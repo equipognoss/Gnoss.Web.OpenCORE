@@ -1,0 +1,20 @@
+﻿@model FuenteViewModel
+    
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+
+    string UrlNuevaFuente = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADFUENTE");
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMIN", "ADMINFUENTES")</h1>
+    <div>
+        <form autocomplete="off">
+            <fieldset class="nuevaFuente">
+                <h4>Editar fuente</h4>
+                @Html.PartialView("_PanelEdicion", Model)
+            </fieldset>
+        </form>
+    </div>
+</div>

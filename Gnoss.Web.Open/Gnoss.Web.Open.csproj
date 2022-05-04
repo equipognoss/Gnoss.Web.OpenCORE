@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.4.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageReference Include="WebPush" Version="1.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.RedesSociales\Es.Riam.Gnoss.RedesSociales.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Traducciones\Es.Riam.Gnoss.Traducciones.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Util\Es.Riam.Gnoss.Util.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.MVC.Controles\Es.Riam.Gnoss.Web.MVC.Controles\Es.Riam.Gnoss.Web.MVC.Controles.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.RSS\Es.Riam.Gnoss.Web.RSS.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.UtilOAuth\Es.Riam.Gnoss.Web.UtilOAuth.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\OntologyToClass\OntologyToClass.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="App_Start\" />
+  </ItemGroup>
+
+</Project>

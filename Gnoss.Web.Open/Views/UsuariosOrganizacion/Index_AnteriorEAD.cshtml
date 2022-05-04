@@ -1,0 +1,655 @@
+﻿@model AdministrarUsuariosOrganizacionViewModel
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.SetBodyClass("layout02 comGnoss");
+
+    string urlAdministracion = Html.GetPerfil().Url + Html.GetText("URLSEM", "ADMINISTRACION") + "/";
+}
+
+<div id="col01">
+
+    <h2 style="background: none;" class="textBox">
+        <span id="lblUsuarios2">@Html.GetText("MENU", "ADMINISTRARORG")</span>
+    </h2>
+    <div class="community box">
+        <p class="imageUser">
+            <a href="@Html.GetPerfil().Url@Model.Organization.Url" title="@Model.Organization.Name">
+                @if (!string.IsNullOrEmpty(Model.Organization.Foto))
+                {
+                    <img title="@Model.Organization.Name" alt="@Model.Organization.Name" src="@Html.GetBaseUrlContent()@Model.Organization.Foto">
+                }
+                <em>@Model.Organization.Name</em>
+            </a>
+        </p>
+    </div>
+    <div style="margin-top:20px" class="listaAcciones">
+        <ul id="pestanyasInvitacion" style="padding: 0">
+            <li class="activo" style="" id="botonMiembros">
+                <a href="@urlAdministracion@Html.GetText("URLSEM", "USUARIOS")" id="hlMiembros">@Html.GetText("USUARIOS", "USUARIOS") (@Model.Organization.NumUsersOrg)</a>
+                <ul class="infoEmpresa">
+                    <li>
+                        <a href="@urlAdministracion@Html.GetText("URLSEM", "USUARIOS")?tipo=0">@Html.GetText("USUARIOS", "ADMINISTRADORES") (@Model.Organization.NumUsersOrgTypeAdmin)</a>
+                    </li>
+                    <li>
+                        <a href="@urlAdministracion@Html.GetText("URLSEM", "USUARIOS")?tipo=1"> @Html.GetText("USUARIOS", "EDITORES") (@Model.Organization.NumUsersOrgTypeSuper)</a>
+                    </li>
+                    <li>
+                        <a href="@urlAdministracion@Html.GetText("URLSEM", "USUARIOS")?tipo=2">@Html.GetText("USUARIOS", "USUARIOS") (@Model.Organization.NumUsersOrgTypeUser)</a>
+                    </li>
+                </ul>
+            </li>
+            <li id="botonComunidades">
+                <a id="hlComunidades" href="@urlAdministracion@Html.GetText("URLSEM", "COMUNIDADES")">@Html.GetText("USUARIOS", "COMUNIDADES") (@Model.Organization.NumCommunitiesOrg)</a>
+            </li>
+
+            <li id="botonGrupos">
+                <a id="hlGrupos" href="@urlAdministracion@Html.GetText("URLSEM", "GRUPOS")">@Html.GetText("CONTACTOS", "GRUPOS") (@Model.Organization.NumGroupsOrg)</a>
+            </li>
+        </ul>
+    </div>
+    <div class="invitarCom" style="margin-top:20px">
+        <p>
+            <a href="@Html.GetPerfil().Url@Html.GetText("URLSEM", "INVITARAORG")" id="hlEnviarInvitaciones" >@Html.GetText("USUARIOS", "INVITARAORGANIZACION")</a>
+        </p>
+    </div>
+</div>
+<div id="col02" class="adminOrg">
+    @if (Model.PageType.Equals(AdministrarUsuariosOrganizacionViewModel.TipoPagina.Usuarios))
+    {
+        @Html.PartialView("_Usuarios", Model)
+    }
+    else if (Model.PageType.Equals(AdministrarUsuariosOrganizacionViewModel.TipoPagina.Comunidades))
+    {
+        @Html.PartialView("_Comunidades", Model)
+    }
+    else if (Model.PageType.Equals(AdministrarUsuariosOrganizacionViewModel.TipoPagina.Grupos))
+    {
+        @Html.PartialView("_Grupos", Model)
+    }
+</div>
+
+
+<script defer="defer" type="text/javascript">
+    EjecutarScriptsIniciales();
+    var ContactosEscondidos = new Array();
+
+    function crearInvitado(ficha, nombre, identidad) {
+        if (ficha.className == "infoUsuario floatLeft") {
+            ficha = ficha.parentNode;
+        }
+        contenedor = document.getElementById('panContenedorInvitados');
+        contenedor.innerHTML = contenedor.innerHTML + '<span class="icoEliminar" style="margin-right:10px;">' + nombre + '<a style="cursor:pointer;" onclick="javascript:eliminarInvitado(\'' + ficha.id + '\',this,\'' + identidad + '\');"><img src="' + document.getElementById('txtBaseUrlHack').value + 'img/blank.gif" alt="eliminar"></a></span>'
+
+        ficha.style.display = 'none';
+        document.getElementById('txtHackInvitados').value = document.getElementById('txtHackInvitados').value + "&" + identidad;
+    }
+
+    function eliminarInvitado(fichaId, nombre, identidad) {
+        ficha = document.getElementById(fichaId);
+        ficha.style.display = 'block';
+
+        cadena = $('.filtroRapido input')[0].value;
+        if ($(ficha).find('h3 a')[0].innerHTML.toLowerCase().indexOf(cadena.toLowerCase()) < 0) {
+            ContactosEscondidos[ContactosEscondidos.length] = ficha;
+            ficha.style.display = 'none';
+        }
+
+        contenedor = document.getElementById('panContenedorInvitados');
+        contenedor.removeChild(nombre.parentNode);
+        document.getElementById('txtHackInvitados').value = document.getElementById('txtHackInvitados').value.replace('&' + identidad, '');
+    }
+
+    function agregarCorreo() {
+        txtCorreo = document.getElementById('txtCorreoAInvitar');
+        txtCorreosNoValidos = document.getElementById('txtCorreosNoValidosHack');
+        infoCorreo = document.getElementById('lblInfoCorreo');
+        if (!validarEmail(txtCorreo.value.replace(/^\s*|\s*$/g, ""))) {
+            infoCorreo.innerHTML = form.emailValido;
+            setTimeout('infoCorreo.innerHTML = \'\'', 3000);
+            return;
+        }
+        if (txtCorreosNoValidos.value.indexOf(txtCorreo.value.replace(/^\s*|\s*$/g, "") + ' ') >= 0) {
+            infoCorreo.innerHTML = invitaciones.correoPerteneceCom;
+            setTimeout('infoCorreo.innerHTML = \'\'', 3000);
+            return;
+        }
+
+        contenedor = document.getElementById('panContenedorInvitados');
+        contenedor.innerHTML = contenedor.innerHTML + '<span class="icoEliminar" style="margin-right:10px;">' + txtCorreo.value.replace(/^\s*|\s*$/g, "") + '<a style="cursor:pointer;" onclick="javascript:eliminarCorreo(\'' + txtCorreo.value.replace(/^\s*|\s*$/g, "") + '\',this);"><img src="' + document.getElementById('txtBaseUrlHack').value + 'img/blank.gif" alt="eliminar"></a></span>'
+
+        document.getElementById('txtHackInvitados').value = document.getElementById('txtHackInvitados').value + "&" + txtCorreo.value.replace(/^\s*|\s*$/g, "");
+
+        txtCorreo.value = '';
+        infoCorreo.innerHTML = '';
+    }
+    function eliminarCorreo(correo, nombre) {
+        txtCorreo = document.getElementById('txtCorreoAInvitar');
+
+        contenedor = document.getElementById('panContenedorInvitados');
+        contenedor.removeChild(nombre.parentNode);
+        document.getElementById('txtHackInvitados').value = document.getElementById('txtHackInvitados').value.replace('&' + correo, '');
+    }
+
+    function mostrarSelectorComentaristas() {
+        MostrarPopUpSelectorDeUsuarios(0);
+        //OcultarProcesando_selectorUsuariosComentaristas();
+    }
+
+    function mostrarSelectorVisibles() {
+        MostrarPopUpSelectorDeUsuarios(1);
+        //OcultarProcesando_selectorUsuariosVisibles();
+    }
+
+    /// <summary>
+    /// Muestra el panel pop-up y uno de las capas que contiene a demanda.
+    /// </summary>
+    function MostrarPopUpSelectorDeUsuarios(pCapa) {
+        //0 -> selector de Comentaristas
+        //1 -> selector de Permisos
+
+        if (pCapa == 0) {
+            document.getElementById('panSelectorComentaristas').style.display = 'block';
+            document.getElementById('panSelectorVisibles').style.display = 'none';
+        }
+        else if (pCapa == 1) {
+            document.getElementById('panSelectorComentaristas').style.display = 'none';
+            document.getElementById('panSelectorVisibles').style.display = 'block';
+        }
+        var $capa = $('#capaModal');
+        var $iframe = null;
+        var $mask = $capa.find('div.mascara').height($(document).height());
+        $capa.find('div.anyadirCategorias').css('top', ($('html').attr('scrollTop') || $('body').attr('scrollTop') || 0) + 'px')
+        $capa.fadeIn();
+        if ($.browser.msie && $.browser.version < 7) {
+            $iframe = $('<iframe></iframe>').css({
+                position: 'absolute',
+                top: 0,
+                left: '50%',
+                zIndex: parseInt($mask.css('zIndex')) - 1,
+                width: '1000px',
+                marginLeft: '-500px',
+                height: $mask.height(),
+                filter: 'mask()'
+            }).insertAfter($mask);
+        }
+        // una vez llamado deberian prepararse los eventos
+        $capa.find('a.icoEliminar').unbind('click').click(function () {
+            $capa.fadeOut();
+            if ($iframe) { $iframe.remove(); }
+        });
+        AjustarTopControl('capaModal');
+        return false;
+    }
+
+    function marcarTodosElementosSelProy(pListaGuids, pIdTxt, pIdSelector) {
+        var guids = new Array();
+        guids = pListaGuids.split('|');
+        var valor = $('#chkSeleccionarTodos').attr('checked');
+        for (i = 0; i < guids.length; i++) {
+            if (valor) {
+                if (!document.getElementById("chkIdentidad|" + guids[i]).checked) {
+                    document.getElementById("chkIdentidad|" + guids[i]).click();
+                }
+            }
+            else {
+                if (document.getElementById("chkIdentidad|" + guids[i]).checked) {
+                    document.getElementById("chkIdentidad|" + guids[i]).click();
+                }
+            }
+        }
+        $('#chkSeleccionarTodos').attr('checked', valor);
+    }
+
+    function marcarTodosElementosPerSelProy(pListaGuids, pIdTxt, pIdSelector) {
+        var guids = new Array();
+        guids = pListaGuids.split('|');
+
+        for (i = 0; i < guids.length; i++) {
+            if ((document.getElementById("chkIdentidad|" + guids[i]).disabled == 0) && (document.getElementById("chkIdentidad|" + guids[i]).checked == 0)) {
+                document.getElementById("chkIdentidad|" + guids[i]).click();
+            }
+            document.getElementById(pIdSelector + "_" + guids[i] + "Per").click();
+        }
+        document.getElementById("chkIdentidadPerTodos").checked = 1;
+    }
+
+    function marcarTodosElementosCorSelProy(pListaGuids, pIdTxt, pIdSelector) {
+        var guids = new Array();
+        guids = pListaGuids.split('|');
+
+        for (i = 0; i < guids.length; i++) {
+            if ((document.getElementById("chkIdentidad|" + guids[i]).disabled == 0) && (document.getElementById("chkIdentidad|" + guids[i]).checked == 0)) {
+                document.getElementById("chkIdentidad|" + guids[i]).click();
+            }
+            document.getElementById(pIdSelector + "_" + guids[i] + "Cor").click();
+        }
+        document.getElementById("chkIdentidadCorTodos").checked = 1;
+    }
+
+    var textoAnterior = '';
+    var timeoutContactos;
+
+    function filtrarContactos() {
+        if (($('#txtFiltrarMiembros').val().length >= 3) && (textoAnterior != $('#txtFiltrarMiembros').val())) {
+            if (timeoutContactos != null) {
+                clearTimeout(timeoutContactos);
+            }
+            timeoutContactos = setTimeout("filtrarContactosTimeout($('#txtFiltrarMiembros').val())", 500);
+        }
+        else if (($('#txtFiltrarMiembros').val().length < 3) && (textoAnterior != '')) {
+            if (timeoutContactos != null) {
+                clearTimeout(timeoutContactos);
+            }
+            timeoutContactos = setTimeout("filtrarContactosTimeout('')", 500);
+        }
+    }
+    function filtrarContactosTimeout(texto) {
+        if ($('#txtFiltrarMiembros').val() == texto) {
+            var arg = 'FiltrarMiembros&' + texto;
+            WebForm_DoCallback('__Page', arg, desbloquearTextos, '__Page', '', true);
+            MostrarUpdateProgress();
+            $("#txtFiltrarMiembros").attr('disabled', true);
+            if (texto.length >= 3) {
+                $('#txtFiltrarMiembros').addClass('activo');
+            }
+            else {
+                $('#txtFiltrarMiembros').removeClass('activo');
+            }
+            textoAnterior = texto;
+        }
+    }
+
+    var timeoutComunidades;
+
+    function filtrarComunidades() {
+        if (($('#txtFiltrarCom').val().length >= 3) && (textoAnterior != $('#txtFiltrarCom').val())) {
+            if (timeoutComunidades != null) {
+                clearTimeout(timeoutComunidades);
+            }
+            timeoutComunidades = setTimeout("filtrarComunidadesTimeout($('#txtFiltrarCom').val())", 500);
+        }
+        else if (($('#txtFiltrarCom').val().length < 3) && (textoAnterior != '')) {
+            if (timeoutComunidades != null) {
+                clearTimeout(timeoutComunidades);
+            }
+            timeoutComunidades = setTimeout("filtrarComunidadesTimeout('')", 500);
+        }
+    }
+    function filtrarComunidadesTimeout(texto) {
+        if ($('#txtFiltrarCom').val() == texto) {
+            var arg = 'FiltrarComunidades&' + texto;
+            WebForm_DoCallback('__Page', arg, desbloquearTextos, '__Page', '', true);
+            MostrarUpdateProgress();
+            $("#txtFiltrarCom").attr('disabled', true);
+            if (texto.length >= 3) {
+                $('#txtFiltrarCom').addClass('activo');
+            }
+            else {
+                $('#txtFiltrarCom').removeClass('activo');
+            }
+            textoAnterior = texto;
+        }
+    }
+
+    function desbloquearTextos(rValue) {
+        ReceiveServerData(rValue);
+        if ($('#txtFiltrarMiembros').length > 0) {
+            $('#txtFiltrarMiembros').attr('disabled', false);
+        }
+        if ($('#txtFiltrarCom').length > 0) {
+            $('#txtFiltrarCom').attr('disabled', false);
+        }
+    }
+
+    $(document).ready(function () {
+        if (typeof window.event == 'undefined') {
+            document.onkeypress = function (e) {
+                var test_var = e.target.nodeName.toUpperCase();
+                if (e.target.type) var test_type = e.target.type.toUpperCase();
+                if ((test_var == 'INPUT' && test_type == 'TEXT') || test_var == 'TEXTAREA') {
+                    return e.keyCode;
+                } else if (e.keyCode == 8) {
+                    e.preventDefault();
+                }
+            }
+        } else {
+            document.onkeydown = function () {
+                var test_var = event.srcElement.tagName.toUpperCase();
+                if (event.srcElement.type) var test_type = event.srcElement.type.toUpperCase();
+                if ((test_var == 'INPUT' && test_type == 'TEXT') || test_var == 'TEXTAREA') {
+                    return event.keyCode;
+                } else if (event.keyCode == 8) {
+                    event.returnValue = false;
+                }
+            }
+        }
+
+        page.on('keydown', '#txtFiltrarMiembros', function (event) {
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    return false;
+                }
+                else {
+                    return true
+                }
+            };
+        });
+        page.on('click', 'input.encontrar[type="button"]', function (event) {
+            lastKey = event.key;
+            lastKeyTimestamp = event.timeStamp;
+            setTimeout(function (valorKey, timeStampKey) {
+                if (valorKey == lastKey && timeStampKey == lastKeyTimestamp && $('#txtFiltrarMiembros').val() != $('#txtFiltrarMiembros').attr('aux')) {
+                    //$('#txtFiltrarMiembros').blur();
+                    lastKey = '';
+                    Filtrar();
+                }
+            }, 400, event.key, event.timeStamp);
+        });
+        page.on('change', 'select#tipoFiltro', function () {
+            Filtrar();
+        });
+        page.on('click', '#aOrdenAscendente', function () {
+            if (!$(this).hasClass('activo')) {
+                $(this).addClass('activo');
+                $('#aOrdenDescendente').removeClass('activo');
+                $('#ordenFiltros').val("ASC");
+                Filtrar();
+            }
+        });
+        page.on('click', '#aOrdenDescendente', function () {
+            if (!$(this).hasClass('activo')) {
+                $(this).addClass('activo');
+                $('#aOrdenAscendente').removeClass('activo');
+                $('#ordenFiltros').val("DESC");
+                Filtrar();
+            }
+        });
+        page.on('click', '#NavegadorPaginas_Pag a', function () {
+            var numPag = $(this).attr('aux');
+            $('#numPagina').val(numPag);
+            Filtrar();
+        });
+        page.on('change', '.proyectosParticipa .mostrarProyParticipa', function () {
+            var panelContenedor = $(this).closest('.proyectosParticipa');
+            FiltrarProyectosUsu(panelContenedor);
+        });
+        page.on('keyup', '.proyectosParticipa .filtroRapido input.inputFiltro', function () {
+            var panelContenedor = $(this).closest('.proyectosParticipa');
+            FiltrarProyectosUsu(panelContenedor);
+        });
+        page.on('click', '.proyectosParticipa .botonAceptar', function () {
+            var panelUsuario = $(this).closest('.resource');
+            var id = panelUsuario.attr('id');
+
+            var panelProyectos = $(this).closest('.proyectosParticipa');
+            var proyectos = $('.proyectos', panelProyectos);
+
+            var datapost = {};
+
+            var cont = 0;
+            @{
+                string metodo = "";
+                string prefijo = "";
+                if (Model.PageType.Equals(AdministrarUsuariosOrganizacionViewModel.TipoPagina.Usuarios))
+                {
+                    metodo = "asign-community";
+                    prefijo = "ProyectosAsignados";
+                }
+                else if (Model.PageType.Equals(AdministrarUsuariosOrganizacionViewModel.TipoPagina.Comunidades))
+                {
+                    metodo = "asign-users";
+                    prefijo = "UsuariosAsignados";
+                }
+            }
+            proyectos.each(function () {
+                var prefijo = '@(prefijo)[' + cont + ']';
+
+                var checked = $('.chkProyecto', $(this)).is(':checked');
+                var id = $(this).attr('id').replace('proyParticipa_', '');
+                var tipo = 1;
+                if (checked) {
+                    var inputTipoSeleccionado = $('input[type=radio][name=tipo_' + id + ']:checked', $(this))
+                    if (inputTipoSeleccionado.length > 0) {
+                        tipo = $('input[type=radio][name=tipo_' + id + ']:checked', $(this)).val();
+                    }
+                }
+
+                datapost[prefijo + '.Key'] = id;
+                datapost[prefijo + '.Participa'] = checked;
+                datapost[prefijo + '.TipoParticipacion'] = tipo;
+
+                cont++;
+            });
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                $('#urlFilter').val() + '/@metodo/' + id,
+                datapost,
+                true
+            ).done(function (data) {
+                CerrarPanelAccion('desplegable_' + id);
+            }).fail(function (data) {
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        page.on('click', '.cambiarRol .botonAceptar', function () {
+            var panelUsuario = $(this).closest('.resource');
+            var id = panelUsuario.attr('id');
+
+            var panelSelector = $(this).closest('.cambiarRol');
+            var inputSeleccionado = $('input[name=SelectorRolUsuario_' + id + ']:checked', panelSelector);
+            var seleccion = inputSeleccionado.attr('rel');
+
+            var datapost = {
+                rol: seleccion
+            }
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                $('#urlFilter').val() + '/change-rol/' + id,
+                datapost,
+                true
+            ).done(function (data) {
+                var tipoUsuario = $('.tipoUsuario', $('#' + id));
+                tipoUsuario.text(inputSeleccionado.attr('aux'));
+                tipoUsuario.attr('rel', seleccion);
+                CerrarPanelAccion('desplegable_' + id);
+            }).fail(function (data) {
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        page.on('click', '.eliminarUsu .botonAceptar', function () {
+            var panelUsuario = $(this).closest('.resource');
+            var id = panelUsuario.attr('id');
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                $('#urlFilter').val() + '/delete/' + id,
+                null,
+                true
+            ).done(function (data) {
+                panelUsuario.remove();
+            }).fail(function (data) {
+                var panel = $('#desplegable_' + id);
+                panel.children().children('#loading').css("display", "none");
+                panel.children().children('#menssages').css("display", "block");
+                panel.children().children('#action').css("display", "none");
+
+                panel.children().children('#menssages').children(".ok").css("display", "none");
+                panel.children().children('#menssages').children(".ko").css("display", "block");
+                panel.children().children('#menssages').children(".ko").html('No se ha podido eliminar al usuario de la organización.');
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        page.on('click', '.eliminarProy .botonAceptar', function () {
+            var panelProyecto = $(this).closest('.resource');
+            var id = panelProyecto.attr('id');
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                $('#urlFilter').val() + '/leave-community/' + id,
+                null,
+                true
+            ).done(function (data) {
+                panelProyecto.remove();
+            }).fail(function (data) {
+                var panel = $('#desplegable_' + id);
+                panel.children().children('#loading').css("display", "none");
+                panel.children().children('#menssages').css("display", "block");
+                panel.children().children('#action').css("display", "none");
+
+                panel.children().children('#menssages').children(".ok").css("display", "none");
+                panel.children().children('#menssages').children(".ko").css("display", "block");
+                panel.children().children('#menssages').children(".ko").html('No se ha podido abandonar la comunidad, algun miembro de la organización es administrador de la comunidad.');
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        page.on('click', '.activarRegAuto .botonAceptar', function () {
+            var panelActivar = $(this).closest('.resource');
+            var id = panelActivar.attr('id');
+            $(this).text('espere un momento');
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                $('#urlFilter').val() + '/activar-regauto/' + id,
+                null,
+                true
+            ).done(function (data) {
+                panelActivar.remove();
+                location.reload();
+            }).fail(function (data) {
+                var panel = $('#desplegable_' + id);
+                panel.children().children('#loading').css("display", "none");
+                panel.children().children('#menssages').css("display", "block");
+                panel.children().children('#action').css("display", "none");
+
+                panel.children().children('#menssages').children(".ok").css("display", "none");
+                panel.children().children('#menssages').children(".ko").css("display", "block");
+                panel.children().children('#menssages').children(".ko").html('No se ha podido activar el registro automatico.');
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        page.on('click', '.desactivarRegAuto .botonAceptar', function () {
+            var panelDesactivar = $(this).closest('.resource');
+            var id = panelDesactivar.attr('id');
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                $('#urlFilter').val() + '/desactivar-regauto/' + id,
+                null,
+                true
+            ).done(function (data) {
+                panelDesactivar.remove();
+                location.reload();
+            }).fail(function (data) {
+                var panel = $('#desplegable_' + id);
+                panel.children().children('#loading').css("display", "none");
+                panel.children().children('#menssages').css("display", "block");
+                panel.children().children('#action').css("display", "none");
+
+                panel.children().children('#menssages').children(".ok").css("display", "none");
+                panel.children().children('#menssages').children(".ko").css("display", "block");
+                panel.children().children('#menssages').children(".ko").html('No se ha podido desactivar el registro automatico.');
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+    });
+
+    function DelplegarCambiarRol(boton, key) {
+        DesplegarAccionConPanelIDMVC('panCambiarRol', boton, 'desplegable_' + key);
+
+        var tipoUsuario = $('.tipoUsuario', $('#' + key)).attr('rel');
+        var panelCambiarRol = $('#panCambiarRol', $('#desplegable_' + key));
+
+        panelCambiarRol.attr('id', 'panCambiarRol_' + key);
+
+        $('input[type=radio]', panelCambiarRol).attr('name', 'SelectorRolUsuario_' + key);
+        $('input[type=radio][rel=' + tipoUsuario + ']', panelCambiarRol).prop('checked', true)
+
+    }
+
+    function DelplegarEliminarUsuario(boton, key) {
+        DesplegarAccionConPanelIDMVC('panEliminarUsu', boton, 'desplegable_' + key);
+        var panelEliminarUsu = $('#panEliminarUsu', $('#desplegable_' + key));
+
+        panelEliminarUsu.attr('id', 'panEliminarUsu_' + key);
+    }
+
+    function DelplegarEliminarProyecto(boton, key) {
+        DesplegarAccionConPanelIDMVC('panEliminarProy', boton, 'desplegable_' + key);
+        var panelEliminarProy = $('#panEliminarProy', $('#desplegable_' + key));
+
+        panelEliminarProy.attr('id', 'panEliminarProy_' + key);
+    }
+    function ActivarRegistroAuto(boton, key) {
+        DesplegarAccionConPanelIDMVC('panActivarRegAuto', boton, 'desplegable_' + key);
+        var panelActivarRegAuto = $('#panActivarRegAuto', $('#desplegable_' + key));
+
+        panelActivarRegAuto.attr('id', 'panActivarRegAuto_' + key);
+    }
+    function DesactivarRegistroAuto(boton, key) {
+        DesplegarAccionConPanelIDMVC('panDesactivarRegAuto', boton, 'desplegable_' + key);
+        var panelDesactivarRegAuto = $('#panDesactivarRegAuto', $('#desplegable_' + key));
+
+        panelDesactivarRegAuto.attr('id', 'panDesactivarRegAuto_' + key);
+    }   
+    function Filtrar() {
+        var dataPost = {
+            Search: $('#txtFiltrarMiembros').val(),
+            NumPage: $('#numPagina').val(),
+            Type: ($('#tipoFiltro').length > 0 ? $('#tipoFiltro').val() : -1),
+            Order: $('#ordenFiltros').val()
+        }
+        MostrarUpdateProgress();
+        GnossPeticionAjax(
+            $('#urlFilter').val() + '/filter',
+            dataPost,
+            true
+        ).done(function (data) {
+            $('#col02').html(data);
+        }).fail(function (data) {
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    }
+
+    function FiltrarProyectosUsu(panelContenedor) {
+        var inputFiltro = $('.inputFiltro', panelContenedor);
+        var textoFiltro = inputFiltro.val().toLowerCase().replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u');
+        var filtrarPorTexto = false;
+        if (textoFiltro.length > 0) {
+            inputFiltro.addClass("activo");
+            filtrarPorTexto = true;
+        }
+        else {
+            inputFiltro.removeClass("activo");
+        }
+
+        var mostrarTodos = !$('.mostrarProyParticipa', panelContenedor).is(':checked');
+        var proyectos = $('.proyectos', panelContenedor);
+
+        proyectos.each(function () {
+            var textoProy = $('span.nombreProy', this).text().trim().toLowerCase().replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u');
+            var mostrarPorFiltro = textoProy.indexOf(textoFiltro) >= 0;
+            var checked = $('.chkProyecto', $(this)).is(':checked');
+            if ((mostrarTodos || checked) && (!filtrarPorTexto || mostrarPorFiltro)) {
+                $(this).show();
+            }
+            else {
+                $(this).hide();
+            }
+        });
+    }
+</script>
+
+
+
+<style>
+
+</style>

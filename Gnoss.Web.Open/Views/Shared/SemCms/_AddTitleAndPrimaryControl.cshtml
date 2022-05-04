@@ -1,0 +1,49 @@
+﻿@model SharedSemCms
+
+
+@if (!Model.semanticPropertyModel.ReadMode && Model.semanticPropertyModel.OntologyPropInfo.MultiLanguage && !Model.semanticPropertyModel.OntologyPropInfo.MultiLanguageWithTabs)
+{
+    <div>
+        @Html.PartialView("SemCms/_TituloPropiedad", Model.semanticPropertyModel)
+
+        @Model.pIdioma = null;
+        @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model)
+    </div>
+
+    foreach (string idioma in Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages.Keys)
+    {
+        if (idioma != Model.semanticPropertyModel.EntityParent.SemanticResourceModel.DefaultLanguage)
+        {
+            string claseTitulo = "lb lb_" + Model.semanticPropertyModel.Element.Propiedad.NombreGeneracionClases;
+
+            if (Model.semanticPropertyModel.Element.Propiedad.EspecifPropiedad.ClaseCssPanelTitulo != null)
+            {
+                claseTitulo = Model.semanticPropertyModel.Element.Propiedad.EspecifPropiedad.ClaseCssPanelTitulo;
+            }
+
+            string textoLabel = Model.semanticPropertyModel.OntologyPropInfo.LabelTitle + " (" + Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages[idioma] + ")";
+            SemanticPropertyModel.PropertyValue propValueIdioma = null;
+
+            if (Model.propertyValue != null && Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues.ContainsKey(idioma))
+            {
+                propValueIdioma = Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues[idioma][0];
+            }
+
+            <div>
+                <label class="@claseTitulo">@textoLabel</label>
+                @Model.pIdioma = idioma;
+                @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model)
+            </div>
+        }
+    }
+}
+else
+{
+    @Html.PartialView("SemCms/_TituloPropiedad", Model);
+    @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model)
+}
+
+@if (!Model.semanticPropertyModel.ReadMode && !Model.semanticPropertyModel.OntologyPropInfo.UniqueValue)
+{
+    @Html.PartialView("../Shared/SemCMS/_AddMultivalueButtons", Model)
+}

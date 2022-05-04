@@ -1,0 +1,104 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.ViewModels.AdministrarTraduccionesViewModel
+
+@{
+    Html.SetTitle("Index");
+    //string urlBase = this.Request.Url.ToString().ToLower();
+    //if (urlBase.EndsWith("/"))
+    //{
+    //    urlBase = urlBase.Substring(0, urlBase.Length - 1);
+    //}
+
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>Administrar traducciones</h1><br />
+    @if (!string.IsNullOrEmpty(Model.URLActionCrearEntradas))
+    {
+        <form class="frmTraducciones" action="@Model.URLActionCrearEntradas" method="post">
+            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+            {
+                <input type="submit" style="background-color:gray;" disabled value="Crear entradas vacías" />
+            }
+            else
+            {
+                <input type="submit" value="Crear entradas vacías" />
+            }
+        </form>
+    }
+    @if (!string.IsNullOrEmpty(Model.URLActionEliminarEntradas))
+    {
+        <form class="frmTraducciones" action="@Model.URLActionEliminarEntradas" method="post">
+            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+            {
+                <input type="submit" style="background-color:gray;" disabled value="Eliminar entradas vacías" />
+            }
+            else
+            {
+                <input type="submit" value="Eliminar entradas vacías" />
+            }
+        </form>
+    }
+
+    @*<input type="button" onclick="location.href='@Model.URLActionCrearTexto'" value="Nueva traducción" />*@
+    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+    {
+        <input type="button" style="background-color:gray;" disabled onclick="location.href='@Model.URLActionCrearTexto'" value="Nueva traducción" />
+    }
+    else
+    {
+        <input type="button" onclick="location.href='@Model.URLActionCrearTexto'" value="Nueva traducción" />
+    }
+    <br /><br />
+    @if (Model.Textos.Count > 0)
+    {
+        <table id="tblTraducciones">
+            @*<tr>
+                    <th>TextoID</th>
+                    @foreach (string language in Model.Textos.First().Idiomas.Keys)
+                    {
+                        <th>@language</th>
+                    }
+                </tr>*@
+            @foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel texto in Model.Textos)
+            {
+                <tr>
+                    <td class="textoID" colspan="3"><a href="@string.Concat(Model.URLActionEditarTexto,"/",Convert.ToBase64String(Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel.GetBytes(texto.TextoID)))">@texto.TextoID</a></td>
+                </tr>
+                foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TraduccionModel traduccion in texto.Traducciones)
+                {
+                    <tr>
+                        <td class="spaceIdioma"> </td>
+                        <td class="idioma">@traduccion.Idioma</td>
+                        <td class="textoIdioma">@traduccion.Texto</td>
+                    </tr>
+                }
+            }
+        </table>
+    }
+</div>
+
+<style>
+    #tblTraducciones .spaceIdioma {
+        padding-left: 20px;
+        border: none;
+    }
+
+    #tblTraducciones .idioma {
+        font-weight: bold;
+    }
+
+    .frmTraducciones {
+        display: inline;
+        float: right;
+    }
+
+    input[type="button"] {
+        margin-left: 0;
+    }
+
+    input[type="submit"] {
+        margin-left: 20px;
+    }
+</style>

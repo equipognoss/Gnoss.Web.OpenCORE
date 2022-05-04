@@ -1,0 +1,48 @@
+﻿@model RegistrarOrgViewModel;
+@{
+    string jsExtra = Html.GetJSExtra();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+}
+
+@{
+    Html.SetBodyClass("layout02 comunidad listado comGnoss");
+
+    Html.SetPintarH1(false);
+}
+
+<div class="row">
+    @*Breadcrumb / Migas de pan en la ficha del recurso*@
+    <div class="col col-12 col-breadcrumb" id="breadcrumb">
+        <ul>
+            <li>@Model.PageName</li>
+        </ul>
+    </div>
+    <form method="post" action="registrar-org/create">
+        <p>
+            <label for="nombre_corto">@Html.GetText("COMADMINPESTANYAS", "NOMBRECORTO")</label>
+            <input type="text" name="nombre_corto" />
+        </p>
+        <p>
+            <label for="nombre">@Html.GetText("COMADMINPESTANYAS", "NOMBRE") </label>
+            <input type="text" name="nombre" />
+        </p>
+        <p>
+            <input type="submit" class="submit principal" value="@Html.GetText("COMMON", "CREAR")" />
+        </p>
+    </form>
+    
+</div>
+<div class="row col col-4" >
+    @if (Model.Error)
+    {
+        <div class="alert alert-danger" role="alert">
+            Error
+        </div>
+    }
+    else if (Model.Success)
+    {
+        <div class="alert alert-success" role="alert">
+            Ok
+        </div>
+    }
+</div>

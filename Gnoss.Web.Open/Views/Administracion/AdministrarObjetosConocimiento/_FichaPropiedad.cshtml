@@ -1,0 +1,20 @@
+﻿@model ObjetoConocimientoModel.PresentacionModel.PropiedadModel
+
+<li class="row propiedad" id="@Guid.NewGuid()">
+    <span class="handle propiedad">:::</span>
+    <section class="header">
+        <span class="nombre" aux="@Model.Propiedad">@Model.Propiedad</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+	</section>
+    <section class="panEdicion">
+		<p>
+			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")</span>
+			<input type="text" name="Nombre" value="@Model.Propiedad" />
+		</p>	
+		<p>
+			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACION")</span>
+			<input type="text" name="Presentacion" value="@Model.Presentacion" />
+		</p>										
+	</section>
+</li>

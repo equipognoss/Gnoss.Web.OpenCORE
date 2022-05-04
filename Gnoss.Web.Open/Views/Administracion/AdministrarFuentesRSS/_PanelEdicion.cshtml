@@ -1,0 +1,256 @@
+﻿@model FuenteViewModel
+    
+@{ 
+    string UrlNuevaFuente = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADFUENTE");
+}
+
+<div id="divConfig">
+    <div id="panFuente">
+        <h4><span id="lblConfigurarFuente">Fuente</span></h4>
+        <input type="hidden" id="keyFuente" value="@Model.Key" />
+        <!-- URL del canal -->
+        <p>
+            <span class="tipo">URL</span>
+            <input type="text" class="text" disabled="disabled" id="txtURL" value="@Model.Url" name="txtURL">
+        </p>
+        <!-- Nombre del canal -->
+        <p>
+            <span class="tipo">Nombre de la fuente</span>
+            <input type="text" class="text" id="txtNombre" value="@Model.Nombre" name="txtNombre">
+        </p>
+        <!-- Periodo de tiempo que espera para revisar si hay nuevos items en la fuente -->
+        <p>
+            <span class="tipo">Periodicidad</span>
+            <input type="text" class="text" id="txtNumeroPeriodicidad" value="@Model.NumPerioicidad" name="txtNumeroPeriodicidad" maxlength="2" style="width: 30px; padding: 4px 0px; text-align: center;">
+            <select id="ddlTipoPeriodicidad" name="ddlTipoPeriodicidad">
+                <option value="2" @Html.Raw(Model.Perioicidad.Equals(2) ? "selected=\"selected\"" : "")>Días</option>
+                <option value="1" @Html.Raw(Model.Perioicidad.Equals(1) ? "selected=\"selected\"" : "")>Horas</option>
+            </select>
+        </p>
+        <!--Configurar editores-->
+        <div>
+            @{
+                string listaIDsPerfiles = "";
+                string htmlNombresPerfiles = "";
+
+                foreach (Guid perfilID in Model.Editores.Keys)
+                {
+                    listaIDsPerfiles += perfilID.ToString() + ", ";
+                    htmlNombresPerfiles += "<li>" + Model.Editores[perfilID] + "<a aux=\"" + perfilID.ToString() + "\" class=\"remove\">eliminar</a></li>";
+                }
+            }
+            <p>
+                <input type="checkbox" name="chkEditores" id="chkEditores" @Html.Raw(Model.Editores.Count > 0 ? "checked=\"checked\"" : "") />
+                <label for="chkEditores"> Agregar editores</label>
+            </p>
+            <section class="opcion2 panPrivacidad" id="panEditoresFuente" @Html.Raw(Model.Editores.Count == 0 ? "style=\"display:none\"" : "") >
+                <p>
+                    <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "PRIVACIDADPERFILES")">Editores</span>
+                    <input type="text" class="text" id="editoresFuente" name="TabPrivacidadPerfiles">
+                    <input type="hidden" id="editoresFuente_Hack" class="valores privacidadPerfiles" name="TabValoresPrivacidadPerfiles" value="@listaIDsPerfiles" />
+                </p>
+                <ul class="resultado">@Html.Raw(htmlNombresPerfiles)</ul>
+            </section>
+        </div>
+    </div>
+
+    <div id="divConfiguracion">
+        <h4>Contenido de los recursos</h4>
+        <!-- Configurar etiquetas -->
+        <div class="panEtiquetas">
+            <h5>Etiquetas</h5>
+            <p>
+                <input type="checkbox" name="chkEtiquetasFijas" id="chkEtiquetasFijas"  @Html.Raw(!string.IsNullOrEmpty(Model.Tags) ? "checked=\"checked\"" : "")>
+                <label for="chkEtiquetasFijas"> Añadir automáticamente etiquetas a los recursos</label>
+            </p>
+            <div id="panContenedorEtiquetas" @Html.Raw(string.IsNullOrEmpty(Model.Tags) ? "style=\"display:none\"" : "") >
+                <span class="tipo">Etiquetas :</span>
+                <div class="autocompletar" style="margin-bottom: 10px; width: 704px;">
+                    <span class="contenedor"></span>
+                    <input type="text" id="txtEtiquetasFijas" class="txtAutocomplete" size="5" value="@Model.Tags"/>
+                    <input type="hidden" id="txtEtiquetasFijas_Hack" />
+                </div>
+            </div>
+            <p>
+                <input type="checkbox" name="chkEtiquetasCateogorias" id="chkEtiquetasCateogorias" @Html.Raw(Model.TagsDeCategorias ? "checked=\"checked\"" : "") />
+                <label for="chkEtiquetasCateogorias"> Añadir categorías de la fuente RSS/ATOM como etiquetas</label>
+            </p>
+            <p>
+                <input type="checkbox" name="chkEtiquetasTitulo" id="chkEtiquetasTitulo" @Html.Raw(Model.TagsDeTitulo ? "checked=\"checked\"" : "") />
+                <label for="chkEtiquetasTitulo"> Añadir tags del título</label>
+            </p>
+        </div>
+
+        <!-- Configurar categorias -->
+        <div class="panCategorias">
+            <h5>Categorías</h5>
+            <p>
+                <input type="checkbox" name="chkCategoriasIdentificar" id="chkCategoriasIdentificar" @Html.Raw(Model.Tesauro.SelectedCategories.Count > 0 ? "checked=\"checked\"" : "") />
+                <label for="chkCategoriasIdentificar"> Categorizar automáticamente en:</label>
+            </p>
+            <div id="panDesplegableSelCat" @Html.Raw(Model.Tesauro.SelectedCategories.Count == 0 ? "style=\"display:none\"" : "") >
+                @Html.PartialView("EditorTesauro/_EditorTesauro", Model.Tesauro)
+            </div>
+        </div>
+
+        <!-- Descripcion -->
+        <div class="panDescripcion">
+            <h5>Descripción</h5>
+            <p>
+                <input type="checkbox" name="chkResumen" id="chkResumen" @Html.Raw(Model.ObtenerResumen ? "checked=\"checked\"" : "") />
+                <label for="chkResumen"> Generar resumen automático</label>
+                <span class="smallText">La descripción del recurso será el resumen de la fuente si se proporciona o los primeros 500 caracteres de la misma</span>
+            </p>
+        </div>
+
+        <!-- Otras config -->
+        <div class="panCompartir">
+            <h5>@Html.GetText("PERFILBASERECURSOSFICHA", "COMPARTIR")</h5>
+            <p>
+                <input type="checkbox" name="chkCompartir" id="chkCompartir" @Html.Raw(Model.Compartir ? "checked=\"checked\"" : "") />
+                <label for="chkCompartir"> Otros usuarios podrán compartir los recursos de la fuente</label>
+            </p>
+        </div>
+
+        <!-- Guardar -->
+        <input class="guardarTodo" type="button" id="btnGuardarFuente" value="Guardar" />
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $('#chkEditores').click(function () {
+            $('#panEditoresFuente').toggle();
+        });
+        $('input[name="TabPrivacidadPerfiles"]').autocomplete(
+            null,
+            {
+                url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                delay: 0,
+                scroll: false,
+                selectFirst: false,
+                minChars: 1,
+                width: 300,
+                cacheLength: 0,
+                NoPintarSeleccionado: true,
+                multiple: true,
+                extraParams: {
+                    grupo: '',
+                    identidad: $('#inpt_identidadID').val(),
+                    organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                    proyecto: $('#inpt_proyID').val(),
+                    bool_edicion: 'true',
+                    bool_traergrupos: 'false',
+                    bool_traerperfiles: 'true'
+                }
+            }
+        );
+
+        $('input[name="TabPrivacidadPerfiles"]').result(function (event, data, formatted) {
+            aceptarEditorSelectorUsuRec(this, data[0], data[1]);
+        });
+
+        $('#panEditoresFuente ul.resultado li a').click(function () {
+            eliminarUsuarioSelecUsu($(this));
+        });
+
+        $('#chkEtiquetasFijas').click(function () {
+            $('#panContenedorEtiquetas').toggle();
+        });
+
+        ActivarAutocompletarRec('txtEtiquetasFijas', 'sioc_t:Tag');
+
+        $('#chkCategoriasIdentificar').click(function () {
+            $('#panDesplegableSelCat').toggle();
+        });
+
+        $('#btnGuardarFuente').click(function () {
+            MostrarUpdateProgress();
+
+
+            var TagsDeCategorias = $('#chkEtiquetasCateogorias').is(':checked');
+            var TagsDeTitulo = $('#chkEtiquetasTitulo').is(':checked');
+            var ThesaurusEditorModel = '';
+            var Compartir = $('#chkCompartir').is(':checked');
+            var ObtenerResumen = $('#chkResumen').is(':checked');
+
+
+            var dataPost = {}
+            dataPost["fuente.Key"] = $('#keyFuente').val();
+            dataPost["fuente.Nombre"] = $('#txtNombre').val();
+            dataPost["fuente.Url"] = $('#txtURL').val();
+            if ($('#txtUser').length > 0) {
+                dataPost["fuente.User"] = $('#txtUser').val();
+            }
+            if ($('#txtPassword').length > 0) {
+                dataPost["fuente.Password"] = $('#txtPassword').val();
+            }
+            dataPost["fuente.Perioicidad"] = $('#ddlTipoPeriodicidad').val();
+            dataPost["fuente.NumPerioicidad"] = $('#txtNumeroPeriodicidad').val();
+
+            if ($('#chkEditores').is(':checked')) {
+                var arrayEditores = $('#editoresFuente_Hack').val().split(',');
+                $.each(arrayEditores, function (indice, editor) {
+                    if (editor.trim() != '') {
+                        dataPost["fuente.Editores[" + indice + "].Key"] = editor.trim();
+                        dataPost["fuente.Editores[" + indice + "].Value"] = '';
+                    }
+                });
+            }
+            if ($('#chkEtiquetasFijas').is(':checked')) {
+                dataPost["fuente.Tags"] = $('#txtEtiquetasFijas_Hack').val();
+            }
+            dataPost["fuente.TagsDeCategorias"] = $('#chkEtiquetasCateogorias').is(':checked');
+            dataPost["fuente.TagsDeTitulo"] = $('#chkEtiquetasTitulo').is(':checked');
+
+            if ($('#chkCategoriasIdentificar').is(':checked')) {
+                var arrayCategorias = $('#txtHackCatTesSel').val().split(',');
+                $.each(arrayCategorias, function (indice, categoria) {
+                    if (categoria.trim() != '') {
+                        dataPost["fuente.CategoriasSeleccionadas[" + indice + "]"] = categoria.trim();
+                    }
+                });
+            }
+
+            dataPost["fuente.Compartir"] = $('#chkCompartir').is(':checked');
+            dataPost["fuente.ObtenerResumen"] = $('#chkResumen').is(':checked');
+
+            GnossPeticionAjax(
+                "@UrlNuevaFuente/save",
+                dataPost,
+                true
+            ).fail(function (response) {
+                
+            }).always(function (response) {
+                OcultarUpdateProgress();
+            })
+        });
+
+
+    });
+
+    function aceptarEditorSelectorUsuRec (txtautocomp, nombre, id) {
+        var padreTxt = $(txtautocomp).closest('.panPrivacidad');
+        var txtValores = $('input.valores', padreTxt);
+        txtValores.val(txtValores.val() + id + ',');
+
+        $('ul.resultado', padreTxt).append('<li>' + nombre + '<a class="remove" aux=' + id + ' >' + borr.eliminar + '</a></li>');
+        $(txtautocomp).val('');
+
+        $('ul.resultado li a', padreTxt).unbind().click(function () {
+            eliminarUsuarioSelecUsu($(this));
+        });
+    }
+
+    function eliminarUsuarioSelecUsu(enlaceEliminar) {
+        var id = enlaceEliminar.attr('aux');
+
+        var padreTxt = enlaceEliminar.closest('.panPrivacidad');
+        var txtValores = $('input.valores', padreTxt);
+
+        txtValores.val(txtValores.val().replace(id + ',', ''));
+        enlaceEliminar.parent().remove();
+    }
+
+</script>

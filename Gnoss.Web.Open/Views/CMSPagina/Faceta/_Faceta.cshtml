@@ -1,0 +1,33 @@
+﻿@using Es.Riam.Gnoss.Web.MVC.Models;
+@model CMSComponentFacet
+
+@if (Model != null)
+{
+    if (Model.FacetModel != null && Model.FacetModel.FacetItemList.Count > 0)
+    {
+        switch (Model.PresentatioType)
+        {
+            case CMSComponentFacet.CMSComponentFacetPresentation.Normal:
+                @Html.PartialView("../CMSPagina/_PintarFaceta", Model)
+                break;
+            case CMSComponentFacet.CMSComponentFacetPresentation.Bars:
+                <div class="componenteFaceta graficoBarras">
+                    @Html.PartialView("../CMSPagina/_PintarFaceta", Model)
+                    <script>
+                        FormatearFacetasGraficas();
+                    </script>
+                </div>
+                break;
+            case CMSComponentFacet.CMSComponentFacetPresentation.Sectors:
+                <div class="componenteFaceta graficoSectores">
+                    @Html.PartialView("../CMSPagina/_PintarFaceta", Model)
+                    <script>
+                        FormatearFacetasGraficas();
+                    </script>
+                </div>
+                break;
+        }
+    }
+}
+
+

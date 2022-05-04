@@ -1,0 +1,47 @@
+﻿@model TabModel.ExportacionSearchTabModel 
+
+@{
+    TabModel.ExportacionSearchTabModel exportacion = Model;
+}
+<li class="bloque row exportacion" id="@exportacion.Key">
+    <span class="handle exportacion">:::</span>
+    <section class="header">
+        <span>@exportacion.Nombre</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <input type="hidden" name="TabEliminada" value="false"/>
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")</span>
+            <input type="text" name="Nombre" value="@exportacion.Nombre" />
+        </p>
+        <div class="panPrivacidad">
+            @{
+                string listaIDsGrupos = "";
+                string htmlNombresGrupos = "";
+
+                foreach (Guid grupoID in exportacion.GruposPermiso.Keys)
+                {
+                    listaIDsGrupos += "g_" + grupoID.ToString() + ", ";
+                    htmlNombresGrupos += "<li>" + exportacion.GruposPermiso[grupoID] + "<a aux=\"" + grupoID.ToString() + "\" class=\"remove\">eliminar</a></li>";
+                }
+                    
+            }
+			<p>
+				<span class="tipo">@Html.GetText("COMADMINPESTANYAS", "GRUPOSPERMISO")</span>
+				<input type="text" id="privacidadGrupos_@exportacion.Key" name="TabPrivacidadGrupos">
+				<input type="hidden" id="privacidadGrupos_@(exportacion.Key)_Hack" class="valores privacidadGrupos" name="TabValoresPrivacidadGrupos" value="@listaIDsGrupos">
+			</p>
+			<ul class="resultado">@Html.Raw(htmlNombresGrupos)</ul>
+        </div>
+        <p>@Html.GetText("COMADMINPESTANYAS", "PROPIEDADES")</p>
+        <ol class="propiedadesSortable">
+            @foreach(TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel propiedadExport in exportacion.ListaPropiedades)
+            {
+                @Html.PartialView("_FichaExportacionPropiedad", propiedadExport);
+            }
+        </ol>
+        <input type="button" value="@Html.GetText("COMADMINPESTANYAS", "ADDPROPIEDAD")" class="addProperty" />
+    </section>
+</li>

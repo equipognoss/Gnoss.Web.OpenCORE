@@ -1,0 +1,6 @@
+﻿@model List<CookieModel>
+
+@foreach (CookieModel cookie in Model) 
+{
+    @Html.PartialView("_EdicionCookieProyecto", cookie)
+}

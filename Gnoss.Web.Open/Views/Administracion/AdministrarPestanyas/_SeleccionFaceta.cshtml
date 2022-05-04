@@ -1,0 +1,41 @@
+﻿@*@model List<FacetaModel>*@
+@model AdministrarFacetasEnPestanyasViewModel
+@{
+    List<FacetaModel> listaFacetas = Model.ListadoFacetas;
+    int i = 1;
+    string id = "id_faceta_";
+    TabModel.FacetasTabModel facetasPestanya = Model.FacetasPestanya;
+
+}
+<li class="bloque row faceta" id="@(id + i)">
+    <span class="handle faceta">:::</span>
+    <section class="header">
+        <span>Nueva faceta para la página</span>
+        <span>@facetasPestanya.ObjetoConocimiento.ToString()</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion" style="width:760px">
+        <input type="hidden" name="TabEliminada" value="false" />
+        <select class="selectFacetas" name="listaFacetas">
+
+            @foreach (FacetaModel faceta in listaFacetas)
+            {
+                <option class="facetas" value="@(faceta.ClaveFaceta)" name="@(faceta.AgrupacionID)" @(facetasPestanya.Faceta.Equals(faceta.Name) ? "selected" : "")>@faceta.Name</option>
+            }
+        </select>
+
+            <select class="selectObjetosConocimiento" name="ListaOC">
+            </select>
+
+        <select class="selectAux" hidden>
+            @foreach (FacetaModel faceta in listaFacetas)
+            {
+                foreach (var objeto in faceta.ObjetosConocimiento)
+                {
+                    <option class="objAux" name="@(faceta.AgrupacionID)" value="@objeto">@objeto</option>
+                }
+            }
+        </select>
+    </section>
+</li>

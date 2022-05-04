@@ -1,0 +1,46 @@
+﻿@model SharedSemCms
+
+@{
+
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
+    string idControl = Model.semanticPropertyModel.OntologyPropInfo.ControlID;
+    string divTabsID = idControl.Replace("Campo_", "divContPesIdioma_");
+    string langActual = "";
+
+    if (Model.semanticPropertyModel.OntologyPropInfo.UniqueValue)
+    {
+        foreach (string idioma in mPropiedad.ListaValoresIdioma.Keys)
+        {
+            if (mPropiedad.ListaValoresIdioma[idioma].Count > 0)
+            {
+                langActual += mPropiedad.ListaValoresIdioma[idioma].Keys.ToArray()[0].Replace("<", "[--C]").Replace(">", "[C--]") + "@" + idioma + "[|lang|]";
+            }
+        }
+    }
+
+    <div id="@divTabsID" class="block tabsGroup" langActual="@langActual">
+        <div class="acciones tabspresentation">
+            <ul>
+                @{
+                    SharedSemCms sharedSemCms = new SharedSemCms();
+                    sharedSemCms.semanticPropertyModel = Model.semanticPropertyModel;
+                    sharedSemCms.pIdioma = Model.semanticPropertyModel.EntityParent.SemanticResourceModel.DefaultLanguage;
+                }
+                @Html.PartialView("../Shared/SemCMS/_AddLanguageToMultiLanguageTabs", sharedSemCms)
+                @foreach (string idioma in Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages.Keys)
+                {
+                    if (idioma != Model.semanticPropertyModel.EntityParent.SemanticResourceModel.DefaultLanguage)
+                    {
+                        sharedSemCms.pIdioma = idioma;
+                        @Html.PartialView("../Shared/SemCMS/_AddLanguageToMultiLanguageTabs", sharedSemCms)
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+
+
+
+}
+
+

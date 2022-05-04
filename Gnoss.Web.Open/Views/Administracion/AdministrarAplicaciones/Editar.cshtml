@@ -1,0 +1,22 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.OAuth.ConsumerModel
+@{
+    Html.SetTitle("Editar");
+    string urlBase = this.Context.Request.Path.ToString().ToLower();
+    if(urlBase.LastIndexOf("/editar") > 0)
+    {
+        urlBase = urlBase.Substring(0,urlBase.LastIndexOf("/editar"));
+        urlBase = string.Concat(urlBase, "/editar");
+    }
+   }
+<div id="col01">
+    <h2>Editar aplicaciones</h2>
+
+     @Html.ValidationSummary()
+    <div class="box box01">
+        <form action="@urlBase" method="post">
+            @Html.Hidden("ConsumerId")
+            Nombre de la aplicación:@Html.TextBox("Name") @Html.ValidationMessage("Name") <br />
+            <input type="submit" value="Guardar" /><br />
+        </form>
+    </div>
+</div>

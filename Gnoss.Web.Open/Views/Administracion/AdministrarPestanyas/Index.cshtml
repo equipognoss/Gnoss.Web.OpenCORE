@@ -1,0 +1,1827 @@
+﻿@model AdministrarPestanyasViewModel
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMINPESTANYAS", "TITULO")</h1>
+    <div>
+        <form autocomplete="off">
+            @{
+                ViewBag.ListaIdiomas = Model.ListaIdiomas;
+                ViewBag.ContenidoMultiIdioma = Model.ContenidoMultiIdioma;
+
+                string idiomas = "";
+
+                foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+                {
+                    idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+                }
+            }
+            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
+            <input type="hidden" id="idiomaDefecto" value="@Model.IdiomaPorDefecto" />
+            <p>
+                @Html.GetText("COMADMINPESTANYAS", "INFOTITULO")
+            </p>
+            <div class="contenedorFiltros">
+                <div class="panFiltrar">
+                    <p>
+                        <span>Filtrar páginas </span>
+                    </p>
+                    <p>
+                        <span>por nombre/ruta</span>
+                        <input type="text" id="txtFiltro">
+                        <span> y por tipo </span>
+                        <select id="cmbFiltro">
+                            <option value="">Todas</option>
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Home) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.Home)">@Html.GetText("COMMON", "HOME")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Indice) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.Indice)">@Html.GetText("COMMON", "INDICE")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Recursos) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.Recursos)">@Html.GetText("COMMON", "RECURSOS")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Preguntas) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.Preguntas)">@Html.GetText("COMMON", "PREGUNTAS")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Debates) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.Debates)">@Html.GetText("COMMON", "DEBATES")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Encuestas) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.Encuestas)">@Html.GetText("COMMON", "ENCUESTAS")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.PersonasYOrganizaciones) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.PersonasYOrganizaciones)">@Html.GetText("COMMON", "PERSONASYORGANIZACIONES")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.AcercaDe) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.AcercaDe)">@Html.GetText("COMMON", "ACERCADE")</option>
+                            }
+                            @if (Model.CMSDisponible && Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.CMS) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.CMS)">@Html.GetText("COMMON", "CMS")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.BusquedaSemantica) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.BusquedaSemantica)">@Html.GetText("COMMON", "BUSQUEDASEMANTICA")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.EnlaceInterno) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.EnlaceInterno)">@Html.GetText("COMMON", "ENLACEINTERNO")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.EnlaceExterno) > 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.EnlaceExterno)">@Html.GetText("COMMON", "ENLACEEXTERNO")</option>
+                            }
+                            @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.BusquedaAvanzada) == 0)
+                            {
+                                <option value="@(TipoPestanyaMenu.BusquedaAvanzada)">@Html.GetText("COMMON", "BUSQUEDAAVANZADA")</option>
+                            }
+                        </select>
+                    </p>
+                </div>
+            </div>
+
+            @*<input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />*@
+            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+            {
+                <input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+            }
+            else
+            {
+                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+            }
+            <div class="panAniadir">
+                @Html.GetText("COMADMINPESTANYAS", "SELECCIONATIPO")
+                <select class="cmbAddPestanya">
+                    <option value="-1">@Html.GetText("COMADMINPESTANYAS", "TIPOPESTANYA")</option>
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Home) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.Home)">@Html.GetText("COMMON", "HOME")</option>
+                    }
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Indice) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.Indice)">@Html.GetText("COMMON", "INDICE")</option>
+                    }
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Recursos) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.Recursos)">@Html.GetText("COMMON", "RECURSOS")</option>
+                    }
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Preguntas) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.Preguntas)">@Html.GetText("COMMON", "PREGUNTAS")</option>
+                    }
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Debates) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.Debates)">@Html.GetText("COMMON", "DEBATES")</option>
+                    }
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Encuestas) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.Encuestas)">@Html.GetText("COMMON", "ENCUESTAS")</option>
+                    }
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.PersonasYOrganizaciones) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.PersonasYOrganizaciones)">@Html.GetText("COMMON", "PERSONASYORGANIZACIONES")</option>
+                    }
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.AcercaDe) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.AcercaDe)">@Html.GetText("COMMON", "ACERCADE")</option>
+                    }
+                    @if (Model.CMSDisponible)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.CMS)">@Html.GetText("COMMON", "CMS")</option>
+                    }
+                    <option value="@((short)TipoPestanyaMenu.BusquedaSemantica)">@Html.GetText("COMMON", "BUSQUEDASEMANTICA")</option>
+                    <option value="@((short)TipoPestanyaMenu.EnlaceInterno)">@Html.GetText("COMMON", "ENLACEINTERNO")</option>
+                    <option value="@((short)TipoPestanyaMenu.EnlaceExterno)">@Html.GetText("COMMON", "ENLACEEXTERNO")</option>
+                    @if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.BusquedaAvanzada) == 0)
+                    {
+                        <option value="@((short)TipoPestanyaMenu.BusquedaAvanzada)">@Html.GetText("COMMON", "BUSQUEDAAVANZADA")</option>
+                    }
+                </select>
+                <input type="button" class="addPestanya" value="@Html.GetText("COMADMINPESTANYAS", "ADDPESTANIA")" />
+            </div>
+            <ol class="table" id="sortable">
+                @foreach (TabModel pestanya in Model.ListaPestanyas.Where(p => p.ParentTabKey == Guid.Empty).OrderBy(p2 => p2.Order))
+                {
+                    PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
+                    pintar.pestanya = pestanya;
+                    pintar.ListaPestanyas = Model.ListaPestanyas;
+                    @Html.PartialView("../Administracion/AdministrarPestanyas/_PintarPestanya", pintar)
+                }
+            </ol>
+        </form>
+    </div>
+    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+    {
+        <input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+    }
+    else
+    {
+        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+    }
+    @*<input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />*@
+</div>
+
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script>
+    let cont = 0;
+    var OperativaOrdenacion = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+            this.recalcularOrden();
+        },
+        config: function () {
+            this.lista = $('#sortable');
+            this.filtros = $('.filtrosOrdenSortable');
+            this.exportaciones = $('.exportacionesSortable');
+            this.propiedades = $('.propiedadesSortable');
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            that.lista.nestedSortable({
+                handle: 'span.handle.pestanya',
+                items: 'li.pestanya',
+                cancel: ".ui-state-disabled",
+                stop: function (event, ui) {
+                    that.recalcularOrden();
+                }
+            });
+            that.filtros.each(function () {
+                $(this).sortable({
+                    handle: 'span.handle.filtroOrden',
+                    items: 'li.row.filtroOrden',
+                    cancel: ".ui-state-disabled",
+                    maxLevels: 1
+
+                });
+            });
+            that.exportaciones.each(function () {
+                $(this).sortable({
+                    handle: 'span.handle.exportacion',
+                    items: 'li.row.exportacion',
+                    cancel: ".ui-state-disabled",
+                    maxLevels: 1
+
+                });
+            });
+            that.propiedades.each(function () {
+                $(this).sortable({
+                    handle: 'span.handle.propiedad',
+                    items: 'li.row.propiedad',
+                    cancel: ".ui-state-disabled",
+                    maxLevels: 1
+
+                });
+            });
+
+
+            $('.header', that.lista).disableSelection();
+            $('.header', that.filtros).disableSelection();
+            $('.header', that.exportaciones).disableSelection();
+            $('.header', that.propiedades).disableSelection();
+            return;
+        },
+        recalcularOrden: function () {
+            var that = this;
+
+            var arrayOrden = that.lista.nestedSortable('toArray');
+
+            for (var i = 0, len = arrayOrden.length; i < len; i++) {
+                var item_id = arrayOrden[i]['item_id'];
+                var parent_id = arrayOrden[i]['parent_id'];
+                var orden = arrayOrden[i]['orden'];
+                var depth = arrayOrden[i]['depth'];
+
+                if (parent_id == null) {
+                    parent_id = '00000000-0000-0000-0000-000000000000';
+                }
+
+                var fila = $('#' + item_id);
+                var panelEdicion = fila.children('.panEdicion');
+                panelEdicion.css('left', '-' + parseInt(depth) * 27 + 'px');
+                panelEdicion.find('[name="ParentTabKey"]').val(parent_id);
+                panelEdicion.find('[name="TabOrden"]').val(orden);
+            }
+
+            $('.row.pestanya').each(function () {
+                var id = $(this).attr('id');
+                var padre = arrayOrden
+
+            });
+        }
+    }
+
+    var OperativaAcciones = {
+        init: function (panelID) {
+            this.config(panelID);
+            if (this.id == '') {
+                this.engancharComportamiento();
+            }
+            this.engancharComportamientoPestanyas();
+            this.engancharMultiIdioma();
+
+            $('.row.pestanya').each(function () {
+                $('#' + this.id + ' .tipoPestanya').html('(' + $('#' + this.id + ' .nombreTipoPestanya').val() + ')');
+            });
+
+
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            this.cargarIdiomas();
+            this.id = '';
+
+            if (typeof panelID != 'undefined' && panelID != '') {
+                this.id = '#' + panelID + ' ';
+            }
+            return;
+        },
+        engancharMultiIdioma: function () {
+            var that = this;
+            if (that.ListaIdiomas.length > 1) {
+                $(that.id + 'input[name="TabName"]:not(:disabled)').each(function () {
+                    var inputName = $(this);
+                    that.montarMultidioma(inputName);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('keyup');
+                    }).blur(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('blur');
+                    });
+                });
+                $(that.id + 'input[name="TabUrl"]:not(:disabled)').each(function () {
+                    var inputUrl = $(this);
+                    that.montarMultidioma(inputUrl);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
+                        inputUrl.trigger('blur');
+                    });
+                });
+                componenteTabulado.init();
+            }
+        },
+        obtenerTextoYClaveDeIdioma: function (texto) {
+            var that = this;
+            var idioma = that.IdiomaPorDefecto;
+            var textoIdioma = texto;
+            if (textoIdioma.length > 3) {
+                var indice = 3;
+                var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
+                if (auxIdioma[0] == '-' && textoIdioma.length > 6) {
+                    indice = 6;
+                    auxIdioma = textoIdioma.substr(textoIdioma.length - 6);
+                }
+                if (auxIdioma[0] == '@('@')') {
+                    idioma = auxIdioma.substr(1);
+                    textoIdioma = textoIdioma.substr(0, textoIdioma.length - indice);
+                }
+            }
+            return { "key": idioma, "value": textoIdioma };
+        },
+        montarMultidioma: function (input) {
+            var that = this;
+
+            input.attr("type", "hidden");
+            var textoMultiIdioma = input.val().split('|||')
+            var listaTextos = [];
+            $.each(textoMultiIdioma, function () {
+                if (this != "") {
+                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
+                    listaTextos.push(objetoIdioma);
+                }
+            });
+
+            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma" ><div class=" acciones tabspresentation "><ul>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
+            });
+
+            htmlMultIdioma += '</ul></div>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                var textoIdioma = listaTextos.findValueByKey(key);
+                if (textoIdioma == null || textoIdioma == '') {
+                    if (key.indexOf('-') > 0) {
+                        var keyAux = key.substr(0, key.indexOf('-'));
+                        textoIdioma = listaTextos.findValueByKey(keyAux);
+                    }
+                    if (textoIdioma == null || textoIdioma == '') {
+                        if (esIdiomaPorDefecto && listaTextos.length > 0) {
+                            textoIdioma = listaTextos[0].value;
+                        }
+                        else {
+                            textoIdioma = '';
+                        }
+                    }
+                }
+                htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p><input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma + '"></p></div>';
+            });
+
+            htmlMultIdioma += '</div>';
+
+            input.before(htmlMultIdioma);
+        },
+        engancharComportamientoPestanyas: function () {
+            var that = this;
+            $(that.id + '.cmbEditarPrivacidad').change(function () {
+                that.editarPrivacidad($(this));
+            });
+            $(that.id + '.linkEditarFiltroOrden').click(function () {
+                that.editarFiltroOrden($(this));
+            });
+            $(that.id + '.linkEditarOpcionesBusqueda').click(function () {
+                that.editarOpcionesBusqueda($(this));
+            });
+            $(that.id + '.linkEditarExportaciones').click(function () {
+                that.editarExportaciones($(this));
+            });
+            $(that.id + 'select[name="listaFacetas"]').change(function () {
+                that.cargarObjetosConocimiento($(this));
+            });
+            $(that.id + '.linkSeleccionarFaceta').click(function () {
+                that.seleccionarFaceta($(this));
+            });
+            $(that.id + '.verFacetas').click(function () {
+                that.seleccionarVerFaceta($(this));
+            });
+            $(that.id + 'span.eliminar').click(function () {
+                that.eliminarPestanya($(this));
+            });
+            $(that.id + 'span.editar').click(function () {
+                that.editarPestanya($(this));
+            });
+            $(that.id + 'input.guardar').click(function () {
+                that.guardarPestanya($(this));
+            });
+            $(that.id + 'input.vistas[type="checkbox"]').click(function () {
+                that.comprobarVistaSeleccionada($(this));
+            });
+            $(that.id + 'input[name="TabName"]').keyup(function () {
+                that.cambiarNombrePestanya($(this));
+            }).blur(function () {
+                that.cambiarAuxNombrePestanya($(this));
+            });
+            $(that.id + 'input[name="TabUrl"]').blur(function () {
+                that.comprobarUrlRepetida($(this));
+            });
+            $(that.id + 'input[name="TabHomeCMS"]').click(function () {
+                that.mostrarBloqueHomeCMS($(this));
+            });
+            $(that.id + 'input[name="TabTypeHomeCMS"]').click(function () {
+                that.mostrarBloqueHomeDistintaCMS($(this));
+            });
+            $('input[name="TabPrivacidadPerfiles"]').autocomplete(
+                null,
+                {
+                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                    delay: 0,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 300,
+                    cacheLength: 0,
+                    NoPintarSeleccionado: true,
+                    multiple: true,
+                    //classTxtValoresSelecc: 'privacidadPerfiles',
+
+                    extraParams: {
+                        grupo: '',
+                        identidad: $('#inpt_identidadID').val(),
+                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                        proyecto: $('#inpt_proyID').val(),
+                        bool_edicion: 'true',
+                        bool_traergrupos: 'false',
+                        bool_traerperfiles: 'true'
+                    }
+                }
+            );
+            $('input[name="TabPrivacidadGrupos"]').autocomplete(
+                null,
+                {
+                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                    delay: 0,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 300,
+                    cacheLength: 0,
+                    NoPintarSeleccionado: true,
+                    multiple: true,
+                    //classTxtValoresSelecc: 'privacidadGrupos',
+
+                    extraParams: {
+                        grupo: '',
+                        identidad: $('#inpt_identidadID').val(),
+                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                        proyecto: $('#inpt_proyID').val(),
+                        bool_edicion: 'true',
+                        bool_traergrupos: 'true',
+                        bool_traerperfiles: 'false'
+                    }
+                }
+            );
+            $('input[name="TabPrivacidadPerfiles"]').result(function (event, data, formatted) {
+                that.aceptarEditorSelectorUsuRec(this, data[0], data[1]);
+            });
+            $('input[name="TabPrivacidadGrupos"]').result(function (event, data, formatted) {
+                that.aceptarEditorSelectorUsuRec(this, data[0], data[1]);
+            });
+            $('ul.resultado li a').click(function () {
+                that.eliminarUsuarioSelecUsu($(this));
+            });
+            $(that.id + 'a.editDefaultName').click(function () {
+                that.mostrarNombreEdicion($(this));
+            });
+            $(that.id + 'a.editDefaultURL').click(function () {
+                that.mostrarRutaEdicion($(this));
+            });
+            $(that.id + 'input.addExportation').click(function () {
+                that.anyadirExportacion($(this));
+            });
+            $(that.id + 'input.addFaceta').click(function () {
+                that.anyadirFaceta($(this));
+            });
+            $(that.id + 'input.addProperty').click(function () {
+                that.anyadirPropiedadExportacion($(this));
+            });
+            $(that.id + 'input.addFiltroOrden').click(function () {
+                that.anyadirFiltroOrden($(this));
+            });
+
+            $(that.id + 'span.tipo').each(function () {
+                if ($(this).attr("title") != null && $(this).attr("title") != '') {
+                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
+                    $(this).removeAttr("title");
+                }
+            });
+
+            $(that.id + '.conToolTip').tooltip();
+            return;
+        },
+        cargarIdiomas: function (bototnEditar) {
+            var that = this;
+
+            that.IdiomaPorDefecto = $('#idiomaDefecto').val();
+
+            var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
+            that.ListaIdiomas = []
+
+            $.each(idiomasComunidad, function () {
+                if (this != "") {
+                    that.ListaIdiomas.push({ "key": this.split('|')[0], "value": this.split('|')[1] });
+                }
+            });
+        },
+        mostrarNombreEdicion: function (bototnEditar) {
+            var that = this;
+
+            var inputName = $('[name="TabName"]', bototnEditar.parent());
+
+            inputName.removeProp('disabled');
+            inputName.attr('type', 'text');
+            $('.tabNameAux', bototnEditar.parent()).remove();
+
+            that.montarMultidioma(inputName);
+            bototnEditar.remove();
+            componenteTabulado.init();
+
+            $('texto_' + that.IdiomaPorDefecto, inputName).blur(function () {
+                inputName.trigger('blur');
+            });
+        },
+        mostrarRutaEdicion: function (bototnEditar) {
+            var that = this;
+
+            var inputUrl = $('[name="TabUrl"]', bototnEditar.parent());
+
+            inputUrl.removeProp('disabled');
+            inputUrl.attr('type', 'text');
+            $('.tabUrlAux', bototnEditar.parent()).remove();
+
+            that.montarMultidioma(inputUrl);
+            bototnEditar.remove();
+            componenteTabulado.init();
+
+            $('#texto_' + that.IdiomaPorDefecto, inputUrl).blur(function () {
+                inputUrl.trigger('blur');
+            });
+        },
+        aceptarEditorSelectorUsuRec: function (txtautocomp, nombre, id) {
+            var that = this;
+
+            var padreTxt = $(txtautocomp).closest('.panPrivacidad');
+            var txtValores = $('input.valores', padreTxt);
+            txtValores.val(txtValores.val() + id + ',');
+
+            $('ul.resultado', padreTxt).append('<li>' + nombre + '<a class="remove" aux=' + id + ' >' + borr.eliminar + '</a></li>');
+            $(txtautocomp).val('');
+
+            $('ul.resultado li a', padreTxt).unbind().click(function () {
+                that.eliminarUsuarioSelecUsu($(this));
+            });
+        },
+        eliminarUsuarioSelecUsu: function (enlaceEliminar) {
+            var id = enlaceEliminar.attr('aux');
+
+            var padreTxt = enlaceEliminar.closest('.panPrivacidad');
+            var txtValores = $('input.valores', padreTxt);
+
+            txtValores.val(txtValores.val().replace(id + ',', ''));
+            enlaceEliminar.parent().remove();
+        },
+        mostrarBloqueHomeDistintaCMS: function (inputSeleccionarHome) {
+            var fila = inputSeleccionarHome.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+            if (inputSeleccionarHome.val() == 'Unica') {
+                panEditar.find('.HomeCMSMiembros').hide();
+            }
+            else {
+                panEditar.find('.HomeCMSMiembros').show();
+            }
+        },
+        mostrarBloqueHomeCMS: function (inputEditarCMS) {
+            var fila = inputEditarCMS.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+            if (inputEditarCMS.is(':checked')) {
+                panEditar.find('.editarHomeCMS').show();
+            }
+            else {
+                panEditar.find('.editarHomeCMS').hide();
+            }
+        },
+        comprobarUrlRepetida: function (inputUrl) {
+            var that = this;
+            $('.error', inputUrl.parent()).remove();
+
+            var errorRutaVacia = false;
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputUrl.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var rutaPorDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+                if (rutaPorDefecto == "") {
+                    errorRutaVacia = true;
+                }
+                else {
+                    var textoMultiIdioma = "";
+                    $.each(that.ListaIdiomas, function () {
+                        var idioma = this.key;
+                        var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                        if (textoIdioma == null || textoIdioma == "") {
+                            textoIdioma = rutaPorDefecto;
+                        }
+                        else {
+                            textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                        }
+                        listaTextos.push({ "key": idioma, "value": textoIdioma });
+                    });
+                    inputUrl.val(textoMultiIdioma);
+                }
+            }
+
+            var fila = inputUrl.closest('.row');
+
+            if (errorRutaVacia) {
+                that.mostrarErrorUrlVacia(fila);
+                return errorRutaVacia;
+            }
+
+            var inputsRutas = $('.row.pestanya:not(".ui-state-disabled") input[name = "TabUrl"]');
+            var ruta = inputUrl.val();
+            var tipoRuta = $("input[name='TabType']", fila).val();
+            var errorRepetida = false;
+            var inputRepetida = null;
+
+            if (tipoRuta != "EnlaceInterno" && tipoRuta != "EnlaceExterno") {
+                inputsRutas.each(function () {
+                    var inputCompare = $(this);
+                    var filaCompare = inputCompare.closest('.row');
+                    var tipoRutaCompare = $("input[name='TabType']", filaCompare).val();
+
+                    if (filaCompare.attr('id') != fila.attr('id') && tipoRutaCompare != "EnlaceExterno" && tipoRutaCompare != "EnlaceInterno") {
+
+                        //Obtenemos el valor de todos los idiomas
+                        var panCompareMultiIdioma = $('#edicion_multiidioma', inputCompare.parent());
+                        if (that.ListaIdiomas.length > 1 && panCompareMultiIdioma.length > 0) {
+
+                            $.each(that.ListaIdiomas, function () {
+                                var idioma = this.key;
+                                var textoIdioma = panCompareMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                                if (textoIdioma == null || textoIdioma == "") {
+                                    textoIdioma = panCompareMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+                                }
+
+                                if (listaTextos.findValueByKey(idioma) == textoIdioma) {
+                                    errorRepetida = true;
+                                    inputRepetida = inputCompare;
+                                }
+                            });
+                        }
+                        else if (that.ListaIdiomas.length > 1) {
+                            if (inputCompare.val() == "") {
+                                $.each(that.ListaIdiomas, function () {
+                                    var idioma = this.key
+                                    if (listaTextos.findValueByKey(idioma) == "") {
+                                        errorRepetida = true;
+                                        inputRepetida = inputCompare;
+                                    }
+                                });
+                            }
+                            else {
+                                var textoMultiIdioma = inputCompare.val().split('|||');
+
+                                $.each(textoMultiIdioma, function () {
+                                    if (this != "") {
+                                        var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
+                                        if (listaTextos.findValueByKey(objetoIdioma.key) == objetoIdioma.value) {
+                                            errorRepetida = true;
+                                            inputRepetida = inputCompare;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        else {
+                            if (inputCompare.val() == ruta) {
+                                errorRepetida = true;
+                                inputRepetida = inputCompare;
+                            }
+                        }
+                    }
+                });
+            }
+            if (errorRepetida) {
+                that.mostrarErrorUrlRepetida(fila);
+                if (inputRepetida != null) {
+                    var filaRepetida = inputRepetida.closest('.row');
+                    that.mostrarErrorUrlRepetida(filaRepetida);
+                }
+            }
+            return errorRepetida;
+        },
+        comprobarUrlsRepetidas: function () {
+            var that = this;
+            var errorRepetida = false;
+            var inputsRutas = $('.row.pestanya:not(".ui-state-disabled") .modified input[name = "TabUrl"]:not(":disabled")');
+            inputsRutas.each(function () {
+                if (that.comprobarUrlRepetida($(this))) {
+                    errorRepetida = true;
+                }
+            });
+            return errorRepetida;
+        },
+        mostrarErrorUrlRepetida: function (fila) {
+            var inputUrl = $('input[name = "TabUrl"]', fila).first();
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORRUTAREPETIDA")</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        mostrarErrorUrlVacia: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "TabUrl"]', fila).first();
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORRUTAVACIA", Model.ListaIdiomas[Model.IdiomaPorDefecto])</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        comprobarNombresCortosRepetidos: function () {
+            var that = this;
+            var errorRepetido = false;
+            var inputsNombresCortos = $('.row.pestanya:not(".ui-state-disabled") .modified input[name = "TabShortName"]');
+            inputsNombresCortos.each(function () {
+                if (that.comprobarNombreCortoRepetido($(this))) {
+                    errorRepetido = true;
+                }
+            });
+            return errorRepetido;
+        },
+        comprobarNombreCortoRepetido: function (inputNombreCorto) {
+            var that = this;
+            $('.error', inputNombreCorto.parent()).remove();
+
+            var fila = inputNombreCorto.closest('.row');
+
+            var inputsNombresCortos = $('.row.pestanya:not(".ui-state-disabled") input[name = "TabShortName"]');
+            var nombreCorto = inputNombreCorto.val();
+            var errorRepetido = false;
+            var inputRepetido = null;
+
+            if (nombreCorto != "") {
+                inputsNombresCortos.each(function () {
+                    var inputCompare = $(this);
+                    if (inputCompare.closest('.row').attr('id') != fila.attr('id')) {
+                        if (inputCompare.val() == nombreCorto) {
+                            errorRepetido = true;
+                            inputRepetido = inputCompare;
+                        }
+                    }
+                });
+            }
+            if (errorRepetido) {
+                that.mostrarErrorNombreCortoRepetido(fila);
+                if (inputRepetido != null) {
+                    var filaRepetidp = inputRepetido.closest('.row');
+                    that.mostrarErrorUrlRepetida(filaRepetida);
+                }
+            }
+            return errorRepetido;
+        },
+        mostrarErrorNombreCortoRepetido: function (fila) {
+            var inputNombreCorto = $('input[name = "TabShortName"]', fila).first();
+            inputNombreCorto.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORNOMBRECORTOREPETIDO")</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        comprobarNombresVacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row.pestanya:not(".ui-state-disabled") .modified input[name = "TabName"]:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarNombreVacio($(this))) {
+                    error = true;
+                }
+            });
+            return error;
+        },
+        comprobarNombreVacio: function (inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+
+            return false;
+        },
+        mostrarErrorNombreVacio: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "TabName"]', fila).first();
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORNOMBREVACIO", Model.ListaIdiomas[Model.IdiomaPorDefecto])</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        mostrarErrorPoyectoOrigenBusquedaPrivado: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "TabName"]', fila).first();
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORPOYECTOORIGENBUSQUEDAPRIVADO")</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        comprobarFiltrosOrden: function () {
+            var that = this;
+            var error = false;
+            var filtros = $('.row.pestanya:not(".ui-state-disabled") .modified ol.filtrosOrdenSortable li.row.filtroOrden:not(".ui-state-disabled")');
+            filtros.each(function () {
+                if (that.comprobarFiltroOrden($(this))) {
+                    error = true;
+                    return;
+                }
+            });
+            return error;
+        },
+        comprobarFiltroOrden: function (filaFiltroOrden) {
+            var that = this
+            $('.error', filaFiltroOrden.parent()).remove();
+
+            var error = false;
+
+            var panelEdicion = filaFiltroOrden.find('.panEdicion');
+            if (panelEdicion.find('[name="TabName"]').val().trim() == "" || panelEdicion.find('[name="Filtro"]').val().trim() == "") {
+                that.mostrarErrorCampoFiltroOrdenVacio(filaFiltroOrden);
+                error = true;
+                return true;
+            }
+            return error;
+        },
+        mostrarErrorCampoFiltroOrdenVacio: function (filaFiltroOrden) {
+            var that = this;
+            var panelEdicion = $('.panEdicion', filaFiltroOrden);
+            panelEdicion.addClass('edit');
+            panelEdicion.addClass('modified');
+
+            var listadoFiltroOrden = filaFiltroOrden.closest('.filtrosOrdenSortable ')
+            listadoFiltroOrden.before("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORFILTROVACIO")</span>");
+        },
+        comprobarExportaciones: function () {
+        var that = this;
+        var error = false;
+        var exportaciones = $('.row.pestanya:not(".ui-state-disabled") .modified ol.exportacionesSortable li.row.exportacion:not(".ui-state-disabled")');
+        exportaciones.each(function () {
+            if (that.comprobarExportacion($(this))) {
+                error = true;
+                return;
+            }
+        });
+        return error;
+    },
+    comprobarExportacion: function (filaExportacion) {
+        var that = this
+        $('.error', filaExportacion.parent()).remove();
+
+        var error = false;
+
+        var panelEdicion = filaExportacion.find('.panEdicion');
+        if (panelEdicion.find('[name="Nombre"]').val().trim() == "") {
+            that.mostrarErrorNombreExportacionVacio(filaExportacion, panelEdicion.find('[name="Nombre"]'));
+            error = true;
+            return true;
+        }
+
+        var propiedades = $('ol.propiedadesSortable li.row.propiedad:not(".ui-state-disabled")', filaExportacion);
+        if (propiedades.length == 0) {
+            that.mostrarErrorExportacionSinPropiedades(filaExportacion);
+            error = true;
+            return true;
+        }
+
+        propiedades.each(function () {
+            if (that.comprobarPropiedadExportacion($(this))) {
+                error = true;
+                return;
+            }
+        });
+
+        return error;
+    },
+    comprobarPropiedadExportacion: function (filaPropiedad) {
+        var that = this
+
+        var filaExportacion = filaPropiedad.closest('.row.exportacion');
+        $('.error', filaExportacion.parent()).remove();
+
+        var panelEdicion = filaPropiedad.find('.panEdicion');
+        if (panelEdicion.find('[name="Nombre"]').val().trim() == "" || panelEdicion.find('[name="Propiedad"]').val().trim() == "") {
+            that.mostrarErrorCampoPropiedadVacio(filaPropiedad);
+            return true;
+        }
+
+        return false;
+    },
+    mostrarErrorCampoPropiedadVacio: function (filaPropiedad) {
+        var that = this;
+
+        var filaExportacion = filaPropiedad.closest('.row.exportacion');
+        var panelEdicionExportacion = filaExportacion.find('panEdicion');
+        panelEdicionExportacion.addClass('edit');
+        panelEdicionExportacion.addClass('modified');
+
+        var panelEdicion = filaExportacion.find('panEdicion');
+        panelEdicion.addClass('edit');
+        panelEdicion.addClass('modified');
+
+        var listadoExportaciones = filaExportacion.closest('.exportacionesSortable ')
+        listadoExportaciones.before("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORCAMPOSPROPIEDADESVACIOS")</span>");
+    },
+    mostrarErrorNombreExportacionVacio: function (filaExportacion) {
+        var that = this;
+        var panelEdicion = filaExportacion.find('panEdicion');
+        panelEdicion.addClass('edit');
+        panelEdicion.addClass('modified');
+
+        var listadoExportaciones = filaExportacion.closest('.exportacionesSortable ')
+        listadoExportaciones.before("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORNOMBRESEXPORTACIONESVACIOS")</span>");
+    },
+    mostrarErrorExportacionSinPropiedades: function (filaExportacion) {
+        var that = this;
+        var panelEdicion = filaExportacion.find('panEdicion');
+        panelEdicion.addClass('edit');
+        panelEdicion.addClass('modified');
+
+        var listadoExportaciones = filaExportacion.closest('.exportacionesSortable ')
+        listadoExportaciones.before("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERROREXPORTACIONESVACIAS")</span>");
+    },
+    cambiarNombrePestanya: function (inputName) {
+        var nombrePestanya = inputName.val();
+        var fila = inputName.closest('.row');
+        var cabecera = fila.children('.header')
+
+        var nombreFila = cabecera.find('.nombrePestanya');
+
+        if (nombrePestanya == '') {
+            nombreFila.text(nombreFila.attr('aux'));
+        }
+        else {
+            nombreFila.text(nombrePestanya);
+        }
+    },
+    cambiarAuxNombrePestanya: function (inputName) {
+        var that = this;
+
+        $('.error', inputName.parent()).remove()
+
+        var nombrePestanya = inputName.val();
+        var fila = inputName.closest('.row');
+        var cabecera = fila.children('.header')
+
+        var nombreFila = cabecera.find('.nombrePestanya');
+
+        if (nombrePestanya == '') {
+            nombreFila.text(nombreFila.attr('aux'));
+            //inputName.val(nombreFila.attr('aux'));
+            that.mostrarErrorNombreVacio(fila);
+        }
+        else {
+            nombreFila.text(nombrePestanya);
+            nombreFila.attr('aux', nombrePestanya);
+            //inputName.val(nombrePestanya);
+        }
+    },
+    comprobarVistaSeleccionada: function (vistaSeleccionada) {
+        var that = this;
+        var inputVistas = vistaSeleccionada.closest('.bloque').find('input[type="checkbox"]');
+        var inputRadio = vistaSeleccionada.prev();
+
+        var contSeleccionadas = 0;
+        inputVistas.each(function () {
+            if ($(this).is(':checked')) {
+                if (inputRadio.is(':checked')) {
+                    var radioCheck = $(this).prev();
+                    radioCheck.prop('checked', 'true');
+                }
+                contSeleccionadas++;
+            }
+        });
+
+        if (contSeleccionadas > 0) {
+            if (vistaSeleccionada.is(':checked')) {
+                inputRadio.removeProp('disabled');
+            }
+            else {
+                inputRadio.prop('disabled', 'true');
+            }
+        }
+        else {
+            vistaSeleccionada.prop('checked', 'true');
+            if (contSeleccionadas == 1) {
+                inputRadio.removeProp('checked');
+            }
+        }
+        if (vistaSeleccionada.hasClass('mapa')) {
+            that.mostrarBloqueVistaMapa(vistaSeleccionada);
+        }
+    },
+    mostrarBloqueVistaMapa: function (vistaSeleccionada) {
+        var bloqueVistaMapa = vistaSeleccionada.closest('.bloque').find('.bloque.mapa');
+        if (vistaSeleccionada.is(':checked')) {
+            bloqueVistaMapa.show();
+        }
+        else {
+            bloqueVistaMapa.hide();
+        }
+    },
+    engancharComportamiento: function () {
+        var that = this;
+        $('input.addPestanya').click(function () {
+            that.anyadirPestanya();
+        });
+        $('input.guardarTodo').click(function () {
+            that.guardarTodasPestanyas();
+        });
+        $('input#txtFiltro').keyup(function (event) {
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    return false;
+                }
+            }
+            that.Filtrar();
+        });
+        $('#cmbFiltro').change(function (event) {
+            that.Filtrar();
+        });
+
+        return;
+    },
+    Filtrar: function () {
+
+        var filtro = $('input#txtFiltro').val();
+        var filtroTipo = $('#cmbFiltro').val();
+
+        var listadoPestanyas = $('.row.pestanya');
+
+        if (filtro == '' && filtroTipo == '') {
+            $('.table').removeClass("filtrado");
+        }
+        else {
+            $('.table').addClass("filtrado");
+        }
+
+        listadoPestanyas.each(function () {
+            var item = $(this);
+            var itemText = item.children('.header').find('span.nombrePestanya').text();
+            var itemRoute = item.children('.panEdicion').find('[name="TabUrl"]').val();
+            var itemTipo = item.children('.panEdicion').find('[name="TabType"]').val();
+
+            item.removeClass('oculto');
+            item.addClass('visible');
+
+            if ((filtro != '' && itemText.toLowerCase().indexOf(filtro.toLowerCase()) < 0 && itemRoute.toLowerCase().indexOf(filtro.toLowerCase()) < 0  ) || (filtroTipo != '' && filtroTipo != itemTipo)) {
+                item.addClass('oculto');
+                item.removeClass('visible');
+            }
+        });
+
+        return;
+    },
+    editarPrivacidad: function (selectPrivacidad) {
+        var fila = selectPrivacidad.closest('.row');
+        var panEditar = fila.children('.panEdicion');
+
+        panEditar.find('.editarPrivacidad').hide();
+        panEditar.find('.editarPrivacidad .opcion1').hide();
+        panEditar.find('.editarPrivacidad .opcion2').hide();
+
+        if (selectPrivacidad.val() > 0) {
+            if (panEditar.find('.editarPrivacidad .opcion' + selectPrivacidad.val()).length > 0) {
+                panEditar.find('.editarPrivacidad').show();
+                panEditar.find('.editarPrivacidad .opcion' + selectPrivacidad.val()).show();
+            }
+        }
+    },
+    editarFiltroOrden: function (botonEditar) {
+        var fila = botonEditar.closest('.row');
+        fila.find('.editarFiltroOrden').show();
+        botonEditar.parent().remove();
+    },
+    editarOpcionesBusqueda: function (botonEditar) {
+        var fila = botonEditar.closest('.row');
+        var panEditar = fila.children('.panEdicion');
+        panEditar.find('.editarOpcionesBusqueda').show();
+        botonEditar.parent().remove();
+    },
+    editarExportaciones: function (botonEditar) {
+        var fila = botonEditar.closest('.row');
+        var panEditar = fila.children('.panEdicion');
+        panEditar.find('.editarExportaciones').show();
+        botonEditar.parent().remove();
+    },
+        seleccionarFaceta: function (botonEditar) {
+            var fila = botonEditar.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('.seleccionarFacetas').show();
+            botonEditar.parent().remove();
+        },
+        seleccionarVerFaceta: function (botonVer) {
+            MostrarUpdateProgress();
+            var fila = botonVer.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('.seleccionarFacetas').show();
+            panEditar.find('input.addFaceta').hide();
+
+            //var idPest = botonVer.parents().find('[class="panEdicion"]').attr('name');
+            var idPest = botonVer.attr('name');
+            var dataPost = {
+                pPestanyaID: idPest
+            }
+            botonVer.parent().remove();
+                GnossPeticionAjax(
+                    this.urlPagina + '/cargar-facetas',
+                    dataPost,
+                    true
+                ).done(function (data) {
+
+                    var numeroFacetas = parseInt(panEditar.find('.numeroFacetas').attr('name'));
+                    var listaFacetas = panEditar.find('ol.facetasSortable');
+                    listaFacetas.append(data);
+
+                    listaFacetas.each(function () {
+                        var item = $(this);
+                        item.attr("id", "id_panel_faceta_" + cont);
+                        var idPanel = item.attr('id');
+                        OperativaAcciones.init(idPanel);
+                        cont++;
+                        item.find('span.editar').trigger('click');
+                    });
+
+                }).always(function () {
+                    OcultarUpdateProgress();
+                });
+
+        },
+        cargarObjetosConocimiento: function (select) {
+            var fila = select.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('[name="ListaOC"]').empty();
+            var facetas = panEditar.find('option.facetas');
+            var selectorFacetas = panEditar.find('select.selectFacetas');
+            var facetaSeleccionada = selectorFacetas.children('option:selected').attr('name');
+            var sel = panEditar.find('select.selectAux');
+            var objetos = sel.find('option.objAux');
+            facetas.each(function () {
+                var face = $(this).attr('name');
+
+                objetos.each(function () {
+                    var obj = $(this).attr('name');
+                    var obj2 = $(this).val();
+                    if (obj == face && facetaSeleccionada == face) {
+                        panEditar.find('[name="ListaOC"]').append('<option value="' + obj + '">' + obj2 + '</option>');
+                    }
+
+                });
+            });
+        },
+    deshacerEliminarPestanya: function (botonDeshacer) {
+        var fila = botonDeshacer.closest('.row');
+
+        fila.removeClass('ui-state-disabled');
+
+        var panEditar = fila.children('.panEdicion');
+        panEditar.find('[name="TabEliminada"]').val('false');
+
+        var panCabecera = fila.children('.header');
+        panCabecera.removeClass('deleted');
+        panEditar.addClass('modified');
+
+        var deshacer = panCabecera.children('.deshacer');
+        var eliminada = panCabecera.children('.eliminada');
+        deshacer.remove();
+        eliminada.remove();
+    },
+    eliminarPestanya: function (botonEliminar) {
+        var that = this;
+        var fila = botonEliminar.closest('.row');
+        var filas = fila.find('.row.pestanya');
+
+        fila.addClass('ui-state-disabled');
+        filas.addClass('ui-state-disabled');
+
+        var panelesEditar = panelesEditar = filas.children('.panEdicion');
+        panelesEditar = panelesEditar.add(fila.children('.panEdicion'));
+        panelesEditar.removeClass('edit');
+        panelesEditar.find('[name="TabEliminada"]').val('true');
+
+        var panelesCabecera = filas.children('.header:not(.deleted)');
+        panelesCabecera = panelesCabecera.add(fila.children('.header:not(.deleted)'));
+        panelesCabecera.addClass('deleted');
+        panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
+        panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
+
+        panelesCabecera.find('span.deshacer').click(function () {
+            that.deshacerEliminarPestanya($(this));
+        });
+    },
+    editarPestanya: function (botonEditar) {
+        var fila = botonEditar.closest('.row');
+        var panEditar = fila.children('.panEdicion');
+
+        if (panEditar.hasClass('edit')) {
+            panEditar.removeClass('edit');
+        }
+        else {
+            panEditar.addClass('edit');
+            panEditar.addClass('modified');
+        }
+    },
+    anyadirExportacion: function (botonAddExportacion) {
+        MostrarUpdateProgress();
+        GnossPeticionAjax(
+           this.urlPagina + '/new-exportation',
+           null,
+           true
+       ).done(function (data) {
+           var listaExportaciones = botonAddExportacion.parent().find('ol.exportacionesSortable');
+
+           listaExportaciones.append(data);
+           var exportacionNueva = listaExportaciones.children().last();
+
+           var idPanel = exportacionNueva.attr('id');
+           OperativaAcciones.init(idPanel);
+
+           exportacionNueva.find('span.editar').trigger('click');
+       }).fail(function (data) {
+           console.log("ERROR =>" + data);
+       }).always(function () {
+           OcultarUpdateProgress();
+       });
+        },
+        anyadirFaceta: function (botonAddFaceta) {
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                this.urlPagina + '/new-faceta',
+                null,
+                true
+            ).done(function (data) {
+                var listaFacetas = botonAddFaceta.parent().find('ol.facetasSortable');
+
+                listaFacetas.append(data);
+                var facetaNueva = listaFacetas.children().last();
+
+                facetaNueva.attr("id", "id_panel_faceta_" + cont);
+                var idPanel = facetaNueva.attr('id');
+                OperativaAcciones.init(idPanel);
+                cont++;
+                facetaNueva.find('span.editar').trigger('click');
+            }).fail(function (data) {
+                console.log("ERROR =>" + data);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+    anyadirFiltroOrden: function (botonAddFiltroOrden) {
+        MostrarUpdateProgress();
+        GnossPeticionAjax(
+           this.urlPagina + '/new-filtro-orden',
+           null,
+           true
+       ).done(function (data) {
+           var listaFiltros = botonAddFiltroOrden.parent().find('ol.filtrosOrdenSortable');
+
+           listaFiltros.append(data);
+           var filtroNuevo = listaFiltros.children().last();
+
+           var idPanel = filtroNuevo.attr('id');
+           OperativaAcciones.init(idPanel);
+
+           filtroNuevo.find('span.editar').trigger('click');
+       }).fail(function (data) {
+           console.log("ERROR =>" + data);
+       }).always(function () {
+           OcultarUpdateProgress();
+       });
+    },
+    anyadirPropiedadExportacion: function (botonAddPropiedad) {
+        MostrarUpdateProgress();
+        GnossPeticionAjax(
+           this.urlPagina + '/new-exportation-property',
+           null,
+           true
+       ).done(function (data) {
+           var listaPropiedades = botonAddPropiedad.parent().find('ol.propiedadesSortable');
+
+           listaPropiedades.append(data);
+           var propiedadNueva = listaPropiedades.children().last();
+
+           var idPanel = propiedadNueva.attr('id');
+           OperativaAcciones.init(idPanel);
+
+           propiedadNueva.find('span.editar').trigger('click');
+       }).fail(function (data) {
+           console.log("ERROR =>" + data);
+       }).always(function () {
+           OcultarUpdateProgress();
+       });
+    },
+    anyadirPestanya: function () {
+        $('.error.general').remove();
+        var pestanya = parseInt($('.cmbAddPestanya').val());
+        if (pestanya < 0) {
+            $('input.guardarTodo').before('<div class="error general">Debes seleccionar un tipo de página</div>');
+            return;
+        }
+
+        MostrarUpdateProgress();
+        var dataPost = {
+            TipoPestanya: pestanya
+        }
+        GnossPeticionAjax(
+            this.urlPagina + '/new-tab',
+            dataPost,
+            true
+        ).done(function (data) {
+            var ultimaPestanya = $('#sortable').children().last();
+            var panelEdicionUltimaPestanya = ultimaPestanya.children('.panEdicion');
+            var orden = panelEdicionUltimaPestanya.find('[name="TabOrden"]').val();
+
+            $('#sortable').append(data);
+            var pestanyaNueva = $('#sortable').children().last();
+            var panelEdicion = pestanyaNueva.children('.panEdicion');
+            panelEdicion.find('[name="TabOrden"]').val(parseInt(orden) + 1);
+
+            var idPanel = pestanyaNueva.attr('id');
+            OperativaAcciones.init(idPanel);
+
+            if (pestanya < 8 || pestanya > 11) {
+                $('.cmbAddPestanya option[value="' + pestanya + '"]').remove();
+            }
+            $('.cmbAddPestanya option[value="-1"]').prop('selected', true);
+            pestanyaNueva.find('span.editar').trigger('click');
+        }).fail(function (data) {
+            console.log("ERROR =>" + data);
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    },
+    guardarTodasPestanyas: function () {
+        var that = this;
+        MostrarUpdateProgressTime(0);
+        $('.ok.general').remove();
+        $('.error').remove();
+        if (!that.comprobarErroresGuardado()) {
+            that.ListaPestanyas = {};
+            var cont = 0;
+            $('.row.pestanya').each(function () {
+                that.obtenerDatosPestanya($(this), cont++);
+            });
+            that.guardar();
+        }
+        else {
+            OcultarUpdateProgress();
+            that.mostrarErrorGuardado();
+        }
+    },
+    mostrarErrorGuardado: function () {
+        var esPre = "@Html.GetComunidad().EntornoEsPre";
+        var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
+
+            if (esPre == "True") {
+                $('input.guardarTodo').before('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
+            }
+            else if (entornoBloqueado == "True") {
+                $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
+            }
+            else {
+                $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div > ');
+            }
+    },
+    mostrarErrorGuardadoFallo: function (data) {
+        $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
+    },
+    guardarPestanya: function (botonGuardar) {
+        var that = this;
+        var fila = botonGuardar.closest('.row');
+
+        that.ListaPestanyas = {};
+        that.obtenerDatosPestanya(fila, 0);
+        that.guardar();
+    },
+    comprobarErroresGuardado: function () {
+        var that = this;
+        var error = false;
+        if (that.comprobarUrlsRepetidas()) {
+            error = true;
+        }
+        if (!error && that.comprobarNombresVacios()) {
+            error = true;
+        }
+        if (!error && that.comprobarNombresCortosRepetidos()) {
+            error = true;
+        }
+        if (!error && that.comprobarFiltrosOrden()) {
+            error = true;
+        }
+        if (!error && that.comprobarExportaciones()) {
+            error = true;
+        }
+        return error;
+    },
+    guardar: function () {
+        var that = this;
+
+        GnossPeticionAjax(
+            that.urlPagina + '/save',
+            that.ListaPestanyas,
+            true
+        ).done(function (data) {
+            that.mostrarGuardadoOK();
+        }).fail(function (data) {
+            var error = data.split('|||');
+            if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
+                that.mostrarErrorGuardado();
+                if (error[0] == "RUTA REPETIDA") {
+                    that.mostrarErrorUrlRepetida($('#' + error[1]));
+                }
+                else if (error[0] == "NOMBRE VACIO") {
+                    that.mostrarErrorNombreVacio($('#' + error[1]));
+                }
+                else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
+                    that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
+                }
+            }
+            else
+            {
+                that.mostrarErrorGuardadoFallo(data);
+            }
+
+
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    },
+    mostrarGuardadoOK: function () {
+        $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
+    },
+    obtenerDatosPestanya: function (fila, num) {
+        var that = this;
+
+        var id = fila.attr('id');
+
+        var panelEdicion = fila.children('.panEdicion');
+        var prefijoClave = 'ListaPestanyas[' + num + ']';
+
+        that.ListaPestanyas[prefijoClave + '.Key'] = fila.attr('id');
+        that.ListaPestanyas[prefijoClave + '.Url'] = panelEdicion.find('[name="TabUrl"]').val();
+        that.ListaPestanyas[prefijoClave + '.EsUrlPorDefecto'] = panelEdicion.find('[name="TabUrl"]').is(':disabled');
+        that.ListaPestanyas[prefijoClave + '.ShortName'] = panelEdicion.find('[name="TabShortName"]').val();
+        that.ListaPestanyas[prefijoClave + '.Type'] = panelEdicion.find('[name="TabType"]').val();
+        that.ListaPestanyas[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
+        that.ListaPestanyas[prefijoClave + '.ParentTabKey'] = panelEdicion.find('[name="ParentTabKey"]').val();
+        that.ListaPestanyas[prefijoClave + '.Order'] = panelEdicion.find('[name="TabOrden"]').val();
+
+        var modified = panelEdicion.hasClass("modified");
+        that.ListaPestanyas[prefijoClave + '.Modified'] = modified;
+
+        if (modified)
+        {
+            that.ListaPestanyas[prefijoClave + '.Name'] = panelEdicion.find('[name="TabName"]').val();
+            that.ListaPestanyas[prefijoClave + '.EsNombrePorDefecto'] = panelEdicion.find('[name="TabName"]').is(':disabled');
+
+            that.ListaPestanyas[prefijoClave + '.OpenInNewWindow'] = panelEdicion.find('[name="TabOpenInNewWindow"]').is(':checked');
+            that.ListaPestanyas[prefijoClave + '.ClassCSSBody'] = panelEdicion.find('[name="TabClassCSSBody"]').val();
+            that.ListaPestanyas[prefijoClave + '.MetaDescription'] = panelEdicion.find('[name="TabMetaDescription"]').val();
+            that.ListaPestanyas[prefijoClave + '.Active'] = panelEdicion.find('[name="TabActive"]').is(':checked');
+            that.ListaPestanyas[prefijoClave + '.Visible'] = panelEdicion.find('[name="TabVisible"]').is(':checked');
+
+            that.ListaPestanyas[prefijoClave + '.Privacidad'] = panelEdicion.find('[name="TabPrivacidad"]').val();
+
+            if (panelEdicion.find('.editarPrivacidad').length > 0) {
+                that.ListaPestanyas[prefijoClave + '.HtmlAlternativoPrivacidad'] = encodeURIComponent(panelEdicion.find('[name="TabHtmlAlternativoPrivacidad"]').val().replace(/\n/g, ''));
+
+                var visibleSinAcceso = panelEdicion.find('[name="TabVisibleSinAcceso"]').is(':checked');
+
+                if (panelEdicion.find('[name="TabPrivacidad"]').val() == '2') {
+
+                    var privacidadPerfiles = panelEdicion.find('[name="TabValoresPrivacidadPerfiles"]').val().split(',');
+                    for (var i = 0; i < privacidadPerfiles.length; i++) {
+                        if (privacidadPerfiles[i] != "") {
+                            var prefijoPrivacidadPerfiles = prefijoClave + '.PrivacidadPerfiles[' + i + ']';
+                            that.ListaPestanyas[prefijoPrivacidadPerfiles + '.Key'] = privacidadPerfiles[i];
+                            that.ListaPestanyas[prefijoPrivacidadPerfiles + '.Value'] = "";
+                        }
+                    }
+
+                    var privacidadGrupos = panelEdicion.find('[name="TabValoresPrivacidadGrupos"]').val().split(',');
+                    for (var i = 0; i < privacidadGrupos.length; i++) {
+                        if (privacidadGrupos[i].trim() != "") {
+                            var prefijoPrivacidadGrupos = prefijoClave + '.PrivacidadGrupos[' + i + ']';
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Key'] = privacidadGrupos[i].substr(2);
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Value'] = "";
+                        }
+                    }
+                }
+            }
+
+            that.ListaPestanyas[prefijoClave + '.VisibleSinAcceso'] = visibleSinAcceso;
+
+            var homeCMS = panelEdicion.find('[name="TabHomeCMS"]');
+            if (homeCMS.length > 0) {
+                var homeTodosUsuarios = false,
+                    homeMiembros = false,
+                    homeNoMiembros = false;
+
+                if (homeCMS.is(":checked")) {
+                    var tipoHomeCMS = panelEdicion.find('[name="TabTypeHomeCMS"]:checked').val();
+                    if (tipoHomeCMS == 'Unica') {
+                        homeTodosUsuarios = true;
+                    }
+                    else {
+                        homeMiembros = panelEdicion.find('[name="TabHomeMienbrosCMS"]').is(':checked');
+                        homeNoMiembros = panelEdicion.find('[name="TabHomeNoMienbrosCMS"]').is(':checked');
+                    }
+                }
+
+                var prefijoHomeCMSClave = prefijoClave + '.HomeCMS';
+                that.ListaPestanyas[prefijoHomeCMSClave + '.HomeTodosUsuarios'] = homeTodosUsuarios;
+                that.ListaPestanyas[prefijoHomeCMSClave + '.HomeMiembros'] = homeMiembros;
+                that.ListaPestanyas[prefijoHomeCMSClave + '.HomeNoMiembros'] = homeNoMiembros;
+            }
+
+            var panelEditarBusqueda = panelEdicion.find('.editarOpcionesBusqueda');
+            if (panelEditarBusqueda.length > 0) {
+                var prefijoBusquedaClave = prefijoClave + '.OpcionesBusqueda';
+
+                that.ListaPestanyas[prefijoBusquedaClave + '.ValoresPorDefecto'] = 'true';
+                that.ListaPestanyas[prefijoBusquedaClave + '.CampoFiltro'] = panelEditarBusqueda.find('[name="TabCampoFiltro"]').val();
+
+                var panelFiltrosOrden = panelEdicion.find('.editarFiltroOrden');
+                if (panelFiltrosOrden.length > 0) {
+                    var prefijoFiltrosOrden = prefijoBusquedaClave + '.FiltrosOrden';
+                    var numFiltro = 0;
+                    $('.row.filtroOrden', panelFiltrosOrden).each(function () {
+                        var panFiltro = $(this).children('.panEdicion');
+                        var prefijoFiltroOrdenClave = prefijoFiltrosOrden + '[' + numFiltro + ']';
+
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Orden'] = numFiltro;
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Deleted'] = panFiltro.find('[name="TabEliminada"]').val();
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Nombre'] = panFiltro.find('[name="TabName"]').val();
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Filtro'] = panFiltro.find('[name="Filtro"]').val();
+
+                        numFiltro++;
+                    });
+                }
+
+                that.ListaPestanyas[prefijoBusquedaClave + '.NumeroResultados'] = panelEditarBusqueda.find('[name="TabNumeroResultados"]').val();
+                that.ListaPestanyas[prefijoBusquedaClave + '.MostrarFacetas'] = panelEditarBusqueda.find('[name="TabMostrarFacetas"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaClave + '.AgruparFacetasPorTipo'] = panelEditarBusqueda.find('[name="TabAgruparFacetasPorTipo"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaClave + '.MostrarEnBusquedaCabecera'] = panelEditarBusqueda.find('[name="TabMostrarEnBusquedaCabecera"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaClave + '.MostrarCajaBusqueda'] = panelEditarBusqueda.find('[name="TabMostrarCajaBusqueda"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaClave + '.ProyectoOrigenBusqueda'] = panelEditarBusqueda.find('[name="TabProyectoOrigenBusqueda"]').val();
+                that.ListaPestanyas[prefijoBusquedaClave + '.OcultarResultadosSinFiltros'] = panelEditarBusqueda.find('[name="TabOcultarResultadosSinFiltros"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaClave + '.TextoBusquedaSinResultados'] = panelEditarBusqueda.find('[name="TabTextoBusquedaSinResultados"]').val();
+                that.ListaPestanyas[prefijoBusquedaClave + '.IgnorarPrivacidadEnBusqueda'] = panelEditarBusqueda.find('[name="TabIgnorarPrivacidadEnBusqueda"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaClave + '.OmitirCargaInicialFacetasResultados'] = panelEditarBusqueda.find('[name="TabOmitirCargaInicialFacetasResultados"]').is(':checked');
+
+                var prefijoBusquedaOpcionesVistasClave = prefijoBusquedaClave + '.OpcionesVistas';
+
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaPorDefecto'] = panelEditarBusqueda.find('[name="' + id + '_VistaPorDefecto"]:checked').val();
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaListado'] = panelEditarBusqueda.find('[name="TabVistaListado"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaMosaico'] = panelEditarBusqueda.find('[name="TabVistaMosaico"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaMapa'] = panelEditarBusqueda.find('[name="TabVistaMapa"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaGrafico'] = panelEditarBusqueda.find('[name="TabVistaGrafico"]').is(':checked');
+
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.PosicionCentralMapa'] = panelEditarBusqueda.find('[name="TabPosicionCentralMapa"]').val();
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.PropiedadLatitud'] = panelEditarBusqueda.find('[name="TabPropiedadLatitud"]').val();
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.PropiedadLongitud'] = panelEditarBusqueda.find('[name="TabPropiedadLongitud"]').val();
+            }
+
+
+            var panelEdicionFacetas = panelEdicion.find('.seleccionarFacetas');
+            if (panelEdicionFacetas.length > 0) {
+                var numFaceta = 0;
+                $('.row.faceta', panelEdicionFacetas).each(function () {
+                    var panFaceta = $(this).children('.panEdicion');
+                    var selectorFacetas = panFaceta.find('.selectFacetas');
+                    var selectorOC = panFaceta.find('[name="ListaOC"]');
+                    var prefijoFacetasClave = prefijoClave + '.ListaFacetas[' + numFaceta + ']';
+
+                    that.ListaPestanyas[prefijoFacetasClave + '.Faceta'] = selectorFacetas.children('option:selected').val();
+                    that.ListaPestanyas[prefijoFacetasClave + '.ObjetoConocimiento'] = selectorOC.children('option:selected').text();
+                    that.ListaPestanyas[prefijoFacetasClave + '.Deleted'] = panFaceta.find('[name="TabEliminada"]').val();
+                    that.ListaPestanyas[prefijoFacetasClave + '.ClavePestanya'] = fila.attr('id');
+                    //that.ListaPestanyas[prefijoFacetasClave + '.Key'] = selectorFacetas.children('option:selected').val();
+                    //that.ListaPestanyas[prefijoFacetasClave + '.Value'] = selectorOC.children('option:selected').text();
+                    numFaceta++;
+                });
+            }
+
+            var panelEditarExportaciones = panelEdicion.find('.editarExportaciones');
+            if (panelEditarExportaciones.length > 0) {
+
+                var numExport = 0;
+                $('.row.exportacion', panelEditarExportaciones).each(function () {
+                    var panExportacion = $(this).children('.panEdicion');
+
+                    var prefijoExportacionesClave = prefijoClave + '.ListaExportaciones[' + numExport + ']';
+
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Key'] = $(this).attr('id');
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Orden'] = numExport;
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Deleted'] = panExportacion.find('[name="TabEliminada"]').val();
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Nombre'] = panExportacion.find('[name="Nombre"]').val();
+
+                    var privacidadGruposExport = panExportacion.find('[name="TabValoresPrivacidadGrupos"]').val().split(',');
+                    for (var i = 0; i < privacidadGruposExport.length; i++) {
+                        if (privacidadGruposExport[i].trim() != "") {
+                            var prefijoPrivacidadGrupos = prefijoExportacionesClave + '.GruposPermiso[' + i + ']';
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Key'] = privacidadGruposExport[i].substr(2);
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Value'] = "";
+                        }
+                    }
+
+                    var numPropExport = 0;
+                    $('.row.propiedad', panExportacion).each(function () {
+                        var panPropExportacion = $(this).children('.panEdicion');
+
+                        var prefijoPropExportacionesClave = prefijoExportacionesClave + '.ListaPropiedades[' + numPropExport + ']';
+
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Orden'] = numPropExport;
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Deleted'] = panPropExportacion.find('[name="TabEliminada"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Nombre'] = panPropExportacion.find('[name="Nombre"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Ontologia'] = panPropExportacion.find('[name="Ontologia"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Propiedad'] = panPropExportacion.find('[name="Propiedad"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.DatoExtraPropiedad'] = panPropExportacion.find('[name="DatoExtraPropiedad"]').val();
+
+                        numPropExport++;
+                    });
+
+                    numExport++;
+                });
+            }
+
+            var panelIdiomasDisponibles = $('.idiomasDisponibles', panelEdicion);
+            if (panelIdiomasDisponibles.length > 0) {
+                var inputsIdioimas = $('input.idioma[type="checkbox"]:checked', panelIdiomasDisponibles)
+                var numIdioma = 0;
+                inputsIdioimas.each(function () {
+                    var prefijoIdioma = prefijoClave + '.ListaIdiomasDisponibles[' + numIdioma + ']';
+
+                    that.ListaPestanyas[prefijoIdioma] = $(this).val();
+
+                    numIdioma++;
+                });
+            }
+        }
+    }
+    }
+
+    $(document).ready(function () {
+        Array.prototype.findValueByKey = function (key) {
+            var resultado = $.grep(this, function (array) {
+                return array.key == key;
+            });
+
+            if (resultado[0] != null) {
+                return resultado[0].value;
+            }
+
+            return null;
+        };
+
+        OperativaOrdenacion.init();
+        OperativaAcciones.init();
+    });
+
+</script>
+
+<style>
+    ol.table li.row section.panEdicion ol.exportacionesSortable,
+    ol#sortable li.row section.panEdicion ol.propiedadesSortable,
+    ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable,
+    ol.table li.row section.panEdicion ol.facetasSortable {
+        border: 0;
+        padding: 0;
+    }
+
+        ol#sortable li.row section.panEdicion ol.exportacionesSortable li.row,
+        ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row,
+        ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable li.row,
+        ol#sortable li.row section.panEdicion ol.facetasSortable li.row {
+            padding-top: 0;
+            margin-bottom: 0;
+            margin-left: 20px;
+            border-bottom: 0;
+        }
+
+            ol#sortable li.row section.panEdicion ol.exportacionesSortable li.row:last-of-type,
+            ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row:last-of-type,
+            ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable li.row:last-of-type,
+            ol#sortable li.row section.panEdicion ol.facetasSortable li.row.row:last-of-type {
+                border-bottom: 1px solid;
+            }
+
+    ol.exportacionesSortable li.row.exportacion section.panEdicion,
+    ol.facetasSortable li.row.facetasSortable section.panEdicion {
+        width: 760px;
+    }
+    ol.exportacionesSortable li.row.exportacion section.panEdicion p {
+        width: 730px;
+    }
+    ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque {
+       margin-bottom: 0;
+       border-bottom: 0;
+    }
+    ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque:last-of-type {
+       border-bottom: 1px solid;
+    }
+    ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque p {
+        width: 710px;
+    }
+    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion{
+        width: 717px;
+    }
+    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion p{
+        width: 700px;
+    }
+    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion .tipo {
+        width: 100px;        
+    }
+    ol.exportacionesSortable li.row.exportacion input[type="text"], 
+    ol.exportacionesSortable li.row.exportacion textarea{
+        width: 520px;
+    }
+    ol.filtrosOrdenSortable li.row input[type="text"],
+    ol.filtrosOrdenSortable li.row textarea {
+        width: 590px;
+    }
+    ol.exportacionesSortable li.row.exportacion .bloque input[type="text"], 
+    ol.exportacionesSortable li.row.exportacion .bloque textarea {
+        width: 490px;
+    }
+    ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion {
+        width: 697px;
+    }
+    ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion p {
+        width: 667px;
+    }
+    ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion .tipo{
+        width: 170px;        
+    }
+
+    .editarFiltroOrden {
+        margin-bottom: 20px;
+        margin-right: 20px;
+    }
+    .editarFiltroOrden .error {
+        margin-left: 20px;
+    }
+        
+    .row .header .nombrePestanya {
+        font-weight: bold;
+    }
+    .row .header .tipoPestanya {
+        padding-left: 10px;
+    }
+
+    .table.filtrado .oculto{
+        display:block;
+    }
+
+    .table.filtrado li.row.visible > .header{
+        border-bottom: 1px solid #000;
+    }
+
+    .table.filtrado li.pestanya ol.subPestanyas,
+    .table.filtrado li.pestanya.row {
+        border:0 !important;
+    }
+
+    .table.filtrado{
+        border-bottom: 0 !important;
+        border: 1px solid #000;
+    }
+
+</style>

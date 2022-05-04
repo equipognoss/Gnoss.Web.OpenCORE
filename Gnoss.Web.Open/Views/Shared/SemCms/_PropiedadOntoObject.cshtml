@@ -1,0 +1,40 @@
+﻿@model SemanticPropertyModel
+
+@if (Model.ReadMode && Model.OntologyPropInfo.NumEntitiesForPage > 0)
+{
+    string srcImagenEspera = Html.GetBaseUrlStatic() + "/images/espera.gif";
+    string onclick = "PaginarSelectorEnt(this, '" + Model.EntityParent.SemanticResourceModel.MvcActionsUrl + "/load-more-entities-selector', '" + Model.EntityParent.Key + "', '" + Model.Element.Propiedad.Nombre + "', " + Model.OntologyPropInfo.NumEntitiesForPage + ", " + Model.OntologyPropInfo.TotalEntitiesPagination + ");";
+
+    <div class="pagSelEnt">
+        @if (Model.Element.TipoPresentacion != null && Model.Element.TipoPresentacion.ToLower() == "ul")
+        {
+            <ul>
+                @Html.PartialView("../Shared/SemCMS/_AddControlInt", Model);
+            </ul>
+        }
+        else
+        {
+            @Html.PartialView("../Shared/SemCMS/_AddControlInt", Model);
+        }
+    </div>
+    <div class="loadpagSelectEnt" style="display:none;">
+        <img ID="imgEsperaArchivo" src="@srcImagenEspera" alt="Espere..." />
+    </div>
+    <div class="pagSelectEnt">
+        <a class="antPagSelectEnt" onclick="@onclick">@Html.GetText("COMMON", "ANTERIOR")</a>
+        <a class="sigPagSelectEnt" onclick="@onclick">@Html.GetText("COMMON", "SIGUIENTE")</a>
+    </div>
+}
+else
+{
+    @if (Model.Element.TipoPresentacion != null && Model.Element.TipoPresentacion.ToLower() == "ul")
+    {
+        <ul>
+            @Html.PartialView("../Shared/SemCMS/_AddControlInt", Model);
+        </ul>
+    }
+    else
+    {
+        @Html.PartialView("../Shared/SemCMS/_AddControlInt", Model);
+    }
+}

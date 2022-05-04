@@ -1,0 +1,15 @@
+﻿@model ObjetoConocimientoModel.PresentacionPersonalizadoModel
+
+<section class="bloque">
+	<p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "LISTAPROPIEDADES")</p>
+    <ol class="propiedadesSortable">
+        @if (Model.ListaPropiedades != null)
+        {
+            foreach (ObjetoConocimientoModel.PresentacionPersonalizadoModel.PropiedadPersonalizadoModel propiedad in Model.ListaPropiedades.OrderBy(prop => prop.Orden))
+            {
+                @Html.PartialView("_FichaPropiedadPersonalizado", propiedad)
+            }
+        }
+    </ol>
+	<input type="button" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "ADDPROPIEDAD")" class="addPersProperty"/>
+</section>

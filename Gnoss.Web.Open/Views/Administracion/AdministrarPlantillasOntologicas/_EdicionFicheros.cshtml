@@ -1,0 +1,124 @@
+﻿@model PlantillaOntologicaViewModel
+
+@{ 
+    bool editando = Model.OntologyID != Guid.Empty;
+    bool esEntidadSecundaria = Model.IsSecondaryOntology;
+}
+
+
+<div id="panPaso2">
+    @if (editando)
+    {
+        <label id="lblShowPanFileOWL" class="botonReemplazar" >
+            <a id="hlShowPanFileOWL">Remplazar plantilla</a>
+        </label>
+    }
+    <div @Html.Raw(editando ? "style=\"display: none;\"":"") id="panFileOWL" class="panFichero">
+        <span>
+            Selecciona la ontología de la plantilla, si ya la tienes disponible
+            @if (editando)
+            {
+            <a class="cerrar">@Html.GetText("COMMON", "CANCELAR")</a>
+            }
+        </span>
+        <input type="file" accept=".owl" id="fileOWL" name="Ontologia.OWL">
+    </div>
+    @if (editando)
+    {
+        <label id="lblShowPanFileXML" class="botonReemplazar">
+            <a id="hlShowPanFileXML">Remplazar archivo de configuración XML</a>
+        </label>
+    }
+    <div @Html.Raw(editando ? "style=\"display: none;\"":"") id="panFileXML" class="panFichero">
+        <input style="display: none;" type="checkbox" @Html.Raw(!editando ? "checked=\"checked\"":"") name="Ontologia.EditXML" id="chkEditXML" />
+        <span>
+            Selecciona el archivo de configuración para el Html de la plantilla
+            @if (editando)
+            {
+            <a class="cerrar">@Html.GetText("COMMON", "CANCELAR")</a>
+            }
+        </span>
+        <input type="file" accept=".xml" disabled="" id="fileXML" name="Ontologia.XML">
+        <div>
+            <input type="checkbox" checked="checked" id="chkUseGenericXML" name="Ontologia.GenericXML">
+            Utilizar archivo de configuración genérico
+            <div @Html.Raw(!esEntidadSecundaria ? "style=\"display: none;\"":"") id="divNoUsarPlantillaXml">
+                <input type="checkbox" id="chkNoUseXML" name="Ontologia.NoUseXML">
+                No usar archivo de configuración
+            </div>
+        </div>
+    </div>
+
+    <div id="panExtraOnto" @Html.Raw(esEntidadSecundaria ? "style=\"display: none;\"":"")>
+        @if (editando)
+        {
+            <label id="lblShowPanFileCSS" class="botonReemplazar">
+                <a id="hlShowPanFileCSS">Remplazar archivo de estilo CSS</a>
+            </label>
+        }
+        <div @Html.Raw(editando ? "style=\"display: none;\"":"") id="panFileCSS" class="panFichero">
+            <input style="display: none;" type="checkbox" @Html.Raw(!editando ? "checked=\"checked\"":"") name="Ontologia.EditCSS" id="chkEditCSS" />
+            <span>
+                Selecciona el archivo de configuración de los estilos de la plantilla
+                @if (editando)
+                {
+                <a class="cerrar">@Html.GetText("COMMON", "CANCELAR")</a>
+                }
+            </span>
+            <input type="file" accept=".css" disabled="disabled" id="fileCSS" name="Ontologia.CSS">
+            <div>
+                <input type="checkbox" checked="checked" id="chkUseGenericCSS" name="Ontologia.GenericCSS">
+                Utilizar archivo de configuración genérico
+            </div>
+        </div>
+        @if (editando)
+        {
+            <label id="lblShowPanFileIMG" class="botonReemplazar">
+                <a id="hlShowPanFileIMG">Remplazar icono ontología</a>
+            </label>
+        }
+        <div @Html.Raw(editando ? "style=\"display: none;\"":"") id="panFileIMG" class="panFichero">
+            <input style="display: none;" type="checkbox" @Html.Raw(!editando ? "checked=\"checked\"":"") name="Ontologia.EditIMG" id="chkEditIMG" />
+            <span>
+                Selecciona la imagen que actuará como icono de la plantilla
+                @if (editando)
+                {
+                <a class="cerrar">@Html.GetText("COMMON", "CANCELAR")</a>
+                }
+            </span>
+            <input type="file" accept="image/*" disabled="disabled" id="fileIMG" name="Ontologia.IMG">
+            <div>
+                <input type="checkbox" checked="checked" id="chkUseGenericIMG" name="Ontologia.GenericIMG">
+                Utilizar icono genérico
+            </div>
+        </div>
+        @if (editando)
+        {
+            <label id="lblShowPanFileJS" class="botonReemplazar">
+                <a id="hlShowPanFileJS">Remplazar archivo JavaScript</a>
+            </label>
+        }
+        <div @Html.Raw(editando ? "style=\"display: none;\"":"") id="panFileJS" class="panFichero">
+            <input style="display: none;" type="checkbox" @Html.Raw(!editando ? "checked=\"checked\"":"") name="Ontologia.EditJS" id="chkEditJS" />
+            <span>
+                Selecciona el archivo JavaScript
+                @if (editando)
+                {
+                <a class="cerrar">@Html.GetText("COMMON", "CANCELAR")</a>
+                }
+            </span>
+            <input type="file" accept=".js" disabled="disabled" id="fileJS" name="Ontologia.JS">
+            <div>
+                <input type="checkbox" checked="checked" id="chkUseGenericJS" name="Ontologia.GenericJS">
+                Utilizar archivo de configuración JavaScript genérico
+            </div>
+        </div>
+    </div>
+    @if (editando)
+    {
+        <label id="lblMostrarHistorial" class="botonReemplazar">
+            <a class="viewHistory" id="hypHistorial">Historial</a>
+        </label>
+        <div style="display:none;" class="versionList" id="divHistorial"></div>
+    }
+</div>

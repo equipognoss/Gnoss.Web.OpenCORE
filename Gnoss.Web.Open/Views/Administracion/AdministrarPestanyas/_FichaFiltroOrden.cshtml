@@ -1,0 +1,26 @@
+﻿@model TabModel.SearchTabModel.FiltroOrden
+
+@{
+    TabModel.SearchTabModel.FiltroOrden filtroOrden = Model;
+}
+<li class="bloque row filtroOrden" id="@Guid.NewGuid()">
+    <span class="handle filtroOrden">:::</span>
+    <section class="header">
+        <span class="nombreFiltroOrden" aux="@Html.ObtenerTextoIdiomaUsuario(filtroOrden.Nombre)">@Html.ObtenerTextoIdiomaUsuario(filtroOrden.Nombre)</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <div>
+            <input type="hidden" name="TabEliminada" value="false" />
+            <p>
+                <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</span>
+                <input type="text" name="TabName" value="@filtroOrden.Nombre" />
+            </p>
+            <p>
+                <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "FILTRO")</span>
+                <input type="text" name="Filtro" value="@filtroOrden.Filtro" />
+            </p>
+        </div>
+    </section>
+</li>

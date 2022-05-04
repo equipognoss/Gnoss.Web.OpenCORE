@@ -1,0 +1,7 @@
+﻿@model CMSComponentMenu
+@if (Model != null)
+{
+    <ul>
+        @Html.PartialView("../CMSPagina/Menu/_PintarOpciones", Model.ItemList)
+    </ul>
+}

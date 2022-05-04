@@ -1,0 +1,90 @@
+﻿@model EditProfileViewModel
+
+@{
+    EditProfileViewModel.ProfileProfesionalViewModel Perfil = Model.ProfileProfesional;
+}
+
+<form method="post" action = "@Model.UrlActionSaveProfile" id="formularioEdicionPerfilProfesional" >
+    <div class="box" id="editarPerfil">
+        <div>
+            <div class="fieldset01 edicionPerfil">
+                <fieldset class="labels">
+                    <legend>@Html.GetText("PERFIL", "DATOSPERSONALES")</legend>
+                    <div id="divErrorTrabajo">
+                    </div>
+                    <p>
+                        <label for="ProfileProfesional.Email" class="datoObligatorio">@Html.GetText("REGISTROUSUARIOORGANIZACION", "EMAIL")</label>
+                        <input type="text" class="text medium" id="EmailProfesional"  value="@Perfil.Email" name="ProfileProfesional.Email" />
+                    </p>
+
+                    <div class="fieldset actionButtons">
+                        <fieldset>
+                            <p>
+                                <input type="button" value="@Html.GetText("PERFIL", "GUARDAR")" onclick="EnviarFormularioEdicion()" class="submit principal" />
+                            </p>
+                        </fieldset>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+@*</form>*@
+
+
+<script type="text/javascript">
+    function EnviarFormularioEdicion()
+    {
+        if (validarPerfilTrabajo()) {
+            MostrarUpdateProgress();
+
+            var dataPost = new FormData();
+            dataPost.append('peticionAJAX', true);
+            $("#formularioEdicionPerfilProfesional").find(':input').each(function () {
+                dataPost.append($(this).attr('name'), $(this).val());
+            });
+
+            GnossPeticionAjax('@Model.UrlActionSaveProfile', dataPost, true)
+                .done(function (data) {
+                    $('#divErrorPersonal').append('<div class=\"ok\">' + data + '</div>')
+                })
+                .fail(function (data) {
+                    var errores = data.split('||');
+                    var error = "";
+                    for (i = 0; i < errores.length; i++) {
+                        if (errores[i].indexOf("&&") != -1) {
+                            var claveError = errores[i].split('&&')[0];
+                            var mensajeError = errores[i].split('&&')[1];
+                            error += '<li>' + mensajeError + '</li>';
+                        }
+                    }
+                    crearError('<ul>' + error + '</ul>', '#divErrorPersonal');
+                })
+                .always(function () {
+                    OcultarUpdateProgress();
+                });
+
+        } else {
+            return false;
+        }
+    }
+
+    function validarPerfilTrabajo() {
+        var $dP = $('#divErrorTrabajo');
+        var error = '';
+
+        if ((((!document.getElementById('EmailProfesional').disabled)) && (document.getElementById('EmailProfesional').value == ''))) {
+            error += '<li>' + form.camposVacios + '</li>';
+        }
+
+        //Validar email
+        if ((!document.getElementById('EmailProfesional').disabled) && (!validarEmail($('#EmailProfesional').val()))) {
+            error += '<li>' + form.emailValido + '</li>';
+        }
+        if (error.length) {
+            crearError('<ul>' + error + '</ul>', '#divErrorTrabajo');
+            return false;
+        }
+        else { return true; }
+    }
+
+</script>

@@ -1,0 +1,15 @@
+﻿@model CookieModel
+
+
+<li class="row cookieProyecto" id="@Model.ProyectoCookie.CookieID">
+    <span class="handle cookieProyecto">:::</span>
+    <section class="header">
+        <span class="nombreCookie" aux="@Html.ObtenerTextoIdiomaUsuario(Model.ProyectoCookie.Nombre, true)">@Html.ObtenerTextoIdiomaUsuario(Model.ProyectoCookie.Nombre, true) (@Html.ObtenerTextoIdiomaUsuario(Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(Model.ProyectoCookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault(), true))</span><span class="tipoCookie"></span>
+        @if (Model.ProyectoCookie.EsEditable)
+        {
+            <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+            <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+        }
+    </section>
+    @Html.PartialView("_EdicionCookieProyecto", Model)
+</li>

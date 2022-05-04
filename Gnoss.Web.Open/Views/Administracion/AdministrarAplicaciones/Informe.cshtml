@@ -1,0 +1,32 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.OAuth.ConsumerModel
+
+@{
+    Html.SetTitle("Confirmar");
+    Html.SetTitle("Editar");
+    string urlBase = this.Context.Request.Path.ToString().ToLower();
+    urlBase = urlBase.Substring(0, urlBase.LastIndexOf("/informe"));
+}
+<div id="col01">
+    <h2>Datos guardados correctamente</h2>
+
+    <div class="box box01">
+        <p>
+            Nombre de la aplicación: @Model.Name<br />
+            ConsumerKey de la aplicación: @Model.Key<br />
+            ConsumerSecret de la aplicación: @Model.Secret<br />
+        </p>
+        <br />
+        @if(String.IsNullOrEmpty(Model.SecretToken)){
+            <button onclick="location.href='@string.Concat(urlBase, "/informe/", @Model.ConsumerId, "/tokens")'">Generar Access Tokens</button><br />
+        }
+        else{
+            <p>
+                Token: @Model.Token<br />
+                Secret Token: @Model.SecretToken<br />
+            </p>
+        }
+        <br />
+        <button onclick="location.href='@urlBase'">Regresar a listado</button>
+        <button onclick="location.href='@string.Concat(urlBase, "/editar/", @Model.ConsumerId)'">Editar</button>
+    </div>
+</div>

@@ -1,0 +1,55 @@
+﻿@model RegisterDataViewModel
+
+@{
+    Html.SetBodyClass("layout04 full operativaRegistro registroPaso0" + Model.TabActive + " comGnoss");
+    CommunityModel Comunidad = Html.GetComunidad();
+
+    UserProfileModel Perfil = Html.GetPerfil();
+}
+<div id="col01">
+    <div class="form formtheme01">
+        <h2>¡Hola @Perfil.Name!. ¡Gracias por unirte a @Comunidad.Name!</h2>
+        @if (Model.TabPreferences && Model.TabActive == 1)
+        {
+        <div class="box">
+            <p>@Html.GetText("REGISTRO", "OFRECERMEJORESRECURSOS")</p>
+        </div>
+        }
+        <div class="box formSteps">
+            <ul>
+                @{
+                    int numPaso = 1;    
+                    if(Model.TabPreferences)
+                    {
+                        <li class="item @(Model.TabActive == 1?"activo":"")"><a><span class="paso">@("Paso 0" + numPaso)</span>@Html.GetText("REGISTRO", "PREFERENCIAS")</a></li>
+                        numPaso++;
+                    }
+                    if(Model.TabData)
+                    {
+                        <li class="item @(Model.TabActive == 2?"activo":"")"><a><span class="paso">@("Paso 0" + numPaso)</span>@Html.GetText("REGISTRO", "CREAPERFIL")</a></li>
+                        numPaso++;
+                    }
+                    if (Model.TabConect)
+                    {
+                        <li class="item @(Model.TabActive == 3?"activo":"")"><a><span class="paso">@("Paso 0" + numPaso)</span>@Html.GetText("REGISTRO", "CONECTATE")</a></li>
+                        numPaso++;
+                    }
+                }
+            </ul>
+        </div>
+        <div class="box box02">
+            @if (Model.TabPreferences && Model.TabActive == 1)
+            {
+                @Html.PartialView("_Preferencias")
+            }
+            @if (Model.TabData && Model.TabActive == 2)
+            {
+                @Html.PartialView("_Datos")
+            }
+            @if (Model.TabConect && Model.TabActive == 3)
+            {
+                @Html.PartialView("_Conectate")
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,140 @@
+.fichaRecurso {  }
+.fichaRecurso main[role="main"] {  }
+.fichaRecurso main[role="main"] > .container {  }
+.fichaRecurso main[role="main"] > .container > .row {  }
+.fichaRecurso main[role="main"] > .container > .row > .col {  }
+
+.fichaRecurso .wrap-col { padding-left: 50px; padding-top: 40px; }
+
+.fichaRecurso .wrap-col .header-resource { display: -webkit-box; display: -ms-flexbox; display: flex; -webkit-box-align: center; -ms-flex-align: center; align-items: center; position: relative; margin-bottom: 30px; }
+
+.fichaRecurso .wrap-col .header-resource .h1-container { -webkit-box-flex: 0; -ms-flex: 0 0 calc(100% - 50px); flex: 0 0 calc(100% - 50px); max-width: calc(100% - 50px); }
+.fichaRecurso .wrap-col .header-resource .h1-container h1 { font-size: 15px; font-weight: 500; color: var(--c-gris-3); margin: 0; }
+.fichaRecurso .wrap-col .header-resource .mas-opciones { -webkit-box-flex: 0; -ms-flex: 0 0 50px; flex: 0 0 50px; max-width: 50px; text-align: right; }
+.fichaRecurso .wrap-col .header-resource .fecha { margin: 0; position: absolute; top: -100%; right: 0; font-size: 13px; color: var(--c-gris-9); }
+
+.fichaRecurso .wrap-col .header-resource .h1-container h1:before { content: '\E873'; font-family: var(--ff-material); font-size: 30px; color: var(--c-gris-85); position: absolute; top: 50%; transform: translateY(-50%); left: -50px; font-weight: normal; }
+.fichaImagen .wrap-col .header-resource .h1-container h1:before { content: '\E3C4'; }
+.fichaVideo .wrap-col .header-resource .h1-container h1:before { content: '\E63A'; }
+.fichaPdf .wrap-col .header-resource .h1-container h1:before { content: '\E415'; }
+.fichaEnlace .wrap-col .header-resource .h1-container h1:before { content: '\E250'; }
+.fichaDescargable .wrap-col .header-resource .h1-container h1:before { content: '\E226'; }
+
+
+.fichaRecurso .wrap-col .publicador { display: -webkit-box; display: -ms-flexbox; display: flex; -webkit-box-align: center; -ms-flex-align: center; align-items: center; margin-bottom: 30px; }
+.fichaRecurso .wrap-col .publicador .imagen { -webkit-box-flex: 0; -ms-flex: 0 0 40px; flex: 0 0 40px; max-width: 40px; width: 40px; height: 40px; line-height: 40px; text-align: center; background-color: var(--c-gris-f2) !important; background: url(resources/icos/icn-usuario.png) no-repeat center; background-size: cover !important; border-radius: 50%; }
+.fichaRecurso .wrap-col .publicador .datos { -webkit-box-flex: 0; -ms-flex: 0 0 calc(100% - 40px); flex: 0 0 calc(100% - 40px); max-width: calc(100% - 40px); padding-left: 15px; }
+.fichaRecurso .wrap-col .publicador .datos > * { display: block; font-size: 14px; font-weight: 500; } 
+.fichaRecurso .wrap-col .publicador .datos .usuario { color: var(--c-gris-3); }
+.fichaRecurso .wrap-col .publicador .datos .comunidad { color: var(--c-gris-9); }
+
+.fichaRecurso .wrap-col .acciones-recurso { display: flex; align-items: center; padding-bottom: 5px; border-bottom: 1px solid #efefef; margin-bottom: 15px; }
+.fichaRecurso .wrap-col .acciones-recurso > ul { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; flex: 0 0 calc(100% - 30px); max-width: calc(100% - 30px); }
+.fichaRecurso .wrap-col .acciones-recurso > ul li { padding: 0 10px; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a { font-size: 14px; color: #666; font-weight: 500; text-decoration: none; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a:before { content: ''; display: inline-block; vertical-align: bottom; font-family: 'Material Icons'; color: #999; font-size: 20px; margin-right: 10px; transition: color .3s ease-in-out; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a:hover,
+.fichaRecurso .wrap-col .acciones-recurso > ul li a:hover:before { color: #1fa5cb; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.descargar:before { content: '\E2C0'; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.editar:before { content: '\E254'; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.versionar:before { content: '\E14D'; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.enviar:before { content: '\E163'; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.ampliar:before { content: '\E85B'; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.enlace:before { content: '\E89E'; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.etiquetas:before { content: '\E866'; }
+.fichaRecurso .wrap-col .acciones-recurso > ul li a.vincular:before { content: '\E24D'; }
+.fichaRecurso .wrap-col .acciones-recurso > .mas-opciones { flex: 0 0 30px; max-width: 30px; }
+
+.fichaRecurso .wrap-col .contenido {  }
+.fichaRecurso .wrap-col .contenido * { font-size: 15px; color: var(--c-gris-6); font-weight: 400; margin-bottom: 15px; }
+.fichaRecurso .wrap-col .contenido strong { font-weight: 500; }
+.fichaRecurso .wrap-col .contenido iframe { width: 100%; max-width: 100%; margin-bottom: 30px; }
+.fichaRecurso .wrap-col .contenido img { /*width: 100%;*/ max-width: 100%; }
+.fichaRecurso .wrap-col .contenido a { color: var(--c-azul-1); }
+.fichaRecurso .wrap-col .contenido ul { margin-bottom: 40px; padding-left: 50px; }
+.fichaRecurso .wrap-col .contenido ul li { color: var(--c-azul-1); margin-bottom: 0; }
+.fichaRecurso .wrap-col .contenido table { margin-bottom: 40px; width: 100%; }
+.fichaRecurso .wrap-col .contenido table thead {  }
+.fichaRecurso .wrap-col .contenido table thead tr {  }
+.fichaRecurso .wrap-col .contenido table thead tr th { border-top: 1px solid #efefef; border-bottom: 1px solid #efefef; background: #fafafa; padding: 10px 20px; font-size: 15px; color: var(--c-gris-6); font-weight: 500; }
+.fichaRecurso .wrap-col .contenido table tbody {  }
+.fichaRecurso .wrap-col .contenido table tbody tr { border-bottom: 1px solid #efefef; }
+.fichaRecurso .wrap-col .contenido table tbody tr td { padding: 10px 20px; }
+.fichaRecurso .wrap-col .contenido table tbody tr td * { font-size: 14px; font-weight: 400; }
+.fichaRecurso .wrap-col .contenido table tbody tr td span { font-size: 15px; color: var(--c-gris-6); }
+
+.fichaRecurso .wrap-col .listas { background: #fafafa; padding: 50px 55px 40px; margin-left: -65px; margin-right: -15px; }
+.fichaRecurso .wrap-col .listas div { margin-bottom: 25px; }
+.fichaRecurso .wrap-col .listas div strong { font-size: 14px; color: var(--c-gris-3); font-weight: 400; display: block; margin-bottom: 15px; }
+.fichaRecurso .wrap-col .listas div ul { list-style: none; margin: 0; padding: 0; display: -webkit-box; display: -ms-flexbox; display: flex; -webkit-box-align: center; -ms-flex-align: center; align-items: center; -ms-flex-wrap: wrap; flex-wrap: wrap; }
+.fichaRecurso .wrap-col .listas div ul li,
+.fichaRecurso .wrap-col .listas div ul li a { font-size: 14px; color: var(--c-gris-9); font-weight: 400; }
+
+.fichaRecurso .wrap-col .comentarios-recurso { margin-top: 60px; padding-left: 40px; }
+.fichaRecurso .wrap-col .comentarios-recurso .h2-container { display: -webkit-box; display: -ms-flexbox; display: flex; -webkit-box-align: center; -ms-flex-align: center; align-items: center; margin-bottom: 20px; position: relative; }
+.fichaRecurso .wrap-col .comentarios-recurso .h2-container:before { content: '\E0BF'; font-family: 'Material Icons'; font-size: 24px; color: var(--c-gris-6); position: absolute; left: -40px; }
+.fichaRecurso .wrap-col .comentarios-recurso .h2-container h2 { font-size: 15px; color: var(--c-gris-3); font-weight: 500; margin-right: 10px; margin-bottom: 0; }
+.fichaRecurso .wrap-col .comentarios-recurso .h2-container span { font-size: 14px; color: var(--c-gris-9); font-weight: 400; }
+
+.fichaRecurso .wrap-col .comentarios-recurso .acciones-comentario { text-align: right; padding-top: 5px; }
+.fichaRecurso .wrap-col .comentarios-recurso .acciones-comentario a:not(.btn) { font-size: 14px; color: #333; font-weight: 400; }
+.fichaRecurso .wrap-col .comentarios-recurso .acciones-comentario a.btn { margin-left: 10px; }
+
+.fichaRecurso .wrap-col .comentarios-recurso .escribir-comentario { display: flex; align-items: flex-start; }
+.fichaRecurso .wrap-col .comentarios-recurso .escribir-comentario .publicador { flex: 0 0 40px; max-width: 40px; }
+.fichaRecurso .wrap-col .comentarios-recurso .escribir-comentario .escribe { flex: 0 0 calc(100% - 40px); max-width: calc(100% - 40px); padding-left: 10px; padding-bottom: 15px; border-bottom: 1px solid #efefef; margin-bottom: 30px; }
+.fichaRecurso .wrap-col .comentarios-recurso .escribir-comentario .escribe textarea { width: 100%; height: 150px; border: 1px solid #e4e4e4; border-radius: 3px; padding: 10px; font-size: 14px; color: var(--c-gris-9); }
+.fichaRecurso .wrap-col .comentarios-recurso .escribir-comentario .escribe .acciones-comentario {  }
+
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso { margin-bottom: 40px; }
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .header-comentario { position: relative; display: -webkit-box; display: -ms-flexbox; display: flex; -webkit-box-align: center; -ms-flex-align: center; align-items: center; margin-bottom: 30px; }
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .header-comentario .publicador { margin: 0; -webkit-box-flex:1 ; -ms-flex-positive:1 ; flex-grow:1 ;}
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .header-comentario .fecha {  }
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .header-comentario .fecha p { font-size: 13px; color: var(--c-gris-9); font-weight: 400; margin: 0; }
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .header-comentario .mas-opciones { margin-left: 10px; }
+
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .body-comentario { padding-left: 55px; }
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .body-comentario p { font-size: 15px; color: var(--c-gris-6); font-weight: 400; }
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .acciones-comentario { text-align: left; padding-left: 55px; }
+.fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .acciones-comentario a.btn { margin-left: 0; margin-right: 10px; }
+
+
+
+@media (max-width: 991px){
+
+  .fichaRecurso .wrap-col { padding-left: 15px; }
+  .fichaRecurso .wrap-col .header-resource .fecha { top: -30px; }
+
+  .fichaRecurso .wrap-col .header-resource .h1-container h1 { padding-left: 55px; }
+  .fichaRecurso .wrap-col .header-resource .h1-container h1:before { left: 0; }
+
+  .fichaRecurso .wrap-col .listas { margin-left: -30px; margin-right: -30px; padding: 30px; }
+  
+}
+
+@media (max-width: 767px){
+  
+  .fichaRecurso .wrap-col { padding-left: 0; }
+
+  .fichaRecurso .wrap-col .acciones-recurso > ul { flex-wrap: wrap; }
+  .fichaRecurso .wrap-col .acciones-recurso > ul li { margin: 5px 0; }
+
+  .fichaRecurso .wrap-col .contenido table thead tr th { padding: 5px 10px; }
+  .fichaRecurso .wrap-col .contenido table tbody tr td { padding: 5px 10px; }
+  
+  .fichaRecurso .wrap-col .comentarios-recurso { padding-left: 0; }
+  .fichaRecurso .wrap-col .comentarios-recurso .h2-container { padding-left: 50px; }
+  .fichaRecurso .wrap-col .comentarios-recurso .h2-container:before { left: 0; }
+
+  .fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .header-comentario { padding-top: 30px; }
+  .fichaRecurso .wrap-col .comentarios-recurso .comentario-recurso .header-comentario .fecha { position: absolute; top: 0; right: 0; }
+
+  .fichaRecurso .wrap-col .listas { margin-left: -15px; margin-right: -15px; padding: 30px 15px; }
+
+}
+
+
+
+
+
+

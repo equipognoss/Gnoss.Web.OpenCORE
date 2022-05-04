@@ -1,0 +1,12 @@
+﻿@model ProyectoServicioWeb
+
+
+<li class="row servicio" id="@Model.Nombre">
+    <span class="handle servicio">:::</span>
+    <section class="header">
+        <span class="nombreServicio" aux="@Model.Nombre">@Html.ObtenerTextoIdiomaUsuario(Model.Nombre)</span><span class="tipoServicio"></span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    @Html.PartialView("_EdicionServicio", Model)
+</li>

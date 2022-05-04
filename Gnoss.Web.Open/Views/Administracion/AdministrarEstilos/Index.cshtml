@@ -1,0 +1,83 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos.ControlEstilosModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    ViewBag.Title = Html.GetText("COMADMINESTILOS", "TITULO");
+}
+<div class="content">
+    <h1>@Html.GetText("COMADMINESTILOS", "TITULO")</h1>
+    <div class="panEditarEstilos">
+        <div>
+            <h2>Administrar versiones de estilos</h2>
+            <p>Las versiones de estilos sirven para probar las futuras versiones que se quieren publicar, puedes subir una versión y ver los cambios que has realizado, sin que afecten al resto de usuarios</p>
+            <div><a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINESTILOS")/crear-version">@Html.GetText("COMADMINESTILOS", "GENERARVERSION")</a></div>
+            <div>
+                @if (Model.ListaVersiones != null)
+                {
+                    <select id="ddlListaVersiones">
+                        <option value="">Selecciona una versión</option>
+                        @foreach (string version in Model.ListaVersiones)
+                        {
+                            <option value="@version">@version</option>
+                        }
+                    </select>
+                    <input id="btnActualizarVersion" type="button" name="subir" value="@Html.GetText("COMADMINESTILOS","ACTUALIZARVERSION")" />
+                    <input id="btnActivarVersion" type="button" name="subir" value="@Html.GetText("COMADMINESTILOS","VERVERSION")" />
+                }
+                else
+                {
+                    <p>@Html.GetText("COMADMINESTILOS", "NOVERSIONES")</p>
+                }
+            </div>
+            <div id="liDesactivarVersion" @Html.Raw(Context.Session.Get<object>("VersionEstilos") == null ? "style=\"display:none\"" : "")>
+                <input id="btnDesactivarVersion" type="submit" name="subir" value="@Html.GetText("COMADMINESTILOS","RESTABLECERESTILOS")" />
+            </div>
+        </div>
+        <div>
+            <h2>Administrar estilos generales</h2>
+            <p>Los estilos generales son los que ven todos los usuarios, los cambios que se suben, afectan a todos los usuarios</p>
+            <div><a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINESTILOS")/actualizar-estilos"> @Html.GetText("COMADMINESTILOS", "ACTUALIZARESTILOS")</a></div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $('#btnActualizarVersion').click(function () {
+        var ddlListaVersiones = $('#ddlListaVersiones');
+        if (ddlListaVersiones.val() != "") {
+            document.location.href = '@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINESTILOS")/actualizar-version/' + ddlListaVersiones.val();
+        }
+    });
+
+    $('#btnActivarVersion').click(function () {
+        var ddlListaVersiones = $('#ddlListaVersiones');
+        if (ddlListaVersiones.val() != "") {
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+               '@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINESTILOS")/activar-version/' + ddlListaVersiones.val(),
+               null,
+               true
+           ).done(function () {
+               $('#liDesactivarVersion').show();
+           }).always(function () {
+               $('#btnVerHistorial').hide();
+               OcultarUpdateProgress();
+           });
+        }
+    });
+
+    $('#btnDesactivarVersion').click(function () {
+        MostrarUpdateProgress();
+        GnossPeticionAjax(
+           '@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINESTILOS")/desactivar-version/',
+           null,
+           true
+       ).done(function () {
+           $('#liDesactivarVersion').hide();
+       }).always(function () {
+           $('#btnVerHistorial').hide();
+           OcultarUpdateProgress();
+       });
+    }); 
+</script>

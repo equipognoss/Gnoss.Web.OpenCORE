@@ -1,0 +1,258 @@
+﻿@model AdministrarCategoriasViewModel
+
+@{
+    void ObtenerNombresCategoriasHijas(Guid pCategoriaSupID, ref string pNombresCategorias, ref string pIdsCategorias)
+    {
+        List<CategoryModel> categoriasHijas = Model.Thesaurus.ThesaurusCategories.FindAll(cat => cat.ParentCategoryKey == pCategoriaSupID);
+
+        foreach (CategoryModel categoria in categoriasHijas)
+        {
+            pNombresCategorias += categoria.Name + ", ";
+            pIdsCategorias += categoria.Key + ", ";
+
+            ObtenerNombresCategoriasHijas(categoria.Key, ref pNombresCategorias, ref pIdsCategorias);
+        }
+    }
+}
+
+@{
+    PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
+    pintar.Thesaurus = Model.Thesaurus;
+}
+
+@switch (Model.Action)
+{
+    case "create":
+        <div>
+            <label style="margin-left: 5px" class="boton btGris floatRight">
+                <a onclick="CrearCategoriaTesauro();" id="linkCrearCategoria">@Html.GetText("COMADMINCATEGORIAS", "CREAR")</a>
+            </label>
+            <div class="floatRight" id="panCrear">
+                <div id="divCrear">
+                    @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarComboCategorias", pintar)
+                </div>
+            </div>
+            <div id="divCrearCategoria">
+                @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarCajasMultiidioma", pintar)
+            </div>
+        </div>
+        break;
+    case "change_name":
+        <div>
+            <div id="divCambiarNombreCategoria">
+                @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarCajasMultiidioma", pintar)
+            </div>
+            <label style="margin-left: 5px" class="boton btGris floatRight">
+                <a onclick="CambiarNombreCategoriaTesauro();" id="linkCambiarNombreCategoria">@Html.GetText("COMADMINCATEGORIAS", "RENOMBRAR")</a>
+            </label>
+            <input type="hidden" id="txtHackCatIDCambioNombre" value="@Model.Categoria.Key.ToString()">
+        </div>
+        break;
+    case "move":
+        <div>
+            <div class="floatLeft" id="panMover">
+                <div class="floatLeft" id="divMover">
+                    <span id="lblMoverCatTes">
+                        @{
+                            string nombresCategoriasMover = "";
+                            string idsCategoriasMover = "";
+
+                            List<CategoryModel> categoriasMover = Model.Thesaurus.ThesaurusCategories.FindAll(cat => Model.Thesaurus.SelectedCategories.Contains(cat.Key));
+
+                            foreach (CategoryModel categoria in categoriasMover)
+                            {
+                                nombresCategoriasMover += categoria.Name + ", ";
+                                idsCategoriasMover += categoria.Key + ", ";
+                            }
+                            if (nombresCategoriasMover.Length > 2)
+                            {
+                                nombresCategoriasMover = nombresCategoriasMover.Substring(0, nombresCategoriasMover.Length - 2);
+                                idsCategoriasMover = idsCategoriasMover.Substring(0, idsCategoriasMover.Length - 2);
+                            }
+                        }
+                        @if (Model.Thesaurus.SelectedCategories.Count > 1)
+                        {
+                            @Html.GetText("COMADMINCATEGORIAS", "MOVERCATSTEXT")@nombresCategoriasMover@Html.GetText("COMADMINCATEGORIAS", "YAMOVER")
+                        }
+                        else
+                        {
+                            @Html.GetText("COMADMINCATEGORIAS", "MOVERCATTEXT")@nombresCategoriasMover@Html.GetText("COMADMINCATEGORIAS", "YAMOVER")
+                        }
+                    </span>
+                    @{
+                        pintar.nombreCombo = "CategoriasMover";
+                        pintar.pExcluirSeleccionadas = true;
+                    }
+                    @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarComboCategorias", pintar)
+                </div>
+            </div>
+            <label class="boton btGris floatLeft">
+                <a onclick="MoverCategoriaTesauro();" id="linkMoverCategoria">@Html.GetText("COMADMINCATEGORIAS", "MOVER")</a>
+            </label>
+            <input type="hidden" id="txtHackCatIDMover" value="@idsCategoriasMover" />
+        </div>
+        break;
+    case "order":
+        <div>
+            <div class="floatLeft" id="panOrdenar">
+                <div class="floatLeft" id="divOrdenar">
+                    <span id="lblOrdenarCatTes">
+                        @{
+                            string nombresCategoriasOrdenar = "";
+                            string idsCategoriasOrdenar = "";
+
+                            List<CategoryModel> categoriasOrdenar = Model.Thesaurus.ThesaurusCategories.FindAll(cat => Model.Thesaurus.SelectedCategories.Contains(cat.Key));
+
+                            foreach (CategoryModel categoria in categoriasOrdenar)
+                            {
+                                nombresCategoriasOrdenar += categoria.Name + ", ";
+                                idsCategoriasOrdenar += categoria.Key + ", ";
+                            }
+                            if (nombresCategoriasOrdenar.Length > 2)
+                            {
+                                nombresCategoriasOrdenar = nombresCategoriasOrdenar.Substring(0, nombresCategoriasOrdenar.Length - 2);
+                                idsCategoriasOrdenar = idsCategoriasOrdenar.Substring(0, idsCategoriasOrdenar.Length - 2);
+                            }
+                        }
+                        @if (Model.Thesaurus.SelectedCategories.Count > 1)
+                        {
+                            @Html.GetText("COMADMINCATEGORIAS", "ORDENARCATSTEXT")@nombresCategoriasOrdenar@Html.GetText("COMADMINCATEGORIAS", "AORDENARLAS")
+                        }
+                        else
+                        {
+
+
+                            @Html.GetText("COMADMINCATEGORIAS", "ORDENARCATTEXT")@nombresCategoriasOrdenar@Html.GetText("COMADMINCATEGORIAS", "AORDENAR")
+                        }
+                    </span>
+                    @{
+                        pintar.nombreCombo = "CategoriasOrdenar";
+                        pintar.pCategoriaID = categoriasOrdenar.First().Key;
+                    }
+                    @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarComboCategoriasMismoNivel", pintar)
+                </div>
+            </div>
+            <label class="boton btGris floatLeft">
+                <a onclick="OrdenarCategoriaTesauro();" id="linkOrdenarCategoria">@Html.GetText("COMADMINCATEGORIAS", "ORDENAR")</a>
+            </label>
+            <input type="hidden" id="txtHackCatIDOrdenar" value="@idsCategoriasOrdenar">
+        </div>
+        break;
+    case "delete":
+        <div>
+            <div class="floatLeft" id="panEliminar">
+                <div class="floatLeft" id="divEliminar">
+                    <span id="lblEliminarCatTes">
+                        @{
+                            string nombresCategoriasEliminar = "";
+                            string idsCategoriasEliminar = "";
+
+                            List<CategoryModel> categoriasEliminar = Model.Thesaurus.ThesaurusCategories.FindAll(cat => Model.Thesaurus.SelectedCategories.Contains(cat.Key));
+
+                            foreach (CategoryModel categoria in categoriasEliminar)
+                            {
+                                nombresCategoriasEliminar += categoria.Name + ", ";
+                                idsCategoriasEliminar += categoria.Key + ", ";
+
+                                ObtenerNombresCategoriasHijas(categoria.Key, ref nombresCategoriasEliminar, ref idsCategoriasEliminar);
+                            }
+                            if (nombresCategoriasEliminar.Length > 2)
+                            {
+                                nombresCategoriasEliminar = nombresCategoriasEliminar.Substring(0, nombresCategoriasEliminar.Length - 2);
+                                idsCategoriasEliminar = idsCategoriasEliminar.Substring(0, idsCategoriasEliminar.Length - 2);
+                            }
+                            if (idsCategoriasEliminar.Split(',').Length == 1)
+                            {
+                                @Html.GetText("COMADMINCATEGORIAS", "ELIMINARCATTEXT") @nombresCategoriasEliminar@("\"")
+                            }
+                            else
+                            {
+                                @Html.GetText("COMADMINCATEGORIAS", "ELIMINARCATSTEXT") @nombresCategoriasEliminar@("\"")
+                            }
+                        }
+                    </span>
+                    @if (Model.ExistenRecursosNoHuerfanos)
+                    {
+                        <select id="cmbMoverElementosTrasBorrar" name="cmbMoverElementosTrasBorrar">
+                            <option value="HUERFANOS">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINHUERFANOSA")</option>
+                            <option value="TODOS">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINA")</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <span id="lblMoverA">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINA")</span>
+                    }
+                    @{
+                        pintar.nombreCombo = "MoverATrasEliminar";
+                        pintar.pExcluirSeleccionadas = true;
+                    }
+                    @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarComboCategorias", pintar)
+                </div>
+            </div>
+            <label class="boton btGris floatLeft">
+                <a onclick="EliminarCategoriaTesauro();" id="linkMoverTodoTrasEliminarCategoria">@Html.GetText("COMADMINCATEGORIAS", "MOVER")</a>
+            </label>
+            <input type="hidden" id="txtHackCatIDEliminar" value="@idsCategoriasEliminar" />
+        </div>
+        break;
+    case "share":
+        <div>
+            <label style="margin-left: 5px" class="boton btGris floatRight disabled">
+                <a onclick="return false;" id="linkCompartirCategoria">@Html.GetText("PERFILBASERECURSOSFICHA", "COMPARTIR")</a>
+            </label>
+            <div class="floatRight" id="divCompartirCategoria">
+                <select style="width: 200px" disabled="disabled" id="cmbCategoriaCompartir">
+                    <option value="@Guid.Empty">Selecciona una categoria</option>
+                </select>
+            </div>
+            <div class="floatRight" id="panCompartir">
+                <div id="divCompartir">
+                    <select style="width: 200px" id="cmbComunidadCompartir" onchange="CargarTesauroComunidadCompartirCategoria()">
+                        <option value="@Guid.Empty">Selecciona una comunidad</option>
+                        @foreach (Guid comunidadID in ViewBag.ListaProyectosUsuario.Keys)
+                        {
+                            if (comunidadID != Html.GetComunidad().Key)
+                            {
+                                <option value="@comunidadID">@ViewBag.ListaProyectosUsuario[comunidadID]</option>
+                            }
+                        }
+                        @foreach (UserProfileModel.ProfileCommunitiesModel comunidad in Html.GetPerfil().Communities)
+                        {
+                            if (comunidad.Key != Html.GetComunidad().Key)
+                            {
+                                <option value="@comunidad.Key">@comunidad.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+        break;
+    case "share_load":
+        <div>
+            <label style="margin-left: 5px" class="boton btGris floatRight">
+                <a onclick="CompartirCategoriaTesauro();" id="linkCompartirCategoria">@Html.GetText("PERFILBASERECURSOSFICHA", "COMPARTIR")</a>
+            </label>
+            <div class="floatRight" id="divCompartirCategoria">
+                <select style="width: 200px" id="cmbCategoriaCompartir">
+                    <option value="@Guid.Empty">Selecciona una categoria</option>
+                    @foreach (CategoryModel categoria in Model.CategoriasCompartir.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
+                    {
+                        <option value="@categoria.Key">@categoria.Name</option>
+                        pintar.Thesaurus = Model.Thesaurus;
+                        pintar.pCategoria = categoria;
+                        @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarComboCategoriasCompartirHijas", pintar)
+                    }
+                </select>
+            </div>
+            <div class="floatRight" id="panCompartir">
+                <div id="divCompartir">
+                    <select style="width: 200px" disabled="disabled" id="cmbComunidadCompartir">
+                        <option value="@Model.ComunidadCompartir.Key">@Model.ComunidadCompartir.Value</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" id="txtHackComunidadCompartir" value="@Model.ComunidadCompartir.Key" />
+        </div>
+        break;
+}

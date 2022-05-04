@@ -1,0 +1,23 @@
+﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
+
+@{
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+    }
+
+    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+}
+
+<div id="contenedorPrincipal_@idPanel">
+    <p id="parrafo_@idPanel">
+        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+        <input type="hidden" id="@idPanel">
+    </p>
+    <div id="contenedor_@idPanel">
+        <div id="contenedorInt_@idPanel"></div>
+    </div>
+    <input type="button" onclick="Propiedad25_NuevoCampo();" class="nuevo" value="Nuevo" />
+</div>

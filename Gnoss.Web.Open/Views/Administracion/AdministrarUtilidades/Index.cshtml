@@ -1,0 +1,610 @@
+﻿@model AdministrarComunidadUtilidades
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/JCrop/css/Jcrop.css?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMIN", "CONFIGURACION")</h1>
+    <div>
+        <form autocomplete="off">
+            <p>
+                @switch (Comunidad.AccessType)
+                {
+                    case CommunityModel.TypeAccessProject.Public:
+                        @Html.Raw(Html.GetText("COMADMIN", "DESCRIPCIONCONFRECRUSOS_PUB", Html.GetText("COMUNIDADES", "COMUNIDADPUBLICA").ToLower()));
+                        break;
+                    case CommunityModel.TypeAccessProject.Restricted:
+                        @Html.Raw(Html.GetText("COMADMIN", "DESCRIPCIONCONFRECRUSOS_PUB", Html.GetText("COMUNIDADES", "COMUNIDADRESTRINGIDA").ToLower()));
+                        break;
+                    case CommunityModel.TypeAccessProject.Private:
+                        @Html.Raw(Html.GetText("COMADMIN", "DESCRIPCIONCONFRECRUSOS_PRIV", Html.GetText("COMUNIDADES", "COMUNIDADPRIVADA").ToLower()));
+                        break;
+                    case CommunityModel.TypeAccessProject.Reserved:
+                        @Html.Raw(Html.GetText("COMADMIN", "DESCRIPCIONCONFRECRUSOS_PRIV", Html.GetText("COMUNIDADES", "COMUNIDADRESERVADA").ToLower()));
+                        break;
+                }
+            </p>
+            <div id="panCompartirRecursos">
+                @Html.PartialView("_PermisosRecursos", Model)
+            </div>
+            <div id="panDescargaDoc">
+                <h4>@Html.GetText("COMADMIN", "DESCARGAFICH")</h4>
+                <p>
+                    <input type="checkbox" @(Model.PermitirDescargarDocUsuInvitado ? "checked=\"checked\"" : "") id="chkPermitirUsuNoLoginDescargDoc" name="chkPermitirUsuNoLoginDescargDoc" id="chkPermitirUsuNoLoginDescargDoc" />
+                    <label for="chkPermitirUsuNoLoginDescargDoc">@Html.GetText("COMADMIN", "PERMITIRDESCARCHUSUNOLOGIN")</label>
+                </p>
+            </div>
+            <div id="panCertificarRecursos">
+                @Html.PartialView("_NivelesCertificacion", Model)
+            </div>
+        </form>
+    </div>
+    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || Html.GetComunidad().EntornoBloqueado)
+    {
+        <input type="button" id="guardarTodo" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+    }
+    else
+    {
+        <input type="button" id="guardarTodo" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+    }
+</div>
+
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/JCrop/js/Jcrop.js?v=@Html.GetVersion()"></script>
+
+<script type="text/javascript">
+
+    var OperativaPermisos = {
+        init: function () {
+            this.engancharComportamiento();
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('.lnkVerGruposOnto').click(function () {
+                var celda = $(this).closest('.celda');
+                $('.gruposOnto', celda).show();
+                $(this).hide();
+            });
+            $('input[name="filtroGrupos"]').autocomplete(
+                null,
+                {
+                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                    delay: 0,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 300,
+                    cacheLength: 0,
+                    NoPintarSeleccionado: true,
+                    multiple: true,
+                    extraParams: {
+                        grupo: '',
+                        identidad: $('#inpt_identidadID').val(),
+                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                        proyecto: $('#inpt_proyID').val(),
+                        bool_edicion: 'true',
+                        bool_traergrupos: 'true',
+                        bool_traerperfiles: 'false'
+                    }
+                }
+            );
+            $('input[name="filtroGrupos"]').result(function (event, data, formatted) {
+                that.aceptarEditorSelectorUsuRec(this, data[0], data[1]);
+            });
+            $('ul.resultado li a').click(function () {
+                that.eliminarUsuarioSelecUsu($(this));
+            });
+            $('.chkAdm').click(function () {
+                var fila = $(this).closest('tr');
+                if (!$(this).is(':checked')) {
+                    $('.chkSup', fila).prop('checked', false);
+                    $('.chkUsu', fila).prop('checked', false);
+                }
+            });
+            $('.chkSup').click(function () {
+                var fila = $(this).closest('tr');
+                if ($(this).is(':checked')) {
+                    $('.chkAdm', fila).prop('checked', true);
+                }
+                else {
+                    $('.chkUsu', fila).prop('checked', false);
+                }
+            });
+            $('.chkUsu').click(function () {
+                var fila = $(this).closest('tr');
+                if ($(this).is(':checked')) {
+                    $('.chkAdm', fila).prop('checked', true);
+                    $('.chkSup', fila).prop('checked', true);
+                }
+            });
+            $('.chkOntoAdm').change(function () {
+                that.checkearTodasOnto();
+            });
+            $('.chkOntoSup').change(function () {
+                that.checkearTodasOnto();
+            });
+            $('.chkOntoUsu').change(function () {
+                var fila = $(this).closest('tr');
+                if ($(this).is(':checked')) {
+                    $('.celda', fila).hide();
+                }
+                else {
+                    $('.celda', fila).show();
+                }
+                that.checkearTodasOnto();
+            });
+            $('tr.filaPlantilla .chkAdm').click(function () {
+                if (!$(this).is(':checked')) {
+                    if ($('#chkOntoAdm_todos').is(':checked')) {
+                        $('#chkOntoAdm_todos').trigger('click');
+                    }
+                    that.deshabilitarChkOntoTodos($(this));
+                }
+                else {
+                    that.habilitarChkOntoTodos($(this));
+                }
+            });
+            $('tr.filaPlantilla .chkSup').click(function () {
+                if (!$(this).is(':checked')) {
+                    if ($('#chkOntoSup_todos').is(':checked')) {
+                        $('#chkOntoSup_todos').trigger('click');
+                    }
+                    that.deshabilitarChkOntoTodos($(this));
+                }
+                else {
+                    that.habilitarChkOntoTodos($(this));
+                }
+            });
+            $('tr.filaPlantilla .chkUsu').click(function () {
+                if (!$(this).is(':checked')) {
+                    if ($('#chkOntoUsu_todos').is(':checked')) {
+                        $('#chkOntoUsu_todos').trigger('click');
+                    }
+                    that.deshabilitarChkOntoTodos($(this));
+                }
+                else {
+                    that.habilitarChkOntoTodos($(this));
+                }
+            });
+            $('#chkOntoAdm_todos').click(function () {
+                if (!$(this).is(':checked')) {
+                    that.desmarcarChkOntoTodos($(this));
+                }
+                else {
+                    that.marcarChkOntoTodos($(this));
+                }
+            });
+            $('#chkOntoSup_todos').click(function () {
+                if (!$(this).is(':checked')) {
+                    that.desmarcarChkOntoTodos($(this));
+                }
+                else {
+                    that.marcarChkOntoTodos($(this));
+                }
+            });
+            $('#chkOntoUsu_todos').click(function () {
+                if (!$(this).is(':checked')) {
+                    that.desmarcarChkOntoTodos($(this));
+                }
+                else {
+                    that.marcarChkOntoTodos($(this));
+                }
+            });
+        },
+        aceptarEditorSelectorUsuRec: function (txtautocomp, nombre, id) {
+            var that = this;
+
+            var padreTxt = $(txtautocomp).closest('.gruposOnto');
+            var txtValores = $('input.valores', padreTxt);
+            txtValores.val(txtValores.val() + id + ',');
+
+            $('ul.resultado', padreTxt).append('<li>' + nombre + '<a class="remove" aux=' + id + ' >' + borr.eliminar + '</a></li>');
+            $(txtautocomp).val('');
+
+            $('ul.resultado li a', padreTxt).unbind().click(function () {
+                that.eliminarUsuarioSelecUsu($(this));
+            });
+        },
+        eliminarUsuarioSelecUsu: function (enlaceEliminar) {
+            var id = enlaceEliminar.attr('aux');
+
+            var padreTxt = enlaceEliminar.closest('.gruposOnto');
+            var txtValores = $('input.valores', padreTxt);
+
+            txtValores.val(txtValores.val().replace(id + ',', ''));
+            enlaceEliminar.parent().remove();
+        },
+        deshabilitarChkOntoTodos: function (checkInput) {
+            var that = this;
+            if (checkInput.hasClass('chkAdm')) {
+                checks = $('.chkOntoAdm, .chkOntoSup, .chkOntoUsu, #chkOntoAdm_todos, #chkOntoSup_todos, #chkOntoUsu_todos');
+            } else if (checkInput.hasClass('chkSup')) {
+                checks = $('.chkOntoSup, .chkOntoUsu, #chkOntoSup_todos, #chkOntoUsu_todos');
+            } else if (checkInput.hasClass('chkUsu')) {
+                checks = $('.chkOntoUsu, #chkOntoUsu_todos');
+            }
+            for (var i = 0; i < checks.length; i++) {
+                $(checks[i]).attr('disabled', true);
+            }
+            that.checkearMostrarGruposOnto();
+        },
+        habilitarChkOntoTodos: function (checkInput) {
+            if (checkInput.hasClass('chkAdm')) {
+                checks = $('.chkOntoAdm, #chkOntoAdm_todos');
+            } else if (checkInput.hasClass('chkSup')) {
+                checks = $('.chkOntoAdm, .chkOntoSup, #chkOntoAdm_todos, #chkOntoSup_todos');
+            } else if (checkInput.hasClass('chkUsu')) {
+                checks = $('.chkOntoAdm, .chkOntoSup, .chkOntoUsu, #chkOntoAdm_todos, #chkOntoSup_todos, #chkOntoUsu_todos');
+            }
+            for (var i = 0; i < checks.length; i++) {
+                $(checks[i]).attr('disabled', false);
+            }
+        },
+        desmarcarChkOntoTodos: function (checkInput) {
+            var that = this;
+            if (checkInput.hasClass('chkAdm')) {
+                checks = $('.chkOntoAdm, .chkOntoSup, .chkOntoUsu');
+            } else if (checkInput.hasClass('chkSup')) {
+                checks = $('.chkOntoSup, .chkOntoUsu');
+            } else if (checkInput.hasClass('chkUsu')) {
+                checks = $('.chkOntoUsu');
+            }
+            for (var i = 0; i < checks.length; i++) {
+                $(checks[i]).prop('checked', false);
+            }
+            that.checkearMostrarGruposOnto();
+        },
+        marcarChkOntoTodos: function (checkInput) {
+            var that = this;
+            if (checkInput.hasClass('chkAdm')) {
+                checks = $('.chkOntoAdm');
+            } else if (checkInput.hasClass('chkSup')) {
+                checks = $('.chkOntoAdm, .chkOntoSup');
+            } else if (checkInput.hasClass('chkUsu')) {
+                checks = $('.chkOntoAdm, .chkOntoSup, .chkOntoUsu');
+            }
+            for (var i = 0; i < checks.length; i++) {
+                $(checks[i]).prop('checked', true);
+            }
+            that.checkearMostrarGruposOnto();
+        },
+        checkearTodasOnto: function () {
+            var checkearTodosAdm = $('.chkOntoAdm').length == $('.chkOntoAdm:checked').length;
+            $('#chkOntoAdm_todos').prop('checked', checkearTodosAdm);
+
+            var checkearTodosSup = $('.chkOntoSup').length == $('.chkOntoSup:checked').length;
+            $('#chkOntoSup_todos').prop('checked', checkearTodosSup);
+
+            var checkearTodosUsu = $('.chkOntoUsu').length == $('.chkOntoUsu:checked').length;
+            $('#chkOntoUsu_todos').prop('checked', checkearTodosUsu);
+        },
+        checkearMostrarGruposOnto: function () {
+            var checksUsu = $('.chkOntoUsu');
+
+            for (var i = 0; i < checksUsu.length; i++) {
+                var fila = $(checksUsu[i]).closest('tr');
+                if ($(checksUsu[i]).is(':checked')) {
+                    $('.celda').hide();
+                }
+                else {
+                    $('.celda').show();
+                }
+            }
+        }
+    }
+
+    var OperativaNivelesCertificacion = {
+        init: function () {
+            this.engancharComportamiento();
+            this.engancharComportamientoEliminarNivel();
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('#chkActivarNivelesCertificacion').click(function () {
+                pan = $('#nivelesCertificacion');
+                if ($(this).is(':checked')) {
+                    pan.show();
+                }
+                else {
+                    pan.hide();
+                }
+            });
+            $('#btnAddNivel').click(function () {
+                var contenedor = $('#shortableNiveles');
+
+                var nuevoNivelID = guidGenerator();
+
+                var html = '<div class="panNivel" id="' + nuevoNivelID + '">\n';
+                html += '    <span class="handle">:::</span>\n';
+                html += '    <input type="text" name="NombreNivel" />';
+                html += '    <a style="margin-right:10px;" class="eliminar" >Eliminar</a>';
+                html += '</div>';
+
+                contenedor.append(html);
+
+                that.engancharComportamientoEliminarNivel();
+            });
+        },
+        engancharComportamientoEliminarNivel: function () {
+            var that = this;
+            $('.panNivel a.eliminar').unbind().click(function () {
+                var panelNivel = $(this).closest('.panNivel')
+                if ($(this).hasClass('docsAsociados')) {
+                    var btnEliminar = $(this);
+                    var textoInfo = 'Existen documentos asignados a este nivel de certificación, si borras este nivel dichos documentos se quedarán sin nivel de certificación ¿Estás seguro de que quieres borrarlo?';
+                    btnEliminar.hide();
+                    btnEliminar.after('<span>' + textoInfo + '<a class="confirmar">Si</a> <a class="rechazar">No</a></span>')
+
+                    $('a.confirmar', panelNivel).click(function () {
+                        that.eliminarNivel(panelNivel);
+                    });
+                    $('a.rechazar', panelNivel).click(function () {
+                        btnEliminar.show();
+                        btnEliminar.next().remove();
+                    });
+                }
+                else {
+                    that.eliminarNivel(panelNivel);
+                }
+            });
+        },
+        eliminarNivel: function (panelNivel) {
+            panelNivel.remove();
+        }
+    }
+
+    var OperativaOrdenacion = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function () {
+            this.lista = $('#shortableNiveles');
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            that.lista.sortable({
+                handle: 'span.handle',
+                items: 'div.panNivel'
+            });
+
+            $('.header', that.lista).disableSelection();
+            return;
+        }
+    }
+
+    var OperativaGuardar = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function () {
+            this.urlPagina = document.location.href;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('#guardarTodo').click(function () {
+                $('.ok.general').remove();
+                $('.error').remove();
+                if (!that.comprobarErroresGuardado()) {
+                    that.obtenerDatosGuardado();
+                    that.guardar();
+                }
+                else {
+                    that.mostrarErrorGuardado();
+                }
+            });
+        },
+        comprobarErroresGuardado: function () {
+            return false;
+        },
+        obtenerDatosGuardado: function () {
+            var that = this;
+            that.DatosGuardado = {};
+
+            var prefijo = 'DatosGuardado';
+            var contPermisos = 0;
+
+            $('#tablaPermisos tbody tr.permiso').each(function () {
+                var tr = $(this);
+
+                var tipoDocumento = tr.attr('id');
+
+                var tipoPermiso = -1;
+
+                if ($('.chkUsu', tr).is(':checked')) {
+                    tipoPermiso = 2;
+                }
+                else if ($('.chkSup', tr).is(':checked')) {
+                    tipoPermiso = 1;
+                }
+                else if ($('.chkAdm', tr).is(':checked')) {
+                    tipoPermiso = 0;
+                }
+
+                if (tipoDocumento == "FicheroServidor") {
+                    //Si el tipo de documento es fichero servidor, añadimos los tipos imagen y video
+
+                    var tipoPermisoFicheroServidor = tipoPermiso;
+                    var tipoPermisoVideo = tipoPermiso;
+                    var tipoPermisoImagen = tipoPermiso;
+                    if ($('input[name="tipoArchivo"]:checked').val() == 'Video') {
+                        tipoPermisoFicheroServidor = -1;
+                        tipoPermisoImagen = -1;
+                    }
+                    else if ($('input[name="tipoArchivo"]:checked').val() == 'Imagen') {
+                        tipoPermisoFicheroServidor = -1;
+                        tipoPermisoVideo = -1;
+                    }
+
+                    var prefijoClave = prefijo + '.PermisosDocumentacion[' + contPermisos + ']';
+                    that.DatosGuardado[prefijoClave + '.TipoDocumento'] = 'FicheroServidor';
+                    that.DatosGuardado[prefijoClave + '.TipoPermiso'] = tipoPermisoFicheroServidor;
+
+                    contPermisos++;
+                    prefijoClave = prefijo + '.PermisosDocumentacion[' + contPermisos + ']';
+                    that.DatosGuardado[prefijoClave + '.TipoDocumento'] = 'Video';
+                    that.DatosGuardado[prefijoClave + '.TipoPermiso'] = tipoPermisoVideo;
+
+                    contPermisos++;
+                    prefijoClave = prefijo + '.PermisosDocumentacion[' + contPermisos + ']';
+                    that.DatosGuardado[prefijoClave + '.TipoDocumento'] = 'Imagen';
+                    that.DatosGuardado[prefijoClave + '.TipoPermiso'] = tipoPermisoImagen;
+                }
+                else {
+                    var prefijoClave = prefijo + '.PermisosDocumentacion[' + contPermisos + ']';
+                    that.DatosGuardado[prefijoClave + '.TipoDocumento'] = tipoDocumento;
+                    that.DatosGuardado[prefijoClave + '.TipoPermiso'] = tipoPermiso;
+                }
+
+                contPermisos++;
+            });
+
+            var contPermisos = 0;
+            $('#tablaPermisos tbody tr.permisoOnto').each(function () {
+                var tr = $(this);
+                var permiso = -1;
+
+                if ($('.chkUsu', tr).is(':checked')) {
+                    permiso = 2;
+                }
+                else if ($('.chkSup', tr).is(':checked')) {
+                    permiso = 1;
+                }
+                else if ($('.chkAdm', tr).is(':checked')) {
+                    permiso = 0;
+                }
+
+                var prefijoClave = prefijo + '.PermisosDocumentacionSemantica[' + contPermisos + ']';
+                that.DatosGuardado[prefijoClave + '.Ontologia'] = tr.attr('id') + ".owl";
+                that.DatosGuardado[prefijoClave + '.TipoPermiso'] = permiso;
+                that.DatosGuardado[prefijoClave + '.TipoDocumento'] = $(this).find(".nameOnto").html();
+                var privacidadGrupos = tr.find('#filtroGrupos_' + tr.attr('id') + '_Hack').val().split(',');
+                for (var i = 0; i < privacidadGrupos.length; i++) {
+                    if (privacidadGrupos[i].trim() != "") {
+                        var prefijoPrivacidadGrupos = prefijoClave + '.PrivacidadGrupos[' + i + ']';
+                        that.DatosGuardado[prefijoPrivacidadGrupos + '.Key'] = privacidadGrupos[i].trim().substr(2);
+                        that.DatosGuardado[prefijoPrivacidadGrupos + '.Value'] = "";
+                    }
+                }
+
+                contPermisos++;
+            });
+
+            that.DatosGuardado[prefijo + '.NivelesCertificacionDisponibles'] = $('#chkActivarNivelesCertificacion').is(':checked');
+
+            var contNiveles = 0;
+            $('#shortableNiveles .panNivel').each(function () {
+                var prefijoClave = prefijo + '.NivelesCertificacion[' + contNiveles + ']';
+
+                that.DatosGuardado[prefijoClave + '.CertificacionID'] = $(this).attr('id');
+                that.DatosGuardado[prefijoClave + '.Nombre'] = $('input[name="NombreNivel"]', $(this)).val().trim();
+                that.DatosGuardado[prefijoClave + '.Orden'] = contNiveles;
+
+                contNiveles++;
+            });
+
+            that.DatosGuardado[prefijo + '.PoliticaCertificacion'] = encodeURIComponent($('#txtPoliticaCertificacion').val());
+            that.DatosGuardado[prefijo + '.PermitirDescargarDocUsuInvitado'] = $('#chkPermitirUsuNoLoginDescargDoc').is(':checked');
+
+        },
+        guardar: function () {
+            var that = this;
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.DatosGuardado,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
+                    that.mostrarErrorGuardado();
+                    if (error[0] == "ERROR_NOMBRE_CERTIFICACION_VACIO") {
+                        that.mostrarErrorNombreVacio();
+                    }
+                }
+                else {
+                    that.mostrarErrorGuardadoFallo(data);
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarErrorNombreVacio: function (fila) {
+            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMIN", "ADVERTENCIANIVELCERTIFICACIONVACIO")</div>');
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div>');
+        },
+        mostrarErrorGuardadoFallo: function (data) {
+            var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
+
+            if (entornoBloqueado == "True") {
+                $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
+            }
+            else {
+                $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
+            }
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
+        }
+
+    }
+
+    $(document).ready(function () {
+        OperativaPermisos.init();
+        OperativaNivelesCertificacion.init();
+        OperativaOrdenacion.init();
+        OperativaGuardar.init();
+    });
+
+</script>
+
+<style>
+    .celda .gruposOnto input {
+        width: 170px;
+    }
+
+    .celda .gruposOnto .resultado {
+        margin-left: 0;
+    }
+
+    #shortableNiveles input {
+        width: 200px;
+    }
+
+    #shortableNiveles .panNivel {
+        padding-top: 5px;
+    }
+
+    span.handle {
+        cursor: move;
+        float: left;
+        text-align: center;
+        width: 25px;
+    }
+
+    #panCompartirRecursos,
+    #panCertificarRecursos {
+        margin-top: 20px;
+    }
+
+    .guardarTodo {
+        margin-top: 5px;
+    }
+</style>

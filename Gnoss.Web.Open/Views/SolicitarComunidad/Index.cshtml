@@ -1,0 +1,254 @@
+﻿@model SolicitarComunidadViewModel
+@*
+    Descripción
+    -----------------------------------------------
+    Vista que muestra un pequeño formulario para solicitar la creación de una comunidad a Gnoss
+
+    Variables
+    ----------------------------------------------------------------*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    @* Id del input del nombre largo de la comunidad *@
+    string idTxtNombreComunidad = "txtNombreComunidad";
+    @* Id del input del nombre corto de la comunidad *@
+    string idTxtNombreCortoComunidad = "txtNombreCortoComunidad";
+    @* Id del ComboBox del tipo de comunidad a crear*@
+    string idCmbAcceso = "cmbAcceso";
+    @* Id del botón para solicitar la comunidad *@
+    string idLbEnviarSolicitud = "lbEnviarSolicitud";
+    string idCmbComunidadPadre = "cmbComunidadPadre";
+    @*Párrafos descriptivos de las comunidades *@
+    string idPanParrafoAcceso0 = "panParrafoAcceso0";
+    string idPanParrafoAcceso1 = "panParrafoAcceso1";
+    string idPanParrafoAcceso2 = "panParrafoAcceso2";
+    string idPanParrafoAcceso3 = "panParrafoAcceso3";
+    string idPanComunidadPadre = "panComunidadPadre";
+    // Url a construir para realizar la petición
+    string urlPost = $"{Html.GetUrlPagina()}/send";
+
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista de Solicitud de comunidad --------------------
+*@
+
+
+@{
+    Html.SetBodyClass("layout03 comGnoss");
+
+    @* Construir la url para envío de solicitud de creación de comunidad *@
+
+    if (Model.AceptacionAutomaticaDeComunidad)
+    {
+        urlPost += "?automaticAccept=true";
+    }
+
+}
+
+
+<div class="row">
+    @* Breadcrumb / Migas de pan en la ficha del recurso *@
+    <div class="col col-12 col-breadcrumb" id="breadcrumb">
+        <ul>
+            <li><a href="@Comunidad.Url"><strong>@Html.GetText("COMMON", "HOME")</strong></a></li>
+            <li>@Html.GetText("SOLICITARCOMUNIDAD", "TITULILLO")</li>
+        </ul>
+    </div>
+
+    <div class="col col-12 col-xl-12 col-contenido derecha">
+        <div class="container">
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="header-contenido">
+                        <div class="h1-container">
+                            <h1>@Html.GetText("SOLICITARCOMUNIDAD", "TITULILLO")</h1>
+                        </div>
+                    </div>
+                    <p>@Html.GetText("SOLICITARCOMUNIDAD", "INFO", Html.GetNombreProyectoEcosistema())</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xl-12">
+                    @* Nombre *@
+                    <div class="form-group mb-5">
+                        <label class="control-label d-block" for="">@Html.GetText("SOLICITARCOMUNIDAD", "NOMBRE")</label>
+                        <input placeholder="@Html.GetText("SOLICITARCOMUNIDAD", "NOMBRE")"
+                               type="text"
+                               name=""
+                               id="@idTxtNombreComunidad"
+                               value=""
+                               class="form-control not-outline" />
+                    </div>
+                    @* Nombre Corto *@
+                    <div class="form-group mb-5">
+                        <label class="control-label d-block" for="">@Html.GetText("SOLICITARCOMUNIDAD", "NOMBRECORTO")</label>
+                        <input placeholder="@Html.GetText("SOLICITARCOMUNIDAD", "NOMBRECORTO")"
+                               type="text"
+                               name=""
+                               id="@idTxtNombreCortoComunidad"
+                               value=""
+                               class="form-control not-outline" />
+                    </div>
+                    @* Descripción *@
+                    <div class="form-group mb-5">
+                        <label class="control-label d-block" for="">@Html.GetText("SOLICITARCOMUNIDAD", "DESCRIPCION")</label>
+                        <textarea class="cke mensajes text big ckeSimple" id="txtDescripcionComunidad" cols="20" rows="2"></textarea>
+
+                    </div>
+
+                    @* Tipo de comunidad *@
+                    <div class="form-group mb-5">
+                        <label class="control-label d-block" for="">@Html.GetText("SOLICITARCOMUNIDAD", "TIPO")</label>
+                        <select id="@idCmbAcceso" name="" class="js-select2 form-control" data-select-search="true">
+                            <option value="0" selected="selected">@Html.GetText("COMADMIN", "PUBLICO")</option>
+                            <option value="1">@Html.GetText("COMADMIN", "PRIVADO")</option>
+                            <option value="2">@Html.GetText("COMADMIN", "RESTRINGIDO")</option>
+                            @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
+                            {
+                                <option value="3">@Html.GetText("COMADMIN", "RESERVADO")</option>
+                            }
+                        </select>
+                    </div>
+
+                    @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
+                    {
+                        <div class="form-group mb-5">
+                            <div id="@idPanComunidadPadre" style="display: none">
+                                <label class="control-label d-block" for="">@Html.GetText("SOLICITARCOMUNIDAD", "COMUNIDADPADRE")</label>
+                                <select id="@idCmbComunidadPadre" class="js-select2 form-control" data-select-search="true">
+                                    <option value="@Guid.Empty">@Html.GetText("COMMON", "MISCOMUNIDADES")</option>
+                                    @foreach (Guid comunidadID in Model.ComunidadesPrivadasAdministraUsuario.Keys)
+                                    {
+                                        <option value="@comunidadID">@Model.ComunidadesPrivadasAdministraUsuario[comunidadID]</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Descripción pública  -->
+                    <div id="@idPanParrafoAcceso0" style="display: block;">
+                        <p>
+                            <strong>
+                                @Html.GetText("COMADMIN", "CABECERAPUBLICA")
+                            </strong>
+                        </p>
+                        <ul class="AdminComunidades">
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "PUBLICA1", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "PUBLICA2", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "PUBLICA3", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Descripción privada  -->
+                    <div style="display: none" id="@idPanParrafoAcceso1">
+                        <p>
+                            <strong>
+                                @Html.GetText("COMADMIN", "CABECERAPRIVADA")
+                            </strong>
+                        </p>
+                        <ul class="AdminComunidades">
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "PRIVADA1"))
+                            </li>
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "PRIVADA2", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "PRIVADA3", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    <!-- Descripción restringida  -->
+                    <div style="display: none" id="@idPanParrafoAcceso2">
+                        <p>
+                            <strong>
+                                @Html.GetText("COMADMIN", "CABECERARESTINGIDA")
+                            </strong>
+                        </p>
+                        <ul class="AdminComunidades">
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "RESTINGIDA1", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "RESTINGIDA2", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                            <li>
+                                @Html.Raw(Html.GetText("COMADMIN", "RESTINGIDA3", Html.GetNombreProyectoEcosistema()))
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
+                    {
+                        <!-- Descripción reservada  -->
+                        <div style="display: none" id="@idPanParrafoAcceso3">
+                            <p>
+                                <strong>
+                                    @Html.GetText("COMADMIN", "CABECERARESERVADA")
+                                </strong>
+                            </p>
+                            <ul class="AdminComunidades">
+                                <li>
+                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA1"))
+                                </li>
+                                <li>
+                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA2", Html.GetNombreProyectoEcosistema()))
+                                </li>
+                                <li>
+                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA3", Html.GetNombreProyectoEcosistema()))
+                                </li>
+                                <li>
+                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA4"))
+                                </li>
+                            </ul>
+                        </div>
+                    }
+
+                    <p class="box"><label><strong>Nota</strong>: El tipo de la comunidad sólo podrá modificarse mediante petición por correo electrónico a <a href="mailo:"></a>.</label></p>
+                    <div class="ko" id="panError">
+                        <p>
+                            <span id="lblCamposIncompletos"></span>
+                        </p>
+                    </div>
+                    <p>
+                        <input id="@idLbEnviarSolicitud" type="button" value="@Html.GetText("SOLICITARCOMUNIDAD", "ENVIARSOLICITUD")" class="submit principal btn btn-primary" />
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // Parámetros para operativaSolicitudCreacionComunidad
+    (function ($) {
+        const pParams = {
+            idTxtNombreComunidad: "@idTxtNombreComunidad",
+            idTxtNombreCortoComunidad: "@idTxtNombreCortoComunidad",
+            idCmbAcceso: "@idCmbAcceso",
+            idLbEnviarSolicitud: "@idLbEnviarSolicitud",
+            idCmbComunidadPadre: "@idCmbComunidadPadre",
+            idPanParrafoAcceso0: "@idPanParrafoAcceso0",
+            idPanParrafoAcceso1: "@idPanParrafoAcceso1",
+            idPanParrafoAcceso2: "@idPanParrafoAcceso2",
+            idPanParrafoAcceso3: "@idPanParrafoAcceso3",
+            idPanComunidadPadre: "@idPanComunidadPadre",
+            urlPost: "@urlPost",
+            emptyGuid: "@Guid.Empty",
+    };
+        // Gestión de operativa para funcionamiento de Solicitud creación de comunidad
+        operativaSolicitudCreacionComunidad.init(pParams);
+    })();
+</script>

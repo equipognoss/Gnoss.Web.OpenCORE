@@ -1,0 +1,131 @@
+﻿@model LicenseEditorModel
+
+@{
+    string licenciaActual = "";
+
+    if (!string.IsNullOrEmpty(Model.DefaultLicense))
+    {
+        licenciaActual = Model.DefaultLicense;
+    }
+    else if (!string.IsNullOrEmpty(Model.License))
+    {
+        licenciaActual = Model.License;
+    }
+    else
+    {
+        licenciaActual = "12";
+    }
+}
+
+<div id="editorLicenciaDoc" class="licenciaDoc">
+	<div id="panels" class="stateShowForm">
+        <div id="action" class="box form activeForm">
+            @if (Model.NotEditable || !string.IsNullOrEmpty(Model.DefaultLicense))
+            {
+                string htmlNoEdit = null;
+
+                if (Model.NotEditable)
+                {
+                    htmlNoEdit = Html.GetText("CONTROLESDOCUMENTACION", "LICENCIANOEDITABLE");
+                }
+                else
+                {
+                    htmlNoEdit = Model.MessageDefaultLicense;
+                }
+                
+                <div class="top10"></div>
+            }
+            @if (string.IsNullOrEmpty(Model.DefaultLicense))
+            {
+                string urlImgAyuda = Html.GetBaseUrlStatic() + "/img/icono_gnoss_ayuda3.png";
+
+                string titleImg0 = "<div style=\"width:350px;\"><span class='nombre'>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSOCOMERCIALTIT") + "</span><div class=\"clear\"></div><span>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSOCOMERCIAL") + "</span></div>";
+                string titleImg1 = "<div style=\"width:350px;\"><span class='nombre'>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSONOCOMERCIALTIT") + "</span><div class=\"clear\"></div><span>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSONOCOMERCIAL") + "</span></div>";
+                string titleImg2 = "<div style=\"width:350px;\"><span class='nombre'>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOPERMITIROBRASTIT") + "</span><div class=\"clear\"></div><span>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOPERMITIROBRAS") + "</span></div>";
+                string titleImg3 = "<div style=\"width:350px;\"><span class='nombre'>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSOCOMPARTIRTIT") + "</span><div class=\"clear\"></div><span>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSOCOMPARTIR") + "</span></div>";
+                string titleImg4 = "<div style=\"width:350px;\"><span class='nombre'>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSOSINDERIVADASTIT") + "</span><div class=\"clear\"></div><span>" + Html.GetText("LICENCIASDOCUMENTOS", "INFOUSOSINDERIVADAS") + "</span></div>";
+
+                string checkedRadio0 = "";
+                string checkedRadio1 = "";
+                string checkedRadio2 = "";
+                string checkedRadio3 = "";
+                string checkedRadio4 = "";
+
+                if (licenciaActual[0] == '0')
+                {
+                    checkedRadio0 = "checked=\"checked\"";
+                }
+                else
+                {
+                    checkedRadio1 = "checked=\"checked\"";
+                }
+
+                if (licenciaActual[1] == '0')
+                {
+                    checkedRadio2 = "checked=\"checked\"";
+                }
+                else if (licenciaActual[1] == '1')
+                {
+                    checkedRadio3 = "checked=\"checked\"";
+                }
+                else
+                {
+                    checkedRadio4 = "checked=\"checked\"";
+                }
+                
+                string disablesRadios = "";
+
+                if (Model.NotEditable)
+                {
+                    disablesRadios = "disabled=\"disabled\"";
+                }
+
+                if (!Model.NotEditable)
+                {
+                    <fieldset>
+                        <p>@Html.Raw(Html.GetText("LICENCIASDOCUMENTOS", "INFOLICENCIASEDICIONDOC", Model.EcosystemProjectName))</p>
+                    </fieldset>
+                }
+                <div class="cajaLicencia">
+                    <fieldset>
+                        <legend>@Html.GetText("LICENCIASDOCUMENTOS", "INFO1NIVEL")</legend>
+                        <ul class="radioList">
+                            <li>
+                                <input type="radio" id="radio1Nivel" name="1Nivel" onclick="document.getElementById('txtHackValorSelecLicencia').value = '0' + document.getElementById('txtHackValorSelecLicencia').value.substring(1);" @Html.Raw(checkedRadio0) @Html.Raw(disablesRadios)>
+                                <label for="radio1Nivel">@Html.GetText("COMMON", "SI")</label>
+                                <a><img src="@urlImgAyuda" class="conTt" title="@titleImg0"></a>
+                            </li>
+                            <li>
+                                <input type="radio" id="radio1Nivel2" name="1Nivel" onclick="document.getElementById('txtHackValorSelecLicencia').value = '1' + document.getElementById('txtHackValorSelecLicencia').value.substring(1);" @Html.Raw(checkedRadio1) @Html.Raw(disablesRadios)>
+                                <label for="radio1Nivel2">@Html.GetText("COMMON", "NO")</label>
+                                <a><img src="@urlImgAyuda" class="conTt" title="@titleImg1"></a>
+                            </li>
+                        </ul>
+                    </fieldset>
+                    <fieldset>
+                        <legend>@Html.GetText("LICENCIASDOCUMENTOS", "INFO2NIVEL")</legend>
+                    </fieldset>
+                    <ul class="radioList">
+                        <li>
+                            <input type="radio" id="radio2Nivel" name="2Nivel" onclick="document.getElementById('txtHackValorSelecLicencia').value = document.getElementById('txtHackValorSelecLicencia').value.substring(0, 1) + '0';" @Html.Raw(checkedRadio2) @Html.Raw(disablesRadios)>
+                            <label for="radio2Nivel">@Html.GetText("COMMON", "SI")</label>
+                            <a><img src="@urlImgAyuda" class="conTt" title="@titleImg2"></a>
+                        </li>
+                        <li>
+                            <input type="radio" id="radio2Nivel2" name="2Nivel" onclick="document.getElementById('txtHackValorSelecLicencia').value = document.getElementById('txtHackValorSelecLicencia').value.substring(0, 1) + '1';" @Html.Raw(checkedRadio3) @Html.Raw(disablesRadios)>
+                            <label for="radio2Nivel2">@Html.GetText("LICENCIASDOCUMENTOS", "SIMIENTRASQUE")</label>
+                            <a><img src="@urlImgAyuda" class="conTt" title="@titleImg3"></a>
+                        </li>
+                        <li>
+                            <input type="radio" id="radio2Nivel3" name="2Nivel" onclick="document.getElementById('txtHackValorSelecLicencia').value = document.getElementById('txtHackValorSelecLicencia').value.substring(0, 1) + '2';" @Html.Raw(checkedRadio4) @Html.Raw(disablesRadios)>
+                            <label for="radio2Nivel3">@Html.GetText("COMMON", "NO")</label>
+                            <a><img src="@urlImgAyuda" class="conTt" title="@titleImg4"></a>
+                        </li>
+                    </ul>
+                </div>
+            }
+        </div>
+	</div>
+    <input name="txtHackValorSelecLicencia" type="hidden" value="@licenciaActual" id="txtHackValorSelecLicencia">
+    <!--<div class="clear"></div>-->
+</div>

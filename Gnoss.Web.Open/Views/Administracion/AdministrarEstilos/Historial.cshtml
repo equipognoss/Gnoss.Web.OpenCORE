@@ -1,0 +1,57 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos.HistorialModel
+@{
+    ViewBag.Title = "Historial";
+}
+<div id="col01">
+    <h2>@Html.GetText("COMADMINESTILOS","HISTORIAL")</h2>
+    <br />
+    @if (Model.Histroial != null)
+    {
+        <table>
+            <tr>
+                <td>@Html.GetText("COMADMINESTILOS","HISTORIALVERSION")</td>
+                <td>JS</td>
+                <td>CSS</td>
+                <td>ZIP</td>
+            </tr>
+            @foreach (string[] version in Model.Histroial)
+            {
+                string urlJS = string.Empty;
+                string urlCSS = string.Empty;
+                string urlZIP = string.Empty;
+                <tr>
+                    <td>@version[0].Substring(version[0].LastIndexOf("\\"))</td>
+                    @for (int i = 1; i < version.Length; i++)
+                    {
+                        if (System.IO.Path.GetExtension(version[i]).Equals(".js"))
+                        {
+                            urlJS = version[i];
+                        }
+                        else if (System.IO.Path.GetExtension(version[i]).Equals(".css"))
+                        {
+                            urlCSS = version[i];
+                        }
+                        else if (System.IO.Path.GetExtension(version[i]).Equals(".zip"))
+                        {
+                            urlZIP = version[i];
+                        }
+                    }
+                    <td>
+                        <a href="@Html.GetBaseUrlContent()/@urlJS">@Html.GetText("COMADMINESTILOS","DESCARGAJS")</a>
+                    </td>
+                    <td>
+                        <a href="@Html.GetBaseUrlContent()/@urlCSS">@Html.GetText("COMADMINESTILOS","DESCARGACSS")</a>
+                    </td>
+                    <td>
+                        <a href="@Html.GetBaseUrlContent()/@urlZIP">@Html.GetText("COMADMINESTILOS","DESCARGAZIP")</a>
+                    </td>
+                </tr>   
+            }         
+        </table>
+    }
+    else
+    {
+        <p>@Html.GetText("COMADMINESTILOS","NOVERSIONES")</p>    
+    }
+
+</div>

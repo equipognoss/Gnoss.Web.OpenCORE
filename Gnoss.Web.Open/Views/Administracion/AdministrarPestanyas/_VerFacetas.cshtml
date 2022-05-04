@@ -1,0 +1,57 @@
+﻿@*@model List<FacetaModel>*@
+@model AdministrarFacetasPestanyasModel
+@{
+    List<FacetaModel> listadoFacetas = Model.ListadoFacetas;
+    List<TabModel.FacetasTabModel> listaFacetasPestanya = Model.FacetasPestanyas;
+
+    AdministrarFacetasEnPestanyasViewModel aux = new AdministrarFacetasEnPestanyasViewModel();
+    aux.ListadoFacetas = listadoFacetas;
+
+}
+
+@foreach (var p in listaFacetasPestanya)
+{
+
+    <li class="bloque row faceta">
+        <span class="handle faceta">:::</span>
+        <section class="header">
+            <span>Nueva faceta para la página</span>
+
+            <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+            <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+        </section>
+        <section class="panEdicion" style="width:760px">
+            <input type="hidden" name="TabEliminada" value="false" />
+            <select class="selectFacetas" name="listaFacetas">
+                @*<option class="facetas" value="@(p.Faceta)" name="@(p.Faceta)">"@(p.Faceta)"</option>*@
+                @foreach (FacetaModel faceta in listadoFacetas)
+                {
+                    if (faceta.ClaveFaceta.Equals(p.Faceta))
+                    {
+                        <option class="facetas" value="@(faceta.ClaveFaceta)" name="@(faceta.AgrupacionID)" selected>@faceta.Name</option>
+                    }
+                    else
+                    {
+                        <option class="facetas" value="@(faceta.ClaveFaceta)" name="@(faceta.AgrupacionID)">@faceta.Name</option>
+                    }
+
+                }
+            </select>
+
+            <select class="selectObjetosConocimiento" name="ListaOC">
+                <option class="objAux" name="@(p.ObjetoConocimiento)" value="@(p.ObjetoConocimiento)">@(p.ObjetoConocimiento)</option>
+            </select>
+
+            <select class="selectAux" hidden>
+                @foreach (FacetaModel faceta in listadoFacetas)
+                {
+                    foreach (var objeto in faceta.ObjetosConocimiento)
+                    {
+                        <option class="objAux" name="@(faceta.AgrupacionID)" value="@objeto">@objeto</option>
+                    }
+                }
+            </select>
+        </section>
+    </li>
+}
+

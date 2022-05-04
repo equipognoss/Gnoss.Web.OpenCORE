@@ -1,0 +1,19 @@
+﻿@model ProyectoServicioWeb
+
+@{
+    ProyectoServicioWeb servicio = Model;
+}
+
+<section class="panEdicion">
+    <div>
+        <input type="hidden" name="TabEliminada" value="false" />
+        <p>
+            <span class="tipo" title="Nombre">@Html.GetText("COMADMINSERVICIOS", "NOMBRE")</span>
+            <input type="text" name="TabName" value="@Html.ObtenerTextoIdiomaUsuario(Model.Nombre)" />
+        </p>
+        <p>
+            <span class="tipo" title="servicio">@Html.GetText("COMADMINSERVICIOS", "WEB")</span>
+            <input type="text" name="tabServicio" value="@Html.ObtenerTextoIdiomaUsuario(Model.AplicacionWeb)" />
+        </p>
+   </div>
+</section>

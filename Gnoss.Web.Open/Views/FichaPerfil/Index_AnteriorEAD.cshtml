@@ -1,0 +1,268 @@
+﻿@model ProfilePageViewModel
+@{
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    ProfileModel Perfil = Model.Profile;
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+
+    string nombreCompleto = Html.ObtenerNombreCompletoDeFichaIdentidad(Perfil);
+}
+
+
+@section breadcrumb{
+    @*
+        //TODO Fernando : Sacar esto al controller y construirlo en la master
+        // Controlar el caso de MyGnoss
+
+        if (ProyectoVirtual.Clave.Equals(ProyectoAD.MetaProyecto))
+        {
+            RutaMenuPulgarcito.Add(UtilIdiomas.GetText("COMMON", "PERSONASYORGANIZACIONES"), BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "PERSONASYORGANIZACIONES"));
+        }
+        else
+        {
+            RutaMenuPulgarcito.Add(UtilIdiomas.GetText("COMMON", "PERSONASYORGANIZACIONES"), GnossUrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "PERSONASYORGANIZACIONES"));
+        }
+    *@
+    <div class="breadcrumb" id="breadcrumb">
+        <div class="box">
+            <p>@Html.GetText("LOGIN", "ESTASEN")</p>
+            <ol>
+                <li><a href="@Comunidad.Url"><strong>@Html.GetText("COMMON", "HOME")</strong></a></li>
+                <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "PERSONASYORGANIZACIONES")">@Html.GetText("COMMON", "PERSONASYORGANIZACIONES")</a></li>
+                <li>@nombreCompleto</li>
+            </ol>
+        </div>
+    </div>
+}
+
+<div id="col01">
+    <div id="community">
+        <div class="community box">
+            <p class="imageUser">
+                <a>
+                    @* Si veo un perfil desconectado, se me muestra su foto de anonimo *@
+                    @if (!IdentidadActual.IsGuestIdentity && !string.IsNullOrEmpty(Perfil.UrlFoto))
+                    {
+                        <img src="@Html.GetBaseUrlContent()@Perfil.UrlFoto.Replace("_peque.png", "_grande.png")" />
+                    }
+                    else
+                    {
+                        <img src="@Html.GetBaseUrlContent()/@Es.Riam.Util.UtilArchivos.ContentImagenes/@Es.Riam.Util.UtilArchivos.ContentImagenesPersonas/anonimo_grande.png" />
+                    }
+                </a>
+            </p>
+            <p style="display: none;">
+                <em>@nombreCompleto</em>
+            </p>
+
+            @if (Perfil.Key != Guid.Empty && !IdentidadActual.IsGuestIdentity)
+            {
+                <ul>
+                    <li><a onclick="javascript:AgregarFiltroPerfil('inicio')" id="inicio">@Html.GetText("PERFIL", "INICIO")</a></li>
+                    @if (Model.ShowResources)
+                    { 
+                        <li><a onclick="javascript:AgregarFiltroPerfil('recursos')" id="recursos">@Html.GetText("COMMON", "RECURSOS")</a></li>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Curriculum.Key) && Model.Curriculum.Key != Guid.Empty.ToString())
+                    {
+                        string textoBio = Html.GetText("PERFIL", "BIOPROFESIONAL");
+                        <li>
+                            @if (Perfil.TypeProfile == ProfileType.Organization)
+                            {
+                                textoBio = Html.GetText("PERFIL", "TRAYECTORIA");
+                            }
+
+                            <a onclick="javascript:AgregarFiltroPerfil('bio')" id="bio">@textoBio</a>
+                        </li>
+                    }
+
+                    @if (Model.HasGrups)
+                    {                        
+                        <li>
+                            <a onclick="javascript:AgregarFiltroPerfil('grupos')" id="grupos">@Html.GetText("CONTACTOS", "GRUPOS")</a>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+
+    @if (Perfil.Key != Guid.Empty && !IdentidadActual.IsGuestIdentity)
+    {
+        @Html.PartialView("_PersonasContactosSeguidores")
+    }
+
+</div>
+
+<div id="col02">
+    @Html.PartialView("_SummaryBio", Model)
+    @if (Perfil.Key != Guid.Empty && !IdentidadActual.IsGuestIdentity)
+    {
+        @Html.PartialView("_ContenidoPagina", Model)
+    }
+</div>
+
+<div id="col03">
+    @if (!IdentidadActual.IsGuestIdentity && Model.Gadgets != null)
+    {
+        @Html.PartialView("_ContextoFichaPerfil", Model.Gadgets)
+    }
+</div>
+
+<script>
+    function AgregarFiltroPerfil(filtro) {
+        var indice = document.location.href.indexOf('?');
+        if (indice == -1) { indice = document.location.href.length; }
+        var url = document.location.href.substr(0, indice);
+        for (i = url.length - 1; i >= 0; i = url.length - 1) {
+            if (url.charAt(i) == '/') { url = url.substring(0, i); } else { break; }
+        }
+        history.pushState('', 'New URL: ' + filtro, '?' + filtro);
+
+        //$('#panContPagina').html("");
+
+        $('#panContPagina .recentActivity').hide();
+        $('#panContPagina .extendedBio').hide();
+        $('#panContPagina .profileResources').hide();
+        $('#panContPagina .profileGroups').hide();
+        $('#panContPagina .profileContacts').hide();
+        $('#panContPagina .profileFollowers').hide();
+        $('#panContPagina .profileFollowed').hide();
+        $('#panContPagina .profilePeople').hide();
+
+        if (filtro == "inicio") {
+            $('body').removeClass('layout02');
+            $('body').addClass('layout01 homePerfil');
+            $('#panContPagina .recentActivity').show();
+            return false;
+        }
+        else {
+            $('body').removeClass('layout01 homePerfil');
+            $('body').addClass('layout02');
+            if (filtro == "bio") {
+                $('#panContPagina .extendedBio').show();
+                return false;
+            }
+            if (filtro == "recursos") {
+                $('#panContPagina .profileResources').show();
+                FiltrarPerfilUsuario(ObtenerHash2());
+            }
+            if (filtro == "seguidores") {
+                $('#panContPagina .profileFollowers').show();
+                return false;
+            }
+            else if (filtro == "sigue-a") {
+                $('#panContPagina .profileFollowed').show();
+                return false;
+            }
+            else if (filtro == "contactos") {
+                $('#panContPagina .profileContacts').show();
+                return false;
+            }
+            else if (filtro == "grupos") {
+                $('#panContPagina .profileGroups').show();
+                return false;
+            }
+        }
+
+        MostrarUpdateProgress();
+
+        var dataPost = {
+            callback: filtro
+        }
+        $.post('@Html.GetUrlPagina()', dataPost, function (data) {
+            if (data != "")
+            {
+                if (filtro == "personas") {
+                    $('#panContPagina .profilePeople').html(data);
+                    $('#panContPagina .profilePeople').show();
+                }
+                //$('#panContPagina').html(data);
+                OcultarUpdateProgress();
+            }
+        });
+
+        return false;
+    }
+
+    function AccionVerMas(that, filtro) {
+        MostrarUpdateProgress();
+
+        var numPeticion = $(that).attr('aux');
+
+        var dataPost = {
+            callback: filtro,
+            numPeticion: numPeticion
+        }
+        $.post('@ViewBag.UrlPagina', dataPost, function (data) {
+            if (data.length > 0) {
+                for (var i in data) {
+                    if (data[i].updateTargetId.indexOf("fichaPerfil_") == 0) {
+                        var htmlGadget = data[i].html;
+                        if (filtro == "seguidores") {
+                            $('#panContPagina .profileFollowers  .listadoPersonas .resource-list').append(htmlGadget);
+                        }
+                        else if (filtro == "sigue-a") {
+                            $('#panContPagina .profileFollowed .listadoPersonas .resource-list').append(htmlGadget);
+                        }
+                    }
+                }
+
+                $(that).attr('aux', parseInt(numPeticion) + 1);
+            }
+            else {
+                $(that).remove();
+            }
+            OcultarUpdateProgress();
+        });
+    }
+
+    function AccionEnviarMensajeGrupoMVC(id) {
+        var $c = $('#' + id);
+
+        if (CKEDITOR.instances["txtDescripcion_" + id] != null) {
+            CKEDITOR.instances["txtDescripcion_" + id].destroy();
+        }
+
+        var $anterior = $c.children();
+
+        if ($anterior.length > 0) {
+            //Eliminar el anterior
+            $anterior.remove();
+        }
+
+        var accion = "javascript:EnviarMensajeGrupoMVC('" + id + "');";
+
+        var $confirmar = $(['<fieldset class="mediumLabels"><legend>', mensajes.enviarMensaje, '</legend><p><label for="txtAsunto_', id, '">', mensajes.asunto, '</label><input type="text" id="txtAsunto_', id, '" class="text big"></p><p><label for="txtDescripcion_', id, '">', mensajes.descripcion, '</label></p><p><textarea class="cke mensajes" id="txtDescripcion_', id, '" rows="2" cols="20"></textarea></p><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', mensajes.enviar, '" class="text medium"></p></fieldset>'].join(''));
+
+        // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
+        $confirmar.prependTo($c)
+    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
+        $c.parents('.stateShowForm').css({ display: 'none' });
+        $confirmar.css({ display: 'none' });
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
+
+        MostrarPanelAccionDesp("desplegable_" + id, null);
+        RecargarTodosCKEditor();
+    }
+
+    @Html.Raw(Html.GetJSExtra());
+
+    //cargarFacetas = false;
+    //FiltrarPerfilUsuario(ObtenerHash2());
+
+    function FiltrarPerfilUsuario(filtro) {
+        var hash = filtro;
+        if(hash.indexOf('recursos') == 0){
+            hash = hash.substring(8);
+            if (hash.indexOf("&") == 0)
+            {
+                hash = hash.substring(1);
+            }
+        }
+        FiltrarPorFacetasGenerico(hash);
+    }
+</script>

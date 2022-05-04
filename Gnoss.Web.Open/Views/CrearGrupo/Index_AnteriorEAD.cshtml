@@ -1,0 +1,321 @@
+﻿@model GroupEditViewModel
+@{
+    GroupCardModel Grupo = ((GroupEditViewModel)Model).Group;
+    
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+    
+    Html.SetBodyClass("layout03 comGnoss ");
+
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    string titulo = string.Empty;
+    string descripcion = string.Empty;
+    string tags = string.Empty;
+    string participantes = string.Empty;
+
+    string textoTituloPagina = "";
+    string textoBotonGuardar = "";
+    
+    if(Grupo != null)
+    {
+        titulo = Grupo.Name;
+        descripcion = Grupo.Description;
+        foreach(string tag in Grupo.Tags)
+        {
+            tags += tag + ',';
+        }
+        foreach (Guid perfil in Model.Participants.Keys)
+        {
+            participantes += "&" + perfil.ToString();
+        }
+
+        if (Model.EsGrupoDeOrganizacion)
+        {
+            textoTituloPagina = Html.GetText("GRUPO", "EDITARGRUPOORGANIZACION");
+        }
+        else
+        {
+            textoTituloPagina = Html.GetText("GRUPO", "EDITARGRUPOCOMUNIDAD");
+        }
+        textoBotonGuardar = Html.GetText("COMMON", "GUARDAR");
+    }
+    else
+    {
+        if (Model.EsGrupoDeOrganizacion)
+        {
+            textoTituloPagina = Html.GetText("GRUPO", "CREARGRUPOORGANIZACION");
+        }
+        else
+        {
+            textoTituloPagina = Html.GetText("GRUPO", "CREARGRUPOCOMUNIDAD");
+        }
+
+        textoBotonGuardar = Html.GetText("GRUPO", "CREARGRUPO");
+    }
+}
+<div id="col02">
+    <h3>
+        <span id="lblTituloPagina">@textoTituloPagina</span>
+    </h3>
+    <div class="box" id="SubirRecurso">
+        <fieldset class="labels">
+            <p>
+                <label id="lblTitulo" for="txtTitulo">@Html.GetText("PERFILBASESUBIRRECURSO", "TITULO")</label>
+                <input type="text" onblur="EtiquetadoAutomaticoDeRecursos(this.value, $('#txtDescripcion').val(), $('#txtHackTagsTitulo'), true)" class="text big" id="txtTitulo" name="txtTitulo" value="@(titulo.Equals(string.Empty)?"":titulo)">
+                <input type="text" style="display: none;" id="txtHackTagsTitulo" name="txtHackTagsTitulo">
+            </p>
+            <p>
+                <label id="lblDescipcion" for="txtDescripcion">@Html.GetText("PERFILBASESUBIRRECURSO", "DESCRIPCION")</label>
+                <!--Newsletter-->
+                <textarea rows="2" cols="20" class="cke recursos" id="txtDescripcion" name="txtDescripcion" style="visibility: hidden; display: none;">@(descripcion.Equals(string.Empty)?"":descripcion)</textarea>
+                <input type="text" style="display: none;" id="txtHackTagsDescripcion" name="txtHackTagsDescripcion">
+            </p>
+            <p class="textarea">
+                <label id="lblEtiquetas" for="txtTags">@Html.GetText("PERFILBASESUBIRRECURSO", "ETIQUETAS")</label>
+            </p>
+            <div onclick="$('#txtTags').focus();" class="autocompletar">
+                <span class="contenedor"></span>
+                <input type="text" size="5" class="txtAutocomplete ac_input" id="txtTags" name="txtTags" style="width: 100%; top: 0px; left: 0px;" autocomplete="off" value="@(tags.Equals(string.Empty)?"":tags)">
+                <input type="text" style="display: none" id="txtTags_Hack" name="txtTags_Hack">
+            </div>
+
+        </fieldset>
+    </div>
+    <!-- #form SubirRecurso -->
+    <div class="box">
+        <h3></h3>
+        <div id="panMiembros">
+            <div id="panAgregarMiembros">
+                <fieldset>
+                    <legend id="lblInicioMiembros">@Html.GetText("GRUPO", "MIEMBROS")</legend>
+
+                    <div id="divContDespEdit">
+                        <div id="panels" class="stateShowForm" style="display: block;">
+                            <div style="display: block;" id="action" class="box form activeForm">
+                                <fieldset class="filtroRapido">
+                                    <legend id="litInstrucciones">
+                                        @if(Model.EsGrupoDeOrganizacion)
+                                        {
+                                            @Html.GetText("GRUPO", "INFOMIEMBROSORGANIZACION")
+                                        }
+                                        else
+                                        {
+                                            @Html.GetText("GRUPO", "INFOMIEMBROSCOMUNIDAD")
+                                        }
+                                    </legend>
+                                    <div>
+                                        <input type="text" id="txtFiltro" class="filtroFaceta ac_input" autocomplete="off">
+                                        <span class="searchButton"></span>
+                                    </div>
+                                </fieldset>
+                                <div style="display: none;" class="contactos" id="selector">
+                                    <div style="display: none;" id="loading" class="loading">
+                                        <p></p>
+                                    </div>
+                                    <div id="panContactos"></div>
+                                </div>
+                                <input type="text" class="oculto" id="txtHackInvitados" name="txtHackInvitados" value="@participantes">
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div id="panContenedorInvitados">
+                @if (Model.Participants != null && Model.Participants.Count > 0)
+                {
+                    <ul class="icoEliminar">
+                    @foreach (Guid perfil in Model.Participants.Keys)
+                    {
+                        <li>@Model.Participants[perfil]<a class='remove' onclick='javascript:eliminarInvitado(null,this, "@perfil.ToString()");'>Eliminar</a></li>
+                    }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+    <div id="divContLblError">
+        <div class="ko" id="divKoError">
+            <p>
+                <span id="lblError"></span>
+            </p>
+        </div>
+    </div>
+    <div id="divContPanelBotonera">
+        <fieldset id="panelBotonera">
+            <p>
+                <input type="button" onclick="validarCamposGuardado()" value="@textoBotonGuardar" class="submit">
+
+                @if (Grupo != null)
+                { 
+                    <input type="button" onclick="redirigirAlGrupo()" value="@Html.GetText("COMMON", "CANCELAR")" class="submit" >
+                }
+            </p>
+        </fieldset>
+    </div>
+</div>
+
+<script type="text/javascript">
+    @if (Grupo != null){
+        <text>
+        function redirigirAlGrupo()
+        {
+            window.location = '@Grupo.UrlGroup';
+        }
+        </text>
+    }
+
+    function validarCamposGuardado() {
+
+        $('#lblError').html("");
+        $('#divKoError').css('display', 'none');
+
+        PintarTags($('#txtTags'));
+
+        if ($('#txtTitulo').val().trim() == '') {
+            $('#lblError').html(form.errordtitulo);
+            $('#divKoError').css('display', 'block');
+            return false;
+        }
+
+        if ($('#txtTags_Hack').val().trim() == '') {
+            $('#lblError').html(form.errordtag);
+            $('#divKoError').css('display', 'block');
+            return false;
+        }
+
+        EnviarDatosServidor();
+    }
+
+    function EnviarDatosServidor() {
+        MostrarUpdateProgress();
+
+        //Miembros
+        var miembros =  $('#txtHackInvitados').val().replace(/\&/g, '[-|-]');
+
+        var dataPost = {
+            Titulo: $('#txtTitulo').val(),
+            Descripcion: encodeURIComponent($('#txtDescripcion').val().replace(/\n/g, '')),
+            Tags: $('#txtTags_Hack').val(),
+            Participantes: miembros
+        }
+
+        GnossPeticionAjax('@Model.UrlSaveGroup', dataPost, true).fail(function (data) {
+            if (data == "ERROR Titulo")
+            {
+                $('#txtTitulo').addClass('error');
+            }
+        }).always(function (data) {
+            OcultarUpdateProgress();
+        });
+    }
+
+    function crearInvitado(ficha, nombre, identidad) {
+        document.getElementById('txtFiltro').value = '';
+        $('#selector').css('display', 'none');
+        contenedor = document.getElementById('panContenedorInvitados');
+        if (contenedor.innerHTML.trim().indexOf('<ul') == 0) { contenedor.innerHTML = contenedor.innerHTML.replace('<ul class=\"icoEliminar\">', '').replace('</ul>', ''); }
+        contenedor.innerHTML = '<ul class=\"icoEliminar\">' + contenedor.innerHTML + '<li>' + nombre + '<a class="remove" onclick="javascript:eliminarInvitado(null,this,\'' + identidad + '\');">' + textoRecursos.Eliminar + '</a></li>' + '</ul>';
+
+        if (ficha != null) {
+            ficha.style.display = 'none';
+        }
+        $('#txtHackInvitados').val($('#txtHackInvitados').val() + "&" + identidad);
+    }
+
+    function eliminarInvitado(fichaId, nombre, identidad) {
+        contenedor = document.getElementById('panContenedorInvitados');
+        contenedor.children[0].removeChild(nombre.parentNode);
+        $('#txtHackInvitados').val($('#txtHackInvitados').val().replace('&' + identidad, ''));
+    }
+
+    $(document).ready(function () {
+        if (CKEDITOR.instances.txtDescripcion == null) {
+            RecargarTodosCKEditor();
+        }
+        CKEDITOR.instances.txtDescripcion.on('blur', function () {
+            var descripcion = $('#txtDescripcion').val();
+            EtiquetadoAutomaticoDeRecursos($('#txtTitulo').val(), descripcion, $('#txtHackTagsDescripcion'), true);
+        });
+    });
+    $('#txtFiltro').bind('keydown', function (evento) {
+        if ((evento.which == 9) || (evento.keyCode == 9) || (evento.which == 13) || (evento.keyCode == 13)) {
+            return false;
+        }
+    });
+    $(document).ready(function () {
+        $('#txtFiltro').autocomplete(
+        null,
+            {
+            @{
+                string metodo = "AutoCompletarLectoresEditores";
+                if (Model.EsGrupoDeOrganizacion)
+                {
+                    metodo = "AutocompletarMiembrosOrganizacion";
+                }
+            }
+            url: $('#inpt_urlServicioAutocompletar').val() + "/@metodo",
+            delay: 0,
+            multiple: true,
+            scroll: false,
+            selectFirst: false,
+            minChars: 1,
+            width: 300,
+            cacheLength: 0,
+            NoPintarSeleccionado: true,
+            txtValoresSeleccID: 'txtHackInvitados',
+            extraParams: {
+                grupo: '@(Grupo != null?Grupo.ShortName:"")',
+                identidad: '@IdentidadActual.KeyIdentity',
+                identidadMyGnoss: '@IdentidadActual.KeyMetaProyectIdentity',
+                identidadOrg: '@(IdentidadActual.KeyOrganization == Guid.Empty?"":IdentidadActual.KeyIdentityOrg.ToString())',
+                proyecto: '@Comunidad.Key',
+                organizacion: '@(IdentidadActual.KeyOrganization == Guid.Empty?"":IdentidadActual.KeyOrganization.ToString())',
+                bool_esPrivada: '@(Comunidad.AccessType == CommunityModel.TypeAccessProject.Private || Comunidad.AccessType == CommunityModel.TypeAccessProject.Reserved?"True":"False")',
+                bool_edicion: 'True',
+                bool_traerperfiles: true,
+                bool_traergrupos: 'False'
+            }
+        }
+        );
+        $('#txtFiltro').result(function (event, data, formatted) {
+            crearInvitado(null, data[0], data[1]);
+        });
+    });
+    $(document).ready(function () {
+        ActivarAutocompletarRec('txtTags', 'sioc_t:Tag');
+    });
+    function ActivarAutocompletarRec(pTxt, pNombreFaceta) {
+        $('#' + pTxt).autocomplete(
+        null,
+        {
+            url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarFacetas",
+            type: "POST",
+            delay: 300,
+            multiple: true,
+            scroll: false,
+            selectFirst: false,
+            minChars: 1,
+            width: 300,
+            cacheLength: 0,
+            extraParams: {
+                proyecto: '@Comunidad.Key',
+                bool_esMyGnoss: 'False',
+                bool_estaEnProyecto: 'True',
+                bool_esUsuarioInvitado: 'False',
+                identidad: '@IdentidadActual.KeyIdentity',
+                nombreFaceta: pNombreFaceta,
+                orden: '',
+                filtrosContexto: '',
+                languageCode: 'es',
+                parametros: '',
+                tipo: '',
+                perfil: '',
+                organizacion: ''
+            }
+        }
+        );
+    }
+
+</script>

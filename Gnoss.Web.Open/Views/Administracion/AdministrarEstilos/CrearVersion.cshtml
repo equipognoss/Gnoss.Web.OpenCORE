@@ -1,0 +1,20 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos.SubidaArchivosModel
+@{
+    ViewBag.Title = "CrearVersion";
+}
+<div id="col01">
+    <h2>@Html.GetText("COMADMINESTILOS", "CREARVERSION")</h2> <br /> 
+    <form action ="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINESTILOS")/crear-version"  method="post" enctype="multipart/form-data">
+        @Html.ValidationMessage("error")
+        @Html.GetText("COMADMINESTILOS", "NOMBREVERSION") <input type="text" name ="NombreVersion" /><br />   
+        <input id="js/css" type="radio" name="tipo" value="js_css" checked ="checked" onclick="FormularioSubidaEstilos()"/>@Html.GetText("COMADMINESTILOS", "TIPOJSCSS")
+            @Html.ValidationMessage("js_css")<br />
+            @Html.GetText("COMADMINESTILOS", "ARCHIVOJS") <input id="archivo_js" type="file" name="ArchivoJS"/>  @Html.ValidationMessage("js")<br>
+            @Html.GetText("COMADMINESTILOS", "ARCHIVOCSS") <input id="archivo_css" type="file" name="ArchivoCSS"/>  @Html.ValidationMessage("css")<br><br>
+        <input id ="zip" type="radio" name="tipo" value="zip" onclick="FormularioSubidaEstilos()" />@Html.GetText("COMADMINESTILOS", "TIPOZIP")
+            @Html.ValidationMessage("zip")<br />
+            @Html.GetText("COMADMINESTILOS", "ARCHIVOZIP") <input id="archivo_zip" type="file" name="ArchivoZIP" disabled="disabled"/><br><br>
+        <input id="tipo_archivo" type="hidden" name="TipoArchivos" value ="js_css" />
+        <input type="submit" name="subir" value="@Html.GetText("COMADMINESTILOS", "SUBIR")" />
+    </form>
+</div>

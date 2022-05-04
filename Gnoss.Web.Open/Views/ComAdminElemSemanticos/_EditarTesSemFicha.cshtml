@@ -1,0 +1,10 @@
+﻿@model Tuple<string, string, string>
+
+<li class="row">
+    <section class="header">
+        <span>@Model.Item1</span>
+        <span class="action eliminar"  onclick="EliminarTesSem($(this), '@Model.Item2', '@Model.Item3');">eliminar</span>
+        <span class="action editar" onclick="EditarTesSem($(this), '@Model.Item2', '@Model.Item3');">editar</span>
+    </section>
+    <section class="panEdicion"></section>
+</li>

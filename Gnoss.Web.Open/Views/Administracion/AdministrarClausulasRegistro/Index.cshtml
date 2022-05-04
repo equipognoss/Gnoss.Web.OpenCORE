@@ -1,0 +1,800 @@
+﻿@model ManageRegisterClausesViewModel
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMINCLAUSULASREGISTRO", "TITULO")</h1>
+    <div>
+        <form autocomplete="off">
+            @{
+                string idiomas = "";
+
+                foreach (string idiomaKey in Model.LanguagesList.Keys)
+                {
+                    idiomas += idiomaKey + "|" + Model.LanguagesList[idiomaKey] + "&&&";
+                }
+            }
+            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
+            <input type="hidden" id="idiomaDefecto" value="@Model.DefaultLanguage" />
+            <p>
+                @Html.GetText("COMADMINCLAUSULASREGISTRO", "INFOTITULO")
+            </p>
+            <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCLAUSULASREGISTRO", "GUARDARTODO")" />
+            <div class="panAniadir">
+                @Html.GetText("COMADMINCLAUSULASREGISTRO", "INFOADDCLAUSULA")
+                <select id="cmbAddClausula">
+                    <option value="@((short)ManageRegisterClausesViewModel.ClauseType.Opcional)">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCLAUSULAOPCIONAL")</option>
+                    @if (Model.ClausesList.Count(c => c.Type == ManageRegisterClausesViewModel.ClauseType.CondicionesUso) == 0)
+                    {
+                        <option value="@((short)ManageRegisterClausesViewModel.ClauseType.CondicionesUso)">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCONDICIONESUSO")</option>
+                    }
+                    @if (Model.ClausesList.Count(c => c.Type == ManageRegisterClausesViewModel.ClauseType.ClausulasTexo) == 0)
+                    {
+                        <option value="@((short)ManageRegisterClausesViewModel.ClauseType.ClausulasTexo)">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICAPRIVACIDAD")</option>
+                    }
+                    @if (Model.ClausesList.Count(c => c.Type == ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina) == 0)
+                    {
+                        <option value="@((short)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina)">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICACOOKIES")</option>
+                    }
+                </select>
+                <input type="button" class="addClausula" value="@Html.GetText("COMADMINCLAUSULASREGISTRO", "ADDCLAUSULA")" />
+            </div>
+            <ol class="table" id="sortable">
+                @foreach (ManageRegisterClausesViewModel.RegisterClauseModel clausula in Model.ClausesList.OrderBy(c => c.Order))
+                {
+                    @Html.PartialView("_EdicionClausulaRegistro", clausula);
+                }
+            </ol>
+        </form>
+    </div>
+    <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCLAUSULASREGISTRO", "GUARDARTODO")" />
+</div>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script>
+    var OperativaOrdenacion = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function () {
+            this.lista = $('#sortable');
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            that.lista.sortable({
+                handle: 'span.handle',
+                items: 'li',
+                cancel: ".ui-state-disabled"
+            });
+            $('.header', that.lista).disableSelection();
+            page.on('focus', 'input[name="TextoNombreCookie"]', function () {
+                $('span.AvisoCambioCookie').show();
+            });
+            return;
+        }
+    }
+
+    var OperativaAcciones = {
+        init: function (panelID) {
+            this.config(panelID);
+            if (this.id == '') {
+                this.engancharComportamiento();
+            }
+            this.engancharComportamientoClausulas();
+            this.engancharMultiIdioma();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            this.cargarIdiomas();
+            this.id = '';
+
+            if (typeof panelID != 'undefined' && panelID != '') {
+                this.id = '#' + panelID + ' ';
+            }
+            return;
+        },
+        engancharMultiIdioma: function () {
+            var that = this;
+            if (that.ListaIdiomas.length > 0) {
+                $(that.id + 'input[name="Title"]:not(:disabled)').each(function () {
+                    var inputName = $(this);
+                    that.montarMultidioma(inputName);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('keyup');
+                    }).blur(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('blur');
+                    });
+                });
+                $(that.id + 'input[name="TextoClausula"]:not(:disabled)').each(function () {
+                    var inputName = $(this);
+                    that.montarMultidioma(inputName);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('keyup');
+                    }).blur(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('blur');
+                    });
+                });
+                $(that.id + 'textarea[name="TextoClausula"].multiidioma:not(:disabled)').each(function () {
+                    var inputUrl = $(this);
+                    that.montarMultidioma(inputUrl);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
+                        inputUrl.trigger('blur');
+                    });
+                });
+                $(that.id + 'textarea[name="TextoCabeceraClausula"].multiidioma:not(:disabled)').each(function () {
+                    var inputUrl = $(this);
+                    that.montarMultidioma(inputUrl);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
+                        inputUrl.trigger('blur');
+                    });
+                });
+                $(that.id + 'textarea[name="TextoPaginaClausula"].multiidioma:not(:disabled)').each(function () {
+                    var inputUrl = $(this);
+                    that.montarMultidioma(inputUrl);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
+                        inputUrl.trigger('blur');
+                    });
+                });
+                componenteTabulado.init();
+            }
+        },
+        obtenerTextoYClaveDeIdioma: function (texto) {
+            var that = this;
+            var idioma = that.IdiomaPorDefecto;
+            var textoIdioma = texto;
+            if (textoIdioma.length > 3) {
+                var indice = 3;
+                var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
+                if (auxIdioma[0] == '-' && textoIdioma.length > 6) {
+                    indice = 6;
+                    auxIdioma = textoIdioma.substr(textoIdioma.length - 6);
+                }
+                if (auxIdioma[0] == '@('@')') {
+                    idioma = auxIdioma.substr(1);
+                    textoIdioma = textoIdioma.substr(0, textoIdioma.length - indice);
+                }
+            }
+            return { "key": idioma, "value": textoIdioma };
+        },
+        montarMultidioma: function (input) {
+            var that = this;
+
+            var esTextArea = input.is('textarea');
+            if (esTextArea) { input.css("display", "none"); }
+            else { input.attr("type", "hidden"); }
+
+            var textoMultiIdioma = input.val().split('|||')
+            var listaTextos = [];
+            $.each(textoMultiIdioma, function () {
+                if (this != "") {
+                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
+                    listaTextos.push(objetoIdioma);
+                }
+            });
+
+            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma" ><div class=" acciones tabspresentation "><ul>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
+            });
+
+            var classCKE = "";
+            if (input.hasClass('cke')) {
+                classCKE = "cke recursos";
+            }
+
+            htmlMultIdioma += '</ul></div>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                var textoIdioma = listaTextos.findValueByKey(key);
+                if (textoIdioma == null || textoIdioma == '') {
+                    if (key.indexOf('-') > 0) {
+                        var keyAux = key.substr(0, key.indexOf('-'));
+                        textoIdioma = listaTextos.findValueByKey(keyAux);
+                    }
+                    if (textoIdioma == null || textoIdioma == '') {
+                        if (esIdiomaPorDefecto && listaTextos.length > 0) {
+                            textoIdioma = listaTextos[0].value;
+                        }
+                        else {
+                            textoIdioma = '';
+                        }
+                    }
+                }
+                htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p>';
+
+                if (esTextArea) { htmlMultIdioma += '<textarea id="texto_' + key + '" class="' + classCKE + '" >' + textoIdioma + '</textarea>'; }
+                else { htmlMultIdioma += '<input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma + '" />'; }
+
+                htmlMultIdioma += '</p></div>';
+            });
+
+            htmlMultIdioma += '</div>';
+
+            input.before(htmlMultIdioma);
+        },
+        engancharComportamientoClausulas: function () {
+            var that = this;
+            $(that.id + 'span.eliminar').click(function () {
+                that.eliminarClausula($(this));
+            });
+            $(that.id + 'span.editar').click(function () {
+                that.editarClausula($(this));
+            });
+            $(that.id + 'input[name="Title"]').keyup(function () {
+                that.cambiarNombreClausula($(this));
+            }).blur(function () {
+                that.cambiarAuxNombreClausula($(this));
+            });
+            $(that.id + 'span.tipo').each(function () {
+                if ($(this).attr("title") != null && $(this).attr("title") != '') {
+                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
+                    $(this).removeAttr("title");
+                }
+            });
+
+            $(that.id + '.conToolTip').tooltip();
+            return;
+        },
+        cargarIdiomas: function (bototnEditar) {
+            var that = this;
+
+            that.IdiomaPorDefecto = $('#idiomaDefecto').val();
+
+            var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
+            that.ListaIdiomas = []
+
+            $.each(idiomasComunidad, function () {
+                if (this != "") {
+                    that.ListaIdiomas.push({ "key": this.split('|')[0], "value": this.split('|')[1] });
+                }
+            });
+        },
+        comprobarCamposVacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row:not(".ui-state-disabled") input[name = "ComunidadOrigen"]');
+            inputsNombre.each(function () {
+                if ($(this).val() == "") {
+                    mostrarErrorCampoVacio($(this));
+                    error = true;
+                }
+            });
+            var inputsNombre = $('.row:not(".ui-state-disabled") input[name = "RelacionOrigenDestino"]');
+            inputsNombre.each(function () {
+                if ($(this).val() == "") {
+                    mostrarErrorCampoVacio($(this));
+                    error = true;
+                }
+            });
+            return error;
+        },
+        mostrarErrorCampoVacio: function (input) {
+            var that = this;
+            input.after("<span class=\"error\">El campo no puede estar vacio</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        comprobarNombresCortosRepetidos: function () {
+            var that = this;
+            var errorRepetido = false;
+            var inputsNombresCortos = $('.row:not(".ui-state-disabled") input[name = "ShortName"]');
+            inputsNombresCortos.each(function () {
+                if (that.comprobarNombreCortoRepetido($(this))) {
+                    errorRepetido = true;
+                }
+            });
+            return errorRepetido;
+        },
+        comprobarNombreCortoRepetido: function (inputNombreCorto) {
+            var that = this;
+            $('.error', inputNombreCorto.parent()).remove();
+
+            var fila = inputNombreCorto.closest('.row');
+
+            var inputsNombresCortos = $('.row:not(".ui-state-disabled") input[name = "ShortName"]');
+            var nombreCorto = inputNombreCorto.val();
+            var errorRepetido = false;
+
+            inputsNombresCortos.each(function () {
+                var inputCompare = $(this);
+                if (inputCompare.closest('.row').attr('id') != fila.attr('id')) {
+                    if (inputCompare.val() == nombreCorto) {
+                        errorRepetido = true;
+                    }
+                }
+            });
+            if (errorRepetido) {
+                that.mostrarErrorNombreCortoRepetido(fila);
+            }
+            return errorRepetido;
+        },
+        mostrarErrorNombreCortoRepetido: function (fila) {
+            var inputNombreCorto = $('input[name = "ShortName"]', fila).first();
+            inputNombreCorto.after("<span class=\"error\">El Nombre Corto no puede estar repetido</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        comprobarContenidosVacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row:not(".ui-state-disabled") textarea[name = "TextoClausula"].multiidioma:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarContenidoVacio($(this))) {
+                    error = true;
+                }
+            });
+            inputsNombre = $('.row:not(".ui-state-disabled") textarea[name = "TextoCabeceraClausula"].multiidioma:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarContenidoVacio($(this))) {
+                    error = true;
+                }
+            });
+            inputsNombre = $('.row:not(".ui-state-disabled") textarea[name = "TextoPaginaClausula"].multiidioma:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarContenidoVacio($(this))) {
+                    error = true;
+                }
+            });
+            return error;
+        },
+        comprobarContenidoVacio: function (inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' textarea').val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    that.mostrarErrorContenidoVacio(inputName.closest('.row'));
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' textarea').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+
+            return false;
+        },
+        mostrarErrorContenidoVacio: function (fila) {
+            var that = this;
+            var inputUrl = $('textarea[name = "TextoClausula"]', fila).first();
+            inputUrl.after("<span class=\"error\">El contenido en " + that.ListaIdiomas.findValueByKey(that.IdiomaPorDefecto) + " no puede estar vacio</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        comprobarNombresVacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row:not(".ui-state-disabled") input[name = "Title"]:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarNombreVacio($(this))) {
+                    error = true;
+                }
+            });
+            inputsNombre = $('.row:not(".ui-state-disabled") input[name = "TextoClausula"]:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarNombreVacio($(this))) {
+                    error = true;
+                }
+            });
+            return error;
+        },
+        comprobarNombreVacio: function (inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+
+            return false;
+        },
+        mostrarErrorNombreVacio: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "Title"]', fila).first();
+            inputUrl.after("<span class=\"error\">El Nombre en " + that.ListaIdiomas.findValueByKey(that.IdiomaPorDefecto) + " no puede estar vacio</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        cambiarNombreClausula: function (inputName) {
+            var nombreClausula = inputName.val();
+            var fila = inputName.closest('.row');
+            var nombreFila = fila.find('.header .nombreClausula');
+
+            if (nombreClausula == '') {
+                nombreFila.text(nombreFila.attr('aux'));
+            }
+            else {
+                nombreFila.text(nombreClausula);
+            }
+        },
+        cambiarAuxNombreClausula: function (inputName) {
+            var that = this;
+
+            $('.error', inputName.parent()).remove()
+
+            var nombreClausula = inputName.val();
+            var fila = inputName.closest('.row');
+            var nombreFila = fila.find('.header .nombreClausula');
+
+            if (nombreClausula == '') {
+                nombreFila.text(nombreFila.attr('aux'));
+                //inputName.val(nombreFila.attr('aux'));
+                that.mostrarErrorNombreVacio(fila);
+            }
+            else {
+                nombreFila.text(nombreClausula);
+                nombreFila.attr('aux', nombreClausula);
+                //inputName.val(nombreClausula);
+            }
+        },
+        Filtrar: function () {
+            var filtro = $('input#txtFiltro').val();
+            var filtroTipo = '';//$('#cmbFiltro').val();
+
+            var listadoClausula = $('.row');
+
+            if (filtro == '' && filtroTipo == '') {
+                $('.table').removeClass("filtrado");
+            }
+            else {
+                $('.table').addClass("filtrado");
+            }
+
+            listadoClausula.each(function () {
+                var item = $(this);
+                var itemText = item.children('.header').find('span.nombreClausula').text();
+                var itemTipo = item.children('.panEdicion').find('[name="TipoClausula"]').val();
+
+                item.removeClass('oculto');
+                item.addClass('visible');
+
+                if ((filtro != '' && itemText.toLowerCase().indexOf(filtro) < 0) || (filtroTipo != '' && filtroTipo != itemTipo)) {
+                    item.addClass('oculto');
+                    item.removeClass('visible');
+                }
+            });
+
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.addClausula').click(function () {
+                that.anyadirClausula();
+            });
+            $('input.guardarTodo').click(function () {
+                that.guardarTodasClausulas();
+            });
+            $('input#txtFiltro').keyup(function (event) {
+                if (event.which || event.keyCode) {
+                    if ((event.which == 13) || (event.keyCode == 13)) {
+                        return false;
+                    }
+                }
+                that.Filtrar();
+            });
+            $('#cmbFiltro').change(function (event) {
+                that.Filtrar();
+            });
+            $('#cmbAddClausula').change(function (event) {
+                $('input.addClausula').prop('disabled', false);
+            });
+            return;
+        },
+        deshacerEliminarClausula: function (botonDeshacer) {
+            var fila = botonDeshacer.closest('.row');
+
+            fila.removeClass('ui-state-disabled');
+
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('[name="TabEliminada"]').val('false');
+
+            var panCabecera = fila.children('.header');
+            panCabecera.removeClass('deleted');
+
+            var deshacer = panCabecera.children('.deshacer');
+            var eliminada = panCabecera.children('.eliminada');
+            deshacer.remove();
+            eliminada.remove();
+
+            @*var TipoClausula = panEditar.find('[name="TipoClausula"]').val();
+
+            if (TipoClausula == '@(ManageRegisterClausesViewModel.ClauseType.ClausulasTexo)') {
+                $('#cmbAddClausula option[value="3"]').prop('disabled', true);
+                $('input.addClausula').prop('disabled', true);
+            }
+            else if (TipoClausula == '@(ManageRegisterClausesViewModel.ClauseType.CondicionesUso)') {
+                $('#cmbAddClausula option[value="4"]').prop('disabled', true);
+                $('input.addClausula').prop('disabled', true);
+            }
+            else if (TipoClausula == '@(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina)') {
+                $('#cmbAddClausula option[value="9"]').prop('disabled', true);
+                $('input.addClausula').prop('disabled', true);
+            }*@
+        },
+        eliminarClausula: function (botonEliminar) {
+            var that = this;
+            var fila = botonEliminar.closest('.row');
+            var filas = fila.find('.row');
+
+            fila.addClass('ui-state-disabled');
+            filas.addClass('ui-state-disabled');
+
+            var panelesEditar = fila.find('.panEdicion');
+            panelesEditar.removeClass('edit');
+            panelesEditar.find('[name="TabEliminada"]').val('true');
+
+            @*var TipoClausula = panelesEditar.find('[name="TipoClausula"]').val();
+
+            if (TipoClausula == '@(ManageRegisterClausesViewModel.ClauseType.ClausulasTexo)') {
+                $('#cmbAddClausula option[value="3"]').prop('disabled', false);
+                $('input.addClausula').prop('disabled', false);
+            }
+            else if (TipoClausula == '@(ManageRegisterClausesViewModel.ClauseType.CondicionesUso)') {
+                $('#cmbAddClausula option[value="4"]').prop('disabled', false);
+                $('input.addClausula').prop('disabled', false);
+            }
+            else if (TipoClausula == '@(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina)') {
+                $('#cmbAddClausula option[value="9"]').prop('disabled', false);
+                $('input.addClausula').prop('disabled', false);
+            }*@
+
+            var panelesCabecera = fila.find('.header:not(.deleted)');
+            panelesCabecera.addClass('deleted');
+            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
+            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
+
+            panelesCabecera.find('span.deshacer').click(function () {
+                that.deshacerEliminarClausula($(this));
+            });
+        },
+        editarClausula: function (botonEditar) {
+            var fila = botonEditar.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+
+            if (panEditar.hasClass('edit')) {
+                panEditar.removeClass('edit');
+            }
+            else {
+                panEditar.addClass('edit');
+            }
+        },
+        anyadirClausula: function () {
+            var TipoClausula = parseInt($('#cmbAddClausula').val());
+
+            if (TipoClausula == '@((short)ManageRegisterClausesViewModel.ClauseType.ClausulasTexo)') {
+                $('#cmbAddClausula option[value="3"]').prop('disabled', true);
+                $('input.addClausula').prop('disabled', true);
+            }
+            else if (TipoClausula == '@((short)ManageRegisterClausesViewModel.ClauseType.CondicionesUso)') {
+                $('#cmbAddClausula option[value="4"]').prop('disabled', true);
+                $('input.addClausula').prop('disabled', true);
+            }
+            else if (TipoClausula == '@((short)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina)') {
+                $('#cmbAddClausula option[value="9"]').prop('disabled', true);
+                $('input.addClausula').prop('disabled', true);
+            }
+
+            MostrarUpdateProgress();
+            var dataPost = {
+                TipoClausula: TipoClausula
+            }
+            GnossPeticionAjax(
+                this.urlPagina + '/new-clause',
+                dataPost,
+                true
+            ).done(function (data) {
+                var ultimaClausula = $('#sortable').children().last();
+                var panelEdicionUltimaClausula = ultimaClausula.children('.panEdicion');
+
+                $('#sortable').append(data);
+                var ClausulaNueva = $('#sortable').children().last();
+                var idPanel = ClausulaNueva.attr('id');
+                OperativaAcciones.init(idPanel);
+                ClausulaNueva.find('span.editar').trigger('click');
+                RecargarTodosCKEditor();
+            }).fail(function (data) {
+                console.log("ERROR =>" + data);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        guardarTodasClausulas: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.ListaClausulas = {};
+                var cont = 0;
+                $('.row').each(function () {
+                    that.obtenerDatosClausula($(this), cont++);
+                });
+                that.guardar();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINCLAUSULASREGISTRO", "GUARDARERROR")</div>');
+        },
+        guardarClausula: function (botonGuardar) {
+            var that = this;
+            var fila = botonGuardar.closest('.row');
+
+            that.ListaClausulas = {};
+            that.obtenerDatosClausula(fila, 0);
+            that.guardar();
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+            if (that.comprobarNombresVacios()) {
+                error = true;
+            }
+            if (that.comprobarContenidosVacios()) {
+                error = true;
+            }
+            if (!error && that.comprobarNombresCortosRepetidos()) {
+                error = true;
+            }
+            if (!error && that.comprobarCamposVacios()) {
+                error = true;
+            }
+
+            return error;
+        },
+        guardar: function () {
+            var that = this;
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.ListaClausulas,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                that.mostrarErrorGuardado();
+                if (error[0] == "NOMBRE VACIO") {
+                    that.mostrarErrorNombreVacio($('#' + error[1]));
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINCLAUSULASREGISTRO", "GUARDAROK")</div>');
+        },
+        obtenerDatosClausula: function (fila, num) {
+            var that = this;
+
+            var panelEdicion = fila.children('.panEdicion');
+
+            var id = fila.attr('id');
+            var TipoClausula = panelEdicion.find('[name="TipoClausula"]').val();
+
+            var prefijoClave = 'ListaClausulas[' + num + ']';
+
+            that.ListaClausulas[prefijoClave + '.Key'] = fila.attr('id');
+            that.ListaClausulas[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
+            that.ListaClausulas[prefijoClave + '.Orden'] = num;
+            that.ListaClausulas[prefijoClave + '.Type'] = TipoClausula;
+
+            that.ListaClausulas[prefijoClave + '.Title'] = ''
+            if (TipoClausula != '@(ManageRegisterClausesViewModel.ClauseType.Opcional)') {
+                that.ListaClausulas[prefijoClave + '.Title'] = panelEdicion.find('[name="Title"]').val();
+            }
+
+            that.ListaClausulas[prefijoClave + '.Text2'] = ''
+            if (TipoClausula == '@(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina)')
+            {
+                that.ListaClausulas[prefijoClave + '.Text1'] = encodeURIComponent(panelEdicion.find('[name="TextoCabeceraClausula"]').val());
+                that.ListaClausulas[prefijoClave + '.Text2'] = encodeURIComponent(panelEdicion.find('[name="TextoPaginaClausula"]').val());
+                that.ListaClausulas[prefijoClave + '.CookieName'] = encodeURIComponent(panelEdicion.find('[name="TextoNombreCookie"]').val());
+            }
+            else {
+                that.ListaClausulas[prefijoClave + '.Text1'] = encodeURIComponent(panelEdicion.find('[name="TextoClausula"]').val());
+            }
+        }
+    }
+
+    $(document).ready(function () {
+        Array.prototype.findValueByKey = function (key) {
+            var resultado = $.grep(this, function (array) {
+                return array.key == key;
+            });
+
+            if (resultado[0] != null) {
+                return resultado[0].value;
+            }
+
+            return null;
+        };
+
+        OperativaOrdenacion.init();
+        OperativaAcciones.init();
+    });
+
+</script>
+
+
+<style>
+
+    #edicion_multiidioma textarea
+    {
+        width: 560px; margin: 10px; padding: 7px; height: 108px;
+    }
+    .row .header .nombreClausula {
+        font-weight: bold;
+    }
+
+    .row .header .tipoClausula {
+        padding-left: 10px;
+    }
+
+    span.AvisoCambioCookie{
+        display: block;
+        margin-left: 200px;
+        font-size: smaller;
+        font-style: italic;
+        color: darkgray;
+    }
+</style>

@@ -1,0 +1,113 @@
+﻿@model List<FuenteViewModel>
+
+@{
+    //Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    //Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    string UrlNuevaFuente = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADFUENTE");
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMIN", "ADMINFUENTES")</h1>
+    <div>
+        <form autocomplete="off">
+            <div id="panAniadir">
+                <input type="button" class="addFont" value="Nueva fuente" onclick="document.location.href='@UrlNuevaFuente'" />
+            </div>
+            <div class="fuentes">
+                <table class="tableFuentes">
+                    <thead>
+                        <tr>
+                            <th style="width:370px;">Titulo</th>
+                            <th style="width:370px;">Url</th>
+                            <th style="width:60px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (FuenteViewModel fuente in Model)
+                        {
+                            string nombreSem = Html.EliminarCaracteresUrlSem(fuente.Nombre);
+                            string urlFuente = UrlNuevaFuente + "/" + nombreSem + "/" + fuente.Key;
+                            <tr class="filaplantilla" id="@fuente.Key">
+                                <td><a style="cursor:default;text-decoration: none;">@fuente.Nombre</a></td>
+                                <td>@fuente.Url</td>
+                                <td class="accionesFuentes">
+                                    <a href="@urlFuente"><span class="action editar">@Html.GetText("COMMON", "EDITAR")</span></a>
+                                    <span class="action eliminar" aux="@urlFuente/delete">@Html.GetText("COMMON", "ELIMINAR")</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div style="display:none;z-index:2000;" class="confirmar" id="divPreguntaConfirmacionEventos">
+                <div class="pregunta">
+                    <span id="lblPregunta_ConfirmacionEliminar"></span>
+                    <input type="button" onclick="" id="lbSi_ConfirmacionEliminar" value="Sí" />
+                    <input type="button" onclick="$('#divPreguntaConfirmacionEventos').hide();$('#mascaraBlanca').hide();" value="No" />
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.accionesFuentes .eliminar').click(function (e) {
+            var elemento = $(this);
+
+            $('#lblPregunta_ConfirmacionEliminar').html('¿Desea eliminar la fuente?');
+            $("#lbSi_ConfirmacionEliminar").unbind('click');
+
+            $("#lbSi_ConfirmacionEliminar").click(function () {
+                $('#divPreguntaConfirmacionEventos').hide();
+                $('#mascaraBlanca').hide();
+                MostrarUpdateProgress();
+                GnossPeticionAjax(
+                    elemento.attr('aux'),
+                    null,
+                    true
+                ).done(function (response) {
+                    elemento.closest('tr').remove();
+                }).fail(function (response) {
+                }).always(function (response) {
+                    OcultarUpdateProgress();
+                });
+            });
+
+            CalcularTopPanelEliminarYMostrar(e, 'divPreguntaConfirmacionEventos');
+        });
+    });
+
+    function CalcularTopPanelEliminarYMostrar(evento, panelID) {
+        $('#mascaraBlanca').show();
+        var fila = $(evento.target).closest('tr');
+        $('#' + panelID).css({
+            left: (fila.offset().left + 100) + 'px',
+            top: (fila.offset().top - 20) + 'px',
+            display: ''
+        });
+        return false;
+    }
+</script>
+
+<style>
+
+#panAniadir {
+    margin-top: 20px;    
+}
+.accionesFuentes span.action {
+    float: left;
+    margin-left: 6px;
+}
+
+#section .content .fuentes {
+    margin: 20px;
+}
+
+</style>

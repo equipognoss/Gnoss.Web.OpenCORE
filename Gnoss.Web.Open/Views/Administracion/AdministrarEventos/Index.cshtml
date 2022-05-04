@@ -1,0 +1,346 @@
+﻿@model AdministrarEventosViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>Administrar eventos</h1>
+    <div>
+        <form autocomplete="off">
+            @Html.PartialView("_EdicionEvento", Model)
+            @if (Model.SelectedEvent.Key.Equals(Guid.Empty))
+            {
+            <div id="divListaEventosContenedor" class="contenedorListadoEventos">
+                <p id="panBotonAgregar" style="height: 15px;">
+                    <a style="float:right;" id="hlCrearNuevo">Agregar nuevo evento</a>
+                </p>
+                <p id="selectorEventoInterno">
+                    Selecciona un evento interno
+                    <select id="ddlComboInterno" name="ddlComboInterno">
+                        <option value="00000000-0000-0000-0000-000000000000">Ninguno</option>
+                        @foreach (AdministrarEventosViewModel.EventModel evento in Model.ListaEventos)
+                        {
+                            <option value="@evento.Key" @Html.Raw(evento.Interno ? "selected=\"selected\"" : "")>@evento.Name</option>
+                        }
+                    </select>
+                </p>
+                <div id="divListaEventos">
+                    <div class="visor" id="visorCopiar">
+                        <p id="panCerrar"><a class="cerrar">cerrar [x]</a></p>
+                        <p>Copia la ruta del evento y pégala en el navegador</p>
+                        <p class="textoURL" id="panTextoCopiar"></p>
+                        <a id="btnCopiar">Copiar</a>
+                        <p id="mensajeCopiado">¡ COPIADO !</p>
+                    </div>
+                    <div class="visor" id="visorRedirect">
+                        <p id="panCerrar"><a class="cerrar">cerrar [x]</a></p>
+                        <p>Url de redirección del evento</p>
+                        <p class="textoURL" id="panTextoRedirect"></p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="editar"></th>
+                                <th class="eliminar"></th>
+                                <th class="nombre">Nombre</th>
+                                <th class="enlace">Enlace</th>
+                                <th class="tipo">Tipo</th>
+                                <th class="miembros">Miembros</th>
+                                <th class="codigoEvento">Código evento</th>
+                                <th class="grupo">Grupo</th>
+                                <th class="urlRedirect">UrlRedirect</th>
+                                <th class="cms">CMS</th>
+                                <th class="activo">Activo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (AdministrarEventosViewModel.EventModel evento in Model.ListaEventos)
+                            {
+                                <tr class="par" id="@evento.Key">
+                                    <td class="editar">
+                                        <a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "COMADMINCOMEVENTOS")/@evento.Key"><span class="action editar">Editar</span></a>
+                                    </td>
+                                    <td class="eliminar">
+                                        @if (evento.NumMembers == 0)
+                                        {
+                                            <span class="action eliminar">Eliminar</span>
+                                        }
+                                    </td>
+                                    <td class="nombre">@evento.Name</td>
+                                    <td class="enlace"><a aux="@evento.Enlace">Ver url</a></td>
+                                    <td>@Model.ListaTiposEventos[evento.Type]</td>
+                                    <td class="miembros">
+                                        @if (evento.NumMembers == 0)
+                                        {
+                                            @evento.NumMembers
+                                        }
+                                        else
+                                        {
+                                            <a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "COMADMINCOMEVENTOS")/@evento.Key/download-csv">@evento.NumMembers</a>
+                                        }
+                                        </td>
+                                    <td class="codigoEvento" style="">@evento.InfoExtra</td>
+                                    <td class="grupo" style="">@evento.Group</td>
+                                    <td class="urlRedirect">
+                                        @if (!string.IsNullOrEmpty(evento.UrlRedirect))
+                                        {
+                                            <a aux="@evento.UrlRedirect">Ver url</a>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (Model.ListaComponentesCMS.ContainsKey(evento.ComponenteCMS))
+                                        {
+                                            @Model.ListaComponentesCMS[evento.ComponenteCMS]
+                                        }
+                                    </td>
+                                    <td class="activo">
+                                        <input type="checkbox" @Html.Raw(evento.Active ? "checked=\"checked\"" : "") class="enlaceActivar">
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            }
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('td.enlace a').click(function () {
+            var panelVisor = $('#visorCopiar');
+            $('#panTextoCopiar', panelVisor).html($(this).attr('aux'));
+            panelVisor.css({
+                display: 'block',
+                top: ($(this).offset().top - 100) + 'px'
+            })
+        });
+
+        $('td.urlRedirect a').click(function () {
+            var panelVisor = $('#visorRedirect');
+            $('#panTextoRedirect', panelVisor).html($(this).attr('aux'));
+            panelVisor.css({
+                display: 'block',
+                top: ($(this).offset().top - 100) + 'px'
+            })
+        });
+
+        $('#visorCopiar #btnCopiar').click(function () {
+            var panelVisor = $('#visorCopiar');
+            copiarAlPortapapeles('panTextoCopiar');
+            $('#mensajeCopiado').show();
+        });
+
+        $('#visorCopiar #panCerrar a').click(function () {
+            var panelVisor = $('#visorCopiar');
+            $('#mensajeCopiado').hide();
+            panelVisor.hide();
+        });
+
+        $('#visorRedirect #panCerrar a').click(function () {
+            var panelVisor = $('#visorRedirect');
+            panelVisor.hide();
+        });
+
+        $('#ddlComboInterno').change(function () {
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                document.location.href + '/' + $('#ddlComboInterno').val() + '/select-internal',
+                null,
+                true
+            ).done(function (data) {
+
+            }).fail(function (data) {
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        $('input[type=checkbox].enlaceActivar').click(function () {
+            var dataPost = {
+                Activar: $(this).is(':checked')
+            }
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                document.location.href + '/' + $(this).closest('tr').attr('id') + '/change-active',
+                dataPost,
+                true
+            ).done(function (data) {
+
+            }).fail(function (data) {
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        $('span.eliminar').click(function () {
+            MostrarUpdateProgress();
+            var botonEliminar = $(this);
+            var id = botonEliminar.closest('tr').attr('id');
+            GnossPeticionAjax(
+                document.location.href + '/' + id + '/delete',
+                null,
+                true
+            ).done(function (data) {
+                botonEliminar.closest('tr').remove();
+                if ($('#ddlComboInterno').val() == id) {
+                    $('#ddlComboInterno')[0].selectedIndex = 0;
+                }
+            }).fail(function (data) {
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        $('.guardarTodo').click(function () {
+            OcultarError();
+
+            if ($("#txtTitulonuevoEvento").val() == '' || $("#txtContenidoNuevoEvento").val() == '') {
+                MostrarError('El titulo y la descripcion no pueden estar vacios');
+                return;
+            }
+
+            var dataPost = {};
+
+            dataPost['evento.Key'] = $("#txtEventoID").val();
+            dataPost['evento.Name'] = $("#txtTitulonuevoEvento").val();
+            dataPost['evento.Desciption'] = encodeURIComponent($("#txtContenidoNuevoEvento").val());
+            dataPost['evento.Type'] = $("#ddlTipoNuevoEvento").val();
+            dataPost['evento.InfoExtra'] = $("#txtCodigoNuevoEvento").val(); 
+            dataPost['evento.Group'] = $("#txtGrupoNuevoEvento").val();
+            dataPost['evento.UrlRedirect'] = $("#txtUrlRedirectNuevoEvento").val();
+            dataPost['evento.ComponenteCMS'] = $("#cmbNuevoComponente").val();
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                document.location.href + '/save',
+                dataPost,
+                true
+            ).done(function (data) {
+            }).fail(function (data) {
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+        $('#hlCrearNuevo').click(function () {
+            OcultarError();
+            $('#divListaEventosContenedor').hide();
+            $('#panEdicionEvento').show();
+        });
+        $('#panEdicionEvento .cancelar').click(function () {
+            OcultarError();
+            $('#divListaEventosContenedor').show();
+            $('#panEdicionEvento').hide();
+        });
+    });
+
+    function MostrarError(mensaje) {
+        $('#panError').html(mensaje).show();
+    }
+
+    function OcultarError() {
+        $('#panError').html('').hide();
+    }
+
+    function copiarAlPortapapeles(id_elemento) {
+        var aux = document.createElement("input");
+        aux.setAttribute("value", document.getElementById(id_elemento).innerHTML);
+        document.body.appendChild(aux);
+        aux.select();
+        document.execCommand("copy");
+        document.body.removeChild(aux);
+    }
+
+</script>
+
+<style>
+    .visor{
+        position: absolute; padding: 10px; width: 400px; background: #ddd; display: none;
+    }
+    #visorCopiar{
+        left: 270px;
+    }
+    #visorRedirect{
+        left: 700px;
+    }
+    .visor .textoURL{
+        cursor: text; 
+        border: 1px solid #ccc; 
+        padding: 10px; 
+        background: white none repeat scroll 0% 0%; 
+        width: 284px; 
+        float: left;
+        height: 60px;
+    }
+    #visorRedirect .textoURL{
+        width: 380px; 
+    }
+    .visor #btnCopiar {
+        background: #ccc none repeat scroll 0 0;
+        border: 1px solid #bbb;
+        color: #444;
+        margin-left: 20px;
+        padding: 3px 10px;
+        position: relative;
+        top: 30px;
+    }
+    .visor #panCerrar{
+        height:20px;
+    }
+    .visor #panCerrar a{
+        float: right;
+    }
+     
+    .visor #mensajeCopiado{
+        top: 50px; 
+        left: 15px; 
+        position: relative;
+         display:none
+    }
+
+    #divListaEventos table{
+        width:100%;
+    }
+    
+    #divListaEventos table .editar,
+    #divListaEventos table .eliminar{
+        width:17px
+    }
+
+    #divListaEventos table .nombre{
+        width:150px
+    }
+
+    #divListaEventos table .enlace{
+        width:45px;
+    }
+    
+    #divListaEventos table .codigoEvento,
+    #divListaEventos table .cms{
+        width:95px;
+    }
+    
+    #divListaEventos table tbody .miembros,
+    #divListaEventos table tbody .activo{
+        text-align:center;
+    }
+    
+    #panEdicionEvento .cancelar{
+        float:right;
+        padding:5px;
+    }
+    #panEdicionEvento input[type=text],
+    #panEdicionEvento textarea{
+       width: 860px;
+    }
+    #panEdicionEvento select{
+       width: 868px;
+    }
+
+    div.error.general{
+        margin-left:0;
+        display:none;
+    }
+    
+</style>

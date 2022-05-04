@@ -1,0 +1,70 @@
+﻿@model ComAdminSemanticElemModel
+
+@if (Model.SecondaryEntities.SemanticResourceModel == null)
+{
+    <h3>@Html.GetText("COMADMIN","INSTANCIASENTSECEDITABLES", Model.SecondaryEntities.SecondaryOntologyNameSelected):</h3>
+    <div id="updBotonera" class="messagetools listToolBar box" >
+        <div id="adminComCate"class="toolbar">
+            <ul class="floatLeft">
+                <li>
+                    <label class="boton btAzul floatRight">
+                        <a id="lbVolverEntSec" class="submit principal">@Html.GetText("PERFILBASERECURSOEDITAR", "VOLVER")</a>
+                    </label>
+                </li>
+                <li>
+                    <input id="lbCrearNuevInsEntSec" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "CREARNUEVA")"/>
+                </li>
+                <li>
+                    <input id="lbEditarInsEntSec" class="submit" type="button" value="@Html.GetText("COMMON", "EDITAR")"/>
+                </li>
+                <li>
+                    <input id="lbEliminarInsEntSec" class="submit" type="button" value="@Html.GetText("COMMON", "ELIMINAR")"/>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <ul>
+        @foreach (string sujetoEnt in Model.SecondaryEntities.SecondaryInstancesEditables.Keys)
+        {
+            <li><input type="checkbox" class="chkEntSec" rel="@sujetoEnt" /> <span>@Model.SecondaryEntities.SecondaryInstancesEditables[sujetoEnt]</span></li>
+        }
+    </ul>
+}
+else
+{
+    if (Model.SecondaryEntities.CreatingNewInstance)
+    {
+        <h3>@Html.GetText("COMADMIN", "CREARINSTANCIAENTSECEDITABLES", Model.SecondaryEntities.SecondaryOntologyNameSelected)</h3>
+    }
+    else
+    {
+        <h3>@Html.GetText("COMADMIN", "EDITARINSTANCIAENTSECEDITABLES", Model.SecondaryEntities.SecondaryOntologyNameSelected)</h3>
+    }
+    
+    <p class="sujEntSec">
+        <label>@Html.GetText("COMADMIN","SUJETOENTIDAD")</label>
+        <input id="sujEntSec" type="text" />
+    </p>
+    
+    @Html.PartialView("../Shared/SemCms/_GeneradorSemCms", Model.SecondaryEntities.SemanticResourceModel);
+    
+    <div class="fieldset actionButtons box" >
+        <fieldset>
+            <p>
+                <label class="boton btAzul floatRight">
+                    @if (Model.SecondaryEntities.CreatingNewInstance)
+                    {
+                        <a id="lbCrearEntSec" class="submit principal">@Html.GetText("COMADMINCATEGORIAS", "GUARDAR")</a>
+                    }
+                    else
+                    {
+                        <a id="lbGuardarEntSec" class="submit principal">@Html.GetText("COMADMINCATEGORIAS", "GUARDAR")</a>
+                    }
+                </label>  
+                <label class="boton btAzul floatRight">
+                    <a id="lbVolverEntSec" class="submit principal">@Html.GetText("PERFILBASERECURSOEDITAR", "VOLVER")</a>
+                </label>
+            </p>
+        </fieldset>
+    </div>
+}

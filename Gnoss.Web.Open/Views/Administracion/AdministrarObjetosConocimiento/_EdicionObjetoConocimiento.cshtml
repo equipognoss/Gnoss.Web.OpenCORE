@@ -1,0 +1,80 @@
+﻿@model ObjetoConocimientoModel
+
+<li class="row ObjetoConocimiento" id="@Model.Ontologia">
+    <section class="header">
+        <span class="nombre" aux="@Html.ObtenerTextoIdiomaUsuario(Model.Name)">@Html.ObtenerTextoIdiomaUsuario(Model.Name)</span> - <span class="ontologia">@Model.Ontologia@(".owl")</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <div>
+            <input type="hidden" name="TabEliminada" value="false" />
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINOBJETOSCONOCIMIENTO", "NOMBREONTOLOGIA")">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBREONTOLOGIA")</span>
+                <input type="text" name="Name" value="@Model.Name">
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINOBJETOSCONOCIMIENTO", "NOMBRECORTOONTOLOGIA")">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRECORTOONTOLOGIA")</span>
+                <input type="text" name="ShortNameOntology" value="@Model.ShortNameOntology">
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINOBJETOSCONOCIMIENTO", "NAMESPACES")">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NAMESPACES")</span>
+                <input type="text" name="Namespace" value="@Model.Namespace" />
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINOBJETOSCONOCIMIENTO", "NAMESPACESEXTRA")">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NAMESPACESEXTRA")</span>
+                <textarea cols="40" rows="3" name="NamespaceExtra">@Model.NamespaceExtra</textarea>
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINOBJETOSCONOCIMIENTO", "NOMBRECATTESEXCLUSIVO")">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRECATTESEXCLUSIVO")</span>
+                <input type="text" name="NombreTesauroExclusivo" value="@Model.NombreTesauroExclusivo" />
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINOBJETOSCONOCIMIENTO", "CACHEARDATOSSEMANTICOS")">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "CACHEARDATOSSEMANTICOS")</span>
+                <input type="checkbox" name="CachearDatosSemanticos" @(Model.CachearDatosSemanticos ? "checked" : "") />
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINOBJETOSCONOCIMIENTO", "ESBUSCABLE")">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "ESBUSCABLE")</span>
+                <input type="checkbox" name="EsBuscable" @(Model.EsBuscable ? "checked" : "") />
+            </p>
+            @if (Model.Subtipos.Count == 0)
+            {
+                <p>
+                    <a class="linkConfigurarSubtipos">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "CONFIGURARSUBTIPOS")</a>
+                </p>
+            }
+            <section class="configurarSubtipos" @Html.Raw(Model.Subtipos.Count == 0 ? "style=\"display:none\"" : "")>
+                <p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "SUBTIPOS")</p>
+                <ol class="subtipos">
+                    @foreach (string tipo in Model.Subtipos.Keys)
+                    {
+                        KeyValuePair<string, string> subTipo = new KeyValuePair<string, string>(tipo, Model.Subtipos[tipo]);
+                        @Html.PartialView("_FichaSubTipo", subTipo);
+                    }
+                </ol>
+                <input type="button" class="addSubTipo" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "ADDSUBTIPO")" />
+            </section>
+            <p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACIONRECLISTADO")</p>
+            <section class="bloque PresentacionListado">
+                @Html.PartialView("_FichaPresentacion", Model.PresentacionListado)
+            </section>
+            <p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACIONRECMOSAICO")</p>
+            <section class="bloque PresentacionMosaico">
+                @Html.PartialView("_FichaPresentacion", Model.PresentacionMosaico)
+            </section>
+            <p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACIONRECMAPA")</p>
+            <section class="bloque PresentacionMapa">
+                @Html.PartialView("_FichaPresentacion", Model.PresentacionMapa)
+            </section>
+            <p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACIONPERSONALIZADO")</p>
+            <section class="bloque PresentacionPersonalizado">
+                @Html.PartialView("_FichaPresentacionPersonalizado", Model.PresentacionPersonalizado)
+            </section>
+            <p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACIONRECRELACIONADOS")</p>
+            <section class="bloque PresentacionRelacionados">
+                @Html.PartialView("_FichaPresentacion", Model.PresentacionRelacionados)
+            </section>
+        </div>
+        @*<input type="button" class="guardar" value="Guardar" />*@
+    </section>
+</li>

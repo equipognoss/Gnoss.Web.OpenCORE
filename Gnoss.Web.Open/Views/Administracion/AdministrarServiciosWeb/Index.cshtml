@@ -1,0 +1,515 @@
+﻿@model AdministrarServiciosWebViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+<div class="content">
+    <h1>Servicios Web</h1>
+    <form autocomplete="off">
+        <p>
+            @Html.GetText("COMADMINSERVICIOS", "INFOTITULO")
+        </p>
+
+        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINSERVICIOS", "GUARDARTODO")" />
+        <div class="panAniadir">
+            <input type="button" class="addServicio" value="@Html.GetText("COMADMINSERVICIOS", "ADDSERVICIOWEB")" />
+        </div>
+        <ol class="table" id="sortable">
+            @foreach (ProyectoServicioWeb servicio in Model.ServiciosWeb)
+            {
+                @Html.PartialView("_PintarServicio", Model)
+            }
+        </ol>
+
+    </form>
+
+
+
+</div>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+
+<script>
+    var OperativaOrdenacion = {
+        init: function () {
+            this.config();
+
+        },
+        config: function () {
+            $("#sortable").sortable();
+            $("#sortable").disableSelection();
+            return;
+        }
+    }
+
+
+    var OperativaAcciones = {
+        init: function (panelID) {
+            this.config(panelID);
+            if (this.id == '') {
+                this.engancharComportamiento();
+            }
+            this.engancharComportamientoServicios();
+
+            $('.row.pestanya').each(function () {
+                $('#' + this.id + ' .tipoPestanya').html('(' + $('#' + this.id + ' .nombreTipoPestanya').val() + ')');
+            });
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            this.id = '';
+
+            if (typeof panelID != 'undefined' && panelID != '') {
+                this.id = '#' + panelID + ' ';
+            }
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.addServicio').click(function () {
+                that.anyadirServicio();
+            });
+            $('input.guardarTodo').click(function () {
+                that.guardarTodosServicios();
+            });
+            return;
+        },
+        engancharComportamientoServicios: function () {
+            var that = this;
+            $(that.id + 'span.editar').click(function () {
+                that.editarServicio($(this));
+            });
+            $(that.id + 'span.eliminar').click(function () {
+                that.eliminarServicio($(this));
+            });
+            $(that.id + 'input[name="TabName"]').keyup(function () {
+                that.cambiarNombreServicio($(this));
+            });
+            return;
+        },
+        anyadirServicio: function () {
+            $('.error.general').remove();
+            MostrarUpdateProgress();
+
+            GnossPeticionAjax(
+                this.urlPagina + '/new-ser',
+                "",
+                true
+            ).done(function (data){
+                var ultimaServicio = $('#sortable').children().last();
+                var panelEdicionUltimaServicio = ultimaServicio.children('.panEdicion');
+                var orden = panelEdicionUltimaServicio.find('[name="TabOrden"]').val();
+
+                $('#sortable').append(data);
+                var servicioNueva = $('#sortable').children().last();
+                var panelEdicion = servicioNueva.children('.panEdicion');
+                panelEdicion.find('[name="TabOrden"]').val(parseInt(orden) + 1);
+
+                var idPanel = servicioNueva.attr('id');
+                OperativaAcciones.init(idPanel);
+
+                servicioNueva.find('span.editar').trigger('click');
+            }).fail(function (data) {
+                console.log("ERROR =>" + data);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+
+        editarServicio: function (botonEditar) {
+            var fila = botonEditar.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+
+            if (panEditar.hasClass('edit')) {
+                panEditar.removeClass('edit');
+            }
+            else {
+                panEditar.addClass('edit');
+                panEditar.addClass('modified');
+            }
+        },
+        eliminarServicio: function (botonEliminar) {
+            var that = this;
+            var fila = botonEliminar.closest('.row');
+            var filas = fila.find('.row.servicio');
+
+            fila.addClass('ui-state-disabled');
+            filas.addClass('ui-state-disabled');
+
+            var panelesEditar = panelesEditar = filas.children('.panEdicion');
+            panelesEditar = panelesEditar.add(fila.children('.panEdicion'));
+            panelesEditar.removeClass('edit');
+            panelesEditar.find('[name="TabEliminada"]').val('true');
+
+            var panelesCabecera = filas.children('.header:not(.deleted)');
+            panelesCabecera = panelesCabecera.add(fila.children('.header:not(.deleted)'));
+            panelesCabecera.addClass('deleted');
+            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
+            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
+
+            panelesCabecera.find('span.deshacer').click(function () {
+                that.deshacerEliminarServicio($(this));
+            });
+        },
+        deshacerEliminarServicio: function (botonDeshacer) {
+            var fila = botonDeshacer.closest('.row');
+
+            fila.removeClass('ui-state-disabled');
+
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('[name="TabEliminada"]').val('false');
+
+            var panCabecera = fila.children('.header');
+            panCabecera.removeClass('deleted');
+            panEditar.addClass('modified');
+
+            var deshacer = panCabecera.children('.deshacer');
+            var eliminada = panCabecera.children('.eliminada');
+            deshacer.remove();
+            eliminada.remove();
+        },
+        cambiarNombreServicio: function (inputName) {
+            var nombreServicio = inputName.val();
+            var fila = inputName.closest('.row');
+            var cabecera = fila.children('.header')
+
+            var nombreFila = cabecera.find('.nombreServicio');
+
+            if (nombreServicio == '') {
+                nombreFila.text(nombreFila.attr('aux'));
+            }
+            else {
+                nombreFila.text(nombreServicio);
+            }
+        },
+        guardarTodosServicios: function () {
+            var that = this;
+            MostrarUpdateProgressTime(0);
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.ListaServicios = {};
+                var cont = 0;
+                $('.row.servicio').each(function () {
+                    that.obtenerDatosServicio($(this), cont++);
+                });
+                that.guardar();
+            }
+            else {
+                OcultarUpdateProgress();
+                that.mostrarErrorGuardado();
+            }
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+            if (that.comprobarNombreServicios()) {
+                error = true;
+            }
+            if (that.comprobarServicioWeb()) {
+                error = true;
+            }
+            return error;
+        },
+
+        comprobarServicioWeb: function () {
+            var that = this;
+            var errorRepetido = false;
+            var inputsNombresCortos = $('.row.servicio:not(".ui-state-disabled") .modified input[name = "tabServicio"]');
+            inputsNombresCortos.each(function () {
+                if (that.comprobarNombreServicio($(this))) {
+                    errorRepetido = true;
+                }
+            });
+            return errorRepetido;
+        },
+        comprobarNombreServicio: function (inputNombreCorto) {
+            var that = this;
+            $('.error', inputNombreCorto.parent()).remove();
+
+            var fila = inputNombreCorto.closest('.row');
+
+            var inputsNombresCortos = $('.row.servicio:not(".ui-state-disabled") input[name = "tabServicio"]');
+            var nombreCorto = inputNombreCorto.val();
+            var errorRepetido = false;
+            var inputRepetido = null;
+
+            if (nombreCorto != "") {
+                inputsNombresCortos.each(function () {
+                    var inputCompare = $(this);
+                    if (inputCompare.closest('.row').attr('id') != fila.attr('id')) {
+                        if (inputCompare.val() == nombreCorto) {
+                            errorRepetido = true;
+                            inputRepetido = inputCompare;
+                        }
+                    }
+                });
+            }
+            else {
+                that.mostrarErrorServicioVacio(fila);
+                return true;
+            }
+
+            if (errorRepetido) {
+                that.mostrarErrorServicioRepetido(fila);
+            }
+            return errorRepetido;
+        },
+        mostrarErrorServicioVacio: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "tabServicio"]', fila).first();
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINSERVICIOS", "ERRORRUTAVACIA")</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        mostrarErrorServicioRepetido: function (fila) {
+            var inputNombreCorto = $('input[name = "tabServicio"]', fila).first();
+            inputNombreCorto.after("<span class=\"error\">@Html.GetText("COMADMINSERVICIOS", "ERRORSERVICIOREPETIDO")</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        comprobarNombreServicios: function () {
+            var that = this;
+            var errorRepetido = false;
+            var inputsNombresCortos = $('.row.servicio:not(".ui-state-disabled") .modified input[name = "TabName"]');
+            inputsNombresCortos.each(function () {
+                if (that.comprobarNombre($(this))) {
+                    errorRepetido = true;
+                }
+            });
+            return errorRepetido;
+        },
+        comprobarNombre: function (inputNombreCorto) {
+            var that = this;
+            $('.error', inputNombreCorto.parent()).remove();
+
+            var fila = inputNombreCorto.closest('.row');
+
+            var inputsNombresCortos = $('.row.servicio:not(".ui-state-disabled") input[name = "TabName"]');
+            var nombreCorto = inputNombreCorto.val();
+            var errorRepetido = false;
+            var inputRepetido = null;
+            var errorNombreVacio = false;
+
+            if (nombreCorto != "") {
+                inputsNombresCortos.each(function () {
+                    var inputCompare = $(this);
+                    if (inputCompare.closest('.row').attr('id') != fila.attr('id')) {
+                        if (inputCompare.val() == nombreCorto) {
+                            errorRepetido = true;
+                            inputRepetido = inputCompare;
+                        }
+                    }
+                });
+            }
+            else
+            {
+                that.mostrarErrorNombreServicioVacio(fila);
+                return true;
+            }
+
+            if (errorRepetido) {
+                that.mostrarErrorNombreCortoRepetido(fila);
+            }
+            return errorRepetido;
+        },
+        mostrarErrorNombreServicioVacio: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "TabName"]', fila).first();
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINSERVICIOS", "ERRORNOMBRECORTOVACIO")</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        mostrarErrorNombreCortoRepetido: function (fila) {
+            var inputNombreCorto = $('input[name = "TabName"]', fila).first();
+            inputNombreCorto.after("<span class=\"error\">@Html.GetText("COMADMINSERVICIOS", "ERRORRUTAREPETIDA")</span>");
+            $('.panEdicion', fila).addClass('edit');
+            $('.panEdicion', fila).addClass('modified');
+        },
+        guardar: function () {
+            var that = this;
+
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.ListaServicios,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                that.mostrarErrorGuardado();
+                if (error[0] == "RUTA REPETIDA") {
+                    that.mostrarErrorUrlRepetida($('#' + error[1]));
+                }
+                else if (error[0] == "NOMBRE VACIO") {
+                    that.mostrarErrorNombreVacio($('#' + error[1]));
+                }
+                else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
+                    that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINSERVICIOS", "GUARDARERROR")</div>');
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINSERVICIOS", "GUARDAROK")</div>');
+        },
+        obtenerDatosServicio: function (fila, num) {
+            var that = this;
+
+            var id = fila.attr('id');
+
+            var panelEdicion = fila.children('.panEdicion');
+            var prefijoClave = 'ListaServicios[' + num + ']';
+
+            var eliminar = panelEdicion.find('[name="TabEliminada"]').val();
+
+            if (eliminar == "false")
+            {
+                that.ListaServicios[prefijoClave + '.Nombre'] = panelEdicion.find('[name="TabName"]').val();
+                that.ListaServicios[prefijoClave + '.AplicacionWeb'] = panelEdicion.find('[name="tabServicio"]').val();
+
+                var modified = panelEdicion.hasClass("modified");
+                that.ListaServicios[prefijoClave + '.Modified'] = modified;
+
+                if (modified) {
+                    that.ListaServicios[prefijoClave + '.Nombre'] = panelEdicion.find('[name="TabName"]').val();
+                    that.ListaServicios[prefijoClave + '.AplicacionWeb'] = panelEdicion.find('[name="tabServicio"]').val();
+                }
+            }
+
+        }
+    }
+
+    $(document).ready(function () {
+
+        OperativaOrdenacion.init();
+        OperativaAcciones.init();
+    });
+
+</script>
+
+
+<style>
+    ol.table li.row section.panEdicion ol.exportacionesSortable,
+    ol#sortable li.row section.panEdicion ol.propiedadesSortable,
+    ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable {
+        border: 0;
+        padding: 0;
+    }
+
+        ol#sortable li.row section.panEdicion ol.exportacionesSortable li.row,
+        ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row,
+        ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable li.row {
+            padding-top: 0;
+            margin-bottom: 0;
+            margin-left: 20px;
+            border-bottom: 0;
+        }
+
+            ol#sortable li.row section.panEdicion ol.exportacionesSortable li.row:last-of-type,
+            ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row:last-of-type,
+            ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable li.row:last-of-type {
+                border-bottom: 1px solid;
+            }
+
+    ol.exportacionesSortable li.row.exportacion section.panEdicion {
+        width: 760px;
+    }
+
+        ol.exportacionesSortable li.row.exportacion section.panEdicion p {
+            width: 730px;
+        }
+
+        ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque {
+            margin-bottom: 0;
+            border-bottom: 0;
+        }
+
+            ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque:last-of-type {
+                border-bottom: 1px solid;
+            }
+
+            ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque p {
+                width: 710px;
+            }
+
+    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion {
+        width: 717px;
+    }
+
+        ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion p {
+            width: 700px;
+        }
+
+        ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion .tipo {
+            width: 100px;
+        }
+
+    ol.exportacionesSortable li.row.exportacion input[type="text"],
+    ol.exportacionesSortable li.row.exportacion textarea {
+        width: 520px;
+    }
+
+    ol.filtrosOrdenSortable li.row input[type="text"],
+    ol.filtrosOrdenSortable li.row textarea {
+        width: 590px;
+    }
+
+    ol.exportacionesSortable li.row.exportacion .bloque input[type="text"],
+    ol.exportacionesSortable li.row.exportacion .bloque textarea {
+        width: 490px;
+    }
+
+    ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion {
+        width: 697px;
+    }
+
+        ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion p {
+            width: 667px;
+        }
+
+        ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion .tipo {
+            width: 170px;
+        }
+
+    .editarFiltroOrden {
+        margin-bottom: 20px;
+        margin-right: 20px;
+    }
+
+        .editarFiltroOrden .error {
+            margin-left: 20px;
+        }
+
+    .row .header .nombrePestanya {
+        font-weight: bold;
+    }
+
+    .row .header .tipoPestanya {
+        padding-left: 10px;
+    }
+
+    .table.filtrado .oculto {
+        display: block;
+    }
+
+    .table.filtrado li.row.visible > .header {
+        border-bottom: 1px solid #000;
+    }
+
+    .table.filtrado li.pestanya ol.subPestanyas,
+    .table.filtrado li.pestanya.row {
+        border: 0 !important;
+    }
+
+    .table.filtrado {
+        border-bottom: 0 !important;
+        border: 1px solid #000;
+    }
+</style>

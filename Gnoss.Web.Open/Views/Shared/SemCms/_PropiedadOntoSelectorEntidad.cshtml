@@ -1,0 +1,243 @@
+﻿@model SemanticPropertyModel
+
+@{
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.Element.Propiedad;
+}
+
+@if (!Model.ReadMode)
+{
+    string classPlaceHolder = "";
+    if (!string.IsNullOrEmpty(Model.OntologyPropInfo.DefaultUnselectableValue))
+    {
+        classPlaceHolder = "autocompletePlaceHolder";
+    }
+
+    @Html.PartialView("SemCms/_TituloPropiedad", Model)
+
+    string idControl = Model.OntologyPropInfo.ControlID;
+
+    if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Combo")
+    {
+        var UtilIdiomas = Html.GetUtilIdiomas();
+        string disabled = "";
+
+        if (!string.IsNullOrEmpty(mPropiedad.EspecifPropiedad.SelectorEntidad.ConsultaDependiente) && mPropiedad.ValoresUnificados.Count == 0)
+        {
+            disabled = "disabled=\"disabled\"";
+        }
+
+        string onchange = "";
+
+        if (Model.OntologyPropInfo.EntitySelector.DependentProperties != null && Model.OntologyPropInfo.UniqueValue)
+        {
+            onchange = "onchange=\"ObtenerSelectoresDependientes('" + mPropiedad.Nombre + "','" + mPropiedad.ElementoOntologia.TipoEntidad + "',false);\"";
+        }
+
+        <select id="@idControl" class="select big form-control not-outline" @Html.Raw(disabled) @Html.Raw(onchange)>
+            @if (mPropiedad.EspecifPropiedad.SelectorEntidad.TextoElemento0 != null)
+            {
+                if ((!string.IsNullOrEmpty(mPropiedad.EspecifPropiedad.SelectorEntidad.TextoElemento0) && mPropiedad.EspecifPropiedad.SelectorEntidad.TextoElemento0 != "|||") || Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues.Keys.Count == 0)
+                {
+                    <option value="">@Es.Riam.Util.UtilCadenas.ObtenerTextoDeIdioma(mPropiedad.EspecifPropiedad.SelectorEntidad.TextoElemento0, UtilIdiomas.LanguageCode, null)</option>
+                }
+            }
+            else
+            {
+                <option value="">@Html.GetText("CONTROLESCVSEM", "SELECIONAENTIDAD")</option>
+            }
+
+            @foreach (string entidadID in Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues.Keys)
+            {
+                disabled = "";
+
+                if (!Model.OntologyPropInfo.UniqueValue)
+                {
+                    if (mPropiedad.ListaValores.ContainsKey(entidadID))
+                    {
+                        disabled = "disabled=\"disabled\"";
+                    }
+                }
+                else if (mPropiedad.ValoresUnificados.ContainsKey(entidadID))
+                {
+                    disabled = "selected=\"selected\"";
+                }
+
+                <option value="@entidadID" @Html.Raw(disabled)>@Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues[entidadID]</option>
+            }
+        </select>
+    }
+    else if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Autocompletar" || mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "GruposGnoss" || mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "PersonaGnoss")
+    {
+        string idTxtHack = idControl.Replace("selEnt_", "hack_");
+        string onfocus = null;
+        string valueControl = "";
+        string valueControlAuto = "";
+        string disabled = "";
+
+        if (Model.OntologyPropInfo.UniqueValue && mPropiedad.ValoresUnificados.Count > 0)
+        {
+            valueControl = new List<string>(mPropiedad.ValoresUnificados.Keys)[0];
+            valueControlAuto = Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues[valueControl];
+        }
+
+        if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Autocompletar")
+        {
+            onfocus = "autocompletarSeleccionEntidad(this,'" + Html.Raw(Model.OntologyPropInfo.EntitySelector.Graph) + "','" + Html.Raw(Model.OntologyPropInfo.EntitySelector.EntityRequestedUrl) + "','" + Html.Raw(Model.OntologyPropInfo.EntitySelector.PropertyRequestedUrl) + "','" + Html.Raw(Model.OntologyPropInfo.EntitySelector.EntityTypeRequestedUrl) + "','" + Html.Raw(Es.Riam.Util.UtilCadenas.CadenaFormatoTexto(Model.OntologyPropInfo.EntitySelector.EditionProperties)) + "','" + Html.Raw(Model.OntologyPropInfo.EntitySelector.ExtraWhereAutoComplete) + "','" + Html.Raw(Model.OntologyPropInfo.EntitySelector.Language) + "');";
+
+            if (!string.IsNullOrEmpty(valueControlAuto))
+            {
+                disabled = "disabled=\"disabled\"";
+            }
+        }
+        else
+        {
+            onfocus = "autocompletarSeleccionEntidadGruposGnoss(this,$('#inpt_identidadID').val(),'" + Html.Raw(Model.OntologyPropInfo.EntitySelector.OrganizationID) + "',$('#inpt_proyID').val(),'" + Html.Raw(Model.OntologyPropInfo.EntitySelector.QueryType) + "');";
+        }
+
+        <input id="@idControl" type="hidden" value="@valueControl" />
+
+        if (Model.OntologyPropInfo.EntitySelector.ExtraTitleAutoComplete != null)
+        {
+            <label class="lb">@Model.OntologyPropInfo.EntitySelector.ExtraTitleAutoComplete</label>
+        }
+        <div class="position-relative">
+            <input placeholder="@Model.OntologyPropInfo.DefaultUnselectableValue" id="@idTxtHack" type="text" class="form-control edit text big autocompletarSelecEnt @classPlaceHolder" onfocus="@onfocus" value="@valueControlAuto" @disabled onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;} " onchange="if (this.value == ''){$('#@idControl').val('');}" />
+        </div>
+        if (Model.OntologyPropInfo.EntitySelector.AdditionalExtraTitleWhereAutoCompletes != null)
+        {
+            int count = 0;
+
+            foreach (KeyValuePair<string, string> tituloExtraWhere in Model.OntologyPropInfo.EntitySelector.AdditionalExtraTitleWhereAutoCompletes)
+            {
+                string idTxtHackExtra = idControl.Replace("selEnt_", "extra_" + count + "_hack_");
+                string onfocusExtra = "autocompletarSeleccionEntidad(this,'" + Model.OntologyPropInfo.EntitySelector.Graph + "','" + Model.OntologyPropInfo.EntitySelector.EntityRequestedUrl + "','" + Model.OntologyPropInfo.EntitySelector.PropertyRequestedUrl + "','" + Model.OntologyPropInfo.EntitySelector.EntityTypeRequestedUrl + "','" + Es.Riam.Util.UtilCadenas.CadenaFormatoTexto(Model.OntologyPropInfo.EntitySelector.EditionProperties) + "','" + tituloExtraWhere.Value + "','" + Model.OntologyPropInfo.EntitySelector.Language + "');";
+                <div>
+                    @if (tituloExtraWhere.Key != null)
+                    {
+                        <label class="lb">@tituloExtraWhere.Key</label>
+                    }
+                    <input placeholder="@Model.OntologyPropInfo.DefaultUnselectableValue" id="@idTxtHackExtra" type="text" class="edit text big @classPlaceHolder" onfocus="@onfocusExtra" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;} " onchange="if (this.value == ''){$('#@idControl').val('');}" />
+                </div>
+                count++;
+            }
+        }
+
+        if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Autocompletar" && !string.IsNullOrEmpty(valueControlAuto))
+        {
+            <a class="remove removeAutocompletar"></a>
+        }
+    }
+    else if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "ListaCheck")
+    {
+        string idDivCheck = idControl.Replace("selEnt_", "divCheckEnt_");
+        string valueControl = "";
+
+        if (Model.OntologyPropInfo.UniqueValue && mPropiedad.ValoresUnificados.Count > 0)
+        {
+            valueControl = new List<string>(mPropiedad.ValoresUnificados.Keys)[0];
+        }
+
+        <input id="@idControl" type="hidden" value="@valueControl" />
+        <div id="@idDivCheck">
+            @if (Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues.Count > 0)
+            {
+                foreach (string entidadID in Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues.Keys)
+                {
+                    string tipoInput = null;
+                    string name = "";
+                    string onclickCheck = "AgregarEntidadSeleccListaCheck(this,'" + System.Net.WebUtility.UrlEncode(idControl) + "','" + entidadID + "','" + mPropiedad.ElementoOntologia.TipoEntidad + "','" + mPropiedad.Nombre + "');";
+
+                    if (Model.OntologyPropInfo.UniqueValue)
+                    {
+                        tipoInput = "radio";
+                        name = "name=\"" + idControl.Replace("selEnt_", "radioName_") + "\"";
+                    }
+                    else
+                    {
+                        tipoInput = "checkbox";
+                    }
+
+                    string checkedInput = "";
+
+                    if (mPropiedad.ValoresUnificados.ContainsKey(entidadID))
+                    {
+                        checkedInput = "checked=\"checked\"";
+                    }
+
+                    <div>
+                        <input type="@tipoInput" @Html.Raw(name) onclick="@onclickCheck" @Html.Raw(checkedInput) />
+                        <label>@Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues[entidadID]</label>
+                    </div>
+                }
+            }
+            else if (mPropiedad.EspecifPropiedad.SelectorEntidad.MensajeNoResultados != null)
+            {
+                <p class="infoProp">@mPropiedad.EspecifPropiedad.SelectorEntidad.MensajeNoResultados</p>
+            }
+        </div>
+    }
+    else if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Tesauro")
+    {
+        string idBkHtml = idControl.Replace("selEnt_", "bkHtmlSelEnt_");
+        string idhackTesNAme = idControl.Replace("selEnt_", "hackTesNameSelEnt_");
+        string idControlTes = idControl.Replace("selEnt_", "divContControlTes_");
+        string idDivCheckTes = idControl.Replace("selEnt_", "divCheckEnt_");
+        string displayControlTes = "";
+
+        if (Model.OntologyPropInfo.UniqueValue && mPropiedad.ValoresUnificados.Count > 0)
+        {
+            displayControlTes = "style=\"display:none;\"";
+        }
+
+        <input id="@idControl" type="hidden" value="@Model.OntologyPropInfo.EntitySelector.SemanticThesaurusAddedValue.Key" />
+        <input id="@idBkHtml" type="hidden" />
+        <input id="@idhackTesNAme" type="hidden" />
+        <div id="@idControlTes" @Html.Raw(displayControlTes)>
+            <div id="@idDivCheckTes" class="tesSem">
+                @foreach (string entidadID in Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues.Keys)
+                {
+                    string idDiv = "";
+                    string idCheck = "";
+                    Guid id = Guid.NewGuid();
+
+                    if (Model.OntologyPropInfo.EntitySelector.EntitiesWithChildren.Contains(entidadID))
+                    {
+                        idDiv = "divTesSem_" + id;
+                    }
+                    idCheck = "CheckTesSem_" + id;
+
+                    string onclickTes = "AgregarEntidadSeleccTesSem(this,'" + idDivCheckTes + "','" + System.Net.WebUtility.UrlEncode(idControl) + "','" + entidadID + "','" + mPropiedad.EspecifPropiedad.SelectorEntidad.Grafo + "','" + mPropiedad.EspecifPropiedad.SelectorEntidad.PropiedadesEdicion[5] + "','" + mPropiedad.EspecifPropiedad.SelectorEntidad.PropiedadesEdicion[3] + "','" + mPropiedad.EspecifPropiedad.SelectorEntidad.PropiedadesEdicion[2] + "','" + System.Net.WebUtility.UrlEncode(Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues[entidadID]) + "','" + idDiv + "','','');";
+
+                    <div @Html.GetParam("id", idDiv)>
+                        <input @Html.GetParam("id", idCheck) type="checkbox" onclick="@onclickTes" />
+                        <label @Html.GetParam("for", idCheck)>@Model.OntologyPropInfo.EntitySelector.EditionEntitiesValues[entidadID]</label>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "UrlRecurso" || mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "UrlRecursoSemantico")
+    {
+        string valueControl = "";
+
+        if (Model.OntologyPropInfo.UniqueValue && mPropiedad.ValoresUnificados.Count > 0)
+        {
+            valueControl = new List<string>(mPropiedad.ValoresUnificados.Keys)[0];
+        }
+
+        <input placeholder="@Model.OntologyPropInfo.DefaultUnselectableValue" id="@idControl" type="text" class="edit text big @classPlaceHolder" value="@valueControl" />
+    }
+
+    SharedSemCms sharedSemCms = new SharedSemCms();
+    sharedSemCms.semanticPropertyModel = Model;
+    @Html.PartialView("../Shared/SemCMS/_AddEditionButtons", sharedSemCms)
+
+    string idDivError = idControl.Replace("selEnt_", "divError_");
+    <div id="@idDivError"></div>
+
+    @Html.PartialView("../Shared/SemCMS/_AddEditionAddedValues", sharedSemCms)
+}
+else
+{
+    @Html.PartialView("SemCms/_PropiedadOntoSelectorEntidadLectura", Model)
+}

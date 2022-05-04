@@ -1,0 +1,581 @@
+﻿@model ManageRedirectionsViewModel
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMINREDIRECCIONES", "TITULO")</h1>
+    <div>
+        <form autocomplete="off">
+            <p>
+                @Html.GetText("COMADMINREDIRECCIONES", "INFOTITULO")
+            </p>
+
+            <div class="contenedorFiltros">
+                <div class="panFiltrar">
+                    <p>
+                        <span>@Html.GetText("COMADMINREDIRECCIONES", "FILTRAR")</span>
+                    </p>
+                    <p>
+                        <input type="text" id="txtFiltro">
+                    </p>
+                </div>
+            </div>
+
+            <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINREDIRECCIONES", "GUARDARCAMBIOS")" />
+            <div class="panAniadir">
+                @Html.GetText("COMADMINREDIRECCIONES", "INFOADDREDIRECCION")
+                <input type="button" class="addRedireccion" value="@Html.GetText("COMADMINREDIRECCIONES", "ADDREDIRECCION")" />
+            </div>
+            <ol class="table" id="listadoRedirecciones">
+                @foreach (ManageRedirectionsViewModel.RedirectionModel redireccion in Model.RedirectionsList.OrderBy(r => r.Key))
+                {
+                    @Html.PartialView("_EdicionRedireccion", redireccion);
+                }
+            </ol>
+        </form>
+    </div>
+    <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINREDIRECCIONES", "GUARDARCAMBIOS")" />
+</div>
+
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script>
+
+    var OperativaAcciones = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+
+            this.engancharComportamientoRedirecciones();
+        },
+        config: function () {
+            this.urlPagina = document.location.href;
+
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.addRedireccion').click(function () {
+                that.anyadirRedireccion();
+            });
+            $('input.guardarTodo').click(function () {
+                that.guardarTodasRedirecciones();
+            });
+            $('input#txtFiltro').keyup(function (event) {
+                if (event.which || event.keyCode) {
+                    if ((event.which == 13) || (event.keyCode == 13)) {
+                        return false;
+                    }
+                }
+                that.Filtrar();
+            });
+            return;
+        },
+        engancharComportamientoRedirecciones: function () {
+            var that = this;
+            page.on('click', 'span.eliminar', function () {
+                that.eliminarRedireccion($(this));
+            });
+            page.on('click', 'span.editar', function () {
+                that.editarRedireccion($(this));
+            });
+            page.on('click', '.panEdicion input[type="radio"]', function () {
+                that.MostrarBloqueRadiobtSeleccionado($(this));
+            });
+            page.on('click', 'input.addParametro', function () {
+                that.anyadirParametroRedireccion($(this));
+            });
+            page.on('click', '.itemParametro .deleteParametro', function () {
+                that.eliminarParametro($(this));
+            });
+            page.on('keyup', 'input[name="txtUrlOrigen"]', function () {
+                that.cambiarNombreRedireccion($(this));
+            });
+            page.on('blur', 'input[name="txtUrlOrigen"]', function () {
+                that.cambiarAuxNombreRedireccion($(this));
+            });
+
+            that.MontarToolTip($('#listadoRedirecciones'));
+            return;
+        },
+        MontarToolTip(panel){
+            $('span.tipo', panel).each(function () {
+                if ($(this).attr("title") != null && $(this).attr("title") != '') {
+                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
+                    $(this).removeAttr("title");
+                }
+            });
+            $('.conToolTip', panel).tooltip();
+        },
+        MostrarBloqueRadiobtSeleccionado: function (radio) {
+            //var ancho = $(".tipoRedireccion input[type=radio]:checked").val() == 'auto' ? '' : this.comprobarAncho();
+            var panEdicion = radio.closest('.panEdicion');
+            if (radio.val() == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
+                $('.redireccionParametrizada', panEdicion).hide();
+                $('.redireccionDirecta', panEdicion).show();
+            }
+            else if (radio.val() == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
+                $('.redireccionDirecta', panEdicion).hide();
+                $('.redireccionParametrizada', panEdicion).show();
+            }
+        },
+        mostrarErrorUrlOrigenVacio: function (inputUrl) {
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLORIGENVACIA")</span>");
+            $('.panEdicion', inputUrl.closest('.row')).addClass('edit');
+        },
+        mostrarErrorUrlDestinoVacio: function (inputUrl) {
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLDESTINOVACIA")</span>");
+            $('.panEdicion', inputUrl.closest('.row')).addClass('edit');
+            this.mostrarErrorGuardado();
+        },
+        mostrarErrorSinTipoRedireccion: function (radioDirecta){
+            $('span.tipoRedireccion', radioDirecta.closest('.row')).after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINTIPOREDIRECCION")</span>");
+            $('.panEdicion', radioDirecta.closest('.row')).addClass('edit');
+            this.mostrarErrorGuardado();
+        },
+        mostrarErrorNomParametroVacio: function (inputUrl){
+            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORNOMPARAMETROVACIO")</span>");
+            $('.panEdicion', inputUrl.closest('.row')).addClass('edit');
+            this.mostrarErrorGuardado();
+        },
+        mostrarErrorSinParametros: function (listaParametros){
+            listaParametros.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINPARAMETROS")</span>");
+            $('.panEdicion', listaParametros.closest('.row')).addClass('edit');
+            this.mostrarErrorGuardado();
+        },
+        mostrarErrorCamposParametrosVacio: function (listaParametros){
+            listaParametros.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORCAMPOPARAMETROSVACIO")</span>");
+            $('.panEdicion', listaParametros.closest('.row')).addClass('edit');
+            this.mostrarErrorGuardado();
+        },
+        cambiarNombreRedireccion: function (inputName) {
+            var nombreRedireccion = inputName.val();
+            var fila = inputName.closest('.row');
+            var nombreFila = fila.find('.header .urlOrigen');
+
+            if (nombreRedireccion == '') {
+                nombreFila.text(nombreFila.attr('aux'));
+            }
+            else {
+                nombreFila.text(nombreRedireccion);
+            }
+        },
+        cambiarAuxNombreRedireccion: function (inputUrlOrigen) {
+            var that = this;
+            $('.error', inputUrlOrigen.parent()).remove()
+            var nombreRedireccion = inputUrlOrigen.val();
+            var fila = inputUrlOrigen.closest('.row');
+            var nombreFila = fila.find('.header .urlOrigen');
+
+            if (nombreRedireccion == '') {
+                nombreFila.text(nombreFila.attr('aux'));
+                //inputUrlOrigen.val(nombreFila.attr('aux'));
+                that.mostrarErrorUrlOrigenVacio(inputUrlOrigen);
+            }
+            else {
+                nombreFila.text(nombreRedireccion);
+                nombreFila.attr('aux', nombreRedireccion);
+                //inputUrlOrigen.val(nombreClausula);
+            }
+        },
+        Filtrar: function () {
+            var filtro = $('input#txtFiltro').val();
+            var listadoRedireccion = $('.row');
+
+            if (filtro == '') {
+                $('.table').removeClass("filtrado");
+            }
+            else {
+                $('.table').addClass("filtrado");
+            }
+
+            listadoRedireccion.removeClass('oculto');
+            listadoRedireccion.addClass('visible');
+
+            if (filtro != '') {
+                var listaEncontradas = listadoRedireccion.find('span.urlOrigen:contains(' + filtro + ')');
+                var listaNoEncontradas = listadoRedireccion.find('span.urlOrigen:not(:contains(' + filtro + '))');
+                listaNoEncontradas.closest('.row').removeClass('visible');
+                listaNoEncontradas.closest('.row').addClass('oculto');
+
+                //listaEncontradas.each(function () {
+                //    var item = $(this);
+                //    item.closest('.row').removeClass('oculto');
+                //    item.closest('.row').addClass('visible');
+                //});
+            }
+
+            //listadoRedireccion.each(function () {
+            //    var item = $(this);
+            //    var itemText = item.children('.header').find('span.urlOrigen').text();
+
+            //    item.removeClass('oculto');
+            //    item.addClass('visible');
+
+            //    if ((filtro != '' && itemText.toLowerCase().indexOf(filtro) < 0)) {
+            //        item.addClass('oculto');
+            //        item.removeClass('visible');
+            //    }
+            //});
+
+            return;
+        },
+        deshacerEliminarRedireccion: function (botonDeshacer) {
+            var fila = botonDeshacer.closest('.row');
+
+            fila.removeClass('ui-state-disabled');
+
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('[name="TabEliminada"]').val('false');
+
+            var panCabecera = fila.children('.header');
+            panCabecera.removeClass('deleted');
+            if (panCabecera.hasClass('edited_removed')) {
+                panCabecera.removeClass('edited_removed');
+                panCabecera.addClass('edited');
+            }
+
+            var deshacer = panCabecera.children('.deshacer');
+            var eliminada = panCabecera.children('.eliminada');
+            deshacer.remove();
+            eliminada.remove();
+        },
+        eliminarRedireccion: function (botonEliminar) {
+            var that = this;
+            var fila = botonEliminar.closest('.row');
+            var filas = fila.find('.row');
+
+            fila.addClass('ui-state-disabled');
+            filas.addClass('ui-state-disabled');
+
+            var panelesEditar = fila.find('.panEdicion');
+            panelesEditar.removeClass('edit');
+            panelesEditar.find('[name="TabEliminada"]').val('true');
+
+            var panelesCabecera = fila.find('.header:not(.deleted)');
+            if (panelesCabecera.hasClass('edited')) {
+                panelesCabecera.removeClass('edited');
+                panelesCabecera.addClass('edited_removed');
+            }
+            panelesCabecera.addClass('deleted');
+            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
+            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
+
+            panelesCabecera.find('span.deshacer').click(function () {
+                that.deshacerEliminarRedireccion($(this));
+            });
+        },
+        editarRedireccion: function (botonEditar) {
+            var fila = botonEditar.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+
+            if (panEditar.hasClass('edit')) {
+                panEditar.removeClass('edit');
+            }
+            else {
+                panEditar.addClass('edit');
+                var panelCabecera = fila.find('.header');
+                panelCabecera.addClass('edited');
+            }
+        },
+        anyadirRedireccion: function () {
+            var that = this;
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/new-redirection',
+                null,
+                true
+            ).done(function (data) {
+                $('#listadoRedirecciones').prepend(data);
+                var RedireccionNueva = $('#listadoRedirecciones').children().first();
+                var idPanel = RedireccionNueva.attr('id');
+                that.MontarToolTip($('#' + idPanel));
+                RedireccionNueva.find('span.editar').trigger('click');
+                RedireccionNueva.find('.redireccionDirecta').hide();
+                RedireccionNueva.find('.redireccionParametrizada').hide();
+                //RedireccionNueva.find('.aceptarRedireccion').hide();
+                RedireccionNueva.find('section.header').addClass('edited');
+            }).fail(function (data) {
+                console.log("ERROR =>" + data);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        anyadirParametroRedireccion: function (btnAnyadir) {
+            var id = btnAnyadir.closest('.row').attr('id')
+            var listaParametros = $('#listaParametros_' + id);
+            var indiceNuevoItem = $('.itemParametro', listaParametros).length;
+            var item = '<li class="itemParametro">';
+            item += '<input type="text" class="InputParametro" id="txtValorParametro_' + id + '_' + indiceNuevoItem + '" value="" />';
+            item += '<input type="text" class="InputParametro" id="txtUrlRedireccionParametrizada_' + id + '_' + indiceNuevoItem + '" value="" />';
+            //item += '<input type="text" class="InputParametro" id="txtOrdenParametro_' + id + '_' + indiceNuevoItem + '" value="" />';
+            item += '<input type="button" class="deleteParametro" value="@Html.GetText("COMMON", "ELIMINAR")" />';
+            item += '</li>';
+            $('#listaParametros_' + id).append(item);
+            //$('#listaParametros', btnAnyadir.parent()).append(item);
+        },
+        eliminarParametro: function (botonEliminar) {
+            var parametro = botonEliminar.closest('.itemParametro');
+            parametro.remove();
+        },
+        guardarTodasRedirecciones: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.ListaRedirecciones = {};
+                that.obtenerDatosRedireccion();
+                that.guardar();
+            }
+            //else {
+            //    that.mostrarErrorGuardado('');
+            //}
+        },
+        mostrarErrorGuardado: function (claveMensaje) {
+            var mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "GUARDARERROR")';
+            if (claveMensaje == 'ERRORURLORIGENVACIA') {
+                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLORIGENVACIA")';
+            }
+            if (claveMensaje == 'ERRORURLDESTINOVACIA') {
+                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLDESTINOVACIA")';
+            }
+            if (claveMensaje == 'ERRORNOMPARAMETROVACIO') {
+                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORNOMPARAMETROVACIO")';
+            }
+            if (claveMensaje == 'ERRORSINPARAMETROS') {
+                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINPARAMETROS")';
+            }
+            if (claveMensaje == 'ERRORSINCAMBIOS') {
+                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINCAMBIOS")';
+            }
+            $('input.guardarTodo').before('<div class="error general">' + mensaje + '</div>');
+        },
+        //aceptarRedireccion: function (botonAceptar) {
+        //    var that = this;
+        //    var redireccion = botonAceptar.closest('.row');
+        //    var panelCabecera = redireccion.find('.header');
+        //    panelCabecera.addClass('edited');
+        //},
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+            error = that.comprobarFilasEditadasBorradas();
+            if (!error) {
+                error = that.comprobarCamposVacios();
+            }
+            else {
+                that.mostrarErrorGuardado('ERRORSINCAMBIOS');
+            }
+            return error;
+        },
+        comprobarFilasEditadasBorradas: function () {
+            return $('.header.edited, .header.deleted').length == 0;
+        },
+        comprobarCamposVacios: function () {
+            var that = this;
+            var error = false;
+            $('.row').each(function () {
+                var fila = $(this);
+                error = that.comprobarUrlOrigen(fila);
+                if (!error) {
+                    error = that.comprobarUrlDestino(fila);
+                    if (error) {
+                        return false;
+                    }
+                }
+                else {
+                    return false;
+                }
+            });
+
+            return error;
+        },
+        comprobarUrlOrigen: function (fila) {
+            var that = this;
+            var input = $('input[name="txtUrlOrigen"]', fila);
+            var error = input.val() == '';
+            if (error) {
+                that.mostrarErrorUrlOrigenVacio(input);
+                that.mostrarErrorGuardado();
+            }
+            return error;
+        },
+        comprobarUrlDestino: function (fila) {
+            var that = this;
+            var error = false;
+            var id = fila.attr('id');
+            var TipoRedireccion = $('input:radio[name=tipoRedireccion_' + id + ']:checked', fila).val();
+
+            if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
+                var input = $('#txtUrlDestino_' + id, fila);
+                error = input.val() == '';
+                if(error){
+                    that.mostrarErrorUrlDestinoVacio(input);
+                }
+            }
+            else if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
+                var input = $('#txtNombreParametro_' + id, fila);
+                error = input.val() == '';
+                if(error){
+                    that.mostrarErrorNomParametroVacio(input);
+                }
+                else {
+                    var listaParametros = $('#listaParametros_' + id);
+                    error = $('.itemParametro', listaParametros).length <= 0;
+                    if (!error) {
+                        $('.itemParametro', listaParametros).each(function (i, item) {
+                            error = ($('#txtValorParametro_' + id + '_' + i, $(item)).val() == '' || $('#txtUrlRedireccionParametrizada_' + id + '_' + i, $(item)).val() == '' /*|| $('#txtOrdenParametro_' + id + '_' + i, $(item)).val() == ''*/);
+                            if(error){
+                                return false;
+                            }
+                        });
+
+                        if(error){
+                            that.mostrarErrorCamposParametrosVacio(listaParametros);
+                        }
+                    }
+                    else{
+                        that.mostrarErrorSinParametros(listaParametros);
+                    }
+                }
+            }
+            else {
+                that.mostrarErrorSinTipoRedireccion($('#rbDirecta_' + id), fila);
+                error = true;
+            }
+
+            return error;
+        },
+        guardar: function () {
+            var that = this;
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.ListaRedirecciones,
+                true
+            ).done(function (data) {
+                $('section.header').removeClass('edited');
+                $('section.panEdicion').removeClass('edit');
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                that.mostrarErrorGuardado();
+                if (error[0] == 'LISTA VACIA') {
+                    that.mostrarErrorGuardado('ERRORSINCAMBIOS');
+                }
+                else if (error[0] == 'URLORIGEN VACIO') {
+                    that.mostrarErrorUrlOrigenVacio($('#txtUrlOrigen_' + error[1]));
+                }
+                else if (error[0] == 'TIPOREDIRECCION INCORRECTA') {
+                    that.mostrarErrorSinTipoRedireccion($('#rbDirecta_' + error[1]));
+                }
+                else if (error[0] == 'URLDESTINO VACIO') {
+                    that.mostrarErrorUrlDestinoVacio($('#txtUrlDestino_' + error[1]));
+                }
+                else if (error[0] == 'NOMPARAMETRO VACIO') {
+                    that.mostrarErrorNomParametroVacio($('#txtNombreParametro_' + error[1]));
+                }
+                else if (error[0] == 'SIN PARAMETROS') {
+                    that.mostrarErrorSinParametros($('#listaParametros_' + error[1]));
+                }
+                else if (error[0] == 'CAMPOPARAMETROS VACIO') {
+                    that.mostrarErrorCamposParametrosVacio($('#listaParametros_' + error[1]));
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINREDIRECCIONES", "GUARDAROK")</div>');
+        },
+        obtenerDatosRedireccion: function () {
+            var that = this;
+            var num = 0;
+            $('.row').each(function () {
+                var fila = $(this);
+                if (fila.children('.header').hasClass('edited') || fila.children('.header').hasClass('deleted')) {
+                    var panelEdicion = fila.children('.panEdicion');
+                    var id = fila.attr('id');
+                    var TipoRedireccion = $('input:radio[name=tipoRedireccion_' + id + ']:checked').val();
+                    var panCampos = '';
+
+                    if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
+                        panCampos = panelEdicion.find('.redireccionDirecta');
+                    }
+                    else if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
+                        panCampos = panelEdicion.find('.redireccionParametrizada');
+                    }
+
+                    var prefijoClave = 'ListaRedirecciones[' + num + ']';
+                    that.ListaRedirecciones[prefijoClave + '.Key'] = id;
+                    that.ListaRedirecciones[prefijoClave + '.OriginalUrl'] = panelEdicion.find('#txtUrlOrigen_' + id).val();
+                    that.ListaRedirecciones[prefijoClave + '.DestinationUrl'] = '';
+                    that.ListaRedirecciones[prefijoClave + '.PreserveFilters'] = false;
+                    that.ListaRedirecciones[prefijoClave + '.DeleteRedirection'] = fila.children('.header').hasClass('deleted');
+
+                    if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
+                        that.ListaRedirecciones[prefijoClave + '.RedirectionType'] = '@(ManageRedirectionsViewModel.RedirectionType.Direct)';
+                        that.ListaRedirecciones[prefijoClave + '.DestinationUrl'] = panCampos.find('#txtUrlDestino_' + id).val();
+                        that.ListaRedirecciones[prefijoClave + '.PreserveFilters'] = panCampos.find('[name="mantenerFiltros"]').is(':checked');
+                    }
+                    else if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
+                        that.ListaRedirecciones[prefijoClave + '.RedirectionType'] = '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)';
+                        var listaParametros = $('#listaParametros_' + id);
+                        $('.itemParametro', listaParametros).each(function (i, item) {
+                            var prefijoClaveParametro = prefijoClave + '.ParameterValues[' + i + ']';
+                            that.ListaRedirecciones[prefijoClave + '.ParameterName'] = panCampos.find('#txtNombreParametro_' + id).val();
+                            that.ListaRedirecciones[prefijoClaveParametro + '.Value'] = $('#txtValorParametro_' + id + '_' + i, $(item)).val();
+                            that.ListaRedirecciones[prefijoClaveParametro + '.DestinationUrl'] = $('#txtUrlRedireccionParametrizada_' + id + '_' + i, $(item)).val();
+                            //that.ListaRedirecciones[prefijoClaveParametro + '.Order'] = $('#txtOrdenParametro_' + id + '_' + i, $(item)).val();
+                        });
+                    }
+                    num++;
+                }
+            });
+        }
+    }
+
+    $(document).ready(function () {
+        Array.prototype.findValueByKey = function (key) {
+            var resultado = $.grep(this, function (array) {
+                return array.key == key;
+            });
+
+            if (resultado[0] != null) {
+                return resultado[0].value;
+            }
+
+            return null;
+        };
+
+        OperativaAcciones.init();
+
+    });
+
+</script>
+
+
+<style>
+    .row .header .urlOrigen {
+        font-weight: bold;
+    }
+    ol.table li.row section.panEdicion .tipo.noFloat {
+        float:none;
+    }
+    /*input[type="text"].ValorParametro, input[type="text"].UrlRedireccionParametrizada*/
+    input[type="text"].InputParametro {
+        width: initial;
+    }
+    ol#listaParametros {
+        display: inline-block;
+    }
+    ol.table ol ol#listaParametros {
+        padding-top: 5px;
+    }
+    ol.table li.row section.header.edited {
+        background-color: #0fa;
+    }
+</style>

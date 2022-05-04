@@ -1,0 +1,48 @@
+/* CONTEXTOS */
+  .contexto { border-left: 1px solid var(--c-gris-ef); }
+  .contexto .wrap { padding: 40px; border-left: 1px solid var(--c-gris-ef); border-bottom: 1px solid var(--c-gris-ef); }
+  .contexto + .contexto .wrap {  }
+  .contexto .wrap h2,
+  .contexto .wrap h2 a { display: block; font-size: 15px; font-weight: var(--fw-semibold); color: var(--c-gris-3); margin: 0 0 30px; text-transform: uppercase; padding-left: 40px; }
+  .contexto .wrap .resource-list {  }
+  .contexto .wrap .resource-list .resource { position: relative; padding-left: 40px; }
+  .contexto .wrap .resource-list .resource h3,
+  .contexto .wrap .resource-list .resource h3 a { display: block; font-size: 15px; font-weight: var(--fw-regular); color: var(--c-gris-3); margin: 0; cursor: pointer; -webkit-transition: all .3s ease-in-out; transition: all .3s ease-in-out; text-decoration: none; }
+  .contexto .wrap .resource-list .resource h3 { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid var(--c-gris-ef); }
+  .contexto .wrap .resource-list .resource:last-child h3 { border-bottom: 0; }
+
+  .contexto .wrap .resource-list .resource::before { content: ''; font-family: 'Material Icons'; font-size: 26px; color: var(--c-gris-85); position: absolute; top: 0; left: 0; -webkit-transition: all .3s ease-in-out; transition: all .3s ease-in-out; }
+  .contexto .wrap .resource-list .resource.resource-documento::before { content: '\E873'; }
+  .contexto .wrap .resource-list .resource.resource-imagen::before { content: '\E3C4'; }
+  .contexto .wrap .resource-list .resource.resource-video::before { content: '\E63A'; }
+  .contexto .wrap .resource-list .resource.resource-pdf::before { content: '\E415'; }
+
+  .contexto-comunidades .wrap {  }
+  .contexto-comunidades .wrap .resource-list .resource h3,
+  .contexto-comunidades .wrap .resource-list .resource h3 a { color: var(--c-gris-6); }
+  .contexto-comunidades .wrap .resource-list .resource h3 { margin-bottom: 30px; padding-bottom: 0; border: 0; }
+  .contexto-comunidades .wrap .ver-todas { padding-left: 30px; color: var(--c-gris-6); text-decoration: none; font-size: 14px; }
+  .contexto-comunidades .wrap .ver-todas:hover { color: var(--c-gris-3);  }
+
+  .contexto-comunidades .wrap .resource-list .resource:hover h3,
+  .contexto-comunidades .wrap .resource-list .resource:hover h3 a,
+  .contexto-comunidades .wrap .resource-list .resource.activo h3,
+  .contexto-comunidades .wrap .resource-list .resource.activo h3 a { color: var(--c-gris-3); }
+  .contexto-comunidades .wrap .resource-list .resource::before { content: '\E80B'; color: var(--c-gris-6); }
+  .contexto-comunidades .wrap .resource-list .resource:hover::before,
+  .contexto-comunidades .wrap .resource-list .resource.activo::before { color: var(--c-gris-3); }
+
+  @media (max-width: 991px){
+
+    .contexto .wrap { padding: 40px 0px 40px 15px; }
+
+  }
+
+  @media (max-width: 767px){
+
+    .contexto { border-left: 0; }
+    .contexto .wrap { border-left: 0; padding: 15px; }
+
+  }
+
+/**/

@@ -1,0 +1,42 @@
+﻿@using Es.Riam.Gnoss.AD.CMS
+@model CMSAdminComponenteEditarViewModel.PropiedadComponente
+
+@{ 
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+    }
+
+    string nombrePropiedad = "";
+
+    switch (Model.TypeComponent)
+    {
+        case TipoComponenteCMS.ListadoEstatico:
+            //case TipoComponenteCMS.RecursosDestacadosEstatico:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "RECURSOS");
+            break;
+        case TipoComponenteCMS.GrupoComponentes:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "COMPONENTES");
+            break;
+        case TipoComponenteCMS.ListadoProyectos:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "COMUNIDADES");
+            break;
+        default:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+            break;
+    }
+}
+
+<div id="contenedorPrincipal_@idPanel">
+    <p id="parrafo_@idPanel">
+        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+        <input type="hidden" id="@idPanel" value="@Model.Value">
+    </p>
+    <div id="contenedor_@idPanel">
+        <div id="contenedorInt_@idPanel"></div>
+    </div>
+    <input type="button" class="nuevo" onclick="Propiedad6_NuevoNivel();" value="Nuevo" />
+    <p></p>
+</div>

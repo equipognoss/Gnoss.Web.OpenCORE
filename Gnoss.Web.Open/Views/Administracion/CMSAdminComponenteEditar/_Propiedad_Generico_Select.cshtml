@@ -1,0 +1,27 @@
+﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
+
+@{
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+    string valorPropiedad = Model.Value;
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+        valorPropiedad = Html.ObtenerTextoDeIdioma(Model.Value, idiomaPanel, null, true);
+    }
+
+    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+}
+
+<div id="contenedorPrincipal_@idPanel">
+    <p id="parrafo_propiedad_@idPanel">
+        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+        <select id="@idPanel">
+            @foreach (string idOpcion in Model.Options.Keys)
+            {
+                bool selected = !string.IsNullOrEmpty(Model.Value) && Model.Value.Equals(idOpcion);
+                <option @(selected ? "selected=\"selected\"" : "") value="@idOpcion">@Model.Options[idOpcion]</option>
+            }
+        </select>
+    </p>
+</div>

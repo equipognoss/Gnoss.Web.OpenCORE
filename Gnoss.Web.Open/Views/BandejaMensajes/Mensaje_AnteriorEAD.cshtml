@@ -1,0 +1,237 @@
+﻿@model MessageModel
+
+@{
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+    UserProfileModel Perfil = Html.GetPerfil();
+
+    Html.SetBodyClass("layout02 listadoMyGnoss fichaMyGnoss fichaMensajesMyGnoss ");
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.Mensajes.js?v=" + Html.GetVersion());
+}
+
+<div id="col01">
+    <div class="mgHerramientas">
+        @Html.PartialView("../Shared/ControlesMVC/_Novedades", "Messages")
+        <div style="display: none" class="resaltarAccion" id="facetaEncuentra">
+            <h2>@Html.GetText("BUSCADORFACETADO", "ENCUENTRA")</h2>
+        </div>
+        <div id="divFac">
+        </div>
+    </div>
+</div>
+<div id="col02">
+
+    @{
+        string tipoBandeja = "recibidos";
+
+        if (Model.Deleted)
+        {
+            tipoBandeja = "eliminados";
+        }
+        else if (!Model.Received)
+        {
+            tipoBandeja = "enviados";
+        }
+
+        string urlVuelta = Perfil.Url + Html.GetText("URLSEM", "MENSAJES");
+
+        if (Context.Request.Path.ToString().Contains("&"))
+        {
+            urlVuelta += "?" + Context.Request.Path.ToString().Substring(Context.Request.Path.ToString().IndexOf("&") + 1).Replace("|", "&");
+        }
+        else if (Context.Request.Headers.ContainsKey("Referer") && Context.Request.Headers["Referer"].ToString().Contains("&"))
+        {
+            urlVuelta += Context.Request.Headers["Referer"].ToString().Substring(Context.Request.Headers["Referer"].ToString().IndexOf("&"));
+        }
+        else
+        {
+            urlVuelta += "?" + tipoBandeja;
+        }
+    }
+    <h2>
+        @Html.GetText("BANDEJAENTRADA", "MENSAJE")
+        <a href="@urlVuelta" class="backToList" id="linkVolver"><span class="icono"></span>@Html.GetText("BANDEJAENTRADA", "volverlistado")</a>
+    </h2>
+    <input type="hidden" value="@tipoBandeja" class="tipoBandeja" />
+
+    @{
+        string ObtenerNombrePerfil(ProfileModel pPerfil)
+        {
+            string nombrePerfil = "";
+
+            if (pPerfil == null)
+            {
+                nombrePerfil = Html.GetNombreProyectoEcosistema();
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(pPerfil.NamePerson))
+                {
+                    nombrePerfil += pPerfil.NamePerson;
+                }
+
+                if (!string.IsNullOrEmpty(pPerfil.NameOrganization))
+                {
+                    if (!string.IsNullOrEmpty(pPerfil.NamePerson))
+                    {
+                        nombrePerfil += " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ";
+                    }
+                    nombrePerfil += pPerfil.NameOrganization;
+                }
+            }
+            return nombrePerfil;
+        }
+
+        string ObtenerUrlPerfil(ProfileModel pPerfil)
+        {
+            string urlPerfil = "";
+
+            if (pPerfil != null)
+            {
+                if (!string.IsNullOrEmpty(pPerfil.NamePerson))
+                {
+                    urlPerfil += pPerfil.UrlPerson;
+                }
+                else if (!string.IsNullOrEmpty(pPerfil.NameOrganization))
+                {
+                    urlPerfil += pPerfil.UrlOrganization;
+                }
+            }
+
+            return urlPerfil;
+        }
+    }
+    <div>
+        <div class="resource">
+            <div class="box description">
+                <!-- Contenido del mensaje -->
+                <div class="group title">
+                    <h3>@Model.Subject</h3>
+                    <p class="resourceType mensaje">
+                        <span>tipo de documento</span>
+                        <a></a>
+                    </p>
+                </div>
+                <div class="group author">
+                    <p>
+                        <span class="by">@Html.GetText("CORREO", "ENVIADOPOR") </span>
+                        @{
+                            string nombreRemitente = ObtenerNombrePerfil(Model.Sender);
+                            string urlRemitente = ObtenerUrlPerfil(Model.Sender);
+                            string urlImagen = "";
+
+                            if (Model.Sender != null)
+                            {
+                                urlImagen = Model.Sender.UrlFoto;
+
+                                if (string.IsNullOrEmpty(urlImagen))
+                                {
+                                    urlImagen = "/imagenes/personas/anonimo_peque.png";
+                                    if (!string.IsNullOrEmpty(Model.Sender.UrlOrganization))
+                                    {
+                                        urlImagen = "/imagenes/organizaciones/anonimo_peque.png";
+                                    }
+                                }
+
+                                urlImagen = Html.GetBaseUrlContent() + urlImagen;
+                            }
+                            else
+                            {
+                                /*urlImagen = Html.GetBaseUrlStatic() + "/img/didactaliaCorreo.png";*/
+                            }
+                        }
+                        <a href="@urlRemitente">
+                            <img style="border-width: 0px;" src="@urlImagen" /></a>
+                        <span>
+                            <a href="@urlRemitente">@nombreRemitente</a></span>
+                    </p>
+                    <p class="publicacion">
+                        @Html.GetText("CORREO", "FECHAENVIADOEL") <strong>@Model.ShippingDate.ToString("dd.MM.yyyy") </strong>@Html.GetText("CORREO", "FECHAALAS") <strong>@Model.ShippingDate.ToString("HH:mm")</strong>
+                    </p>
+                </div>
+                <div class="group utils-1">
+                    <p class="info">
+                    </p>
+                    <p class="literalPara">
+                        <strong>@Html.GetText("CORREO", "PARA")</strong>
+                    </p>
+                    <!-- Destinatarios del mensaje -->
+                    <ul class="paraMensaje">
+                        @foreach (GroupCardModel destinatarioGrupo in Model.ReceiversGroup)
+                        {
+                            if (string.IsNullOrEmpty(destinatarioGrupo.UrlGroup))
+                            { 
+                                <li>@destinatarioGrupo.CompleteName</li>
+                            }
+                            else{
+                                <li><a title="@destinatarioGrupo.CompleteName" href="@destinatarioGrupo.UrlGroup">@destinatarioGrupo.CompleteName</a></li>
+                            }
+                        }
+                        @foreach (ProfileModel destinatario in Model.Receivers)
+                        {
+                            string nombreDestinatario = ObtenerNombrePerfil(destinatario);
+                            string urlDestinatario = ObtenerUrlPerfil(destinatario);
+                            <li><a title="@nombreDestinatario" href="@urlDestinatario">@nombreDestinatario</a></li>
+                        }
+                    </ul>
+                </div>
+                <div class="customAboutResource" id="customAboutResource">
+                    <div class="group acciones resourceTools activo">
+                        <ul class="principal">
+                            <li class="opSend"><a class="inlineActionResource" href="@Model.Url.Replace("?mensaje", "?responder&mensaje")">@Html.GetText("CORREO", "RESPONDERMENSAJESINTEXTOMENSAJE")</a></li>
+                            <li class="opSend"><a class="inlineActionResource" href="@Model.Url.Replace("?mensaje", "?responderATodos&mensaje")">@Html.GetText("CORREO", "REENVIARMENSAJEATODOS")</a></li>
+                            <li class="opEdit"><a class="inlineActionResource" href="@Model.Url.Replace("?mensaje", "?reenviar&mensaje")">@Html.GetText("CORREO", "REENVIARMENSAJESINTEXTOMENSAJE")</a></li>
+                        </ul>
+                        <ul class="secondary">
+                            <li class="opDelete toSecondary"><a onclick="javascript:EliminarCorreoSeleccionado('@Model.Key')">Eliminar<span></span></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Contenido del mensaje -->
+                <div class="group content">
+                    <p>@Html.Raw(Model.Body)</p>
+                </div>
+            </div>
+        </div>
+        <div class="messagesPagination pagination">
+            <ul>
+                @if (Model.PreviousMessageKey != Guid.Empty)
+                {
+                    <li class="anterior"><a href="@Context.Request.Path.ToString().Replace(Model.Key.ToString(), Model.PreviousMessageKey.ToString())"></a></li>
+                }
+                @if (Model.NextMessageKey != Guid.Empty)
+                {
+                    <li class="siguiente"><a href="@Context.Request.Path.ToString().Replace(Model.Key.ToString(), Model.NextMessageKey.ToString())"></a></li>
+                }
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="listadoMensajesMyGnoss" id="divContenedorContexto">
+        <h4 id="ctl00_CPH1_h3Relacionados">Mensajes relacionados</h4>
+        <div class="resource-list withSelector compactview" id="divContexto">
+        </div>
+    </div>
+</div>
+<script defer="defer" lang="javascript" type="text/javascript">
+    MontarContextoMensajes('@IdentidadActual.KeyUser', '@IdentidadActual.KeyIdentity', '@Model.Key', '@Html.GetUtilIdiomas().LanguageCode', '', 'divContexto');
+
+    $(function () {
+        var filtrosFacetas = $('.tipoBandeja').val();
+
+        filtrosPeticionActual = filtrosFacetas;
+        MontarFacetas(filtrosFacetas, false, 1, '#divFac', 'dce:type');
+    });
+
+    function EliminarCorreoSeleccionado(correoID) {
+        MostrarUpdateProgress();
+
+        var params = {
+            listMessages: correoID,
+            profileBox: $('.tipoBandeja').val()
+        }
+        GnossPeticionAjax("@Html.GetUrlPagina()/deleteMessages", params, true)
+    }
+
+    @Html.Raw(Html.GetJSExtra());
+</script>

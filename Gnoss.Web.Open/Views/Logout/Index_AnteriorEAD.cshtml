@@ -1,0 +1,57 @@
+﻿@model LogoutModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="refresh" content="0; url=@Model.UrlIframe&redirect=@System.Net.WebUtility.UrlEncode(Model.UrlRedirect)" />
+    <title>@Html.GetText("LOGOUT", "TITULOPAGINA")</title>
+
+    @if (@Html.GetJSYCSSunificado().HasValue && !@Html.GetJSYCSSunificado().Value)
+    {
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/comunidades.css?v=@Html.GetVersion()" media="screen" />
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/comun.css?v=@Html.GetVersion()" media="screen" />
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/plantillas.css?v=@Html.GetVersion()" media="screen" />
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/forms.css?v=@Html.GetVersion()" media="screen" />
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/tools.css?v=@Html.GetVersion()" media="screen" />
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/print.css?v=@Html.GetVersion()" media="screen" />
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/gnossStyle.css?v=@Html.GetVersion()" media="screen" />
+    }
+    else
+    {
+        <link rel="stylesheet" type="text/css" href="@Html.GetBaseUrlStatic()/cssUnificar/unificado.css?v=@Html.GetVersion()" media="screen" />
+    }
+</head>
+<body class="entraSale">
+    @if(Model.ShowPowered){
+    <div ID="panPowered" Style="margin-top: 230px;">
+        <p>@Html.GetText("COMMON", "POWEREDBY");</p>
+        <a><img src="@Html.GetBaseUrlStatic()/img/entradaSalida.gif" ID="imgPowered" alt="GNOSS" Style="border-width: 0px; width: 80px; float: left;" /></a>
+    </div>
+    }
+    <div class="entraSale">
+        <p>@Html.GetText("LOGOUT", "TITULO")...</p>
+        <p>
+            @{
+                string urlLogo = Html.GetBaseUrlStatic() + "/img/entradaSalida.gif";
+                string nombreComunidad = "GNOSS";
+                if (!string.IsNullOrEmpty(Model.UrlLogo))
+                {
+                    urlLogo = Html.GetBaseUrlContent() + Model.UrlLogo;
+                }
+                if (!string.IsNullOrEmpty(Model.NombreComunidad))
+                {
+                    nombreComunidad = Model.NombreComunidad;
+                }
+            }
+
+            <img src="@urlLogo" id="imgEntradaSalida" alt="@nombreComunidad" style="margin-left:0px" class="loader"/><br />
+            <img src="@Html.GetBaseUrlStatic()/img/loaderEntrada.gif" id="imgLoader" alt="Cargando" class="loader" />
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+﻿@model SharedSemCms
+
+@{
+
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
+    string clase = "";
+
+    if (Model.pIdioma == Model.semanticPropertyModel.EntityParent.SemanticResourceModel.DefaultLanguage)
+    {
+        clase = "active";
+    }
+
+    string onclick = "SeleccionarIdioma(this, '" + mPropiedad.ElementoOntologia.TipoEntidad + "', '" + mPropiedad.Nombre + "', '" + Model.pIdioma + "', " + (!Model.semanticPropertyModel.OntologyPropInfo.UniqueValue).ToString().ToLower() + ")";
+
+    <li class="@clase" rel="@Model.pIdioma">
+        <a onclick="@onclick">@Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages[Model.pIdioma]</a>
+    </li>
+}

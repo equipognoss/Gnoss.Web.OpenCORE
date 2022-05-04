@@ -1,0 +1,110 @@
+﻿@model AdministrarMapaViewModel
+@{
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+}
+<div class="content">
+    <h1>Configurar Mapas</h1>
+
+    <label for="pPropiedadLatitud">Introduce la pripiedad de la ontología correspondiente a la latitud</label>
+    <input type="text" id="pPropiedadLatitud" value="@Model.Latidud"><br>
+    <p class="example">
+        <b>Ejemplo:</b> http://www.w3.org/2003/01/geo/wgs84_pos#location&#64;&#64;&#64;http://www.w3.org/2003/01/geo/wgs84_pos#lat
+    </p>
+    <br />
+    <label for="pPropiedadLongitud">Introduce la pripiedad de la ontología correspondiente a la longitud</label>
+    <input type="text" id="pPropiedadLongitud" value="@Model.Longitud">
+    <p class="example">
+        <b>Ejemplo:</b> http://www.w3.org/2003/01/geo/wgs84_pos#location&#64;&#64;&#64;http://www.w3.org/2003/01/geo/wgs84_pos#long
+    </p>
+    <br />
+    <label for="pPropiedadRuta">Introduce la pripiedad de la ontología correspondiente a la ruta</label>
+    <input type="text" id="pPropiedadRuta" value="@Model.Ruta"><br>
+    <br />
+    <label for="pPropiedadColorRuta">Introduce la pripiedad de la ontología correspondiente al color de la ruta</label>
+    <input type="text" id="pPropiedadColorRuta"  value="@Model.ColorRuta">
+    <br />
+    <div>
+        <input type="button" class="guardarTodo" value="Submit" />
+    </div>
+</div>
+
+<script>
+    var OperativaAcciones = {
+        init: function () {
+            this.urlPagina = document.location.href;
+            this.engancharComportamiento();
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+            return;
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.pMapa = {};
+                that.pMapa.Latidud = $('#pPropiedadLatitud').val()
+                that.pMapa.Longitud = $('#pPropiedadLongitud').val()
+                that.pMapa.Ruta = $('#pPropiedadRuta').val()
+                that.pMapa.ColorRuta = $('#pPropiedadColorRuta').val()
+                that.guardar();
+            }
+            else {
+                that.mostrarError();
+            }
+        },
+        mostrarError: function () {
+            $('input.guardarTodo').before('<div class="error general">No puedes dejar los valores de latitud y longitud vacios</div>');
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">Ha habido un error en el guardado</div>');
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            if ($('#pPropiedadLatitud').val().length == 0) {
+                return true;
+            }
+            if ($('#pPropiedadLongitud').val().length == 0) {
+                return true;
+            }
+            return false;
+        },
+
+        guardar: function () {
+            var that = this;
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save-map',
+                that.pMapa,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                that.mostrarErrorGuardado();
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
+        },
+    }
+    $(document).ready(function () {
+        OperativaAcciones.init();
+    });
+</script>
+
+<style>
+    input[type="text"], textarea {
+        width: 90%;
+    }
+
+    .example {
+        color: gray;
+    }
+</style>

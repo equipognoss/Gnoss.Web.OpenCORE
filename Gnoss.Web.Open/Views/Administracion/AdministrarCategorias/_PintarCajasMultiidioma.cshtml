@@ -1,0 +1,41 @@
+﻿@model PintarComboAdministrarCategorias
+
+@{
+    Dictionary<string, string> nombreCategoria = Model.Categoria.Value;
+
+    HeaderModel cabecera = Html.GetCabecera();
+    if (Model.MultiLanguaje)
+    {
+        foreach (KeyValuePair<string, string>
+            idioma in cabecera.Languajes)
+        {
+            string textoCaja = "";
+            if (nombreCategoria != null && nombreCategoria.ContainsKey(idioma.Key))
+            {
+                textoCaja = nombreCategoria[idioma.Key];
+            }
+
+            <div>
+                <span style="display:block">Nombre (@idioma.Value) *</span>
+                <input type="text" rel="@idioma.Key" class="inputIdioma" id="@("txtNombreCat" + idioma.Key)" @Html.Raw(!string.IsNullOrEmpty(textoCaja) ? "value=\"" + textoCaja + "\"" : "") />
+            </div>
+        }
+    }
+    else
+    {
+        KeyValuePair<string, string>
+            idiomaUnico = new KeyValuePair<string, string>
+                ("es", "español");
+        string textoCaja = "";
+        if (nombreCategoria != null && nombreCategoria.ContainsKey(idiomaUnico.Key))
+        {
+            textoCaja = nombreCategoria[idiomaUnico.Key];
+        }
+        <div>
+            <span style="display:block">Nombre *</span>
+            <input type="text" rel="@idiomaUnico.Key" class="inputIdioma" id="@("txtNombreCat" + idiomaUnico.Key)" @Html.Raw(!string.IsNullOrEmpty(textoCaja) ? "value=\"" + textoCaja + "\"" : "") />
+        </div>
+    }
+
+
+}

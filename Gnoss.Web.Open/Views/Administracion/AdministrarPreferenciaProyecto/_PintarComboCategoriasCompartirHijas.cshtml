@@ -1,0 +1,13 @@
+﻿@model PintarComboAdministrarCategorias
+
+@foreach (CategoryModel categoria in Model.CategoriasCompartir.Where(cat => cat.ParentCategoryKey == Model.pCategoria.Key).OrderBy(cat2 => cat2.Order))
+{
+    <option value="@categoria.Key">@categoria.Name</option>
+
+    PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
+    pintar.Thesaurus = Model.Thesaurus;
+    pintar.pCategoria = categoria;
+    @Html.PartialView("../Administracion/AdministrarPreferenciaProyecto/_PintarComboCategoriasCompartirHijas", pintar)
+}
+
+

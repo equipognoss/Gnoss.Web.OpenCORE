@@ -1,0 +1,164 @@
+﻿@model EditProfileViewModel
+
+<div>
+    <div class="box" id="editarPerfil2">
+        <div class="fieldset">
+            <fieldset class="labels">
+                <legend>@Html.GetText("PERFIL", "PERFILENWEB")</legend>
+                <p>
+                    <span>@Html.GetText("PERFIL", "INTROREDESSOCIALESSINLINK")</span>
+                </p>
+                <div id="panRedesSociales">
+
+
+
+                    <table id="tblRedesSociales" style="margin-top: 20px; @(Model.SocialNetworks.Count == 0 ? "display:none;" : "")">
+                        <thead>
+                            <tr>
+                                <th colspan="2">@Html.GetText("PERFIL", "NOMBREREDSOCIAL")</th>
+                                <th>@Html.GetText("PERFIL", "URLUSUARIOTABLA")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @foreach (EditProfileViewModel.SocialNetwork RedSocial in Model.SocialNetworks)
+                            {
+                                <tr>
+                                    <td style="min-width: 15px; padding-right: 10px; padding-left: 5px;">
+                                        <img style="height: 16px; margin-top: 3px;" alt="@RedSocial.Name" title="@RedSocial.Name" src="http://www.google.com/s2/favicons?domain=@RedSocial.Domain" />
+                                    </td>
+                                    <td style="min-width: 150px; padding-right: 10px; padding-left: 5px;">@RedSocial.Name</td>
+                                    <td style="min-width: 150px; padding-right: 10px; padding-left: 5px;">@RedSocial.Url</td>
+                                    <td style="text-align: center;">
+                                        <a onclick="EditarRedSocial(this, '@RedSocial.Name','@RedSocial.Url');" style="cursor: pointer;">
+                                            <img style="margin-top: 3px;" alt="Editar" title="Editar" src="@Html.GetBaseUrlStatic()/img/icoEditar.gif" />
+                                        </a>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <a onclick="EliminarRedSocial(this, '@RedSocial.Name');" class="icoEliminar">X</a>
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <p>
+                    <span>Introduce tu url de usuario y añádela</span>
+                    <input type="text" style="width: 560px;" class="text medium" id="UrlUsuario" maxlength="200" name="UrlUsuario" />
+                </p>
+                <div class="fieldset actionButtons">
+                    <fieldset>
+                        <p>
+                            <a class="submit principal" id="btnRedSocial">@Html.GetText("PERFIL", "ANYADIRREDSOCIAL")</a>
+                        </p>
+                    </fieldset>
+                </div>
+                <div id="divErrorRedSocial">
+                    <div class="ko">
+                        <p>La Url introducida no es válida</p>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#btnRedSocial').bind('click', AnyadirRedSocial);
+    });
+
+    function AnyadirRedSocial() {
+        $('#divErrorRedSocial div').hide();
+        if ($('#UrlUsuario').val() != '') {
+            MostrarUpdateProgress();
+            var dataPost = {
+                callback: "AnyadirRedSocial",
+                url: $('#UrlUsuario').val()
+            }
+
+            $.post('@Html.GetUrlPagina()', dataPost, function (data) {
+                OcultarUpdateProgress();
+                if (data != '' && data.indexOf("OK:") == 0) {
+                    data = data.substring("OK:".length);
+                    MontarRedSocial(data, $('#UrlUsuario').val())
+                    $('#tblRedesSociales').show();
+                    $('#UrlUsuario').val('');
+                }
+                else {
+                    //mostrar error
+                    $('#divErrorRedSocial div p').val(data.substring("ERROR:".length))
+                    $('#divErrorRedSocial div').show();
+                }
+            });
+        }
+    }
+
+    function EliminarRedSocial(that, nombre) {
+        MostrarUpdateProgress();
+        var dataPost = {
+            callback: "EliminarRedSocial",
+            nombreRed: nombre
+        }
+
+        $.post('@Html.GetUrlPagina()', dataPost, function (data) {
+            var tBody = $(that).closest("tbody");
+            if ($('tr', tBody).length == 0) {
+                $('#tblRedesSociales').hide();
+            }
+            $(that).closest("tr").remove();
+            OcultarUpdateProgress();
+        });
+    }
+
+    function EditarRedSocial(that, nombre, url) {
+        $(that).closest("tr").remove();
+        $('#UrlUsuario').val(url);
+        $('#UrlUsuario').attr('nombreRed', nombre);
+
+        $('#btnRedSocial').html('@Html.GetText("PERFIL", "GUARDAR")');
+        $('#btnRedSocial').unbind('click').bind('click', GuardarEdicionRedSocial);
+    }
+
+    function GuardarEdicionRedSocial() {
+        MostrarUpdateProgress();
+        var dataPost = {
+            callback: "EditarRedSocial",
+            nombreRed: $('#UrlUsuario').attr('nombreRed'),
+            url: $('#UrlUsuario').val()
+        }
+
+        $.post('@Html.GetUrlPagina()', dataPost, function (data) {
+            MontarRedSocial($('#UrlUsuario').attr('nombreRed'), $('#UrlUsuario').val());
+
+            $('#UrlUsuario').val('');
+            $('#UrlUsuario').removeAttr('nombreRed');
+            $('#btnRedSocial').html('@Html.GetText("PERFIL", "ANYADIRREDSOCIAL")');
+            $('#btnRedSocial').unbind('click').bind('click', AnyadirRedSocial);
+            OcultarUpdateProgress();
+        });
+    }
+
+    function MontarRedSocial(nombreRed, url) {
+        var htmlFila =
+            "<tr> " +
+            "   <td style=\"min-width: 15px; padding-right: 10px; padding-left: 5px;\"> " +
+            "       <img style=\"height: 16px; margin-top: 3px;\" alt=\"" + nombreRed + "\" title=\"" + nombreRed + "\" src=\"http://www.google.com/s2/favicons?domain=" + url + "\" /> " +
+            "   </td> " +
+            "   <td style=\"min-width: 150px; padding-right: 10px; padding-left: 5px;\">" + nombreRed + "</td> " +
+            "   <td style=\"min-width: 150px; padding-right: 10px; padding-left: 5px;\">" + url + "</td> " +
+            "   <td style=\"text-align: center;\"> " +
+            "       <a onclick=\"EditarRedSocial(this, '" + nombreRed + "','" + url + "');\" style=\"cursor: pointer;\"> " +
+            "           <img style=\"margin-top: 3px;\" alt=\"Editar\" title=\"Editar\" src=\"http://prestatic.gnoss.com/img/icoEditar.gif\" /> " +
+            "       </a> " +
+            "   </td> " +
+            "   <td style=\"text-align: center;\"> " +
+            "       <a onclick=\"EliminarRedSocial(this, '" + nombreRed + "');\" class=\"icoEliminar\">X</a> " +
+            "   </td> " +
+            "</tr>";
+
+        $('#tblRedesSociales tbody').append($(htmlFila));
+    }
+
+</script>

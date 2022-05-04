@@ -1,0 +1,673 @@
+﻿@model AdministrarPlantillasOntologicasViewModel
+
+@{
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add("https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js");
+
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    bool editando = Model.SelectedOntology.OntologyID != Guid.Empty;
+    PlantillaOntologicaViewModel pantillaEdicion = Model.SelectedOntology;
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMIN", "TITULOADMINPLANTILLAS2")</h1>
+    <div>
+        <form autocomplete="off">
+            @if (editando)
+            {
+                <div id="panEditar" class="editarOntologia">
+                    <h2><span id="lblSubirRecurso" style="display: block;">Editar plantilla @pantillaEdicion.Name</span></h2>
+                    @Html.PartialView("_EdicionDatos", pantillaEdicion)
+                    @Html.PartialView("_EdicionFicheros", pantillaEdicion)
+                </div>
+                <div class="botoneraCrearPlantilla">
+                    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || Html.GetComunidad().EntornoBloqueado)
+                    {
+                        <a id="btnGuardarPlantilla" style="pointer-events: none">Guardar plantilla</a>
+                    }
+                    else
+                    {
+                        <a onclick="GuardarPlantilla();" id="btnGuardarPlantilla">Guardar plantilla</a>
+                    }
+                    @*<a onclick="GuardarPlantilla();" id="btnGuardarPlantilla">Guardar plantilla</a>*@
+                </div>
+            }
+            else
+            {
+                <div id="panAniadir">
+                    <input type="button" id="btnNuevaPlantilla" class="addTemplate" value="Nueva plantilla" onclick="NuevaPlantilla()" />
+                    <input type="button" id="btnDescargarClasesYVistas" class="addTemplate" value="Descargar Clases y Vistas" onclick="DescargarClasesYVistas()" />
+                    <input type="button" id="btnDescargarClasesYVistasJava" class="addTemplate" value="Descargar Clases y Vistas Java" onclick="DescargarClasesYVistasJava()" />
+                    <div style="display: none;" id="panCrearPlantilla">
+
+                        <h2><span id="lblSubirRecurso" style="display: block;">Agregar plantilla</span></h2>
+                        <div id="panPaso1">
+                            <div id="panOpcionTipoPlantilla">
+                                <span><input type="radio" name="TipoOntologia" id="rdbTengoOwl" checked="checked">Crear Ontologia</span>
+                                <span><input type="radio" name="TipoOntologia" id="rdbTengoOwlSecundario">Crear Ontologia secundaria</span>
+                            </div>
+                            <div id="panInfoConseguirOwl">
+                                <span id="lblInfOwlTexto">Puedes crear una ontología desde cero usando alguno de los siguientes programas:</span>
+                                <span><a href="http://protege.stanford.edu/" id="hlProtege">Protégé &ndash; Universidad de Stanford</a></span>
+                                <span><a href="http://www.topquadrant.com/products/TB_Composer.html" id="hlTopBrain">TopBraid Composer - TopQuadrant</a></span>
+                                <span>O elegir algún otro del siguiente <a href="http://en.wikipedia.org/wiki/Ontology_editor" id="hlWikipedia">listado de Wikipedia</a></span>
+                                <span>O puedes <a href="mailto:solicitudes@gnoss.com" id="hlSolicitarOWL">solicitar</a> que se la desarrollemos en GNOSS</span>
+                            </div>
+                        </div>
+                        @Html.PartialView("_EdicionDatos", pantillaEdicion)
+                        @Html.PartialView("_EdicionFicheros", pantillaEdicion)
+
+                        <div class="botoneraCrearPlantilla">
+                            <a onclick="GuardarPlantilla();" id="btnAgregarPlantilla">Agregar plantilla</a>
+                            <a onclick="SiguienteNuevaPlantilla();" id="btnSiguientePlantilla">Siguiente</a>
+                            <a onclick="CancelarNuevaPlantilla();" id="btnCancelarPlantilla">@Html.GetText("COMMON", "CANCELAR")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="plantillas">
+                    <h2 class="noBgImg" id="h2PlantillasActu">Plantillas de la comunidad</h2>
+                    @Html.PartialView("_ListaPlantillas", Model.Templates)
+                </div>
+                <div class="plantillas">
+                    <h2 class="noBgImg" id="h2PlantillasSecund">Plantillas secundarias de la comunidad</h2>
+                    @Html.PartialView("_ListaPlantillas", Model.SecondaryTemplates)
+                </div>
+                <div style="display:none;z-index:2000;" class="confirmar" id="divPreguntaConfirmacionEventos">
+                    <div class="pregunta">
+                        <span id="lblPregunta_ConfirmacionEliminar"></span>
+                        <input type="button" onclick="" id="lbSi_ConfirmacionEliminar" value="Sí" />
+                        <input type="button" onclick="$('#divPreguntaConfirmacionEventos').hide();$('#mascaraBlanca').hide();" value="No" />
+                    </div>
+                </div>
+            }
+        </form>
+
+        <div id="panOK" class="ok general">Los cambios se han guardado correctamente</div>
+        <div id="panError" class="error general"></div>
+    </div>
+</div>
+
+@*<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>*@
+
+<script type="text/javascript">
+    function CompartirPlantilla(urlCompartir, enlace, id) {
+        DesplegarAccionMVC(urlCompartir, enlace, 'despAccionRec_' + id, 'AccionRecurso_Compartir');
+
+        var panelContenedor = $(enlace).closest('tr');
+
+        $('#despAccionRec_' + id).css({
+            position: 'absolute',
+            width: '500px',
+            left: (panelContenedor.offset().left + (panelContenedor.width() / 2) - 250) + 'px',
+            top: (panelContenedor.offset().top - 100) + 'px'
+        });
+
+        $('.cerrar a', $('#despAccionRec_' + id)).click(function () {
+            $('#despAccionRec_' + id).hide();
+        });
+    }
+
+    function NuevaPlantilla() {
+        $('#panCrearPlantilla').show();
+        $('#panAniadir').addClass('paso1');
+        $('div.plantillas').hide();
+    }
+
+    function DescargarClasesYVistas() {
+        var url = document.location.href + '/download-classes';
+        var ajax = new XMLHttpRequest();
+        ajax.open("POST", url, true);
+        ajax.responseType = "blob";
+        ajax.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    var respuesta = this.statusText;
+                    if (respuesta.indexOf("Error") > -1 || respuesta == null) {
+                        console.log(respuesta);
+                    }
+                    else {
+                        var blob = new Blob([this.response], { type: "application/zip" });
+                        saveAs(blob, "clasesGeneradas.zip");
+                    }
+                    OcultarUpdateProgress();
+                }
+                else {
+                    console.log(this.statusText);
+                }
+            }
+        };
+        ajax.send();
+    }
+
+    function DescargarClasesYVistasJava() {
+        var url = document.location.href + '/download-classes-java';
+
+        var ajax = new XMLHttpRequest();
+        ajax.open("POST", url, true);
+        ajax.responseType = "blob";
+        ajax.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    var respuesta = this.statusText;
+                    if (respuesta.indexOf("Error") > -1 || respuesta == null) {
+                        console.log(respuesta);
+                    }
+                    else {
+                        var blob = new Blob([this.response], { type: "application/zip" });
+                        saveAs(blob, "clasesGeneradas.zip");
+                    }
+
+                    OcultarUpdateProgress();
+                }
+                else {
+                    console.log(this.statusText);
+                }
+            }
+        };
+        ajax.send();
+    }
+
+    function CancelarNuevaPlantilla() {
+        $('div.plantillas').show();
+        $('#panCrearPlantilla').hide();
+        $('#panAniadir').removeClass('paso1');
+        $('#panAniadir').removeClass('paso2');
+    }
+
+    function SiguienteNuevaPlantilla() {
+        if ($('#panAniadir').hasClass('paso1')) {
+            if ($('#rdbTengoOwl').is(':checked') || $('#rdbTengoOwlSecundario').is(':checked')) {
+                $('#panAniadir').removeClass('paso1');
+                $('#panAniadir').addClass('paso2');
+                if ($('#rdbTengoOwlSecundario').is(':checked')) {
+                    $('#divNoUsarPlantillaXml').show();
+                    $('#panExtraOnto').hide();
+                }
+                else {
+                    $('#divNoUsarPlantillaXml').hide();
+                    $('#panExtraOnto').show();
+                }
+            }
+            else {
+                MostrarError('Debes seleccionar una opción');
+            }
+        }
+
+        $('div.plantillas').hide();
+    }
+
+    function ObtenerFichero(input) {
+        var files = input.get(0).files;
+        if (files.length > 0) {
+            return files[0];
+        }
+        return null;
+    }
+
+    function GuardarPlantilla() {
+        var error = false;
+
+        var dataPost = new FormData();
+
+        var titulo = $('#txtTitulo').val();
+        if (titulo == "") {
+            $('#txtTitulo').after('<p class="ko">El título de la ontologia es obligatorio</p>');
+            error = true;
+        }
+        dataPost.append($('#txtTitulo').attr('name'), $('#txtTitulo').val());
+
+        var descripcion = $('#txtDescripcion').val();
+        if (descripcion == "") {
+            $('#txtDescripcion').after('<p class="ko">La descripción de la ontologia es obligatorio</p>');
+            error = true;
+        }
+        dataPost.append($('#txtDescripcion').attr('name'), encodeURIComponent(descripcion));
+
+        var nuevaOntologia = false;
+        if ($('#rdbTengoOwl').length > 0) {
+            nuevaOntologia = true;
+        }
+
+        if (nuevaOntologia) {
+            //Obtenemos el tipo de plantilla
+            dataPost.append("Ontologia.Principal", $('#rdbTengoOwl').is(':checked'));
+        }
+
+        //Obtenemos el fichero OWL
+        var ficheroOWL = ObtenerFichero($('#fileOWL'));
+        if (ficheroOWL == null && nuevaOntologia) {
+            $('#fileOWL').after('<p class="ko">Debes seleccionar una ontologia</p>');
+            error = true;
+        }
+        dataPost.append($('#fileOWL').attr('name'), ficheroOWL);
+
+        //Obtenemos el fichero XML
+        var reemplazarXML = $('#chkEditXML').is(':checked');
+        dataPost.append($('#chkEditXML').attr('name'), reemplazarXML);
+        if (reemplazarXML) {
+            var usarGenricoXML = $('#chkUseGenericXML').is(':checked');
+            var noUsarXML = $('#chkNoUseXML').is(':checked');
+            dataPost.append($('#chkUseGenericXML').attr('name'), usarGenricoXML);
+            dataPost.append($('#chkNoUseXML').attr('name'), noUsarXML);
+            if (!usarGenricoXML && !noUsarXML) {
+                var ficheroXML = ObtenerFichero($('#fileXML'));
+                if (ficheroXML == null) {
+                    $('#fileXML').after('<p class="ko">Debes seleccionar un archivo de configuración de los estilo</p>');
+                    error = true;
+                }
+                dataPost.append($('#fileXML').attr('name'), ficheroXML);
+            }
+        }
+
+        //Obtenemos el fichero CSS
+        var reemplazarCSS = $('#chkEditCSS').is(':checked');
+        dataPost.append($('#chkEditCSS').attr('name'), reemplazarCSS);
+        if (reemplazarCSS) {
+            var usarGenricoCSS = $('#chkUseGenericCSS').is(':checked');
+            dataPost.append($('#chkUseGenericCSS').attr('name'), usarGenricoCSS);
+            if (!usarGenricoCSS) {
+                var ficheroCSS = ObtenerFichero($('#fileCSS'));
+                if (ficheroCSS == null) {
+                    $('#fileCSS').after('<p class="ko">Debes seleccionar un archivo de configuración de los estilo</p>');
+                    error = true;
+                }
+                dataPost.append($('#fileCSS').attr('name'), ficheroCSS);
+            }
+        }
+
+        //Obtenemos el fichero IMG
+        var reemplazarIMG = $('#chkEditIMG').is(':checked');
+        dataPost.append($('#chkEditIMG').attr('name'), reemplazarIMG);
+        if (reemplazarIMG) {
+            var usarGenricoIMG = $('#chkUseGenericIMG').is(':checked');
+            dataPost.append($('#chkUseGenericIMG').attr('name'), usarGenricoIMG);
+            if (!usarGenricoIMG) {
+                var ficheroIMG = ObtenerFichero($('#fileIMG'));
+                if (ficheroIMG == null) {
+                    $('#fileIMG').after('<p class="ko">Debes seleccionar una imagen</p>');
+                    error = true;
+                }
+                dataPost.append($('#fileIMG').attr('name'), ficheroIMG);
+            }
+        }
+
+        //Obtenemos el fichero JS
+        var reemplazarJS = $('#chkEditJS').is(':checked');
+        dataPost.append($('#chkEditJS').attr('name'), reemplazarJS);
+        if (reemplazarJS) {
+            var usarGenricoJS = $('#chkUseGenericJS').is(':checked');
+            dataPost.append($('#chkUseGenericJS').attr('name'), usarGenricoJS);
+            if (!usarGenricoJS) {
+                var ficheroJS = ObtenerFichero($('#fileJS'));
+                if (ficheroJS == null) {
+                    $('#fileJS').after('<p class="ko">Debes seleccionar un archivo javascript</p>');
+                    error = true;
+                }
+                dataPost.append($('#fileJS').attr('name'), ficheroJS);
+            }
+        }
+
+        if (!error) {
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                document.location.href + '/save',
+                dataPost,
+                true
+            ).done(function (data) {
+                $('#panOK').show();
+            }).fail(function (data) {
+                $('#panError').html(data).show();
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        }
+    }
+
+
+    $(document).ready(function () {
+        $('.panFichero a.cerrar').click(function () {
+            var panFichero = $(this).closest('.panFichero');
+            panFichero.prev().show();
+            panFichero.hide();
+            $('input[type=checkbox]', panFichero).prop("checked", false);
+
+        });
+        $('.accionesPlantillas .mas').click(function () {
+            $('.editarElemento').hide();
+            $('.editarElemento', $(this).closest('.accionesPlantillas')).show();
+        });
+        $('.editarElemento').mouseout(function (event) {
+            if ($(this).find(event.relatedTarget).length == 0) {
+                $(this).hide();
+            }
+        });
+        $('#hlShowPanFileOWL').click(function () {
+            $('#panFileOWL').slideDown();
+            $('#lblShowPanFileOWL').hide();
+        });
+        $('#hlShowPanFileXML').click(function () {
+            $('#panFileXML').slideDown();
+            $('#lblShowPanFileXML').hide();
+            //Pongo el check Hack a checked para saber que se está editando el archivo de configuración:
+            $('#chkEditXML').prop('checked', true);
+            if ($('#chkUseGenericXML').is(':checked')) {
+                $('#chkUseGenericXML').trigger('click');
+            }
+        });
+        $('#chkUseGenericXML').click(function () {
+            if ($(this).is(":checked")) {
+                $('#chkNoUseXML').prop('checked', false);
+            }
+            $('#fileXML').prop('disabled', $(this).is(":checked") || $('#chkNoUseXML').is(":checked"));
+        });
+        $('#chkNoUseXML').click(function () {
+            if ($(this).is(":checked")) {
+                $('#chkUseGenericXML').prop('checked', false);
+            }
+            $('#fileXML').prop('disabled', $('#chkUseGenericXML').is(":checked") || $(this).is(":checked"));
+        });
+        $('#hlShowPanFileCSS').click(function () {
+            $('#panFileCSS').slideDown();
+            $('#lblShowPanFileCSS').hide();
+            //Pongo el check Hack a checked para saber que se está editando el archivo de configuración:
+            $('#chkEditCSS').prop('checked', true);
+            if ($('#chkUseGenericCSS').is(':checked')) {
+                $('#chkUseGenericCSS').trigger('click');
+            }
+        });
+        $('#chkUseGenericCSS').click(function () {
+            $('#fileCSS').prop('disabled', $(this).is(":checked"));
+        });
+        $('#hlShowPanFileIMG').click(function () {
+            $('#panFileIMG').slideDown();
+            $('#lblShowPanFileIMG').hide();
+            //Pongo el check Hack a checked para saber que se está editando el archivo de configuración:
+            $('#chkEditIMG').prop('checked', true);
+            if ($('#chkUseGenericIMG').is(':checked')) {
+                $('#chkUseGenericIMG').trigger('click');
+            }
+        });
+        $('#chkUseGenericIMG').click(function () {
+            $('#fileIMG').prop('disabled', $(this).is(":checked"));
+        });
+        $('#hlShowPanFileJS').click(function () {
+            $('#panFileJS').slideDown();
+            $('#lblShowPanFileJS').hide();
+            //Pongo el check Hack a checked para saber que se está editando el archivo de configuración:
+            $('#chkEditJS').prop('checked', true);
+            if ($('#chkUseGenericJS').is(':checked')) {
+                $('#chkUseGenericJS').trigger('click');
+            }
+        });
+        $('#chkUseGenericJS').click(function () {
+            $('#fileJS').prop('disabled', $(this).is(":checked"));
+        });
+        $('.viewHistory').click(function (e) {
+            e.preventDefault();
+            MostrarUpdateProgress();
+            $('.versionList').removeClass("ko");
+            $('.versionList').html('');
+
+            GnossPeticionAjax(
+                document.location.href + '/history',
+                null,
+                true
+            ).done(function (response) {
+                $('#lblMostrarHistorial').hide();
+                $('#divHistorial').show();
+                $('.versionList').html(response);
+            }).fail(function (response) {
+                $('.versionList').addClass("ko").show();
+                $('.versionList').append('<p>' + response + '</p>');
+            }).always(function (response) {
+                OcultarUpdateProgress();
+            })
+        });
+        $('.accionesPlantillas .editar').click(function (e) {
+            document.location.href = document.location.href + "/" + $(this).closest('tr').attr('id');
+        });
+        $('.accionesPlantillas .eliminar').click(function (e) {
+            var elemento = $(this);
+
+            $('#lblPregunta_ConfirmacionEliminar').html('¿Desea eliminar la plantilla?');
+            $("#lbSi_ConfirmacionEliminar").unbind('click');
+
+            $("#lbSi_ConfirmacionEliminar").click(function () {
+                $('#divPreguntaConfirmacionEventos').hide();
+                $('#mascaraBlanca').hide();
+                $('.error').remove();
+                MostrarUpdateProgress();
+                GnossPeticionAjax(
+                    document.location.href + "/" + elemento.closest('.filaplantilla').attr('id') + "/delete",
+                    null,
+                    true
+                ).done(function (response) {
+                    elemento.closest('tr').remove();
+                }).fail(function (response) {
+                    mostrarErrorGuardadoFallo(response);
+                }).always(function (response) {
+                    OcultarUpdateProgress();
+                })
+            });
+
+            CalcularTopPanelEliminarYMostrar(e, 'divPreguntaConfirmacionEventos');
+        });
+        $('.filaplantilla .protect input[type=checkbox]').click(function (e) {
+            MostrarUpdateProgress();
+
+            var botonEvento = $(this);
+            var dataPost = {}
+            dataPost.Protect = botonEvento.is(':checked');
+
+            GnossPeticionAjax(
+                document.location.href + "/" + botonEvento.closest('.filaplantilla').attr('id') + "/protect",
+                dataPost,
+                true
+            ).fail(function (response) {
+                botonEvento.prop('checked', !botonEvento.is(':checked'));
+            }).always(function (response) {
+                OcultarUpdateProgress();
+            })
+        });
+        $('.filaplantilla .allowMasiveUpload input[type=checkbox]').click(function (e) {
+            MostrarUpdateProgress();
+
+            var botonEvento = $(this);
+            var dataPost = {}
+            dataPost.AllowMasiveUpload = botonEvento.is(':checked');
+
+            GnossPeticionAjax(
+                document.location.href + "/" + botonEvento.closest('.filaplantilla').attr('id') + "/allowMasiveUpload",
+                dataPost,
+                true
+            ).fail(function (response) {
+                botonEvento.prop('checked', !botonEvento.is(':checked'));
+            }).always(function (response) {
+                OcultarUpdateProgress();
+            })
+        });
+    });
+
+    function mostrarErrorGuardadoFallo(data) {
+        var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
+
+        if (entornoBloqueado == "True") {
+            $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
+        }
+        else {
+            $('div.panAniadir').before('<div class="error general">' + data + '</div>');
+        }
+    }
+
+    function CalcularTopPanelEliminarYMostrar(evento, panelID) {
+        $('#mascaraBlanca').show();
+        var fila = $(evento.target).closest('tr');
+        $('#' + panelID).css({
+            left: (fila.offset().left + 100) + 'px',
+            top: (fila.offset().top - 20) + 'px',
+            display: ''
+        });
+        return false;
+    }
+</script>
+
+<style>
+    /*.accionesPlantillas .action.mas:hover + .editarElemento {
+        position:absolute;
+        display:block;
+    }
+
+    .accionesPlantillas .editarElemento:hover
+     {
+        position:absolute;
+        display:block;
+    }*/
+
+    label.botonReemplazar {
+        display: block;
+        height: 23px;
+        padding: 10px 5px 0;
+        margin-left: 20px;
+    }
+
+    #panEditar,
+    #panAniadir,
+    #panInfoConseguirOwl,
+    #panCrearPlantilla .botoneraCrearPlantilla {
+        margin-top: 20px;
+    }
+
+    #panPaso2 .panFichero,
+    #divHistorial {
+        background: #ddd;
+        padding: 15px 50px 15px 20px;
+        margin: 20px 20px 0;
+    }
+
+        #divHistorial.ko {
+            background: Crimson none repeat scroll 0 0;
+        }
+
+        #divHistorial ul {
+            list-style-type: none;
+        }
+
+        #panPaso2 .panFichero a.cerrar {
+            float: right;
+        }
+
+    #panInfoConseguirOwl {
+        background-color: #ddd;
+        margin: 5px;
+        padding: 5px 20px 15px;
+    }
+
+        #panPaso3,
+        #panOpcionTipoPlantilla span,
+        #panInfoConseguirOwl span {
+            display: block;
+            margin-top: 10px;
+        }
+
+    #panPaso2 span {
+        display: block;
+    }
+
+    #panPaso2 p.ko {
+        color: red;
+        margin: 0;
+    }
+
+    #panAniadir #panPaso1,
+    #panAniadir #panPaso2,
+    #panAniadir #panPaso3 {
+        display: none;
+    }
+
+    #panAniadir.editarOntologia #panPaso2,
+    #panAniadir.editarOntologia #panPaso3,
+    #panAniadir.paso1 #panPaso1,
+    #panAniadir.paso2 #panPaso2,
+    #panAniadir.paso2 #panPaso3 {
+        display: block;
+    }
+
+    #panAniadir.editarOntologia .addTemplate,
+    #panAniadir.paso1 .addTemplate,
+    #panAniadir.paso2 .addTemplate,
+    #panAniadir.paso3 .addTemplate {
+        display: none;
+    }
+
+    .botoneraCrearPlantilla a {
+        float: right;
+        margin-right: 20px;
+    }
+
+    #panAniadir.paso1 .botoneraCrearPlantilla a#btnAgregarPlantilla {
+        display: none;
+    }
+
+    #panAniadir.paso2 .botoneraCrearPlantilla a#btnSiguientePlantilla {
+        display: none;
+    }
+
+    #section .content table.tablePlantillas td p {
+        margin-bottom: 0;
+    }
+
+    #section .content .plantillas {
+        margin: 20px;
+    }
+
+    .accionesPlantillas span.action {
+        float: left;
+    }
+
+    .accionesPlantillas .editarElemento {
+        background: #ddd none repeat scroll 0 0;
+        border: 1px solid #ccc;
+        display: none;
+        margin-left: -10px;
+        margin-top: 26px;
+        position: absolute;
+    }
+
+        .accionesPlantillas .editarElemento ul {
+            list-style-type: none;
+            padding: 5px 10px 0;
+            width: 120px;
+        }
+
+            .accionesPlantillas .editarElemento ul li {
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 5px;
+            }
+
+                .accionesPlantillas .editarElemento ul li:last-child {
+                    border-bottom: 0;
+                }
+
+    span.action.compartir {
+        background-position: 0 -104px;
+    }
+
+    span.action.mas {
+        background-position: -20px -104px;
+    }
+
+    div#panOK.ok.general,
+    div#panError.error.general {
+        margin-left: 0;
+        display: none;
+    }
+
+    span.action.eliminar.disabled {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+</style>

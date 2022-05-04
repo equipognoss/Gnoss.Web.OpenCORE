@@ -1,0 +1,119 @@
+fieldset.smallLabels p label.subirRecRap{width:auto;}
+
+/* Pagina Mis Favoritos, accion: Organizar en categorias */
+.confirmar .categorias
+{
+    position: relative;
+	background:#eee; 
+	padding:2em; 
+	-moz-box-shadow: 0 0 10px #888;
+	-webkit-box-shadow: 0 0 10px #888;
+	box-shadow: 0 0 10px #888;}
+.confirmar .categorias span,
+.confirmar .categorias label a{font-size:13px}
+.confirmar .categorias label a{margin-left:10px}
+
+.iconsRedesSociales ul li.facebook a {
+    background-position: -83px -162px;
+}
+
+
+.resource .iconsRedesSociales ul li.twitter a {
+    background-position: -37px -182px;
+}
+
+.resource .iconsRedesSociales ul li.google a {
+    background-position: -59px -182px;
+}
+
+#ctl00_CPH1_panVerCorreo .description .group.author, 
+#panVerCorreo .description .group.author, 
+#ctl00_CPH1_panVerCorreo .description .group.utils-1, 
+#panVerCorreo .description .group.utils-1, 
+#ctl00_CPH1_panVerCorreo #customAboutResource.customAboutResource, 
+#panVerCorreo #customAboutResource.customAboutResource{
+    display:inherit;
+}
+
+#col02 #panVerCorreo .description,
+#col02 #ctl00_CPH1_panVerCorreo .description{
+    margin-top: 10px;
+}
+
+.subirRecReg
+{
+	left: 0;
+    margin-top: 300px;
+    position: absolute;
+}
+
+.resource .logoComunidad img {
+    display: block;
+    width: 100%;
+}
+
+#col01 .componente.cp0401 .title h4 {
+    font-size: 14px;
+}
+
+
+#breadcrumb, .facetedSearch #gnoss_hasfechapublicacion .facetedSearchBox{display:inherit;}
+
+.cp0101 .contenido ul li span{display:block; padding-top:115px; min-height:30px}
+
+span.prevArcFormSem {margin-right:10px;font-size:13px;}
+span.prevArcFormSem img {max-width: 100px; max-height: 100px; vertical-align: middle;}
+
+.tesSem a {font-size: 13px;line-height: 1.2;}
+.tesSem a.activo {font-weight: bold;}
+.tesSem .hijosTesSem {padding-left:15px;}
+
+.facetedSearch .categoriesTesSem ul li{margin-left:10px;}
+
+.ArbolTesSem ul {list-style-type: none;}
+
+.resource .semanticView .group .ArbolTesSem img {float:left; margin-top:4px;margin-right: 5px;cursor:pointer;}
+
+div.divContRecCarMas, div#divFuExaminarMasivo, div#divContListaRecCarMas {margin-bottom:15px;margin-top:15px;}
+div#divContListaRecCarMas div.recursoMasivo {margin-bottom:10px;}
+div.divRecTempDesple {margin-top:10px;}
+
+div.ajax__fileupload_topFileStatus{float:right;width:400px;}
+
+div.ajax__fileupload{overflow: visible;}
+
+.formSemEdicion .infoProp{margin-left:10px; margin-top: 5px;}
+
+.fichaMapaPerYOrg{min-width:300px;}
+
+.formSemLectura .mapGoogle
+{
+	height:500px;
+}
+
+.formSemEdicion div.imgCargandoFichFormSem img
+{
+	vertical-align: middle;
+	margin-right: 5px;
+}
+
+.contAgr table .tdval
+{
+	max-width:300px;
+}
+
+/*Administración elementos semánticos*/
+
+.menuAdminSem
+{
+	margin-bottom:25px;
+}
+
+#listTesSemEdit h2
+{
+	margin-bottom:10px;
+}
+
+.wrapeditTesSem .listToolBar .toolbar ul li {display:inline-block;}
+
+/*Fin Administración elementos semánticos*/

@@ -1,0 +1,9 @@
+﻿@model EditSuscriptionViewModel
+
+@foreach (CategoryModel categoria in Model.Categories.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat => cat.Order))
+{
+    PintarCategoriasEditarSuscripcion pintar = new PintarCategoriasEditarSuscripcion();
+    pintar.editSuscriptionView = Model;
+    pintar.categoryModel = categoria;
+    @Html.PartialView("../EditarSuscripcionComunidad/_PintarCategoria", pintar)
+}

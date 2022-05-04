@@ -1,0 +1,544 @@
+
+.formSemEdicion .edit
+{
+    width:652px;
+}
+
+.formSemLectura  .edit
+{
+    width:633px;
+}
+
+.formSemEdicion .tdaccion
+{
+	text-align: center;
+}
+
+.formSemEdicion .cont table
+{
+	margin-top:5px;
+	margin-bottom:5px;
+}
+
+.formSemEdicion .lb
+{
+	display:block;
+}
+.formSemLectura .lb
+{
+	display:block;
+}
+
+.formSemEdicion table
+ {
+	min-width:650px;
+	border-collapse:collapse;
+ }
+
+
+.formSemEdicion .cont_PersonName
+{
+	width:45%;
+	float:left;
+}
+.formSemEdicion .edit_PersonName
+{
+	width:280px;
+}
+.formSemEdicion .cont_FatherName
+{
+	width:45%;
+	float:right;
+}
+.formSemEdicion .edit_FatherName
+{
+	width:280px;
+}
+.formSemEdicion .cont_TipoDocumentoAcreditativo
+{
+	float:left;
+}
+.formSemEdicion .edit_TipoDocumentoAcreditativo
+{
+	width:100px;
+	height:22px;
+	margin-bottom:6px;
+	margin-right:10px;
+}
+.formSemEdicion .cont_PersonLegalID
+{
+	float:left;
+}
+.formSemEdicion .edit_PersonLegalID
+{
+	width:171px;
+	margin-right:10px;
+}
+.formSemEdicion .cont_foto
+{
+	width:45%;
+	float:left;
+	padding-top:5px;
+	display:none;
+}
+.formSemLectura .edit_foto
+{
+	max-height:100px;
+	max-width:100px;
+}
+.formSemEdicion .cont_GenderCode
+{
+	float:right;
+	margin-right:10px;
+}
+.formSemEdicion .edit_GenderCode
+{
+	width:108px;
+	height:22px;
+	margin-bottom:6px;
+}
+.formSemEdicion .cont_BirthDate
+{
+	float:right;
+	padding-right: 8px;
+}
+.formSemEdicion .edit_BirthDate
+{
+	width:143px;
+}
+.formSemEdicion .cont_AddressLine
+{
+	float:left;
+}
+.formSemEdicion .edit_AddressLine
+{
+	width:280px;
+}
+.formSemEdicion .cont_DialNumber
+{
+	width:45%;
+	float:left;
+}
+.formSemEdicion .edit_DialNumber
+{
+	width:280px;
+}
+.formSemEdicion .cont_CountrySubDivisionCode
+{
+	width:45%;
+	float:right;
+}
+.formSemEdicion .edit_CountrySubDivisionCode
+{
+	width:280px;
+}
+.formSemEdicion .cont_PostalCode
+{
+	float:right;
+	padding-right:10px;
+}
+.formSemEdicion .edit_PostalCode
+{
+	width:101px;
+}
+.formSemEdicion .cont_CityName
+{
+	float:right;
+	padding-right:9px;
+}
+.formSemEdicion .edit_CityName
+{
+	width:164px;
+}
+.formSemEdicion .cont_NationalityCode
+{
+	display:none;
+	width:45%;
+	float:left;
+}
+.formSemEdicion .edit_NationalityCode
+{
+	 width:280px;
+}
+.formSemEdicion .cont_URI
+{
+	width:45%;
+	float:left;
+}
+.formSemEdicion .edit_URI
+{
+	 width:280px;
+}
+.formSemEdicion .cont_CurrentWork
+{
+	float:right;
+	padding-right:10px;
+}
+.formSemEdicion .edit_CurrentWork
+{
+	width:108px;
+	height:22px;
+	margin-bottom:6px;
+}
+.formSemEdicion .cont_MaritalStatusCode
+{
+	float:right;
+	padding-right:8px;
+}
+.formSemEdicion .edit_MaritalStatusCode
+{
+	width:174px;
+	height:22px;
+	margin-bottom:6px;
+}
+.formSemEdicion .cont_CountryCode
+{
+	width:45%;
+	float:left;
+}
+.formSemEdicion .edit_CountryCode
+{
+	width:280px;
+}
+.formSemEdicion .cont_UseCode
+{
+	display:none;
+}
+.formSemEdicion .cont_PersonID
+{
+	display:none;
+}
+.formSemEdicion .cont_Tags
+{
+	margin-bottom:10px;
+}
+.formSemEdicion .edit_Tags
+{
+	width:655px;
+}
+
+.formSemEdicion .edit_HonoresYPremios
+{
+	width:655px;
+}
+.formSemEdicion .edit_Licencias
+{
+	width:655px;
+}
+.formSemEdicion .edit_Asociaciones
+{
+	width:655px;
+}
+
+.formSemEdicion .cont_Communications
+{
+	display:none;
+}
+
+.formSemEdicion .contEnt_EmploymentHistory
+{
+	margin-bottom:20px;
+}
+.formSemEdicion .contEnt_EducationHistory
+{
+	margin-bottom:20px;
+}
+.formSemEdicion .contEnt_PersonQualifications
+{
+	margin-bottom:20px;
+}
+.formSemEdicion .contEnt_Licenses
+{
+	margin-bottom:20px;
+}
+.formSemEdicion .contEnt_OrganizationAffiliations
+{
+	margin-bottom:20px;
+}
+.formSemEdicion .contEnt_UserArea_CandidateProfile
+{
+	margin-bottom:20px;
+}
+.formSemEdicion .contEnt_EmployerHistory
+{
+	margin-bottom:20px;
+}
+
+
+.formSemEdicion .cont_OrganizationName
+{
+	float:left;
+}
+.formSemEdicion .edit_OrganizationName
+{
+	width:314px;
+}
+.formSemEdicion .cont_IndustryCode
+{
+	float:right;
+}
+.formSemEdicion .edit_IndustryCode
+{
+	width:314px;
+}
+.formSemEdicion .cont_EndDate
+{
+	float:left;
+	padding-left:60px;
+}
+.formSemEdicion .edit_EndDate
+{
+	width:100px;
+}
+.formSemEdicion .cont_StartDate
+{
+	float:left;
+}
+.formSemEdicion .edit_StartDate
+{
+	width:100px;
+}
+
+.formSemEdicion .edit_FechaInicio
+{
+	float:left;
+}
+.formSemEdicion .edit_FechaFin
+{
+	float:left;
+}
+
+.formSemEdicion .cont_PositionTitle
+{
+	float:left;
+}
+.formSemEdicion .edit_PositionTitle
+{
+	width:314px;
+}
+.formSemEdicion .cont_OrganizationUnitName
+{
+	float:right;
+	padding-left:16px;
+}
+.formSemEdicion .edit_OrganizationUnitName
+{
+	width:314px;
+}
+.formSemEdicion .cont_JobGradeCode
+{
+	float:right;
+}
+.formSemEdicion .edit_JobGradeCode
+{
+	display:none;
+    width:203px;
+}
+.formSemEdicion .cont_PersonasASuCargo
+{
+	float:left;
+}
+.formSemEdicion .edit_PersonasASuCargo
+{
+	width:314px;
+}
+.formSemEdicion .cont_PresupuestoManejado
+{
+	float:right;
+	padding-left:16px;
+}
+.formSemEdicion .edit_PresupuestoManejado
+{
+	 width:314px;
+}
+.formSemEdicion .cont_CompetencyName
+{
+	float:left;
+}
+.formSemEdicion .edit_CompetencyName
+{
+	width:314px;
+}
+.formSemEdicion .cont_ProficiencyLevel
+{
+	float:left;
+	margin-left:20px;
+}
+.formSemEdicion .edit_ProficiencyLevel
+{
+	width:314px;
+	height:22px;
+}
+
+
+.formSemEdicion .edit_EducationLevelCode
+{
+	height:22px;
+}
+.formSemEdicion .edit_Escribir
+{
+	float:right;
+	margin-right:312px;
+    width:180px;
+	height:22px;
+}
+.formSemEdicion .edit_InteraccionOral
+{
+	float:right;
+	margin-right:312px;
+    width:180px;
+	height:22px;
+}
+.formSemEdicion .edit_ComprensionAuditiva
+{
+	float:right;
+	margin-right:312px;
+    width:180px;
+	height:22px;
+}
+.formSemEdicion .edit_ComprensionLectura
+{
+	float:right;
+	margin-right:312px;
+    width:180px;
+	height:22px;
+}
+.formSemEdicion .edit_ExpresionOral
+{
+	float:right;
+	margin-right:312px;
+    width:180px;
+	height:22px;
+}
+
+.formSemEdicion .cont_ComprensionAuditiva
+{
+	margin-top:10px;
+}
+
+.formSemLectura .edit_IdiomaMaterno
+{
+	font-weight:bold;
+}
+.formSemLectura .edit_CompetencyName
+{
+	font-weight:bold;
+}
+.formSemLectura .edit_PaisEstancia
+{
+	font-weight:bold;
+}
+.formSemLectura .edit_CentroEstudios
+{
+	margin-left:9px;
+}
+
+.formSemLectura .cont_ExecutiveSummary
+{
+	margin-bottom:10px;
+}
+
+.formSemEdicion .cont_UserAreas_PersonQualifications table
+{
+	min-width:135px;
+	padding-right:10px;
+}
+
+
+
+.formSemEdicion .cont_ProfileName
+{
+	float:left;
+}
+.formSemLectura .cont_ProfileName
+{
+	margin-top:10px;
+}
+.formSemEdicion .edit_ProfileName
+{
+	width:420px;
+	margin-left:20px;
+	margin-bottom:20px;
+}
+.formSemEdicion .lb_ProfileName
+{
+	display:inline;
+}
+.formSemLectura .lb_ProfileName
+{
+	margin-right:10px;
+	display:inline;
+}
+
+.formSemEdicion .contEnt_PublicationHistory
+{
+	margin-bottom:20px;
+}
+
+.formSemLectura .cont_DescripcionFormacion
+{
+	margin-bottom:15px;
+}
+
+.formSemEdicion .edit_PublisherName
+{
+	width:655px;
+}
+
+.formSemEdicion .cont_FechaInicio
+{
+	float:left;
+}
+.formSemEdicion .cont_FechaFin
+{
+	float:left;
+	margin-left:25px;
+}
+
+.formSemEdicion .lb_Licencias
+{
+	font-weight: bold;
+	color:#8186BD;
+}
+.formSemEdicion .lb_HonoresYPremios
+{
+	font-weight: bold;
+	color:#8186BD;
+}
+.formSemEdicion .lb_Asociaciones
+{
+	font-weight: bold;
+	color:#8186BD;
+}
+
+.formSemEdicion .lb_ComprensionAuditiva
+{
+	display:inline;
+}
+.formSemEdicion .lb_Escribir
+{
+	display:inline;
+	font-weight: bold;
+}
+.formSemEdicion .lb_InteraccionOral
+{
+	display:inline;
+}
+.formSemEdicion .lb_ComprensionLectura
+{
+	display:inline;
+}
+.formSemEdicion .lb_ExpresionOral
+{
+	display:inline;
+}
+
+.formSemLectura .cont_PositionsHistory
+{
+	margin-left:30px;
+}
+
+.formSemEdicion .cont_Description
+{
+	float:left;
+}

@@ -1,0 +1,25 @@
+﻿@model ComAdminSemanticElemModel
+
+@{
+    string srcImagenEspera = ViewBag.BaseUrlStatic + "/images/espera.gif";
+}
+
+<div id="listSimpGrafEdit">
+    <h2>@Html.GetText("COMADMIN","SIMPGRAFEDITABLES")</h2>
+    <ul>
+        @foreach (string urlOnto in Model.SimpleGraphs.SimpleGraphsEditables.Keys)
+        {
+            <li><span>@Model.SimpleGraphs.SimpleGraphsEditables[urlOnto]</span> <a onclick="EditarSimpGraf('@urlOnto');">@Html.GetText("COMMON", "EDITAR")</a></li>
+        }
+    </ul>
+</div>
+<div id="divEditSimpGraf" style="display:none;">
+    <div id="divCargandoSimpGraf">
+        <img ID="imgEsperaArchivo" src="@srcImagenEspera" alt="Espere..." />
+        <span>@Html.GetText("COMMON", "CARGANDO")</span>
+    </div>
+    <div id="divEditSimpGrafInt">
+        <div id="panAccionesSimpGraf"></div>
+    </div>
+</div>
+<div id="divErroSimpGraf"></div>

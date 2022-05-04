@@ -1,0 +1,70 @@
+﻿@model FacetaModel.FiltrosFacetas
+
+@{
+    FacetaModel.FiltrosFacetas filtro = Model;
+    long longitudTexto = filtro.Nombre.LongCount();
+}
+
+<li class="bloque row filtro" id="@filtro.Nombre">
+    <span class="handle filtro">:::</span>
+    <section class="header">
+        @{
+            if (filtro.Deleted)
+            {
+                <span class="nombreFiltro" aux="Nuevo Filtro">Nuevo Filtro</span>
+            }
+            else
+            {
+                if (longitudTexto > 50)
+                {
+                    <span class="nombreFiltro" aux="@filtro.Nombre.Substring(0,50)...">@filtro.Nombre.Substring(0,50)...</span>
+                }
+                else
+                {
+                    <span class="nombreFiltro" aux="@filtro.Nombre">@filtro.Nombre</span>
+                }
+
+            }
+        }
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <input type="hidden" name="TabEliminada" value="false" />
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINFACETAS", "NOMBREFILTRO")">@Html.GetText("AYUDACOMADMINFACETAS", "FILTRO")</span>
+            @{
+                if (filtro.Deleted)
+                {
+                    <input type="text" name="TabNombre" value="" />
+                }
+                else
+                {
+                    <input type="text" name="TabNombre" value="@filtro.Nombre" />
+                }
+            }
+            
+            
+
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINFACETAS", "CONDICIONFILTRO")">@Html.GetText("AYUDACOMADMINFACETAS", "FILTROCONDICION")</span>
+            <input type="text" name="TabCondicion" value="@filtro.Condicion" />
+        </p>
+    </section>
+</li>
+
+
+@*<li class="bloque row exportacion" id="@exportacion.Key">
+    <span class="handle exportacion">:::</span>
+    <section class="header">
+        <span>@exportacion.Nombre</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <input type="hidden" name="TabEliminada" value="false" />
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")</span>
+            <input type="text" name="Nombre" value="@exportacion.Nombre" />
+        </p>
+    </section>
+</li>*@

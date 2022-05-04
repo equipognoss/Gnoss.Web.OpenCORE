@@ -1,0 +1,90 @@
+﻿@model CookieModel
+@using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
+
+@{
+
+    string NombrePorTipo(int pTipo)
+    {
+        switch (pTipo)
+        {
+            case 0:
+                return "Persistent";
+            case 1:
+                return "Session";
+            case 2:
+                return "Third party";
+            default:
+                return "Persistent";
+        }
+    }
+
+    short TipoPorNombre(string pNombre)
+    {
+        switch (pNombre)
+        {
+            case "Persistent":
+                return 0;
+            case "Session":
+                return 1;
+            case "Third party":
+                return 2;
+            default:
+                return 0;
+        }
+    }
+
+}
+
+@{
+    ProyectoCookie cookie = Model.ProyectoCookie;
+}
+
+<li class="row cookieProyecto" id="@cookie.CookieID">
+    <span class="handle cookieProyecto">:::</span>
+    <section class="header">
+        <span class="nombreCookie" aux="@Html.ObtenerTextoIdiomaUsuario(cookie.Nombre, true)">@Html.ObtenerTextoIdiomaUsuario(cookie.Nombre, true) (@Html.ObtenerTextoIdiomaUsuario(Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault(), true))</span><span class="tipoCookie"></span>
+        @if (cookie.EsEditable)
+        {
+            <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+            <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+        }
+    </section>
+    <section class="panEdicion" name="@cookie.CookieID">
+        <div>
+            <input type="hidden" name="cookieShortName" value="@cookie.NombreCorto" />
+            <input type="hidden" name="CookieModificada" value="@Model.Modificada.ToString()" />
+            <input type="hidden" name="TabEliminada" value="false" />
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "NOMBRE")">@Html.GetText("COMADMINCOOKIES", "NOMBRE")</span>
+                <input type="text" name="CookieName" value="@cookie.Nombre" />
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "CATEGORIA")">@Html.GetText("COMADMINCOOKIES", "CATEGORIA")</span>
+                <select class="cmbEditarCategoria" name="TabCategoria">
+                    <option selected value="@cookie.CategoriaID">@Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault()</option>
+                    @foreach (CategoriaProyectoCookie categoriaCookie in Model.ListaCategoriaProyectoCookie.Where(item => !item.CategoriaID.Equals(cookie.CategoriaID)))
+                    {
+                        <option value="@categoriaCookie.CategoriaID">@categoriaCookie.Nombre</option>
+                    }
+                </select>
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")">@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")</span>
+                <textarea rows="3" cols="40" name="CookieDescription">@cookie.Descripcion</textarea>
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "TIPODURACION")">@Html.GetText("COMADMINCOOKIES", "TIPODURACION")</span>
+                <select class="cmbTipoDuracion" name="TabTipoDuracion">
+                    <option selected value="@NombrePorTipo(cookie.Tipo)">@NombrePorTipo(cookie.Tipo)</option>
+                    @foreach (int tipo in Enum.GetValues(typeof(TipoCookies)))
+                    {
+                        if (!NombrePorTipo(tipo).Equals(NombrePorTipo(cookie.Tipo)))
+                        {
+                            <option value="@NombrePorTipo(tipo)">@NombrePorTipo(tipo)</option>
+                        }
+                    }
+                </select>
+            </p>
+        </div>
+    </section>
+</li>

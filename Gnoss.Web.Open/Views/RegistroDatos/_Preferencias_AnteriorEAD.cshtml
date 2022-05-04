@@ -1,0 +1,64 @@
+﻿@model RegisterDataViewModel
+
+@{
+    Dictionary<Guid, KeyValuePair<string, Dictionary<Guid, string>>> listaPreferencias = Model.ListPreferences;
+    int numCat = 1;
+    foreach (Guid catID in listaPreferencias.Keys)
+    {
+        string claseDiv = "fieldset fieldset0" + numCat + " activo";
+        <div class="@claseDiv">
+            <fieldset>
+                <legend>@listaPreferencias[catID].Key</legend>
+                <div class="fieldsetContent">
+                    <ul class="radioList">
+                    @{
+                        int numCatHija = 0;
+                        foreach (Guid catHijaID in listaPreferencias[catID].Value.Keys)
+                        {
+                            string claseLi = "item" + numCat + numCatHija;
+                            string idInput = "id_" + numCat + "_" + numCatHija;
+                            <li class="@claseLi">
+                                
+                                <input type="checkbox" categoriaid="@catHijaID" class="categoriaPreferencia" id="@idInput" name="" />
+                                <label for="@idInput">@listaPreferencias[catID].Value[catHijaID]</label>
+                            </li>
+                            numCatHija++;
+                        }  
+                    }        
+                    </ul>
+                </div>
+            </fieldset>
+        </div>
+        numCat++;
+    }
+}
+<form method="post" id="formPreferenciasRegistro">
+    <div class="fieldset actionButtons">
+        <fieldset>
+            <p>
+                <input type="hidden" name="paginaOriginal" value="@Model.ReferrerPage"/>
+                <input type="hidden" name="listaCategorias" id="listaCategorias"/>
+                <input type="hidden" name="paginaPreferencias" value="true"/>
+                <input type="hidden" name="tienePaginaDatosRegistro" value="@Model.TabData.ToString().ToLower()" />
+                <input type="submit" onclick="Registro_EnviarPreferencias()" class="submit principal" value="CONTINUAR" />
+            </p>
+        </fieldset>
+    </div>
+</form>
+
+<script type="text/javascript">
+    function Registro_EnviarPreferencias()
+    {
+        MostrarUpdateProgress();
+        var arg = "";
+        $('.categoriaPreferencia').each(function () {
+            var chk = $(this);
+            if (chk.is(":checked")) {
+                arg += '&' + chk.attr("categoriaid");
+            }
+        })
+
+        $('#listaCategorias').val(arg);
+    }
+
+</script>

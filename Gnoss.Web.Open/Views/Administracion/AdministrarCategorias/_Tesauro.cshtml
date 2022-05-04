@@ -1,0 +1,78 @@
+﻿@model AdministrarCategoriasViewModel
+
+@{
+    HeaderModel cabecera = Html.GetCabecera();
+
+    string CategoriasSeleccionadas = "";
+    string CategoriasExpandidas = "";
+    string PasosRealizados = "";
+
+    if (Model.Thesaurus.SelectedCategories != null)
+    {
+        foreach (Guid categoria in Model.Thesaurus.SelectedCategories)
+        {
+            CategoriasSeleccionadas += categoria.ToString() + ',';
+        }
+    }
+
+    if (Model.Thesaurus.ExpandedCategories != null)
+    {
+        foreach (Guid categoria in Model.Thesaurus.ExpandedCategories)
+        {
+            CategoriasExpandidas += categoria.ToString() + ',';
+        }
+    }
+    
+    if(!string.IsNullOrEmpty(Model.PasosRealizados))
+    {
+        PasosRealizados = Model.PasosRealizados;
+    }
+}
+
+<input type="hidden" id="txtAccionesTesauroHack" name="txtAccionesTesauroHack" value="@PasosRealizados">
+<input type="hidden" id="txtCategoriasSeleccionadas" name="txtCategoriasSeleccionadas" value="@CategoriasSeleccionadas">
+<input type="hidden" id="txtCategoriasExpandidas" name="txtCategoriasExpandidas" value="@CategoriasExpandidas">
+<input type="hidden" id="txtGuardarObligatorio" name="txtGuardarObligatorio">
+<input type="hidden" id="txtHackIdiomaTesauro" value="@Model.IdiomaTesauro" name="thtHackdiomaTesauro">
+<input type="hidden" id="txtHackIdiomaTesauroDefecto" value="@Model.IdiomaDefecto" name="thtHackdiomaTesauroDefecto">
+
+<div class="ko" id="panError">
+    <span id="lblError"></span>
+</div>
+<div class="ok" id="panGuardado" style="display:none">
+    <span id="lblGuardado">
+        @Html.GetText("COMADMINCATEGORIAS", "GUARDADOCORRECTO")
+    </span>
+</div>
+
+<div class="clear"></div>
+
+<div @Html.Raw(Model.MultiLanguaje?"":"style=\"display:none\"") id="divIdioma">
+    @{
+        bool primero = true;
+        foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+        {
+            if(!primero)
+            {
+                @Html.Raw("/");
+            }
+            <span>
+                <a @Html.Raw(Model.IdiomaTesauro == idioma.Key?"style=\"display:none\"":"") rel="@idioma.Key" onclick="seleccionarIdioma('@idioma.Key')" class="enlaceIdioma" id="@("lbVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                <span @Html.Raw(Model.IdiomaTesauro != idioma.Key?"style=\"display:none\"":"") rel="@idioma.Key" class="litIdioma" id="@("litVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</span>
+            </span>
+            primero = false;              
+        }
+    }   
+</div>
+
+<div class="clear"></div>
+
+<div style="padding: 5px" id="adminAnyadirCategorias">
+    <div id="PanParaSelectorCategorias">
+	    <div id="selectorCategoriasEdicionComunidad">
+            <div id="divSelCatTesauro">
+                @Html.PartialView("EditorTesauro/_EditorTesauro_CatArbol_AnteriorEAD", Model.Thesaurus)
+            </div>
+	    </div>
+    </div>
+</div>

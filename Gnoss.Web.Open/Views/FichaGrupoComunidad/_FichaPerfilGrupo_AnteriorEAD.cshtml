@@ -1,0 +1,55 @@
+﻿@model ProfileModel
+@{
+    UserIdentityModel identidadActual = Html.GetIdentidadActual();
+}
+
+<div class="resource" id="perfilGrupo_@Model.Key">
+    <div class="box description">
+        <div class="group title">
+            @{
+                string nombreCompleto = "";
+                if (Model.TypeProfile == ProfileType.Personal || Model.TypeProfile == ProfileType.Teacher)
+                {
+                    nombreCompleto = Model.NamePerson;
+                }
+                else if (Model.TypeProfile == ProfileType.ProfessionalPersonal)
+                {
+                    nombreCompleto = Model.NamePerson + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " " + Model.NameOrganization;
+                }
+                else if (Model.TypeProfile == ProfileType.ProfessionalCorporate && !string.IsNullOrEmpty(Model.NamePerson))
+                {
+                    nombreCompleto = Model.NameOrganization + " (" + Model.NamePerson + ")";
+                }
+                else
+                {
+                    nombreCompleto = Model.NameOrganization;
+                }
+                        
+            }
+            <h4><a href="@Model.UrlPerson">@nombreCompleto</a></h4>
+            <div class="logoComunidad resourceType persona">
+                <a href="@Model.UrlPerson" title="@nombreCompleto">
+                    @if (!string.IsNullOrEmpty(Model.UrlFoto))
+                    {
+                        <img title="@nombreCompleto" alt="@nombreCompleto" src="@Html.GetBaseUrlContent()@Model.UrlFoto" />
+                    }
+                </a>
+            </div>
+        </div>
+        <div class="group acciones">
+            <ul id="listaAcciones_@Model.Key">
+                @if (identidadActual.IsProyectSupervisor || identidadActual.IsProyectAdmin)
+                {
+                <li>
+                    <a onclick="javascript:$(this).hide();$(this).next().show();" >Eliminar</a>
+                    <span style="display:none">
+                        ¿Estás seguro de la eliminación? 
+                        <a onclick="javascript:EliminarIdentidadDeGrupo('@Model.Key');" >Sí</a> 
+                        <a onclick="javascript:$(this).parent().hide();$(this).parent().prev().show();">No</a>
+                    </span>
+                </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,110 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos.SubidaArchivosModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    ViewBag.Title = Html.GetText("COMADMINESTILOS", "TITULO");
+
+    string tituloPagina = Html.GetText("COMADMINESTILOS", "ESTILOSGENERALES");
+    string urlForm = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINESTILOS") + "/actualizar-estilos";
+    string urlHistorial = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINESTILOS") + "/historial";
+
+    if (Model.NewVersion)
+    {
+        tituloPagina = Html.GetText("COMADMINESTILOS", "TITULO") + " - " + Html.GetText("COMADMINESTILOS", "CREARVERSION");
+        urlForm = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINESTILOS") + "/crear-version";
+        urlHistorial = "";
+    }
+    else if (!string.IsNullOrEmpty(Model.NombreVersion))
+    {
+        tituloPagina = Html.GetText("COMADMINESTILOS", "ESTILOSVERSION") + " - " + Model.NombreVersion;
+        urlForm = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINESTILOS") + "/actualizar-version/" + System.Net.WebUtility.UrlEncode(Model.NombreVersion);
+        urlHistorial += "/" + System.Net.WebUtility.UrlEncode(Model.NombreVersion);
+    }
+}
+<div class="content">
+    <h1>@tituloPagina</h1>
+    <div>
+        <div class="panEditarEstilos">
+            @if (!Model.NewVersion && string.IsNullOrEmpty(Model.NombreVersion))
+            {
+                <div class="general error">@Html.GetText("COMADMINESTILOS", "ESTILOSGENERALESAVISO")</div>
+            }
+            <form autocomplete="off" id="formAdminEstilos">
+                @if (Model.NewVersion)
+                {
+                    <div>
+                        @Html.GetText("COMADMINESTILOS", "NOMBREVERSION") <input type="text" name="NombreVersion" />
+                    </div>
+                }
+                else
+                {
+                    <input type="hidden" name="NombreVersion" value="@Model.NombreVersion" />
+                }
+                <div>
+                    <input id="js/css" type="radio" name="tipo_Archivos" value="js_css" checked="checked" onclick="FormularioSubidaEstilos()" />@Html.GetText("COMADMINESTILOS", "TIPOJSCSS")
+                    <span>@Html.GetText("COMADMINESTILOS", "ARCHIVOJS") <input id="archivo_js" type="file" accept=".js" name="ArchivoJS" /></span>
+                    <span>@Html.GetText("COMADMINESTILOS", "ARCHIVOCSS") <input id="archivo_css" type="file" accept=".css" name="ArchivoCSS" /></span>
+                </div>
+                <div>
+                    <input id="zip" type="radio" name="tipo_Archivos" value="zip" onclick="FormularioSubidaEstilos()" />@Html.GetText("COMADMINESTILOS", "TIPOZIP")
+                    <span>@Html.GetText("COMADMINESTILOS", "ARCHIVOZIP") <input id="archivo_zip" type="file" name="ArchivoZIP" accept=".zip" disabled="disabled" /></span>
+                </div>
+                <input id="tipo_archivo" type="hidden" name="TipoArchivos" value="js_css" />
+                <div>
+                    <input type="button" name="subir" id="btnSubirEstilos" value="@Html.GetText("COMADMINESTILOS", "SUBIR")" />
+                </div>
+
+                <div id="panError" style="display:none" class="general error"></div>
+                <div id="panOK" style="display:none" class="general ok">Los cambios se han realizado correctamente</div>
+            </form>
+            @if (!Model.NewVersion)
+            {
+                <a id="btnVerHistorial">@Html.GetText("COMADMINESTILOS", "HISTORIAL")</a>
+                <div id="panHistorial" style="display:none"></div>
+                <div id="panErrorHistorial" style="display:none" class="general error"></div>
+            }
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#btnSubirEstilos').click(function () {       
+        $('#panError').html('').hide();
+        $('#panOK').hide();
+
+        MostrarUpdateProgress();
+
+        var formData = new FormData(document.getElementById("formAdminEstilos"));
+
+        GnossPeticionAjax(
+           '@urlForm/save',
+           formData,
+           true
+       ).done(function () {
+           $('#panOK').show();
+       }).fail(function (data) {
+           $('#panError').html(data).show();
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    });
+
+    $('#btnVerHistorial').click(function () {
+        $('#panError').html('').hide();
+        $('#panOK').hide();
+
+        MostrarUpdateProgress();
+
+        GnossPeticionAjax(
+           '@urlHistorial',
+           null,
+           true
+       ).done(function (data) {
+           $('#panHistorial').html(data).show();
+       }).fail(function (data) {
+           $('#panErrorHistorial').html(data).show();
+       }).always(function () {
+           $('#btnVerHistorial').hide();
+           OcultarUpdateProgress();
+       });
+    });
+</script>

@@ -1,0 +1,100 @@
+﻿@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+<div class="content">
+    <style>
+        li, p, a{
+            font-weight: bold;
+        }
+       
+    </style>
+    <h1 style="margin-bottom: 5%">Manual de creación y configuración de aplicación en Azure AD para integrar SharePoint</h1>
+  
+    <ol>
+        <li>
+           Nos dirigimos a <a href="https://portal.azure.com">https://portal.azure.com</a>. Nos pedirá iniciar sesión con nuestra cuenta de Office si no tenemos la sesión iniciada.
+        </li>
+        <li>
+            <p>Una vez logueados, abrimos el menú lateral y seleccionamos ‘Azure Active Directory’.</p>
+            <img style="width: 100%;" alt="+" src="~/img/manual_sharepoint/paso1.png" /><br /><br /><br />
+        </li>
+        <li>
+            <p>Ahora tenemos que ir a 'Registro de aplicaciones'. Una vez aquí debemos darle a 'Nuevo registro' para añadir una nueva aplicación.</p>
+            <img style="width: 50%;" alt="+" src="~/img/manual_sharepoint/paso2.png" /><br /><br /><br />
+        </li>
+        <li>
+            <p>En el siguiente paso simplemente le damos un nombre a la aplicación, y el resto de campos los dejamos como vienen por defecto.</p>
+            <img style="width:70%;" alt="+" src="~/img/manual_sharepoint/paso3.png" /><br /><br /><br />
+        </li>
+        <li>
+            Una vez registrada, vamos a ver la información de la aplicación. Para ellos vamos a 'Información general'. Aquí tenemos dos de los datos que necesitamos para configurar SharePoint en la plataforma: 
+            <br /><br />
+            <ul>
+                <li>Id de aplicación (ClientID)</li>
+                <li>Id de directorio inquilino (TenantID)</li>
+            </ul>
+            <p>Copiamos esos valores y los ponemos en el campo correspondiente del formulario de configuración de Sharepoint (<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSHAREPOINT")">Ir al formulario</a>)</p>
+            <img style="width: 70%; display:flex;" alt="+" src="~/img/manual_sharepoint/paso4.png" /><br /><br /><br />
+        </li>
+        <li>
+            <p> El siguiente campo que tenemos que rellenar es el Secreto de cliente (ClientSecret). Este dato debemos generarlo nosotros en el apartado de 'Certificados y secretos'. Aquí le damos a 'Nuevo secreto de cliente' y le damos un nombre y una expiración. Este secreto tiene una duración máxima de 24 meses, por lo que si caduca habría generar que otro nuevo. </p>          
+            <img style="width:100%;" alt="+" src="~/img/manual_sharepoint/paso5.png" /><br /><br />
+            <p>Una vez creado, debemos copiarnos el código generado en 'Valor'. <br />
+            <p style="color:red;">*CUIDADO* Tenemos que copiar este valor ahora, ya que si salimos de la página ya no podremos hacerlo y habría que crear un secreto nuevo.</p>
+            <img style="width:100%;" alt="+" src="~/img/manual_sharepoint/paso6.png" /><br /><br /><br />
+        </li>
+        <li>
+            <p>A continuación, nos dirigimos a ‘Autenticación’. En este paso tenemos que añadir las URLs de redirección que tendrá nuestra aplicación. En principio solo hace falta configurar tres, que apuntarán al servicio de login, pero podrían configurarse más en caso de que fuese necesario. Para ello le damos a ‘Agregar una plataforma’</p>
+            <img style="width:80%;" alt="+" src="~/img/manual_sharepoint/paso7.png" /><br /><br />
+            <p>Nos saldrán varias opciones para elegir y seleccionaremos Web. Luego escribiremos una de las URLs que vienen dadas en el <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSHAREPOINT")">formulario</a>, el resto las añadimos en el siguiente paso ya que en este momento solo permite añadir una.</p>
+            <img style="width:50%;" alt="+" src="~/img/manual_sharepoint/paso8.png" />
+            <img style="width:48%;" alt="+" src="~/img/manual_sharepoint/paso9.png" /><br /><br /><br />
+        </li>
+        <li>
+            <p>Añadimos las otras dos URLs. Al final debemos tener tres.</p>
+            <p>Las URLs que tenemos que añadir son las que aparecen en el <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSHAREPOINT")">formulario de configuración de SharePoint</a></p>
+            <img style="width:70%;" alt="+" src="~/img/manual_sharepoint/urls.png" />
+            <p style="color:red;"> *Es obligatorio que todas las URLs de redirección tengan https, de lo contrario no permitirá hacer redirecciones*</p>
+            <ul>
+                <li>https://dominio-servicio-login-plataforma/login/LoginSharepoint</li>
+                <li>https://dominio-servicio-login-plataforma/login/ObtenerTokenSharepoint</li>
+                <li>https://dominio-servicio-login-plataforma/login/Redireccion</li>
+            </ul>
+            <img style="width:100%;" alt="+" src="~/img/manual_sharepoint/paso10.png" /> <br /><br /><br />         
+        </li>
+        <li>
+            <p>El siguiente paso es añadir los permisos de la aplicación. Para configurarlos debemos ir a 'Permisos de API', y una vez ahí le damos a 'Agregar un permiso'.</p>
+            <img style="width:100%;" alt="+" src="~/img/manual_sharepoint/paso11.png" /><br /><br />
+            <p>Tendremos que ir jugando con los permisos de Microsoft Graph y SharePoint</p>
+            <img style="width:80%;" alt="+" src="~/img/manual_sharepoint/paso12.png" />
+            <img style="width:80%;" alt="+" src="~/img/manual_sharepoint/paso13.png" /><br /><br />
+            <p>A la hora de agregar un permiso debemos elegir si será un permiso delegado o de aplicación. Los permisos finales deben ser similares a los siguientes:</p>
+            <ul>
+                <li>Microsoft Graph
+                    <ul>
+                        <li>Mail.Read - Delegado</li>
+                        <li>User.Read - Delegado</li>
+                        <li>Files.Read.All - Delegado</li>
+                        <li>User.Read.All - Aplicación</li>
+                    </ul>        
+                </li>
+                <li>SharePoint
+                    <ul>
+                        <li>AllSites.Read - Delegado</li>
+                        <li>Sites.Read.All - Aplicación</li>                      
+                    </ul> 
+                </li>
+            </ul>
+            <img style="width:100%;" alt="+" src="~/img/manual_sharepoint/paso14.png" /><br /><br /><br />
+        </li>
+        <li>
+            <p>Llegados a este punto, la aplicación ya estará configurada para integrar SharePoint, el único paso que falta es que un Administrador conceda los permisos necesarios para que podamos utilzarla.</p>
+            <p>Para conceder estos permisos tenemos que ir al formulario y hacer click en el enlace o darle al botón de Guardar, cualquiera de los dos vale. Se nos pedirán las credenciales de un usuario administrador para aceptar los permisos.</p>
+            <p style="color:red;">*Cuidado antes de Guardar o darle al enlace, primero tenemos que tener esta aplicación configurada.*</p>
+            <img style="width:100%;" alt="+" src="~/img/manual_sharepoint/paso15.png" />     
+        </li>
+    </ol>        
+</div>

@@ -1,0 +1,1298 @@
+﻿@using Es.Riam.Gnoss.AD.CMS
+
+@model CMSAdminComponenteEditarViewModel
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/demo.css?v=" + Html.GetVersion());
+
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+<div class="content">
+    <h1>
+        @if (Model.EsEdicion)
+        {
+            @(Html.GetText("COMADMINCMS", "COMPONENTEEDICION") + " " + Html.GetText("COMADMINCMS", "COMPONENTE_" + Model.Type));
+        }
+        else
+        {
+            @(Html.GetText("COMADMINCMS", "COMPONENTENUEVO") + " " + Html.GetText("COMADMINCMS", "COMPONENTE_" + Model.Type));
+        }
+
+    </h1>
+    <div id="contentEdicionComponente">
+
+        <form autocomplete="off" class="form formtheme02">
+            @{
+                string idiomas = "";
+
+                if (Model.ListaIdiomas.Count == 0)
+                {
+                    idiomas += Model.IdiomaPorDefecto + "|" + Model.IdiomaPorDefecto;
+                }
+                else
+                {
+                    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+                    {
+                        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+                    }
+                }
+            }
+            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
+
+            <div class="box">
+                <div class="bloquePrivacidad" id="panPrivacidad">
+                    <fieldset>
+                        <p>
+                            <input type="checkbox" onclick="editarPrivacidad(this);" @Html.Raw(Model.Private ? "checked" : "") id="chkEditarPrivacidad" name="chkEditarPrivacidad">
+                            <span>@Html.GetText("COMADMIN", "PRIVADO")</span>
+                        </p>
+                        <div class="oculto" id="divEditarConfiguracion" @Html.Raw(Model.Private ? "style=\"display:block\"" : "")>
+                            <div id="panels" class="stateShowForm" style="display: block;">
+                                <div style="display: block;" id="action" class="box form activeForm">
+                                    <fieldset>
+                                        <legend>
+                                            Selecciona las personas y/o grupos que pueden ver el componente
+                                        </legend>
+                                        <div id="divContactos">
+                                            <fieldset class="filtroRapido box labels">
+                                                <p>
+                                                    <input type="text" id="filtroFaceta" class="filtroFaceta ac_input" autocomplete="off" />
+                                                    <span class="searchButton"></span>
+                                                </p>
+                                            </fieldset>
+                                            <div class="editorLector">
+                                                <p><label id="lblTituloLectores">Personas y/o grupos permitidos: </label></p>
+                                                <div id="panContenedorInvitadosPag">
+                                                    <ul class="icoEliminar">
+                                                        @{
+                                                            string listaPrivacidad = "";
+                                                            if (Model.Private)
+                                                            {
+                                                                foreach (Guid grupoID in Model.GruposPrivacidad.Keys)
+                                                                {
+                                                                    listaPrivacidad += "g_" + grupoID + ",";
+                                                                    <li>@Model.GruposPrivacidad[grupoID]<a onclick="EliminarUsuarioSelecUsu(this, 'g_@grupoID');" class="remove">eliminar</a></li>
+                                                                }
+                                                                foreach (Guid perfilID in Model.PerfilesPrivacidad.Keys)
+                                                                {
+                                                                    listaPrivacidad += perfilID + ",";
+                                                                    <li>@Model.GruposPrivacidad[perfilID]<a onclick="EliminarUsuarioSelecUsu(this, '@perfilID');" class="remove">eliminar</a></li>
+                                                                }
+                                                            }
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="txtHackInvitadosPagina" name="txtHackInvitadosPagina" value="@listaPrivacidad">
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                @if (Model.ContenidoMultiIdioma)
+                {
+                    <p>
+                        <input type="checkbox" class="selectIdioma" id="chkSelectIdioma" name="chkSelectIdioma" @Html.Raw(Model.ListaIdiomasDisponibles.Count > 0 ? "checked=\"checked\"" : "")>
+                        <span>@Html.GetText("COMADMINCMS", "SELECCIONAIDIOMAS")</span>
+                    </p>
+                    <div id="divSelectIdioma" @Html.Raw(Model.ListaIdiomasDisponibles.Count == 0 ? "style=\"display:none\"" : "")>
+                        @Html.GetText("COMADMINCMS", "IDIOMASDISPONIBLES")
+                        <p>
+                            <input type="checkbox" class="idiomaMulti" @Html.Raw(Model.ListaIdiomasDisponibles.Count == 0 ? "checked=\"checked\"" : "") id="chkIdioma" name="chkIdioma">
+                            <span>Todos los idiomas</span>
+                        </p>
+                        @foreach (string idioma in Model.ListaIdiomas.Keys)
+                        {
+                            bool langDisabled = Model.ListaIdiomasDisponibles.Count == 0;
+                            bool langChecked = Model.ListaIdiomasDisponibles.Contains(idioma);
+                            string langId = "chkIdioma" + idioma;
+                            <p>
+                                <input type="checkbox" lang="@idioma" class="idioma" @Html.Raw(langDisabled ? "disabled=\"disabled\"" : "") @Html.Raw(langChecked ? "checked=\"checked\"" : "") id="@langId" name="@langId">
+                                <span>@Model.ListaIdiomas[idioma]</span>
+                            </p>
+                        }
+                    </div>
+                }
+                <div>
+                    <fieldset class="labels">
+                        <div class="fieldsetContent">
+                            <p>
+                                <label for="nombrecomponente">@Html.GetText("COMMON", "NOMBRE") *</label>
+                                <input type="text" id="nombrecomponente" value="@Model.Name" class="text big" />
+                            </p>
+                            <p>
+                                <label for="nombreCortocomponente">@Html.GetText("COMADMIN", "NOMBRECORTO")</label>
+                                <input type="text" id="nombreCortocomponente" value="@Model.ShortName" class="text big" />
+                            </p>
+                            <p>
+                                <label for="activocomponente">@Html.GetText("WIKIHISTORIAL", "ACTIVO")</label>
+                                <input type="checkBox" @Html.Raw(Model.Active ? "checked=\"checked\"" : "") class="enLinea" id="activocomponente" />
+                            </p>
+                            @if (Html.GetComunidad().AccessType.Equals(CommunityModel.TypeAccessProject.Private) || Html.GetComunidad().AccessType.Equals(CommunityModel.TypeAccessProject.Reserved))
+                            {
+                                <p>
+                                    <label for="accesopublicocomponente">@Html.GetText("COMADMINCMS", "PERMITIRACCESOPUBLICO")</label>
+                                    <input type="checkBox" @Html.Raw(Model.AccesoPublicoComponente ? "checked=\"checked\"" : "") class="enLinea" id="accesopublicocomponente" />
+                                </p>
+                            }
+                            @if (Model.Personalizaciones.Count > 0)
+                            {
+                                <p>
+                                    <label for="personalizacioncomponente">@Html.GetText("COMADMINCMS", "PROPIEDAD_" + TipoPropiedadCMS.Personalizacion.ToString()) *</label>
+                                    <select id="personalizacioncomponente">
+                                        @*<option value="@Guid.Empty" @Html.Raw(Model.PersonalizacionSeleccionada.Equals(Guid.Empty) ? "selected=\"selected\"": "")>Personalización por defecto</option>*@
+                                        @foreach (Guid personalizacionID in Model.Personalizaciones.Keys)
+                                        {
+                                            bool estaSeleccionada = Model.PersonalizacionSeleccionada.Equals(personalizacionID);
+                                            <option value="@personalizacionID" @Html.Raw(estaSeleccionada ? "selected=\"selected\"" : "")>@Model.Personalizaciones[personalizacionID]</option>
+                                        }
+                                    </select>
+                                </p>
+                            }
+
+                            @if (Model.ListaIdiomas.Count > 1)
+                            {
+                                int cont = 0;
+                                <div class="block tabsGroup" id="edicion_multiidioma">
+                                    <div class="acciones tabspresentation">
+                                        <ul>
+                                            @foreach (string idioma in Model.ListaIdiomas.Keys)
+                                            {
+                                                <li @Html.Raw(idioma.Equals(Model.IdiomaPorDefecto) ? "class=\"active\"" : "")><a rel="@cont" href="#">@Model.ListaIdiomas[idioma]@(idioma.Equals(Model.IdiomaPorDefecto) ? " *" : "")</a></li>
+                                                cont++;
+                                            }
+                                        </ul>
+                                    </div>
+                                    @{
+                                        cont = 0;
+                                        foreach (string idioma in Model.ListaIdiomas.Keys)
+                                        {
+                                            <div rel="@cont" class="block" id="edicion_@idioma" @Html.Raw(idioma.Equals(Model.IdiomaPorDefecto) ? "" : "style=\"display: none;\"")>
+                                                @PintarPropiedades(idioma, true)
+                                            </div>
+                                            cont++;
+                                        }
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                @PintarPropiedades(Model.IdiomaPorDefecto, true)
+                            }
+                            @foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Model.Properties.Where(prop => prop.MultiLang == true))
+                            {
+                                <input type="hidden" id="propiedad@((short)propiedad.TipoPropiedadCMS)" value="@propiedad.Value">
+                            }
+
+                            @PintarPropiedades(Model.IdiomaPorDefecto, false)
+
+                            @{
+                                string PintarPropiedades(string idioma, bool multiIdioma)
+                                {
+                                    ViewData["idiomaPanel"] = "";
+                                    if (multiIdioma)
+                                    {
+                                        ViewData["idiomaPanel"] = idioma;
+                                    }
+                                    foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Model.Properties.Where(prop => prop.MultiLang == multiIdioma))
+                                    {
+                                        switch (propiedad.TipoPropiedadCMS)
+                                        {
+                                            case TipoPropiedadCMS.Enlace:
+                                            case TipoPropiedadCMS.Titulo:
+                                            case TipoPropiedadCMS.TextoDefecto:
+                                            case TipoPropiedadCMS.URLBusqueda:
+                                            case TipoPropiedadCMS.URLVerMas:
+                                            case TipoPropiedadCMS.TituloAtributoDeBusqueda:
+                                            case TipoPropiedadCMS.AtributoDeBusqueda:
+                                            case TipoPropiedadCMS.Faceta:
+                                            case TipoPropiedadCMS.TextoBoton:
+                                            case TipoPropiedadCMS.TextoMensajeOK:
+                                            case TipoPropiedadCMS.DestinatarioCorreo:
+                                            case TipoPropiedadCMS.ElementoID:
+                                            case TipoPropiedadCMS.NumItems:
+                                            case TipoPropiedadCMS.NumDias:
+                                            case TipoPropiedadCMS.NumItemsMostrar:
+                                                @Html.PartialView("_Propiedad_Generico_TextBox", propiedad);
+                                                break;
+                                            case TipoPropiedadCMS.Subtitulo:
+                                            case TipoPropiedadCMS.HTML:
+                                            case TipoPropiedadCMS.QuerySPARQL:
+                                            case TipoPropiedadCMS.QuerySQLSERVER:
+                                                @Html.PartialView("_Propiedad_Generico_TextArea", propiedad);
+                                                break;
+                                            case TipoPropiedadCMS.TieneImagen:
+                                            case TipoPropiedadCMS.TieneBotonHazteMiembro:
+                                            case TipoPropiedadCMS.VerMas:
+                                            case TipoPropiedadCMS.ContarPersonasNoVisibles:
+                                                @Html.PartialView("_Propiedad_Generico_Booleano", propiedad);
+                                                break;
+                                            case TipoPropiedadCMS.TipoPresentacionRecurso:
+                                            case TipoPropiedadCMS.TipoPresentacionGrupoComponentes:
+                                            case TipoPropiedadCMS.TipoActividadRecienteCMS:
+                                            case TipoPropiedadCMS.TipoPresentacionListadoRecursos:
+                                            case TipoPropiedadCMS.TipoPresentacionListadoUsuarios:
+                                            case TipoPropiedadCMS.TipoListadoUsuarios:
+                                            case TipoPropiedadCMS.TipoPresentacionFaceta:
+                                            case TipoPropiedadCMS.TipoListadoProyectos:
+                                                @Html.PartialView("_Propiedad_Generico_Select", propiedad);
+                                                break;
+                                            default:
+                                                @Html.PartialView("_Propiedad_" + propiedad.TipoPropiedadCMS.ToString(), propiedad);
+                                                break;
+                                        }
+                                    }
+                                    return string.Empty;
+                                }
+                            }
+
+                            @if (Model.Caducidades.Count > 0)
+                            {
+                                <p>
+                                    <label for="caducidadComponente">Caducidad de la cache del componente</label><select id="caducidadComponente">
+                                        @foreach (TipoCaducidadComponenteCMS caducidad in Model.Caducidades.Keys)
+                                        {
+                                            <option value="@((short)caducidad)" @(Model.Caducidades[caducidad] ? "selected" : "")>@Html.GetText("COMADMINCOMCMS", "CADUCIDAD_" + caducidad.ToString())</option>
+                                        }
+                                    </select>
+                                </p>
+                            }
+                            <p>
+                                <label for="estiloscomponente">Estilos</label>
+                                <input type="text" id="estiloscomponente" value="@Model.Styles" class="text medium">
+                            </p>
+                            <div id="panOK" class="ok general">Los cambios se han guardado correctamente</div>
+                            <div id="panError" class="error general"></div>
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="actionButtons">
+                    <fieldset>
+                        <p>
+                            @*<input type="button" value="Guardar" onclick="Guardar()" class="submit" id="btnGuardar" name="btnGuardar">*@
+                            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+                            {
+                                <input type="button" value="Guardar" style="background-color:gray;" disabled onclick="Guardar()" class="submit" id="btnGuardar" name="btnGuardar">
+                            }
+                            else
+                            {
+                                <input type="button" value="Guardar" onclick="Guardar()" class="submit" id="btnGuardar" name="btnGuardar">
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.UrlVuelta))
+                            {
+                                <input type="button" onclick="document.location.href='@Model.UrlVuelta'" value="Volver" class="submit principal" id="btnVolver" name="btnVolver">
+                            }
+                            @{
+                                string propiedades = "";
+                                foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Model.Properties)
+                                {
+                                    propiedades += "propiedad" + (short)propiedad.TipoPropiedadCMS + "|||";
+                                }
+                                <input type="hidden" value="@propiedades" id="hackProperties" name="hackProperties">
+                            }
+                        </p>
+                    </fieldset>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+
+<script type="text/javascript">
+
+    function Guardar() {
+
+        MostrarUpdateProgress();
+
+        $('#panError').html('').hide();
+        $('#panOK').html('').hide();
+
+        var datosComponente = {};
+
+        var prefijoClave = 'Componente';
+
+        datosComponente[prefijoClave + '.Private'] = $('#chkEditarPrivacidad').is(':checked');
+
+        if ($('#chkEditarPrivacidad').is(':checked')) {
+            var privacidad = $('#txtHackInvitadosPagina').val().split(',');
+            for (var i = 0; i < privacidad.length; i++) {
+                var idPrivacidad = privacidad[i].trim();
+                if (idPrivacidad != "") {
+                    if (idPrivacidad.substr(0, 2) == 'g_')
+                    {
+                        var prefijoPrivacidadGrupos = prefijoClave + '.GruposPrivacidad[' + i + ']';
+                        datosComponente[prefijoPrivacidadGrupos + '.Key'] = privacidad[i].substr(2);
+                        datosComponente[prefijoPrivacidadGrupos + '.Value'] = "";
+                    }
+                    else
+                    {
+                        var prefijoPrivacidadPerfiles = prefijoClave + '.PerfilesPrivacidad[' + i + ']';
+                        datosComponente[prefijoPrivacidadPerfiles + '.Key'] = privacidad[i];
+                        datosComponente[prefijoPrivacidadPerfiles + '.Value'] = "";
+                    }
+                }
+            }
+        }
+
+        if ($('#chkSelectIdioma').is(':checked') && $('input.idiomaMulti').length > 0)
+        {
+            var prefijoIdiomasDisponibles = prefijoClave + '.ListaIdiomasDisponibles';
+            var todosIdiomas = $('input.idiomaMulti').is(':checked');
+            if (!todosIdiomas) {
+                var items = $('input.idioma');
+                var i = 0;
+                items.each(function () {
+                    var item = $(this);
+                    if (item.is(':checked')) {
+                        datosComponente[prefijoIdiomasDisponibles + '[' + i + ']'] = item.prop('lang');
+                        i++;
+                    }
+                });
+            }
+        }
+
+        datosComponente[prefijoClave + '.Name'] = $('#nombrecomponente').val();
+        datosComponente[prefijoClave + '.ShortName'] = $('#nombreCortocomponente').val();
+        datosComponente[prefijoClave + '.Active'] = $('#activocomponente').is(':checked');
+
+        if ($('#accesopublicocomponente').length > 0) {
+            datosComponente[prefijoClave + '.AccesoPublicoComponente'] = $('#accesopublicocomponente').is(':checked');
+        }
+
+        if ($('#personalizacioncomponente').length > 0) {
+            datosComponente[prefijoClave + '.PersonalizacionSeleccionada'] = $('#personalizacioncomponente').val();
+        }
+
+        if ($('#caducidadComponente').length > 0) {
+            datosComponente[prefijoClave + '.CaducidadSeleccionada'] = $('#caducidadComponente').val();
+        }
+        else{
+            datosComponente[prefijoClave + '.CaducidadSeleccionada'] = '6';
+        }
+
+        datosComponente[prefijoClave + '.Styles'] = $('#estiloscomponente').val();
+
+        var properties = $('#hackProperties').val().split('|||');
+
+        $.each(properties, function (key, value) {
+            if (value != "") {
+                var prefijoPropiedades = prefijoClave + '.Properties[' + key + ']';
+                if (value == "propiedad25") {
+                    Propiedad25_RecalcularValor()
+                }
+                else if (value == "propiedad30") {
+                    Propiedad30_RecalcularListaCampos();
+                }
+                else if (value == "propiedad6") {
+                    Propiedad6_RecalcularListaID();
+                }
+                else{
+                    var valorMultiIdioma = "";
+                    var esMultiIdioma = false;
+                    $.each(listaIdiomas, function (keyidioma, valueidioma) {
+                        if ($('#' + value + '_' + valueidioma).length > 0) {
+                            esMultiIdioma = true;
+                            var valorCampo = $('#' + value + '_' + valueidioma).val();
+                            if (valorCampo != '') {
+                                valorMultiIdioma += $('#' + value + '_' + valueidioma).val() + '@("@")' + valueidioma + '|||';
+                            }
+                        }
+                    });
+                    if (esMultiIdioma) {
+                        $('#' + value).val(valorMultiIdioma);
+                    }
+                }
+
+                var valorPropiedad = "";
+
+                if ($('#' + value).length > 0) {
+                    var propiedad = $('#' + value);
+                    var valorCampo = propiedad.val();
+                    if (propiedad.is(':radio')) {
+                        valorCampo = propiedad.is(':checked');
+                    }
+                    valorPropiedad = valorCampo;
+                }
+
+                datosComponente[prefijoPropiedades + '.TipoPropiedadCMS'] = value.replace("propiedad", "");
+                datosComponente[prefijoPropiedades + '.Value'] = encodeURIComponent(valorPropiedad);
+            }
+        });
+
+        GnossPeticionAjax(
+            document.location.href + '/save',
+            datosComponente,
+            true
+        ).done(function (data) {
+            $('#panOK').html("El componente se ha guardado correctamente.").show();
+            if (data != "" && data != null) {
+                var imagenes = data.split('|||')
+                $.each(imagenes, function (key, value) {
+                    var paramsImg = value.split('@("@")');
+                    $('#propiedad2_' + paramsImg[1]).val(paramsImg[0]);
+                    $('#img_propiedad2_' + paramsImg[1]).attr('src', paramsImg[0]);
+                });
+            }
+        }).fail(function (data) {
+            $('#panError').html(data).show();
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    }
+
+    function Propiedad2_SubirImagenDesdeFichero(input, idioma) {
+        var panContenedor = $(input).closest('#contenedorPrincipal_propiedad2_' + idioma);
+        var panImg = $('.panelImg', panContenedor);
+
+        if (input.files && input.files[0]) {
+            var file = input.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var imgFile = e.target.result;
+                $('img', panImg).attr('src', imgFile);
+
+                var data = imgFile.substr(imgFile.indexOf(';base64,') + 8);
+                $('#propiedad2_' + idioma, panImg).val("File:" + file.name + ';Data:' + data);
+            }
+            reader.readAsDataURL(file);
+        }
+
+        var selectorTipo = $('.selectorTipo', panContenedor);
+        var subirIMG = $('.subirIMG', panContenedor);
+        selectorTipo.hide();
+        subirIMG.hide();
+        panImg.show();
+
+    }
+
+    function Propiedad2_SubirImagenDesdeUrl(btn, idioma) {
+        var panContenedor = btn.closest('#contenedorPrincipal_propiedad2_' + idioma);
+        var panImg = $('.panelImg', panContenedor);
+        var selectorTipo = $('.selectorTipo', panContenedor);
+        var panSubirUrl = $('.subirURL', panContenedor);
+        var imagen = $('#url_propiedad2_' + idioma, panSubirUrl).val().trim();
+        $('img', panImg).attr('src', imagen);
+        $('#propiedad2_' + idioma, panImg).val(imagen);
+        selectorTipo.hide();
+        panSubirUrl.hide();
+        panImg.show();
+    }
+
+    function Propiedad2_EliminarImagen(btnEliminar, idioma) {
+        var panContenedor = btnEliminar.closest('#contenedorPrincipal_propiedad2_' + idioma);
+        var panImg = $('.panelImg', panContenedor);
+        var selectorTipo = $('.selectorTipo', panContenedor);
+        var panSubirUrl = $('.subirURL', panContenedor);
+        var panSubirImg = $('.subirIMG', panContenedor);
+        var imgUrl = $('#url_propiedad2_' + idioma, panSubirUrl);
+        var imgFile = $('#file_propiedad2_' + idioma, panSubirImg);
+        panImg.hide();
+        $('#propiedad2_' + idioma, panImg).val('');
+        $('img', panImg).attr('src', '');
+        imgUrl.val('');
+        imgFile.val('');
+        $('#file_propiedad2_es').val('')
+        selectorTipo.show();
+        $('select', selectorTipo)[0].selectedIndex = 0;
+        panSubirUrl.hide();
+        panSubirImg.hide();
+    }
+
+    function Propiedad2_CambiarSubidaImagen(ddl, idioma) {
+        var indice = ddl.val();
+        var panContenedor = ddl.closest('#contenedorPrincipal_propiedad2_' + idioma);
+        var panSubirUrl = $('.subirURL', panContenedor)
+        var panSubirImg = $('.subirIMG', panContenedor)
+
+        if (indice == 0) {
+            panSubirUrl.hide();
+            panSubirImg.hide();
+        }
+        else if (indice == 1) {
+            panSubirUrl.hide();
+            panSubirImg.show();
+        }
+        else if (indice == 2) {
+            panSubirUrl.show();
+            panSubirImg.hide();
+        }
+    }
+
+    $(function () {
+        $('input.selectIdioma').change(function () {
+            if ($('input.selectIdioma:checked').length == 0) {
+                $('#divSelectIdioma').hide();
+            } else {
+                $('#divSelectIdioma').show();
+            }
+        });
+
+        $('input.idiomaMulti').change(function () {
+            comportamientoMultiIdioma();
+        });
+
+        $('input.idioma').change(function () {
+            if ($('input.idioma:checked').length == 0) {
+                $(this).prop("checked", true);
+            }
+        });
+    });
+
+    function comportamientoMultiIdioma() {
+        var chkTodos = $('input.idiomaMulti');
+        if (chkTodos.is(':checked')) {
+            $('input.idioma').prop("checked", false);
+            $('input.idioma').prop("disabled", true);
+        } else {
+            $('input.idioma').prop("checked", true);
+            $('input.idioma').prop("disabled", false);
+        }
+    }
+
+    function mostrarSelectorEditores() {
+        var contenedor = document.getElementById('panContenedorInvitadosPag');
+        var contenedornuevo = document.getElementById('panContenedorInvitados');
+        contenedornuevo.innerHTML = contenedor.innerHTML;
+        contenedornuevo.innerHTML = contenedornuevo.innerHTML.replace(/eliminarInvitadoPag/g, "eliminarInvitado");
+
+        var texto = document.getElementById('txtHackInvitadosPagina');
+        document.getElementById('txtHackInvitados').value = texto.value;
+
+        document.getElementById('divContDespLect').className = '';
+    }
+
+    function editarPrivacidad(chek) {
+        if (chek.checked) {
+            $('#divEditarConfiguracion').show();
+            $('.divContDespLect').show(); $('.editorLector').show();
+        } else {
+            $('#divEditarConfiguracion').hide();
+            $('.divContDespLect').hide(); $('.editorLector').hide();
+        }
+    }
+
+    function ConfigurarSelectoresEditores() {
+        $('#filtroFaceta').autocomplete(
+            null,
+            {
+                url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                delay: 0,
+                scroll: false,
+                max: 30,
+                selectFirst: false,
+                minChars: 1,
+                width: 300,
+                cacheLength: 0,
+                NoPintarSeleccionado: true,
+                multiple: true,
+                classTxtValoresSelecc: 'txtHackInvitadosPagina',
+
+                extraParams: {
+                    grupo: '',
+                    identidad: $('#inpt_identidadID').val(),
+                    organizacion: '',
+                    proyecto: $('#inpt_proyID').val(),
+                    bool_edicion: 'false',
+                    bool_traergrupos: 'true',
+                    bool_traerperfiles: 'true'
+                }
+            }
+        );
+
+        $('#filtroFaceta').result(function (event, data, formatted) {
+            AceptarEditorSelectorUsu(this, data[0], data[1]);
+        });
+    }
+
+    function EliminarUsuarioSelecUsu(nodo, perfilID) {
+        var txtValores = $('#txtHackInvitadosPagina', $(nodo).parents('#divEditarConfiguracion'));
+        txtValores.val(txtValores.val().replace(perfilID + ',', ''));
+        $(nodo).parent().remove();
+    }
+
+    function AceptarEditorSelectorUsu(txtautocomp, nombre, id) {
+        var padreTxt = $(txtautocomp).parents('#divEditarConfiguracion');
+        var txtValores = $('#txtHackInvitadosPagina', padreTxt);
+        txtValores.val(txtValores.val() + id + ',');
+
+        $('#panContenedorInvitadosPag ul', padreTxt).append('<li>' + nombre + '<a class="remove" onclick="EliminarUsuarioSelecUsu(this, \'' + id + '\');">' + borr.eliminar + '</a></li>');
+        $(txtautocomp).val('');
+    }
+
+    $(document).ready(function () {
+        Array.prototype.findValueByKey = function (key) {
+            var resultado = $.grep(this, function (array) {
+                return array.key == key;
+            });
+
+            if (resultado[0] != null) {
+                return resultado[0].value;
+            }
+
+            return null;
+        };
+
+        ConfigurarSelectoresEditores();
+
+        var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
+        listaIdiomas = [];
+
+        $.each(idiomasComunidad, function () {
+            if (this != "") {
+                listaIdiomas.push(this.split('|')[0]);
+            }
+        });
+
+        Propiedad6_InicializarListaID();
+        Propiedad30_InicializarListaCampos();
+        Propiedad25_InicializarListaCampos();
+        Propiedad24_InicializarCombo();
+    });
+
+
+    function Propiedad25_SubirCampo(idElemento)
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var numElemento=parseInt(idElemento.substring(idElemento.lastIndexOf('_')+1));
+            var elementos = $('.elementos_propiedad25_' + valueidioma);
+            var nuevosElementos = ''
+            elementos.each(function(indice){
+                var elemento=$(this);
+                if(indice==numElemento){
+                    var elemento=$(elementos[numElemento-1]);
+                }
+                else if(indice==numElemento-1){
+                    var elemento=$(elementos[numElemento]);
+                }
+                var valorTxt=elemento.find('input:text').val()
+                var valorChk=elemento.find('input:checkBox').is(":checked");
+                var valorSelect = elemento.find('select option:selected').val();
+                nuevosElementos += Propiedad25_PintarCampo(valorTxt, valorChk, valorSelect, indice, elementos.length, 'propiedad25_' + valueidioma);
+            });
+            $('#contenedorInt_propiedad25_' + valueidioma).html(nuevosElementos);
+        });
+    }
+
+    function Propiedad25_BajarCampo(idElemento)
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var numElemento=parseInt(idElemento.substring(idElemento.lastIndexOf('_')+1));
+            var elementos = $('.elementos_propiedad25_' + valueidioma);
+            var nuevosElementos = ''
+            elementos.each(function(indice){
+                var elemento=$(this);
+                if(indice==numElemento){
+                    var elemento=$(elementos[numElemento+1]);
+                }
+                else if(indice==numElemento+1){
+                    var elemento=$(elementos[numElemento]);
+                }
+                    var valorTxt=elemento.find('input:text').val()
+                    var valorChk=elemento.find('input:checkBox').is(":checked");
+                    var valorSelect = elemento.find('select option:selected').val();
+                    nuevosElementos += Propiedad25_PintarCampo(valorTxt,valorChk,valorSelect,indice,elementos.length,'propiedad25_' + valueidioma);
+            });
+            $('#contenedorInt_propiedad25_' + valueidioma).html(nuevosElementos);
+        });
+    }
+
+    function Propiedad25_EliminarCampo(idElemento)
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var numElemento=idElemento.substring(idElemento.lastIndexOf('_')+1);
+            var elementos = $('.elementos_propiedad25_' + valueidioma);
+            var nuevosElementos = ''
+            var nuevoIndice=0;
+            elementos.each(function(indice){
+                if(indice!=numElemento){
+                    var elemento=$(this);
+                    var valorTxt=elemento.find('input:text').val()
+                    var valorChk=elemento.find('input:checkBox').is(":checked");
+                    var valorSelect = elemento.find('select option:selected').val();
+                    nuevosElementos += Propiedad25_PintarCampo(valorTxt,valorChk,valorSelect,nuevoIndice,elementos.length-1,'propiedad25_' + valueidioma);
+                    nuevoIndice++;
+                }
+            });
+            $('#contenedorInt_propiedad25_' + valueidioma).html(nuevosElementos);
+        });
+    }
+
+    function Propiedad25_NuevoCampo()
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var elementos = $('.elementos_propiedad25_' + valueidioma);
+            var nuevosElementos = ''
+            elementos.each(function(indice){
+                var elemento=$(this);
+                var valorTxt=elemento.find('input:text').val();
+                var valorChk=elemento.find('input:checkBox').is(":checked");
+                var valorSelect = elemento.find('select option:selected').val();
+                nuevosElementos += Propiedad25_PintarCampo(valorTxt, valorChk, valorSelect, indice, elementos.length + 1, 'propiedad25_' + valueidioma);
+            });
+            nuevosElementos += Propiedad25_PintarCampo('', false, 0, elementos.length, elementos.length + 1, 'propiedad25_' + valueidioma);
+            $('#contenedorInt_propiedad25_' + valueidioma).html(nuevosElementos);
+      });
+    }
+
+    function Propiedad25_PintarCampo(valorTxt, valorChk, valorSelect, indice, numElementos, idActual) {
+        if (valorTxt == null) { valorTxt = '';}
+        var elemento = '';
+        var id = "'id'";
+        elemento += '<p id="' + idActual + '_' + indice + '" class="elementos_' + idActual + '">';
+        elemento += '<label class="enLinea" for="' + idActual + '_' + indice + '_txt" >Nombre</label>';
+        elemento += '<input type="text" class="text medium enLinea" id="' + idActual + '_' + indice + '_txt" value="' + valorTxt + '">';
+        elemento += '<label class="enLinea" for="' + idActual + '_' + indice + '_chk" >Obligatorio</label>';
+        elemento += '<input class="enLinea" type="checkBox" id="' + idActual + '_' + indice + '_chk" ';
+        if (valorChk) { elemento += ' checked="checked"'; }
+        elemento += ' onclick="Propiedad25_ReplicarCheck(this)" '
+        elemento += '>';
+        elemento += '<label class="enLinea" for="' + idActual + '_' + indice + '_ddlist" >Tipo</label>';
+        elemento += '<select class="enLinea" name="tipocampo' + indice + '" id="' + idActual + '_' + indice + '_ddlist" onchange="Propiedad25_ReplicarDropDownList(this)">';
+        elemento += '<option value="0"';
+        if (valorSelect == 0) { elemento += ' selected'; }
+        elemento += '>Corta</option>';
+        elemento += '<option value="1"';
+        if (valorSelect == 1) { elemento += ' selected'; }
+        elemento += '>Larga</option>';
+        elemento += '</select>'
+        if (indice > 0) {
+            elemento += '<input class="enLinea" type="image" onclick="Propiedad25_SubirCampo($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offUp.gif">';
+        }
+        if (indice < numElementos - 1) {
+            elemento += '<input class="enLinea" type="image" onclick="Propiedad25_BajarCampo($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offDown.gif">';
+        }
+        elemento += '<input class="enLinea" type="button" value="Eliminar" onclick="Propiedad25_EliminarCampo($(this).parent().attr(' + id + '));return false;">';
+        elemento += '</p>';
+        return elemento;
+    }
+
+    function Propiedad25_ReplicarCheck(check)
+    {
+        var texto=$(check).attr('id');
+        var ultimoGuion=texto.lastIndexOf('_');
+        texto=texto.substring(0,ultimoGuion);
+        var penultimoGuion=texto.lastIndexOf('_')+1;
+        var indiceChk = $(check).attr("id").substring(penultimoGuion, ultimoGuion);
+
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            $('#propiedad25_' + valueidioma + '_' + indiceChk + '_chk').attr('checked', $(check).is(":checked"));
+        });
+    }
+
+    function Propiedad25_ReplicarDropDownList(ddl)
+    {
+        var texto=$(ddl).attr('id');
+        var ultimoGuion=texto.lastIndexOf('_');
+        texto=texto.substring(0,ultimoGuion);
+        var penultimoGuion=texto.lastIndexOf('_')+1;
+        var indiceDdl = $(ddl).attr("id").substring(penultimoGuion, ultimoGuion);
+        var valorSeleccionado = $(ddl).val();
+
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            if($('#propiedad25_' + valueidioma + '_'+indiceDdl+'_ddlist').val() != valorSeleccionado)
+            {
+                $('#propiedad25_' + valueidioma + '_'+indiceDdl+'_ddlist').val(valorSeleccionado);
+            }
+        });
+    }
+
+    function Propiedad25_RecalcularValor() {
+        var elementos = $('.elementos_propiedad25_' + listaIdiomas[0]);
+        var nuevosElementos = ''
+        $('#propiedad25').val('');
+        elementos.each(function (indice) {
+            var elemento = $(this);
+            var valorTxt = '';
+
+            $.each(listaIdiomas, function (keyidioma, valueidioma) {
+                var valorCampo = $('#propiedad25_' + valueidioma + '_' + indice + '_txt').val();
+                if (valorCampo != '') {
+                    valorTxt += $('#propiedad25_' + valueidioma + '_' + indice + '_txt').val() + '@("@")' + valueidioma + '|||';
+                }
+            });
+
+            var valorChk = elemento.find('input:checkBox').is(":checked");
+            var valorSelect = elemento.find('select option:selected').val();
+            $('#propiedad25').val($('#propiedad25').val() + valorTxt + '&&&' + valorChk + '&&&' + valorSelect + '###');
+        });
+    }
+    function Propiedad25_InicializarListaCampos() {
+        if ($('#contenedorPrincipal_propiedad25_' + listaIdiomas[0]).length > 0) {
+            var elementos = $('#propiedad25').val().split('###');
+            var indice = 0;
+            $.each(elementos, function (indice) {
+                var valor = this.trim();
+                if (valor != '') {
+
+                    var datos = valor.split('&&&');
+                    var valorNombre = datos[0].split('|||');
+                    var valorChk = datos[1] == 'true';
+                    var valorSelect = datos[2];
+
+                    var listaTextosNombre = [];
+                    $.each(valorNombre, function () {
+                        if (this != "") {
+                            var objetoIdioma = obtenerTextoYClaveDeIdioma(this);
+                            listaTextosNombre.push(objetoIdioma);
+                        }
+                    });
+
+                    $.each(listaIdiomas, function (keyidioma, valueidioma) {
+                        var nuevoElemento = Propiedad25_PintarCampo(listaTextosNombre.findValueByKey(valueidioma), valorChk, valorSelect, indice, elementos.length, 'propiedad25_' + valueidioma);
+                        $('#contenedorInt_propiedad25_' + valueidioma).append(nuevoElemento);
+                    });
+
+                    indice++;
+                }
+            });
+        }
+    }
+
+    function Propiedad6_SubirElemento(idElemento)
+    {
+        var numElemento=parseInt(idElemento.substring(idElemento.indexOf('_')+1));
+        var elementos = $('.elementos_propiedad6');
+        var nuevosElementos = ''
+        elementos.each(function(indice){
+            var elemento=$(this);
+            if(indice==numElemento){
+                var elemento=$(elementos[numElemento-1]);
+            }
+            else if(indice==numElemento-1){
+                var elemento=$(elementos[numElemento]);
+            }
+                var valor=elemento.find('input:text').val()
+                var mensaje='';
+                var mensajes = elemento.find($('.mensaje'));
+                if(mensajes.length==1)
+                {
+                    mensaje=mensajes[0].outerHTML;
+                }
+                nuevosElementos += Propiedad6_PintarElemento(valor, indice, elementos.length, mensaje);
+        });
+        $('#contenedorInt_propiedad6').html(nuevosElementos)
+    }
+    function Propiedad6_BajarElemento(idElemento)
+    {
+        var numElemento=parseInt(idElemento.substring(idElemento.indexOf('_')+1));
+        var elementos = $('.elementos_propiedad6');
+        var nuevosElementos = ''
+        elementos.each(function(indice){
+            var elemento=$(this);
+            if(indice==numElemento){
+                var elemento=$(elementos[numElemento+1]);
+            }
+            else if(indice==numElemento+1){
+                var elemento=$(elementos[numElemento]);
+            }
+                var valor=elemento.find('input:text').val()
+                var mensaje='';
+                var mensajes = elemento.find($('.mensaje'));
+                if(mensajes.length==1)
+                {
+                    mensaje=mensajes[0].outerHTML;
+                }
+                nuevosElementos += Propiedad6_PintarElemento(valor, indice, elementos.length, mensaje);
+        });
+        $('#contenedorInt_propiedad6').html(nuevosElementos);
+    }
+    function Propiedad6_EliminarElemento(idElemento)
+    {
+        var numElemento=idElemento.substring(idElemento.indexOf('_')+1);
+        var elementos = $('.elementos_propiedad6');
+        var nuevosElementos = ''
+        var nuevoIndice=0;
+        elementos.each(function(indice){
+            if(indice!=numElemento){
+                var elemento=$(this);
+                var valor=elemento.find('input:text').val()
+                var mensaje='';
+                var mensajes = elemento.find($('.mensaje'));
+                if(mensajes.length==1)
+                {
+                    mensaje=mensajes[0].outerHTML;
+                }
+                nuevosElementos += Propiedad6_PintarElemento(valor, nuevoIndice, elementos.length - 1, mensaje);
+                nuevoIndice++;
+            }
+        });
+        $('#contenedorInt_propiedad6').html(nuevosElementos);
+    }
+    function Propiedad6_NuevoNivel()
+    {
+        var elementos = $('.elementos_propiedad6');
+        var nuevosElementos = ''
+        elementos.each(function (indice) {
+            var elemento = $(this);
+            var valor = elemento.find('input:text').val()
+            var mensaje = '';
+            var mensajes = elemento.find($('.mensaje'));
+            if (mensajes.length == 1) {
+                mensaje = mensajes[0].outerHTML;
+            }
+            nuevosElementos += Propiedad6_PintarElemento(valor, indice, elementos.length + 1, mensaje);
+        });
+        nuevosElementos += Propiedad6_PintarElemento('', elementos.length, elementos.length + 1, '');
+        $('#contenedorInt_propiedad6').html(nuevosElementos);
+    }
+    function Propiedad6_PintarElemento(valor, indice, numElementos, mensaje)
+    {
+        var elemento='';
+        var id="'id'";
+        elemento+='<p id="propiedad6_'+indice+'" class="elementos_propiedad6">';
+        elemento += '<input type="text" class="text big"  value="' + valor + '">';// onchange = "Propiedad6_ComprobarListaID(this)"
+        if(indice>0){
+            elemento += '<input type="image" onclick="Propiedad6_SubirElemento($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offUp.gif">';
+        }
+        if (indice < numElementos - 1) {
+            elemento += '<input type="image" onclick="Propiedad6_BajarElemento($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offDown.gif">';
+            }
+        elemento += '<input type="button" value="Eliminar" onclick="Propiedad6_EliminarElemento($(this).parent().attr(' + id + '));return false;">';
+            elemento+=mensaje;
+            elemento+='</p>';
+        return elemento;
+    }
+    function Propiedad6_InicializarListaID() {
+        if ($('#contenedorPrincipal_propiedad6').length > 0)
+        {
+            var nuevosElementos = '';
+            var elementos = $('#propiedad6', $('#contenedorPrincipal_propiedad6')).val().split(',');
+            $.each(elementos, function (indice) {
+                var valor = this.trim();
+                if (valor != '') {
+                    nuevosElementos += Propiedad6_PintarElemento(valor, indice, elementos.length - 1, '');
+                }
+            });
+            $('#contenedorInt_propiedad6').html(nuevosElementos);
+
+            Propiedad6_ComprobarListaID();
+        }
+        $('#contenedorPrincipal_propiedad6').on('change', '.elementos_propiedad6 input[type=text]', function () {
+            Propiedad6_ComprobarListaID(this);
+        })
+        $('#contenedorPrincipal_propiedad6').on('keydown', '.elementos_propiedad6 input[type=text]', function (event) {
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    event.preventDefault();
+                    Propiedad6_ComprobarListaID(this);
+                }
+            }
+        })
+    }
+    function Propiedad6_RecalcularListaID()
+    {
+        var elementos = $('.elementos_propiedad6');
+        var nuevosElementos = ''
+        $('#propiedad6').val('');
+        elementos.each(function(indice){
+            var elemento=$(this);
+            var valor=elemento.find('input:text').val()
+            if($('#propiedad6').val()==''){$('#propiedad6').val(valor);}
+            else{$('#propiedad6').val($('#propiedad6').val()+','+valor);}
+        });
+    }
+
+    function Propiedad6_PintarResultadoComprobacion(resultado, input) {
+         $('.mensaje', input.parent()).remove();
+
+        var enlace = resultado.UrlEnlace;
+        var texto = resultado.TextoEnlace;
+        var error = resultado.Error;
+        if (error == "") {
+            input.parent().append('<span class="mensaje"><a target="_blank" href="' + enlace + '">' + texto + '</a></span>')
+        }
+        else {
+            input.parent().append('<span class="mensaje error">' + error + '</span>')
+        }
+        input.removeClass('cargando');
+    }
+
+    function Propiedad6_ComprobarListaID() {
+
+        var listaIDs = {};
+        var elementos = $('input[type=text]', $('#contenedorInt_propiedad6'));
+
+        if (elementos.length > 0) {
+            var i = 0;
+            elementos.each(function () {
+                $(this).addClass('cargando');
+                $('.mensaje.error', $(this).parent()).remove();
+                listaIDs['listaIDs[' + i + ']'] = $(this).val();
+                i++;
+            })
+
+            GnossPeticionAjax(
+                document.location.href + '/check',
+                listaIDs,
+                true
+            ).done(function (data) {
+                var i = 0;
+                elementos.each(function () {
+                    var elemento = $(this);
+                    if (!Array.isArray(data)) {
+                        // V5 -> Objeto de arrays -> Acceder al elemento 2 del objeto
+                        var resultado = data.$values[i];
+                        Propiedad6_PintarResultadoComprobacion(resultado, elemento);
+                        i++;
+                    } else {
+                        // V4 -> Array solo ha sido devuelto
+                        var resultado = data[i];
+                        Propiedad6_PintarResultadoComprobacion(resultado, elemento);
+                        i++;
+                    }
+                });
+            });
+        }
+    }
+    function Propiedad30_SubirCampo(idElemento)
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var numElemento = parseInt(idElemento.substring(idElemento.lastIndexOf('_') + 1));
+            var elementos = $('.elementos_propiedad30_' + valueidioma);
+            var nuevosElementos = '';
+            var nivelAnterior = -1;
+            elementos.each(function(indice){
+                var elemento = $(this);
+                if(indice == numElemento){
+                    elemento = $(elementos[numElemento - 1]);
+                }
+                else if(indice == numElemento - 1){
+                    elemento = $(elementos[numElemento]);
+                }
+                var valorTxtNombre = $('input:text', elemento)[0].value
+                var valorTxtEnlace = $('input:text', elemento)[1].value;
+                var nivel = parseInt(elemento.attr('nivel'));
+                if(nivel > nivelAnterior + 1)
+                {
+                    nivel = nivelAnterior + 1;
+                }
+                nuevosElementos += Propiedad30_PintarCampo(valorTxtNombre, valorTxtEnlace, indice, nivel, elementos.length, 'propiedad30_' + valueidioma, elemento.find('input.OriginalPosition').val());
+                nivelAnterior = nivel;
+            });
+            $('#contenedorInt_propiedad30_' + valueidioma).html(nuevosElementos);
+        });
+    }
+
+    function Propiedad30_BajarCampo(idElemento)
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var numElemento = parseInt(idElemento.substring(idElemento.lastIndexOf('_') + 1));
+            var elementos = $('.elementos_propiedad30_' + valueidioma);
+            var nuevosElementos = '';
+            var nivelAnterior = -1;
+            elementos.each(function(indice){
+                var elemento = $(this);
+                if(indice == numElemento){
+                    elemento = $(elementos[numElemento + 1]);
+                }
+                else if(indice==numElemento + 1){
+                    elemento = $(elementos[numElemento]);
+                }
+                var valorTxtNombre = $('input:text', elemento)[0].value
+                var valorTxtEnlace = $('input:text', elemento)[1].value;
+                var nivel = parseInt(elemento.attr('nivel'));
+                if(nivel > nivelAnterior + 1)
+                {
+                    nivel = nivelAnterior + 1;
+                }
+                nuevosElementos += Propiedad30_PintarCampo(valorTxtNombre, valorTxtEnlace, indice, nivel, elementos.length, 'propiedad30_' + valueidioma, elemento.find('input.OriginalPosition').val());
+                nivelAnterior = nivel;
+            });
+            $('#contenedorInt_propiedad30_' + valueidioma).html(nuevosElementos);
+        });
+    }
+    function Propiedad30_EliminarCampo(idElemento)
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var numElemento=idElemento.substring(idElemento.lastIndexOf('_')+1);
+            var elementos = $('.elementos_propiedad30_' + valueidioma);
+            var nuevosElementos = ''
+            var nuevoIndice=0;
+            var nivelAnterior = -1;
+            elementos.each(function(indice){
+                if(indice!=numElemento){
+                    var elemento=$(this);
+                    var valorTxtNombre=elemento.find('input:text')[0].value;
+                    var valorTxtEnlace=elemento.find('input:text')[1].value;
+                    var nivel=parseInt(elemento.attr('nivel'));
+                    if(nivel>nivelAnterior+1)
+                    {
+                        nivel= nivelAnterior+1;
+                    }
+                    nuevosElementos += Propiedad30_PintarCampo(valorTxtNombre, valorTxtEnlace, nuevoIndice, nivel, elementos.length - 1, 'propiedad30_' + valueidioma, elemento.find('input.OriginalPosition').val());
+                    nuevoIndice++;
+                    nivelAnterior = nivel;
+                }
+            });
+            $('#contenedorInt_propiedad30' + valueidioma).html(nuevosElementos);
+        });
+    }
+    function Propiedad30_NuevoNivel()
+    {
+        $.each(listaIdiomas, function (keyidioma, valueidioma) {
+            var elementos = $('.elementos_propiedad30_' + valueidioma);
+            var nuevosElementos = ''
+            elementos.each(function(indice){
+                var elemento=$(this);
+                var valorTxtNombre=elemento.find('input:text')[0].value;
+                var valorTxtEnlace=elemento.find('input:text')[1].value;
+                var nivel=parseInt(elemento.attr('nivel'));
+                nuevosElementos += Propiedad30_PintarCampo(valorTxtNombre, valorTxtEnlace, indice, nivel, elementos.length + 1, 'propiedad30_' + valueidioma, elemento.find('input.OriginalPosition').val());
+            });
+            nuevosElementos += Propiedad30_PintarCampo('', '', elementos.length, 0, elementos.length + 1, 'propiedad30_' + valueidioma, elementos.length);
+            $('#contenedorInt_propiedad30_' + valueidioma).html(nuevosElementos);
+        });
+    }
+    function Propiedad30_AnteriorCampo(idElemento)
+    {
+        var nivel=parseInt($('#'+idElemento).attr('nivel'));
+        if(nivel>0)
+        {
+            nivel--;
+        }
+        $('#'+idElemento).attr('nivel',nivel);
+        $('#'+idElemento).attr('style','margin-left:'+nivel*10+'px');
+    }
+    function Propiedad30_SiguienteCampo(idElemento)
+    {
+        var nivelAnterior=parseInt($('#'+idElemento).prev().attr('nivel'));
+        var nivel=parseInt($('#'+idElemento).attr('nivel'));
+        if(nivel<=nivelAnterior)
+        {
+            nivel++;
+        }
+        $('#'+idElemento).attr('nivel',nivel);
+        $('#'+idElemento).attr('style','margin-left:'+nivel*10+'px');
+    }
+    function Propiedad30_PintarCampo(valorTxtNombre, valorTxtEnlace, indice, nivel, numElementos, idActual, originalPosition)
+    {
+        var elemento = '';
+        var id = "'id'";
+        var margin = '';
+        if (nivel > 0)
+        {
+            margin = 'style="margin-left:' + nivel * 10 + 'px"';
+        }
+        elemento += '<p id="' + idActual + '_' + indice + '" ' + margin + ' nivel=' + nivel + ' class="elementos_' + idActual + '">';
+        elemento += '<label class="enLinea" for="' + idActual + '_' + indice + '_txt_nombre" >Nombre</label>';
+        elemento += '<input type="text" class="text medium enLinea" id="' + idActual + '_' + indice + '_txt_nombre" value="' + valorTxtNombre + '">';
+        elemento += '<label class="enLinea" for="' + idActual + '_' + indice + '_txt_enlace" >Enlace</label>';
+        elemento += '<input type="text" class="text medium enLinea" id="' + idActual + '_' + indice + '_txt_enlace" value="' + valorTxtEnlace + '">';
+        elemento += '</select>'
+        if (indice > 0) {
+            elemento += '<input class="enLinea" type="image" onclick="Propiedad30_SubirCampo($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offUp.gif">';
+        }
+        if (indice < numElementos - 1) {
+            elemento += '<input class="enLinea" type="image" onclick="Propiedad30_BajarCampo($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offDown.gif">';
+        }
+        if (indice > 0) {
+            elemento += '<input class="enLinea" type="image" onclick="Propiedad30_AnteriorCampo($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offAnterior.gif">';
+            elemento += '<input class="enLinea" type="image" onclick="Propiedad30_SiguienteCampo($(this).parent().attr(' + id + '));return false;" src="@Html.GetBaseUrlStatic()/img/offSiguiente.gif">';
+        }
+        elemento += '<input class="enLinea" type="button" value="Eliminar" onclick="Propiedad30_EliminarCampo($(this).parent().attr(' + id + '));return false;">';
+        elemento += '<input type="hidden" value="' + originalPosition + '" class="OriginalPosition">';
+        elemento += '</p>';
+        return elemento;
+    }
+    function Propiedad30_RecalcularListaCampos()
+    {
+        var elementos = $('.elementos_propiedad30_' + listaIdiomas[0]);
+        var nuevosElementos = ''
+        $('#propiedad30').val('');
+        var nuevaPosicion=0;
+        elementos.each(function(indice){
+            var elemento=$(this);
+            var valorTxtNombre='';
+            var valorTxtEnlace='';
+            var valorTxtOriginalPosition = '';
+
+            $.each(listaIdiomas, function (keyidioma, valueidioma) {
+
+                valorTxtNombre += $('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre').val() + '@("@")' + valueidioma + '|||';
+                valorTxtEnlace += $('#propiedad30_' + valueidioma + '_' + indice + '_txt_enlace').val() + '@("@")' + valueidioma + '|||';
+            });
+
+            var nivel = parseInt($('#propiedad30_' + listaIdiomas[0] + '_' + indice).attr('nivel'));
+
+            valorTxtOriginalPosition = elemento.find('input.OriginalPosition').val();
+            $('#propiedad30').val($('#propiedad30').val() + nivel + '&&&' + valorTxtNombre + '&&&' + valorTxtEnlace + '&&&' + valorTxtOriginalPosition + '&&&' + '###');
+            elemento.find('input.OriginalPosition').val(nuevaPosicion);
+            nuevaPosicion++
+        });
+    }
+    function Propiedad30_InicializarListaCampos() {
+        if ($('#contenedorPrincipal_propiedad30_' + listaIdiomas[0]).length > 0) {
+            var elementos = $('#propiedad30').val().split('###');
+            var indice = 0;
+            $.each(elementos, function (indice) {
+                var valor = this.trim();
+                if (valor != '') {
+
+                    var datos = valor.split('&&&');
+                    var nivel = datos[0];
+                    var valorNombre = datos[1].split('|||');
+                    var valorEnlace = datos[2].split('|||');
+
+                    var listaTextosNombre = [];
+                    $.each(valorNombre, function () {
+                        if (this != "") {
+                            var objetoIdioma = obtenerTextoYClaveDeIdioma(this);
+                            listaTextosNombre.push(objetoIdioma);
+                        }
+                    });
+
+                    var listaTextosEnlace = [];
+                    $.each(valorEnlace, function () {
+                        if (this != "") {
+                            var objetoIdioma = obtenerTextoYClaveDeIdioma(this);
+                            listaTextosEnlace.push(objetoIdioma);
+                        }
+                    });
+
+                    $.each(listaIdiomas, function (keyidioma, valueidioma) {
+                        var nuevoElemento = Propiedad30_PintarCampo(listaTextosNombre.findValueByKey(valueidioma), listaTextosEnlace.findValueByKey(valueidioma), indice, nivel, elementos.length, 'propiedad30_' + valueidioma, indice);
+                        $('#contenedorInt_propiedad30_' + valueidioma).append(nuevoElemento);
+                    });
+
+                    indice++;
+                }
+            });
+        }
+    }
+
+    function obtenerTextoYClaveDeIdioma(texto) {
+        var idioma = listaIdiomas[0];
+        var textoIdioma = texto;
+        if (textoIdioma.length > 0) {
+            var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
+            if (auxIdioma[0] == '@('@')') {
+                idioma = auxIdioma.substr(1);
+                textoIdioma = textoIdioma.substr(0, textoIdioma.length - 3);
+            }
+        }
+        return { "key": idioma, "value": textoIdioma };
+    }
+
+    function Propiedad24_InicializarCombo(){
+        $('#propiedad24').change(function () {
+            var valor = $(this).val();
+            if (valor == 0 || valor == 1) {
+                $('#contenedorPrincipal_propiedad6').hide();
+                $('#contenedorPrincipal_propiedad5').show();
+            }
+            else {
+                $('#contenedorPrincipal_propiedad6').show();
+                $('#contenedorPrincipal_propiedad5').hide();
+            }
+        }).change();
+    }
+
+</script>

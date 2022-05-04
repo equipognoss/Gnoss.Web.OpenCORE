@@ -1,0 +1,506 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="@Html.GetUtilIdiomas().LanguageCode" xmlns:og="http://ogp.me/ns#">
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+    string avisoCookies = Html.GetCookiesWarning();
+    <head>
+
+
+
+        @if (Comunidad != null && Comunidad.ProjectExtraHTMLList != null)
+        {
+            @Html.PartialView("../Shared/ProyectoElementoHTML", Comunidad.ProjectExtraHTMLList.Where(a => a.Ubication == UbicacionHtmlProyecto.BeginHead).ToList());
+        }
+
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        @Html.PartialView("../Shared/Head/_Metas")
+
+        <title>@Html.GetTituloPagina()</title>
+
+        <link id="IMGfavicon" rel="shortcut icon" type="image/ico" href="@Html.GetFavicon()" />
+
+        @if (!string.IsNullOrEmpty(Html.GetUrlCanonical()))
+        {
+            <link rel="canonical" href="@Html.GetUrlCanonical()" />
+        }
+        @if (Html.GetCabecera() != null && Html.GetCabecera().MultiLingualLinks != null)
+        {
+            if (Html.GetCabecera().MultiLingualLinks.Keys.Contains(Html.GetUtilIdiomas().LanguageCode))
+            {
+                <link rel="alternate" hreflang="@Html.GetUtilIdiomas().LanguageCode" href="@Html.GetCabecera().MultiLingualLinks[Html.GetUtilIdiomas().LanguageCode].Value" />
+            }
+            foreach (string language in Html.GetCabecera().MultiLingualLinks.Keys)
+            {
+                if (!language.Equals(Html.GetUtilIdiomas().LanguageCode))
+                {
+                    if (Html.GetCabecera().MultiLingualLinks[language].Key)
+                    {
+                        <link rel="alternate" hreflang="@language" href="@Html.GetCabecera().MultiLingualLinks[language].Value" />
+                    }
+                }
+            }
+        }
+        @*@if (!string.IsNullOrEmpty(Html.GetURLRSS()))
+        {
+            <link rel="alternate" type="application/rss+xml" href="@Html.GetURLRSS()" />
+        }*@
+        @if (!string.IsNullOrEmpty(Html.GetURLRDF()))
+        {
+            <link rel="alternate" type="application/rdf+xml" href="@Html.GetURLRDF()" />
+        }
+
+        @if (Html.GetListaMetas() != null)
+        {
+            foreach (KeyValuePair<string, string> contentMeta in Html.GetListaMetas())
+            {
+                <meta name="@contentMeta.Key" content="@contentMeta.Value" />
+            }
+        }
+
+        @if (Html.GetListaMetasComplejas() != null)
+        {
+            foreach (Dictionary<string, string> atributosMeta in Html.GetListaMetasComplejas())
+            {
+                System.Text.StringBuilder meta = new System.Text.StringBuilder("<meta");
+
+                foreach (string clave in atributosMeta.Keys)
+                {
+                    meta.Append(" ");
+                    meta.Append(clave);
+                    meta.Append("=");
+                    meta.Append("\"");
+                    meta.Append(atributosMeta[clave]);
+                    meta.Append("\"");
+                }
+
+                meta.Append(" />\r\n");
+
+                @Html.Raw(meta)
+            }
+        }
+
+        @Html.PartialView("../Shared/Head/_HojasDeEstilo_AnteriorEAD")
+
+        @Html.PartialView("../Shared/Head/_FicherosJavascript_AnteriorEAD")
+
+        @* Cargar bootstrap JS para que no fallen posibles llamadas js de componentes (ej: tooltip) *@
+        <!-- POPPER + BOOTSTRAP 4 + PROPELLER -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+                integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+                crossorigin="anonymous"></script>
+        <script src="@Html.GetBaseUrlStatic()/responsive/theme/libraries/bootstrap/bootstrap.min.js?v=@Html.GetVersion()"></script>
+        <script src="@Html.GetBaseUrlStatic()/responsive/theme/libraries/propeller/js/propeller.js?v=@Html.GetVersion()"></script>
+        <!-- MomentJS -->
+        <script type="text/javascript"
+                src="@Html.GetBaseUrlStatic()/responsive/theme/libraries/momentJS/moment.js?v=@Html.GetVersion()"></script>
+        <script type="text/javascript"
+                src="@Html.GetBaseUrlStatic()/responsive/theme/libraries/momentJS/moment-timezone-with-data.js?v=@Html.GetVersion()"></script>
+        <!-- Dirty Form -->
+        <script type="text/javascript"
+                src="@Html.GetBaseUrlStatic()/responsive/theme/libraries/dirty-form/jquery.dirty.js?v=@Html.GetVersion()"></script>
+
+
+        @if (Html.GetBusquedasXml() != null)
+        {
+            foreach (string busqeda in Html.GetBusquedasXml())
+            {
+                <link rel="search" type="application/opensearchdescription+xml" href="@busqeda" />
+            }
+        }
+
+        @if (Comunidad != null && Comunidad.ProjectExtraHTMLList != null)
+        {
+            @Html.PartialView("../Shared/ProyectoElementoHTML", Comunidad.ProjectExtraHTMLList.Where(a => a.Ubication == UbicacionHtmlProyecto.EndHead).ToList());
+        }
+
+        @if (!string.IsNullOrEmpty(avisoCookies))
+        {
+            <style>
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                }
+
+                /* The Modal (background) */
+                .modal {
+                    display: none; /* Hidden by default */
+                    position: fixed; /* Stay in place */
+                    z-index: 1; /* Sit on top */
+                    padding-top: 100px; /* Location of the box */
+                    left: 0;
+                    top: 0;
+                    width: 100%; /* Full width */
+                    height: 100%; /* Full height */
+                    overflow: auto; /* Enable scroll if needed */
+                    background-color: rgb(0,0,0); /* Fallback color */
+                    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+                }
+
+                /* Modal Content */
+                .modal-content {
+                    background-color: #fefefe;
+                    margin: auto;
+                    padding: 20px;
+                    border: 1px solid #888;
+                    width: 80%;
+                }
+
+                /* The Close Button */
+                .close {
+                    color: #aaaaaa;
+                    float: right;
+                    font-size: 28px;
+                    font-weight: bold;
+                }
+
+                    .close:hover,
+                    .close:focus {
+                        color: #000;
+                        text-decoration: none;
+                        cursor: pointer;
+                    }
+            </style>
+        }
+
+    </head>
+
+    <body class="@Html.GetBodyClass() @(IdentidadActual == null || IdentidadActual.IsGuestUser ? " invitado" : "") @Html.GetBodyClassPestanya()">
+
+        @if (Comunidad != null && Comunidad.ProjectExtraHTMLList != null)
+        {
+            @Html.PartialView("../Shared/ProyectoElementoHTML", Comunidad.ProjectExtraHTMLList.Where(a => a.Ubication == UbicacionHtmlProyecto.BeginBody).ToList());
+        }
+
+        <form method="post" target="_blank" action="" name="formularioHidden" id="formularioHidden">
+            <fieldset style="display: none">
+                <legend class="nota">formularioHidden</legend>
+                @if (Html.GetListaInputHidden() != null)
+                {
+                    foreach (KeyValuePair<string, string> inputHidden in Html.GetListaInputHidden())
+                    {
+                        <input type="hidden" id="@inputHidden.Key" class="@inputHidden.Key" value="@inputHidden.Value" />
+                    }
+                }
+                <input type="submit" style="display: none;" id="enviarHidden" value="enviar" title="enviar" />
+            </fieldset>
+        </form>
+
+        <form method="post" target="_blank" action="" name="formularioRDF" id="formularioRDF">
+            <fieldset style="display: none">
+                <legend class="nota">formularioRDF</legend>
+                <input type="text" style="display: none;" title="query" name="query" id="query" />
+                <input type="text" style="display: none;" title="pagina" name="pagina" id="pagina" />
+                <input type="submit" style="display: none;" id="rdfHack" value="enviar" title="enviar" />
+            </fieldset>
+        </form>
+
+        <div style="width: 100px; height: 100px; position: absolute; display: none; left: 0px; top: 0px; z-index: 2000" class="popup">
+            <img style="border-width: 0px;" alt="Cargando..." src="@Html.GetBaseUrlStatic()/img/espera.gif" />
+            <p><strong>Cargando...</strong></p>
+        </div>
+        <div style="display: none; z-index: 1999; width: 100%; top: 0px; left: 0px; position: absolute; height: 2900px;" id="mascaraBlanca"></div>
+
+        @Html.PartialView("../Shared/_Cabecera_AnteriorEAD")
+
+        <div id="wrap">
+            <div id="page">
+                @if (!string.IsNullOrEmpty(avisoCookies))
+                {
+                    <!--<div id="phAvisoCookie">
+                        <div class="info columms cookies" id="info">
+                            <p class="title-panel-info"><span>Panel </span>@Html.GetText("COMMON", "INFORMACION")</p>
+                            <div class="col-4">
+                                <div class="box" id="divAvisoCookie">@Html.Raw(avisoCookies)</div>
+                            </div>
+                            <div id="panelcookies">
+                                <form method="post" id="formaceptcookies" action="javascript:void(0)">
+                                    <p>
+                                        <input type="submit" title="Aceptar" value="Aceptar" class="principal submit" onclick="guardar()">
+                                    </p>
+                                </form>
+                                <p>
+                                    <input type="submit" id="modificarcookie" title="Modificar" value="Modificar" class="principal submit" onclick="MostrarConfiguracion()">
+                                </p>
+                                <div id="modificar-cookies" style="display: none">
+                                    <p>¿Cómo puedes configurar o deshabilitar tus cookies?</p>
+                                    <p>Puedes  permitir,  bloquear  o  eliminar  las  cookies  instaladas  en  su  equipo mediante la configuración de las opciones de tu navegador de Internet.  En los siguientes enlaces tienes a tu disposición toda la información para configurar o deshabilitar tus cookies  en cada navegador:</p>
+                                    <a href="https://support.microsoft.com/es-es/help/17442/windows-internet-explorer-delete-manage-cookies#ie=%C2%BBie-10%E2%80%B3"> Internet Explorer </a>
+                                    <a href="https://support.mozilla.org/es/kb/Borrar%20cookies"> Mozilla </a>
+                                    <a href="https://support.google.com/chrome/answer/95647?hl=%C2%BBes%C2%BB"> Chrome </a>
+                                    <a href="https://www.apple.com/legal/privacy/es/cookies/"> Safari </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>-->
+
+                    <button id="myBtn" hidden>Open Modal</button>
+                    <div id="myModal" class="modal">
+
+                        <!-- Modal content -->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+                            </div>
+                            <div class="modal-body">
+                                <script>
+                                    $(document).ready(function () {
+                                        $('#myBtn').click();
+                                    });
+                                </script>
+                                <div id="phAvisoCookie">
+                                    <div class="info columms cookies" id="info">
+                                        <p class="title-panel-info"><span>Panel </span>Información</p>
+                                        <div class="col-4">
+                                            <div class="box" id="divAvisoCookie">
+                                                @Html.Raw(avisoCookies)
+                                            </div>
+                                        </div>
+                                        <div id="panelcookies">
+                                            <div id="modificar-cookies" style="display: none">
+                                                <h4>¿Cómo puedes configurar o deshabilitar tus cookies?</h4>
+                                                <p>Puedes  permitir,  bloquear  o  eliminar  las  cookies  instaladas  en  su  equipo mediante la configuración de las opciones de tu navegador de Internet.  En los siguientes enlaces tienes a tu disposición toda la información para configurar o deshabilitar tus cookies  en cada navegador:</p>
+                                                <ul>
+                                                    <li><a href="https://support.microsoft.com/es-es/help/17442/windows-internet-explorer-delete-manage-cookies#ie=%C2%BBie-10%E2%80%B3"> Internet Explorer </a></li>
+                                                    <li><a href="https://support.mozilla.org/es/kb/Borrar%20cookies"> Mozilla </a></li>
+                                                    <li><a href="https://support.google.com/chrome/answer/95647?hl=%C2%BBes%C2%BB"> Chrome </a></li>
+                                                    <li><a href="https://www.apple.com/legal/privacy/es/cookies/"> Safari </a></li>
+                                                </ul>
+                                                <br />
+                                            </div>
+                                            <form method="post" id="formaceptcookies" action="javascript:void(0)">
+                                                <p>
+                                                    <input type="submit" title="Aceptar" value="Aceptar" class="principal submit btn btn-default" onclick="guardarAceptarCookies()">
+                                                    <input type="submit" id="modificarcookie" title="Modificar" value="Modificar configuración" class="principal submit" onclick="MostrarConfiguracion()">
+                                                </p>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        function MostrarConfiguracion() {
+                            var selected = $("#modificarcookie").val();
+                            if (selected == 'Modificar configuración') {
+                                $("#modificarcookie").attr('value', 'Volver');
+                                $('#modificar-cookies').show();
+                            }
+                            else {
+                                $("#modificarcookie").attr('value', 'Modificar configuración')
+                                $('#modificar-cookies').hide();
+                            }
+                        }
+
+                        function mostrarErrorGuardado(data) {
+                            if (data) {
+                                $('#formaceptcookies').after('<div class="error general">' + data + '</div>');
+                            } else {
+                                $('#formaceptcookies').after('<div class="error general">Ha habido errores en el guardado</div>');
+                            }
+                        }
+
+                        function guardarAceptarCookies() {
+                            var that = this;
+                            MostrarUpdateProgress();
+                            GnossPeticionAjax(
+                                document.location.origin + '/aceptar-cookies',
+                                null,
+                                true
+                            ).fail(function (data) {
+                                mostrarErrorGuardado(data);
+                            }).done(function () {
+                                $('#phAvisoCookie').hide();
+                            }).always(function () {
+                                OcultarUpdateProgress();
+                                modal = document.getElementById("myModal");
+                                modal.style.display = "none";
+                            });
+                        }
+                        // Get the modal
+                        var modal = document.getElementById("myModal");
+
+                        // Get the button that opens the modal
+                        var btn = document.getElementById("myBtn");
+
+                        // Get the <span> element that closes the modal
+                        /*var span = document.getElementsByClassName("close")[0];*/
+
+                        // When the user clicks the button, open the modal
+                        btn.onclick = function () {
+                            modal.style.display = "block";
+                        }
+
+                        // When the user clicks on <span> (x), close the modal
+                        /*
+                        span.onclick = function () {
+                            modal.style.display = "none";
+                        }*/
+
+                        // When the user clicks anywhere outside of the modal, close it
+                        /*window.onclick = function(event) {
+                          if (event.target == modal) {
+                            modal.style.display = "none";
+                          }
+                        }*/
+                    </script>
+                }
+                @if (Comunidad != null && string.IsNullOrEmpty(Context.Request.Query["new-community-wizard"]) && (IdentidadActual.IsExpelled || Comunidad.ProjectState == CommunityModel.StateProject.Close || Comunidad.ProjectState == CommunityModel.StateProject.CloseTemporaly || Comunidad.ProjectState == CommunityModel.StateProject.Definition))
+                {
+                    <div class="aviso columms" id="info">
+                        <h3><span>Panel </span>Aviso</h3>
+                        <div class="col-4">
+                            <div class="box">
+                                @if (IdentidadActual.IsExpelled)
+                                {
+                                    @*Usuario expulsado*@
+                                    <p>@Html.Raw(Html.GetText("COMINICIOLOGIN", "ADVERTENCIAEXPULSADO1"))</p>
+                                    <p>@Html.GetText("COMMON", "MUCHASGRACIAS")</p>
+                                }
+                                else if (Comunidad.ProjectState == CommunityModel.StateProject.Close)
+                                {
+                                    <p>@Html.GetText("COMADMIN", "EXPLICACIONCERRADA", Html.GetNombreProyectoEcosistema())</p>
+                                }
+                                else if (Comunidad.ProjectState == CommunityModel.StateProject.CloseTemporaly)
+                                {
+                                    <p>@Html.GetText("COMADMIN", "EXPLICACIONCERRADATMP")</p>
+                                }
+                                else if (Comunidad.ProjectState == CommunityModel.StateProject.Definition)
+                                {
+                                    if (IdentidadActual.IsProyectAdmin)
+                                    {
+                                        string urlAdmin = @Html.GetGeneradorURLs().ObtenerURLAdministracionComunidad(Html.GetUtilIdiomas(), Html.GetBaseUrlIdioma(), Comunidad.ShortName, "ADMINISTRARCOMUNIDADGENERAL");
+                                        //Sacamos el mensaje al administrador:
+                                        switch (Comunidad.AccessType)
+                                        {
+                                            case CommunityModel.TypeAccessProject.Public:
+                                                @Html.Raw(Html.GetText("COMINICIOLOGIN", "NOACCESODEFINICIONADMINPUBLICA", urlAdmin))
+                                                break;
+                                            case CommunityModel.TypeAccessProject.Private:
+                                                @Html.Raw(Html.GetText("COMINICIOLOGIN", "NOACCESODEFINICIONADMINPRIVADA", urlAdmin))
+                                                break;
+                                            case CommunityModel.TypeAccessProject.Reserved:
+                                                @Html.Raw(Html.GetText("COMINICIOLOGIN", "NOACCESODEFINICIONADMINRESERVADA", urlAdmin))
+                                                break;
+                                            case CommunityModel.TypeAccessProject.Restricted:
+                                                @Html.Raw(Html.GetText("COMINICIOLOGIN", "NOACCESODEFINICIONADMINRESTRINGIDA", urlAdmin))
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <p>@Html.GetText("COMINICIOLOGIN", "COMUNIDADDEFINICION")</p>
+                                        <p>@Html.GetText("COMINICIOLOGIN", "NOACCESODEFINICION")</p>
+                                        foreach (ProfileModel admin in Comunidad.Administrators)
+                                        {
+                                            <p>@Html.ObtenerNombrePerfil(admin)</p>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                @RenderSection("breadcrumb", required: false)
+                <div id="section">
+                    @if (Comunidad != null && (IdentidadActual.IsProyectAdmin || (Comunidad.ProjectState != CommunityModel.StateProject.Close && Comunidad.ProjectState != CommunityModel.StateProject.CloseTemporaly && (Comunidad.ProjectState != CommunityModel.StateProject.Definition || !IdentidadActual.IsGuestIdentity))))
+                    {
+                        if (Comunidad.Key != ProyectoAD.MetaProyecto && (!IdentidadActual.IsGuestIdentity || (Comunidad.ProyectType != CommunityModel.TypeProyect.CatalogoNoSocial && Comunidad.ProyectType != CommunityModel.TypeProyect.CatalogoNoSocialConUnTipoDeRecurso)) && (!Html.GetOcultarMenusComunidad().HasValue || !Html.GetOcultarMenusComunidad().Value))
+                        {
+                            @Html.PartialView("../Shared/_PanelQueHacer")
+                        }
+                    }
+                    <div id="content">
+                        @RenderBody()
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @Html.PartialView("../Shared/_pie/_Pie_AnteriorEAD")
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                EjecutarScriptsIniciales2();
+            });
+        </script>
+        @RenderSection("javascript", required: false)
+
+
+
+
+        @if (Comunidad != null)
+        {
+            try
+            {
+                DateTime? envioCookie = Context.Session.Get<DateTime>("EnvioCookie");
+
+                //Actualizo la cookie del usuario para que no caduque
+                if (Context.Request.Method.Equals("GET") && !envioCookie.HasValue && !Html.GetIdentidadActual().IsGuestUser)
+                {
+                    Context.Session.Set("EnvioCookie", DateTime.Now);
+
+                    string urlServicioLogin = @Html.GetUrlServicioLogin();
+                    string query = string.Format("?usuarioID={0}&dominio={1}/", Html.GetIdentidadActual().KeyUser, Html.GetBaseUrl());
+
+                    if (new Uri($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}").Scheme.Equals("http"))
+                    {
+                        //Elimino la sesión del resto de dominios en los que había entrado el usuario
+                        //para que cuando entre en ellos soliciten la cookie al servicio de login
+
+                        if (urlServicioLogin.StartsWith("https://"))
+                        {
+                            //Hago una petición con http porque si no no te desconecta de los dominios que no tienen https.
+                            urlServicioLogin = urlServicioLogin.Replace("https://", "http://");
+                        }
+
+                        string nuevoEnvio = "";
+                        if (Context.Session.Keys.Contains("CrearCookieEnServicioLogin"))
+                        {
+                            nuevoEnvio = "&nuevoEnvio=true";
+                        }
+
+                        <iframe style="WIDTH:1px;HEIGHT:1px; display:none;" frameBorder="0" src="@string.Format("{0}/eliminarcookie.aspx{1}{2}", urlServicioLogin, query, nuevoEnvio)"></iframe>
+
+                        ////Registro el evento y lanzo la accion del proyecto
+                        //ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD);
+                        //Dictionary<TipoProyectoEventoAccion, string> listaEventos = proyectoCL.ObtenerEventosAccionProyectoPorProyectoID(ProyectoSeleccionado.Clave, ((GnossWebPage)Page).EsBot);
+                        //proyectoCL.Dispose();
+                        //if (listaEventos != null && listaEventos.Count > 0)
+                        //{
+                        //    //comprobación existencia evento login
+                        //    if (listaEventos.ContainsKey(TipoProyectoEventoAccion.Login) && (!((GnossWebPage)Page).OmitirProyectoEventoAccionLogin))
+                        //    {
+                        //        StringBuilder sbEventos = new StringBuilder();
+                        //        sbEventos.AppendLine(listaEventos[TipoProyectoEventoAccion.Login]);
+                        //        this.Page.ClientScript.RegisterStartupScript(this.GetType(), "EventoLogin", sbEventos.ToString(), true);
+                        //    }
+                        //}
+                    }
+                    if (Context.Session.Keys.Contains("CrearCookieEnServicioLogin") && Context.Session.Keys.Contains("Usuario"))
+                    {
+                        //Envío la cookie del usuario
+                        Es.Riam.Gnoss.Util.Seguridad.GnossIdentity usuario = (Context.Session.Get<Es.Riam.Gnoss.Util.Seguridad.GnossIdentity>("Usuario"));
+
+                        query = "usuarioID=" + usuario.UsuarioID + "&loginUsuario=" + usuario.Login + "&idioma=" + usuario.Idioma + "&personaID=" + usuario.PersonaID + "&nombreCorto=" + usuario.Login;
+                        query += "&token=" + @Html.GetTokenLoginUsuario();
+
+                        <iframe style="WIDTH:1px;HEIGHT:1px; display:none;" frameBorder="0" src="@string.Format("{0}/crearCookie.aspx?{1}", urlServicioLogin, query)"></iframe>
+
+                        Context.Session.Remove("CrearCookieEnServicioLogin");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                @Html.GetLoggingService().GuardarLogErrorView(ex);
+            }
+            if (Comunidad.ProjectExtraHTMLList != null)
+            {
+                @Html.PartialView("../Shared/ProyectoElementoHTML", Comunidad.ProjectExtraHTMLList.Where(a => a.Ubication == UbicacionHtmlProyecto.EndBody).ToList());
+            }
+        }
+    </body>
+}
+</html>

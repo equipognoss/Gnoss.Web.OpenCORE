@@ -1,0 +1,24 @@
+﻿@model List<HistoryFile>
+
+@if (Model != null && Model.Count > 0)
+{
+    <table>
+        <tbody>
+            <tr>
+                <th>@Html.GetText("COMADMINDISENIO", "HISTORIAL")</th>
+            </tr>
+            @foreach (HistoryFile fichero in Model.OrderByDescending(file => file.Fecha))
+            {
+                <tr>
+                    <td>@Html.GetText("COMADMINDISENIO", "FECHADESUBIDA") @fichero.Fecha</td>
+                    <td >
+                        <form method="post" action="@fichero.UrlDownload">
+                            <input class="oculto" type="submit" value="@Html.GetText("COMADMINDISENIO", "BOTONHISTORIAL")">
+                            <a onclick="$(this).prev().click()">@Html.GetText("COMADMINDISENIO", "BOTONDESCARGAR")</a>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
