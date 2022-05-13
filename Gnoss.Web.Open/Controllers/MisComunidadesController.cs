@@ -118,9 +118,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     string nombreImagenePeque = ControladorProyecto.ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID).NombreImagenPeque;
                     string urlLogo = BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesProyectos + "/" + nombreImagenePeque;
 
+                    // No mostrar por defecto una imagen anónima -> Se realiza directamente en la vista vía CSS
                     if (nombreImagenePeque == "peque")
                     {
-                        urlLogo = BaseURLStatic + "/img" + "/" + UtilArchivos.ContentImgIconos + "/" + UtilArchivos.ContentImagenesProyectos + "/" + "anonimo_peque.png";
+                        //urlLogo = BaseURLStatic + "/img" + "/" + UtilArchivos.ContentImgIconos + "/" + UtilArchivos.ContentImagenesProyectos + "/" + "anonimo_peque.png";
+                        urlLogo = "";
                     }
                     comunidad.Logo = urlLogo;
                     

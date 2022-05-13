@@ -159,7 +159,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (!mEntityContextOauth.Usuario.Any(item => item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID)))
             {
-                OAuthAD.OAuth.Usuario filaUsuario = new OAuthAD.OAuth.Usuario();
+                Usuario filaUsuario = new Usuario();
                 filaUsuario.UsuarioID = mControladorBase.UsuarioActual.UsuarioID;
                 filaUsuario.Login = mControladorBase.UsuarioActual.Login;
 
@@ -177,7 +177,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mOAuthCN.ActualizarBD();
 
             OAuthToken filaToken = new OAuthToken();
-
             filaToken.Token = GenerarTokens();
             filaToken.TokenSecret = GenerarTokens();
             filaToken.State = 2;
@@ -189,6 +188,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             filaToken.ConsumerVersion = "1.0.1";
 
             mEntityContextOauth.OAuthToken.Add(filaToken);
+
+            //mEntityContextOauth.PinToken.Add(filaPinToken);
 
             mOAuthCN.ActualizarBD();
 
@@ -299,7 +300,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 try
                 {
                     //Comprobamos si el usuario está ya en la lista de usuarios de Oauth
-                    OAuthAD.OAuth.Usuario usuario = mOAuthCN.ObtenerUsuarioPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID);
+                    Usuario usuario = mOAuthCN.ObtenerUsuarioPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID);
                     if (usuario == null)
                     {
                         insertarUsuario = true;
@@ -331,7 +332,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     //Insertamos el usuario si no estay
                     if (insertarUsuario)
                     {
-                        OAuthAD.OAuth.Usuario filaUsuario = new OAuthAD.OAuth.Usuario();
+                        Usuario filaUsuario = new Usuario();
                         filaUsuario.UsuarioID = mControladorBase.UsuarioActual.UsuarioID;
                         filaUsuario.Login = mControladorBase.UsuarioActual.Login;
                         mEntityContextOauth.Usuario.Add(filaUsuario);

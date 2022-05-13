@@ -487,6 +487,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
             {
                 string fileName = ComponentePersonalizable;
+                if (mConfigService.EstaDesplegadoEnDocker())
+                {
+                    ComponentePersonalizable = ComponentePersonalizable.Replace("Views", "ViewsAdministracion");
+                }
                 string htmlPagina = DescargarComponenteCMS(ComponentePersonalizable, true, Guid.Empty);
                 if (!string.IsNullOrEmpty(htmlPagina))
                 {

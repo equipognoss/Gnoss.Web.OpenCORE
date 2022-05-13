@@ -3590,6 +3590,7 @@ Plugin de CKEditor simplificado. Se activará sobre cualquier input que tenga la
             $ckEditorToolbar: undefined,                    // Toolbar del CKEditor
             $ckEditorContent: undefined,	                // Content del CKEditor
             ckeEditorContentLength: 0,                      // Longitud de textos que hay en el editor CKEditor
+            isOnFocusCKEditor: false,                       // Valor por defecto que indica si está el foco en el ckEditor (El usuario está introduciendo datos)
         }
 
         // Métodos públicos que podrán ser llamados desde fuera del plugin
@@ -3622,17 +3623,17 @@ Plugin de CKEditor simplificado. Se activará sobre cualquier input que tenga la
                         if (mutation.attributeName === "class") {
                             attributeValue = $(mutation.target).prop(mutation.attributeName);
                             const arrayClassList = attributeValue.split(" ");
-                            let isOnFocusCKEditor = false;
+                            settings.isOnFocusCKEditor = false;
                             // Buscar si está o no focus en el CKEditor
                             if (jQuery.inArray("cke_focus", arrayClassList) != -1) {
                                 // Está el Foco del CKEditor
-                                isOnFocusCKEditor = true
+                                settings.isOnFocusCKEditor = true
                             } else {
                                 // No está el Foco del CKEditor
-                                isOnFocusCKEditor = false;
+                                settings.isOnFocusCKEditor = false;
                             }
                             // Animar altura CKEditor siempre que sea diferente al valor actual
-                            settings.isCKEditorContentPanelExpanded != isOnFocusCKEditor && helpers.animateToolbarCKEditor(true, !settings.isCKEditorToolBarVisible);
+                            settings.isCKEditorContentPanelExpanded != settings.isOnFocusCKEditor && helpers.animateToolbarCKEditor(true, !settings.isCKEditorToolBarVisible);
                         }
                     });
                 });
@@ -3642,6 +3643,10 @@ Plugin de CKEditor simplificado. Se activará sobre cualquier input que tenga la
                     mutations.forEach(function (mutation) {
                         if (mutation.addedNodes.length > 0 && mutation.target.className) {
                             helpers.animateToolbarCKEditor(true, true);
+                        }
+                        if (mutation.removedNodes.length >= 1 && !settings.isOnFocusCKEditor) {
+                            // Cerrar la caja si no hay contenido y no está el focus en el ckEditor
+                            helpers.animateToolbarCKEditor(true, false);
                         }
                     });
                 });
@@ -3729,13 +3734,27 @@ Plugin de CKEditor simplificado. Se activará sobre cualquier input que tenga la
                         height: panelHeight
                     }, settings.speed, function () {
                         // Guardamos flag de que el tamaño del panel ha sido modificado
-                        settings.isCKEditorContentPanelExpanded = !settings.isCKEditorContentPanelExpanded;
+                        settings.isCKEditorContentPanelExpanded = !settings.isCKEditorContentPanelExpanded;                        
                     });
                 } else {
                     // Establecer tamaño sin animación               
                     settings.$ckEditorContent.css('height', panelHeight);
                     // Guardamos flag de que el tamaño del panel ha sido modificado
-                    settings.isCKEditorContentPanelExpanded = !settings.isCKEditorContentPanelExpanded;
+                    settings.isCKEditorContentPanelExpanded = !settings.isCKEditorContentPanelExpanded;                    
+                }
+                helpers.showSendCommentButton(extendPanel);
+            },
+
+            /**
+            * Método para ocultar o mostrar el botón de "Enviar comentario" que esté asociado a un ckEditor
+            **/
+            showSendCommentButton: function (showSendCommentButton) {
+                // Contenedor asociado al ckEditor actual                
+                const $containerSendComment = settings.$ckEditorInstance.parent().siblings(".accion-comentario");
+
+                // Ocultar o mostrar el botón de "Enviar comentario"
+                if ($containerSendComment.length > 0) {
+                    showSendCommentButton ? $containerSendComment.css('visibility', 'visible').hide().fadeIn() : $containerSendComment.css('visibility', 'visible').hide().fadeOut();
                 }
             },
 

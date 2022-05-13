@@ -32,13 +32,19 @@ var bodyScrolling = {
 
         // mark if scroll is up or down
         if (currentScrollTop > this.lastScrollTop) {
-            this.body.addClass("scrolling-down");
-            this.body.removeClass("scrolling-up");
-            $(window).trigger("scrolling-down");
+            if (currentScrollTop >= 40) {
+                this.body.addClass("scrolling-down");
+                this.body.removeClass("scrolling-up");
+                $(window).trigger("scrolling-down");
+            }
+            
         } else {
-            this.body.addClass("scrolling-up");
-            this.body.removeClass("scrolling-down");
-            $(window).trigger("scrolling-up");
+            if (currentScrollTop >= 40) {
+                this.body.addClass("scrolling-up");
+                this.body.removeClass("scrolling-down");
+                $(window).trigger("scrolling-up");
+            }
+            
         }
 
         // remove scrolling-up if scroll is on top

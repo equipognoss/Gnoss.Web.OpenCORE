@@ -154,7 +154,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     return RedireccionarAPaginaNoEncontrada();
                 }
             }
-
+            //ViewBag.applicationServerKey = mConfigService.ObtenerVapidPublicKey();
             ControladorCorreo.ResetearContadorNuevosMensajes(IdentidadActual.PerfilID);
             if (IdentidadActual.IdentidadOrganizacion != null && EsIdentidadActualAdministradorOrganizacion)
             {

@@ -161,7 +161,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 case 2:
                     if (Request.HasFormContentType && Request.Form.ContainsKey("paginaDatos"))
                     {
-                        errores = !GuardarDatosRegistro();
+                        errores = !GuardarDatosRegistro();                        
+                        // Si se produce algún error es necesario que el controlador construya los paises para evitar errores en la vista
+                        if (errores == true)
+                        {
+                            CargarDatosRegistro();
+                        }
                         // Si se produce algún error es necesario que el controlador construya los paises para evitar errores en la vista
                         if (errores == true)
                         {

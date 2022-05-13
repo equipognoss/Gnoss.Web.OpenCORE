@@ -1605,6 +1605,7 @@
                 that.ListaPestanyas[prefijoBusquedaClave + '.TextoBusquedaSinResultados'] = panelEditarBusqueda.find('[name="TabTextoBusquedaSinResultados"]').val();
                 that.ListaPestanyas[prefijoBusquedaClave + '.IgnorarPrivacidadEnBusqueda'] = panelEditarBusqueda.find('[name="TabIgnorarPrivacidadEnBusqueda"]').is(':checked');
                 that.ListaPestanyas[prefijoBusquedaClave + '.OmitirCargaInicialFacetasResultados'] = panelEditarBusqueda.find('[name="TabOmitirCargaInicialFacetasResultados"]').is(':checked');
+                that.ListaPestanyas[prefijoBusquedaClave + '.RelacionMandatory'] = panelEditarBusqueda.find('[name="TabFiltroRelacionMandatory"]').val();
 
                 var prefijoBusquedaOpcionesVistasClave = prefijoBusquedaClave + '.OpcionesVistas';
 

@@ -295,7 +295,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 
             // Si el usuario tiene que ir al Master, 
-            if (mControladorBase.UsuarioActual.UsarMasterParaLectura)
+          if (mControladorBase.UsuarioActual.UsarMasterParaLectura)
             {
                 mControladorBase.AgregarObjetoAPeticionActual("UsarMasterParaLectura", true);
             }
@@ -3268,8 +3268,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     try
                     {
                         bool iniciado = false;
-                        string peticion = UrlApiIntegracionContinua + $"/config/comprobar-init?pNombreCorto={ProyectoSeleccionado.NombreCorto}";
-                        iniciado = JsonConvert.DeserializeObject<bool>(UtilGeneral.WebRequest("POST", peticion, null));
+                        iniciado = mUtilServicioIntegracionContinua.EstaEnBD(ProyectoSeleccionado.NombreCorto, UrlApiIntegracionContinua);
                         permisosPaginasModel.AdministracionIntegracionContinuaIniciada = iniciado;
                     }
                     catch (Exception ex)

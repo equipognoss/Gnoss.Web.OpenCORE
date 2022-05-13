@@ -57,7 +57,7 @@
         <span><b>*Antes de guardar debes seguir los pasos del manual y registrar una aplicación en Azure Active Directory si no está ya registrada*</b></span><br /><br />
     </form>
     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "MANUALSHAREPOINT")">Ver manual de configuración de aplicación</a><br />
-    <a href="javascript:window.open('@Model.UrlAdminConsent','popup','width=500px,height=500px');">Conceder permisos por parte de un Administrador</a>
+    <a onclick="PedirConsentimiento();">Conceder permisos por parte de un Administrador</a>
     <input type="button" class="guardarTodo" value="Guardar Todo" />
 </div>
 
@@ -75,7 +75,7 @@
         var clientID = $("#clientID").val();
         var clientSecret = $("#clientSecret").val();
         var tenantID = $("#tenantID").val();
-        var urlAdminConsent = $("#urlAdminConsent").attr("href");
+        var urlAdminConsent = "https://login.microsoftonline.com/"+tenantID+"/adminconsent?client_id="+clientID;
 
         if(comprobarCampos()){
             var dataPost = {
@@ -95,7 +95,7 @@
                 true,
                 false
             ).done(function (data) {
-                mostrarGuardadoOK();
+                mostrarGuardadoOK(urlAdminConsent);
             }).fail(function (data) {
                 mostrarGuardadoError();
             });
@@ -160,9 +160,16 @@
         return (error == 0);
     }
 
-    function mostrarGuardadoOK() {
+    function PedirConsentimiento(){
+        var clientID = $("#clientID").val();
+        var tenantID = $("#tenantID").val();
+        var urlAdminConsent = "https://login.microsoftonline.com/"+tenantID+"/adminconsent?client_id="+clientID;
+        window.open(urlAdminConsent,'popup','width=500px,height=500px');
+    }
+
+    function mostrarGuardadoOK(urlAdminConsent) {
         $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
-        window.open('@Model.UrlAdminConsent','popup','width=500px,height=500px');
+        window.open(urlAdminConsent,'popup','width=500px,height=500px');
     }
     function mostrarGuardadoError(){
         $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');

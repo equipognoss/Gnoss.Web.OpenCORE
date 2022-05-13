@@ -45,12 +45,22 @@
     {
         <h2 @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
             @AddChildren()
+            
+        @foreach (SemanticPropertyModel semPropMod in Model.Properties)
+        {
+            @Html.PartialView("SemCms/_Propiedad", semPropMod);
+        }
         </h2>
     }
     else if (Model.Element.TipoGrupo == "titulo")
     {
         <h1 @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
             @AddChildren()
+            
+        @foreach (SemanticPropertyModel semPropMod in Model.Properties)
+        {
+            @Html.PartialView("SemCms/_Propiedad", semPropMod);
+        }
         </h1>
 
         if (Model.GroupInfo.IncludeGnossIcon)
@@ -78,12 +88,22 @@
     {
         <dl @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
             @AddChildren()
+            
+        @foreach (SemanticPropertyModel semPropMod in Model.Properties)
+        {
+            @Html.PartialView("SemCms/_Propiedad", semPropMod);
+        }
         </dl>
     }
     else
     {
         @Html.Raw("<" + Model.Element.TipoGrupo + idGrupo + claseGrupo + display + ">")
         @AddChildren()
+        
+        @foreach (SemanticPropertyModel semPropMod in Model.Properties)
+        {
+            @Html.PartialView("SemCms/_Propiedad", semPropMod);
+        }
         @Html.Raw("</" + Model.Element.TipoGrupo + ">")
     }
 }
@@ -91,6 +111,11 @@ else
 {
     <div @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
         @AddChildren()
+        
+        @foreach (SemanticPropertyModel semPropMod in Model.Properties)
+        {
+            @Html.PartialView("SemCms/_Propiedad", semPropMod);
+        }
     </div>
 }
 
@@ -116,11 +141,6 @@ else
             }
 
             Model.Depth++;
-        }
-
-        foreach (SemanticPropertyModel semPropMod in Model.Properties)
-        {
-            @Html.PartialView("SemCms/_Propiedad", semPropMod);
         }
         return string.Empty;
     }

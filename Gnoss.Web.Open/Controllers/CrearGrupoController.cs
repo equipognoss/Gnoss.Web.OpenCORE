@@ -123,11 +123,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-
             // Es posible que la lista de participantes en el momento de la creación del grupo sea null porque no se deseen añadir en primera instancia. Tenerlo en cuenta para evitar errores            
-            string[] listaParticipantes = Array.Empty<string>();
-            if (Participantes != null)
-            {
+            string[] listaParticipantes = new string[0];
+            if (Participantes != null) {
                 listaParticipantes = Participantes.Split(new string[] { "[-|-]" }, StringSplitOptions.RemoveEmptyEntries);
             }
 

@@ -1075,11 +1075,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             List<CommentModel> listaComentarios = new List<CommentModel>();
 
-            //string sql = "ComentarioSuperiorID IS NULL";
             List<AD.EntityModel.Models.Comentario.Comentario> filasComentarios;
             if (pComentarioSupID != Guid.Empty)
             {
-                //sql = "ComentarioSuperiorID = '" + pComentarioSupID.ToString() + "'";
                 filasComentarios = Documento.GestorDocumental.GestionComentarios.ComentarioDW.ListaComentario.Where(item => item.ComentarioSuperiorID.HasValue && item.ComentarioSuperiorID.Value.Equals(pComentarioSupID) && item.Eliminado.Equals(false)).OrderByDescending(item => item.Fecha).ToList();
             }
             else
@@ -2016,10 +2014,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 docCL.InvalidarFichaRecursoMVC(new Guid(pDocumentoID), (Guid)dwDocumentacion.ListaDocumento[0].ProyectoID);
 
                 return GnossResultOK();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return GnossResultERROR(ex.Message);
-            }                       
+            }
         }
 
         [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
@@ -2293,7 +2292,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             if (vinculado.Actions == null)
                             {
-                                vinculado.Actions = new ResourceModel.ActionsModel();
+                                vinculado.Actions = new ActionsModel();
                             }
                             vinculado.Actions.UnLinkUp = true;
 
@@ -4071,7 +4070,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string rdfTexto = null;
                 string nombreOntologia = null;
                 List<ElementoOntologia> instanciasPrincipales = ObtenerSemCmsController(Documento).ObtenerEntidadesPrincipalesRecursoDeBD(Documento, Documento.ElementoVinculadoID, BaseURLFormulariosSem, UrlIntragnoss, UtilIdiomas, ProyectoSeleccionado, out nombreOntologia, out ontologia, out rdfTexto, null);
-                byte[] rdfArrayBytes = System.Text.Encoding.UTF8.GetBytes(rdfTexto);
+                byte[] rdfArrayBytes = Encoding.UTF8.GetBytes(rdfTexto);
 
                 mLoggingService.AgregarEntrada("Tras obtener instanciasPrincipales");
 
@@ -4697,7 +4696,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private ActionResult LLamarServicioExternoAccionSemCms(string pUrlServicio, string pRDFRecurso, string pEntidadAccionID)
         {
             pUrlServicio = ControladorDocumentacion.ObtenerUrlServicioExternoSEMCMS(pUrlServicio, ProyectoSeleccionado.Clave);
-            byte[] rdfArrayBytes = System.Text.Encoding.UTF8.GetBytes(pRDFRecurso);
+            byte[] rdfArrayBytes = Encoding.UTF8.GetBytes(pRDFRecurso);
 
             Dictionary<string, string> parametros = new Dictionary<string, string>();
             parametros.Add("ResourceID", Documento.Clave.ToString());
@@ -5024,7 +5023,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        private List<ResourceModel.SharedBRModel> CargarBRCompartidasParaEliminar()
+        private List<SharedBRModel> CargarBRCompartidasParaEliminar()
         {
             List<Guid> ProyectosID = new List<Guid>();
             foreach (Guid baseRecursos in Documento.BaseRecursos)
@@ -5035,7 +5034,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             DataWrapperProyecto proyectosCompartidosDWP = proyCN.ObtenerProyectosPorIDsCargaLigera(ProyectosID);
             proyCN.Dispose();
 
-            List<ResourceModel.SharedBRModel> listaBRCompartidas = new List<ResourceModel.SharedBRModel>();
+            List<SharedBRModel> listaBRCompartidas = new List<SharedBRModel>();
 
             foreach (Guid baseRecursosID in Documento.BaseRecursos)
             {
@@ -5050,7 +5049,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     AD.EntityModel.Models.ProyectoDS.Proyecto filaProy = proyectosCompartidosDWP.ListaProyecto.FirstOrDefault(proy => proy.ProyectoID.Equals(proyectoID));
 
-                    ResourceModel.SharedBRModel brCompartida = new ResourceModel.SharedBRModel();
+                    SharedBRModel brCompartida = new SharedBRModel();
                     brCompartida.Key = baseRecursosID;
                     brCompartida.Name = UtilCadenas.ObtenerTextoDeIdioma(filaProy.Nombre, IdiomaUsuario, IdiomaPorDefecto);
                     brCompartida.ProyectKey = filaProy.ProyectoID;
@@ -5375,7 +5374,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             paginaModel.PersonalSpace = UtilCadenas.ObtenerTextoDeIdioma(EspacioPersonal, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
 
-            ResourceModel.ActionsModel fichaAcciones = new ResourceModel.ActionsModel();
+            ActionsModel fichaAcciones = new ActionsModel();
 
             fichaAcciones.AddToMyPersonalSpace = true;
             fichaAcciones.Restore = false;
@@ -5743,7 +5742,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (FichaRecurso.Poll == null)
                     {
-                        FichaRecurso.Poll = new ResourceModel.PollModel();
+                        FichaRecurso.Poll = new PollModel();
                     }
 
                     bool verResultadosEncuesta = false;
@@ -5776,11 +5775,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             verResultadosEncuesta = true;
                         }
 
-                        FichaRecurso.Poll.PollOptions = new List<ResourceModel.PollModel.PollOptionsModel>();
+                        FichaRecurso.Poll.PollOptions = new List<PollModel.PollOptionsModel>();
 
                         foreach (RespuestaRecurso opcion in Documento.ListaRespuestas.Values)
                         {
-                            ResourceModel.PollModel.PollOptionsModel opcionEncuesta = new ResourceModel.PollModel.PollOptionsModel();
+                            PollModel.PollOptionsModel opcionEncuesta = new PollModel.PollOptionsModel();
                             opcionEncuesta.Key = opcion.FilaRespuesta.RespuestaID;
                             opcionEncuesta.Name = opcion.FilaRespuesta.Descripcion;
                             opcionEncuesta.NumberOfVotes = opcion.FilaRespuesta.NumVotos;
@@ -5984,7 +5983,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (gestorTesauro.ListaCategoriasTesauro.ContainsKey(categoria.Key))
                     {
-                        Elementos.Tesauro.CategoriaTesauro catTesauro = gestorTesauro.ListaCategoriasTesauro[categoria.Key];
+                        CategoriaTesauro catTesauro = gestorTesauro.ListaCategoriasTesauro[categoria.Key];
                         categoria.Name = UtilCadenas.ObtenerTextoDeIdioma(catTesauro.FilaCategoria.Nombre, UtilIdiomas.LanguageCode, "es");
                     }
                     categoria.Lang = UtilIdiomas.LanguageCode;
@@ -6007,30 +6006,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     switch (paginaModel.Resource.TypeDocument)
                     {
-                        case ResourceModel.DocumentType.Audio:
-                        case ResourceModel.DocumentType.AudioBrightcove:
-                        case ResourceModel.DocumentType.AudioTOP:
+                        case DocumentType.Audio:
+                        case DocumentType.AudioBrightcove:
+                        case DocumentType.AudioTOP:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCAUDIO");
                             break;
-                        case ResourceModel.DocumentType.Blog:
+                        case DocumentType.Blog:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCBLOG");
                             break;
-                        case ResourceModel.DocumentType.DafoProyecto:
+                        case DocumentType.DafoProyecto:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCDAFO");
                             break;
-                        case ResourceModel.DocumentType.Debate:
+                        case DocumentType.Debate:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCDEBATE");
                             break;
-                        case ResourceModel.DocumentType.Encuesta:
+                        case DocumentType.Encuesta:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCENCUESTA");
                             break;
-                        case ResourceModel.DocumentType.EntradaBlog:
+                        case DocumentType.EntradaBlog:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCENTRADABLOG");
                             break;
-                        case ResourceModel.DocumentType.EntradaBlogTemporal:
+                        case DocumentType.EntradaBlogTemporal:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCENTRADABLOGTEMP");
                             break;
-                        case ResourceModel.DocumentType.FicheroServidor:
+                        case DocumentType.FicheroServidor:
                             switch (paginaModel.Resource.NameImage)
                             {
                                 case "video":
@@ -6056,7 +6055,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     break;
                             }
                             break;
-                        case ResourceModel.DocumentType.Hipervinculo:
+                        case DocumentType.Hipervinculo:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCHIPERVINCULO");
                             paginaModel.Resource.EsEnlaceSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace);
                             ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -6066,28 +6065,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 paginaModel.Resource.EsEnlaceSharepoint = false;
                             }
                             break;
-                        case ResourceModel.DocumentType.Imagen:
+                        case DocumentType.Imagen:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCIMAGEN");
                             break;
-                        case ResourceModel.DocumentType.ImagenWiki:
+                        case DocumentType.ImagenWiki:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCIMGWIKI");
                             break;
-                        case ResourceModel.DocumentType.Newsletter:
+                        case DocumentType.Newsletter:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCNEWSLETTER");
                             break;
-                        case ResourceModel.DocumentType.Nota:
+                        case DocumentType.Nota:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCNOTA");
                             break;
-                        case ResourceModel.DocumentType.Pregunta:
+                        case DocumentType.Pregunta:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCPREGUNTA");
                             break;
-                        case ResourceModel.DocumentType.Video:
-                        case ResourceModel.DocumentType.VideoBrightcove:
-                        case ResourceModel.DocumentType.VideoTOP:
+                        case DocumentType.Video:
+                        case DocumentType.VideoBrightcove:
+                        case DocumentType.VideoTOP:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCVIDEO");
                             break;
-                        case ResourceModel.DocumentType.Wiki:
-                        case ResourceModel.DocumentType.WikiTemporal:
+                        case DocumentType.Wiki:
+                        case DocumentType.WikiTemporal:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCWIKI");
                             break;
                     }
@@ -6178,14 +6177,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (paginaModel.Resource.Poll == null)
                     {
-                        paginaModel.Resource.Poll = new ResourceModel.PollModel();
+                        paginaModel.Resource.Poll = new PollModel();
                     }
 
-                    paginaModel.Resource.Poll.PollOptions = new List<ResourceModel.PollModel.PollOptionsModel>();
+                    paginaModel.Resource.Poll.PollOptions = new List<PollModel.PollOptionsModel>();
 
                     foreach (RespuestaRecurso opcion in Documento.ListaRespuestas.Values)
                     {
-                        ResourceModel.PollModel.PollOptionsModel opcionEncuesta = new ResourceModel.PollModel.PollOptionsModel();
+                        PollModel.PollOptionsModel opcionEncuesta = new PollModel.PollOptionsModel();
                         opcionEncuesta.Key = opcion.FilaRespuesta.RespuestaID;
                         opcionEncuesta.Name = opcion.FilaRespuesta.Descripcion;
                         opcionEncuesta.NumberOfVotes = opcion.FilaRespuesta.NumVotos;
@@ -6202,13 +6201,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     paginaModel.Resource.AllowComments = (Documento.FilaDocumentoWebVinBR.PermiteComentarios && ParametrosGeneralesRow.ComentariosDisponibles);
                 }
 
-                //paginaModel.Resource = JsonConvert.DeserializeObject<ResourceModel>(ReemplazarClavesCacheHTML(JsonConvert.SerializeObject(paginaModel.Resource)));
-
                 if (Documento.TipoDocumentacion.Equals(TiposDocumentacion.Encuesta))
                 {
                     if (paginaModel.Resource.Poll == null)
                     {
-                        paginaModel.Resource.Poll = new ResourceModel.PollModel();
+                        paginaModel.Resource.Poll = new PollModel();
                     }
                     if (GestorDocumental.DataWrapperDocumentacion != null)
                     {
@@ -6224,7 +6221,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string rdfType = Documento.TipoDocumentacion.ToString();
                 if (Documento.TipoDocumentacion == TiposDocumentacion.Semantico)
                 {
-                    rdfType = System.IO.Path.GetFileNameWithoutExtension(GestorDocumental.ListaDocumentos[Documento.ElementoVinculadoID].Enlace);
+                    rdfType = Path.GetFileNameWithoutExtension(GestorDocumental.ListaDocumentos[Documento.ElementoVinculadoID].Enlace);
 
                     paginaModel.Resource.Title = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Title, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
 
@@ -6308,7 +6305,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         spController.Token = tokenSP;
                         bool estaAlineadoConSharepoint = spController.ComprobarSiEstaAlineadoConSharepoint(Documento.Enlace);
                         paginaModel.Resource.EstaAlineadoConSharepoint = estaAlineadoConSharepoint;
-                    }                   
+                    }
                 }
 
                 paginaModel.AllowPalco = false;
@@ -6455,11 +6452,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     lecturaAumentada.DescripcionAumentada = null;
                 }
 
-                ////Insertar Rabbit ColaTagsComunidadesLInkedData
+                //Insertar Rabbit ColaTagsComunidadesLInkedData
                 ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
                 controladorDocumentacion.InsertLinkedDataRabbit(Documento.ProyectoID, Documento.TipoDocumentacion.ToString(), lecturaAumentada);
 
-                ///
                 mEntityContext.SaveChanges();
 
                 DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -6537,7 +6533,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
                 return null;
-            }      
+            }
             return null;
         }
 
@@ -7074,9 +7070,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        private List<ResourceModel.GrafoRecurso> CargarGrafosRecurso()
+        private List<GrafoRecurso> CargarGrafosRecurso()
         {
-            List<ResourceModel.GrafoRecurso> listaGrafosRecurso = new List<ResourceModel.GrafoRecurso>();
+            List<GrafoRecurso> listaGrafosRecurso = new List<GrafoRecurso>();
 
             ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             DataWrapperProyecto proyGrafosDWP = proyCL.ObtenerGrafosProyecto(ProyectoSeleccionado.Clave);
@@ -7137,7 +7133,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         pestana = UtilIdiomas.GetText("URLSEM", "BUSQUEDAAVANZADA");
                     }
 
-                    ResourceModel.GrafoRecurso grafoRecurso = new ResourceModel.GrafoRecurso();
+                    GrafoRecurso grafoRecurso = new GrafoRecurso();
                     grafoRecurso.PropEnlace = filaProyGrafo.PropEnlace;
                     grafoRecurso.NodosLimiteNivel = filaProyGrafo.NodosLimiteNivel.Value;
                     //grafoRecurso.UrlJsArbor = BaseURLStatic + "/jsNuevo/grafos/js/arbor.js" + version;
@@ -7428,7 +7424,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 else if (Documento.TipoDocumentacion == TiposDocumentacion.FicheroServidor || Documento.TipoDocumentacion == TiposDocumentacion.Imagen)
                 {
                     string tipo = ControladorDocumentacion.ObtenerTipoEntidadAdjuntarDocumento(Documento.TipoEntidadVinculada);
-                    string extension = System.IO.Path.GetExtension(Documento.NombreDocumento).ToLower();
+                    string extension = Path.GetExtension(Documento.NombreDocumento).ToLower();
 
                     if (extension == ".swf")
                     {
@@ -7487,7 +7483,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 try
                 {
-                    string extension = System.IO.Path.GetExtension(Documento.NombreDocumento).ToLower();
+                    string extension = Path.GetExtension(Documento.NombreDocumento).ToLower();
 
                     if (extension == ".swf" && Documento.TipoDocumentacion != TiposDocumentacion.Hipervinculo)
                     {
@@ -7573,7 +7569,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                         else
                         {
-                            v = System.Web.HttpUtility.ParseQueryString(new Uri(pDocumento.Enlace).Query).Get("v");
+                            v = HttpUtility.ParseQueryString(new Uri(pDocumento.Enlace).Query).Get("v");
                         }
 
                         //si el enlace viene de youtube y el parámetro v no es null
@@ -8050,9 +8046,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return listaEtiquetas;
         }
 
-        private List<ResourceModel.SharedBRModel> CargarBRCompartidas()
+        private List<SharedBRModel> CargarBRCompartidas()
         {
-            List<ResourceModel.SharedBRModel> listaBRCompartidas = new List<ResourceModel.SharedBRModel>();
+            List<SharedBRModel> listaBRCompartidas = new List<SharedBRModel>();
 
             List<Guid> ProyectosID = new List<Guid>();
             var listaBaseRecursos = Documento.BaseRecursos.Take(20);
@@ -8104,7 +8100,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                                 if (tieneAccesoComunidad)
                                 {
-                                    ResourceModel.SharedBRModel brComunidad = new ResourceModel.SharedBRModel();
+                                    SharedBRModel brComunidad = new SharedBRModel();
                                     brComunidad.Key = baseRecursos;
                                     brComunidad.ProyectKey = filaProy.ProyectoID;
                                     brComunidad.OrganizationKey = ProyectoAD.MetaOrganizacion;
@@ -8133,7 +8129,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     {
                                         if (Documento.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos.FirstOrDefault(item => item.BaseRecursosID.Equals(baseRecursos) && item.DocumentoID.Equals(DocumentoID)).TipoPublicacion != 0)
                                         {
-                                            ResourceModel.SharedBRModel brOrganizacion = new ResourceModel.SharedBRModel();
+                                            SharedBRModel brOrganizacion = new SharedBRModel();
                                             brOrganizacion.Key = baseRecursos;
                                             brOrganizacion.ProyectKey = ProyectoAD.MetaProyecto;
                                             brOrganizacion.OrganizationKey = filasBROrg[0].OrganizacionID;
@@ -8149,7 +8145,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     {
                                         if (Documento.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos.FirstOrDefault(item => item.BaseRecursosID.Equals(baseRecursos) && item.DocumentoID.Equals(DocumentoID)).TipoPublicacion != 0)
                                         {
-                                            ResourceModel.SharedBRModel brPersonal = new ResourceModel.SharedBRModel();
+                                            SharedBRModel brPersonal = new SharedBRModel();
                                             brPersonal.Key = baseRecursos;
                                             brPersonal.Name = UtilIdiomas.GetText("ANYADIRGNOSS", "BRPERSONAL");
                                             brPersonal.Url = mControladorBase.UrlsSemanticas.GetURLBaseRecursos(BaseURLIdioma, UtilIdiomas, "", UrlPerfil, false);
@@ -8660,6 +8656,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             return resultado;
         }
+                
         #region Propiedades
 
         /// <summary>

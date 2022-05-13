@@ -29,8 +29,8 @@ function RecargarTodosCKEditor() {
 			}
 		}
         var BasePath = CKEDITOR.basePath;
-		var ImageBrowseUrl = urlbase + "/conector-ckeditor";
-		var ImageUploadUrl = urlbase + "/conector-ckeditor";
+		var ImageBrowseUrl = urlbase + "/conector-ckeditor?v=0";
+		var ImageUploadUrl = urlbase + "/conector-ckeditor?v=0";
 		//var ImageBrowseUrl = urlbase + "/ConectorCKEditor.aspx";
 		//var ImageUploadUrl = urlbase + "/ConectorCKEditor.aspx";
         //var ImageBrowseUrl = BasePath + "filemanager/browser/default/browser.html?Type=Image&Connector=" + BasePath + "filemanager/connectors/aspx/connector.aspx";

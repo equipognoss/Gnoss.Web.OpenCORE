@@ -48,7 +48,7 @@ a,
 a:focus,
 a:hover { color: var(--c-primario); }
 
-img { max-width: 100%; }
+img { max-width: 100%; height: 100%; }
 
 .oculto { display: none !important; }
 
@@ -2790,7 +2790,7 @@ table.table > tbody > tr.activo > td { font-weight: 500; color: var(--c-primario
     /* Permitir visualización de filtros cuando se haga scroll-up */
     .listado.scrolling-down { }
     .listado.scrolling-down header .col03 ul li:not(.nuevo), .listado.scrolling-up header .col03 ul li:not(.nuevo)  { display: none; }
-    .listado.scrolling-down header .col.col01, .listado.scrolling-up header .col03 ul li:not(.nuevo) { display: none; }
+    .listado.scrolling-down header .col.col01, .listado.scrolling-up header .col03 ul li:not(.nuevo), .listado.scrolling-up header .col.col01{ display: none; }
     .listado.scrolling-down header .community-row, .listado.scrolling-up header .community-row { display: none !important; }
     .listado.scrolling-down .header-listado .acciones-listado, .listado.scrolling-up .header-listado .acciones-listado { align-items: center; height: 50px; position: fixed; top: 60px; left: 0; right: 0; display: flex; justify-content: flex-end; padding: 5px !important; background-color: #f5f5f5; z-index: 802; }
     .listado.scrolling-down .header-listado .acciones-listado.add-shadow, .listado.scrolling-up .header-listado .acciones-listado.add-shadow { box-shadow: 0 3px 6px 0 rgb(0 0 0 / 16%); }
@@ -2819,6 +2819,8 @@ table.table > tbody > tr.activo > td { font-weight: 500; color: var(--c-primario
     .listado.scrolling-down #panFiltros .borrarFiltros, .listado.scrolling-up #panFiltros .borrarFiltros { margin-left: 0; border-radius: 50%; opacity: 0.5; height: 22px; width: 22px; top: 5px; }
     .listado.scrolling-down #panFiltros .borrarFiltros::after, .listado.scrolling-up #panFiltros .borrarFiltros::after { display: none; }
     .listado.scrolling-down #panFiltros .borrarFiltros::before, .listado.scrolling-up #panFiltros .borrarFiltros::before {  }
+
+
 
     /* Filtros para mensajes */
     .listado.scrolling-down #divFiltros, .listado.scrolling-up #divFiltros { padding: 0 5px 5px 5px; z-index: 801; left: 0; right: 0; position: fixed; top: 110px; background-color: #f5f5f5; }

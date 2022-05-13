@@ -327,13 +327,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 bool transaccionIniciada = false;
                 try
                 {
+                    List<TabModel> paginaModelPestanyas = PaginaModel.ListaPestanyas;
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
                     contrPest.GuardarPestanyas(ListaPestanyas);
 
                     if (iniciado)
                     {
-                        ListaPestanyas = ModificarOrdenPestanyas(PaginaModel.ListaPestanyas, ListaPestanyas);
+                        ListaPestanyas = ModificarOrdenPestanyas(paginaModelPestanyas, ListaPestanyas);
 
                         HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonConvert.SerializeObject(ListaPestanyas, Formatting.Indented));
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
@@ -406,7 +407,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             pestanyaNueva.OpcionesBusqueda.ValoresPorDefecto = true;
                         }
-                        pestanyaNueva.Modified = true;
+
+                        //Solo modificar las que se han cambiado de orden
+                        if (pestanyaNueva.Order != pestanya.Order)
+                        {
+                            pestanyaNueva.Order = pestanya.Order;
+                            pestanyaNueva.Modified = true;
+                        }
                     }
                     else
                     {

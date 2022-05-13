@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 
@@ -153,10 +154,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
+                    List<FacetaModel> facetaModel = PaginaModel.ListaFacetas;
 
                     contrFacetas.GuardarFacetas(ListaFacetas);
                     if (iniciado)
                     {
+                        ListaFacetas = ModificarOrdenFacetas(facetaModel, ListaFacetas);
                         HttpResponseMessage resultado = InformarCambioAdministracion("Facetas", JsonConvert.SerializeObject(ListaFacetas, Formatting.Indented));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
@@ -233,7 +236,33 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return faceta;
         }
 
-
+        private List<FacetaModel> ModificarOrdenFacetas(List<FacetaModel> pFacetaModel, List<FacetaModel> pListaFacetas)
+        {
+            List<FacetaModel> listaFacetasDevolver = new List<FacetaModel>();
+            foreach (FacetaModel faceta in pListaFacetas)
+            {
+                FacetaModel facetaNueva = faceta;
+                if (!faceta.Deleted && !faceta.Modified)
+                {
+                    facetaNueva = pFacetaModel.Where(facet => facet.AgrupacionID.Equals(faceta.AgrupacionID)).FirstOrDefault();
+                    if (facetaNueva != null)
+                    {
+                        //Solo modificar las que se han cambiado de orden 
+                        if (facetaNueva.Orden != faceta.Orden)
+                        {
+                            facetaNueva.Orden = faceta.Orden;
+                            facetaNueva.Modified = true;
+                            listaFacetasDevolver.Add(facetaNueva);
+                        }
+                    }
+                }
+                else
+                {
+                    listaFacetasDevolver.Add(facetaNueva);
+                }
+            }
+            return listaFacetasDevolver;
+        }
 
         private void CargarOntologias()
         {

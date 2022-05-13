@@ -818,6 +818,7 @@
             }
             else {
                 panEditar.addClass('edit');
+                panEditar.addClass('modified');
             }
         },
         anyadirFaceta: function () {
@@ -1072,6 +1073,9 @@
                 that.ListaFacetas[prefijoClave + '.ComportamientoOR'] = panelEdicion.find('[name="ComportamientoOR"]').is(':checked');
                 that.ListaFacetas[prefijoClave + '.Inmutable'] = panelEdicion.find('[name="chkInmutable"]').is(':checked');
                 that.ListaFacetas[prefijoClave + '.PriorizarOrdenResultados'] = panelEdicion.find('[name="PriorizarOrdenResultados"]').is(':checked');
+
+                var modified = panelEdicion.hasClass("modified");
+                that.ListaFacetas[prefijoClave + '.Modified'] = modified;
 
                 var privacidadGrupos = panelEdicion.find('[name="TabValoresPrivacidadGrupos"]').val().split(',');
                 for (var i = 0; i < privacidadGrupos.length; i++) {

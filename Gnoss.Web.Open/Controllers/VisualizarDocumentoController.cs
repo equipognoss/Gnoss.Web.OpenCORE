@@ -28,6 +28,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -204,6 +205,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 archivoAdjuntoSem = archivo.Substring(0, archivo.LastIndexOf('.'));
                 ext = archivo.Substring(archivo.LastIndexOf('.'));
             }
+
+            bool descargaIframe = !string.IsNullOrEmpty(Request.Query["iframe"]) && Request.Query["iframe"].Equals("true");
 
             DocumentacionCN docsCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
 
@@ -643,11 +646,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 //Le añado el tipo de contenido
                 Response.ContentType = contentType;
 
-                if (agregarCabecera)
+                if (descargaIframe)
                 {
                     //Añadimos la cabecera http al navegador
-                    Response.Headers.Add("Content-Disposition", "attachment; filename=\"" + HttpUtility.UrlEncode(nombre) + "\"");//+ HttpUtility.ParseQueryString(nombre));
+                    Response.Headers.Add("Content-Disposition", $"filename=\"{nombre}\"");
+                    ConcurrentDictionary<string, string> mimetypes = Conexion.ObtenerMimeType();
+                    string mimetype = "";
+                    if (mimetypes.TryGetValue(ext, out mimetype))
+                    {
+                        Response.Headers.Add("Content-Type", mimetype);
+                    }
+                    else
+                    {
+                        Response.Headers.Add("Content-Type", "application/octet-stream");
+                    }
                 }
+                else if (agregarCabecera)
+                {
+                    //Añadimos la cabecera http al navegador
+                    Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{nombre}\"");
+                }
+
                 //Enviamos todo al explorador
                 //Response.Flush();
                 //Escribimos el contenido del fichero en la página
@@ -657,7 +676,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 return NotFound("No se encontr&oacute; el documento");
             }
-            //Response.End();
         }
 
         private bool? mPermisoOauth;

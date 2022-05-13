@@ -206,7 +206,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
-            ControladorObjetosConocimiento contrObjetosConocim = new ControladorObjetosConocimiento(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD);
+            ControladorObjetosConocimiento contrObjetosConocim = new ControladorObjetosConocimiento(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             string errores = contrObjetosConocim.ComprobarErrores(ListaObjetosConocimiento);
 
             if (string.IsNullOrEmpty(errores))
@@ -295,7 +295,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     mPaginaModel.ListaObjetosConocimiento = new List<ObjetoConocimientoModel>();
 
-                    ControladorObjetosConocimiento contrObjetosConocim = new ControladorObjetosConocimiento(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD);
+                    ControladorObjetosConocimiento contrObjetosConocim = new ControladorObjetosConocimiento(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
 
                     foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc)
                     {

@@ -178,7 +178,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 mEntityContext.NoConfirmarTransacciones = true;
                 transaccionIniciada = proyAD.IniciarTransaccion(true);
 
-                ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD);
+                ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
 
                 contrPaginasCMS.GuardarWeb(TipoUbicacionCMSPaginaActual, Estructura, OpcionesPropiedades, MostrarSoloCuerpo, false);
 
@@ -259,7 +259,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void Guardar(string estructura, string propiedadComponente, bool MostrarSoloCuerpo, bool borrador = true)
         {
-            ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD);
+            ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
 
             contrPaginasCMS.GuardarWeb(TipoUbicacionCMSPaginaActual, estructura, propiedadComponente, MostrarSoloCuerpo, borrador);
 
@@ -278,7 +278,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mPaginaModel == null)
                 {
-                    ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD);
+                    ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
                     mPaginaModel = contrPaginasCMS.CargarPagina(TipoUbicacionCMSPaginaActual, GestorCMSPaginaActual);
                     if (PestanyaID.HasValue)
                     {

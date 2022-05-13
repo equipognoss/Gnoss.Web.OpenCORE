@@ -219,19 +219,19 @@
                                             case TipoPropiedadCMS.NumItems:
                                             case TipoPropiedadCMS.NumDias:
                                             case TipoPropiedadCMS.NumItemsMostrar:
-                                                @Html.PartialView("_Propiedad_Generico_TextBox", propiedad);
+                                                @Html.RenderPartialAsync("_Propiedad_Generico_TextBox", propiedad);
                                                 break;
                                             case TipoPropiedadCMS.Subtitulo:
                                             case TipoPropiedadCMS.HTML:
                                             case TipoPropiedadCMS.QuerySPARQL:
                                             case TipoPropiedadCMS.QuerySQLSERVER:
-                                                @Html.PartialView("_Propiedad_Generico_TextArea", propiedad);
+                                                @Html.RenderPartialAsync("_Propiedad_Generico_TextArea", propiedad);
                                                 break;
                                             case TipoPropiedadCMS.TieneImagen:
                                             case TipoPropiedadCMS.TieneBotonHazteMiembro:
                                             case TipoPropiedadCMS.VerMas:
                                             case TipoPropiedadCMS.ContarPersonasNoVisibles:
-                                                @Html.PartialView("_Propiedad_Generico_Booleano", propiedad);
+                                                @Html.RenderPartialAsync("_Propiedad_Generico_Booleano", propiedad);
                                                 break;
                                             case TipoPropiedadCMS.TipoPresentacionRecurso:
                                             case TipoPropiedadCMS.TipoPresentacionGrupoComponentes:
@@ -241,10 +241,10 @@
                                             case TipoPropiedadCMS.TipoListadoUsuarios:
                                             case TipoPropiedadCMS.TipoPresentacionFaceta:
                                             case TipoPropiedadCMS.TipoListadoProyectos:
-                                                @Html.PartialView("_Propiedad_Generico_Select", propiedad);
+                                                @Html.RenderPartialAsync("_Propiedad_Generico_Select", propiedad);
                                                 break;
                                             default:
-                                                @Html.PartialView("_Propiedad_" + propiedad.TipoPropiedadCMS.ToString(), propiedad);
+                                                @Html.RenderPartialAsync("_Propiedad_" + propiedad.TipoPropiedadCMS.ToString(), propiedad);
                                                 break;
                                         }
                                     }

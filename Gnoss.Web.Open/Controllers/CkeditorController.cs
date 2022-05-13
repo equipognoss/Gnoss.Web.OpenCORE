@@ -87,7 +87,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 bool correcto = false;
 
                 ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
-                servicioImagenes.Url = UrlIntragnossServicios.ToString().Replace("https://", "http://");
+                servicioImagenes.Url = UrlIntragnossServicios.ToString();
 
                 correcto = servicioImagenes.AgregarImagenADirectorio(buffer1, Path.Combine(UtilArchivos.ContentImagenesUsuarios, "ImagenesCKEditor",  mUsuarioID.ToString()), mEspecialID.ToString(), mExtension);
 

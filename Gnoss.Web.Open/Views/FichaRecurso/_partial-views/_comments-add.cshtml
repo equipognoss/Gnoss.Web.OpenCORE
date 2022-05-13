@@ -73,7 +73,7 @@ UserProfileModel perfil = Html.GetPerfil();
                 <div class="form-group">
                     <textarea cols="20" rows="2" id="txtNuevoComentario_@FichaDocumento.Key" class="cke ckeSimple comentarios"></textarea>
                 </div>
-                <div class="accion-comentario">
+                <div class="accion-comentario" style="visibility: hidden">
                     <a class="btn btn-outline-grey"
                        onclick="@Html.Raw(funcionComentario_CrearComentario)">
                         <span class="texto">

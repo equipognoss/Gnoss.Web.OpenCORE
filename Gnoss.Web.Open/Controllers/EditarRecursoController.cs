@@ -4,7 +4,6 @@ using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
-using Es.Riam.Gnoss.AD.EntityModel.Models.UsuarioDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado.Model;
 using Es.Riam.Gnoss.AD.Identidad;
@@ -2865,7 +2864,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             mEditRecCont.ModifyResourceModel.UrlCancelButton = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, Documento, (IdentidadOrganizacion != null));
 
-            if (Documento.TipoDocumentacion == TiposDocumentacion.FicheroServidor && !Documento.EsPresentacionIncrustada && !Documento.Enlace.Equals(string.Empty))
+            if ((Documento.TipoDocumentacion == TiposDocumentacion.FicheroServidor || Documento.TipoDocumentacion == TiposDocumentacion.Imagen) && !Documento.EsPresentacionIncrustada && !Documento.Enlace.Equals(string.Empty))
             {
                 ControladorDocumentacion controlador = new ControladorDocumentacion(GestorDocumental, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
                 mEditRecCont.ModifyResourceModel.DocumentEditionModel.UrlDownloadAttached = controlador.CrearEnlaceDocumento(Documento, IdentidadOrganizacion, UsuarioActual);
