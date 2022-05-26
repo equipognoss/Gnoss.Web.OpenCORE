@@ -1,4 +1,4 @@
-# Gnoss.Web
+# Gnoss.Web.OpenCORE
 
 ![](https://github.com/equipognoss/Gnoss.Web/workflows/BuildWeb/badge.svg)
 
