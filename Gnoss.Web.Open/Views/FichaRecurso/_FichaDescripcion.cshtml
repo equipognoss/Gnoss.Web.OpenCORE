@@ -10,7 +10,8 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
-
+// Comprobar si hay una imagen miniatura del recurso generada por archivo adjunto
+bool isImagePreview = false;
 
 }
 
@@ -89,8 +90,9 @@ Variables
     }
     else if (Model.NameImage == "imagen" || Model.NameImage == "hipervinculo")
     {
-        <a href="@Model.UrlDocument" >
-        <img src="@Model.UrlPreview" alt="@Model.Title"/>
+        isImagePreview = true;
+        <a href="@Model.UrlDocument" style="float: left;">
+        <img src="@Model.UrlPreview" alt="@Model.Title" style="margin-right: 1rem"; margin-bottom: "1rem";/>
         </a>
     }
     else if (Model.NameImage == "digital" && !string.IsNullOrEmpty(Model.UrlDocument) && Model.UrlDocument.Contains("VisualizarFlash.aspx"))
@@ -133,4 +135,9 @@ Variables
     {
         @Html.Raw(Model.Description)
     }
+    @* Deshacer el float de imagen miniatura *@
+    @if (isImagePreview)
+    {
+        <div style="clear:both; display:block"></div>    
+    }    
 </div>

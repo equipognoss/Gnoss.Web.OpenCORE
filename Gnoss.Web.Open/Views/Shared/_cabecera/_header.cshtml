@@ -21,7 +21,7 @@ UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
 UserProfileModel perfil = Html.GetPerfil();
 CommunityModel Comunidad = Html.GetComunidad();
 // Obtiene si existe la url de la comunidad principal (ParametroAplicacion - ComunidadPrincipalID)
-string mainCommunityUrl = Html.GetMainCommunityUrl();
+string mainCommunityUrl = perfil.Url;
 // Permisos disponibles en la comunidad
 CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
 // URL de la foto del usuario
@@ -66,11 +66,11 @@ bool containsUrlFoto = true;
                             else if (Comunidad.MetaProyect)
                             {
                                 @* <a href="@Html.GetBaseUrlIdioma()/home" class="text-blanco"><img alt="Gnoss" title="Gnoss" src="@Html.GetBaseUrlStatic()/img/logo_gnoss.png" /></a>*@
-                                <a href="@Html.GetBaseUrlIdioma()/home" class="texto-blanco">@Comunidad.NameMetaComunidad</a>
+                                <a href="@mainCommunityUrl/home" class="texto-blanco">@Comunidad.NameMetaComunidad</a>
                             }
                             else
                             {
-                                <a href="@Html.GetBaseUrlIdioma()" class="texto-blanco">@Comunidad.NameMetaComunidad</a>
+                                <a href="@mainCommunityUrl" class="texto-blanco">@Comunidad.NameMetaComunidad</a>
                                 @* -- NO MOSTRAR DE MOMENTO EL LOGO
                                         @if (!string.IsNullOrEmpty(Comunidad.Logo))
                                         {

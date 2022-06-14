@@ -39,6 +39,7 @@ namespace Gnoss.Web.Controllers
         private string clientSecret = "";
         private string baseUrl = "https://graph.microsoft.com/v1.0/";
         private string mToken = "";
+        private string mTokenCreadorRecurso = "";
         private bool mEsEnlaceSharepoint;
         private string urlFichero;
         private Guid documentoID;
@@ -47,6 +48,12 @@ namespace Gnoss.Web.Controllers
         {
             get { return mToken; }
             set { mToken = value; }
+        }
+
+        public string TokenCreadorRecurso
+        {
+            get { return mTokenCreadorRecurso; }
+            set { mTokenCreadorRecurso = value; }
         }
 
         public SharepointController(string documentoID, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
@@ -166,18 +173,36 @@ namespace Gnoss.Web.Controllers
 
         public bool ComprobarSiEstaAlineadoConSharepoint(string url)
         {
+            try
+            {
+                return PeticionAlineadoConSharepoint(url);
+            }
+            catch
+            {
+                if(!string.IsNullOrEmpty(mTokenCreadorRecurso) && !mTokenCreadorRecurso.Equals(mToken))
+                {
+                    try { PeticionAlineadoConSharepoint(url, true); }
+                    catch { return true; }
+                }
+                return true;
+            } 
+        }
+
+        private bool PeticionAlineadoConSharepoint(string url, bool pEsCreadorRecurso = false)
+        {
+            string token = !pEsCreadorRecurso ? mToken : mTokenCreadorRecurso;
+
             string urlCodificada = CodificarUrl(url);
             string peticion = $"{baseUrl}shares/{urlCodificada}/root";
-            string response = UtilGeneral.WebRequest("GET", peticion, mToken, null);
+            string response = UtilGeneral.WebRequest("GET", peticion, token, null);
             dynamic respuestaObj = JsonConvert.DeserializeObject(response);
-            
+
             string fechaModificacionApi = respuestaObj.lastModifiedDateTime;
             DateTime fechaModificacionSP = DateTime.Parse(fechaModificacionApi, System.Globalization.CultureInfo.InvariantCulture);
             long fechaModificacionSharepoint = fechaModificacionSP.Ticks;
 
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             long fechaCreacionVersion = docCN.ObtenerFechaCreacionDocumento(documentoID);
-            
             return !(fechaModificacionSharepoint > fechaCreacionVersion);
         }
 

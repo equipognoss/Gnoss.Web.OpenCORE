@@ -55,13 +55,16 @@
 
             if (fichaRecurso.EsEnlaceSharepoint)
             {
+                @if (acciones.Edit)
+                {
                 //FRAN
-                <li>
-                    <a id="op_GoToWeb" class="btn btn-primary" href="@fichaRecurso.UrlDocument" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
-                        <span class="material-icons">open_in_new</span>
-                        <span class="texto">@Html.GetText("HISTORIALVERSIONES", "IRVERSIONCOLABORATIVA")</span>
-                    </a>
-                </li>
+                    <li>
+                        <a id="op_GoToWeb" class="btn btn-primary" href="@fichaRecurso.UrlDocument" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
+                            <span class="material-icons">open_in_new</span>
+                            <span class="texto">@Html.GetText("HISTORIALVERSIONES", "IRVERSIONCOLABORATIVA")</span>
+                        </a>
+                    </li>
+                }
 
                 <li>
                     <a id="op_DownloadSharepoint" class="btn btn-primary" onclick="DescargarFicheroSharepoint();" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
@@ -69,7 +72,7 @@
                         <span class="texto">@Html.GetText("HISTORIALVERSIONES", "DESCARGARSHAREPOINT") @fichaRecurso.PublishDate.ToString("dd-MM-yyyy")</span>
                     </a>
                 </li>
-                @if (!fichaRecurso.EstaAlineadoConSharepoint)
+                @if (acciones.Edit && !fichaRecurso.EstaAlineadoConSharepoint)
                 {
                     <li>
                         <a id="op_AddCreateVersion" class="btn btn-outline-primary" onclick="CrearVersionRapidaEnlaceSharepoint();">

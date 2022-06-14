@@ -48,7 +48,9 @@ a,
 a:focus,
 a:hover { color: var(--c-primario); }
 
-img { max-width: 100%; height: 100%; }
+img:not(.fullScreen) { max-width: 100%; height: 100%; }
+#zoomiocontainer > img { max-width: inherit; height: inherit;}
+
 
 .oculto { display: none !important; }
 

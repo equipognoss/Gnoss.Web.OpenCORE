@@ -1416,7 +1416,16 @@ $(document).ready(function () {
 			// Eliminar la clase por defecto de mostrarse en el top
 			$(this).removeClass("modal-top");
 		}
-	});	
+	});
+
+	// Permitir carga de imagenes / zoom en pantalla completa al hacer click sobre ellas
+	$('img.fullScreen').fullscreenimage({
+		scale: 2 // magnify by 2 times when mouse moves over full screen image (set to 1 to disable)
+	});
+
+	// Comportamiento de navegación back button del navegador
+	operativaDetectarNavegacionBackButton.init();
+
 });
 
 /* Evitar ocultamiento de faceta cuando se utiliza el datepicker para seleccionar meses */

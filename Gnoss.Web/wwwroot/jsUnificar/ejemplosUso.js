@@ -4489,7 +4489,7 @@ const comportamientoFacetasPopUp = {
             replaceAll(
                 replaceAll(
                     replaceAll(
-                        ObtenerHash2().replace(/&/g, "|").replace("#", ""),
+                        urlDecode(ObtenerHash2()).replace(/&/g, "|").replace("#", ""),
                         "%",
                         "%25"
                     ),
@@ -4512,12 +4512,20 @@ const comportamientoFacetasPopUp = {
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = FacetaActual;
 
-        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal         
-        that.$modalLoaded.find(".buscador-coleccion .buscar .texto").keyup(function () {
-            that.textoActual = that.eliminarAcentos($(this).val());
-            that.paginaActual = 1;
-            that.buscarFacetas();
-        });
+        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal                
+        that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
+            .keyup(function () {
+                that.textoActual = that.eliminarAcentos($(this).val());
+                that.paginaActual = 1;
+                that.buscarFacetas();
+            })
+            .on('paste', function () {
+                const input = $(this);
+                setTimeout(function () {
+                    input.keyup();
+                }, 200);
+
+            });
 
 
         // Petición al servicio para obtención de Facetas                
@@ -5413,8 +5421,8 @@ var utilMapas = {
         var vistaMapa = ($('li.mapView').attr('class') == "mapView activeView");
         var vistaChart = ($('.chartView').attr('class') == "chartView activeView");
         */
-        var vistaMapa = $('li.mapView').hasClass('activeView');
-        var vistaChart = $('.chartView').hasClass('activeView');
+        var vistaMapa = $(".item-dropdown.aMapView").hasClass("activeView");
+        var vistaChart = $(".item-dropdown.aGraphView").hasClass("activeView");
 
         var mapView = $('.mapView');
 
@@ -6088,7 +6096,7 @@ function ObtenerNumElementosNuevosAJAX(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandej
             identCargarNov += $(spanNov[i]).attr('id').substring($(spanNov[i]).attr('id').indexOf('_') + 1) + '&';
         }
     }
-
+    PeticionesCookie.CargarCookie();
     PeticionesAJAX.CargarNumElementosNuevos(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX);
 }
 
@@ -7944,6 +7952,20 @@ function Redirigir(response) {
     }
 }
 
+var PeticionesCookie = {
+    CargarCookie() {
+        var urlPeticion = null;
+        urlPeticion = $('#inpt_UrlLogin').val().split("/login")[0] + "/RefrescarCookie";
+        GnossPeticionAjax(
+            urlPeticion,
+            null,
+            true
+        ).done(function (response) {
+        }).fail(function (response) {
+        });
+    }
+
+}
 
 var PeticionesAJAX = {
     CargarNumElementosNuevos: function (pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX) {

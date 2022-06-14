@@ -3,7 +3,7 @@
 @* Nº máximo de comunidades que se mostrarán donde se está compartiendo el Recurso *@
 @{ 
     int maxNumCommunityShared = 100;
-    for (int i = Model.position; i < Model.listaBaseRecursos.Count; i++)
+    for (int i = Model.position; i < Model.resourceModel.Shareds.Count; i++)
     {
         if (i < maxNumCommunityShared || Model.pintarNumerLimitado == false)
         {

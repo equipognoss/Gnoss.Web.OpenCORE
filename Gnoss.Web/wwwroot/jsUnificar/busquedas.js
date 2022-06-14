@@ -631,8 +631,8 @@ function FiltrarPorFacetasGenerico(filtro) {
     var vistaChart = ($('.chartView').attr('class') == "chartView activeView");
     */
 
-    var vistaMapa = $('li.mapView').hasClass('activeView');
-    var vistaChart = $('.chartView').hasClass('activeView');
+    var vistaMapa = $(".item-dropdown.aMapView").hasClass("activeView");
+    var vistaChart = $(".item-dropdown.aGraphView").hasClass("activeView");
 
     if (!primeraCargaDeFacetas && !vistaMapa) {
         MostrarUpdateProgress();
@@ -712,7 +712,7 @@ function FiltrarPorFacetasGenerico(filtro) {
 
     var tokenAfinidad = guidGenerator();
 
-    if (vistaMapa || !primeraCargaDeFacetas) {
+    if ((vistaMapa || !primeraCargaDeFacetas) && (!vistaChart || typeof (chartActivo) != "undefined")) {
         MontarResultados(filtro, primeraCarga, 1, '#' + panResultados, tokenAfinidad);
     }
 
@@ -2011,7 +2011,7 @@ function FinalizarMontarFacetas() {
 }
 
 $(document).ready(function () {
-    /*$('.searchGroup .encontrar').click(function (event) {
+    $('.searchGroup .encontrar').click(function (event) {
         var txt = $(this).parent().find('.text');
         if ($(this).parent().find('#criterio').attr('origen') != undefined) {
             //Buscadores CMS
@@ -2025,7 +2025,33 @@ $(document).ready(function () {
             return false;
         }
         return false;
-    });*/
+    });
+
+    // Buscador CMS
+    $('.searchGroup .encontrar_cms').click(function (event) {
+        // Recoger el contenido para iniciar búsqueda
+        const txt = $(this).parent().find('.text');
+        if ($(this).parent().find('#criterio').attr('origen') != undefined) {
+            //Buscadores CMS
+            // Hay datos relativos a un proyecto --> Realizar búsqueda disparando el submit del formulario
+            const btnSubmitBuscadorCMS = txt.parent().find(".encontrar_cms_submit");
+            // Formulario de búsqueda
+            const form = $(this).parents(".encontrar_cms_form");
+            const actionUrl = form.attr("action");
+            // Hacer submit del formulario del formulario para hacer petición POST de búsqueda
+            //btnSubmitBuscadorCMS.trigger("click");                   
+            // Acceder a la página construoyendo la url más la búsqueda
+            window.location.href = `${actionUrl}?search=${encodeURIComponent(txt.val())}`;
+        }
+    });
+
+    // Formulario CMS
+    $(".encontrar_cms_form").on("submit", function (e) {
+        e.preventDefault();
+        // Ejecutar comportamiento de click en la lupa de búsqueda
+        $('.searchGroup .encontrar_cms').trigger("click");
+        return false;
+    });
 
     $('.searchGroup .text').keydown(function (event) {
         if ($(this).val().indexOf('|') > -1) {

@@ -40,7 +40,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 nombreCookie = "cookieAviso" + mControladorBase.DominoAplicacion;
             }
-            Dictionary<string, string> value = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie]);
+            Dictionary<string, string> value = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie], mEntityContext);
             value.Add("aceptada", "true");
             // Opciones cookie para evitar problemas en Safari (iOS) y al depurar
             CookieOptions cookieOptions = new CookieOptions { Expires = DateTime.Now.AddYears(1)};
@@ -49,7 +49,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 cookieOptions.Secure = true;
             }            
 
-            Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(value), cookieOptions);
+            Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(value, mEntityContext), cookieOptions);
 
             return new EmptyResult();
         }

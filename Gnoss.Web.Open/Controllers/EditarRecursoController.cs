@@ -324,7 +324,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             EsPaginaEdicion = true;
 
-            mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"]);
+            mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"], mEntityContext);
             if (mCookieAnyadirGnoss == null && (RequestParams("titl") != null || RequestParams("descp") != null))
             {
                 //crea la cookie con los parámetros de la petición
@@ -333,7 +333,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mCookieAnyadirGnoss["descp"] = System.Net.WebUtility.UrlEncode(DescripcionAddTo);
                 mCookieAnyadirGnoss["tags"] = System.Net.WebUtility.UrlEncode(TagsAddTo);
                 mCookieAnyadirGnoss["verAddTo"] = RequestParams("verAddTo");
-                Response.Cookies.Append("anyadirGnoss", UtilCookies.ToLegacyCookieString(mCookieAnyadirGnoss), new CookieOptions { Expires = DateTime.Now.AddMinutes(20) });
+                Response.Cookies.Append("anyadirGnoss", UtilCookies.ToLegacyCookieString(mCookieAnyadirGnoss, mEntityContext), new CookieOptions { Expires = DateTime.Now.AddMinutes(20) });
             }
 
             ViewBag.EsPaginaEdicionRecurso = true;
@@ -348,7 +348,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad })]
         public ActionResult Index(bool pDevolverVista = true)
         {
-            mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"]);
+            mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"], mEntityContext);
 
             mLoggingService.AgregarEntrada("TiemposMVC_IndexEditarRecurso_Inicio");
 

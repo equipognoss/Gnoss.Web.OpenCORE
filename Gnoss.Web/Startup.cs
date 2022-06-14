@@ -19,7 +19,9 @@ using Es.Riam.Gnoss.Web.MVC;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Open;
+using Es.Riam.OpenArchivos;
 using Es.Riam.OpenReplication;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Util;
@@ -112,6 +114,7 @@ namespace Gnoss.Web
             services.AddScoped<IUtilServicioIntegracionContinua, UtilServicioIntegracionContinuaOpen>();
             services.AddScoped<IServicesUtilVirtuosoAndReplication, ServicesVirtuosoAndBidirectionalReplicationOpen>();
             services.AddScoped<IMassiveOntologyToClass, MassiveOntologyToClassOpen>();
+            services.AddScoped<IUtilArchivos, UtilArchivosOpen>();
             services.AddScoped<IRDFSearch, RDFSearchOpen>();
             services.AddScoped<IOAuth, OAuthOpen>();
             string bdType = "";
@@ -128,6 +131,7 @@ namespace Gnoss.Web
             {
                 services.AddScoped(typeof(DbContextOptions<EntityContext>));
                 services.AddScoped(typeof(DbContextOptions<EntityContextBASE>));
+                services.AddScoped(typeof(DbContextOptions<EntityContextOauth>));
             }
             services.AddSingleton(typeof(ConfigService));
             services.AddSingleton<ILoggerFactory, LoggerFactory>();
@@ -232,6 +236,16 @@ namespace Gnoss.Web
 
                         );
             }
+            else if (bdType.Equals("1"))
+            {
+                services.AddDbContext<EntityContext, EntityContextOracle>(options =>
+                        options.UseOracle(acid)
+                        );
+                services.AddDbContext<EntityContextBASE, EntityContextBASEOracle>(options =>
+                        options.UseOracle(baseConnection)
+
+                        );
+            }
             else if (bdType.Equals("2"))
             {
                 services.AddDbContext<EntityContext, EntityContextPostgres>(opt =>
@@ -308,6 +322,7 @@ namespace Gnoss.Web
 
             var entity = sp.GetService<EntityContext>();
             var entityBASE = sp.GetService<EntityContextBASE>();
+            var entityOauth = sp.GetService<EntityContextOauth>();
             //var migrations = entity.Database.GetPendingMigrations();
             entity.Migrate();
             entityBASE.Migrate();
@@ -317,7 +332,7 @@ namespace Gnoss.Web
             {
                 LoggingService.InicializarLogstash(configLogStash);
             }
-            FirstDataLoad firstDataLoad = new FirstDataLoad(entity);
+            FirstDataLoad firstDataLoad = new FirstDataLoad(entity, configService);
             firstDataLoad.InsertDataIfPossible();
             BaseCL.UsarCacheLocal = UsoCacheLocal.SiElServicioLoUsanPocosProyectos;
             string rutaVersionCacheLocal = $"{AppDomain.CurrentDomain.SetupInformation.ApplicationBase}/config/versionCacheLocal/";

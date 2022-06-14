@@ -77,7 +77,7 @@ String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
                                 href="@rutaPrivacidad"
                                 style="cursor: pointer"
                                 class="link"
-                                onclick="DeployActionInModalPanel('@Perfil.Url/@Html.GetText("URLSEM", "PRIVACIDADENLACE")/load-modal', this, 'modal-dinamic-content', '');"
+                                onclick="DeployActionInModalPanel('@Perfil.Url@Html.GetText("URLSEM", "PRIVACIDADENLACE")/load-modal', this, 'modal-dinamic-content', '');"
                                 data-toggle="modal"
                                 data-target="#modal-container">
                                 @Html.GetText("FOOTER", "PRIVACIDAD")
@@ -94,7 +94,7 @@ String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
                                        href="@rutaCookies"
                                        style="cursor: pointer"
                                        class="link"
-                                       onclick="DeployActionInModalPanel('@Perfil.Url/@Html.GetText("URLSEM", "POLITICACOOKIES")/load-modal', this, 'modal-dinamic-content', '');"
+                                       onclick="DeployActionInModalPanel('@Perfil.Url@Html.GetText("URLSEM", "POLITICACOOKIES")/load-modal', this, 'modal-dinamic-content', '');"
                                        data-toggle="modal"
                                        data-target="#modal-container">
                                         @Html.GetText("FOOTER", "POLITICACOOKIES")
@@ -109,7 +109,7 @@ String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
                                href="@rutaCondicionesUso"
                                style="cursor: pointer"
                                class="link"
-                               onclick="DeployActionInModalPanel('@Perfil.Url/@Html.GetText("URLSEM", "CONDICIONESUSO")/load-modal', this, 'modal-dinamic-content', '');"
+                               onclick="DeployActionInModalPanel('@Perfil.Url@Html.GetText("URLSEM", "CONDICIONESUSO")/load-modal', this, 'modal-dinamic-content', '');"
                                data-toggle="modal"
                                data-target="#modal-container">
                                 @Html.GetText("FOOTER", "CONDICIONESDEUSO")

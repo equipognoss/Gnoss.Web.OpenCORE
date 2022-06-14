@@ -110,7 +110,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             CargarDatos();
             string error = "";
-            GuardarLogError("SANTI --> Iniciamos la descarga de páginas");
             if (string.IsNullOrEmpty(PaginasPersonalizables) && string.IsNullOrEmpty(FormulariosSemanticos))
             {
                 error = "Tienes que seleccionar una opción en el combo";
@@ -131,7 +130,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.Download)
                 {
-                    GuardarLogError("SANTI --> Descarga normal");
                     string fileName = Pagina;
 
                     string lineaSeguridad = "@*[security|||" + Pagina.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower() + "|||" + ProyectoSeleccionado.NombreCorto.ToLower() + "]*@";
@@ -285,6 +283,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     error = "No hay una plantilla personalizada para esta vista";
                 }
             }
+            else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
+            {
+                string fileName = PaginaResultados;
+                if (mConfigService.EstaDesplegadoEnDocker())
+                {
+                    PaginaResultados = PaginaResultados.Replace("Views", "ViewsAdministracion");
+                }
+                string htmlPagina = DescargarPagina(PaginaResultados, true, false);
+                if (!string.IsNullOrEmpty(htmlPagina))
+                {
+                    MemoryStream stream = new MemoryStream();
+                    StreamWriter writer = new StreamWriter(stream);
+                    writer.Write(htmlPagina);
+                    writer.Flush();
+                    stream.Position = 0;
+
+                    return File(writer.BaseStream, "application/text", fileName);
+                }
+                else
+                {
+                    error = "No hay una plantilla personalizada para esta vista";
+                }
+            }
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.Upload)
             {
                 if (Fichero != null)
@@ -388,7 +409,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     error = "No hay una plantilla personalizada para esta vista";
                 }
             }
+            else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
+            {
+                string fileName = PaginaFacetas;
+                if (mConfigService.EstaDesplegadoEnDocker())
+                {
+                    PaginaFacetas = PaginaFacetas.Replace("Views", "ViewsAdministracion");
+                }
+                string htmlPagina = DescargarPagina(PaginaFacetas, true, false);
+                if (!string.IsNullOrEmpty(htmlPagina))
+                {
+                    MemoryStream stream = new MemoryStream();
+                    StreamWriter writer = new StreamWriter(stream);
+                    writer.Write(htmlPagina);
+                    writer.Flush();
+                    stream.Position = 0;
 
+                    return File(writer.BaseStream, "application/text", fileName);
+                }
+                else
+                {
+                    error = "No hay una plantilla personalizada para esta vista";
+                }
+            }
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.Upload)
             {
                 if (Fichero != null)
@@ -1625,7 +1668,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             List<string> listaPaginasPersonalizables = new List<string>();
 
-            if (!string.IsNullOrEmpty(pDirectorio))
+            if (!string.IsNullOrEmpty(pDirectorio) && Directory.Exists(pDirectorio))
             {
                 List<string> listaFicherosDirectorio = new List<string>(Directory.GetFiles(pDirectorio));
 

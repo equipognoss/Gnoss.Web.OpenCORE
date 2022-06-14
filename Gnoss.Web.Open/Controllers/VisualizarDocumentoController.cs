@@ -156,7 +156,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            bool descargaDesdeRdf = Request.Headers.ContainsKey("dscr") && Request.Headers["dscr"].Equals("true");
+            bool descargaDesdeRdf = !string.IsNullOrEmpty(Request.Query["dscr"]) && Request.Query["dscr"].Equals("true");
 
             //Obtiene los parámetros de la petición
             if (Request.Query.ContainsKey("tipo"))
@@ -475,7 +475,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     byteArray = gestorDocumental.ObtenerDocumentoDeDirectorio(directorio, archivoAdjuntoSem, ext);
 
-                    if (byteArray == null)//Miramos si el documento está en el nuevo directorio:
+                    if (byteArray == null || byteArray.Count() == 0)//Miramos si el documento está en el nuevo directorio:
                     {
                         directorio = Path.Combine(UtilArchivos.ContentDocumentosSem, UtilArchivos.DirectorioDocumento(ficheroID));
                         if (!string.IsNullOrEmpty(idiomaFichero))
@@ -649,7 +649,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (descargaIframe)
                 {
                     //Añadimos la cabecera http al navegador
-                    Response.Headers.Add("Content-Disposition", $"filename=\"{nombre}\"");
+                    Response.Headers.Add("Content-Disposition", $"filename=\"{HttpUtility.UrlEncode(nombre)}\"");
                     ConcurrentDictionary<string, string> mimetypes = Conexion.ObtenerMimeType();
                     string mimetype = "";
                     if (mimetypes.TryGetValue(ext, out mimetype))
@@ -664,7 +664,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 else if (agregarCabecera)
                 {
                     //Añadimos la cabecera http al navegador
-                    Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{nombre}\"");
+                    Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{HttpUtility.UrlEncode(nombre)}\"");
                 }
 
                 //Enviamos todo al explorador

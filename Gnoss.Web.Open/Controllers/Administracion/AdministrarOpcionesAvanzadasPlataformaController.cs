@@ -317,6 +317,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
             parametroAplicacionCL.InvalidarCacheParametrosAplicacion();
             parametroAplicacionCL.Dispose();
+            mGnossCache.VersionarCacheLocal(ProyectoSeleccionado.Clave);
+            mGnossCache.VersionarCacheLocal(Guid.Empty);
         }
 
         /// <summary>

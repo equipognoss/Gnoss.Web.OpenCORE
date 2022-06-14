@@ -263,7 +263,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     return;
                 }
-                // TODO desacoplar
 
                 //si es petición Oauth, hay que validar el usuario
                 if (EsPeticionOAuth)
@@ -346,7 +345,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 nombreCortoProyectoPadre = ProyectoSeleccionado.NombreCorto;
             }
 
-
+            UtilServicios.ComprobacionCambiosCachesLocales(Guid.Empty);
             UtilServicios.ComprobacionCambiosCachesLocales(proyectoIDPadre);
 
             ComprobacionInvalidarVistasLocales();
@@ -4744,7 +4743,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     nombreCookie = "cookieAviso" + mControladorBase.DominoAplicacion;
                 }
 
-                Dictionary<string, string> cookieAviso = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie]);
+                Dictionary<string, string> cookieAviso = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie], mEntityContext);
                 bool actualizarCookie = false;
                 if (cookieAviso == null || cookieAviso.Count == 0 || !cookieAviso.ContainsKey("aceptada"))
                 {
@@ -4769,7 +4768,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         nombreCookie = "cookieAviso" + mControladorBase.DominoAplicacion;
                     }
-                    cookieAviso = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie]);
+                    cookieAviso = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie], mEntityContext);
 
                     if (cookieAviso == null)
                     {
@@ -4786,7 +4785,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (actualizarCookie && pFilterContext.Result != null)
                 {
-                    Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(cookieAviso), new CookieOptions { Expires = DateTime.Now.AddYears(1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = true });
+                    Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(cookieAviso, mEntityContext), new CookieOptions { Expires = DateTime.Now.AddYears(1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = true });
                 }
             }
         }

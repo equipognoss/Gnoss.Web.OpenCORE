@@ -44,7 +44,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private IUtilServicioIntegracionContinua mUtilIntegracionContinua;
 
 
-        public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua)
+        /*public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
@@ -57,6 +57,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
 
             Filtro = FiltroAcciones.Todo;
+
+            mUtilIntegracionContinua = utilIntegracionContinua;
+        }*/
+
+        public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua, FiltroAcciones pFiltro = FiltroAcciones.Todo)
+        {
+            mEntityContext = entityContext;
+            mLoggingService = loggingService;
+            mConfigService = configService;
+            mVirtuosoAD = virtuosoAD;
+            mHttpContextAccessor = httpContextAccessor;
+            mGnossCache = gnossCache;
+            mEntityContextBASE = entityContextBASE;
+            mRedisCacheWrapper = redisCacheWrapper;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
+
+            Filtro = pFiltro;
 
             mUtilIntegracionContinua = utilIntegracionContinua;
         }

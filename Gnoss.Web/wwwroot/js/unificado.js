@@ -6,6 +6,40 @@
 */
 
 /**
+ * Operativa para detectar comportamiento de navegación cuando se pulsa en "Back Button" del navegador
+ * En ciertas páginas, se podían producir errores debido a que podían sobreescribir datos previos insertados: Ej: Creación de un recurso desde ckEditor
+ * Esta operativa detecta este tipo de navegación y realiza una carga de la web
+ */
+ const operativaDetectarNavegacionBackButton = {
+    init: function() {
+        this.iniciarComportamiento();
+    },
+
+    /**
+     * Comprobar si se ha pulsado en "back" del navegador. Si es así, y se encuentran elementos relativos a edición de recurso, 
+     * obligar a recargar la página para obtener los datos siempre actualizados y evitar posible pérdida al sobreescribirlos
+     */
+    iniciarComportamiento: function(){
+        
+        window.onpageshow = function (event) {
+            if (event.persisted) {
+                // Se ha pulsado en "back" del navegador. Comprobar si es necesario recargar la página
+                // ckeditor, radioButtons, checkbox
+                 if ($(".cke, input[type='checkbox'],input[type='radio']").length > 1){
+                    MostrarUpdateProgress();
+                    // Desactivar el plugin dirty para que no muestr el mensaje
+                    // Prevenir actualización de páginas cuando haya formularios "importantes". Avisar al usuario
+                    if ($("#preventLeavingFormWithoutSaving").dirty != null) {
+                        $("#preventLeavingFormWithoutSaving").dirty("setAsClean");
+                    }                    
+                    window.location.reload();
+                 }                 
+            }
+        };
+    },
+};
+
+/**
  * Clase jquery para poder hacer búsquedas desde un input para ocultar o mostrar una jerarquía de categorías
  * Ejemplo: Usado en el buscador de categorías de la página "Index"
  *
@@ -8235,7 +8269,7 @@ const comportamientoFacetasPopUp = {
             replaceAll(
                 replaceAll(
                     replaceAll(
-                        ObtenerHash2().replace(/&/g, "|").replace("#", ""),
+                        urlDecode(ObtenerHash2()).replace(/&/g, "|").replace("#", ""),
                         "%",
                         "%25"
                     ),
@@ -8258,12 +8292,20 @@ const comportamientoFacetasPopUp = {
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = FacetaActual;
     
-        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal         
-        that.$modalLoaded.find(".buscador-coleccion .buscar .texto").keyup(function () {
-            that.textoActual = that.eliminarAcentos($(this).val());
-            that.paginaActual = 1;
-            that.buscarFacetas();
-        });
+        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal                
+        that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
+            .keyup(function () {
+                that.textoActual = that.eliminarAcentos($(this).val());
+                that.paginaActual = 1;
+                that.buscarFacetas();
+            })
+            .on('paste', function () {
+                const input = $(this);
+                setTimeout(function () {
+                    input.keyup();
+                }, 200);
+
+            });
     
     
         // Petición al servicio para obtenciÃ³n de Facetas                
@@ -9160,8 +9202,9 @@ var utilMapas = {
         var vistaMapa = ($('li.mapView').attr('class') == "mapView activeView");
         var vistaChart = ($('.chartView').attr('class') == "chartView activeView");
         */
-        var vistaMapa = $('li.mapView').hasClass('activeView');
-        var vistaChart = $('.chartView').hasClass('activeView');
+        var vistaMapa = $(".item-dropdown.aMapView").hasClass("activeView");
+        var vistaChart = $(".item-dropdown.aGraphView").hasClass("activeView");
+
 
         var mapView = $('.mapView');
 
@@ -9835,7 +9878,7 @@ function ObtenerNumElementosNuevosAJAX(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandej
             identCargarNov += $(spanNov[i]).attr('id').substring($(spanNov[i]).attr('id').indexOf('_') + 1) + '&';
         }
     }
-
+    PeticionesCookie.CargarCookie();
     PeticionesAJAX.CargarNumElementosNuevos(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX);
 }
 
@@ -11696,6 +11739,19 @@ function Redirigir(response)
     }
 }
 
+var PeticionesCookie = {
+    CargarCookie() {
+        var urlPeticion = null;
+        urlPeticion = $('#inpt_UrlLogin').val().split("/login")[0] + "/RefrescarCookie";
+        GnossPeticionAjax(
+            urlPeticion,
+            null,
+            true
+        ).done(function (response) {
+        }).fail(function (response) {     
+        });
+    }
+}
 
 var PeticionesAJAX = {
     CargarNumElementosNuevos: function (pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX) {
@@ -12373,8 +12429,8 @@ function FiltrarPorFacetasGenerico(filtro) {
     var vistaChart = ($('.chartView').attr('class') == "chartView activeView");
     */
 
-    var vistaMapa = $('li.mapView').hasClass('activeView');
-    var vistaChart = $('.chartView').hasClass('activeView');
+    var vistaMapa = $(".item-dropdown.aMapView").hasClass("activeView");
+    var vistaChart = $(".item-dropdown.aGraphView").hasClass("activeView");
 
     if (!primeraCargaDeFacetas && !vistaMapa) {
         MostrarUpdateProgress();
@@ -12454,7 +12510,7 @@ function FiltrarPorFacetasGenerico(filtro) {
 
     var tokenAfinidad = guidGenerator();
 
-    if (vistaMapa || !primeraCargaDeFacetas) {
+    if ((vistaMapa || !primeraCargaDeFacetas) && (!vistaChart || typeof (chartActivo) != "undefined")) {
         MontarResultados(filtro, primeraCarga, 1, '#' + panResultados, tokenAfinidad);
     }
 
@@ -13742,6 +13798,34 @@ $(document).ready(function () {
         return false;
     });
 
+
+    // Buscador CMS
+    $('.searchGroup .encontrar_cms').click(function (event) {
+        // Recoger el contenido para iniciar búsqueda
+        const txt = $(this).parent().find('.text');
+        if ($(this).parent().find('#criterio').attr('origen') != undefined) {            
+            //Buscadores CMS
+            // Hay datos relativos a un proyecto --> Realizar búsqueda disparando el submit del formulario
+            const btnSubmitBuscadorCMS = txt.parent().find(".encontrar_cms_submit");
+            // Formulario de búsqueda
+            const form = $(this).parents(".encontrar_cms_form");
+            const actionUrl = form.attr("action");
+            // Hacer submit del formulario del formulario para hacer petición POST de búsqueda
+            //btnSubmitBuscadorCMS.trigger("click");                   
+            // Acceder a la página construoyendo la url más la búsqueda
+            window.location.href = `${actionUrl}?search=${encodeURIComponent(txt.val())}`;            
+        }
+    });
+
+    // Formulario CMS
+    $(".encontrar_cms_form").on("submit", function (e) {
+        e.preventDefault();
+        // Ejecutar comportamiento de click en la lupa de búsqueda
+        $('.searchGroup .encontrar_cms').trigger("click");
+        return false;
+    });
+
+
     $('.searchGroup .text').keydown(function (event) {
         if ($(this).val().indexOf('|') > -1) {
             $(this).val($(this).val().replace(/\|/g, ''));
@@ -13755,6 +13839,9 @@ $(document).ready(function () {
             return true;
         };
     });
+
+
+
 
     $('.aaCabecera .searchGroup .text')
     .unbind()
@@ -21279,6 +21366,12 @@ $(document).ready(function() {
             $(this).removeClass("modal-top");
         }               
     });
+
+    // Permitir carga de imagenes / zoom en pantalla completa al hacer click sobre ellas
+    $('img.fullScreen').fullscreenimage({
+        scale: 2 // magnify by 2 times when mouse moves over full screen image (set to 1 to disable)
+    });
+  
 });
 
 /* Evitar ocultamiento de faceta cuando se utiliza el datepicker para seleccionar meses */

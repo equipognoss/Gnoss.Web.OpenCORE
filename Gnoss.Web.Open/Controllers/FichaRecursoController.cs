@@ -134,7 +134,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private string mUrlCanonica;
 
+        /// <summary>
+        /// Token del usuario de la peticion
+        /// </summary>
         private string tokenSP;
+
+        /// <summary>
+        /// Token del usuario creador del documento
+        /// </summary>
+        private string tokenSPAdminDocument;
         #endregion
 
         #region Comentarios
@@ -6303,6 +6311,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                         SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
                         spController.Token = tokenSP;
+                        spController.TokenCreadorRecurso = tokenSPAdminDocument;
                         bool estaAlineadoConSharepoint = spController.ComprobarSiEstaAlineadoConSharepoint(Documento.Enlace);
                         paginaModel.Resource.EstaAlineadoConSharepoint = estaAlineadoConSharepoint;
                     }
@@ -6504,12 +6513,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     mHttpContextAccessor.HttpContext.Response.Cookies.Append("urlInicio", RequestUrl, cookieOptions);
 
                     //comprobamos en BD si existe un token para el usuario
-                    Guid personaID = (Guid)IdentidadActual.PerfilUsuario.PersonaID;
                     PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    Guid usuarioID = (Guid)personaCN.ObtenerUsuarioIDDePersonaID(personaID);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+
+
+                    Guid usuarioID = UsuarioActual.UsuarioID;
+                    Guid usuarioIDCreador = identidadCN.ObtenerUsuarioIDConIdentidadID(Documento.FilaDocumento.CreadorID.Value);
+                    //Si el usuario es solo lector, comprobar con el token del creador.
+                    if (!paginaModel.Resource.Actions.Edit)
+                    {
+                        usuarioID = identidadCN.ObtenerUsuarioIDConIdentidadID(Documento.FilaDocumento.CreadorID.Value);
+                        urlRedirect = $"{urlServicioLogin}/LoginSharepoint?urlInicio={RequestUrl}&usuario={usuarioIDCreador}";
+                    }
                     string tokenUsuario = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.Sharepoint, usuarioID);
 
+                    //Generar y comprobar token para usuario normal.
                     if (!string.IsNullOrEmpty(tokenUsuario))
                     {
                         //si existe en la bd comprobamos si el token sigue siendo valido
@@ -6530,6 +6549,35 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         //si no existe generamos uno nuevo llamando al servicio de login
                         return Redirect(urlRedirect);
+                    }
+
+                    //Generar y comprobar token para usuario Creador del recurso.
+                    if (!usuarioID.Equals(usuarioIDCreador))
+                    {
+                        tokenUsuario = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.Sharepoint, usuarioID);
+
+                        //Generar y comprobar token para usuario normal.
+                        if (!string.IsNullOrEmpty(tokenUsuario))
+                        {
+                            //si existe en la bd comprobamos si el token sigue siendo valido
+                            bool tokenEsValido = sharepointController.ComprobarValidezToken(tokenUsuario);
+                            if (!tokenEsValido)
+                            {
+                                //si existe pero no es valido solicitamos uno nuevo llamando al servicio de login
+                                return Redirect(urlRedirect);
+                            }
+                            else
+                            {
+                                //si existe lo guardamos para usarlo y que nos permita descargar
+                                sharepointController.Token = tokenUsuario;
+                                tokenSPAdminDocument = tokenUsuario;
+                            }
+                        }
+                        else
+                        {
+                            //si no existe generamos uno nuevo llamando al servicio de login
+                            return Redirect(urlRedirect);
+                        }
                     }
                 }
                 return null;

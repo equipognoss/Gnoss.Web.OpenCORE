@@ -9298,6 +9298,7 @@ function ObtenerNumElementosNuevosAJAX(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandej
         }
     }
 
+    PeticionesCookie.CargarCookie();
     PeticionesAJAX.CargarNumElementosNuevos(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX);
 }
 
@@ -11131,6 +11132,19 @@ function Redirigir(response)
     }
 }
 
+var PeticionesCookie = {
+    CargarCookie() {
+        var urlPeticion = null;
+        urlPeticion = $('#inpt_UrlLogin').val().split("/login")[0] + "/RefrescarCookie";
+        GnossPeticionAjax(
+            urlPeticion,
+            null,
+            true
+        ).done(function (response) {
+        }).fail(function (response) {
+        });
+    }
+}
 
 var PeticionesAJAX = {
     CargarNumElementosNuevos: function (pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX) {

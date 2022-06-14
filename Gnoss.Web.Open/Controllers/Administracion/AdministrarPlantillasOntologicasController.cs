@@ -1258,27 +1258,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (archivoInfo1 != null)
                 {
-                    extensionArchivo1 = System.IO.Path.GetExtension(archivoInfo1.Name).ToLower();
+                    extensionArchivo1 = Path.GetExtension(archivoInfo1.Name).ToLower();
                 }
 
                 if (archivoInfo2 != null)
                 {
-                    extensionArchivo2 = System.IO.Path.GetExtension(archivoInfo2.Name).ToLower();
+                    extensionArchivo2 = Path.GetExtension(archivoInfo2.Name).ToLower();
                 }
 
                 if (archivoInfo3 != null)
                 {
-                    extensionArchivo3 = System.IO.Path.GetExtension(archivoInfo3.Name).ToLower();
+                    extensionArchivo3 = Path.GetExtension(archivoInfo3.Name).ToLower();
                 }
 
                 if (archivoInfo4 != null)
                 {
-                    extensionArchivo4 = System.IO.Path.GetExtension(archivoInfo4.Name).ToLower();
+                    extensionArchivo4 = Path.GetExtension(archivoInfo4.Name).ToLower();
                 }
 
                 if (archivoInfo5 != null)
                 {
-                    extensionArchivo5 = System.IO.Path.GetExtension(archivoInfo5.Name).ToLower();
+                    extensionArchivo5 = Path.GetExtension(archivoInfo5.Name).ToLower();
                 }
 
                 //Obtengo lo primero el buffer del archivo para no perderlo luego mediante un cierre de Stream.
@@ -1488,6 +1488,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             {
                                 Servicios.UtilidadesVirtuoso.ONTOLOGIA_XML_CACHE.Add(OntologiaID, buffer3);
                             }
+                            Dictionary<string, List<string>> selectores = new Dictionary<string, List<string>>();
+                            selectores = ObtenerSelectores(buffer1);
+                            foreach (string grafo in selectores.Keys)
+                            {
+                                foreach (string selector in selectores[grafo])
+                                {
+                                    FacetaEntidadesExternas facetaEntidad = new FacetaEntidadesExternas();
+                                    facetaEntidad.Grafo = grafo;
+                                    facetaEntidad.BuscarConRecursividad = true;
+                                    facetaEntidad.EsEntidadSecundaria = false;
+                                    facetaEntidad.EntidadID = UrlIntragnoss + "items/" + selector;
+                                    facetaEntidad.OrganizacionID = UsuarioActual.OrganizacionID;
+                                    facetaEntidad.ProyectoID = UsuarioActual.ProyectoID;
+                                    AniadirFacetaEntidad(facetaEntidad);
+                                }
+                            }
+
                         }
                         if (archivoInfo1 == null || resultado == 1)
                         {
@@ -1619,6 +1636,99 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 Error = UtilIdiomas.GetText("COMADMIN", "XMLCONFIGURACIONINCORRECTO") + ": " + ex.Message;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Devuelve los selectores del archivo XML
+        /// </summary> 
+        /// <returns>La clave es el grafo y el valor la lista de selectores del grafo</returns>
+        private Dictionary<string, List<string>> ObtenerSelectores(byte[] pOntologia)
+        {
+            string clase = string.Empty;
+            Dictionary<string, List<string>> dicSelectores = new Dictionary<string, List<string>>();
+            List<string> vSelectores = new List<string>();
+            if (EspefEntidad != null)
+            {
+
+                XmlNodeList listaSeleccionEntidad = EspefPropiedad.SelectNodes($"Propiedad/SeleccionEntidad");
+                foreach (XmlNode seleccionEntidad in listaSeleccionEntidad)
+                {
+                    XmlNode nodoGrafo = seleccionEntidad.SelectSingleNode("Grafo");
+                    if (nodoGrafo != null)
+                    {
+                        string nombreGrafo = nodoGrafo.InnerText;
+
+                        List<string> listaSelectoresNombre = new List<string>();
+                        XmlNode selector = seleccionEntidad.SelectSingleNode("UrlTipoEntSolicitada");
+                        if (selector == null)
+                        {
+                            Ontologia ontologia = null;
+                            if (pOntologia == null)
+                            {
+                                DocumentacionCN documentacionCn = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                Guid ontologiaID = documentacionCn.ObtenerOntologiaAPartirNombre(ProyectoSeleccionado.Clave, nombreGrafo);
+                                byte[] ontologiArrray = ControladorDocumentacion.ObtenerOntologia(ontologiaID, ProyectoSeleccionado.Clave);
+                                ontologia = new Ontologia(ontologiArrray, true);
+                            }
+                            else
+                            {
+                                ontologia = new Ontologia(pOntologia, true);
+                            }
+
+                            ontologia.LeerOntologia();
+                            List<ElementoOntologia> entidadesPrincipal = GestionOWL.ObtenerElementosContenedorSuperior(ontologia.Entidades);
+                            ElementoOntologia entidadPrincipal = null;
+                            if (entidadesPrincipal != null && entidadesPrincipal.Count > 0)
+                            {
+                                entidadPrincipal = entidadesPrincipal.First();
+                                string tipoEntidad = entidadPrincipal.TipoEntidadRelativo;
+                                if (!listaSelectoresNombre.Contains(tipoEntidad))
+                                {
+                                    listaSelectoresNombre.Add(tipoEntidad);
+                                }
+                            }
+                        }
+                        else if (selector != null)
+                        {
+                            string[] sel = selector.InnerText.Split(',');
+                            foreach (string selNombre in sel)
+                            {
+                                string nombre = "";
+                                if (selNombre != null && selNombre.Contains("#"))
+                                {
+                                    nombre = selNombre.Substring(selNombre.LastIndexOf("#") + 1);
+                                }
+                                else if (selNombre != null && selNombre.Contains("/"))
+                                {
+                                    nombre = selNombre.Substring(selNombre.LastIndexOf("/") + 1);
+                                }
+                                else
+                                {
+                                    nombre = selNombre;
+                                }
+
+                                if (!listaSelectoresNombre.Contains(nombre))
+                                {
+                                    listaSelectoresNombre.Add(nombre);
+                                }
+                            }
+                        }
+
+                        if (dicSelectores.ContainsKey(nombreGrafo))
+                        {
+                            vSelectores = dicSelectores[nombreGrafo];
+                            vSelectores = vSelectores.Union(listaSelectoresNombre).ToList();
+                            dicSelectores[nombreGrafo] = vSelectores;
+                        }
+                        else
+                        {
+                            dicSelectores.Add(nombreGrafo, listaSelectoresNombre);
+                        }
+                    }
+                }
+            }
+
+            return dicSelectores;
         }
 
         private List<string> CargarHistorial(Guid pOntologiaID)

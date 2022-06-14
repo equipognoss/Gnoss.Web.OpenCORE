@@ -141,7 +141,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
-            ControladorFacetas contrFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD);
+            ControladorFacetas contrFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             string errores = contrFacetas.ComprobarErrores(ListaFacetas);
             if (string.IsNullOrEmpty(errores))
             {
@@ -323,7 +323,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     CargarOntologias();
 
-                    ControladorFacetas contrFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD);
+                    ControladorFacetas contrFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
 
                     mPaginaModel.ListaFacetas = contrFacetas.CargarListadoFacetas();
 

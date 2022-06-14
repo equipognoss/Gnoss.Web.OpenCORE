@@ -1452,7 +1452,7 @@
     },
     guardar: function () {
         var that = this;
-
+        MostrarUpdateProgress();
         GnossPeticionAjax(
             that.urlPagina + '/save',
             that.ListaPestanyas,

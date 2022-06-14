@@ -211,7 +211,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Dictionary<string, string> cookieRewrite = mControladorBase.CookieRewrite;
                 if (cookieRewrite != null)
                 {
-                    Response.Cookies.Append("rewrite" + mControladorBase.DominoAplicacion, UtilCookies.ToLegacyCookieString(cookieRewrite), new CookieOptions { Expires = DateTime.Now.AddDays(1), Domain = mControladorBase.DominoAplicacion });
+                    Response.Cookies.Append("rewrite" + mControladorBase.DominoAplicacion, UtilCookies.ToLegacyCookieString(cookieRewrite, mEntityContext), new CookieOptions { Expires = DateTime.Now.AddDays(1), Domain = mControladorBase.DominoAplicacion });
                 }
             }
             catch (Exception ex)

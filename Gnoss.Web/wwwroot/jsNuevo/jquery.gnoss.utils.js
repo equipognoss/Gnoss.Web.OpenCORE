@@ -15,6 +15,40 @@
  */
 
 /**
+ * Operativa para detectar comportamiento de navegación cuando se pulsa en "Back Button" del navegador
+ * En ciertas páginas, se podían producir errores debido a que podían sobreescribir datos previos insertados: Ej: Creación de un recurso desde ckEditor
+ * Esta operativa detecta este tipo de navegación y realiza una carga de la web
+ */
+ const operativaDetectarNavegacionBackButton = {
+    init: function() {
+        this.iniciarComportamiento();
+    },
+
+    /**
+     * Comprobar si se ha pulsado en "back" del navegador. Si es así, y se encuentran elementos relativos a edición de recurso, 
+     * obligar a recargar la página para obtener los datos siempre actualizados y evitar posible pérdida al sobreescribirlos
+     */
+    iniciarComportamiento: function(){
+        
+        window.onpageshow = function (event) {
+            if (event.persisted) {
+                // Se ha pulsado en "back" del navegador. Comprobar si es necesario recargar la página
+                // ckeditor, radioButtons, checkbox
+                 if ($(".cke, input[type='checkbox'],input[type='radio']").length > 1){
+                    MostrarUpdateProgress();
+                    // Desactivar el plugin dirty para que no muestr el mensaje
+                    // Prevenir actualización de páginas cuando haya formularios "importantes". Avisar al usuario
+                    if ($("#preventLeavingFormWithoutSaving").dirty != null) {
+                        $("#preventLeavingFormWithoutSaving").dirty("setAsClean");
+                    }                    
+                    window.location.reload();
+                 }                 
+            }
+        };
+    },
+};
+
+/**
  * Clase jquery para poder hacer búsquedas desde un input para ocultar o mostrar una jerarquía de categorías
  * Ejemplo: Usado en el buscador de categorías de la página "Index"
  *

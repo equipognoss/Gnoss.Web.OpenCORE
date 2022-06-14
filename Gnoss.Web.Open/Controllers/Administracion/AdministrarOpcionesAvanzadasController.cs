@@ -81,7 +81,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
 
-            ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor);
+            ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
 
             GuardarXmlCambiosAdministracion();
 
@@ -153,7 +153,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mPaginaModel == null)
                 {
-                    ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor);
+                    ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
                     mPaginaModel = contrOpcionesAvanzadas.CargarOpcionesAvanzadas();
 
                     //Twitter

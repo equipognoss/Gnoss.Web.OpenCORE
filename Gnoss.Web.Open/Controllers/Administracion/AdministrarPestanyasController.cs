@@ -226,7 +226,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult AgregarFaceta()
         {
             EliminarPersonalizacionVistas();
-            ControladorFacetas conFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService,mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD);
+            ControladorFacetas conFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService,mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             List<FacetaModel> listaFacetas = conFacetas.CargarListadoFacetas();
             AdministrarFacetasEnPestanyasViewModel model = new AdministrarFacetasEnPestanyasViewModel();
 
@@ -243,7 +243,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult CargarFacetas(Guid pPestanyaID)
         {
             EliminarPersonalizacionVistas();
-            ControladorFacetas conFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD);
+            ControladorFacetas conFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             List<FacetaModel> listaFacetas = conFacetas.CargarListadoFacetas();
             AdministrarFacetasPestanyasModel model = new AdministrarFacetasPestanyasModel();
             ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, false);
