@@ -92,6 +92,7 @@
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.UtilOAuth\Es.Riam.Gnoss.Web.UtilOAuth.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.InterfacesOpen\Es.Riam.InterfacesOpen.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Interfaces\Es.Riam.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.OpenArchivos\Es.Riam.OpenArchivos.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.OpenReplication\Es.Riam.OpenReplication.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Open\Es.Riam.Open.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Semantica\Es.Riam.Semantica.csproj" />
