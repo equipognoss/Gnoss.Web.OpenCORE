@@ -26,7 +26,6 @@ using Es.Riam.Gnoss.Logica.Tesauro;
 using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;

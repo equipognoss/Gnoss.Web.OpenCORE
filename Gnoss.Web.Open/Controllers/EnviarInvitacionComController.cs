@@ -125,6 +125,71 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return View(paginaModel);
         }
 
+        /// <summary>
+        /// Cargar la vista de invitación a comunidad en una vista modal
+        /// </summary>
+        public ActionResult LoadModal() {
+
+            ActionResult partialView = View();
+
+            if (mControladorBase.UsuarioActual.EsIdentidadInvitada)
+            {
+                return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto));
+            }
+
+            if (!ParametrosGeneralesRow.InvitacionesDisponibles || (ProyectoSeleccionado.Estado != (short)EstadoProyecto.Abierto))
+            {
+                if (!mControladorBase.UsuarioActual.EstaAutorizadoEnProyecto((ulong)Capacidad.Proyecto.CapacidadesAdministrador.AdministrarProyecto))
+                {
+                    return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto));
+                }
+            }
+
+            SendInvitationComViewModel paginaModel = new SendInvitationComViewModel();
+
+            if (!ProyectoSeleccionado.TipoProyecto.Equals(TipoProyecto.EducacionExpandida))
+            {
+                paginaModel.Message = UtilIdiomas.GetText("INVITACIONES", "TEXTODEFECTOINVITACIONCOMUNIDAD", ProyectoSeleccionado.FilaProyecto.Nombre, UtilCadenas.EliminarEnlacesDeHtml(UtilCadenas.ObtenerTextoDeIdioma(ProyectoSeleccionado.FilaProyecto.Descripcion, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto)), NombreProyectoEcosistema);
+            }
+            else
+            {
+                paginaModel.Message = UtilIdiomas.GetText("INVITACIONES", "TEXTODEFECTOINVITACIONCLASE", IdentidadActual.Persona.NombreConApellidos, ProyectoSeleccionado.FilaProyecto.Nombre, NombreProyectoEcosistema);
+            }
+
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerGruposDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            identidadCN.Dispose();
+
+            paginaModel.AllowGroupsInvitations = ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID) && gestorIdentidades.ListaGrupos.Count > 0;
+
+            paginaModel.AllowInviteContacts = true;
+            paginaModel.AllowInviteEmail = true;
+            paginaModel.AllowPersonlizeMessage = true;
+            if (!ParametrosGeneralesRow.InvitacionesPorContactoDisponibles)
+            {
+                paginaModel.AllowInviteContacts = false;
+            }
+            if (!PestanyaImportarContactosCorreo)
+            {
+                paginaModel.AllowInviteEmail = false;
+            }
+            if (!PanelMensajeImportarContactos)
+            {
+                paginaModel.AllowPersonlizeMessage = false;
+            }
+
+            if (!string.IsNullOrEmpty(RequestParams("new-community-wizard")))
+            {
+                // Está llegando a esta página desde el asistente de creación de comunidades, se la muestro como una página de administración
+                EliminarPersonalizacionVistas();
+            }
+            // Construir el modelo y devolver el modal
+            partialView = GnossResultHtml("../Shared/_cabecera/_modal-views/_invite-community", paginaModel);
+            // Devolver la vista modal
+            return partialView;       
+        }
+
+
         [HttpPost]
         public ActionResult GuardarCambios(SendInvitationComViewModel pEnviarInvitacionModel)
         {

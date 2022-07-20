@@ -6521,7 +6521,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     Guid usuarioID = UsuarioActual.UsuarioID;
                     Guid usuarioIDCreador = identidadCN.ObtenerUsuarioIDConIdentidadID(Documento.FilaDocumento.CreadorID.Value);
                     //Si el usuario es solo lector, comprobar con el token del creador.
-                    if (!paginaModel.Resource.Actions.Edit)
+                    if (paginaModel.Resource != null && !paginaModel.Resource.Actions.Edit)
                     {
                         usuarioID = identidadCN.ObtenerUsuarioIDConIdentidadID(Documento.FilaDocumento.CreadorID.Value);
                         urlRedirect = $"{urlServicioLogin}/LoginSharepoint?urlInicio={RequestUrl}&usuario={usuarioIDCreador}";
@@ -7932,6 +7932,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         urlVistaPrevia = BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesDocumentos + "/" + UtilArchivos.DirectorioDocumento(pDocumento.Clave) + "/" + pDocumento.Clave.ToString().ToLower() + extension + versionFoto;
                     }
+                }
+                else if (Documento.EsFicheroDigital)
+                {
+                    urlVistaPrevia = BaseURLContent + "/Videos/" + Documento.Enlace;
                 }
             }
 

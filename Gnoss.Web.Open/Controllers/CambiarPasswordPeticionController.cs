@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
+using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -67,7 +68,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 return new RedirectResult(urlBase);
             }
-            else if( RequestParams("usuarioID") == null)
+            else if (RequestParams("usuarioID") == null)
             {
                 return View("NoUsuario");
             }
@@ -102,7 +103,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             paginaModel.UrlRechazar = urlBase + "/reject";
 
             return View(paginaModel);
-            
+
         }
 
         [HttpPost]
@@ -163,7 +164,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     personaCN.Dispose();
 
-                    if(string.IsNullOrEmpty(error))
+                    if (string.IsNullOrEmpty(error))
                     {
 
                         PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -173,9 +174,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                         DataWrapperUsuario dataWrapperUsuario = usuCN.ObtenerUsuarioCompletoPorID(UsuarioID);
                         usuCN.Dispose();
-                        GestionUsuarios gestorUsuario = new GestionUsuarios(dataWrapperUsuario, mLoggingService, mEntityContext, mConfigService);
 
-                        if (gestionPeticion.ListaPeticiones.ContainsKey(PeticionID) && gestorUsuario.DataWrapperUsuario.ListaUsuario.Count > 0)
+                        if (gestionPeticion.ListaPeticiones.ContainsKey(PeticionID) && dataWrapperUsuario.ListaUsuario.Count > 0)
                         {
                             Peticion peticion = gestionPeticion.ListaPeticiones[PeticionID];
                             peticion.FilaPeticion.FechaProcesado = DateTime.Now;
@@ -183,12 +183,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                             try
                             {
-                                JsonEstado jsonEstadoEditarPass = ControladorIdentidades.AccionEnServicioExternoEcosistema(TipoAccionExterna.EditarPassword, ProyectoSeleccionado.Clave, mControladorBase.UsuarioActual.UsuarioID, "", "", User, Password, GestorParametroAplicacion, null, null, null, null);
+                                JsonEstado jsonEstadoEditarPass = ControladorIdentidades.AccionEnServicioExternoEcosistema(TipoAccionExterna.EditarPassword, ProyectoSeleccionado.Clave, UsuarioID, "", "", User, Password, GestorParametroAplicacion, null, null, null, null);
 
-                                mEntityContext.SaveChanges();
+                                CambiarContrasenyaUsuario(dataWrapperUsuario, Password);
 
                                 return GnossResultOK();
-
                             }
                             catch (Exception)
                             {
@@ -199,12 +198,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
             else
-            { 
-                if(string.IsNullOrEmpty(User))
+            {
+                if (string.IsNullOrEmpty(User))
                 {
                     error = UtilIdiomas.GetText("CONFIRMACIONCAMBIOPASSWORD", "NOUSUARIO");
                 }
-                else if(string.IsNullOrEmpty(Password))
+                else if (string.IsNullOrEmpty(Password))
                 {
                     error = UtilIdiomas.GetText("CONFIRMACIONCAMBIOPASSWORD", "NOPASSWORD");
                 }
@@ -244,7 +243,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     peticionCN.ActualizarBD();
 
                     //Response.Redirect(BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD") + "/" + UtilIdiomas.GetText("URLSEM", "RECHAZADO"));
-                    
+
                 }
                 catch (Exception)
                 {
@@ -260,6 +259,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
+        private void CambiarContrasenyaUsuario(DataWrapperUsuario pDataWrapperUsuario, string pNuevoPassword)
+        {
+            UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            usuarioCN.EstablecerPasswordPropioUsuario(pDataWrapperUsuario.ListaUsuario.FirstOrDefault(), pNuevoPassword);
+            usuarioCN.Dispose();
+        }
 
         #region Propiedades
 

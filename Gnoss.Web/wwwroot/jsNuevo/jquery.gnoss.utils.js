@@ -14,6 +14,15 @@
  * Date: 20.02.2014.11.30 
  */
 
+// Permitir envío de Cookies a otro dominio
+$.ajaxSetup({
+    crossDomain: true,
+    xhrFields: {
+        withCredentials: true
+    }
+});
+
+
 /**
  * Operativa para detectar comportamiento de navegación cuando se pulsa en "Back Button" del navegador
  * En ciertas páginas, se podían producir errores debido a que podían sobreescribir datos previos insertados: Ej: Creación de un recurso desde ckEditor
@@ -74,16 +83,24 @@ const operativaFiltroRapido = {
     /**
      * Configuración de los eventos de los items html
      * */
-    configEvents: function () {
+     configEvents: function () {
         const that = this;
+        that.isSearching = false;
 
         // Input donde se realizará la búsqueda
-        this.input.on("keydown", function (event) {
+        this.input.on("keyup", function (event) {
             clearTimeout(that.timer);
-            that.timer = setTimeout(function () {
+            that.timer = setTimeout(function () {                
                 // Obtener el id de la lista para saber qué lista filtrar
                 const listaSelCatArbolId = that.input.data("filterlistid");
-                MVCFiltrarListaSelCatArbol(that.input, listaSelCatArbolId);
+                if (!that.isSearching) {
+                    that.isSearching = true;
+                    MVCFiltrarListaSelCatArbol(that.input, listaSelCatArbolId, function () {
+                        // Completion cuando finalice la búsqueda
+                        that.isSearching = false
+                    });
+                }
+                
             }, that.timeWaitingForUserToType);
         });
     },
@@ -2765,6 +2782,7 @@ const operativaSolicitudCreacionComunidad = {
 
         // KeyUp en Nombre corto de Comunidad
         this.txtNombreCortoComunidad.on("keyup", function (e) {
+            this.value = this.value.replace(/[^a-zA-Z0-9 _ -]/g, '').trim();
             this.value = this.value.toLowerCase();
         });
 
@@ -4122,7 +4140,7 @@ const operativaPeticionCambiarContrasenia = {
                 // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contrase�a
                 that.panelCambioPassword.remove()
             })
-            .fail(function () {
+            .fail(function (html) {
                 // Mostrar panel info con su clase
                 that.panelErroresInformativo.removeClass(that.okClass);
                 that.panelErroresInformativo.addClass(that.errorClass);
@@ -4168,14 +4186,17 @@ const operativaPeticionCambiarContrasenia = {
  *  - Desde la propia ficha de recurso (Enviar Link)
  *  - Panel lateral del usuario si dispone de permisos en la comunidad para enviar invitaciones 
  * */
- const operativaEnviarResource_Link_Community_Invitation= {
+const operativaEnviarResource_Link_Community_Invitation = {
     /**
      * Acci�n para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
-        this.configEvents();        
-        if (pParams.autocompleteParams) { this.configAutocompleteService(pParams.autocompleteParams); }        
+        this.configEvents();
+        if (pParams.autocompleteParams) {
+            this.configAutocompleteService(pParams.autocompleteParams);
+            this.configAutocompleteServiceForCommunityGroups(pParams.autocompleteParams)
+        }
     },
     /*
      * Opciones de configuraci�n de la vista
@@ -4183,22 +4204,28 @@ const operativaPeticionCambiarContrasenia = {
     config: function (pParams) {
         // Inicializaci�n de las vistas  
         this.txtFiltro = $(`#${pParams.idTxtFiltro}`);
-        this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);        
+        this.txtFiltroGrupos = $(`#${pParams.idTxtFiltroGrupos}`);
+        this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);
         this.buttonLitAniadirCorreo = $(`#${pParams.idButtonLitAniadirCorreo}`);
         this.txtHackInvitados = $(`#${pParams.idTxtHackInvitados}`);
+        this.txtHackGrupos = $(`#${pParams.idTxtHackGrupos_invite_community}`);
         // El autocomplete necesita solo el nombre del input oculto
         this.txtHackInvitadosInputName = pParams.idTxtHackInvitados;
+        // El autocomplete necesita solo el nombre del input oculto
+        this.txtHackGruposInvitadosInputName = pParams.idTxtFiltroGrupos;
+
         this.panContenedorInvitados = $(`#${pParams.idPanContenedorInvitados}`);
         this.listaDestinatarios = $(`#${pParams.idListaDestinatarios}`);
+        this.listaGrupos = $(`#${pParams.idPanContenedorGrupos}`);
         this.noDestinatarios = $(`#${pParams.idNoDestinatarios}`);
-        this.btnEnviarInvitaciones = $(`#${pParams.idBtnEnviarInvitaciones}`);        
-        this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);        
+        this.btnEnviarInvitaciones = $(`#${pParams.idBtnEnviarInvitaciones}`);
+        this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);
         this.panelInfoInvitationSent = $(`#${pParams.idPanelInfoInvitationSent}`);
 
         // Campos especiales para env�o de link (idioma & notas/mensaje)                
         this.txtNotas = $(`#${pParams.idTxtNotas}`);
         this.dllIdioma = $(`#${pParams.idDlIdioma}`);
-       
+
         // Paneles de error/info
         this.panelesInfo = [this.panelInfoInvitationSent];
 
@@ -4226,7 +4253,7 @@ const operativaPeticionCambiarContrasenia = {
             // Comprobar que el input de invitados (el oculto que almacena los ids al menos tiene emails o contactos)
             if (that.validarCampos()) {
                 // Realizar la petici�n de cambio de contrase�a
-                that.enviarInvitacion_EnlaceSubmit();                           
+                that.enviarInvitacion_EnlaceSubmit();
             }
         });
 
@@ -4244,10 +4271,17 @@ const operativaPeticionCambiarContrasenia = {
         });
 
         // Configurar el borrado de elementos al pulsar en (x) de un item de los destinatarios
-        this.listaDestinatarios.on('click', 'span', function (event) {
+        this.listaDestinatarios.on('click', '.tag-remove', function (event) {
             const identidad = $(event.target).parent().parent().attr("id");
-            that.eliminarUsuario(null, identidad);            
-        });    
+            that.eliminarUsuario(null, identidad);
+        });
+
+
+        // Configurar el borrado de grupos al pulsar en (x) de un item de grupos        
+        this.listaGrupos.on('click', '.tag-remove', function (event) {
+            const identidad = $(event.target).parent().parent().attr("id");
+            that.eliminarGrupo(null, identidad);
+        });
     },
 
     /**
@@ -4266,7 +4300,7 @@ const operativaPeticionCambiarContrasenia = {
      * @param {any} identidad: La identidad del item seleccionado
      * @param {boolean} isAnEmail: Valor que indicar� si lo que se est� intentando a�adir es un contacto (normal) o un email de un usuario
      */
-    crearInvitado: function (ficha, nombre, identidad, isAnEmail) {     
+    crearInvitado: function (ficha, nombre, identidad, isAnEmail) {
         // Item que se a�adir� como elemento seleccionado
         let itemHtml = "";
 
@@ -4278,10 +4312,10 @@ const operativaPeticionCambiarContrasenia = {
             itemHtml += `</div>`;
             itemHtml += `</div>`;
             // A�adir la identidad al input de invitados
-            this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${identidad}`);        
-        } else {            
+            this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${identidad}`);
+        } else {
             // Construyo correos separados por comas
-            const correos = this.txtCorreoAInvitar.val().split(',');                        
+            const correos = this.txtCorreoAInvitar.val().split(',');
             // Validar si son correos v�lidos     
             for (let i = 0; i < correos.length; i++) {
                 if (correos[i] != '') {
@@ -4297,21 +4331,21 @@ const operativaPeticionCambiarContrasenia = {
             }
             // Recorrer array de correos para ser a�adidos a la vista
             for (let i = 0; i < correos.length; i++) {
-                if (correos[i] != '') {                    
+                if (correos[i] != '') {
                     let data_item = correos[i].replace(/\@/g, '_');
-                    data_item = data_item.replace(".",'_');
+                    data_item = data_item.replace(".", '_');
                     itemHtml += `<div class="tag" id="${correos[i]}" data-item="${data_item}">`;
                     itemHtml += `<div class="tag-wrap">`;
                     itemHtml += `<span class="tag-text">${correos[i]}</span>`;
                     itemHtml += `<span class="tag-remove material-icons">close</span>`;
                     itemHtml += `</div>`;
-                    itemHtml += `</div>`;                                        
+                    itemHtml += `</div>`;
                     // A�adir el correo al input de invitados
-                    this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${correos[i].replace(/^\s*|\s*$/g, "")}`);  
+                    this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${correos[i].replace(/^\s*|\s*$/g, "")}`);
                 }
             }
         }
-        
+
         // A�adir el item en el contenedor de destinatarios
         this.listaDestinatarios.append(itemHtml);
 
@@ -4326,7 +4360,34 @@ const operativaPeticionCambiarContrasenia = {
 
         if (ficha != null) {
             ficha.style.display = 'none';
-        }        
+        }
+    },
+
+    /**
+     * Acción que se ejecuta cuando se realice una b�squeda escribiendo el nombre de un grupo de la comunidad y se seleccione un item de resultados devueltos por autocomplete.
+     * Con los datos devueltos, construir� el item y lo  meter� en "panContenedorInvitados". *@     
+     * @param {any} nombre: El nombre del usuario seleccionado
+     * @param {any} identidad: La identidad del item seleccionado     
+     */
+    crearGrupoInvitado: function (nombre, identidad) {
+        // Item que se añadirá como elemento seleccionado
+        let itemHtml = "";
+
+        itemHtml += `<div class="tag" id="${identidad}" data-item="${identidad}">`;
+        itemHtml += `<div class="tag-wrap">`;
+        itemHtml += `<span class="tag-text">${nombre}</span>`;
+        itemHtml += `<span class="tag-remove material-icons">close</span>`;
+        itemHtml += `</div>`;
+        itemHtml += `</div>`;
+
+        // A�adir la identidad al input de grupos    
+        this.txtHackGrupos.val(`${this.txtHackGrupos.val()}&${identidad}`);
+
+        // A�adir el item en el contenedor de grupos
+        this.listaGrupos.append(itemHtml);
+
+        // Vaciamos el input donde se ha introducido el grupo a buscar
+        this.txtFiltroGrupos.val('');
     },
 
     /**
@@ -4335,10 +4396,10 @@ const operativaPeticionCambiarContrasenia = {
      * @param {any} fichaId             
      */
     eliminarUsuario: function (fichaId, identidad) {
-               
+
         // Eliminar la identidad al input construyendo el nuevo valor que tomar�
         let newTxtHackInvitados = this.txtHackInvitados.val().replace('&' + identidad, '');
-        this.txtHackInvitados.val(newTxtHackInvitados);                   
+        this.txtHackInvitados.val(newTxtHackInvitados);
 
         // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electr�nicos)
         let data_item = identidad.replace(/\@/g, '_');
@@ -4349,6 +4410,24 @@ const operativaPeticionCambiarContrasenia = {
         // Comprobar si hay items para mostrar u ocultar mensaje de "Ning�n destinatario..."
         const numItems = this.listaDestinatarios.children().length;
         numItems >= 1 ? this.noDestinatarios.hide() : this.noDestinatarios.show();
+    },
+
+    /**
+         * Acci�n que eliminar� a un elemento al pulsar sobre su (x). Desaparecer� del contenedor y del input oculto que contiene
+         * los items seleccionados para el env�o de la solicitud
+         * @param {any} fichaId             
+         */
+    eliminarGrupo: function (fichaId, identidad) {
+
+        // Eliminar la identidad al input construyendo el nuevo valor que tomará
+        let newTxtHackInvitados = this.txtHackGrupos.val().replace('&' + identidad, '');
+        this.txtHackGrupos.val(newTxtHackInvitados);
+
+        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electr�nicos)
+        let data_item = identidad.replace(/\@/g, '_');
+        data_item = data_item.replace(".", '_');
+        const itemToDelete = $(`*[data-item="${data_item}"]`);
+        itemToDelete.remove();
     },
 
     /**
@@ -4366,9 +4445,9 @@ const operativaPeticionCambiarContrasenia = {
         if (autoCompleteParams.isEcosistemasinMetaProyecto) {
             extraParams = {
                 identidad: autoCompleteParams.identidad,
-                identidadMyGnoss: autoCompleteParams.identidadMyGnoss, 
-                identidadOrg: autoCompleteParams.identidadOrg, 
-                proyecto: autoCompleteParams.proyecto, 
+                identidadMyGnoss: autoCompleteParams.identidadMyGnoss,
+                identidadOrg: autoCompleteParams.identidadOrg,
+                proyecto: autoCompleteParams.proyecto,
                 bool_esPrivada: autoCompleteParams.esPrivada
             }
         } else {
@@ -4405,6 +4484,46 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
+         * Configuraci�n del servicio autocomplete para el input buscador de nombres de grupos de la comunidad
+         * Se pasaran los par�metros necesarios los cuales se han obtenido de la vista
+         * @param {any} autoCompleteParams
+         */
+    configAutocompleteServiceForCommunityGroups(autoCompleteParams) {
+        const that = this;
+
+        // Configurar input de autocomplete para grupos de la comunidad
+        this.txtFiltroGrupos.keydown(function (event) {
+            if (event.which || event.keyCode) { if ((event.which == 13) || (event.keyCode == 13)) { return false; } }
+        }).autocomplete(
+            null,
+            {
+                url: $(`#${autoCompleteParams.idInpt_urlServicioAutocompletar}`).val() + '/' + "AutoCompletarGruposInvitaciones",
+                delay: 0,
+                multiple: true,
+                scroll: false,
+                selectFirst: false,
+                minChars: 1,
+                width: 300,
+                cacheLength: 0,
+
+                NoPintarSeleccionado: true,
+                txtValoresSeleccID: that.txtHackGruposInvitadosInputName,
+
+                extraParams: {
+                    identidad: autoCompleteParams.identidad,
+                    identidadMyGnoss: autoCompleteParams.identidadMyGnoss,
+                    identidadOrg: autoCompleteParams.identidadOrg,
+                    proyecto: autoCompleteParams.proyecto,
+                }
+            });
+
+        // Configuraci�n la acci�n select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
+        this.txtFiltroGrupos.result(function (event, data, formatted) {
+            that.crearGrupoInvitado(data[0], data[1]);
+        });
+    },
+
+    /**
     * Acción de envío de la invitación de la comunidad o del enlace
     * Se disparará al pulsar el bot�n de "Enviar"
     */
@@ -4422,7 +4541,8 @@ const operativaPeticionCambiarContrasenia = {
             if (that.txtNotas.val() == undefined) {
                 dataPost = {
                     Guests: that.txtHackInvitados.val(),
-                    Message: "",
+                    Message: encodeURIComponent(that.txtNotas.val().replace(/\n/g, '')),
+                    Groups: that.txtHackGrupos.val()
                 };
             }
             else {
@@ -4446,8 +4566,7 @@ const operativaPeticionCambiarContrasenia = {
             true
         ).done(function (response) {
             claseDiv = "ok";
-            // 2 - Cerrar modal            
-            $('#modal-invite-community').modal('hide');
+            // 2 - Cerrar modal                        
             $('#modal-container').modal('hide');
             // 3 - Mostrar mensaje OK
             setTimeout(() => {
@@ -4456,14 +4575,11 @@ const operativaPeticionCambiarContrasenia = {
         }).fail(function (response) {
             claseDiv = "ko";
             /* Mostrar error */
-            // 3 - Mostrar mensaje OK
+            // 3 - Mostrar mensaje KO
             setTimeout(() => {
                 mostrarNotificacion('error', response);
             }, 1500)
         }).always(function (response) {
-            /*that.panelInfoInvitationSent.addClass(claseDiv)
-            that.panelInfoInvitationSent.html(response);
-            that.panelInfoInvitationSent.fadeIn();*/
             OcultarUpdateProgress();
         });
     }

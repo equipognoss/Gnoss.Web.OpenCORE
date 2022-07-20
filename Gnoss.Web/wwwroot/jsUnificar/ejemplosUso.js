@@ -7955,7 +7955,7 @@ function Redirigir(response) {
 var PeticionesCookie = {
     CargarCookie() {
         var urlPeticion = null;
-        urlPeticion = $('#inpt_UrlLogin').val().split("/login")[0] + "/RefrescarCookie";
+        urlPeticion = $('#inpt_UrlLoginCookie').val() + "/RefrescarCookie";
         GnossPeticionAjax(
             urlPeticion,
             null,

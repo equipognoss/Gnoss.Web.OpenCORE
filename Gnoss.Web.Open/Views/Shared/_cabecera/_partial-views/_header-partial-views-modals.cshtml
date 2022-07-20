@@ -1,19 +1,18 @@
 ﻿@*
-    Descripción
-    ----------------------------------------------------------------
-    Vista que simplemente controlará si diferentes vistas modales han de cargarse o no en pantalla dependiendo de permisos del usuario, comunidad.
-    Estas vistas modales se lanzan desde el menú lateral del usuario.
+Descripción
+----------------------------------------------------------------
+Vista que simplemente controlará si diferentes vistas modales han de cargarse o no en pantalla dependiendo de permisos del usuario, comunidad.
+Estas vistas modales se lanzan desde el menú lateral del usuario.
 
-    @*
-    Variables
+@*
+Variables
     ----------------------------------------------------------------
 *@
 @{
-    CommunityModel Comunidad = Html.GetComunidad();
-    // Permisos disponibles en la comunidad
-    CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
-    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
-
+CommunityModel Comunidad = Html.GetComunidad();
+// Permisos disponibles en la comunidad
+CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
+UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
 }
 @*
     ----------------------------------------------------------------
@@ -76,7 +75,9 @@
     {
         if (permisosComunidad != null && permisosComunidad.Invite)
         {
-            @Html.PartialView("../Shared/_cabecera/_modal-views/_invite-community");
+           @* Se gestiona vía llamada ApiRest
+            @Html.PartialView("../Shared/_cabecera/_modal-views/_invite-community"); 
+           *@
         }
     }
 

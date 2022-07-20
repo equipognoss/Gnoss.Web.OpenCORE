@@ -45,10 +45,7 @@
 
     // Controlar si dispone o no de fotografía el usuario
     bool containsUrlFoto = true;
-    // Controlar el nº de Comunidades a mostrar para que no quede demasiado largo
-    int numMaxCommunitiesToDisplay = 5;
-    int contCommunity = 0;
-    // Contrlar el nº de identidades de organización a mostrar
+    // Controlar el nº de identidades de organización a mostrar
     int numMaxIdentitiesToDisplay = 5;
     // Lista con las identidades de organización. Se guardarán las que quedarán visibles pero ocultas para poder desplegarlas si fuera necesario
     List<UserProfileModel> hiddenUserIdentities = new List<UserProfileModel>();
@@ -184,38 +181,8 @@
                     </div>
                 </div>
 
-                @* Ver sección de Mis Comunidades o Clases si es perfil Profesor *@
-                <div class="group-collapse comunidades">
-                    <a href="#comunidades" data-toggle="collapse" aria-expanded="true">@Html.GetText("COMMON", "MISCOMUNIDADES")</a>
-                    <div id="comunidades" class="collapse show">
-                        <ul class="pmd-sidebar-nav">
-                            @if (perfil.IsClassAdministrator && perfil.TypeProfile.Equals(ProfileType.Teacher))
-                            {
-                                <li class="usuarioClases"><a href="@perfil.Url@Html.GetText("URLSEM", "VERCLASESADMINISTRO")">@Html.GetText("ADMINISTRARCLASES", "MISCLASES")</a></li>
-                            }
-                            @* Listado cada item de Comunidades del usuario *@
-                            @{
-                                List<UserProfileModel.ProfileCommunitiesModel> masUsados = perfil.Communities.OrderByDescending(comunidadPerfil => comunidadPerfil.NumberOfConnections).Take(10).ToList();
-
-                                foreach (UserProfileModel.ProfileCommunitiesModel comunidadPerfil in masUsados.OrderBy(comunidadPerfil => comunidadPerfil.Name))
-                                {
-                                    string clase = "abierta";
-                                    if (comunidadPerfil.Type == 1 || comunidadPerfil.Type == 3) { clase = "cerrada"; }
-                                    @* Mostrar como máximo 5 comunidades *@
-                                    if (contCommunity < numMaxCommunitiesToDisplay)
-                                    {
-                                        <li class="@clase"><a href="@comunidadPerfil.Url" title="@comunidadPerfil.Name"><span class="icono"></span>@Html.AcortarTexto(comunidadPerfil.Name, 29)</a></li>
-                                        contCommunity += 1;
-                                    }
-                                }
-                            }
-                            <li class="ver">
-                                <a href="@perfil.Url@Html.GetText("URLSEM", "MISCOMUNIDADES")">@Html.GetText("INICIO", "VERTODOS")</a>
-                            </li>
-                        </ul>
-                    </div>
-                    @* Fin Listado de comunidades*@
-                </div>
+                @* Ver sección de Mis Comunidades *@           
+                @Html.PartialView("../Shared/_cabecera/_partial-views/_community-list-items")                
 
                 @* Ver sección de Configuración Máxima invitaciones exceidas (Anteriormente en "_PanelQueHacer") *@
                 @if (permisosComunidad != null && permisosComunidad.MaxMembersExceeded)
@@ -393,8 +360,18 @@
                                     {
                                         if (permisosComunidad.Invite)
                                         {
-                                            <li class="liInvitarAmigos">
+                                            @*<li class="liInvitarAmigos">
                                                 <a href="#" class="link" data-toggle="modal" data-target="#modal-invite-community">@Html.GetText("QUEPUEDOHACER", "INVITAAMIGOS")</a>
+                                            </li>*@
+                                            <li class="liInvitarAmigos">
+                                                <a 
+                                                   href="#"
+                                                   class="link"
+                                                   data-toggle="modal"
+                                                   data-target="#modal-container"                                                   
+                                                   onclick="DeployActionInModalPanel('@Comunidad.Url/@Html.GetText("URLSEM", "INVITARACOMUNIDADVIAMODAL")', this, 'modal-dinamic-content', '');">                                                                                                                       
+                                                   @Html.GetText("QUEPUEDOHACER", "INVITAAMIGOS")
+                                                </a>
                                             </li>
                                         }
                                     }
@@ -449,7 +426,6 @@
                                         @* Novedades sin visualizar de la identidad *@
                                         <span style="display: none;" class="novPerfilOtraIdent badge badge-pill badge-primary infoNov_@perfilPersonal.Key" id="infoNov_@perfilPersonal.Key"></span>
                                     </li>
-
                                 }
                             }
 
@@ -473,7 +449,6 @@
                                         @* Novedades sin visualizar de la identidad *@
                                         <span style="display: none;" class="novPerfilOtraIdent badge badge-pill badge-primary infoNov_@perfilProfesor.Key" id="infoNov_@perfilProfesor.Key"></span>
                                     </li>
-
                                 }
                             }
                             @* Listado de identidades del usuario (Identidades de Organizaciones ) *@
@@ -483,8 +458,7 @@
                                 {
                                     continue;
                                 }
-                                if (contadorPerfilesPerfil < numMaxIdentitiesToDisplay)
-                                {
+                                if (contadorPerfilesPerfil < numMaxIdentitiesToDisplay) {
                                     <li class="identidad_@perfilActual.Key d-flex justify-content-between align-items-center">
                                         <a class="organizacion" href="@perfilActual.Url" title="@perfilActual.Name">
                                             <span>@perfilActual.Name</span>
@@ -494,16 +468,14 @@
                                     </li>
                                     contadorPerfilesPerfil++;
                                 }
-                                else
-                                {
+                                else {
                                     // Guardar la identidad para ser mostrada a continuación desde una panel de "VER MÁS"
                                     hiddenUserIdentities.Add(perfilActual);
                                 }
                             }
 
                             @* Opción para Mostrar Identidades de organización de forma oculta *@
-                            @if (hiddenUserIdentities.Count > 0)
-                            {
+                            @if (hiddenUserIdentities.Count > 0) {
                                 <li class="ver ver-todas-identidades d-flex justify-content-between align-items-center">
                                     <a href="javascript: void(0);" class="expand-collapse-identities" data-toggle="collapse" data-target="#collapseIdentities" aria-expanded="false" aria-controls="collapseIdentities">
                                         <span class="texto">@Html.GetText("INICIO", "VERTODOS")</span>
@@ -545,8 +517,7 @@
                     @* Sección de MetaAdministrador *@
                     @* Ver sección de si es usuario Admin y es la MetaComunidad *@
                     @*@if ((Comunidad.GNOSSCommunity || IdentidadActual.IsProyectAdmin) && Comunidad.MetaProyect) { *@
-                    @if ((Comunidad.GNOSSCommunity && IdentidadActual.IsProyectAdmin) && Comunidad.MetaProyect)
-                    {
+                    @if ((Comunidad.GNOSSCommunity && IdentidadActual.IsProyectAdmin) && Comunidad.MetaProyect) {
                         <div class="group-collapse metaAdministrador">
                             <a href="#metaAdministrador" data-toggle="collapse" aria-expanded="true">@Html.GetText("COMADMINCOMUNIDAD", "ADMINMETAADMINOPTIONS")</a>
                             <div id="metaAdministrador" class="collapse show">
@@ -659,8 +630,7 @@
                                         </li>
                                     }
                                     @*Cambiar la contraseña si el usuario está en alguna comunidad *@
-                                    else
-                                    {
+                                    else {
                                         <li class="liCambiarContrasenia">
                                             <a id="cambiar_contrasenia" href="@Comunidad.Url/@Html.GetText("URLSEM", "CAMBIARPASSWORD")">@Html.GetText("MENU", "CAMBIOCONTRAS")</a>
                                         </li>

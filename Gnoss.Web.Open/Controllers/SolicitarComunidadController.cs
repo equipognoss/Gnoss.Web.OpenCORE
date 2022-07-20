@@ -35,6 +35,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Web;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
@@ -169,9 +170,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 //ParametroAplicacionDS.ParametroAplicacionRow[] filas = (ParametroAplicacionDS.ParametroAplicacionRow[])ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro='" + TiposParametrosAplicacion.CorreoSolicitudes + "'");
                 List<Es.Riam.Gnoss.AD.EntityModel.ParametroAplicacion> filas = ParametrosAplicacionDS.Where(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.CorreoSolicitudes)).ToList();
-
+                //StringBuilder sb = new StringBuilder();
+               // sb.AppendLine($"Elementos con Parametro {TiposParametrosAplicacion.CorreoSolicitudes}: {filas.Count}");
                 if (enviarEmailConfirmacion)
                 {
+                    //sb.AppendLine($"Enviar email de confirmacion: {enviarEmailConfirmacion}");
+                    //mLoggingService.GuardarLogError(sb.ToString());
                     GestorNotificaciones.AgregarNotificacionSolicitudCrearComunidad(IdentidadActual, BaseURL, "SOLICITUD DE COMUNIDAD" + UtilIdiomas.GetText("SOLICITARCOMUNIDAD", "NOMBRE"), mensaje, filas[0].Valor, UtilIdiomas.LanguageCode);
                 }
 
@@ -180,7 +184,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex.Message);
+                GuardarLogError(ex);
                 return UtilIdiomas.GetText("SOLICITARCOMUNIDAD", "ERRORENVIO");
             }
 

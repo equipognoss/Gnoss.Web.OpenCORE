@@ -653,7 +653,7 @@ function MVCFiltrarListaSelCat(txt, panDesplID) {
  * @param {any} txt
  * @param {any} panDesplID
  */
-function MVCFiltrarListaSelCatArbol(txt, id) {
+function MVCFiltrarListaSelCatArbol(txt, id, completion = undefined) {
     var cadena = $(txt).val();
     // Eliminamos posibles tildes para búsqueda ampliada
     cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
@@ -682,6 +682,9 @@ function MVCFiltrarListaSelCatArbol(txt, id) {
             });
         });
     }
+    if (completion != undefined) {
+        completion();
+    }    
 }
 
 /**

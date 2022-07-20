@@ -195,6 +195,10 @@ namespace Gnoss.Web.Controllers
             string urlCodificada = CodificarUrl(url);
             string peticion = $"{baseUrl}shares/{urlCodificada}/root";
             string response = UtilGeneral.WebRequest("GET", peticion, token, null);
+            if (string.IsNullOrEmpty(response))
+            {
+                return false;
+            }
             dynamic respuestaObj = JsonConvert.DeserializeObject(response);
 
             string fechaModificacionApi = respuestaObj.lastModifiedDateTime;

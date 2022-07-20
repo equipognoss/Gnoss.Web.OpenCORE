@@ -1,12 +1,28 @@
 ﻿@model SharedSemCms
 
+@*
+Descripción
+-----------------------------------------------
+Vista donde se muestra el título o el nombre del recurso ontológico.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista donde se muestra el título o el nombre del recurso ontológico --------------------
+*@
+
 
 @if (!Model.semanticPropertyModel.ReadMode && Model.semanticPropertyModel.OntologyPropInfo.MultiLanguage && !Model.semanticPropertyModel.OntologyPropInfo.MultiLanguageWithTabs)
-{
-    <div>
-        @Html.PartialView("SemCms/_TituloPropiedad", Model.semanticPropertyModel)
-
-        @Model.pIdioma = null;
+{    
+    Model.pIdioma = null;
+    <div class="mb-3 titleandPrimaryControl">
+        @Html.PartialView("SemCms/_TituloPropiedad", Model.semanticPropertyModel)       
         @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model)
     </div>
 
@@ -30,8 +46,10 @@
             }
 
             <div>
-                <label class="@claseTitulo">@textoLabel</label>
-                @Model.pIdioma = idioma;
+                @{
+                    Model.pIdioma = idioma;
+                }
+                <label class="control-label d-block @claseTitulo">@textoLabel</label>                
                 @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model)
             </div>
         }

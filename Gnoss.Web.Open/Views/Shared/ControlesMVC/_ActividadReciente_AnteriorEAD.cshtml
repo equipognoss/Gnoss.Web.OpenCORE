@@ -199,7 +199,7 @@
                     </ul>
                 </div>
 
-                @if (Model.TypeActivity != (int)Es.Riam.Gnoss.AD.Live.TipoActividadReciente.PerfilProyecto)
+                @if (Model.TypeActivity != (int)TipoActividadReciente.PerfilProyecto)
                 {
                     string[] parametrosAccion = actividad.Key.Split('_');
                     string idAcciones = "accionesListado_" + parametrosAccion[1] + "_" + Guid.NewGuid() + "_" + parametrosAccion[2];
@@ -308,22 +308,22 @@ else if (Model.RecentActivityItems.Count == 0 && Model.NumPage == 1)
 {
     switch (Model.TypeActivity)
     {
-        case (int)Es.Riam.Gnoss.AD.Live.TipoActividadReciente.HomeUsuario:
+        case (int)TipoActividadReciente.HomeUsuario:
             break;
-        case (int)Es.Riam.Gnoss.AD.Live.TipoActividadReciente.HomeProyecto:
+        case (int)TipoActividadReciente.HomeProyecto:
             break;
-        case (int)Es.Riam.Gnoss.AD.Live.TipoActividadReciente.PerfilProyecto:
+        case (int)TipoActividadReciente.PerfilProyecto:
             <div class="resource actividad">
                 <div class="group">
                     <p>@Html.GetText("PERFIL", "USUARIOSINACTIVIDAD")</p>
                 </div>
             </div>
             break;
-        case (int)Es.Riam.Gnoss.AD.Live.TipoActividadReciente.SuscripcionProyecto:
+        case (int)TipoActividadReciente.SuscripcionProyecto:
             break;
-        case (int)Es.Riam.Gnoss.AD.Live.TipoActividadReciente.Suscripcion:
+        case (int)TipoActividadReciente.Suscripcion:
             break;
-        case (int)Es.Riam.Gnoss.AD.Live.TipoActividadReciente.SuscripcionSiNoHomeProyecto:
+        case (int)TipoActividadReciente.SuscripcionSiNoHomeProyecto:
             break;
     }
 }

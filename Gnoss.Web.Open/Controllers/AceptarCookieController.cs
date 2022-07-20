@@ -41,7 +41,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 nombreCookie = "cookieAviso" + mControladorBase.DominoAplicacion;
             }
             Dictionary<string, string> value = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie], mEntityContext);
-            value.Add("aceptada", "true");
+            if (value.ContainsKey("aceptada"))
+            {
+                value["aceptada"] = "true";
+            }
+            else
+            {
+                value.Add("aceptada", "true");
+            }
+
+            
             // Opciones cookie para evitar problemas en Safari (iOS) y al depurar
             CookieOptions cookieOptions = new CookieOptions { Expires = DateTime.Now.AddYears(1)};
             if (!mControladorBase.DominoAplicacion.Contains("depuracion.net")) {

@@ -1119,7 +1119,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                             //Si el redirect ya contiene esta cadena, significa que ya se le ha redireccionado a login (ya estamos en esa página, no hay que volver a redireccionar)
                                             if (!redirect.Contains(urlComunidadLogin) && (!redirect.Contains("/login/redirect")) && (!redirect.EndsWith("/login")))
                                             {
-                                                if (!this.GetType().Name.Equals("LogoutController") && !this.GetType().Name.Equals("LoadingController"))
+                                                if (this.GetType().Name.Equals("LogoutController") && this.GetType().Name.Equals("LoadingController"))
                                                 {
                                                     redirect = "";
                                                 }
@@ -1297,13 +1297,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private void ComprobarRedireccionAMyGnoss(string pUrlPropiaProyecto, ActionExecutingContext pFilterContext)
         {
-            //Comprobamos si el dominio al que vamos corresponde a un dominio diferente
-            bool esUnDominioDiferente = (!string.IsNullOrEmpty(pUrlPropiaProyecto) && mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Equals(ControladorBase.ObtenerDominioUrl(new Uri(pUrlPropiaProyecto), false)));
-            if ((ProyectoSeleccionado != null) && (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto)) && esUnDominioDiferente && !(this.GetType().Name.Equals("LoadingController")) && !(this.GetType().Name.Equals("CkeditorController")) && !(this.GetType().Name.Equals("AceptarCookieController")) && !(this.GetType().Name.Equals("CrearCookieController")) && !(this.GetType().Name.Equals("EliminarCookieController")))
+            try
             {
-                mLoggingService.AgregarEntrada("Entra en ComprobarRedireccionAMyGnoss");
+                //Comprobamos si el dominio al que vamos corresponde a un dominio diferente
+                bool esUnDominioDiferente = (!string.IsNullOrEmpty(pUrlPropiaProyecto) && mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Equals(ControladorBase.ObtenerDominioUrl(new Uri(pUrlPropiaProyecto), false)));
+                if ((ProyectoSeleccionado != null) && (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto)) && esUnDominioDiferente && !(this.GetType().Name.Equals("LoadingController")) && !(this.GetType().Name.Equals("CkeditorController")) && !(this.GetType().Name.Equals("AceptarCookieController")) && !(this.GetType().Name.Equals("CrearCookieController")) && !(this.GetType().Name.Equals("EliminarCookieController")))
+                {
+                    mLoggingService.AgregarEntrada("Entra en ComprobarRedireccionAMyGnoss");
 
-                pFilterContext.Result = Redirect(ProyectoSeleccionado.UrlPropia(IdiomaUsuario) + Request.Path);
+                    pFilterContext.Result = Redirect(ProyectoSeleccionado.UrlPropia(IdiomaUsuario) + Request.Path);
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError($"Url de intento uri {pUrlPropiaProyecto}");
+                throw;
             }
         }
 

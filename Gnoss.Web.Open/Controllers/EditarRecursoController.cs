@@ -976,12 +976,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             if (ProyectoSeleccionado.Clave == ProyectoAD.MetaProyecto || ListaPermisosDocumentos.Contains(TiposDocumentacion.Video))
                             {
-                                //Subimos el fichero al servidor
-                                /* TODO Javier migrar a rest
-                                Es.Riam.Gnoss.Web.Controles.ServicioVideosWS.ServicioVideos servicioVideos = new Es.Riam.Gnoss.Web.Controles.ServicioVideosWS.ServicioVideos();
-                                servicioVideos.Timeout = 600000;
-                                servicioVideos.Url = UrlIntragnossServicios + "/ServicioVideos.asmx";
-
+                                CallInterntService servicioVideos = new CallInterntService(mConfigService);
                                 if (ProyectoSeleccionado.Clave == ProyectoAD.MetaProyecto)
                                 {
                                     if (IdentidadOrganizacion == null)
@@ -997,7 +992,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 {
                                     resultado = servicioVideos.AgregarVideo(buffer1, extensionArchivo, documentoID);
                                 }
-                                servicioVideos.Dispose();*/
                             }
                             else
                             {
@@ -4382,11 +4376,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (tipoArchivo == TipoArchivo.Audio || tipoArchivo == TipoArchivo.Video)
                     {
-                        /*TODO Javier migrar a rest
-                        //Subimos el fichero al servidor
-                        ServicioVideos servicioVideos = new ServicioVideos();
-                        servicioVideos.Timeout = 600000;
-                        servicioVideos.Url = UrlIntragnossServicios + "/ServicioVideos.asmx";
+                        CallInterntService servicioVideos = new CallInterntService(mConfigService);
 
                         if (!EsComunidad)
                         {
@@ -4405,8 +4395,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             resultado = servicioVideos.AgregarVideo(buffer1, extensionArchivo, mDocumentoID);
                         }
-                        servicioVideos.Dispose();
-                        */
                     }
                     else if (tipoArchivo == TipoArchivo.Imagen)
                     {
@@ -4624,7 +4612,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                                 if (Documento.TipoDocumentacion == TiposDocumentacion.Video)
                                 {
-                                    nuevoEnlace = nuevoEnlace.Substring(0, nuevoEnlace.LastIndexOf(".")) + ".flv";
+                                    nuevoEnlace = Documento.Clave + archivoInfo.Extension;
                                 }
                                 return nuevoEnlace;
                             }

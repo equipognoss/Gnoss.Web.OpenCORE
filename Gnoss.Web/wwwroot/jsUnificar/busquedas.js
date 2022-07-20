@@ -2073,7 +2073,7 @@ $(document).ready(function () {
         if ($(this).val().indexOf('|') > -1) {
             $(this).val($(this).val().replace(/\|/g, ''));
         };
-        if (event.which || event.keyCode) {
+        if (!$(this).hasClass('ac_input') && (event.which || event.keyCode)) {
             if ((event.which == 13) || (event.keyCode == 13)) {
                 $(this).parent().find('.encontrar').click();
                 return false;

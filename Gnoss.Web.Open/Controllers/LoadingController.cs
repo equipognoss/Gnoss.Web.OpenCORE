@@ -9,7 +9,7 @@ using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
-using Es.Riam.Gnoss.Web.Controles;
+using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;

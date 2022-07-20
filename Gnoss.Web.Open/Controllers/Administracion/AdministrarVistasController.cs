@@ -325,7 +325,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             {
                                 CargadorResultados cargadorResultados = new CargadorResultados();
                                 cargadorResultados.Url = url;
-                                cargadorResultados.InvalidarVistas();
+                                cargadorResultados.InvalidarVistas(UsuarioActual.IdentidadID);
                             }
                         }
                         else
@@ -349,7 +349,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     CargadorResultados cargadorResultados = new CargadorResultados();
                     cargadorResultados.Url = mConfigService.ObtenerUrlServicioResultados();
-                    cargadorResultados.InvalidarVistas();
+                    cargadorResultados.InvalidarVistas(UsuarioActual.IdentidadID);
                 }
                 else
                 {
@@ -447,7 +447,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             CargadorFacetas cargadorFacetas = new CargadorFacetas();
                             cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
-                            cargadorFacetas.InvalidarVistas();
+                            cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
                         }
                         else
                         {
@@ -470,7 +470,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     CargadorFacetas cargadorFacetas = new CargadorFacetas();
                     cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
-                    cargadorFacetas.InvalidarVistas();
+                    cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
                 }
                 else
                 {
@@ -1008,10 +1008,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 listaComponentesDisponibles.Add(tipoComponenteCMS);
             }
             List<string> listaVistas = ObtenerFicherosDeDirectorio(Path.Combine(mEnv.ContentRootPath, $"{mViews}", "CMSPagina"));
+            mLoggingService.GuardarLogError("La ruta obtenida es: " + Path.Combine(mEnv.ContentRootPath, $"{mViews}", "CMSPagina"));
             List<TipoComponenteCMS> listaComponentesDisponiblesAux = new List<TipoComponenteCMS>(listaComponentesDisponibles);
             foreach (TipoComponenteCMS componente in listaComponentesDisponiblesAux)
             {
-                if (!listaVistas.Contains($"/{VIEWS_DIRECTORY}/CMSPagina/" + componente.ToString() + "/_" + componente.ToString() + ".cshtml"))
+                if (!listaVistas.Contains($"/{mViews}/CMSPagina/" + componente.ToString() + "/_" + componente.ToString() + ".cshtml"))
                 {
                     listaComponentesDisponibles.Remove(componente);
                 }
@@ -1593,12 +1594,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 CargadorResultados cargadorResultados = new CargadorResultados();
                 cargadorResultados.Url = url;
-                cargadorResultados.InvalidarVistas();
+                cargadorResultados.InvalidarVistas(UsuarioActual.IdentidadID);
             }
 
             CargadorFacetas cargadorFacetas = new CargadorFacetas();
             cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
-            cargadorFacetas.InvalidarVistas();
+            cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
         }
 
         private void LimpiarCacheVista(string pVista, bool pEsRdfType)

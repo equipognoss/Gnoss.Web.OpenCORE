@@ -1,9 +1,18 @@
-/*global.js*/ 
+/*global.js*/
 /*
 ..........................................................................
 :: Links en ventana nueva                                               ::
 ..........................................................................
 */
+
+// Permitir envío de Cookies a otro dominio
+$.ajaxSetup({
+    crossDomain: true,
+    xhrFields: {
+        withCredentials: true
+    }
+});
+
 
 /**
  * Operativa para detectar comportamiento de navegación cuando se pulsa en "Back Button" del navegador
@@ -67,14 +76,22 @@ const operativaFiltroRapido = {
      * */
     configEvents: function () {
         const that = this;
+        that.isSearching = false;
 
         // Input donde se realizará la búsqueda
-        this.input.on("keydown", function (event) {
+        this.input.on("keyup", function (event) {
             clearTimeout(that.timer);
-            that.timer = setTimeout(function () {
+            that.timer = setTimeout(function () {                
                 // Obtener el id de la lista para saber qué lista filtrar
                 const listaSelCatArbolId = that.input.data("filterlistid");
-                MVCFiltrarListaSelCatArbol(that.input, listaSelCatArbolId);
+                if (!that.isSearching) {
+                    that.isSearching = true;
+                    MVCFiltrarListaSelCatArbol(that.input, listaSelCatArbolId, function () {
+                        // Completion cuando finalice la búsqueda
+                        that.isSearching = false
+                    });
+                }
+                
             }, that.timeWaitingForUserToType);
         });
     },
@@ -7456,13 +7473,20 @@ function EtiquetadoAutomaticoDeRecursos(titulo, descripcion, txtHack, pEsPaginaE
     var servicio = new WS($('input.inpt_urlEtiquetadoAutomatico').val());
     var params = {};
     params['ProyectoID'] = $('input.inpt_proyID').val();
+    params['documentoID'] = documentoID;
+    var ext = $('#txtHackEnlaceDoc').val();
+    if (ext != undefined) {
+        ext = ext.split(".").pop();
+        ext = "." + ext;
+        params['extension'] = ext;
+    }
     var numMax = 15000;
     titulo = urlEncode(titulo);
     descripcion = urlEncode(descripcion);
     if (descripcion.length < numMax) {
         var metodo = 'SeleccionarEtiquetas';
         params['titulo'] = titulo;
-        params['descripcion'] = descripcion;
+        params['descripcion'] = descripcion; 
         /*servicio.call(metodo, params, function (data) {
             procesarTags(data, txtHack, pEsPaginaEdicion);
         });*/
@@ -7792,7 +7816,7 @@ $(document).ready(function () {
     $(".loginButton").click(function () {
         $("#botonLogin").toggleClass("btLogin");
     });
-
+        
     $("#txtUsuario").keydown(function (event) {
         if (event.which || event.keyCode) {
             if ((event.which == 13) || (event.keyCode == 13)) {
@@ -7939,10 +7963,19 @@ const comportamientoFacetasPopUpPlegado = {
             // Faceta seleccionada
             that.facetaActual = $(e.relatedTarget).data('facetkey');
             that.facetaActualName = $(e.relatedTarget).data('facetname');
+
             // Registrar el id del modal abierto (para cargar los datos en el modal correspondiente)
             that.$modalLoaded = $(`#${e.target.id}`);
-            // Clonar la faceta/mostrarlo en modal
-            that.clonarFaceta();
+            that.facetaTesauroSemantico = $(e.relatedTarget).data('facetissemantic');
+
+            if (that.facetaTesauroSemantico == "True") {
+                that.obtenerFacetaTesuaroSemantico();
+            }
+            else {
+                // Clonar la faceta/mostrarlo en modal
+                that.clonarFaceta();
+            }
+            
             // Configurar eventos mostrados en el modal
             that.configEvents();
         });
@@ -7956,17 +7989,110 @@ const comportamientoFacetasPopUpPlegado = {
         });
     },
 
+    obtenerFacetaTesuaroSemantico: function () {
+        const that = this;
+
+        // Configuración del servicio para llamar a las facetas deseadas
+        var metodo = "CargarFacetas";
+        var params = {};
+        params["pProyectoID"] = $("input.inpt_proyID").val();
+        params["pEstaEnProyecto"] = $("input.inpt_bool_estaEnProyecto").val() == "True";
+        params["pEsUsuarioInvitado"] = $("input.inpt_bool_esUsuarioInvitado").val() == "True";
+        params["pIdentidadID"] = $("input.inpt_identidadID").val();
+        params["pParametros"] =
+            "" +
+            replaceAll(
+                replaceAll(
+                    replaceAll(
+                        urlDecode(ObtenerHash2()).replace(/&/g, "|").replace("#", ""),
+                        "%",
+                        "%25"
+                    ),
+                    "#",
+                    "%23"
+                ),
+                "+",
+                "%2B"
+            );
+        params["pLanguageCode"] = $("input.inpt_Idioma").val();
+        params["pPrimeraCarga"] = false;
+        params["pAdministradorVeTodasPersonas"] = false;
+        params["pTipoBusqueda"] = tipoBusqeda;
+        params["pGrafo"] = grafo;
+        params["pFiltroContexto"] = filtroContexto;
+        params["pParametros_adiccionales"] = parametros_adiccionales + "|NumElementosFaceta=10000|";
+        params["pUbicacionBusqueda"] = ubicacionBusqueda;
+        params["pNumeroFacetas"] = -1;
+        params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
+        params["pFaceta"] = that.facetaActual;
+
+       
+        // Petición al servicio para obtención de Facetas                
+        $.post(obtenerUrl($('input.inpt_UrlServicioFacetas').val()) + "/" + metodo, params, function (data) {
+            var htmlRespuesta = $("<div>").html(data);
+            that.arrayTotales = new Array($(htmlRespuesta).find(".faceta").length);
+            that.facetaTesuaroSemantico = $(htmlRespuesta).find(".tesaroSemantico").length > 0;
+            numFacetasTotales = that.arrayTotales;
+            var i = 0;
+            $(htmlRespuesta)
+                .find(".faceta")
+                .each(function () {
+                    that.arrayTotales[i] = new Array(3);
+                    that.arrayTotales[i][0] = that.eliminarAcentos(
+                        $(this).text().toLowerCase()
+                    );
+                    that.arrayTotales[i][1] = $(this);
+                    // Obtenemos las facetas hijas
+                    that.arrayTotales[i][2] = $(this).siblings();
+                    i++;
+                });
+
+            // Limpio antes de mostrar datos - No harí­a falta si elimino todo con el cierre del modal
+            that.$modalLoaded.find(".indice-lista.no-letra ul.listadoFacetas").remove();
+
+            for (i = 0; i < that.arrayTotales.length; i++) {
+                if (!that.arrayTotales[i][1].hasClass("isChildren")) {
+                    ul = $(`<ul class="listadoFacetas">`);
+                    that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
+
+                    var li = $("<li>");
+                    li.append(that.arrayTotales[i][1]);
+                    if (that.arrayTotales[i][2].length > 0) {
+                        PintarFacetasHijas(that.arrayTotales[i][2], li);
+                    }
+
+                    ul.append(li);
+                }
+              
+                // Ocultar el Loading
+                that.$modalLoaded.find('.loading-modal-facet').addClass('d-none');
+            }
+
+            // Configurar click de las faceta
+            $(".indice-lista .faceta").off().click(function (e) {
+                AgregarFaceta($(this).attr("name"));
+                // Cerrar modal
+                that.$modalLoaded.modal('toggle');
+                e.preventDefault();
+            });
+
+            //Añadir comportamiento desplegable para facetas de tipo tesauro semántico
+            plegarSubFacetas.init();
+
+        });
+    },
+
     configEvents: function () {
         const that = this;
 
         // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal         
-        this.$modalLoaded.find(".buscador-coleccion .buscar .texto").keyup(function () {
+        this.$modalLoaded.find(".buscador-coleccion .buscar .texto").off().keyup(function () {
             that.textoActual = that.eliminarAcentos($(this).val());
             that.filtrarElementos()
         });
-
+        
         // Configurar click de la faceta
-        this.$modalLoaded.find(".faceta").click(function (e) {
+        this.$modalLoaded.find(".faceta").off().click(function (e) {
             AgregarFaceta($(this).attr("name"));
             // Cerrar modal
             that.$modalLoaded.modal('toggle');
@@ -8041,26 +8167,19 @@ const comportamientoFacetasPopUpPlegado = {
             itemsListado = this.$modalLoaded.find('.facetas-carpeta li');
         }
         itemsListado.show();
-        if (that.textoActual == '') {
-            // $('.boton-desplegar').removeClass('mostrar-hijos');
-        } else {
+        if (that.textoActual != '') {
             itemsListado.each(function () {
-                var boton = $(this).find('.desplegarSubFaceta');
-                //boton.removeClass('mostrar-hijos');
-                var nombreCat = $(this).find('.textoFaceta').text();
-                //boton.trigger('click');
-                $(`.js-desplegar-facetas-modal`).trigger('click');
+                //Obtengo el nombre de la categoría en la que me situo
+                var nombreCat = $(this).find('.textoFaceta').text();                
+
+                //Compruebo si el nombre de la faceta actual tiene el texto que estoy buscando. Si no lo tiene oculta la faceta
                 if (nombreCat.toLowerCase().indexOf(that.textoActual.toLowerCase()) < 0) {
                     $(this).hide();
                 }
-                var categoriaHijo = $(this).find('ul').children('li');
-                categoriaHijo.each(function () {
-                    var nombreCatHijo = $(this).find('.textoFaceta').text();
-                    if (nombreCatHijo.toLowerCase().indexOf(that.textoActual.toLowerCase()) < 0) {
-                        $(this).hide();
-                    }
-                });
             });
+
+            //Desplegamos las facetas que no coinciden con la búsqueda
+            $(`.js-desplegar-facetas-modal`).trigger('click');
         }
     },
 };
@@ -8245,7 +8364,9 @@ const comportamientoFacetasPopUp = {
         this.buscando = false;
         this.arrayTotales = null;
         var numFacetasTotales = 0;
-    
+
+        var facetaTesuaroSemantico = false;
+
         // Placeholder del buscador
         if (configuracion.idioma == 'en') {
             that.$modalLoaded.find(".buscador-coleccion .buscar .texto").attr("placeholder", `${this.FacetTranslations.en.searchBy}${that.facetasConPopUp[that.IndiceFacetaActual][1]}`);
@@ -8291,41 +8412,45 @@ const comportamientoFacetasPopUp = {
         params["pNumeroFacetas"] = -1;
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = FacetaActual;
-    
-        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal                
-        that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
-            .keyup(function () {
-                that.textoActual = that.eliminarAcentos($(this).val());
-                that.paginaActual = 1;
-                that.buscarFacetas();
-            })
-            .on('paste', function () {
-                const input = $(this);
-                setTimeout(function () {
-                    input.keyup();
-                }, 200);
 
-            });
+        //COMENTADO PORQUE EL EVENTO DE BÚSQUEDA ESTÁ DUPLICADO
+        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal                
+        //that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
+        //    .keyup(function () {
+        //        that.textoActual = that.eliminarAcentos($(this).val());
+        //        that.paginaActual = 1;
+        //        that.buscarFacetas();
+        //    })
+        //    .on('paste', function () {
+        //        const input = $(this);
+        //        setTimeout(function () {
+        //            input.keyup();
+        //        }, 200);
+
+        //    });
     
     
-        // Petición al servicio para obtenciÃ³n de Facetas                
+        // Petición al servicio para obtención de Facetas                
         $.post(obtenerUrl($('input.inpt_UrlServicioFacetas').val()) + "/" + metodo, params, function (data) {
             var htmlRespuesta = $("<div>").html(data);
             that.arrayTotales = new Array($(htmlRespuesta).find(".faceta").length);
+            that.facetaTesuaroSemantico = $(htmlRespuesta).find(".tesaroSemantico").length > 0;
             numFacetasTotales = that.arrayTotales;
             var i = 0;
             $(htmlRespuesta)
                 .find(".faceta")
                 .each(function () {
-                    that.arrayTotales[i] = new Array(2);
+                    that.arrayTotales[i] = new Array(3);
                     that.arrayTotales[i][0] = that.eliminarAcentos(
                         $(this).text().toLowerCase()
                     );
                     that.arrayTotales[i][1] = $(this);
+                    // Obtenemos las facetas hijas
+                    that.arrayTotales[i][2] = $(this).siblings();
                     i++;
                 });
-    
-            //Ordena por orden alfabÃ©tico
+
+            //Ordena por orden alfabético
             if (that.facetasConPopUp[that.IndiceFacetaActual][2]) {
                 that.arrayTotales = that.arrayTotales.sort(function (a, b) {
                     if (a[0] > b[0]) return 1;
@@ -8426,15 +8551,24 @@ const comportamientoFacetasPopUp = {
             // Buscar facetas y mostrarlas
             that.buscarFacetas();
         });
-        // Si hay más de 1000 facetas, en lugar de buscar entre las traidas, las pedimos al servicio autocompletar
+
+        // Si hay más de 1000 facetas, en lugar de buscar entre las traidas, las pedimos al servicio autocompletar        
         if (numFacetasTotales < 1000) {
-            that.$modalLoaded.find(".buscador-coleccion .buscar .texto").keyup(function () {
-                that.textoActual = that.eliminarAcentos($(this).val());
-                that.paginaActual = 1;
-                that.buscarFacetas();
-            });
+
+            that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
+                .keyup(function () {
+                        that.textoActual = that.eliminarAcentos($(this).val());
+                        that.paginaActual = 1;
+                        that.buscarFacetas();
+                })
+                .on('paste', function () {
+                    const input = $(this);
+                    setTimeout(function () {
+                        input.keyup();
+                    }, 200)
+                });                    
         }
-        else {
+        else {        
             that.$modalLoaded.find(".buscador-coleccion .buscar .texto").keyup(function (event) {
                 //Comprobamos si la tecla es válida y si continua escribiendo
                 if (that.validarKeyPulsada(event) == true) {
@@ -8509,9 +8643,11 @@ const comportamientoFacetasPopUp = {
                                 $(htmlRespuesta)
                                     .find(".faceta")
                                     .each(function () {
-                                        that.arrayTotales[i] = new Array(2);
+                                        that.arrayTotales[i] = new Array(3);
                                         that.arrayTotales[i][0] = that.eliminarAcentos($(this).text().toLowerCase());
                                         that.arrayTotales[i][1] = $(this);
+                                        //Obtenemos las facetas hijas
+                                        that.arrayTotales[i][2] = $(this).siblings();
                                         i++;
                                     });
     
@@ -8528,6 +8664,8 @@ const comportamientoFacetasPopUp = {
     
                                 //Buscamos y pintamos las facetas en el modal
                                 that.buscarFacetas();
+                                //SANTI
+                                plegarSubFacetas.init();
                             });
                         }
     
@@ -8542,7 +8680,7 @@ const comportamientoFacetasPopUp = {
         const that = this;
         this.textoActual = this.textoActual.toLowerCase();
 
-        // Limpio antes de mostrar datos - No harÃ­a falta si elimino todo con el cierre del modal
+        // Limpio antes de mostrar datos - No harí­a falta si elimino todo con el cierre del modal
         that.$modalLoaded.find(".indice-lista.no-letra ul.listadoFacetas").remove();
 
         var facetaMin = (this.paginaActual - 1) * 22 + 1;
@@ -8551,58 +8689,75 @@ const comportamientoFacetasPopUp = {
         var facetaActual = 0;
         var facetaPintadoActual = 0;
         var ul = $(`<ul class="listadoFacetas">`);
-
+        // Petición al servicio para obtención de Facetas
         this.fin = true;
 
         var arrayTextoActual = this.textoActual.split(" ");
 
         for (i = 0; i < this.arrayTotales.length; i++) {
-            var nombre = this.arrayTotales[i][0];
+            if (!this.arrayTotales[i][1].hasClass("isChildren")) {
+                var nombre = this.arrayTotales[i][0];
 
-            var mostrar = true;
-            for (j = 0; j < arrayTextoActual.length; j++) {
-                mostrar = mostrar && nombre.indexOf(arrayTextoActual[j]) >= 0;
-            }
+                var mostrar = true;
+                for (j = 0; j < arrayTextoActual.length; j++) {
+                    mostrar = mostrar && nombre.indexOf(arrayTextoActual[j]) >= 0;
+                }
 
-            if (facetaPintadoActual < 22 && mostrar) {
-                facetaActual++;
-                if (facetaActual >= facetaMin && facetaActual <= facetaMax) {
-                    facetaPintadoActual++;
-                    if (facetaPintadoActual == 1) {
-                        ul = $(`<ul class="listadoFacetas">`);
-                        that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
-                    } else if (facetaPintadoActual == 12) {
-                        ul = $(`<ul class="listadoFacetas">`);
-                        that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
+                if (facetaPintadoActual < 22 && mostrar) {
+                    facetaActual++;
+                    if (facetaActual >= facetaMin && facetaActual <= facetaMax) {
+                        facetaPintadoActual++;
+                        if (facetaPintadoActual == 1) {
+                            ul = $(`<ul class="listadoFacetas">`);
+                            that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
+                        } else if (facetaPintadoActual == 12) {
+                            ul = $(`<ul class="listadoFacetas">`);
+                            that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
+                        }
+                        var li = $("<li>");
+                        li.append(this.arrayTotales[i][1]);
+                        if (this.arrayTotales[i][2].length > 0) {
+                            PintarFacetasHijas(this.arrayTotales[i][2], li);
+                        }
+                        
+                        ul.append(li);
                     }
-                    var li = $("<li>");
-                    li.append(this.arrayTotales[i][1]);
-                    ul.append(li);
+                }
+                if (this.fin && facetaPintadoActual == 22 && mostrar) {
+                    this.fin = false;
                 }
             }
-            if (this.fin && facetaPintadoActual == 22 && mostrar) {
-                this.fin = false;
-            }
+
+            this.buscando = false;
+            // Establecer el tÃ­tulo o cabecera titular del modal
+            that.$modalLoaded.find(".loading-modal-facet-title").text(
+                that.facetasConPopUp[that.IndiceFacetaActual][1]
+            );
+            // Ocultar el Loading
+            that.$modalLoaded.find('.loading-modal-facet').addClass('d-none');
         }
 
-        // Configurar click de la faceta
-        $(".indice-lista .faceta").click(function (e) {
+        // Configurar click de las faceta
+        $(".indice-lista .faceta").off().click(function (e) {
             AgregarFaceta($(this).attr("name"));
             // Cerrar modal
             that.$modalLoaded.modal('toggle');
             e.preventDefault();
         });
 
-        this.buscando = false;
-        // Establecer el tÃ­tulo o cabecera titular del modal
-        that.$modalLoaded.find(".loading-modal-facet-title").text(
-            that.facetasConPopUp[that.IndiceFacetaActual][1]
-        );
-        // Ocultar el Loading
-        that.$modalLoaded.find('.loading-modal-facet').addClass('d-none');
+        //Añadir comportamiento desplegable para facetas de tipo tesauro semántico
+        plegarSubFacetas.init();
     },
 };
 
+function PintarFacetasHijas(facetasHijas, listaTodasFacetas) {    
+    let conjuntoFacetasHijas = `
+    <ul>
+        ${facetasHijas.html()}
+    </ul>
+    `;    
+    listaTodasFacetas.append(conjuntoFacetasHijas);
+}
 
 function VerFaceta(faceta, controlID) {
     if (document.getElementById(controlID + '_aux') == null) {
@@ -11742,7 +11897,7 @@ function Redirigir(response)
 var PeticionesCookie = {
     CargarCookie() {
         var urlPeticion = null;
-        urlPeticion = $('#inpt_UrlLogin').val().split("/login")[0] + "/RefrescarCookie";
+        urlPeticion = $('#inpt_UrlLoginCookie').val() + "/RefrescarCookie";
         GnossPeticionAjax(
             urlPeticion,
             null,
@@ -13849,7 +14004,7 @@ $(document).ready(function () {
         if ($(this).val().indexOf('|') > -1) {
             $(this).val($(this).val().replace(/\|/g, ''));
         };
-        if (event.which || event.keyCode) {
+        if (!$(this).hasClass('ac_input') && (event.which || event.keyCode)) {
             if ((event.which == 13) || (event.keyCode == 13)) {
                 $(this).parent().find('.encontrar').click();
                 return false;
@@ -17385,6 +17540,7 @@ const operativaSolicitudCreacionComunidad = {
 
         // KeyUp en Nombre corto de Comunidad
         this.txtNombreCortoComunidad.on("keyup", function (e) {
+            this.value = this.value.replace(/[^a-zA-Z0-9 _ -]/g, '').trim();
             this.value = this.value.toLowerCase();
         });
 
@@ -18743,7 +18899,7 @@ const operativaPeticionCambiarContrasenia = {
                 // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contrase�a
                 that.panelCambioPassword.remove()
             })
-            .fail(function () {
+            .fail(function (html) {
                 // Mostrar panel info con su clase
                 that.panelErroresInformativo.removeClass(that.okClass);
                 that.panelErroresInformativo.addClass(that.errorClass);
@@ -18789,14 +18945,17 @@ const operativaPeticionCambiarContrasenia = {
  *  - Desde la propia ficha de recurso (Enviar Link)
  *  - Panel lateral del usuario si dispone de permisos en la comunidad para enviar invitaciones 
  * */
-const operativaEnviarResource_Link_Community_Invitation= {
+const operativaEnviarResource_Link_Community_Invitation = {
     /**
      * Acci�n para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();        
-        if (pParams.autocompleteParams) { this.configAutocompleteService(pParams.autocompleteParams); }        
+        if (pParams.autocompleteParams) {
+            this.configAutocompleteService(pParams.autocompleteParams);
+            this.configAutocompleteServiceForCommunityGroups(pParams.autocompleteParams)
+        }
     },
     /*
      * Opciones de configuraci�n de la vista
@@ -18804,13 +18963,19 @@ const operativaEnviarResource_Link_Community_Invitation= {
     config: function (pParams) {
         // Inicializaci�n de las vistas  
         this.txtFiltro = $(`#${pParams.idTxtFiltro}`);
+        this.txtFiltroGrupos = $(`#${pParams.idTxtFiltroGrupos}`);
         this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);        
         this.buttonLitAniadirCorreo = $(`#${pParams.idButtonLitAniadirCorreo}`);
         this.txtHackInvitados = $(`#${pParams.idTxtHackInvitados}`);
+        this.txtHackGrupos = $(`#${pParams.idTxtHackGrupos_invite_community}`);
         // El autocomplete necesita solo el nombre del input oculto
         this.txtHackInvitadosInputName = pParams.idTxtHackInvitados;
+        // El autocomplete necesita solo el nombre del input oculto
+        this.txtHackGruposInvitadosInputName = pParams.idTxtFiltroGrupos;
+
         this.panContenedorInvitados = $(`#${pParams.idPanContenedorInvitados}`);
         this.listaDestinatarios = $(`#${pParams.idListaDestinatarios}`);
+        this.listaGrupos = $(`#${pParams.idPanContenedorGrupos}`);
         this.noDestinatarios = $(`#${pParams.idNoDestinatarios}`);
         this.btnEnviarInvitaciones = $(`#${pParams.idBtnEnviarInvitaciones}`);        
         this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);        
@@ -18865,10 +19030,17 @@ const operativaEnviarResource_Link_Community_Invitation= {
         });
 
         // Configurar el borrado de elementos al pulsar en (x) de un item de los destinatarios
-        this.listaDestinatarios.on('click', 'span', function (event) {
+        this.listaDestinatarios.on('click', '.tag-remove', function (event) {
             const identidad = $(event.target).parent().parent().attr("id");
             that.eliminarUsuario(null, identidad);            
-        });    
+        });
+
+        
+        // Configurar el borrado de grupos al pulsar en (x) de un item de grupos        
+        this.listaGrupos.on('click', '.tag-remove', function (event) {
+            const identidad = $(event.target).parent().parent().attr("id");
+            that.eliminarGrupo(null, identidad);
+        });
     },
 
     /**
@@ -18951,6 +19123,33 @@ const operativaEnviarResource_Link_Community_Invitation= {
     },
 
     /**
+     * Acción que se ejecuta cuando se realice una b�squeda escribiendo el nombre de un grupo de la comunidad y se seleccione un item de resultados devueltos por autocomplete.
+     * Con los datos devueltos, construir� el item y lo  meter� en "panContenedorInvitados". *@     
+     * @param {any} nombre: El nombre del usuario seleccionado
+     * @param {any} identidad: La identidad del item seleccionado     
+     */
+    crearGrupoInvitado: function (nombre, identidad) {
+        // Item que se añadirá como elemento seleccionado
+        let itemHtml = "";
+
+        itemHtml += `<div class="tag" id="${identidad}" data-item="${identidad}">`;
+            itemHtml += `<div class="tag-wrap">`;
+                itemHtml += `<span class="tag-text">${nombre}</span>`;
+                itemHtml += `<span class="tag-remove material-icons">close</span>`;
+            itemHtml += `</div>`;
+        itemHtml += `</div>`;
+
+        // A�adir la identidad al input de grupos    
+        this.txtHackGrupos.val(`${this.txtHackGrupos.val()}&${identidad}`);        
+
+        // A�adir el item en el contenedor de grupos
+        this.listaGrupos.append(itemHtml);
+        
+        // Vaciamos el input donde se ha introducido el grupo a buscar
+        this.txtFiltroGrupos.val('');       
+    },
+
+    /**
      * Acci�n que eliminar� a un elemento al pulsar sobre su (x). Desaparecer� del contenedor y del input oculto que contiene
      * los items seleccionados para el env�o de la solicitud
      * @param {any} fichaId             
@@ -18970,6 +19169,24 @@ const operativaEnviarResource_Link_Community_Invitation= {
         // Comprobar si hay items para mostrar u ocultar mensaje de "Ning�n destinatario..."
         const numItems = this.listaDestinatarios.children().length;
         numItems >= 1 ? this.noDestinatarios.hide() : this.noDestinatarios.show();
+    },
+
+    /**
+         * Acci�n que eliminar� a un elemento al pulsar sobre su (x). Desaparecer� del contenedor y del input oculto que contiene
+         * los items seleccionados para el env�o de la solicitud
+         * @param {any} fichaId             
+         */
+    eliminarGrupo: function (fichaId, identidad) {
+
+        // Eliminar la identidad al input construyendo el nuevo valor que tomará
+        let newTxtHackInvitados = this.txtHackGrupos.val().replace('&' + identidad, '');
+        this.txtHackGrupos.val(newTxtHackInvitados);
+
+        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electr�nicos)
+        let data_item = identidad.replace(/\@/g, '_');
+        data_item = data_item.replace(".", '_');
+        const itemToDelete = $(`*[data-item="${data_item}"]`);
+        itemToDelete.remove();
     },
 
     /**
@@ -19026,6 +19243,46 @@ const operativaEnviarResource_Link_Community_Invitation= {
     },
 
     /**
+         * Configuraci�n del servicio autocomplete para el input buscador de nombres de grupos de la comunidad
+         * Se pasaran los par�metros necesarios los cuales se han obtenido de la vista
+         * @param {any} autoCompleteParams
+         */
+    configAutocompleteServiceForCommunityGroups(autoCompleteParams) {
+        const that = this;
+
+        // Configurar input de autocomplete para grupos de la comunidad
+        this.txtFiltroGrupos.keydown(function (event) {
+            if (event.which || event.keyCode) { if ((event.which == 13) || (event.keyCode == 13)) { return false; } }
+        }).autocomplete(
+            null,
+            {
+                url: $(`#${autoCompleteParams.idInpt_urlServicioAutocompletar}`).val() + '/' + "AutoCompletarGruposInvitaciones",
+                delay: 0,
+                multiple: true,
+                scroll: false,
+                selectFirst: false,
+                minChars: 1,
+                width: 300,
+                cacheLength: 0,
+
+                NoPintarSeleccionado: true,
+                txtValoresSeleccID: that.txtHackGruposInvitadosInputName,
+
+                extraParams: {
+                    identidad: autoCompleteParams.identidad,
+                    identidadMyGnoss: autoCompleteParams.identidadMyGnoss,
+                    identidadOrg: autoCompleteParams.identidadOrg,
+                    proyecto: autoCompleteParams.proyecto,                    
+                }
+            });
+
+        // Configuraci�n la acci�n select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
+        this.txtFiltroGrupos.result(function (event, data, formatted) {
+            that.crearGrupoInvitado(data[0], data[1]);
+        });
+    },
+
+    /**
     * Acción de envío de la invitación de la comunidad o del enlace
     * Se disparará al pulsar el bot�n de "Enviar"
     */
@@ -19043,7 +19300,8 @@ const operativaEnviarResource_Link_Community_Invitation= {
             if (that.txtNotas.val() == undefined) {
                 dataPost = {
                     Guests: that.txtHackInvitados.val(),
-                    Message: "",
+                    Message: encodeURIComponent(that.txtNotas.val().replace(/\n/g, '')),
+                    Groups: that.txtHackGrupos.val()
                 };
             }
             else {
@@ -19067,8 +19325,7 @@ const operativaEnviarResource_Link_Community_Invitation= {
             true
         ).done(function (response) {
             claseDiv = "ok";
-            // 2 - Cerrar modal            
-            $('#modal-invite-community').modal('hide');
+            // 2 - Cerrar modal                        
             $('#modal-container').modal('hide');
             // 3 - Mostrar mensaje OK
             setTimeout(() => {
@@ -19077,14 +19334,11 @@ const operativaEnviarResource_Link_Community_Invitation= {
         }).fail(function (response) {
             claseDiv = "ko";
             /* Mostrar error */
-            // 3 - Mostrar mensaje OK
+            // 3 - Mostrar mensaje KO
             setTimeout(() => {
                 mostrarNotificacion('error', response);
             }, 1500)
         }).always(function (response) {
-            /*that.panelInfoInvitationSent.addClass(claseDiv)
-            that.panelInfoInvitationSent.html(response);
-            that.panelInfoInvitationSent.fadeIn();*/
             OcultarUpdateProgress();
         });
     }
@@ -26224,7 +26478,7 @@ function MVCFiltrarListaSelCat(txt, panDesplID) {
  * @param {any} txt
  * @param {any} panDesplID
  */
-function MVCFiltrarListaSelCatArbol(txt, id) {
+function MVCFiltrarListaSelCatArbol(txt, id, completion = undefined) {
     var cadena = $(txt).val();
     // Eliminamos posibles tildes para búsqueda ampliada
     cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
@@ -26252,6 +26506,9 @@ function MVCFiltrarListaSelCatArbol(txt, id) {
                 }
             });
         });
+    }
+    if (completion != undefined) {
+        completion();
     }
 }
 

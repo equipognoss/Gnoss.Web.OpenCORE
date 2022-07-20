@@ -214,6 +214,11 @@ namespace Gnoss.Web.Middlewares
                             //RedirectToRoute(mHttpContextAccessor.HttpContext.Items["originalPath"]);
                             return context.Items["originalPath"].ToString();
                         }
+                        else
+                        {
+                            context.Items["statusCode"] = 404;
+                            return $"/{comunidadTxt}/{nombreCortoComunidad}/error";
+                        }
                     }
                 }
             }

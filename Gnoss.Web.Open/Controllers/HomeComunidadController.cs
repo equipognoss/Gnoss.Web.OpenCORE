@@ -6,7 +6,6 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado;
 using Es.Riam.Gnoss.AD.Facetado.Model;
-using Es.Riam.Gnoss.AD.Live;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;

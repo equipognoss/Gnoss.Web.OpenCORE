@@ -1557,7 +1557,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                                 if (archivoInfo1 != null)
                                 {
-                                    nuevoEnlace = archivoInfo1.Name;
+                                    nuevoEnlace = archivoInfo1.Name.ToLower();
                                 }
                                 else
                                 {

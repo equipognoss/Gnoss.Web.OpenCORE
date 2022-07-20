@@ -7019,6 +7019,13 @@ function EtiquetadoAutomaticoDeRecursos(titulo, descripcion, txtHack, pEsPaginaE
     var servicio = $('input.inpt_urlEtiquetadoAutomatico').val();
     var params = {};
     params['ProyectoID'] = $('input.inpt_proyID').val();
+    params['documentoID'] = documentoID;
+    var ext = $('#txtHackEnlaceDoc').val();
+    if (ext != undefined) {
+        ext = ext.split(".").pop();
+        ext = "." + ext;
+        params['extension'] = ext;
+    }
     var numMax = 15000;
     titulo = urlEncode(titulo);
     descripcion = urlEncode(descripcion);
@@ -11135,7 +11142,7 @@ function Redirigir(response)
 var PeticionesCookie = {
     CargarCookie() {
         var urlPeticion = null;
-        urlPeticion = $('#inpt_UrlLogin').val().split("/login")[0] + "/RefrescarCookie";
+        urlPeticion = $('#inpt_UrlLoginCookie').val() + "/RefrescarCookie";
         GnossPeticionAjax(
             urlPeticion,
             null,

@@ -1,11 +1,28 @@
 ﻿@model SharedSemCms
 
-@{
+@*
+Descripción
+-----------------------------------------------
+Vista que pinta la cabecera donde irán los diferentes tabs multiidioma de una ontología. Es aquí donde se mostrará la vista AddLanguageToMultilanguageTabs
 
-    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
-    string idControl = Model.semanticPropertyModel.OntologyPropInfo.ControlID;
-    string divTabsID = idControl.Replace("Campo_", "divContPesIdioma_");
-    string langActual = "";
+Variables
+----------------------------------------------------------------
+*@
+@{
+Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
+string idControl = Model.semanticPropertyModel.OntologyPropInfo.ControlID;
+string divTabsID = idControl.Replace("Campo_", "divContPesIdioma_");
+string langActual = "";
+string tabId = @divTabsID + "_tab";
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista que pinta la cabecera donde irán los diferentes tabs multiidioma de una ontología. --------------------
+*@
+
+
+@{
 
     if (Model.semanticPropertyModel.OntologyPropInfo.UniqueValue)
     {
@@ -18,9 +35,9 @@
         }
     }
 
-    <div id="@divTabsID" class="block tabsGroup" langActual="@langActual">
+    <div id="@divTabsID" class="mb-3" langActual="@langActual">
         <div class="acciones tabspresentation">
-            <ul>
+            <ul class="nav nav-tabs" id="@tabId" role="tablist">
                 @{
                     SharedSemCms sharedSemCms = new SharedSemCms();
                     sharedSemCms.semanticPropertyModel = Model.semanticPropertyModel;
@@ -38,8 +55,6 @@
             </ul>
         </div>
     </div>
-
-
 
 }
 

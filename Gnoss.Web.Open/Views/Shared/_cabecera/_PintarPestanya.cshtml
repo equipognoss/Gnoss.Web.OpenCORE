@@ -11,20 +11,22 @@
     {
         clasePest += " navHomeCom";
     }
-
-    <li class="@clasePest @Model.pPestanya.Name.ToLower()">
-        <a @Html.Raw(Model.pPintarEnlaces ? "href=\"" + Model.pPestanya.Url + "\"" : " disabled=\"disabled\"") @Html.Raw(Model.pPestanya.OpenInNewWindow ? "target=\"_blank\"" : "")>@Model.pPestanya.Name</a>
-        @if (Model.pPestanya.SubTab != null && Model.pPestanya.SubTab.Count > 0)
-        {
+    if (!string.IsNullOrEmpty(Model.pPestanya.Name))
+    {
+        <li class="@clasePest @Model.pPestanya.Name.ToLower()">
+            <a @Html.Raw(Model.pPintarEnlaces ? "href=\" " + Model.pPestanya.Url + " \"" : " disabled=\" disabled\"") @Html.Raw(Model.pPestanya.OpenInNewWindow ? "target=\"_blank\"" : "")>@Model.pPestanya.Name</a>
+            @if (Model.pPestanya.SubTab != null && Model.pPestanya.SubTab.Count > 0)
+            {
             <ul>
                 @foreach (CommunityModel.TabModel pPestanyaInt in Model.pPestanya.SubTab)
                 {
                     PintarPestanyaCabecera pintar = new PintarPestanyaCabecera();
                     pintar.pPestanya = pPestanyaInt;
                     pintar.pPintarEnlaces = Model.pPintarEnlaces;
-                    @Html.PartialView("../Shared/_cabecera/_PintarPestanya", pintar);
+                    Html.PartialView("../Shared/_cabecera/_PintarPestanya", pintar);
                 }
             </ul>
-        }
-    </li>
+            }
+        </li>
+    }
 }

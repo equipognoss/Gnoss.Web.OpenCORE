@@ -4530,7 +4530,7 @@ function AgregarValorGrupoGnossAutocompletar(pControlID, pData) {
 }
 
 function SeleccionarIdioma(pLink, pEntidad, pPropiedad, pIdioma, pMultiple) {
-    var li = $('li.active', $(pLink).parent().parent());
+    var li = $('li.activo', $(pLink).parent().parent());
     var idiomaActual = li.attr('rel');
 
     var valorProp = ObtenerValorEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem);
@@ -4558,8 +4558,10 @@ function SeleccionarIdioma(pLink, pEntidad, pPropiedad, pIdioma, pMultiple) {
             $('#' + idControlCampoPes).attr('langActual', valorProp);
         //}
 
-        li.attr('class', '');
-        $(pLink).parent().attr('class', 'active');
+        //li.attr('class', '');
+        li.removeClass('activo');
+        //$(pLink).parent().attr('class', 'active');
+        $(pLink).parent().addClass('activo');
         DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, GetValorDecode(ExtraerTextoIdioma(valorAntiguo, pIdioma)));
     }
 }
