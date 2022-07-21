@@ -1662,7 +1662,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             proyCL.Dispose();
 
-            ControladorAdministrarVistas.LimpiarCacheVistasRedis(EsAdministracionEcosistema, $"/{VIEWS_DIRECTORY}/CMSPagina/{pPersonalizacionComponenteID.ToString()}.cshtml", UrlIntragnoss);
+            ControladorAdministrarVistas.LimpiarCacheVistasRedis(EsAdministracionEcosistema, "", UrlIntragnoss);
         }
 
         private List<string> ObtenerFicherosDeDirectorio(string pDirectorio)
