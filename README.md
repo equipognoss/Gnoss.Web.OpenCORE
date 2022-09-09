@@ -63,6 +63,9 @@ web:
      replicacionActivadaHome: "true"
      VirtuosoHome__VirtuosoEscrituraHome: ${VirtuosoHome__VirtuosoEscrituraHome}
      DesplegadoDocker: "true"
+     scopeIdentity: ${scopeIdentity}
+     clientIDIdentity: ${clientIDIdentity}
+     clientSecretIdentity: ${clientIDIdentity}
     volumes:
       - ./logs/web:/app/logs
       - ./logs/web:/app/trazas
