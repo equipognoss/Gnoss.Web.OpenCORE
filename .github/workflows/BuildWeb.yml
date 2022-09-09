@@ -2,9 +2,9 @@ name: BuildWeb
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ develop ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -19,7 +19,7 @@ jobs:
         repository: equipognoss/Gnoss.Commons.OpenCORE
         token: ${{ secrets.MY_PAT }}
         path: ./Gnoss.Commons
-        ref: develop
+        ref: main
     - name: change folder
       run: |
         cd ..
