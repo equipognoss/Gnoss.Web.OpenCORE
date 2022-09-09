@@ -2,9 +2,9 @@ name: BuildWeb
 
 on:
   push:
-    branches: [ main ]
+    branches: [ develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ develop ]
 
 jobs:
   build:
@@ -19,12 +19,12 @@ jobs:
         repository: equipognoss/Gnoss.Commons.OpenCORE
         token: ${{ secrets.MY_PAT }}
         path: ./Gnoss.Commons
-        ref: main
+        ref: develop
     - name: change folder
       run: |
         cd ..
-        mv Gnoss.Web/Gnoss.Commons Gnoss.Commons
-        cd Gnoss.Web
+        mv Gnoss.Web.OpenCORE/Gnoss.Commons Gnoss.Commons
+        cd Gnoss.Web.OpenCORE
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
