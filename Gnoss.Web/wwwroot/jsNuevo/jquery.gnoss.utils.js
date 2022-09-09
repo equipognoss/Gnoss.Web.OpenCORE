@@ -833,10 +833,12 @@ var modoVisualizacionListados = {
     },
     showGridView: function () {
         this.list.removeClass(this.cssListView);
-        this.list.addClass(this.cssGridView);
+        //this.list.addClass(this.cssGridView);
+        this.list.addClass("mosaicView");
     },
     showListView: function () {
-        this.list.removeClass(this.cssGridView);
+        //this.list.removeClass(this.cssGridView);
+        this.list.removeClass("mosaicView");
         this.list.addClass(this.cssListView);
     },
     preloader: function (group) {
@@ -845,7 +847,7 @@ var modoVisualizacionListados = {
         //group.css('visibility','hidden');
         group.addClass('gridPreview');
         var imagenes = $('.miniatura img', group);
-        var numeroImagenes = imagenes.size();
+        var numeroImagenes = imagenes.length;
 
         for (var i=1;i<=5;i++)
         {
@@ -861,17 +863,18 @@ var modoVisualizacionListados = {
         } else {
             var contador = 0;
             //sthis.view.hide();
+            imagenes.load(function () {
+                var imagen = $(this);
+                contador++;
+                if (contador > numeroImagenes - 1) {
+                    that.calcular(group);
+                    group.removeClass('gridPreview');
+                    //group.css('visibility','visible');
+                    that.view.show();
+                }
+            });
         };
-        imagenes.load(function () {
-            var imagen = $(this);
-            contador++;
-            if (contador > numeroImagenes - 1) {
-                that.calcular(group);
-                group.removeClass('gridPreview');
-                //group.css('visibility','visible');
-                that.view.show();
-            }
-        });
+        
         return;
     },
     seguridadImagenesRotas: function () {
@@ -922,7 +925,8 @@ var modoVisualizacionListados = {
         return;
     },
     setView: function () {
-        this.gridView.hasClass(this.cssActiveView) ? this.isGridViewDefault = true : this.isGridViewDefault = false;
+        //this.gridView.hasClass(this.cssActiveView) ? this.isGridViewDefault = true : this.isGridViewDefault = false;
+        $(".activeView").hasClass("aMosaicView") ? this.isGridViewDefault = true : this.isGridViewDefault = false;
         return;
     },
     enganchar: function () {

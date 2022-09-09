@@ -105,7 +105,7 @@ namespace Gnoss.Web.Controllers
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
         public IActionResult aceptar_peticion(Guid peticion_id)
         {
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
             Dictionary<string, byte[]> logosProyectos = new Dictionary<string, byte[]>();
             string ruta = $"proyectos/{peticion_id}";
@@ -188,7 +188,7 @@ namespace Gnoss.Web.Controllers
 
                     //Subimos el fichero al servidor
                     Stopwatch sw = LoggingService.IniciarRelojTelemetria();
-                    GestionDocumental gd = new GestionDocumental(mLoggingService);
+                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                     gd.Url = UrlServicioWebDocumentacion.Replace("https://", "http://");
                     gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString(), ".xml");
                     gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString() + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xml");
@@ -205,7 +205,7 @@ namespace Gnoss.Web.Controllers
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
         public IActionResult rechazar_peticion(Guid peticion_id)
         {
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
 
             GeneralCN generalCN = new GeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);

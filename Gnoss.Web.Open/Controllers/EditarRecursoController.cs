@@ -1020,7 +1020,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                                 byte[] bufferReducido = UtilImages.ImageToBytePng(imagenPeque);
 
-                                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                                 servicioImagenes.Url = UrlIntragnossServicios;
                                 bool correcto = false;
 
@@ -1045,8 +1045,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     resultado = 1;
 
                                     string idAuxGestorDocumental = "";
-
-                                    GestionDocumental gd = new GestionDocumental(mLoggingService);
+                                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                                     gd.Url = UrlServicioWebDocumentacion;
                                     //gd.Timeout = 600000;
                                     sw = LoggingService.IniciarRelojTelemetria();
@@ -1099,7 +1098,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     string idAuxGestorDocumental = "";
 
                                     //Subimos el fichero al servidor
-                                    GestionDocumental gd = new GestionDocumental(mLoggingService);
+                                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                                     gd.Url = UrlServicioWebDocumentacion;
                                     sw = LoggingService.IniciarRelojTelemetria();
 
@@ -1923,7 +1922,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             Documento doc = CrearDocumentoEnModeloAcido(mDocumentoID, categoriasSeleccionadas);
 
-            FuncionalidadSharepoint();
+            //FuncionalidadSharepoint(doc);
 
             if (SubidaUnificada && doc.TipoDocumentacion == TiposDocumentacion.FicheroServidor)
             {
@@ -2034,6 +2033,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             else//Es enlace
             {
                 rutaFichero = mNombreDocumento.Trim();
+                if (UtilCadenas.EsEnlaceSharepoint(rutaFichero)) {
+                    AD.EntityModel.Models.Documentacion.Documento docAux = new AD.EntityModel.Models.Documentacion.Documento();
+                    docAux.Enlace = rutaFichero;
+                    FuncionalidadSharepoint(docAux);
+                    rutaFichero = docAux.Enlace;
+                }
+                
             }
 
             if (rutaFichero == null)
@@ -2905,8 +2911,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     mEditRecCont.ModifyResourceModel.EditFileAvailable = false;
                     mEditRecCont.ModifyResourceModel.UploadedAttachedNameByAddin = "(" + nombreDocTemporal + ")";
-
-                    GestionDocumental gestorDocumentalWS = new GestionDocumental(mLoggingService);
+                    GestionDocumental gestorDocumentalWS = new GestionDocumental(mLoggingService, mConfigService);
                     gestorDocumentalWS.Url = UrlServicioWebDocumentacion;
                     sw = LoggingService.IniciarRelojTelemetria();
                     byte[] buffer1 = gestorDocumentalWS.ObtenerRecursoTemporal(idDocTemporal.Value, Path.GetExtension(nombreDocTemporal));
@@ -3359,7 +3364,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private int GuardarArchivoTemporal_ModificarRecurso_GestorDocumental(byte[] pFichero, string pNombre, string pExtension)
         {
             //Subimos el fichero al servidor
-            GestionDocumental gd = new GestionDocumental(mLoggingService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
             gd.Url = UrlServicioWebDocumentacion;
 
             string idAuxGestorDocumental = "";
@@ -3602,11 +3607,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 KeyValuePair<bool, bool> parCapturaWeb_GeneraImgMini = ExtraerReemplazoArchivo_ModificarRecurso();
-
-                ActionResult redireccion = FuncionalidadSharepointCrearVersion(mDocumentoID, Documento.FilaDocumento.Enlace);
+                string enlaceNuevoAux;
+                ActionResult redireccion = FuncionalidadSharepointCrearVersion(mDocumentoID, Documento.FilaDocumento.Enlace, out enlaceNuevoAux);               
                 if (redireccion != null)
                 {
                     return redireccion;
+                }
+                ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
+                if (!string.IsNullOrEmpty(sharepointConfigurado) && UtilCadenas.EsEnlaceSharepoint(enlaceNuevoAux))
+                {
+                    Documento.Enlace = enlaceNuevoAux;
+                    Documento.FilaDocumento.Enlace = enlaceNuevoAux;
                 }
 
                 if (mErrorDocumento != null)
@@ -4329,7 +4341,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     TipoArchivo tipoArchivo = TipoArchivo.Otros;
                     string idAuxGestorDocumental = "";
-                    GestionDocumental gd = new GestionDocumental(mLoggingService);
+                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                     gd.Url = UrlServicioWebDocumentacion;
 
                     byte[] buffer1 = null;
@@ -4414,7 +4426,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         byte[] bufferReducido = UtilImages.ImageToBytePng(imagenPeque);
 
-                        ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                        ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                         servicioImagenes.Url = UrlIntragnossServicios;
                         bool correcto = false;
 
@@ -4511,7 +4523,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         else
                         {
                             //Subimos el fichero al servidor
-                            gd = new GestionDocumental(mLoggingService);
+                            gd = new GestionDocumental(mLoggingService, mConfigService);
                             gd.Url = UrlServicioWebDocumentacion;
                             //gd.Timeout = 600000;
 
@@ -4660,7 +4672,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string nombre = System.IO.Path.GetFileNameWithoutExtension(txtHackArchivo).ToLower();
 
                 //Obtenemos el fichero del servidor
-                GestionDocumental gestorDoc = new GestionDocumental(mLoggingService);
+                GestionDocumental gestorDoc = new GestionDocumental(mLoggingService, mConfigService);
                 gestorDoc.Url = UrlServicioWebDocumentacion;
 
                 byte[] archivoTemporal = gestorDoc.ObtenerDocumentoWebTemporal(IdentidadActual.Clave, nombre, extension);
@@ -5651,7 +5663,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ObtenerSemCmsController(Documento).FusionarOntologiasYXMLEntExtEditables(mOntologia, ProyectoSeleccionado.Clave, propiedadesOmitirPintado, ParametroProyecto);
             }
 
-            SemCmsController.ApañarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
+            SemCmsController.ApanyarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
             List<ElementoOntologia> instanciasPrincipales = null;
 
             if (EditandoFormSem)
@@ -6075,7 +6087,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         //imagen.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
                         //buffer1 = ms.ToArray();
 
-                        ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                        ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                         servicioImagenes.Url = UrlIntragnossServicios;
 
                         bool correcto = servicioImagenes.AgregarImagenADirectorio(buffer1, Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, "temp", UtilArchivos.DirectorioDocumento(documentoID)), especialID, extensionArchivo);
@@ -6178,7 +6190,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 //    pExtensionArchivo = ".jpg";
 
 
-                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                 servicioImagenes.Url = UrlIntragnossServicios;
 
                 correcto = servicioImagenes.AgregarImagenADirectorio(pBuffer1, Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(pDocumentoID)), pEspecialID, pExtensionArchivo);
@@ -6250,8 +6262,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else
                 {
-
-                    GestionDocumental gestionDoc = new GestionDocumental(mLoggingService);
+                    GestionDocumental gestionDoc = new GestionDocumental(mLoggingService, mConfigService);
                     gestionDoc.Url = UrlServicioWebDocumentacion;
 
                     string directorio = Path.Combine(UtilArchivos.ContentDocumentosSem, UtilArchivos.DirectorioDocumento(pDocumentoID)) + idioma;
@@ -8576,7 +8587,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 string especialID = ruta.Substring(ruta.LastIndexOf("/") + 1);
 
-                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                 servicioImagenes.Url = UrlIntragnossServicios;
 
                 byte[] bytesImagen = servicioImagenes.ObtenerImagen(ruta, extensionArchivo);
@@ -9550,7 +9561,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 //Subimos el fichero al servidor
-                gd = new GestionDocumental(mLoggingService);
+                gd = new GestionDocumental(mLoggingService, mConfigService);
                 gd.Url = UrlServicioWebDocumentacion;
                 byte[] bufferRecurso = gd.ObtenerRecursoTemporal(pDocumento.Clave, Path.GetExtension(mModelSaveRec.Link));
 
@@ -9612,7 +9623,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         byte[] bufferReducido = UtilImages.ImageToBytePng(imagenPeque);
 
-                        ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                        ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                         servicioImagenes.Url = UrlIntragnossServicios;
                         bool correcto = false;
 
@@ -11080,7 +11091,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     docCN.ObtenerBaseRecursosProyecto(dwDocumentacion, ProyectoSeleccionado.FilaProyecto.ProyectoID);
                     //GestorDocumental = new GestorDocumental(dwDocumentacion, mLoggingService, mEntityContext);
                     //GestorDocumental.DataWrapperDocumentacion = dwDocumentacion;
-                    CargaInicial();
+                    if (!EditandoRecurso)
+                    {
+                        CargaInicial();
+                    }
+                    
                 }
                 codigo = docCN.DocumentoRepetidoTituloEnlace(pTitulo, enlaceRepeticion, Guid.Empty, GestorDocumental.BaseRecursosIDActual, out documentoRepetidoID);
             }
@@ -11500,7 +11515,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return creandoVersion && mTipoDocumento == TiposDocumentacion.Hipervinculo && (!string.IsNullOrEmpty(RequestParams("documentoID")) || !string.IsNullOrEmpty(RequestParams("docID")));
         }
 
-        private ActionResult FuncionalidadSharepoint()
+        private ActionResult FuncionalidadSharepoint(AD.EntityModel.Models.Documentacion.Documento pDoc = null)
         {
             ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
@@ -11539,7 +11554,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     Guid usuarioID = (Guid)personaCN.ObtenerUsuarioIDDePersonaID(personaID);
                     string tokenUsuario = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.Sharepoint, usuarioID);
-
+                    string refreshToken = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.SharepointRefresh, usuarioID);
                     if (!string.IsNullOrEmpty(tokenUsuario))
                     {
                         //Si existe comprobamos si sigue siendo valido
@@ -11547,13 +11562,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         if (!tokenEsValido)
                         {
                             //Si no es valido, generamos uno nuevo llamando al servicio de login
-                            return Redirect(urlRedirect);
+                            //return Redirect(urlRedirect);
+                            tokenUsuario = sharepointController.RenovarToken(refreshToken, usuarioID);
+                            if (string.IsNullOrEmpty(tokenUsuario))
+                            {
+                                return Redirect(urlRedirect);
+                            }
+                            sharepointController.Token = tokenUsuario;
+                            string nombreFichero = sharepointController.GuardarArchivoDesdeAPI(enlace);
+                            if (pDoc != null)
+                            {
+                                pDoc.Enlace = $"{pDoc.Enlace}|||{nombreFichero}";
+                            }
                         }
                         else
                         {
                             //Si es valido, guardamos el archivo
                             sharepointController.Token = tokenUsuario;
-                            sharepointController.GuardarArchivoDesdeAPI(enlace);
+                            string nombreFichero = sharepointController.GuardarArchivoDesdeAPI(enlace);
+                            if (pDoc != null)
+                            {
+                                pDoc.Enlace = $"{pDoc.Enlace}|||{nombreFichero}";
+                            }                           
                         }
                     }
                     else
@@ -11568,10 +11598,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return null;
         }
 
-        private ActionResult FuncionalidadSharepointCrearVersion(Guid docID, string enlace)
+        private ActionResult FuncionalidadSharepointCrearVersion(Guid docID, string enlace, out string enlaceNuevo)
         {
             ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
+            enlaceNuevo = enlace;
             if (!string.IsNullOrEmpty(sharepointConfigurado))
             {
                 string urlServicioLogin = mConfigService.ObtenerUrlServicioLogin();
@@ -11601,7 +11632,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     Guid usuarioID = (Guid)personaCN.ObtenerUsuarioIDDePersonaID(personaID);
                     string tokenUsuario = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.Sharepoint, usuarioID);
-
+                    string refreshToken = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.SharepointRefresh, usuarioID);
                     if (!string.IsNullOrEmpty(tokenUsuario))
                     {
                         //si existe en la bd comprobamos si el token sigue siendo valido
@@ -11609,13 +11640,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         if (!tokenEsValido)
                         {
                             //si existe pero no es valido generamos uno nuevo llamando al servicio de login
-                            return Redirect(urlRedirect);
+                            //return Redirect(urlRedirect);
+                            tokenUsuario = sharepointController.RenovarToken(refreshToken, usuarioID);
+                            if (string.IsNullOrEmpty(tokenUsuario))
+                            {
+                                return Redirect(urlRedirect);
+                            }
+                            sharepointController.Token = tokenUsuario;
+                            string nombreFichero = sharepointController.GuardarArchivoDesdeAPI(enlace);
+                            if (!enlace.Contains("|||"))
+                            {
+                                enlaceNuevo = $"{enlace}|||{nombreFichero}";
+                            }
                         }
                         else
                         {
                             //si existe y es valido guardamos el archivo
                             sharepointController.Token = tokenUsuario;
-                            sharepointController.GuardarArchivoDesdeAPI(enlace);
+                            string nombreFichero = sharepointController.GuardarArchivoDesdeAPI(enlace);
+                            if (!enlace.Contains("|||"))
+                            {
+                                enlaceNuevo = $"{enlace}|||{nombreFichero}";
+                            }
+
                         }
                     }
                     else
@@ -11669,7 +11716,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     Guid usuarioID = (Guid)personaCN.ObtenerUsuarioIDDePersonaID(personaID);
                     string tokenUsuario = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.Sharepoint, usuarioID);
-
+                    string tokenRefresh = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.SharepointRefresh, usuarioID);
                     if (!string.IsNullOrEmpty(tokenUsuario))
                     {
                         //si existe en la bd comprobamos si el token sigue siendo valido
@@ -11677,7 +11724,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         if (!tokenEsValido)
                         {
                             //si existe pero no es valido solicitamos uno nuevo llamando al servicio de login
-                            return Redirect(urlRedirect);
+                            //return Redirect(urlRedirect);
+                            tokenUsuario = sharepointController.RenovarToken(tokenRefresh, usuarioID);
+                            if (string.IsNullOrEmpty(tokenUsuario))
+                            {
+                                return Redirect(urlRedirect);
+                            }
+                            sharepointController.Token = tokenUsuario;
+                            tokenSP = tokenUsuario;
                         }
                         else
                         {
@@ -11734,15 +11788,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     Guid usuarioID = (Guid)personaCN.ObtenerUsuarioIDDePersonaID(personaID);
                     string tokenUsuario = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.Sharepoint, usuarioID);
-
+                    string tokenRefresh = usuarioCN.ObtenerLoginEnRedSocialPorUsuarioId(TipoRedSocialLogin.SharepointRefresh, usuarioID);
                     if (!string.IsNullOrEmpty(tokenUsuario))
                     {
                         //si existe en la bd comprobamos si el token sigue siendo valido
                         bool tokenEsValido = sharepointController.ComprobarValidezToken(tokenUsuario);
                         if (!tokenEsValido)
                         {
-                            //si existe pero no es valido solicitamos uno nuevo llamando al servicio de login
-                            return Redirect(urlRedirect);
+                            //si existe pero no es valido solicitamos uno nuevo llamando al servicio de logina
+                            //return Redirect(urlRedirect);
+                            tokenUsuario = sharepointController.RenovarToken(tokenRefresh, usuarioID);
+                            if (string.IsNullOrEmpty(tokenUsuario))
+                            {
+                                return Redirect(urlRedirect);
+                            }
+                            sharepointController.Token = tokenUsuario;
+                            tokenSP = tokenUsuario;
                         }
                         else
                         {
@@ -12006,8 +12067,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 string urlRedirect = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, documentoWeb, (IdentidadOrganizacion != null));
                 urlRedirect += "?versioned";
-
-                ActionResult redireccion = FuncionalidadSharepointCrearVersion(documentoNuevaVersion.FilaDocumento.DocumentoID, Documento.FilaDocumento.Enlace);
+                string enlaceNuevo;
+                ActionResult redireccion = FuncionalidadSharepointCrearVersion(documentoNuevaVersion.FilaDocumento.DocumentoID, Documento.FilaDocumento.Enlace, out enlaceNuevo);
                 if (redireccion != null)
                 {
                     string urlServicioLogin = mConfigService.ObtenerUrlServicioLogin();
@@ -12248,8 +12309,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 int resultado = 0;
 
                 string idAuxGestorDocumental = "";
-
-                GestionDocumental gestorDocumental = new GestionDocumental(mLoggingService);
+                GestionDocumental gestorDocumental = new GestionDocumental(mLoggingService, mConfigService);
                 gestorDocumental.Url = mConfigService.ObtenerUrlServicioDocumental();
 
                 byteArray = gestorDocumental.ObtenerDocumento(TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, ProyectoSeleccionado.FilaProyecto.OrganizacionID, filaDocumento.ProyectoID.Value, mDocumentoID, ext);
@@ -12263,7 +12323,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (mTipoDocumento == TiposDocumentacion.Imagen)
                 {
-                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                     servicioImagenes.Url = UrlIntragnossServicios;
 
                     bool correcto = false;

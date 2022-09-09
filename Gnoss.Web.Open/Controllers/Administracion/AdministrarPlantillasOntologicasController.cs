@@ -558,7 +558,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 if (Ontologia.FicheroIMG == null)
                 {
-                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                     servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
                     byte[] buffer = servicioImagenes.ObtenerImagenDeDirectorioOntologia($"Archivos{Path.DirectorySeparatorChar}" + documentoID.ToString().Substring(0, 3), documentoID + "_240", ".jpg");
                     if (buffer != null && buffer.Any())
@@ -1490,6 +1490,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             }
                             Dictionary<string, List<string>> selectores = new Dictionary<string, List<string>>();
                             selectores = ObtenerSelectores(buffer1);
+                            DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            List<AD.EntityModel.Models.Documentacion.Documento> listaEntidadesSecundarias = documentacionCN.ObtenerOntologiasSecundarias(UsuarioActual.ProyectoID);
                             foreach (string grafo in selectores.Keys)
                             {
                                 foreach (string selector in selectores[grafo])
@@ -1497,7 +1499,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                     FacetaEntidadesExternas facetaEntidad = new FacetaEntidadesExternas();
                                     facetaEntidad.Grafo = grafo;
                                     facetaEntidad.BuscarConRecursividad = true;
-                                    facetaEntidad.EsEntidadSecundaria = false;
+                                    facetaEntidad.EsEntidadSecundaria = listaEntidadesSecundarias.Any(item => item.Enlace.Equals(grafo));
                                     facetaEntidad.EntidadID = UrlIntragnoss + "items/" + selector;
                                     facetaEntidad.OrganizacionID = UsuarioActual.OrganizacionID;
                                     facetaEntidad.ProyectoID = UsuarioActual.ProyectoID;
@@ -1522,7 +1524,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                             if (buffer4 != null)
                             {
-                                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                                 servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
 
                                 servicioImagenes.AgregarImagenADirectorioOntologia(buffer4, $"Archivos{Path.DirectorySeparatorChar}{DocumentoID.ToString().Substring(0, 3)}", DocumentoID + "_240", extensionArchivo4);

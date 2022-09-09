@@ -93,15 +93,17 @@
                 </div>
             </div>
 
-            @*<input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />*@
             @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
             {
                 <input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+                <input type="hidden" id="auxIC" value="NO" />
             }
             else
             {
-                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
+                <input type="hidden" id="auxIC" value="SI" />
             }
+
             <div class="panAniadir">
                 @Html.GetText("COMADMINPESTANYAS", "SELECCIONATIPO")
                 <select class="cmbAddPestanya">
@@ -169,9 +171,8 @@
     }
     else
     {
-        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
     }
-    @*<input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />*@
 </div>
 
 <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
@@ -317,6 +318,14 @@
                         inputUrl.trigger('blur');
                     });
                 });
+                $(that.id + 'input[name="TabMetaDescription"]:not(:disabled)').each(function () {
+                    var inputUrl = $(this);
+                    that.montarMultidioma(inputUrl);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
+                        inputUrl.trigger('blur');
+                    });
+                });
                 componenteTabulado.init();
             }
         },
@@ -413,9 +422,19 @@
             });
             $(that.id + 'span.eliminar').click(function () {
                 that.eliminarPestanya($(this));
+                if ($("#auxIC").val() == 'SI') 
+                {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
             });
             $(that.id + 'span.editar').click(function () {
                 that.editarPestanya($(this));
+                if ($("#auxIC").val() == 'SI')
+                {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
             });
             $(that.id + 'input.guardar').click(function () {
                 that.guardarPestanya($(this));
@@ -823,6 +842,42 @@
                     that.mostrarErrorNombreVacio(inputName.closest('.row'));
                     return true;
                 }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+
+            return false;
+        },
+        comprobarMetadescripciones: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row.pestanya:not(".ui-state-disabled") .modified input[name = "TabMetaDescription"]:not(":disabled")');
+            inputsNombre.each(function () {
+                that.comprobarMetadescripcion($(this));
+            });
+            return error;
+        },
+        comprobarMetadescripcion: function (inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
 
                 $.each(that.ListaIdiomas, function () {
                     var idioma = this.key;
@@ -1448,6 +1503,7 @@
         if (!error && that.comprobarExportaciones()) {
             error = true;
         }
+        this.comprobarMetadescripciones();
         return error;
     },
     guardar: function () {
@@ -1748,79 +1804,94 @@
     ol.facetasSortable li.row.facetasSortable section.panEdicion {
         width: 760px;
     }
-    ol.exportacionesSortable li.row.exportacion section.panEdicion p {
-        width: 730px;
-    }
-    ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque {
-       margin-bottom: 0;
-       border-bottom: 0;
-    }
-    ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque:last-of-type {
-       border-bottom: 1px solid;
-    }
-    ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque p {
-        width: 710px;
-    }
-    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion{
+
+        ol.exportacionesSortable li.row.exportacion section.panEdicion p {
+            width: 730px;
+        }
+
+        ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque {
+            margin-bottom: 0;
+            border-bottom: 0;
+        }
+
+            ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque:last-of-type {
+                border-bottom: 1px solid;
+            }
+
+            ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque p {
+                width: 710px;
+            }
+
+    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion {
         width: 717px;
     }
-    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion p{
-        width: 700px;
-    }
-    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion .tipo {
-        width: 100px;        
-    }
-    ol.exportacionesSortable li.row.exportacion input[type="text"], 
-    ol.exportacionesSortable li.row.exportacion textarea{
+
+        ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion p {
+            width: 700px;
+        }
+
+        ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion .tipo {
+            width: 100px;
+        }
+
+    ol.exportacionesSortable li.row.exportacion input[type="text"],
+    ol.exportacionesSortable li.row.exportacion textarea {
         width: 520px;
     }
+
     ol.filtrosOrdenSortable li.row input[type="text"],
     ol.filtrosOrdenSortable li.row textarea {
         width: 590px;
     }
-    ol.exportacionesSortable li.row.exportacion .bloque input[type="text"], 
+
+    ol.exportacionesSortable li.row.exportacion .bloque input[type="text"],
     ol.exportacionesSortable li.row.exportacion .bloque textarea {
         width: 490px;
     }
+
     ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion {
         width: 697px;
     }
-    ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion p {
-        width: 667px;
-    }
-    ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion .tipo{
-        width: 170px;        
-    }
+
+        ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion p {
+            width: 667px;
+        }
+
+        ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion .tipo {
+            width: 170px;
+        }
 
     .editarFiltroOrden {
         margin-bottom: 20px;
         margin-right: 20px;
     }
-    .editarFiltroOrden .error {
-        margin-left: 20px;
-    }
-        
+
+        .editarFiltroOrden .error {
+            margin-left: 20px;
+        }
+
     .row .header .nombrePestanya {
         font-weight: bold;
     }
+
     .row .header .tipoPestanya {
         padding-left: 10px;
     }
 
-    .table.filtrado .oculto{
-        display:block;
+    .table.filtrado .oculto {
+        display: block;
     }
 
-    .table.filtrado li.row.visible > .header{
+    .table.filtrado li.row.visible > .header {
         border-bottom: 1px solid #000;
     }
 
     .table.filtrado li.pestanya ol.subPestanyas,
     .table.filtrado li.pestanya.row {
-        border:0 !important;
+        border: 0 !important;
     }
 
-    .table.filtrado{
+    .table.filtrado {
         border-bottom: 0 !important;
         border: 1px solid #000;
     }

@@ -120,7 +120,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         if (ExtensionesImagenesPermitidas.Contains(extensionArchivo))
                         {
-                            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                             servicioImagenes.Url = UrlIntragnossServicios;
 
                             string primeroDisponible = servicioImagenes.ObtenerNombreDisponible(ruta + nombre + extensionArchivo);
@@ -136,15 +136,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             bool exito = false;
                             try
                             {
-                                string rutaFichero = UtilArchivos.ContentImagenes + "/" + ruta;
-                                string urlPeticion = string.Format("{0}/DocumentosLink/AgregarDocumentoADirectorio?pRuta={1}&pNombre={2}&pExtension={3}", UrlIntragnossServicios, rutaFichero, System.Net.WebUtility.UrlEncode(nombre), System.Net.WebUtility.UrlEncode(extensionArchivo));
-                                string respuesta = UtilHttpWeb.EnviarFicheroEnPeticionPOST(urlPeticion, buffer1);
+                                string rutaFichero = $"{UtilArchivos.ContentImagenes}/{ruta}";
+                                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+                                servicioImagenes.Url = UrlIntragnossServicios;
+                                exito = servicioImagenes.AgregarFichero(buffer1.ToArray(), nombre, extensionArchivo, rutaFichero);
                                 InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(buffer1), fichero.FileName);
-                                exito = respuesta.Equals("OK");
                             }
                             catch (Exception ex)
                             {
-                                GuardarLogError(ex.Message + " \r\nPila: " + ex.StackTrace);
+                                GuardarLogError($"{ex.Message} \r\nPila: {ex.StackTrace}");
                             }
 
                             error = !exito;
@@ -168,7 +168,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         public void CargarModelo(int pPagina, string pSearch, string pExtension, string pNumusos)
         {
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios;
             string ruta = UtilArchivos.ContentImagenesProyectos + "/personalizacion/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "/cms/";
             string[] nombres = servicioImagenes.ObtenerIDsImagenesPorNombreImagen(ruta, pSearch);
@@ -543,7 +543,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if ((!ViewBag.ListaComponentesItem.ContainsKey(nombreComponente) || ViewBag.ListaComponentesItem[nombreComponente].Count == 0)
                     && (!ViewBag.ListaPaginasItem.ContainsKey(nombreComponente) || ViewBag.ListaPaginasItem[nombreComponente].Count == 0))
                 {
-                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                     servicioImagenes.Url = UrlIntragnossServicios;
                     String ruta = UtilArchivos.ContentImagenesProyectos + "/personalizacion/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "/cms/";
                     servicioImagenes.BorrarImagen(ruta + nombreComponente);

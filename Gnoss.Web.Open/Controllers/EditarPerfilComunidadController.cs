@@ -603,7 +603,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             int minSize = 240;
             int maxSize = 450;
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios;
 
             //Si se sube un fichero nuevo se borra la foto temporal
@@ -1306,7 +1306,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
 
-        private Dictionary<string, string> GuardarPerfilPersonal(EditProfileViewModel.ProfilePersonalViewModel pPerfilPersonal)
+        private Dictionary<string, string> GuardarPerfilPersonal(ProfilePersonalViewModel pPerfilPersonal)
         {
             bool existenErrores = false;
 
@@ -1373,7 +1373,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State == EntityState.Detached)
                     {
-                        IdentidadActual.Persona.FilaPersona = mEntityContext.Persona.FirstOrDefault(persona => persona.PersonaID.Equals(IdentidadActual.Persona.FilaPersona.PersonaID));
+                        IdentidadActual.Persona.FilaPersona = personaCN.ObtenerFilaPersonaPorID(IdentidadActual.Persona.FilaPersona.PersonaID);
                     }
 
                     bool CambiadoNombre = (IdentidadActual.Persona.FilaPersona.Nombre != pPerfilPersonal.Name);
@@ -1514,6 +1514,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         IdentidadActual.Persona.Localidad = "";
                         IdentidadActual.Persona.CodPostal = "";
                     }
+                    personaCN.Actualizar();
 
                     IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     DataWrapperIdentidad dataWrapperIdentidad = identidadCN.ObtenerDatosExtraProyectoOpcionIdentidadPorIdentidadID(IdentidadActual.Clave);
@@ -2327,7 +2328,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 urlFicheroImagen = UtilArchivos.ContentImagenesPersonas + "/" + mControladorBase.UsuarioActual.PersonaID.ToString();
             }
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios;
 
             //Si se sube un fichero nuevo se borra la foto temporal

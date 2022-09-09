@@ -21,6 +21,8 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -46,7 +48,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
@@ -64,10 +65,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarSearchViewModel pOptions)
         {
-            string autocompletar  = pOptions.TagsAutocompletar;
+            bool iniciado = false;
+            try
+            {
+                iniciado = HayIntegracionContinua;
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
+                return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+            }
+            string autocompletar = pOptions.TagsAutocompletar;
             List<string> listaAutocompletar = new List<string>();
             string[] trozosAuto = autocompletar.Split(',');
-            for(int i = 0; i<trozosAuto.Length; i++)
+            for (int i = 0; i < trozosAuto.Length; i++)
             {
                 listaAutocompletar.Add(trozosAuto[i]);
             }
@@ -75,7 +86,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string txtLibre = pOptions.TagsTxtLibre;
             List<string> listaTxtLibre = new List<string>();
             string[] trozosTxt = txtLibre.Split(',');
-            for(int i = 0; i<trozosTxt.Length; i++)
+            for (int i = 0; i < trozosTxt.Length; i++)
             {
                 listaTxtLibre.Add(trozosTxt[i]);
             }
@@ -86,13 +97,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 paramCN.ActualizarConfigAutocompletar(ProyectoSeleccionado.Clave, listaAutocompletar);
                 paramCN.ActualizarConfigSearch(ProyectoSeleccionado.Clave, listaTxtLibre);
 
+                //cambios para IC             
+                if (iniciado)
+                {
+                    ConfigSearchModel configSearchModel = new ConfigSearchModel();
+                    configSearchModel.ConfigSearch = txtLibre;
+                    configSearchModel.ConfigAutocompletar = autocompletar;
+                    HttpResponseMessage resultado = InformarCambioAdministracion("ConfigSearch", JsonConvert.SerializeObject(configSearchModel, Formatting.Indented));
+                    if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
+                    {
+                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                    }
+                }
                 return GnossResultOK();
             }
             catch (Exception)
             {
                 return GnossResultERROR();
                 throw;
-            }           
+            }
         }
         /// <summary>
         /// Recargar Autocompletar
@@ -126,7 +149,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR();
                 throw;
             }
-            
+
         }
         #endregion
 
@@ -148,9 +171,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             listaConfigSearch = paramCN.ObtenerConfigSearch(ProyectoSeleccionado.Clave);
 
-            for(int i = 0; i<listaConfigAutocompletar.Count; i++)
+            for (int i = 0; i < listaConfigAutocompletar.Count; i++)
             {
-                for(int j = 0; j<listaConfigSearch.Count; j++)
+                for (int j = 0; j < listaConfigSearch.Count; j++)
                 {
                     if (listaConfigAutocompletar[i].Equals(listaConfigSearch[j]))
                     {
@@ -160,14 +183,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
             string valoresInicialesAuto = string.Empty;
-            foreach(string valor in listaConfigAutocompletar)
+            foreach (string valor in listaConfigAutocompletar)
             {
                 valoresInicialesAuto = valoresInicialesAuto + "," + valor;
             }
             adSearch.TagsAutocompletar = valoresInicialesAuto;
 
             string valoresInicialesSearch = string.Empty;
-            foreach(string valor in listaConfigSearch)
+            foreach (string valor in listaConfigSearch)
             {
                 valoresInicialesSearch = valoresInicialesSearch + "," + valor;
             }
@@ -183,7 +206,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             string exchange = "";
             string colaRabbit = "ColaTagsComunidadesGeneradorAutocompletar";
-            
+
             if (mConfigService.ExistRabbitConnection(RabbitMQClient.BD_SERVICIOS_WIN))
             {
                 using (RabbitMQClient rabbitMQ = new RabbitMQClient(RabbitMQClient.BD_SERVICIOS_WIN, colaRabbit, mLoggingService, mConfigService, exchange, colaRabbit))
@@ -192,7 +215,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
         }
-        
+
         #endregion
     }
 }

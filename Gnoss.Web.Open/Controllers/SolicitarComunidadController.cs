@@ -287,7 +287,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 //Subimos el fichero al servidor
                 Stopwatch sw = LoggingService.IniciarRelojTelemetria();
-                GestionDocumental gd = new GestionDocumental(mLoggingService);
+                GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                 gd.Url = UrlServicioWebDocumentacion.Replace("https://", "http://");
                 gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString(), ".xml");
                 gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString() + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xml");

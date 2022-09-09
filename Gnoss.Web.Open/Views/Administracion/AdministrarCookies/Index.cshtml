@@ -55,22 +55,20 @@
 <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
 <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
 <script>
+    var UrlPagina = document.location.href;
+
     function CrearCookiesProyecto(url) {
         CargarCookiesMetaproyecto();
     }
 
     function CargarCookiesMetaproyecto() {
-       // GnossPeticionAjax("@Html.GetComunidad().Url/administrar-cookies/pintar-cookies-metaproyecto", null, true).done(function (data) {
-       //    $("#cookiesProyecto").html(data);
-        GnossPeticionAjax(document.location.href + "/pintar-cookies-metaproyecto", null, true).done(function (data) {
+        GnossPeticionAjax(UrlPagina + "/pintar-cookies-metaproyecto", null, true).done(function (data) {
             $("#cookiesProyecto").html(data);
         }).always(function () { CargarCategoriasCookies(); });
     }
 
     function CargarCategoriasCookies() {
-        //GnossPeticionAjax("@Html.GetComunidad().Url/administrar-cookies/pintar-categorias-metaproyecto", null, true).done(function (data) {
-        //    $("#categoriasCookies").html(data);
-        GnossPeticionAjax(document.location.href + "/pintar-categorias-metaproyecto", null, true).done(function (data) {
+        GnossPeticionAjax(UrlPagina + "/pintar-categorias-metaproyecto", null, true).done(function (data) {
             $("#categoriasCookies").html(data);
         }).always(function ()
         {
@@ -105,8 +103,7 @@
 
         MostrarUpdateProgress();
         GnossPeticionAjax(
-            //"@Html.GetComunidad().Url/administrar-cookies/add-category",
-            document.location.href + "/add-category",
+            UrlPagina + "/add-category",
             null,
             true
         ).done(function (data) {
@@ -134,8 +131,7 @@
             Categoria: categoria
         }
         GnossPeticionAjax(
-            //"@Html.GetComunidad().Url/administrar-cookies/add-cookie",
-            document.location.href + "/add-cookie",
+           UrlPagina + "/add-cookie",
             dataPost,
             true
         ).done(function (data) {
@@ -153,11 +149,9 @@
 
     function anyadirCookiesAnalytics() {
         $('.error.general').remove();
-
         MostrarUpdateProgress();
         GnossPeticionAjax(
-            //"@Html.GetComunidad().Url/administrar-cookies/pintar-cookies-analiticas",
-            document.location.href + "/pintar-cookies-analiticas",
+           UrlPagina + "/pintar-cookies-analiticas",
             null,
             true
         ).done(function (data) {
@@ -176,8 +170,7 @@
 
         MostrarUpdateProgress();
         GnossPeticionAjax(
-            //"@Html.GetComunidad().Url/administrar-cookies/pintar-cookies-youtube",
-            document.location.href + "/pintar-cookies-youtube",
+            UrlPagina + "/pintar-cookies-youtube",
             null,
             true
         ).done(function (data) {
@@ -205,6 +198,20 @@
 
         that.ListaCategorias = {};
         var cont = 0;
+
+        var inputsNombre = $('.row.categoriaCookie:not(".ui-state-disabled") .modified input[name = "CategoryName"]:not(":disabled")');
+        inputsNombre.each(function () {
+            if (OperativaAcciones.comprobarNombreVacio($(this))) {
+                error = true;
+            }
+        });
+        var inputsDescripcion = $('.row.categoriaCookie:not(".ui-state-disabled") .modified textarea[name = "CategoryDescription"]:not(":disabled")');
+        inputsDescripcion.each(function () {
+            if (OperativaAcciones.comprobarTextareas($(this))) {
+                error = true;
+            }
+        });
+
         $('.row.categoriaCookie').each(function () {
             that.obtenerDatosCategorias($(this), cont++);
         });
@@ -256,8 +263,7 @@
     function guardarCookies() {
         var that = this;
         GnossPeticionAjax(
-            //"@Html.GetComunidad().Url/administrar-cookies/save-cookie",
-            document.location.href + "/save-cookie",
+            UrlPagina + "/save-cookie",
             that.ListaCookies,
             true
         ).done(function (data) {
@@ -287,13 +293,24 @@
     function guardarCategorias() {
         var that = this;
         GnossPeticionAjax(
-            //"@Html.GetComunidad().Url/administrar-cookies/save-category",
-            document.location.href + "/save-category",
+            UrlPagina + "/save-category",
             that.ListaCategorias,
             true
         ).done(function (data) {
             that.ListaCookies = {};
             var cont = 0;
+            var inputsNombre = $('.row.cookieProyecto:not(".ui-state-disabled") .modified input[name = "CookieName"]:not(":disabled")');
+            inputsNombre.each(function () {
+                if (OperativaAcciones.comprobarNombreVacio($(this))) {
+                    error = true;
+                }
+            });
+            var inputsDescripcion = $('.row.cookieProyecto:not(".ui-state-disabled") .modified textarea[name = "CookieDescription"]:not(":disabled")');
+            inputsDescripcion.each(function () {
+                if (OperativaAcciones.comprobarTextareas($(this))) {
+                    error = true;
+                }
+            });
             $('.row.cookieProyecto').each(function () {
                 that.obtenerDatosCookies($(this), cont++);
             });
@@ -329,7 +346,7 @@
         }
 
         $(botonEliminar).parent().addClass('deleted');
-        $(botonEliminar).parent().append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>');
+        $(botonEliminar).parent().append('<span class="deshacer">@Html.GetComunidad()</span>');
         $(botonEliminar).parent().prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>');
 
         $(botonEliminar).parent().find('span.deshacer').click(function () {
@@ -404,7 +421,7 @@
         engancharMultiIdioma: function () {
             var that = this;
             if (that.ListaIdiomas.length > 1) {
-                $(that.id + 'input[name="TabName"]:not(:disabled)').each(function () {
+                $(that.id + 'input[name="CookieName"]:not(:disabled)').each(function () {
                     var inputName = $(this);
                     that.montarMultidioma(inputName);
 
@@ -416,10 +433,27 @@
                         inputName.trigger('blur');
                     });
                 });
-                $(that.id + 'input[name="TabUrl"]:not(:disabled)').each(function () {
+                $(that.id + 'input[name="CookieDescription"]:not(:disabled)').each(function () {
                     var inputUrl = $(this);
                     that.montarMultidioma(inputUrl);
-
+                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
+                        inputUrl.trigger('blur');
+                    });
+                });
+                 $(that.id + 'input[name="CategoryName"]:not(:disabled)').each(function () {
+                    var inputName = $(this);
+                    that.montarMultidioma(inputName);
+                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('keyup');
+                    }).blur(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('blur');
+                    });
+                });
+                $(that.id + 'textarea[name="CategoryDescription"]:not(:disabled)').each(function () {
+                    var inputUrl = $(this);
+                    that.montarMultidioma(inputUrl);
                     $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
                         inputUrl.trigger('blur');
                     });
@@ -427,18 +461,73 @@
                 componenteTabulado.init();
             }
         },
+        montarMultidioma: function (input) {
+            var that = this;
+            if (input.attr('name') == "CookieDescription" || input.attr('name') == "CategoryDescription") {
+                input.attr("hidden", "true");
+            } else {
+                input.attr("type", "hidden");
+            }
+
+            var textoMultiIdioma = input.val().split('|||')
+            var listaTextos = [];
+            $.each(textoMultiIdioma, function () {
+                if (this != "") {
+                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
+                    listaTextos.push(objetoIdioma);
+                }
+            });
+
+            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma" ><div class=" acciones tabspresentation "><ul>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
+            });
+
+            htmlMultIdioma += '</ul></div>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                var textoIdioma = listaTextos.findValueByKey(key);
+                if (textoIdioma == null || textoIdioma == '') {
+                    if (key.indexOf('-') > 0) {
+                        var keyAux = key.substr(0, key.indexOf('-'));
+                        textoIdioma = listaTextos.findValueByKey(keyAux);
+                    }
+                    if (textoIdioma == null || textoIdioma == '') {
+                        if (esIdiomaPorDefecto && listaTextos.length > 0) {
+                            textoIdioma = listaTextos[0].value;
+                        }
+                        else {
+                            textoIdioma = '';
+                        }
+                    }
+                }
+                if (input.attr('name') == "CookieDescription" || input.attr('name') == "CategoryDescription") {
+                    htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p><textarea id="texto_' + key + '" class="text big">' + textoIdioma +'</textarea></p></div>';
+                } else {
+                    htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p><input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma + '"></p></div>';
+                }
+
+            });
+
+            htmlMultIdioma += '</div>';
+
+            input.before(htmlMultIdioma);
+        },
         obtenerTextoYClaveDeIdioma: function (texto) {
             var that = this;
             var idioma = that.IdiomaPorDefecto;
             var textoIdioma = texto;
             if (textoIdioma.length > 3) {
                 var indice = 3;
-                var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
-                if (auxIdioma[0] == '-' && textoIdioma.length > 6) {
-                    indice = 6;
-                    auxIdioma = textoIdioma.substr(textoIdioma.length - 6);
-                }
-                if (auxIdioma[0] == '@('@')') {
+                var auxIdioma = textoIdioma.substr(textoIdioma.length - indice);
+                if (that.ListaIdiomas.findValueByKey(auxIdioma.substr(1)) != null) {
                     idioma = auxIdioma.substr(1);
                     textoIdioma = textoIdioma.substr(0, textoIdioma.length - indice);
                 }
@@ -511,6 +600,67 @@
             }).always(function () {
                 OcultarUpdateProgress();
             });
+        },
+        comprobarNombreVacio: function (inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+
+            return false;
+        },
+        comprobarTextareas: function(inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' textarea').val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' textarea').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+            return false;
         }
     }
 

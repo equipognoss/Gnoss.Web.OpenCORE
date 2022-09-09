@@ -8239,9 +8239,9 @@ const comportamientoFacetasPopUp = {
 
     },
     config: function () {
-        //1Âº Nombre de la faceta
-        //2Âº Titulo del buscador
-        //3Âº True para ordenar por orden alfabÃ©tico, False para utilizar el orden por defecto
+        //1º Nombre de la faceta
+        //2º Titulo del buscador
+        //3º True para ordenar por orden alfabético, False para utilizar el orden por defecto
         var that = this;
 
         /* Esquema que tendrÃ¡
@@ -8253,10 +8253,10 @@ const comportamientoFacetasPopUp = {
             ], //Tags            
         ];*/
 
-        // Array de Facetas que tendrÃ¡ visualizaciÃ³n con PopUp
+        // Array de Facetas que tendrá visualización con PopUp
         this.facetasConPopUp = [];
 
-        // Recoger todos posibles botones de "Ver mÃ¡s" para construir un array de facetasConPopUp                
+        // Recoger todos posibles botones de "Ver más" para construir un array de facetasConPopUp                
         this.facetsArray = $('.verMasFacetasModal');
 
         // Posibles traducciones que se utilicen en los modales de Facetas
@@ -8272,17 +8272,21 @@ const comportamientoFacetasPopUp = {
         };
 
         $(this.facetsArray).each(function () {
-            // Construir el objeto Array de la faceta para luego aÃ±adirlo a facetasConPopUp
+            var ordenAlfabetico = $(this).data('facetalphabeticalorder');
+            if (ordenAlfabetico == undefined) {
+                ordenAlfabetico = "True";
+            }
+            // Construir el objeto Array de la faceta para luego añadirlo a facetasConPopUp
             const facetaArray = [
-                $(this).data('facetkey'), // Faceta para bÃºsqueda
-                $(this).data('facetname'), // TÃ­tulo de la faceta
-                true,                     // Ordenar por orden alfabÃ©tico,                
+                $(this).data('facetkey'),               // Faceta para búsqueda
+                $(this).data('facetname'),              // Título de la faceta
+                $(this).data('facetalphabeticalorder'), // Ordenar por orden alfabético,
             ];
             that.facetasConPopUp.push(facetaArray);
         });
 
         for (i = 0; i < this.facetasConPopUp.length; i++) {
-            // Faceta de tipo de bÃºsqueda
+            // Faceta de tipo de búsqueda
             var faceta = this.facetasConPopUp[i][0];
             var facetaSinCaracteres = faceta
                 .replace(/\@@@/g, "---")
@@ -8412,24 +8416,7 @@ const comportamientoFacetasPopUp = {
         params["pNumeroFacetas"] = -1;
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = FacetaActual;
-
-        //COMENTADO PORQUE EL EVENTO DE BÚSQUEDA ESTÁ DUPLICADO
-        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal                
-        //that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
-        //    .keyup(function () {
-        //        that.textoActual = that.eliminarAcentos($(this).val());
-        //        that.paginaActual = 1;
-        //        that.buscarFacetas();
-        //    })
-        //    .on('paste', function () {
-        //        const input = $(this);
-        //        setTimeout(function () {
-        //            input.keyup();
-        //        }, 200);
-
-        //    });
-    
-    
+            
         // Petición al servicio para obtención de Facetas                
         $.post(obtenerUrl($('input.inpt_UrlServicioFacetas').val()) + "/" + metodo, params, function (data) {
             var htmlRespuesta = $("<div>").html(data);
@@ -8451,7 +8438,7 @@ const comportamientoFacetasPopUp = {
                 });
 
             //Ordena por orden alfabético
-            if (that.facetasConPopUp[that.IndiceFacetaActual][2]) {
+            if (that.facetasConPopUp[that.IndiceFacetaActual][2] != 'False') {
                 that.arrayTotales = that.arrayTotales.sort(function (a, b) {
                     if (a[0] > b[0]) return 1;
                     if (a[0] < b[0]) return -1;
@@ -8664,7 +8651,6 @@ const comportamientoFacetasPopUp = {
     
                                 //Buscamos y pintamos las facetas en el modal
                                 that.buscarFacetas();
-                                //SANTI
                                 plegarSubFacetas.init();
                             });
                         }
@@ -8674,7 +8660,9 @@ const comportamientoFacetasPopUp = {
             });
         }
     },
+    ordernarPorNumeroResultados: function () {
 
+    },
     buscarFacetas: function () {
         buscando = true;
         const that = this;
@@ -14023,26 +14011,32 @@ $(document).ready(function () {
 
     //Buscador de la cabecera superior - Buscador de algunos buscadores (Comentarios, Mensajes...)
     $('.searchGroup .encontrar')
-    .unbind()
-    .click(function (event) {
-        var ddlCategorias = $('.fieldsetGroup .ddlCategorias').val();
-        var url = ObtenerUrlBusqueda(ddlCategorias);
-        if (typeof ($('.tipoBandeja').val()) != 'undefined' && ddlCategorias == 'Mensaje') {
-            //Es una búsqueda en la bandeja de mensajes
-            url = url.replace('search=', $('.tipoBandeja').val() + '&search=')
-        }
-        var parametros = $('.searchGroup .text').val();
-        var autocompletar = $('.ac_results .ac_over');
-        if (typeof (autocompletar) != 'undefined' && autocompletar.length > 0 && typeof ($('.ac_results .ac_over')[0].textContent) != 'undefined') {
-		 
-            parametros = $('.ac_results .ac_over')[0].textContent;
-        }
+        .unbind()
+        .click(function (event) {
+            const input = $(this).parent().find('.text');
+            if (input.hasClass("input_buscador_cms")) {
+                // Busqueda a realizar vía Caja CMS
+                $(".encontrar_cms_form").trigger("submit");
+            } else {
+                var ddlCategorias = $('.fieldsetGroup .ddlCategorias').val();
+                var url = ObtenerUrlBusqueda(ddlCategorias);
+                if (typeof ($('.tipoBandeja').val()) != 'undefined' && ddlCategorias == 'Mensaje') {
+                    //Es una búsqueda en la bandeja de mensajes
+                    url = url.replace('search=', $('.tipoBandeja').val() + '&search=')
+                }
+                var parametros = $('.searchGroup .text').val();
+                var autocompletar = $('.ac_results .ac_over');
+                if (typeof (autocompletar) != 'undefined' && autocompletar.length > 0 && typeof ($('.ac_results .ac_over')[0].textContent) != 'undefined') {
 
-        if (parametros == '') {
-            url = url.replace('?search=', '').replace('/tag/', '');
-        }
-        window.location.href = url + parametros;
-    });
+                    parametros = $('.ac_results .ac_over')[0].textContent;
+                }
+
+                if (parametros == '') {
+                    url = url.replace('?search=', '').replace('/tag/', '');
+                }
+                window.location.href = url + parametros;
+            }
+        });
 });
 
 
@@ -15591,10 +15585,12 @@ var modoVisualizacionListados = {
     },
     showGridView: function () {
         this.list.removeClass(this.cssListView);
-        this.list.addClass(this.cssGridView);
+        //this.list.addClass(this.cssGridView);
+        this.list.addClass("mosaicView");
     },
     showListView: function () {
-        this.list.removeClass(this.cssGridView);
+        //this.list.removeClass(this.cssGridView);
+        this.list.removeClass("mosaicView");
         this.list.addClass(this.cssListView);
     },
     preloader: function (group) {
@@ -15603,7 +15599,7 @@ var modoVisualizacionListados = {
         //group.css('visibility','hidden');
         group.addClass('gridPreview');
         var imagenes = $('.miniatura img', group);
-        var numeroImagenes = imagenes.size();
+        var numeroImagenes = imagenes.length;
 
         for (var i=1;i<=5;i++)
         {
@@ -15619,17 +15615,18 @@ var modoVisualizacionListados = {
         } else {
             var contador = 0;
             //sthis.view.hide();
+            imagenes.load(function () {
+                var imagen = $(this);
+                contador++;
+                if (contador > numeroImagenes - 1) {
+                    that.calcular(group);
+                    group.removeClass('gridPreview');
+                    //group.css('visibility','visible');
+                    that.view.show();
+                }
+            });
         };
-        imagenes.load(function () {
-            var imagen = $(this);
-            contador++;
-            if (contador > numeroImagenes - 1) {
-                that.calcular(group);
-                group.removeClass('gridPreview');
-                //group.css('visibility','visible');
-                that.view.show();
-            }
-        });
+        
         return;
     },
     seguridadImagenesRotas: function () {
@@ -15680,7 +15677,8 @@ var modoVisualizacionListados = {
         return;
     },
     setView: function () {
-        this.gridView.hasClass(this.cssActiveView) ? this.isGridViewDefault = true : this.isGridViewDefault = false;
+        //this.gridView.hasClass(this.cssActiveView) ? this.isGridViewDefault = true : this.isGridViewDefault = false;
+        $(".activeView").hasClass("aMosaicView") ? this.isGridViewDefault = true : this.isGridViewDefault = false;
         return;
     },
     enganchar: function () {

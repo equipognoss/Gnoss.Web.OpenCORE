@@ -16,12 +16,17 @@ using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Newtonsoft.Json;
+using System.Net;
+using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Es.Riam.Gnoss.Recursos;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -80,48 +85,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     }
 
     /// <summary>
-    /// Modelo de la vista de edición de administrar cookies
-    /// </summary>
-    [Serializable]
-    public class CookieEditModel
-    {
-        /// <summary>
-        /// Id de la cookie
-        /// </summary>
-        public string CookieID { get; set; }
-
-        /// <summary>
-        /// Nombre de la cookie
-        /// </summary>
-        public string Nombre { get; set; }
-
-        /// <summary>
-        /// Categoría de la cookie
-        /// </summary>
-        public string Categoria { get; set; }
-
-        /// <summary>
-        /// Descripción de la cookie
-        /// </summary>
-        public string Descripcion { get; set; }
-
-        /// <summary>
-        /// Tipo de la cookie 0 -> Persistent, 1 -> Session, 2 -> Third party
-        /// </summary>
-        public string Tipo { get; set; }
-
-        /// <summary>
-        /// Si se ha eliminado la cookie
-        /// </summary>
-        public string Deleted { get; set; }
-
-        /// <summary>
-        /// Si se ha modificado la cookie
-        /// </summary>
-        public string EsModificada { get; set; }
-    }
-
-    /// <summary>
     /// Modelo de las categorías para la página de edición
     /// </summary>
     [Serializable]
@@ -164,8 +127,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     [Serializable]
     public class CategoriaCookieModel
     {
+        /// <summary>
+        /// Categoría de la cookie
+        /// </summary>
         public CategoriaProyectoCookie CategoriaProyectoCookie { get; set; }
+
+        /// <summary>
+        /// Si ha sido o no moficada la categoría
+        /// </summary>
         public bool Modificada { get; set; }
+        
+        /// <summary>
+        /// Si la categoría tiene o no alguna cookie vinculada
+        /// </summary>
         public bool CookiesVinculadas { get; set; }
     }
 
@@ -175,10 +149,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     public class AdministrarCookiesController : ControllerBaseWeb
     {
         private AdministrarCookiesViewModel mPaginaModel = null;
+        private UtilIdiomas utilIdiomasEspanyol = null;
+        private UtilIdiomas utilIdiomasCatalan = null;
+        private UtilIdiomas utilIdiomasIngles = null;
+        private UtilIdiomas utilIdiomasAleman = null;
+        private UtilIdiomas utilIdiomasItaliano = null;
+        private UtilIdiomas utilIdiomasFrances = null;
+        private UtilIdiomas utilIdiomasGallego = null;
+        private UtilIdiomas utilIdiomasEuskera = null;
+        private UtilIdiomas utilIdiomasPortugues = null;
 
         public AdministrarCookiesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
              : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
         {
+            utilIdiomasEspanyol = new UtilIdiomas("es", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasCatalan = new UtilIdiomas("ca", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasIngles = new UtilIdiomas("en", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasAleman = new UtilIdiomas("de", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasItaliano = new UtilIdiomas("it", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasFrances = new UtilIdiomas("fr", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasGallego = new UtilIdiomas("gl", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasEuskera = new UtilIdiomas("eu", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasPortugues = new UtilIdiomas("pt", mLoggingService, mEntityContext, mConfigService);
         }
 
         /// <summary>
@@ -218,6 +210,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
+        /// <summary>
+        /// Se encarga de pintar las cookies para el metaproyecto
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         public ActionResult PintarCookiesMetaproyecto()
         {
@@ -234,6 +230,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return PartialView("_CookiesProyecto", listaCookieModel);
         }
 
+        /// <summary>
+        /// Se encarga de pintar las categorías de las cookies para el metaproyecto
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         public ActionResult PintarCategoriasCookiesMetaproyecto()
         {
@@ -250,6 +250,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return PartialView("_CategoriasCookies", listaCategoriaCookieModel);
         }
 
+        /// <summary>
+        /// Método para añadir una cookie a la vista
+        /// </summary>
+        /// <param name="Categoria"></param>
+        /// <returns></returns>
         [HttpPost]
         public ActionResult AddCookie(string Categoria)
         {
@@ -268,14 +273,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             CookieModel cookieModel = new CookieModel();
             cookieModel.Modificada = true;
-            cookieModel.ProyectoCookie = cookie;
-            //cookieModel.ListaCategoriaProyectoCookie = new CookieCN().ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
+            cookieModel.ProyectoCookie = cookie;            
             cookieModel.ListaCategoriaProyectoCookie = new List<CategoriaProyectoCookie>();
             cookieModel.ListaCategoriaProyectoCookie.Add(new CategoriaProyectoCookie() { Nombre = categoria[1], CategoriaID = cookie.CategoriaID, Descripcion = "", ProyectoID = cookie.ProyectoID });
 
             return PartialView("_EdicionCookieProyecto", cookieModel);
         }
 
+        /// <summary>
+        /// Se encarga de pintar las cookies analíticas
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         public ActionResult PintarCookiesAnaliticas()
         {
@@ -290,10 +298,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     categoriaGoogleAnalytics.ProyectoID = ProyectoSeleccionado.Clave;
                     categoriaGoogleAnalytics.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoriaGoogleAnalytics.ProyectoID);
                     categoriaGoogleAnalytics.CategoriaID = Guid.NewGuid();
-                    categoriaGoogleAnalytics.Nombre = "Cookies analíticas";
                     categoriaGoogleAnalytics.NombreCorto = "Analiticas";
-                    categoriaGoogleAnalytics.Descripcion = "Son aquellas que permiten al responsable de las mismas el seguimiento y análisis del comportamiento de los usuarios de los sitios web a los que están vinculadas, incluida la cuantificación de los impactos de los anuncios. La información recogida mediante este tipo de cookies se utiliza en la medición de la actividad de los sitios web, aplicación o plataforma, con el fin de introducir mejoras en función del análisis de los datos de uso que hacen los usuarios del servicio.";
-
+                    categoriaGoogleAnalytics.Nombre = $"{utilIdiomasEspanyol.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@es|||{utilIdiomasIngles.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@en|||{utilIdiomasPortugues.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@pt|||{utilIdiomasCatalan.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@ca|||{utilIdiomasEuskera.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@eu|||{utilIdiomasGallego.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@gl|||{utilIdiomasFrances.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@fr|||{utilIdiomasAleman.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@de|||{utilIdiomasItaliano.GetText("MENSAJECOOKIES", "NOMBRECOOKIESANALITICAS")}@it";
+                    categoriaGoogleAnalytics.Descripcion = $"{utilIdiomasEspanyol.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@es|||{utilIdiomasIngles.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@en|||{utilIdiomasPortugues.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@pt|||{utilIdiomasCatalan.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@ca|||{utilIdiomasEuskera.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@eu|||{utilIdiomasGallego.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@gl|||{utilIdiomasFrances.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@fr|||{utilIdiomasAleman.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@de|||{utilIdiomasItaliano.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESANALITICAS")}@it";
                     mEntityContext.CategoriaProyectoCookie.Add(categoriaGoogleAnalytics);
                     mEntityContext.SaveChanges();
                 }
@@ -308,7 +315,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-
+        /// <summary>
+        /// Se encarga de pintar las cookies de youtube (redes sociales)
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         public ActionResult PintarCookiesYoutube()
         {
@@ -323,9 +333,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     categoriaRedesSociales.ProyectoID = ProyectoSeleccionado.Clave;
                     categoriaRedesSociales.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoriaRedesSociales.ProyectoID);
                     categoriaRedesSociales.CategoriaID = Guid.NewGuid();
-                    categoriaRedesSociales.Nombre = "Redes sociales";
                     categoriaRedesSociales.NombreCorto = "Redes sociales";
-                    categoriaRedesSociales.Descripcion = "Cookies de redes sociales";
+                    categoriaRedesSociales.Nombre = $"{utilIdiomasEspanyol.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@es|||{utilIdiomasIngles.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@en|||{utilIdiomasPortugues.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@pt|||{utilIdiomasCatalan.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@ca|||{utilIdiomasEuskera.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@eu|||{utilIdiomasGallego.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@gl|||{utilIdiomasFrances.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@fr|||{utilIdiomasAleman.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@de|||{utilIdiomasItaliano.GetText("MENSAJECOOKIES", "NOMBRECOOKIESREDESSOCIALES")}@it";
+                    categoriaRedesSociales.Descripcion = $"{utilIdiomasEspanyol.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@es|||{utilIdiomasIngles.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@en|||{utilIdiomasPortugues.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@pt|||{utilIdiomasCatalan.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@ca|||{utilIdiomasEuskera.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@eu|||{utilIdiomasGallego.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@gl|||{utilIdiomasFrances.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@fr|||{utilIdiomasAleman.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@de|||{utilIdiomasItaliano.GetText("MENSAJECOOKIES", "DESCRIPCIONCOOKIESREDESSOCIALES")}@it";
 
                     mEntityContext.CategoriaProyectoCookie.Add(categoriaRedesSociales);
                     mEntityContext.SaveChanges();
@@ -341,13 +351,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
+        /// <summary>
+        /// Método que sirve para guardar las cookies
+        /// </summary>
+        /// <param name="ListaCookies"></param>
         [HttpPost]
         public void SaveCookies(CookieEditModel[] ListaCookies)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            List<CookiesModel> lista = new List<CookiesModel>();
+
             foreach (CookieEditModel cookieProyecto in ListaCookies)
             {
+                CookiesModel cookieModel = new CookiesModel();
+
                 bool esEliminada = false;
                 if (cookieProyecto.Deleted != null && bool.Parse(cookieProyecto.Deleted))
                 {
@@ -360,6 +378,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     esEditada = bool.Parse(cookieProyecto.EsModificada);
                 }
 
+                cookieModel.EsModificada = esEditada;
+                cookieModel.Deleted = esEliminada;
                 ProyectoCookie proyectoCookie = cookieCN.ObtenerCookiePorId(new Guid(cookieProyecto.CookieID), ProyectoSeleccionado.Clave);
 
                 if (proyectoCookie == null)
@@ -386,11 +406,51 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     mEntityContext.ProyectoCookie.Remove(proyectoCookie);
                 }
-            }
 
+                if (proyectoCookie != null)
+                {
+                    CategoriaProyectoCookie categoriaProyectoCookie = ObtenerCategoriaDeCookie(proyectoCookie.CategoriaID);
+                    CategoriaCookiesModel categoria = new CategoriaCookiesModel();
+                    categoria.CategoriaID = categoriaProyectoCookie.CategoriaID;
+                    categoria.Descripcion = categoriaProyectoCookie.Descripcion;
+                    categoria.Nombre = categoriaProyectoCookie.Nombre;
+                    categoria.NombreCorto = categoriaProyectoCookie.NombreCorto;
+
+                    cookieModel.Categoria = categoria;
+                    cookieModel.CookieID = proyectoCookie.CookieID;
+                    cookieModel.Descripcion = proyectoCookie.Descripcion;
+                    cookieModel.Nombre = proyectoCookie.Nombre;
+                    cookieModel.Tipo = proyectoCookie.Tipo;
+                    lista.Add(cookieModel);
+                }
+            }
             mEntityContext.SaveChanges();
+
+            /*Incluir cookies en integración continua*/
+            bool iniciado = false;
+            try
+            {
+                iniciado = HayIntegracionContinua;
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
+            }
+            if (iniciado)
+            {
+                List<CookiesModel> listaCookiesSinTecnicas = OmitirCookiesTecnicas(lista);
+                HttpResponseMessage resultado = InformarCambioAdministracion("Cookies", JsonConvert.SerializeObject(listaCookiesSinTecnicas, Formatting.Indented));
+                if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
+                {
+                    throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                }
+            }
         }
 
+        /// <summary>
+        /// Método que se utiliza para guardar las categorías en base de datos
+        /// </summary>
+        /// <param name="ListaCategorias">Lista de categorías a guardar en base de datos</param>
         [HttpPost]
         public void SaveCategories(CategoryEditModel[] ListaCategorias)
         {
@@ -448,6 +508,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mEntityContext.SaveChanges();
         }
 
+        /// <summary>
+        /// Añade una categoría para las cookies a la vista
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         public ActionResult AddCategory()
         {
@@ -468,6 +532,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return PartialView("_EdicionCategoriaCookie", categoriaCookieModel);
         }
 
+        /// <summary>
+        /// Genera las cookies analíticas 
+        /// </summary>
+        /// <param name="pCategoriaID">Ídentificador de la categoría a la que serán vinculadas las cookies generadas</param>
+        /// <returns></returns>
         private List<CookieModel> GenerarCookiesAnaliticas(Guid pCategoriaID)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -508,6 +577,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return listaCookiesAnaliticas;
         }
 
+        /// <summary>
+        /// Genera las cookies de youtube (pertenecen a redes sociales)
+        /// </summary>
+        /// <param name="pCategoriaID">Identificador de la categoría de redes sociales a la que se vinculará</param>
+        /// <returns></returns>
         private List<CookieModel> GenerarCookiesYoutube(Guid pCategoriaID)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -536,6 +610,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return listaCookiesYoutube;
         }
 
+        /// <summary>
+        /// Nos indica si la cookie pasada por parámetro es una cookie Técnica
+        /// </summary>
+        /// <param name="pNombreCookie">Nombre de la cookie</param>
+        /// <returns></returns>
         private bool EsCookieTecnica(string pNombreCookie)
         {
             string[] listaCookiesTecnicas = new string[] { "IdiomaActual", "cookieAviso.gnoss.com", "ASP.NET_SessionId", "UsuarioLogueado", "SesionUsuarioActiva" };
@@ -543,6 +622,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return listaCookiesTecnicas.Contains(pNombreCookie);
         }
 
+        /// <summary>
+        /// Obtriene el tipo de cookie en función del nombre
+        /// </summary>
+        /// <param name="pNombreTipo">Nombre del tipo</param>
+        /// <returns></returns>
         private short ObtenerTipoPorNombre(string pNombreTipo)
         {
             switch (pNombreTipo)
@@ -558,6 +642,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
+        /// <summary>
+        /// Obtiene la categoría completa de base de datos con su identificador
+        /// </summary>
+        /// <param name="pCategoriaID">Identificador de la categoría a obtener</param>
+        /// <returns></returns>
         private CategoriaProyectoCookie ObtenerCategoriaDeCookie(Guid pCategoriaID)
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -572,7 +661,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return categoria;
         }
 
+        /// <summary>
+        /// Devuelve la lista obtenida por parámetro eliminando las cookies técnicas
+        /// </summary>
+        /// <param name="pListaCookies">Lista de la cual queremos eliminar las cookies técnicas</param>
+        /// <returns></returns>
+        private List<CookiesModel> OmitirCookiesTecnicas(List<CookiesModel> pListaCookies)
+        {
+            List<CookiesModel> listaCookiesSinTecnicas = new List<CookiesModel>();
+            foreach (CookiesModel cookie in pListaCookies)
+            {
+                if (!EsCookieTecnica(cookie.Nombre))
+                {
+                    listaCookiesSinTecnicas.Add(cookie);
+                }
+            }
 
+            return listaCookiesSinTecnicas;
+        }
+
+        /// <summary>
+        /// Modelo utilizado en la vista de la página de administración de cookies
+        /// </summary>
         private AdministrarCookiesViewModel PaginaModel
         {
             get
@@ -597,7 +707,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
 
                     mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
-
                     mPaginaModel.ListaProyectoCookie = new List<CookieModel>();
                     mPaginaModel.ListaCategoriaProyectoCookie = new List<CategoriaCookieModel>();
 

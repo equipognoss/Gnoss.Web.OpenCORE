@@ -627,8 +627,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
         private string LimpiarTexto(string pCadena)
         {
-            byte[] tempBytes;
-            tempBytes = Encoding.GetEncoding("ISO-8859-8").GetBytes(pCadena);
+            System.Text.EncodingProvider encodingProvider = System.Text.CodePagesEncodingProvider.Instance;
+            Encoding.RegisterProvider(encodingProvider);
+            byte[] tempBytes = Encoding.GetEncoding("ISO-8859-8").GetBytes(pCadena);
             return Encoding.UTF8.GetString(tempBytes).ToLower();
         }
 

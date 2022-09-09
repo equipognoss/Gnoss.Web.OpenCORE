@@ -423,7 +423,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             //Llamada al servicio web para obtener el contenido del fichero.
-            GestionDocumental gestorDocumental = new GestionDocumental(mLoggingService);
+            GestionDocumental gestorDocumental = new GestionDocumental(mLoggingService, mConfigService);
             gestorDocumental.Url = UrlServicioWebDocumentacion;
 
             byte[] byteArray = null;

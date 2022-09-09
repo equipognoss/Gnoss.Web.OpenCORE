@@ -29,6 +29,7 @@ using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.InterfacesOpen;
+using System.Linq;
 
 namespace Gnoss.Web.Controllers
 {
@@ -38,6 +39,7 @@ namespace Gnoss.Web.Controllers
         private string clientID = "";
         private string clientSecret = "";
         private string baseUrl = "https://graph.microsoft.com/v1.0/";
+        private string microsoftLoginEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
         private string mToken = "";
         private string mTokenCreadorRecurso = "";
         private bool mEsEnlaceSharepoint;
@@ -77,6 +79,40 @@ namespace Gnoss.Web.Controllers
             
         }
 
+        public string RenovarToken(string pRefreshToken, Guid pUsuarioID)
+        {
+            try
+            {
+                string peticion = $"{microsoftLoginEndpoint}";
+                string requestParameters = $"client_id={clientID}&grant_type=refresh_token&refresh_token={pRefreshToken}&client_secret={clientSecret}";
+                byte[] byteData = Encoding.UTF8.GetBytes(requestParameters);
+                string response = UtilGeneral.WebRequest("POST", peticion, byteData);
+                dynamic respuestaObj = JsonConvert.DeserializeObject(response);
+                //Almacenamos los nuevos tokens en BD (los tokens de refresco duran 90 dias)
+                string token = respuestaObj.access_token;
+                string refreshTokenNuevo = respuestaObj.refresh_token;
+                ActualizarTokensUsuario(pUsuarioID, token, refreshTokenNuevo);
+
+                return token;
+            }
+            catch (Exception ex)
+            {
+                return "";
+            }
+            
+        }
+
+        public void ActualizarTokensUsuario(Guid pUsuarioID, string pToken, string pTokenRefresco)
+        {
+            UsuarioVinculadoLoginRedesSociales usuarioSP = mEntityContext.UsuarioVinculadoLoginRedesSociales.Where(parametroApp => parametroApp.UsuarioID.Equals(pUsuarioID) && parametroApp.TipoRedSocial == 6).FirstOrDefault();
+            UsuarioVinculadoLoginRedesSociales usuarioRefresco = mEntityContext.UsuarioVinculadoLoginRedesSociales.Where(parametroApp => parametroApp.UsuarioID.Equals(pUsuarioID) && parametroApp.TipoRedSocial == 7).FirstOrDefault();
+            usuarioSP.IDenRedSocial = pToken;
+            usuarioRefresco.IDenRedSocial = pTokenRefresco;
+            mEntityContext.UsuarioVinculadoLoginRedesSociales.Update(usuarioSP);
+            mEntityContext.UsuarioVinculadoLoginRedesSociales.Update(usuarioRefresco);
+            mEntityContext.SaveChanges();
+        }
+
         public bool ComprobarValidezToken(string token)
         {
             string peticionComprobarToken = $"{baseUrl}me";
@@ -91,7 +127,13 @@ namespace Gnoss.Web.Controllers
 
         public string CodificarUrl(string url)
         {
-            string base64Value = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(url));
+            string[] enlaceConNombre = url.Split("|||");
+            string enlace = url;
+            if (enlaceConNombre.Length > 1)
+            {
+                enlace = enlaceConNombre[0];
+            }
+            string base64Value = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(enlace));
             string encodedUrl = "u!" + base64Value.TrimEnd('=').Replace('/', '_').Replace('+', '-');
 
             return encodedUrl;
@@ -141,7 +183,7 @@ namespace Gnoss.Web.Controllers
             return nombre;
         }
 
-        public void GuardarArchivoDesdeAPI(string url)
+        public string GuardarArchivoDesdeAPI(string url)
         {
             string urlCodificada = CodificarUrl(url);
             string nombreFichero = ExtraerNombreFichero(urlCodificada);
@@ -157,7 +199,7 @@ namespace Gnoss.Web.Controllers
 
             FileInfo archivoInfo = new FileInfo(nombreFichero);
             string extensionArchivo = System.IO.Path.GetExtension(archivoInfo.Name).ToLower();
-            GestionDocumental gd = new GestionDocumental(mLoggingService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
             gd.Url = UrlServicioWebDocumentacion;
             Stream streamFichero = webRequest.GetResponse().GetResponseStream();
             byte[] buffer1;
@@ -169,6 +211,8 @@ namespace Gnoss.Web.Controllers
             }
 
             string idAuxGestorDocumental = gd.AdjuntarDocumento(buffer1, TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, mControladorBase.UsuarioActual.OrganizacionID, mControladorBase.UsuarioActual.ProyectoID, documentoID, extensionArchivo);
+
+            return nombreFichero;
         }
 
         public bool ComprobarSiEstaAlineadoConSharepoint(string url)

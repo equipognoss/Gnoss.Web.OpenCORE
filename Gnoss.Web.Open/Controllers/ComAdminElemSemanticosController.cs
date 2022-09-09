@@ -1646,20 +1646,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             bool creandoNuevo = (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveNewInstance);
             CrearEditarIntanciaOntologiaSecundaria();
             List<ElementoOntologia> entidadesGuardar = mSemController.RecogerValoresRdf(HttpUtility.HtmlDecode(mEditEntSecModel.RdfValue), null);
-            string nuevaSecundaria = "";
-            if (entidadesGuardar.Count > 0 && entidadesGuardar[0].Propiedades[0].PrimerValorPropiedad != null)
-            {
-                if (entidadesGuardar[0].Propiedades.Count > 0)
-                {
-                    nuevaSecundaria = entidadesGuardar[0].Propiedades[0].PrimerValorPropiedad;
-                    string tildes = "[áéíóúöüÁÉÍÓÚÖÜ]";
-                    bool tilde = Regex.IsMatch(nuevaSecundaria, tildes);
-                    if (tilde)
-                    {
-                        return GnossResultERROR("No se pueden poner acentos");
-                    }
-                }
-            }
 
             if (string.IsNullOrEmpty(mEditEntSecModel.EntitySubject))
             {
@@ -1721,8 +1707,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditEntSecModel.OntologyUrl));//("UrlOntologia='" + mEditEntSecModel.OntologyUrl + "'")[0];
             Guid ontologiaID = new Guid(filaConfig.SourceTesSem);
-            mOntologia = ObtenerOntologia(ontologiaID);
-            SemCmsController.ApañarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
+            mOntologia = ObtenerOntologia(ontologiaID); 
+            SemCmsController.ApanyarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
             mModelAdmin.SecondaryEntities.SemanticResourceModel = new SemanticResourceModel();
 
             List<ElementoOntologia> instanciaPinc = null;
@@ -1745,7 +1731,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 mSemController.ObtenerModeloSemCMSEdicion(IdentidadActual.Clave);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 if (string.IsNullOrEmpty(mModelAdmin.SecondaryEntities.SemanticResourceModel.AdminGenerationError) || !ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
                 {

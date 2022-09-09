@@ -19,6 +19,20 @@ namespace Gnoss.Web.Services.VirtualPathProvider
         private IServicesUtilVirtuosoAndReplication _servicesUtilVirtuosoAndReplication;
         public static ConcurrentDictionary<string, string> ListaRutasVirtuales { get; } = new ConcurrentDictionary<string, string>();
         private static Dictionary<Guid, string> ListaHtmlsTemporales = new Dictionary<Guid, string>();
+        private static List<string> ViewImports = new List<string>() 
+        {
+            "@using Es.Riam.Gnoss.Web.MVC.Models",
+            "@using Es.Riam.Gnoss.Web.MVC.Controles.Helper",
+            "@using Es.Riam.Gnoss.Web.MVC.Models.ViewModels",
+            "@using Es.Riam.Gnoss.Web.MVC.Models.Administracion",
+            "@using Es.Riam.Gnoss.AD.ServiciosGenerales",
+            "@using Es.Riam.Gnoss.Web.MVC.Controllers",
+            "@using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion",
+            "@using Es.Riam.Gnoss.Web.Controles",
+            "@using Newtonsoft.Json",
+            "@using Es.Riam.Util",
+            "@using Microsoft.AspNetCore.Components.Web"
+        };
 
         public BDVirtualPath(EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
         {
@@ -110,6 +124,11 @@ namespace Gnoss.Web.Services.VirtualPathProvider
                                 //{
                                 //    virtualPath = virtualPath.Replace("Views", DirectorioVistas);
                                 //}
+                            }
+                            if (!html.Contains(ViewImports.First()))
+                            {
+                                string textoInicial = string.Join("\r\n", ViewImports) + "\r\n";
+                                html = textoInicial + html;
                             }
                             try
                             {

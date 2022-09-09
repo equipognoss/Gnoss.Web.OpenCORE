@@ -121,7 +121,7 @@ namespace Gnoss.Web.Controllers
                     pLogo.CopyTo(ms);
                     fileBytes = ms.ToArray();
                 }
-                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                 string url = UrlIntragnossServicios;
                 servicioImagenes.Url = url;
                 string idFoto;

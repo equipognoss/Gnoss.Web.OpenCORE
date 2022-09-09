@@ -52,7 +52,7 @@ textoVisitas = Html.GetText("LISTARECURSOS", "REPRODUCCIONES");
         @* Mostrar interacciones del recurso (Likes, Dislikes) *@
         @if (FichaDocumento.Votes != null && FichaDocumento.AllowVotes)
         {            
-            @Html.PartialView("../FichaRecurso/_FichaVotos", FichaDocumento.Votes)
+            @Html.PartialView("_FichaVotos", FichaDocumento.Votes)
         }
 
         @* Mostrar certificación del recurso *@
@@ -69,7 +69,7 @@ textoVisitas = Html.GetText("LISTARECURSOS", "REPRODUCCIONES");
     <div class="derecha">
         @if (!PresentacionNoSocial || IdentidadActual.IsProyectAdmin || IdentidadActual.IsProyectSupervisor || Model.Resource.Actions.Edit)
         {                        
-            @Html.PartialView("../FichaRecurso/_FichaAccionesMenu", model)
+            @Html.PartialView("_FichaAccionesMenu", model)
         }    
     </div>
 </div>

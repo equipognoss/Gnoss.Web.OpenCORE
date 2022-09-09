@@ -231,7 +231,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             IFormFile ficheroImagen = Request.Form.Files["ImagenRegistroUsuario"];
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios;
 
             //Si se sube un fichero nuevo se borra la foto temporal

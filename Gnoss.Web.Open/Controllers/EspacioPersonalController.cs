@@ -441,7 +441,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             {
                                 if (doc.TipoDocumentacion == TiposDocumentacion.FicheroServidor)
                                 {
-                                    GestionDocumental gd = new GestionDocumental(mLoggingService);
+                                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                                     gd.Url = UrlServicioWebDocumentacion;
 
                                     espacioArchivo = gd.ObtenerEspacioDocumentoDeBaseRecursosUsuario(TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, mControladorBase.UsuarioActual.PersonaID, recurso, Path.GetExtension(doc.Enlace));
@@ -449,7 +449,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 }
                                 else if (doc.TipoDocumentacion == TiposDocumentacion.Imagen)
                                 {
-                                    ServicioImagenes sI = new ServicioImagenes(mLoggingService);
+                                    ServicioImagenes sI = new ServicioImagenes(mLoggingService, mConfigService);
                                     sI.Url = UrlIntragnossServicios;
 
                                     espacioArchivo = sI.ObtenerEspacioImagenDocumentoPersonal(recurso.ToString(), ".jpg", mControladorBase.UsuarioActual.PersonaID);

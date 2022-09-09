@@ -69,9 +69,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult Guardar(AdministrarSeoGoogleViewModel pParametros)
         {
 
-            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor);
-
-            //GuardarXmlCambiosAdministracion();
+            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
 
             pParametros.CodigoGoogleAnalytics = HttpUtility.UrlDecode(pParametros.CodigoGoogleAnalytics);
             pParametros.ScriptGoogleAnalytics = HttpUtility.UrlDecode(pParametros.ScriptGoogleAnalytics);
@@ -110,7 +108,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarSeoGoogleViewModel();
@@ -131,7 +128,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor);
+                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
                 //string valorCodigo = ControladorProyecto.ObtenerParametroString(ParametroProyecto, "CodigoGoogleAnalytics");
                 //comprobar si esta en ParametroProyecto
 
@@ -154,7 +151,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor);
+                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
                 //comprobar si esta en ParametroProyecto
                 //string valorScript = ControladorProyecto.ObtenerParametroString(ParametroProyecto, "ScriptGoogleAnalytics");
                 string valorScript = contrSeoGoogle.FilaParametrosGenerales.ScriptGoogleAnalytics;

@@ -16,7 +16,6 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
@@ -354,7 +353,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             CMSComponenteEnvioCorreo componente = (CMSComponenteEnvioCorreo)(mControladorCMS.GestorCMSActual.ListaComponentes[ComponentKey]);
             foreach (short orden in componente.ListaCamposEnvioCorreo.Keys)
             {
-                string valorCampo = RequestParams(ComponentKey.ToString() + "_" + orden);
+                string valorCampo = Uri.UnescapeDataString(RequestParams(ComponentKey.ToString() + "_" + orden));
                 if (bool.Parse(componente.ListaCamposEnvioCorreo[orden][TipoPropiedadEnvioCorreo.Obligatorio]) && string.IsNullOrEmpty(valorCampo))
                 {
                     mensajeError += UtilIdiomas.GetText("COMADMINCMS", "ERRORCAMPOVACIO", UtilCadenas.ObtenerTextoDeIdioma(componente.ListaCamposEnvioCorreo[orden][TipoPropiedadEnvioCorreo.Nombre], UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto));

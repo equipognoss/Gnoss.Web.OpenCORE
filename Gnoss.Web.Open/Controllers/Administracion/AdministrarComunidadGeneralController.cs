@@ -287,7 +287,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             FilaParametrosGenerales.IdiomaDefecto = Options.IdiomaPorDefecto;
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios;
 
             GuardarImagenHead(servicioImagenes, Options.ImageHead);
@@ -756,7 +756,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             AdministrarComunidadGeneralModel.ImageCoordenadas ImageHead = new AdministrarComunidadGeneralModel.ImageCoordenadas();
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
 
             string ruta = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "_sup_grande_temp2";
@@ -819,7 +819,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             AdministrarComunidadGeneralModel.ImageCoordenadas ImageHead = new AdministrarComunidadGeneralModel.ImageCoordenadas();
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios;
 
             string ruta = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "_mosaico_grande_temp2";
@@ -888,7 +888,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 ImageHead.Pos_X_1 = int.Parse(coordenadas[2]);
                 ImageHead.Pos_Y_1 = int.Parse(coordenadas[3]);
 
-                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                 servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
                 string ruta = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower();
                 byte[] imagenBytes = servicioImagenes.ObtenerImagen(ruta, ".png");
@@ -930,7 +930,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     ImageLogo.Pos_X_1 = int.Parse(coordenadas[2]);
                     ImageLogo.Pos_Y_1 = int.Parse(coordenadas[3]);
 
-                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                     servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
 
                     string rutaOriginal = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "_mosaico_grande_temp";

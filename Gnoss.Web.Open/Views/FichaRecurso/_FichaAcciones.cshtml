@@ -161,31 +161,12 @@
             case "delete-selective":
                 @Html.PartialView("_modal-views/_delete-selective", Model);                
                 break;
+            case "add-metatitle":
+                @Html.PartialView("_modal-views/_metatitle", Model);
+                break;
+            case "add-metadescription":
+                @Html.PartialView("_modal-views/_metadescription", Model);
+                break;
         }
     }
 }
-@*
-@functions{
-    string PintarCategoria(CategoryModel pCategoriaTesauro, int pNivel)
-    {
-        ResourceModel fichaRecurso = Model.Resource;
-        bool tieneHijos = ((List<CategoryModel>)Model.Categories).Count(cat => cat.ParentCategoryKey == pCategoriaTesauro.Key) > 0;
-
-        string nombre = "";
-        for (int i = 0; i < pNivel; i++)
-        {
-            nombre += "&nbsp;";
-        }
-        nombre += pCategoriaTesauro.Name;
-        <option value="@pCategoriaTesauro.Key">@Html.Raw(nombre)</option>
-        if (tieneHijos)
-        {
-            foreach (CategoryModel categoria in ((List<CategoryModel>)Model.Categories).Where(cat => cat.ParentCategoryKey == pCategoriaTesauro.Key).OrderBy(cat => cat.Order))
-            {
-                @PintarCategoria(categoria, pNivel + 1);
-            }
-        }
-        return string.Empty;
-    }
-}
-    *@

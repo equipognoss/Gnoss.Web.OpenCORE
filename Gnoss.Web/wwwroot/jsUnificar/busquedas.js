@@ -2094,23 +2094,29 @@ $(document).ready(function () {
     $('.searchGroup .encontrar')
     .unbind()
     .click(function (event) {
-        var ddlCategorias = $('.fieldsetGroup .ddlCategorias').val();
-        var url = ObtenerUrlBusqueda(ddlCategorias);
-        if (typeof ($('.tipoBandeja').val()) != 'undefined' && ddlCategorias == 'Mensaje') {
-            //Es una búsqueda en la bandeja de mensajes
-            url = url.replace('search=', $('.tipoBandeja').val() + '&search=')
-        }
-        var parametros = $('.searchGroup .text').val();
-        var autocompletar = $('.ac_results .ac_over');
-        if (typeof (autocompletar) != 'undefined' && autocompletar.length > 0 && typeof ($('.ac_results .ac_over')[0].textContent) != 'undefined') {
-		 
-            parametros = $('.ac_results .ac_over')[0].textContent;
-        }
+        const input = $(this).parent().find('.text');
+        if (input.hasClass("input_buscador_cms")) {
+            // Busqueda a realizar vía Caja CMS
+            $(".encontrar_cms_form").trigger("submit");
+        } else {
+            var ddlCategorias = $('.fieldsetGroup .ddlCategorias').val();
+            var url = ObtenerUrlBusqueda(ddlCategorias);
+            if (typeof ($('.tipoBandeja').val()) != 'undefined' && ddlCategorias == 'Mensaje') {
+                //Es una búsqueda en la bandeja de mensajes
+                url = url.replace('search=', $('.tipoBandeja').val() + '&search=')
+            }
+            var parametros = $('.searchGroup .text').val();
+            var autocompletar = $('.ac_results .ac_over');
+            if (typeof (autocompletar) != 'undefined' && autocompletar.length > 0 && typeof ($('.ac_results .ac_over')[0].textContent) != 'undefined') {
 
-        if (parametros == '') {
-            url = url.replace('?search=', '').replace('/tag/', '');
+                parametros = $('.ac_results .ac_over')[0].textContent;
+            }
+
+            if (parametros == '') {
+                url = url.replace('?search=', '').replace('/tag/', '');
+            }
+            window.location.href = url + parametros;
         }
-        window.location.href = url + parametros;
     });
 });
 

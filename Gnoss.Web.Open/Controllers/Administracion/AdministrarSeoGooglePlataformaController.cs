@@ -7,6 +7,7 @@ using Es.Riam.Gnoss.AD.ParametrosProyecto;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
@@ -65,10 +66,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarSeoGooglePlataformaViewModel pParametros)
         {
-
             ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle();
-
-            //GuardarXmlCambiosAdministracion();
 
             pParametros.CodigoGoogleAnalytics = HttpUtility.UrlDecode(pParametros.CodigoGoogleAnalytics);
             pParametros.ScriptGoogleAnalytics = HttpUtility.UrlDecode(pParametros.ScriptGoogleAnalytics);
@@ -98,10 +96,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR(ex.Message);
             }
 
-            //contrSeoGoogle.InvalidarCaches();
-
             return GnossResultOK();
         }
+
         private AdministrarSeoGooglePlataformaViewModel PaginaModel
         {
             get
@@ -127,9 +124,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-
                 mConfigDeParametroAplicacion = false;
-                //List<ParametroAplicacion> busqueda = GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals(ParametroAD.RobotsComunidad)).ToList();
+                
                 ParametroAplicacion parametroAplicacion = GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals(ParametroAD.RobotsComunidad)).FirstOrDefault();
                 if (parametroAplicacion != null)
                 {
@@ -193,6 +189,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 string mScript = "var peticionGARetenida = false; (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q = i[r].q ||[]).push(arguments)},i [r].l=1*new Date(); a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a, m)})(window, document,'script','https://www.google-analytics.com/analytics.js','ga'); ga('create', '@@codigoga@@', 'auto'); var cname = \"cookieAviso.\" + document.location.host.replace(\"www.\",\"\"); var name = cname + \"=\"; var ca = document.cookie.split(';'); var valor=\"\"; for (var i = 0; i < ca.length; i++){var c = ca[i]; while (c.charAt(0) == ' '){c = c.substring(1);}if (c.indexOf(name) == 0){valor=c.substring(name.length, c.length);}} if (valor.toLowerCase() == \"3gv3jeLqUkVdjqrfSUK0MA%3d%3d\".toLowerCase()){ga('send', 'pageview');}else{peticionGARetenida = true;}; ";
                 return mScript;
             }
+        }
+
+        private void InvalidarCachesParametroAplicacion()
+        {
+            ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            parametroAplicacionCL.InvalidarCacheParametrosAplicacion();
         }
     }
 }

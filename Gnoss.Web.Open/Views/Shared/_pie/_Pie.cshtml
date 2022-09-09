@@ -19,9 +19,9 @@ string NombreProyectoEcosistema = Html.GetNombreProyectoEcosistema();
 bool isGnossEcosistema = NombreProyectoEcosistema.ToLower().Contains("gnoss") ? true : false;
 
 // Construcción de las rutas del footer
-String rutaPrivacidad = @Perfil.Url + @Html.GetText("URLSEM", "PRIVACIDADENLACE");
-String rutaCookies = @Perfil.Url + @Html.GetText("URLSEM", "POLITICACOOKIES");
-String rutaCondicionesUso = @Perfil.Url + @Html.GetText("URLSEM", "CONDICIONESUSO");
+string rutaPrivacidad = Comunidad.Url + "/" + Html.GetText("URLSEM", "PRIVACIDADENLACE");
+string rutaCookies = Comunidad.Url + "/" + Html.GetText("URLSEM", "POLITICACOOKIES");
+string rutaCondicionesUso = Comunidad.Url + "/" + Html.GetText("URLSEM", "CONDICIONESUSO");
 String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
 }
 
@@ -77,7 +77,7 @@ String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
                                 href="@rutaPrivacidad"
                                 style="cursor: pointer"
                                 class="link"
-                                onclick="DeployActionInModalPanel('@Perfil.Url@Html.GetText("URLSEM", "PRIVACIDADENLACE")/load-modal', this, 'modal-dinamic-content', '');"
+                                onclick="DeployActionInModalPanel('@rutaPrivacidad/load-modal', this, 'modal-dinamic-content', '');"
                                 data-toggle="modal"
                                 data-target="#modal-container">
                                 @Html.GetText("FOOTER", "PRIVACIDAD")
@@ -94,7 +94,7 @@ String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
                                        href="@rutaCookies"
                                        style="cursor: pointer"
                                        class="link"
-                                       onclick="DeployActionInModalPanel('@Perfil.Url@Html.GetText("URLSEM", "POLITICACOOKIES")/load-modal', this, 'modal-dinamic-content', '');"
+                                       onclick="DeployActionInModalPanel('@rutaCookies/load-modal', this, 'modal-dinamic-content', '');"
                                        data-toggle="modal"
                                        data-target="#modal-container">
                                         @Html.GetText("FOOTER", "POLITICACOOKIES")
@@ -109,13 +109,12 @@ String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
                                href="@rutaCondicionesUso"
                                style="cursor: pointer"
                                class="link"
-                               onclick="DeployActionInModalPanel('@Perfil.Url@Html.GetText("URLSEM", "CONDICIONESUSO")/load-modal', this, 'modal-dinamic-content', '');"
+                               onclick="DeployActionInModalPanel('@rutaCondicionesUso/load-modal', this, 'modal-dinamic-content', '');"
                                data-toggle="modal"
                                data-target="#modal-container">
                                 @Html.GetText("FOOTER", "CONDICIONESDEUSO")
                             </a>
                         </li>
-
                         @* Acerca de *@
                         @if (Comunidad.IsCatalog && !Comunidad.Key.Equals(ProyectoAD.MetaProyecto))
                         {

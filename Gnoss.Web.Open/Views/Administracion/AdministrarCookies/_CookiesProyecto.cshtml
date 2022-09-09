@@ -17,26 +17,18 @@
         <option value="11111111-1111-1111-1111-111111111111_@Html.GetText("COMADMINCOOKIES", "CATEGORIACOOKIE")">@Html.GetText("COMADMINCOOKIES", "CATEGORIACOOKIE")</option>
         @foreach (CategoriaProyectoCookie categoriaCookie in Model.FirstOrDefault().ListaCategoriaProyectoCookie)
         {
-            string cookieCategoriaId_Nombre = $"{@categoriaCookie.CategoriaID}_{@categoriaCookie.Nombre}";
-            <option value="@cookieCategoriaId_Nombre">@categoriaCookie.Nombre</option>
+            string cookieCategoriaId_Nombre = $"{categoriaCookie.CategoriaID}_{categoriaCookie.Nombre}";
+            <option value="@cookieCategoriaId_Nombre">@Html.ObtenerTextoIdiomaUsuario(categoriaCookie.Nombre)</option>
         }
     </select>
     <input type="button" class="addCookie" value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIE")" />
-    @if (Model.FirstOrDefault().ProyectoCookie.ProyectoID.Equals(new Guid("11111111-1111-1111-1111-111111111111")) && !Html.ViewBag.Comunidad.Key.Equals(new Guid("11111111-1111-1111-1111-111111111111")))
+    @if (Model.Where(item => listaNombreCookiesGoogle.Contains(item.ProyectoCookie.Nombre)).FirstOrDefault() == null)
     {
-        <input type="button" style="background-color: gray;" disabled class="addCookieAnalytics" title="@Html.GetText("COMADMINCOOKIES", "MUSTSAVECOOKIES")" value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEANALYTICS")" />
-        <input type="button" style="background-color: gray;" disabled class="addCookieYoutube" title="@Html.GetText("COMADMINCOOKIES", "MUSTSAVECOOKIES")" value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEYOUTUBE")" />
+        <input type="button" class="addCookieAnalytics" value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEANALYTICS")" />
     }
-    else
+    @if (Model.Where(item => listaNombreCookiesYoutube.Contains(item.ProyectoCookie.Nombre)).FirstOrDefault() == null)
     {
-        if (Model.Where(item => listaNombreCookiesGoogle.Contains(item.ProyectoCookie.Nombre)).FirstOrDefault() == null)
-        {
-            <input type="button" class="addCookieAnalytics" value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEANALYTICS")" />
-        }
-        if (Model.Where(item => listaNombreCookiesYoutube.Contains(item.ProyectoCookie.Nombre)).FirstOrDefault() == null)
-        {
-            <input type="button" class="addCookieYoutube" value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEYOUTUBE")" />
-        }
+        <input type="button" class="addCookieYoutube" value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEYOUTUBE")" />
     }
 
 </div>

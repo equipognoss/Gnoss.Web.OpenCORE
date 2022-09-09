@@ -85,7 +85,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
 
                     contrUtilidades.GuardarUtilidades(DatosGuardado);
-
+                    mControladorBase.LimpiarListaOntologiasPermitidasPorIdentidad();
                     if (iniciado)
                     {
 

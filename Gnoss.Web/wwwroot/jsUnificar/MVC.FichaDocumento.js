@@ -568,6 +568,40 @@ function AccionRecurso_Vincular_Aceptar(urlVincularRecurso, urlCargarVinculados,
     });
 }
 
+function AccionRecurso_MetaTitulo(urlMetatitulo, documentoID) {
+    MostrarUpdateProgress();
+    var txtMetaTitulo = $("#txtMetaTitulo_" + documentoID).val();
+
+    var datosPost = {
+        MetaTitle: txtMetaTitulo
+    }
+    GnossPeticionAjax(urlMetatitulo, datosPost, true).done(function (data) {
+        EnviarAccGogAnac('Acciones sociales', 'Añadir Metatitulo', urlMetatitulo);
+        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, textoRecursos.guardadoOK);
+        OcultarUpdateProgress();
+    }).fail(function (data) {
+        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, data);
+        OcultarUpdateProgress();
+    });
+}
+
+function AccionRecurso_MetaDescripcion(urlMetaDescripcion, documentoID) {
+    MostrarUpdateProgress();
+    var txtMetaDescripcion = $("#txtMetaDescripcion_" + documentoID).val();
+
+    var datosPost = {
+        MetaDescripcion: txtMetaDescripcion
+    }
+    GnossPeticionAjax(urlMetaDescripcion, datosPost, true).done(function (data) {
+        EnviarAccGogAnac('Acciones sociales', 'Añadir MetaDescripcion', urlMetaDescripcion);
+        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, textoRecursos.guardadoOK);
+        OcultarUpdateProgress();
+    }).fail(function (data) {
+        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, data);
+        OcultarUpdateProgress();
+    });
+}
+
 /**
  * Mostrar el mensaje correcto de recurso desvinculado. 
  * Seguidamente, realiza la petici�n para cargar los nuevos recursos vinculados.

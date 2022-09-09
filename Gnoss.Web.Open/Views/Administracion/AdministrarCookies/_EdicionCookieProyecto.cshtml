@@ -61,10 +61,10 @@
             <p>
                 <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "CATEGORIA")">@Html.GetText("COMADMINCOOKIES", "CATEGORIA")</span>
                 <select class="cmbEditarCategoria" name="TabCategoria">
-                    <option selected value="@cookie.CategoriaID">@Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault()</option>
+                    <option selected value="@cookie.CategoriaID">@Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => Html.ObtenerTextoIdiomaUsuario(item.Nombre)).FirstOrDefault()</option>
                     @foreach (CategoriaProyectoCookie categoriaCookie in Model.ListaCategoriaProyectoCookie.Where(item => !item.CategoriaID.Equals(cookie.CategoriaID)))
                     {
-                        <option value="@categoriaCookie.CategoriaID">@categoriaCookie.Nombre</option>
+                        <option value="@categoriaCookie.CategoriaID">@Html.ObtenerTextoIdiomaUsuario(categoriaCookie.Nombre)</option>
                     }
                 </select>
             </p>

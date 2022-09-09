@@ -449,8 +449,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "AdministracionPaginasPermitido", pOptions.AdministracionPaginasPermitido);
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "AdministracionVistasPermitido", pOptions.AdministracionVistasPermitido);
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "AdministracionDesarrolladoresPermitido", pOptions.AdministracionDesarrolladoresPermitido);
-            ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "PintarEnlacesLODEtiquetasEnProyecto", pOptions.EtiquetasConLOD, true);
-            //ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "AgruparRegistrosUsuariosEnProyecto", pOptions.AgruparEventosNuevosUsuarios);
+            ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "PintarEnlacesLODEtiquetasEnProyecto", pOptions.EtiquetasConLOD, true);            
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "RecibirNewsletterDefecto", pOptions.RecibirNewsletterDefecto, true);
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "GoogleDrive", pOptions.GoogleDrive);
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple", pOptions.OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple);
@@ -466,8 +465,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             if (pOptions.ProyectoSinNombreCortoEnURL)
             {
                 Gnoss.Logica.ServiciosGenerales.ProyectoCN proyCN = new Gnoss.Logica.ServiciosGenerales.ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                List<string> listaUrls = new List<string>();
-                listaUrls = proyCN.ObtenerUrlsComunidadCajaBusqueda(ProyectoSeleccionado.Clave);
+                List<string> listaUrls = proyCN.ObtenerUrlsComunidadCajaBusqueda(ProyectoSeleccionado.Clave);
+
                 foreach(string url in listaUrls)
                 {
                     if(url.Contains(UtilIdiomas.GetText("URLSEM", "COMUNIDAD")))
@@ -477,16 +476,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
             bool resultado = pOptions.Replicacion;
-            string resultadoNumerico = string.Empty;
+            string resultadoNumerico = "0";
             if (resultado)
             {
                 resultadoNumerico = "1";
-            }else
-            {
-                resultadoNumerico = "0";
             }
+
             ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             paramCN.ActualizarParametroAplicacion("Replicacion", resultadoNumerico);
+            paramCN.Actualizar();
+
             // Estos parámetros son booleanos pero se guardan con true y false
             ControladorProyecto.GuardarParametroString(ParametrosGeneralesDS, "EnviarNotificacionesDeSuscripciones", pOptions.EnviarNotificacionesDeSuscripciones ? "true" : null);
             ControladorProyecto.GuardarParametroString(ParametrosGeneralesDS, "SuscribirATodaComunidad", pOptions.SuscribirATodaComunidad ? "true" : null);

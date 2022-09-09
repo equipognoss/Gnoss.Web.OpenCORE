@@ -32,58 +32,60 @@
                         <input type="text" id="txtFiltro">
                         @*<span> y por tipo </span>
                             <select id="cmbFiltro">
-                                <option value="">Todas</option>
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.HtmlIncrustado) > 0)
-                                {
-                                    <option value="@(TipoGadget.HtmlIncrustado)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADHTML")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltPreguntas) > 0)
-                                {
-                                    <option value="@(TipoGadget.UltPreguntas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTPREGUNTAS")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltDebates) > 0)
-                                {
-                                    <option value="@(TipoGadget.UltDebates)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTDEBATES")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltEncuestas) > 0)
-                                {
-                                    <option value="@(TipoGadget.UltEncuestas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTENCUESTAS")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.Consulta) > 0)
-                                {
-                                    <option value="@(TipoGadget.Consulta)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONSULTA")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.ProyRelacionados) > 0)
-                                {
-                                    <option value="@(TipoGadget.ProyRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADPROYRELACIONADOS")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.QueEstaPasando) > 0)
-                                {
-                                    <option value="@(TipoGadget.QueEstaPasando)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADQUEESTAPASANDO")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosContextos) > 0)
-                                {
-                                    <option value="@(TipoGadget.RecursosContextos)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONTEXTO")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosRelacionados) > 0)
-                                {
-                                    <option value="@(TipoGadget.RecursosRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADRECURSOSRELACIONADOS")</option>
-                                }
-                                @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.CMS) > 0)
-                                {
-                                    <option value="@(TipoGadget.CMS)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCMS")</option>
-                                }
-                            </select>*@
+                        <option value="">Todas</option>
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.HtmlIncrustado) > 0)
+                        {
+                            <option value="@(TipoGadget.HtmlIncrustado)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADHTML")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltPreguntas) > 0)
+                        {
+                            <option value="@(TipoGadget.UltPreguntas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTPREGUNTAS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltDebates) > 0)
+                        {
+                            <option value="@(TipoGadget.UltDebates)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTDEBATES")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltEncuestas) > 0)
+                        {
+                            <option value="@(TipoGadget.UltEncuestas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTENCUESTAS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.Consulta) > 0)
+                        {
+                            <option value="@(TipoGadget.Consulta)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONSULTA")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.ProyRelacionados) > 0)
+                        {
+                            <option value="@(TipoGadget.ProyRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADPROYRELACIONADOS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.QueEstaPasando) > 0)
+                        {
+                            <option value="@(TipoGadget.QueEstaPasando)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADQUEESTAPASANDO")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosContextos) > 0)
+                        {
+                            <option value="@(TipoGadget.RecursosContextos)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONTEXTO")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosRelacionados) > 0)
+                        {
+                            <option value="@(TipoGadget.RecursosRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADRECURSOSRELACIONADOS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.CMS) > 0)
+                        {
+                            <option value="@(TipoGadget.CMS)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCMS")</option>
+                        }
+                    </select>*@
                     </p>
                 </div>
             </div>
             @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
             {
                 <input type="button" style="background-color: gray;" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" />
+                <input type="hidden" id="auxIC" value="NO" />
             }
             else
             {
-                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" />
+                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
+                <input type="hidden" id="auxIC" value="SI" />
             }
             <div class="panAniadir">
                 @Html.GetText("COMADMINCONTEXTOS", "INFOADDGADGET")
@@ -139,7 +141,7 @@
     }
     else
     {
-        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" />
+        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
     }
 </div>
 <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
@@ -288,9 +290,17 @@
             var that = this;
             $(that.id + 'span.eliminar').click(function () {
                 that.eliminarContexto($(this));
+                 if ($("#auxIC").val() == 'SI') {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
             });
             $(that.id + 'span.editar').click(function () {
                 that.editarContexto($(this));
+                if ($("#auxIC").val() == 'SI') {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
             });
             $(that.id + 'input[name="Name"]').keyup(function () {
                 that.cambiarNombreContexto($(this));

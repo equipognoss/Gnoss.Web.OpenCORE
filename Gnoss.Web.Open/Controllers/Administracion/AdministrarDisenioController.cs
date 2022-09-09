@@ -83,7 +83,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         VersionarCaches(controlador);
 
                         #region Guardo el XML en el historial
-                        GestionDocumental gd = new GestionDocumental(mLoggingService);
+                        GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                         gd.Url = UrlServicioWebDocumentacion;
 
                         sw = LoggingService.IniciarRelojTelemetria();
@@ -153,7 +153,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult DownloadFile(string fileName)
         {
-            GestionDocumental gd = new GestionDocumental(mLoggingService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
             gd.Url = UrlServicioWebDocumentacion;
             byte[] buffer = gd.ObtenerDocumentoDeDirectorio("Configuracion/" + ProyectoSeleccionado.Clave, fileName, ".xml");
             return File(buffer, "text/xml", "plantilla_" + ProyectoSeleccionado.NombreCorto + fileName.Substring(fileName.IndexOf("_") + 1) + ".xml");
@@ -178,8 +178,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string urlActionDownloadFile = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARDISENIO") + "/DownloadFile";
 
             List<HistoryFile> listXMLVersion = new List<HistoryFile>();
-
-            GestionDocumental gd = new GestionDocumental(mLoggingService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
             gd.Url = UrlServicioWebDocumentacion;
 
             string[] listado = gd.ObtenerListadoDeDocumentosDeDirectorio("Configuracion/" + ProyectoSeleccionado.Clave);

@@ -1,5 +1,4 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
@@ -32,7 +31,6 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -58,19 +56,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             AdministrarTraduccionesViewModel modelo = new AdministrarTraduccionesViewModel();
 
-            string baseUrl = BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONESECOSISTEMA") + "/";
+            string baseUrl = $"{BaseURLIdioma}/{UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONESECOSISTEMA")}/";
             if (!EsAdministracionEcosistema)
             {
-                baseUrl = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONES") + "/";
+                baseUrl = $"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto)}/{UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")}/";
             }
 
-            modelo.URLActionCrearTexto = baseUrl + "crear";
-            modelo.URLActionEditarTexto = baseUrl + "editar";
-            modelo.URLActionCrearEntradas = baseUrl + "crearentradas";
-            modelo.URLActionEliminarEntradas = baseUrl + "eliminarentradas";
+            modelo.URLActionCrearTexto = $"{baseUrl}crear";
+            modelo.URLActionEditarTexto = $"{baseUrl} editar";
+            modelo.URLActionCrearEntradas = $"{baseUrl}crearentradas";
+            modelo.URLActionEliminarEntradas = $"{baseUrl}eliminarentradas";
 
             ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            Dictionary<String, String> idiomas = mConfigService.ObtenerListaIdiomasDictionary();
+            Dictionary<string, string> idiomas = mConfigService.ObtenerListaIdiomasDictionary();
             List<TextoTraducidoModel> listaTextos = new List<TextoTraducidoModel>();
 
             GestorParametroGeneral textosPersonalizadosDS = new GestorParametroGeneral();
@@ -112,7 +110,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
-            Dictionary<String, String> idiomas = mConfigService.ObtenerListaIdiomasDictionary();
+            Dictionary<string, string> idiomas = mConfigService.ObtenerListaIdiomasDictionary();
             TextoTraducidoModel modelo = new TextoTraducidoModel(idiomas);
             return View("Editar", modelo);
         }
@@ -150,7 +148,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     CargarPermisosAdministracionComunidadEnViewBag();
                     return View("Editar", pModelo);
                 }
-                string urlRedireccion = this.Request.Path.ToString().ToLower();
+                string urlRedireccion = Request.Path.ToString().ToLower();
                 urlRedireccion = urlRedireccion.Substring(0, urlRedireccion.LastIndexOf("/crear"));
                 return Redirect(urlRedireccion);
             }
@@ -170,24 +168,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
-            Dictionary<String, String> idiomas = mConfigService.ObtenerListaIdiomasDictionary();
+            Dictionary<string, string> idiomas = mConfigService.ObtenerListaIdiomasDictionary();
             TextoTraducidoModel modelo = new TextoTraducidoModel(idiomas);
             var data = Convert.FromBase64String(pTextoId);
             pTextoId = TextoTraducidoModel.GetString(data);
            
             ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            //ParametroGeneralDS textosPersonalizadosDS = null;
             GestorParametroGeneral gestorParametoGeneral = new GestorParametroGeneral();
             ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
 
             if (EsAdministracionEcosistema)
             {
-                // textosPersonalizadosDS = paramGeneralCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
                 gestorParametoGeneral.ListaTextosPersonalizadosPersonalizacion = paramGeneralCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
             }
             else
             {
-                //textosPersonalizadosDS = paramGeneralCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
                 gestorParametoGeneral.ListaTextosPersonalizadosPersonalizacion = paramGeneralCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
             }
 
@@ -227,7 +222,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     ModelState.AddModelError(string.Empty, "Error al guardar la traducción, inténtelo de nuevo");
                     return View("Editar", pModelo);
                 }
-                string urlRedireccion = this.Request.Path.ToString().ToLower();
+                string urlRedireccion = Request.Path.ToString().ToLower();
                 urlRedireccion = urlRedireccion.Substring(0, urlRedireccion.LastIndexOf("/editar"));
                 return Redirect(urlRedireccion);
             }
@@ -313,24 +308,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             if (EsAdministracionEcosistema)
             {
                 ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                //ParametroGeneralDS textosPersonalizadosDS = paramCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
                 GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                 gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
                 ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
                 foreach (string entradaObtenida in listaEntradasTexto)
                 {
-                    //if (textosPersonalizadosDS.TextosPersonalizadosPersonalizacion.Select("PersonalizacionID='" + mControladorBase.PersonalizacionEcosistemaID + "' AND TextoID='" + entradaObtenida + "'").Length == 0)
                     if (gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Where(textoPersonalizadoPers => textoPersonalizadoPers.PersonalizacionID.Equals(mControladorBase.PersonalizacionEcosistemaID) && textoPersonalizadoPers.TextoID.Equals(entradaObtenida)).ToList().Count == 0)
                     {
                         TextosPersonalizadosPersonalizacion textoPersonalizadoPersonalizacion = new TextosPersonalizadosPersonalizacion(mControladorBase.PersonalizacionEcosistemaID, entradaObtenida, "es", entradaObtenida);
                         gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Add(textoPersonalizadoPersonalizacion);
                         gestorController.AddTextosPersonalizadosPersonalizacion(textoPersonalizadoPersonalizacion);
-                        //No existe la entrada, la creamos
-                        //textosPersonalizadosDS.TextosPersonalizadosPersonalizacion.AddTextosPersonalizadosPersonalizacionRow(mControladorBase.PersonalizacionEcosistemaID, entradaObtenida, "es", entradaObtenida);
                     }
                 }
 
-                // paramCN.ActualizarParametrosGenerales(textosPersonalizadosDS, false);
                 paramCN.ActualizarParametrosGenerales();
                 paramCN.Dispose();
 
@@ -344,7 +334,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (vistaVirtualDW.ListaVistaVirtualProyecto.Count > 0)
                 {
                     ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    //ParametroGeneralDS textosPersonalizadosDS = paramCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
                     GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                     gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizacionProyecto(mControladorBase.PersonalizacionEcosistemaID);
                     ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
@@ -352,18 +341,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     foreach (string entradaObtenida in listaEntradasTexto)
                     {
-                        //if (textosPersonalizadosDS.TextosPersonalizadosPersonalizacion.Select("PersonalizacionID='" + personalizacionID + "' AND TextoID='" + entradaObtenida + "'").Length == 0)
                         if (gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Where(textoPersonalizadoPersonalizacion => textoPersonalizadoPersonalizacion.PersonalizacionID.Equals(personalizacionID) && textoPersonalizadoPersonalizacion.TextoID.Equals(entradaObtenida)).ToList().Count == 0)
                         {
                             TextosPersonalizadosPersonalizacion textoPersonalizadoPersonalizacion = new TextosPersonalizadosPersonalizacion(personalizacionID, entradaObtenida, "es", entradaObtenida);
                             gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Add(textoPersonalizadoPersonalizacion);
                             gestorController.AddTextosPersonalizadosPersonalizacion(textoPersonalizadoPersonalizacion);
-                            //No existe la entrada, la creamos
-                            // textosPersonalizadosDS.TextosPersonalizadosPersonalizacion.AddTextosPersonalizadosPersonalizacionRow(personalizacionID, entradaObtenida, "es", entradaObtenida);
                         }
                     }
 
-                    // paramCN.ActualizarParametrosGenerales(textosPersonalizadosDS, false);
                     paramCN.ActualizarParametrosGenerales();
                     paramCN.Dispose();
 
@@ -373,7 +358,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
 
-            return new RedirectResult(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONES"));
+            return new RedirectResult($"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto)}/{UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")}");
         }
 
         /// <summary>
@@ -401,7 +386,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             try
             {
-
                 mEntityContext.NoConfirmarTransacciones = true;
                 transaccionIniciada = proyAD.IniciarTransaccion(true);
 
@@ -475,15 +459,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (EsAdministracionEcosistema)
                 {
                     ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    //ParametroGeneralDS textosPersonalizadosDS = paramCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
                     GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                     ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
                     gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
-
-                    //foreach (DataRow filaTextoBBDD in textosPersonalizadosDS.TextosPersonalizadosPersonalizacion.Select("PersonalizacionID='" + mControladorBase.PersonalizacionEcosistemaID + "'"))
+                    
                     foreach (TextosPersonalizadosPersonalizacion filaTextosPersonalizadosPersonalizacion in gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Where(textoPersonalizado => textoPersonalizado.PersonalizacionID.Equals(mControladorBase.PersonalizacionEcosistemaID)))
                     {
-                        //ParametroGeneralDS.TextosPersonalizadosPersonalizacionRow filaTextosPersonalizadosPersonalizacion = (ParametroGeneralDS.TextosPersonalizadosPersonalizacionRow)filaTextoBBDD;
                         if (!listaEntradasTexto.Contains(filaTextosPersonalizadosPersonalizacion.TextoID))
                         {
                             TranslatorModel modeloTraduccion = new TranslatorModel();
@@ -492,11 +473,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             listaTraducciones.Add(modeloTraduccion);
                             gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Remove(filaTextosPersonalizadosPersonalizacion);
                             gestorController.DeleteTextoPersonalizadoPersonalizacion(filaTextosPersonalizadosPersonalizacion);
-                            //filaTextosPersonalizadosPersonalizacion.Delete();
                         }
                     }
 
-                    //paramCN.ActualizarParametrosGenerales(textosPersonalizadosDS, false);
                     paramCN.ActualizarParametrosGenerales();
                     paramCN.Dispose();
 
@@ -510,16 +489,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     if (vistaVirtualDW.ListaVistaVirtualProyecto.Count > 0)
                     {
                         ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        //ParametroGeneralDS textosPersonalizadosDS = paramCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
                         ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
                         GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                         gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
-                        Guid personalizacionID = ((VistaVirtualProyecto)vistaVirtualDW.ListaVistaVirtualProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).FirstOrDefault()).PersonalizacionID;
+                        Guid personalizacionID = (vistaVirtualDW.ListaVistaVirtualProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).FirstOrDefault()).PersonalizacionID;
 
-                        //foreach (DataRow filaTextoBBDD in textosPersonalizadosDS.TextosPersonalizadosPersonalizacion.Select("PersonalizacionID='" + personalizacionID + "'"))
                         foreach (TextosPersonalizadosPersonalizacion filaTextosPersonalizadosPersonalizacion in gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Where(textoPersonalizado => textoPersonalizado.PersonalizacionID.Equals(personalizacionID)).ToList())
                         {
-                            //ParametroGeneralDS.TextosPersonalizadosPersonalizacionRow filaTextosPersonalizadosPersonalizacion = (ParametroGeneralDS.TextosPersonalizadosPersonalizacionRow)filaTextoBBDD;
                             if (!listaEntradasTexto.Contains(filaTextosPersonalizadosPersonalizacion.TextoID))
                             {
                                 TranslatorModel modeloTraduccion = new TranslatorModel();
@@ -528,7 +504,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 listaTraducciones.Add(modeloTraduccion);
                                 gestorController.DeleteTextoPersonalizadoPersonalizacion(filaTextosPersonalizadosPersonalizacion);
                                 gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Remove(filaTextosPersonalizadosPersonalizacion);
-                                //filaTextosPersonalizadosPersonalizacion.Delete();
                             }
                         }
 
@@ -565,7 +540,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR(ex.Message);
             }
 
-            return new RedirectResult(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONES"));
+            return new RedirectResult($"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto)}/{UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")}");
         }
 
         /// <summary>
@@ -589,7 +564,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 texto = texto.Replace(comandoTraduccion, "");
 
                 int indiceTexto = 0;
-                Boolean encontrado = false;
+                bool encontrado = false;
                 while (indiceTexto > -1 && !encontrado)
                 {
                     indiceTexto++;
@@ -616,6 +591,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             return listaEntradas;
         }
+
         #region Guardar en BD
 
         /// <summary>
@@ -665,7 +641,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             vistaVirtualProyectoRowsMayorCero = vistaVirtualDW.ListaVistaVirtualProyecto.Count > 0;
                             if (vistaVirtualProyectoRowsMayorCero)
                             {
-                                personalizacionID = ((VistaVirtualProyecto)vistaVirtualDW.ListaVistaVirtualProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).FirstOrDefault()).PersonalizacionID;
+                                personalizacionID = (vistaVirtualDW.ListaVistaVirtualProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).FirstOrDefault()).PersonalizacionID;
                                 textosPersonalizadosDSGuardado.ListaTextosPersonalizadosPersonalizacion = paramGeneralCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
                             }
                         }
@@ -686,7 +662,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             }
                         }
                         paramGeneralCN.ActualizarParametrosGenerales();
-                        // textosPersonalizadosDSGuardado.Dispose();
 
                         if (iniciado)
                         {
@@ -719,10 +694,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 catch (Exception)
                 {
-                    if (textosPersonalizadosDSGuardado != null)
-                    {
-                        //textosPersonalizadosDSGuardado.Dispose();
-                    }
                     throw;
                 }
             }

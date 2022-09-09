@@ -86,7 +86,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 bool correcto = false;
 
-                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService);
+                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                 servicioImagenes.Url = UrlIntragnossServicios.ToString();
 
                 correcto = servicioImagenes.AgregarImagenADirectorio(buffer1, Path.Combine(UtilArchivos.ContentImagenesUsuarios, "ImagenesCKEditor",  mUsuarioID.ToString()), mEspecialID.ToString(), mExtension);

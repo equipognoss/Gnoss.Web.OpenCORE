@@ -143,8 +143,12 @@
                     </select>
                 </p>
                 <p>
-                    <span class="tipo" title="@Html.GetText("AYUDACOMADMINFACETAS", "FILTROS")">@Html.GetText("COMADMINFACETAS", "FILTROS")</span>
-                    <input type="text" name="Filtros" value="@Model.Filtros" />
+                    @* Metodo anterior para guardar los filtros *@
+                    @*<span class="tipo" title="@Html.GetText("AYUDACOMADMINFACETAS", "FILTROS")">@Html.GetText("COMADMINFACETAS", "FILTROS")</span>
+                    <input type="text" name="Filtros" value="@Model.Filtros" />*@
+
+
+                    @Html.PartialView("_EdicionFiltro", @Model.ListaFiltrosFacetas)
                 </p>
             }
             else if (Model.Type.Equals(TipoFaceta.Numero))

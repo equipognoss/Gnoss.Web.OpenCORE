@@ -95,7 +95,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         controladorEstructuraXML.ConfigurarCMSComunidadConXML(texto);
                         #region Guardo el XML en el historial
-                        GestionDocumental gd = new GestionDocumental(mLoggingService);
+                        GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                         gd.Url = UrlServicioWebDocumentacion;
                         
                         sw = LoggingService.IniciarRelojTelemetria();
@@ -174,7 +174,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult DownloadFile(string fileName)
         {
-            GestionDocumental gd = new GestionDocumental(mLoggingService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
             gd.Url = UrlServicioWebDocumentacion;
             byte[] buffer = gd.ObtenerDocumentoDeDirectorio("ConfiguracionCMS/" + ProyectoSeleccionado.Clave, fileName, ".xml");
             return File(buffer, "application/text", "plantilla_" + ProyectoSeleccionado.NombreCorto + fileName.Substring(fileName.IndexOf("_") + 1) + "_CMS.xml");
@@ -196,8 +196,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             paginaModel.KOMessage = pMensajeKO;
             paginaModel.ListXMLVersion = new SortedDictionary<DateTime, string>();
             if (pCargarHistorial)
-            {
-                GestionDocumental gd = new GestionDocumental(mLoggingService);
+            { 
+                GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                 gd.Url = UrlServicioWebDocumentacion;
 
                 string[] listado = gd.ObtenerListadoDeDocumentosDeDirectorio("ConfiguracionCMS/" + ProyectoSeleccionado.Clave);

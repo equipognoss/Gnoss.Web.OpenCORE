@@ -3848,13 +3848,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ParametroAplicacion busqueda = GestorParametroAplicacion.ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro == "copyright");
                 ParametroAplicacion busqueda2 = GestorParametroAplicacion.ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro == TiposParametrosAplicacion.Copyright);
                 string textoCopyright = "";
-                //if (!string.IsNullOrEmpty(ParametrosGeneralesVirtualRow.Copyright) || (ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro='copyright'").Length > 0 && !string.IsNullOrEmpty(((ParametroAplicacionDS.ParametroAplicacionRow)(ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro='" + TiposParametrosAplicacion.Copyright + "'")[0])).Valor)))
+                
                 if (!string.IsNullOrEmpty(ParametrosGeneralesVirtualRow.Copyright) || (busqueda != null && !string.IsNullOrEmpty(((GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro == TiposParametrosAplicacion.Copyright).FirstOrDefault())).Valor)))
                 {
-                    //if ((busqueda.Count > 0 && !string.IsNullOrEmpty(((ParametroAplicacionDS.ParametroAplicacionRow)(ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro='" + TiposParametrosAplicacion.Copyright + "'")[0])).Valor)))
                     if ((busqueda != null && busqueda2 != null && !string.IsNullOrEmpty(busqueda2.Valor)))
                     {
-                        //textoCopyright = ((ParametroAplicacionDS.ParametroAplicacionRow)(ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro='" + TiposParametrosAplicacion.Copyright + "'")[0])).Valor;
                         textoCopyright = busqueda2.Valor;
                     }
                     else
@@ -4766,7 +4764,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         actualizarCookie = true;
                     }                    
                 }
-                else
+                else if (cookieAviso.ContainsKey("aceptada") && cookieAviso["aceptada"] == "true")
                 {
                     if (mControladorBase.ParametroProyectoEcosistema != null && mControladorBase.ParametroProyectoEcosistema.ContainsKey(ParametroAD.NombrePoliticaCookies) && !string.IsNullOrEmpty(mControladorBase.ParametroProyectoEcosistema[ParametroAD.NombrePoliticaCookies]))
                     {
@@ -4816,7 +4814,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 memoryStream.Read(biteArray, 0, (int)memoryStream.Length);
 
                 //Subimos el fichero al servidor
-                GestionDocumental gd = new GestionDocumental(mLoggingService);
+                GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
                 gd.Url = UrlServicioWebDocumentacion;
 
                 gd.AdjuntarDocumentoADirectorio(biteArray, "Configuracion/" + ProyectoSeleccionado.Clave, ProyectoSeleccionado.Clave.ToString() + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xml");

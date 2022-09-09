@@ -61,7 +61,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string urlBase = BaseURLIdioma + UrlPerfil;
             if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto || EsEcosistemaSinMetaProyecto)
             {
-                urlBase = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto) + "/";
+                urlBase = $"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto)}/";
             }
 
             if (!mControladorBase.UsuarioActual.EsUsuarioInvitado)
@@ -96,14 +96,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            urlBase += UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD") + "/" + UtilIdiomas.GetText("URLSEM", "PETICION") + "/" + RequestParams("peticionID") + "/" + UtilIdiomas.GetText("URLSEM", "USUARIO") + "/" + RequestParams("usuarioID");
+            urlBase += $"{UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD")}/{UtilIdiomas.GetText("URLSEM", "PETICION")}/{RequestParams("peticionID")}/{UtilIdiomas.GetText("URLSEM", "USUARIO")}/{RequestParams("usuarioID")}";
 
             CambiarPasswordPeticionViewModel paginaModel = new CambiarPasswordPeticionViewModel();
-            paginaModel.UrlAceptar = urlBase + "/accept";
-            paginaModel.UrlRechazar = urlBase + "/reject";
+            paginaModel.UrlAceptar = $"{urlBase}/accept";
+            paginaModel.UrlRechazar = $"{urlBase}/reject";
 
             return View(paginaModel);
-
         }
 
         [HttpPost]
@@ -166,7 +165,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (string.IsNullOrEmpty(error))
                     {
-
                         PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                         GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext);
                         peticionCN.Dispose();
@@ -229,11 +227,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext);
 
-                UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                DataWrapperUsuario usuDW = usuCN.ObtenerUsuarioCompletoPorID(UsuarioID);
-                usuCN.Dispose();
-                GestionUsuarios gestorUsuario = new GestionUsuarios(usuDW, mLoggingService, mEntityContext, mConfigService);
-
                 Peticion peticion = gestionPeticion.ListaPeticiones[PeticionID];
                 peticion.FilaPeticion.FechaProcesado = DateTime.Now;
                 peticion.FilaPeticion.Estado = (short)EstadoPeticion.Rechazada;
@@ -241,9 +234,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 try
                 {
                     peticionCN.ActualizarBD();
-
-                    //Response.Redirect(BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD") + "/" + UtilIdiomas.GetText("URLSEM", "RECHAZADO"));
-
                 }
                 catch (Exception)
                 {

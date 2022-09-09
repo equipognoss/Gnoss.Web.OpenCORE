@@ -1,0 +1,9 @@
+FROM docker.gnoss.com/web:latest
+
+COPY CargadorFacetas/*.cshtml Views/CargadorFacetas/
+
+COPY CargadorContextoMensajes/*.cshtml Views/CargadorContextoMensajes/
+COPY CargadorResultados/*.cshtml Views/CargadorResultados/
+COPY Shared/*.cshtml Views/Shared/
+
+ENTRYPOINT ["dotnet", "Gnoss.Web.dll"]

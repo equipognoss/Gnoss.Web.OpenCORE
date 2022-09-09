@@ -4,8 +4,6 @@
     CommunityModel Comunidad = Html.GetComunidad();
 }
 
-
-
 @* JS y libererías para el sitio web - Theme *@
 <!-- JQUERY -->
 <script src="//code.jquery.com/jquery-3.5.1.js"
@@ -191,3 +189,8 @@ else if (!string.IsNullOrEmpty(@Html.GetGoogleAnalyticsCode()))
         });
     </script>
 }
+
+<script type="text/javascript">
+    var metaEtiquetasOntologia = '@Html.Raw(Html.GetMetaEtiquetasXMLOntologias())';
+    var metaEtiquetasOntologiaJSON = JSON.parse(metaEtiquetasOntologia);
+</script>

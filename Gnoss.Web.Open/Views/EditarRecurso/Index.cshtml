@@ -60,7 +60,10 @@ Variables
     else
     {
         // Acceso directo al recurso
-        urlCancelar = Model.ModifyResourceModel.UrlCancelButton;
+        if (Model.ModifyResourceModel != null)
+        {
+            urlCancelar = Model.ModifyResourceModel.UrlCancelButton;
+        }
     }
 }
 

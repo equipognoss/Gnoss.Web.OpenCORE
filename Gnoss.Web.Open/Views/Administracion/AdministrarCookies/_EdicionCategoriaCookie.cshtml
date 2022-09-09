@@ -21,7 +21,7 @@
     <section class="panEdicion" name="@categoriaCookie.CategoriaID">
         <div>
             <input type="hidden" name="TabEliminada" value="false" />
-            <input type="hidden" name="CategoriaModificada" value="@Model.Modificada" />
+            <input type="hidden" name="CategoriaModificada" value="@Model.Modificada.ToString()" />
             <input type="hidden" name="TabEliminada" value="false" />
             <p>
                 <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "NOMBRE")">@Html.GetText("COMADMINCOOKIES", "NOMBRE")</span>

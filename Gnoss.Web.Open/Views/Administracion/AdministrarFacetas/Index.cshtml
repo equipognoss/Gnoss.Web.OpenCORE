@@ -64,10 +64,12 @@
             @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
             {
                 <input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" />
+                <input type="hidden" id="auxIC" value="NO" />
             }
             else
             {
-                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" />
+                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
+                <input type="hidden" id="auxIC" value="SI" />
             }
             <div class="panAniadir">
                 @Html.GetText("COMADMINFACETAS", "INFOADDFACETA")
@@ -97,7 +99,7 @@
     }
     else
     {
-        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" />
+        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
     }
 </div>
 
@@ -282,9 +284,17 @@
             var that = this;
             $(that.id + 'span.eliminar').click(function () {
                 that.eliminarFaceta($(this));
+                if ($("#auxIC").val() == 'SI') {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
             });
             $(that.id + 'span.editar').click(function () {
                 that.editarFaceta($(this));
+                if ($("#auxIC").val() == 'SI') {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
             });
             $(that.id + 'input[name="TabName"]').keyup(function () {
                 that.cambiarNombreFaceta($(this));

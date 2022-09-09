@@ -115,7 +115,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            if ((ProyectoSeleccionado.Estado == (short)EstadoProyecto.Definicion && string.IsNullOrEmpty(RequestParams("mostrarLogin")) && Invitacion == null) || (!mControladorBase.UsuarioActual.EsUsuarioInvitado && ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled))
+            if ((ProyectoSeleccionado.Estado == (short)EstadoProyecto.Definicion && string.IsNullOrEmpty(RequestParams("mostrarLogin")) && Invitacion == null) || (!mControladorBase.UsuarioActual.EsUsuarioInvitado && ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled) || !UsuarioActual.EsIdentidadInvitada)
             {
                 return GnossResultUrl(Comunidad.Url);
             }

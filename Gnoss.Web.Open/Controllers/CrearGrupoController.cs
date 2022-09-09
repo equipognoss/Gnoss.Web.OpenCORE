@@ -199,8 +199,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 hashNumUsu++;
             }
 
-            DataWrapperIdentidad identidadDW = new DataWrapperIdentidad();
+            if (string.IsNullOrEmpty(pTags)) 
+            {
+                pTags = string.Empty;
+            }
 
+            DataWrapperIdentidad identidadDW = new DataWrapperIdentidad();
+            
             AD.EntityModel.Models.IdentidadDS.GrupoIdentidades filaGrupoIdentidades = new AD.EntityModel.Models.IdentidadDS.GrupoIdentidades();
             filaGrupoIdentidades.GrupoID = grupoID;
             filaGrupoIdentidades.Nombre = pTitulo;

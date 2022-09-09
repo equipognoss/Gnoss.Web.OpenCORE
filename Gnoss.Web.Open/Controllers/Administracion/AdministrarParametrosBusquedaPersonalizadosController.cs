@@ -17,9 +17,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Web;
 
 
@@ -69,10 +72,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(List<ParametroBusquedaPersonalizadoModel> ListaPestanyas)
         {
+            bool iniciado = false;
+            try
+            {
+                iniciado = HayIntegracionContinua;
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
+                return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+            }
             try
             {
                 Guid organizacionID = proyCN.ObtenerOrganizacionIDAPartirDeProyectoID(ProyectoSeleccionado.Clave);
                 proyCN.ActualizarParametrosBusquedaPersonalizados(organizacionID, ProyectoSeleccionado.Clave, ListaPestanyas);
+                if (iniciado)
+                {
+                    HttpResponseMessage resultado = InformarCambioAdministracion("SearchPersonalizado", JsonConvert.SerializeObject(ListaPestanyas, Formatting.Indented));
+                    if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
+                    {
+                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                    }
+                }
                 ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
                 proyCL.InvalidarFilaProyecto(ProyectoSeleccionado.Clave);
                 proyCL.Dispose();
