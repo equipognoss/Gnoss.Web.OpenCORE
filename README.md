@@ -1,13 +1,14 @@
 ![](https://content.gnoss.ws/imagenes/proyectos/personalizacion/7e72bf14-28b9-4beb-82f8-e32a3b49d9d3/cms/logognossazulprincipal.png)
 
 # Gnoss.Web.OpenCORE
-
+ 
 ![](https://github.com/equipognoss/Gnoss.Web/workflows/BuildWeb/badge.svg)
 
 Es la aplicación principal de la plataforma GNOSS. Se encarga de gestionar la autorización de los usuarios a las páginas de la plataforma, la navegación por la web, mantener la sesión del usuario, la carga del menú de la aplicación web con las opciones que el usuario tiene disponibles, etc. 
 
 
 Configuración estandar de esta aplicación en el archivo docker-compose.yml: 
+
 
 ```yml
 web:
