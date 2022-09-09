@@ -1,0 +1,67 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos.HistorialModel
+
+@if (Model != null && Model.Histroial != null)
+{
+    <h3>Historial</h3>
+    <table>
+        <tr>
+            <td>@Html.GetText("COMADMINESTILOS", "HISTORIALVERSION")</td>
+            <td>JS</td>
+            <td>CSS</td>
+            <td>ZIP</td>
+        </tr>
+        @foreach (string[] version in Model.Histroial)
+        {
+            string urlJS = string.Empty;
+            string urlCSS = string.Empty;
+            string urlZIP = string.Empty;
+
+            string nombreVersion = version[0];
+            if (nombreVersion.Contains("/"))
+            {
+                nombreVersion = version[0].Substring(version[0].LastIndexOf("/"));
+            }
+
+            <tr>
+                <td>@nombreVersion</td>
+                @for (int i = 1; i < version.Length; i++)
+                {
+                    if (System.IO.Path.GetExtension(version[i]).Equals(".js"))
+                    {
+                        urlJS = version[i];
+                    }
+                    else if (System.IO.Path.GetExtension(version[i]).Equals(".css"))
+                    {
+                        urlCSS = version[i];
+                    }
+                    else if (System.IO.Path.GetExtension(version[i]).Equals(".zip"))
+                    {
+                        urlZIP = version[i];
+                    }
+                }
+                <td>
+                    @if (!string.IsNullOrEmpty(urlJS))
+                    {
+                        <a href="@Html.GetBaseUrlContent()/imagenes/@urlJS">@Html.GetText("COMADMINESTILOS", "DESCARGAJS")</a>
+                    }
+                </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(urlCSS))
+                    {
+                        <a href="@Html.GetBaseUrlContent()/imagenes/@urlCSS">@Html.GetText("COMADMINESTILOS", "DESCARGACSS")</a>
+                    }
+                </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(urlZIP))
+                    {
+                        <a href="@Html.GetBaseUrlContent()/imagenes/@urlZIP">@Html.GetText("COMADMINESTILOS", "DESCARGAZIP")</a>
+                    }
+                </td>
+            </tr>
+        }
+    </table>
+}
+else
+{
+    <p>@Html.GetText("COMADMINESTILOS", "NOVERSIONES")</p>
+}

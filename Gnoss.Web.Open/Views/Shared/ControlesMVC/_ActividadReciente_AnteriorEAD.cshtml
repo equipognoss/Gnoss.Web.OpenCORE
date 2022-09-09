@@ -1,0 +1,329 @@
+﻿@model RecentActivity
+<div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            limpiarActividadRecienteHome.init();
+            MontarFechas();
+            CompletadaCargaActividadReciente();
+            ObtenerAccionesListadoMVC('@Html.GetUrlLoadResourceActions()');
+        });
+    </script>
+
+    @foreach (RecentActivityItem actividad in Model.RecentActivityItems)
+    {
+        if (actividad is RecentActivityResourceItem)
+        {
+            ResourceModel recurso = ((RecentActivityResourceItem)actividad).Resource;
+            if (recurso != null)
+            {
+                List<ResourceEventModel> enventos = ((RecentActivityResourceItem)actividad).Events;
+                ProfileModel publicador = recurso.Publisher;
+            
+        <div class="resource" id="resource_@recurso.Key">
+            <div class="box description">
+                <div class="group title">
+                    <h3><a href="@recurso.CompletCardLink">@recurso.Title</a></h3>
+                    @{
+                string privado = "";
+                if (recurso.Private)
+                {
+                    privado = " privado";
+                }
+                    }
+                    
+                    <p class="resourceType @(recurso.TypeDocument == ResourceModel.DocumentType.Semantico?"semantico " + recurso.RdfType:recurso.NameImage) @privado"><span>tipo de documento</span><a href="@recurso.CompletCardLink">@recurso.RdfTypeName</a></p>
+                </div>
+                <div class="group author">
+                    <p class="userType Persona">
+                        @if (recurso.TypePublication == ResourceModel.PublicationType.Published)
+                        {
+                            @Html.GetText("COMMON", "PUBLICADOR")
+                        }
+                        else
+                        {
+                            @Html.GetText("COMMON", "COMPARTIDOR")
+                        }
+                        @if (publicador.TypeProfile == ProfileType.Personal || publicador.TypeProfile == ProfileType.Teacher)
+                        {
+                            if (publicador.UrlFoto != null)
+                            {
+                            <span class="imagenIcono Persona">
+                                <a href="@publicador.UrlPerson">
+                                    <img alt="@publicador.NamePerson" src="@Html.GetBaseUrlContent()@publicador.UrlFoto" />
+                                </a>
+                            </span>
+                            }
+                            else
+                            {    
+                            <span class="imagenIcono personaSinImagen">
+                                <a href="@publicador.UrlPerson"></a>
+                            </span>
+                            }
+                            <span class="by" id="spanByFichaRec">
+                                <a href="@publicador.UrlPerson">
+                                    <span>@publicador.NamePerson</span>
+                                </a>
+                            </span>
+                        }
+                        else if (publicador.TypeProfile == ProfileType.ProfessionalPersonal)
+                        {
+                            if (publicador.UrlFoto != null)
+                            {
+                            <span class="imagenIcono Persona">
+                                <a href="@publicador.UrlPerson">
+                                    <img alt="@publicador.NamePerson @ConstantesDeSeparacion.SEPARACION_CONCATENADOR @publicador.NameOrganization" src="@Html.GetBaseUrlContent()@publicador.UrlFoto" />
+                                </a>
+                            </span>
+                            }
+                            else
+                            {
+                            <span class="imagenIcono personaSinImagen">
+                                <a href="@publicador.UrlPerson"></a>
+                            </span>
+                            }
+                            <span class="by" id="spanByFichaRec">
+                                <a href="@publicador.UrlPerson">
+                                    <span>@publicador.NamePerson @ConstantesDeSeparacion.SEPARACION_CONCATENADOR @publicador.NameOrganization</span>
+                                </a>
+                            </span>
+                        }
+                        else if (publicador.TypeProfile == ProfileType.ProfessionalCorporate && !string.IsNullOrEmpty(publicador.NamePerson))
+                        {
+                            if (publicador.UrlFoto != null)
+                            {
+                            <span class="imagenIcono Organizacion">
+                                <a href="@publicador.UrlOrganization">
+                                    <img alt="@publicador.NameOrganization" src="@Html.GetBaseUrlContent()@publicador.UrlFoto" />
+                                </a>
+                            </span>
+                            }
+                            else
+                            {
+                            <span class="imagenIcono organizacionSinImagen">
+                                <a href="@publicador.UrlOrganization"></a>
+                            </span>
+                            }
+                
+                            <span class="by" id="spanByFichaRec">
+                                <a href="@publicador.UrlOrganization">
+                                    <span>@publicador.NameOrganization</span>
+                                </a>
+                                <span class="userAuthor">
+                                    <span style="display: none">(@publicador.NamePerson)</span>
+                                    <a style="cursor: pointer" onclick="javascript:DesplegarImgMasMVC(this, $(this).prev());">
+                                        <img alt="+" src="@Html.GetBaseUrlStatic()/img/verMas.gif"/>
+                                    </a>
+                                </span>
+                            </span>
+                        }
+                        else
+                        {
+                            if (publicador.UrlFoto != null)
+                            {
+                            <span class="imagenIcono Organizacion">
+                                <a href="@publicador.UrlOrganization">
+                                    <img alt="@publicador.NameOrganization" src="@Html.GetBaseUrlContent()@publicador.UrlFoto" />
+                                </a>
+                            </span>
+                            }
+                            else
+                            {
+                            <span class="imagenIcono organizacionSinImagen">
+                                <a href="@publicador.UrlOrganization"></a>
+                            </span>
+                            }
+                
+                            <span class="by" id="spanByFichaRec">
+                                <a href="@publicador.UrlOrganization">
+                                    <span>@publicador.NameOrganization</span>
+                                </a>
+                            </span>
+                        }
+                        @if(!string.IsNullOrEmpty(actividad.UrlCommunity))
+                        {
+                            <span class="where"> en <a href="@actividad.UrlCommunity" title="@actividad.NameCommunity">@Html.AcortarTexto(actividad.NameCommunity, 30)</a> </span>
+                        }
+                    </p>
+                    <p class="publicacion enCajaAuthor"><strong class="fechaLive">@recurso.PublishDate.ToString("yyyy/MM/dd HH:mm")</strong></p>
+                </div>
+                <div class="group content">
+                    <div class="descripcionResumida">
+                        @if (!string.IsNullOrEmpty(recurso.UrlPreview))
+                        {
+                            string classMiniatura = "";
+                            if (recurso.NameImage == "video")
+                            {
+                                classMiniatura = "recursoVideo";
+                            }
+                                
+                            <p class="miniatura @classMiniatura">
+                                <a href="@recurso.CompletCardLink">
+                                    <img src="@recurso.UrlPreview" />
+                                </a>
+                            </p>
+                        }
+                        @Html.Raw(Html.AcortarDescripcionHtml(recurso.Description, 250))
+                    </div>
+                </div>
+                @if (enventos != null && enventos.Find(evento => evento.Type == ResourceEventModel.EventType.Voted || evento.Type == ResourceEventModel.EventType.Certified) != null)
+                { 
+                    <div class="group utils-1">
+                        <p class="info"><strong>Actividad reciente...</strong></p>
+                        @if (enventos.Find(evento => evento.Type == ResourceEventModel.EventType.Voted) != null)
+                        { 
+                            <p class="voto"><span class="voto"></span>@Html.GetText("CONTROLESLIVE", "GUSTA1PERSONA")</p>
+                        }
+                        @if (enventos.Find(evento => evento.Type == ResourceEventModel.EventType.Certified) != null)
+                        {
+                            ResourceEventCertifyModel eventoCertificacion = (ResourceEventCertifyModel)enventos.Find(evento => evento.Type == ResourceEventModel.EventType.Certified);
+                            <p class="certificado">Ha sido certificado como @eventoCertificacion.Description</p>
+                        }
+                    </div>
+                }
+
+                <div class="group etiquetas">
+                    <p>
+                        Etiquetas: 
+                    </p>
+                    <ul class="listTags">
+                        @{
+                int cont = 0;
+                foreach (string etiqueta in recurso.Tags)
+                {
+                    string separador = "";
+                    if (cont > 0) { separador = ", "; }
+                            <li>@separador<a resource="@recurso.UrlSearch/@Html.GetText("URLSEM", "TAG")/@etiqueta" rel="sioc:topic" href="@recurso.UrlSearch/@Html.GetText("URLSEM", "TAG")/@etiqueta"><span about="@recurso.UrlSearch/@Html.GetText("URLSEM", "TAG")/@etiqueta" property="dcterms:name" typeof="sioc_t:Tag">@etiqueta</span></a></li>
+                    cont++;
+                }
+                        }
+                    </ul>
+                </div>
+
+                @if (Model.TypeActivity != (int)TipoActividadReciente.PerfilProyecto)
+                {
+                    string[] parametrosAccion = actividad.Key.Split('_');
+                    string idAcciones = "accionesListado_" + parametrosAccion[1] + "_" + Guid.NewGuid() + "_" + parametrosAccion[2];
+
+                    <div class="group acciones noGridView" id="@idAcciones"></div>
+                    <div class="divContAccList"></div>
+                }
+                <div id="@actividad.Key" class="group accionesSusc"></div>
+            </div>
+            @if (enventos != null && enventos.Find(evento => evento.Type == ResourceEventModel.EventType.Commented) != null)
+            {
+                <div class="box comments">
+                    <p class="what">
+                        <strong>@recurso.NumComments @Html.GetText("BANDEJAENTRADA", "COMENTARIOS")</strong>
+                    </p>
+                    <div xmlns:sioc_t="http://rdfs.org/sioc/types#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:sioc="http://rdfs.org/sioc/ns#">
+                        <div about="@recurso.CompletCardLink" rel="sioc:has_discussion">
+                            @foreach (ResourceEventCommentModel eventoComentario in enventos.Where(evento => evento.Type == ResourceEventModel.EventType.Commented))
+                            {
+                                CommentModel comment = eventoComentario.Comment;
+
+                                string namePerson = Html.ObtenerNombrePerfil(comment.PublisherCard);
+                                string urlPerson = Html.ObtenerUrlPerfil(comment.PublisherCard);
+                        
+                        
+                                <div class="comment" resource="@recurso.CompletCardLink">
+                                    <p rel="sioc:has_creator" about="@recurso.CompletCardLink">
+                                        <a href="@urlPerson" class="userCreator">
+                                            @if(!string.IsNullOrEmpty(comment.PublisherCard.UrlFoto))
+                                            {
+                                                <img alt="@namePerson" src="@Html.GetBaseUrlContent()@comment.PublisherCard.UrlFoto" />
+                                            }
+                                            else
+                                            {
+                                                <img alt="@namePerson" src="@Html.GetBaseUrlContent()/imagenes/personas/anonimo_peque.png" />
+                                            }
+                                        </a>
+                                        <a title="@namePerson" href="@urlPerson">
+                                            <span property="foaf:name" typeof="foaf:Person" about="@urlPerson">@namePerson</span>
+                                        </a>
+                                        <span class="says">ha dicho</span>
+                                    </p>
+                                    <div property="sioc:content" class="comment-content">@Html.Raw(comment.Title)</div>
+                                    <p property="dcterms:created" class="created fechaLive">@comment.PublishDate.ToString("yyyy/MM/dd HH:mm")</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="vertodos">
+                        <ul>
+                            <li><a href="@recurso.CompletCardLink#comments">Ver todos los comentarios</a></li>
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+            }
+        }
+        else if (actividad is RecentActivityMemberItem)
+        {
+            ProfileModel miembro = ((RecentActivityMemberItem)actividad).Profile;
+            if (miembro != null)
+            {
+                string nombreMiembro = Html.ObtenerNombrePerfil(miembro);
+                string urlMiembro = Html.ObtenerUrlPerfil(miembro);
+                
+                <div class="resource social-resource">
+                    <div class="box description">
+                        <div class="group title">
+                            <h4><a href="@urlMiembro">@nombreMiembro</a></h4>
+                            <div class="logoComunidad">
+                                <p class="resourceType persona">
+                                    <a href="@urlMiembro">
+                                        @if (!string.IsNullOrEmpty(miembro.UrlFoto))
+                                        {
+                                            <img alt="@nombreMiembro" src="@miembro.UrlFoto"/>
+                                        }
+                                    </a>
+                                </p>
+                            </div>
+                            @*<p class="publicacion"><span>Publicación:</span> <strong class="">El 11/02/2015</strong></p>*@
+                        </div>
+                        <div class="group content">
+                            <div class="descripcionResumida">
+                                <p style="display: block;" >se ha unido a <a href="@actividad.UrlCommunity" >@actividad.NameCommunity</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>
+@if (Model.RecentActivityItems.Count == Model.NumItemsPage)
+{
+    Guid guidControl = Guid.NewGuid();
+    <div id="actividadReciente_@guidControl">
+        <div class="more-social-events">
+            <p>
+                <a onclick="ActividadReciente_MostrarMas('@Model.UrlLoadMoreActivity', '@Html.GetUrlLoadResourceActions()', '@Model.TypeActivity', '@(Model.NumPage + 1)', '@guidControl', '@Model.ComponentKey', '@Model.ProfileKey')">@Html.GetText("HOMEUSU", "MASACTIVIDAD")</a>
+            </p>
+        </div>
+    </div>
+}
+else if (Model.RecentActivityItems.Count == 0 && Model.NumPage == 1)
+{
+    switch (Model.TypeActivity)
+    {
+        case (int)TipoActividadReciente.HomeUsuario:
+            break;
+        case (int)TipoActividadReciente.HomeProyecto:
+            break;
+        case (int)TipoActividadReciente.PerfilProyecto:
+            <div class="resource actividad">
+                <div class="group">
+                    <p>@Html.GetText("PERFIL", "USUARIOSINACTIVIDAD")</p>
+                </div>
+            </div>
+            break;
+        case (int)TipoActividadReciente.SuscripcionProyecto:
+            break;
+        case (int)TipoActividadReciente.Suscripcion:
+            break;
+        case (int)TipoActividadReciente.SuscripcionSiNoHomeProyecto:
+            break;
+    }
+}

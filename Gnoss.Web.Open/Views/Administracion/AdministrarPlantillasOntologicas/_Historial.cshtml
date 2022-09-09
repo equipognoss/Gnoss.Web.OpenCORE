@@ -1,0 +1,12 @@
+﻿@model OntologicalTemplatesAdministrationViewModel
+
+@if (Model != null && Model.VersionList != null && Model.VersionList.Count > 0)
+{
+    <p><strong>Historial: </strong></p>
+    <ul>
+    @foreach (string archivo in Model.VersionList)
+    {
+        <li>@archivo.Replace("_" + Model.OntologyID, "") (<a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARPLANTILLASCOM")/download-version?copyName=@(System.Net.WebUtility.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + System.Net.WebUtility.UrlEncode(Model.OntologyName))">descargar</a>)</li>    
+    }
+    </ul>
+}

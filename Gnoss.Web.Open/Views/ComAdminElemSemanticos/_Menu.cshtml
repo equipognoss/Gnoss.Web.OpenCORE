@@ -1,0 +1,51 @@
+﻿@model ComAdminSemanticElemModel.ComAdminSemanticElemPage
+
+@{ 
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="menuAdminSem">
+    <p>
+        @if (Model == ComAdminSemanticElemModel.ComAdminSemanticElemPage.OntologiesAdmin)
+        {
+            <span>@Html.GetText("COMADMIN", "TITULOADMINPLANTILLAS2")</span>
+        }
+        else
+        {
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARPLANTILLASCOM")">@Html.GetText("COMADMIN", "TITULOADMINPLANTILLAS2")</a>
+        }
+
+        @Html.Raw("|")
+
+        @if (Model == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition)
+        {
+            <span>@Html.GetText("COMADMIN", "TESAUROSSEMANTICOS")</span>
+        }
+        else
+        {
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINTESSEM")">@Html.GetText("COMADMIN", "TESAUROSSEMANTICOS")</a>
+        }
+
+        @Html.Raw("|")
+
+        @if (Model == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SecondaryEntitiesEdition)
+        {
+            <span>@Html.GetText("COMADMIN", "ENTIDADESSECUNDARIAS")</span>
+        }
+        else
+        {
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINENTSECUND")">@Html.GetText("COMADMIN", "ENTIDADESSECUNDARIAS")</a>
+        }
+
+        @Html.Raw("|")
+
+        @if (Model == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SimpleGraphsEdition)
+        {
+            <span>@Html.GetText("COMADMIN", "GRAFOSSIMPLES")</span>
+        }
+        else
+        {
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINGRAFSIMPLE")">@Html.GetText("COMADMIN", "GRAFOSSIMPLES")</a>
+        }
+    </p>
+</div>

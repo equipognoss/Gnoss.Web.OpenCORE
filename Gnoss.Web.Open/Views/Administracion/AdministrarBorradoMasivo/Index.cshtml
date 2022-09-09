@@ -1,0 +1,198 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.BorradoMasivoViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="content" id="borradoMasivo">
+    <h1>Borrado Masivo</h1>
+    <div>
+        <p>
+            ¡Cuidado! Si ejecutas el borrado, se borrarán todos los recursos de la ontología<br />
+        </p>
+        <form autocomplete="off">
+            <p>
+                Ontologías: <br />
+                @foreach(Guid ontologia in Model.OntologiaABorrar.Keys)
+                {
+                    <p>
+                        <input type="checkbox" class="ontologiasProyecto" value="@ontologia"/> @Model.OntologiaABorrar[ontologia]
+                    </p>
+                }
+            </p>
+            <div style="display:none;z-index:2000;" class="confirmar" id="divPreguntaConfirmacionEventos">
+                <div class="pregunta">
+                    <span id="lblPregunta_ConfirmacionEliminar"></span>
+                    <input type="button" onclick="" id="lbSi_ConfirmacionEliminar" value="Sí" />
+                    <input type="button" onclick="$('#divPreguntaConfirmacionEventos').hide();$('#mascaraBlanca').hide();" value="No" />
+                </div>
+            </div>
+        </form>
+    </div>
+    <input type="button" class="eliminarRecursos" value="Eliminar recursos de la ontología" />
+    <span class="vacio"></span>
+</div>
+
+<script>
+    var OperativaAcciones = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+            return;
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.Options = {};
+                that.obtenerDatos();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+
+            return error;
+        },
+        obtenerDatos: function () {
+            var that = this;
+            var listaOntologias = [];
+            var ontologias = Array.from(document.getElementsByClassName('ontologiasProyecto'));
+            ontologias.forEach(function (ontologia) {
+                var isCkecked = ontologia.checked;
+                if (isCkecked) {
+                    listaOntologias.push(ontologia.value);
+                }
+            });           
+            that.Options['OntologiaSeleccionada'] = listaOntologias;/*$("#OntologiaSeleccionada").val();*/
+        },
+        engancharComportamiento: function () {
+            var that = this;
+
+            $('input.eliminarRecursos').click(function (e) {
+                var elemento = $(this);
+                that.guardarTodo();
+
+                $('#lblPregunta_ConfirmacionEliminar').html('¿Desea eliminar los documentos de la ontología?');
+                $("#lbSi_ConfirmacionEliminar").unbind('click');
+
+                $("#lbSi_ConfirmacionEliminar").click(function () {
+                    $('#divPreguntaConfirmacionEventos').hide();
+                    $('#mascaraBlanca').hide();
+                    MostrarUpdateProgress();
+                    that.mostrarMensajeEspera();
+                    GnossPeticionAjax(
+                        that.urlPagina + "/Borrar",
+                        that.Options,
+                        true
+                    ).fail(function (response) {
+                        var error = data.split('|||');
+                        that.mostrarErrorBorrado();
+                        that.eliminarMensajeEspera();
+                    }).done(function (response) {
+                        that.mostrarBorradoOK();
+                        that.eliminarMensajeEspera();
+                    }).always(function (response) {
+                        OcultarUpdateProgress();
+                        
+                    })
+                });
+                CalcularTopPanelEliminarYMostrar(e, 'divPreguntaConfirmacionEventos');
+            });
+            return;
+        },
+        mostrarBorradoOK: function () {
+            $('input.eliminarRecursos').before('<div class="ok general">Se ha eliminado correctamente</div>');
+        },
+        mostrarErrorBorrado: function(){
+            $('input.eliminarRecursos').before('<div class="error general">Ha habido errores en el borrado</div>');
+        },
+        mostrarMensajeEspera: function () {
+            $('span.vacio').before('<div class="mensaje espera" id="mensaje">Este proceso puede tardar varios minutos...</div>');
+            var boton = document.getElementsByClassName('eliminarRecursos')[0];
+            boton.style.display = 'none';
+        },
+        eliminarMensajeEspera: function () {
+            var contenido = document.getElementById('borradoMasivo');
+            var mensaje = document.getElementById('mensaje');
+            contenido.removeChild(mensaje);
+            var botonAparecer = document.getElementsByClassName('eliminarRecursos')[0];
+            botonAparecer.style.display = 'block';
+        }
+    }
+    $(document).ready(function () {
+        OperativaAcciones.init();
+    });
+    function CalcularTopPanelEliminarYMostrar(evento, panelID) {
+        $('#mascaraBlanca').show();
+        var fila = $(evento.target);
+        $('#' + panelID).css({
+            left: (fila.offset().left + 100) + 'px',
+            top: (fila.offset().top - 20) + 'px',
+            display: ''
+        });
+        return false;
+    }
+</script>
+<style>
+    div.content {
+        margin: 50px;
+    }
+
+    div.content form {
+        margin: 30px;
+    }
+
+    div#confCorreo .bloque {
+        border: 1px solid;
+        padding: 10px;
+    }
+
+    div.error.general {
+        background-color: Red;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.ok.general {
+        background-color: limegreen;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.content input.guardarTodo{
+        float:right;
+    }
+    
+    div.content input[type='text'],
+    div.content input[type='password'],
+    div.content select {
+        width: 100%;
+        margin-bottom:10px;
+    }
+    h4 {
+        padding-top:20px;
+        padding-bottom:20px;
+    }
+</style>

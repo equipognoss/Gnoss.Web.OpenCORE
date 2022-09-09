@@ -1,0 +1,16 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.ViewModels.AdministrarAplicacionesViewModel
+
+@{
+    Html.SetTitle("Index");
+    string urlBase = this.Context.Request.Path.ToString().ToLower();
+    if (urlBase.EndsWith("/"))
+    {
+        urlBase = urlBase.Substring(0, urlBase.Length - 1);
+    }
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+<div id="col01">
+    <h2>Descargar Configuracion OAuth</h2> <br />
+    <button onclick="location.href='@string.Concat(urlBase,"/descargarXML")'">Descargar Configuracion OAuth</button> <br /> <br />
+</div>

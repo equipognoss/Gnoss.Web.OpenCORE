@@ -1,0 +1,36 @@
+﻿@model string
+@*
+Descripción
+-----------------------------------------------
+Vista modal que muestra la política de cookies de la página. Esta vista estará accesible al hacer click en la opción correspondiente del pie o footer de la página.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista Modal que muestra la política de cookies de la empresa --------------------
+*@
+@*<div id="modal-politica-cookies" class="modal modal-top fade modal--wide-content" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">*@
+            <div class="modal-header">
+                <p class="modal-title"><span class="material-icons">privacy_tip</span>@Html.GetText("POLITICACOOKIES", "TITULO")</p>
+            </div>
+            <div class="modal-body">
+                <div class="box">
+                    @Html.Raw(Model)
+                </div>
+                <span class="btn btn-primary " data-dismiss="modal" aria-label="Close">
+                    @Html.GetText("COMMON", "CERRAR")
+                </span>
+            </div>
+@*
+        </div>
+    </div>
+</div>*@

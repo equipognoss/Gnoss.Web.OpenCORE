@@ -1,0 +1,592 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AministrarRegistroPorPasosViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="content">
+    <h1>Registro por pasos</h1>
+    <div>
+        <input type="button" class="guardarTodo" value="Guardar Todo" /> 
+        <form autocomplete="off">  
+            <p>
+                Cuando un usuario se registra en la página, puede pasar por una serie de pasos que pueden ser obligatorios (el usuario tiene que realizar una acción) o no.<br/>
+                Para configuarar los pasos hay que tener en cuenta: <br />
+                - El orden de cómo se coloquen los pasos, será el orden de aparición de las páginas en el registro. <br />
+                - No es posible colocar un paso obligatorio por debajo de uno que no lo es. <br /><br/>
+
+                Pasos por defecto: <br />
+                - En el paso Datos se piden los datos del usuario, como una foto o la localidad, etc. <br />
+                - En el paso Preferencias, se muestran las categorías para que el usuario seleccione cuáles son de su interés. Las preferencias se pueden administrar en la página Preferencias del Proyecto <br />
+                - En el paso Conecta, se muestran usuarios de los mismos intereses para comenzar a seguirlos. <br /><br />
+
+                Pasos personalizados: <br />
+                - Se pueden añadir más pasos para completar el registro, que corresponderán con el nombre de la página CMS asociada, que puede contener lo que se necesite para cada proyecto. <br />
+                - Si este paso es obligatorio, es necesario redirigir la página, si por ejemplo la página CMS tiene como ruta registro-cms, la URL deberá ser: /registrar-usuario/paso-registro?url=registro-cms
+            </p>            
+            <div class="panAniadir">Añadir un nuevo paso del registro:   <input type="button" class="addPestanya" value="Añadir paso del registro"></div>
+            <ol class="table ui-sortable" id="sortable">
+                @foreach (PasoRegistroModel ser in Model.ListaServicios)
+                {
+                    <li class="row pestanya" id="@ser.NombrePasoRegistro" style>
+                        <span class="handle pestanya ui-sortable-handle">:::</span>
+                        <section class="header">
+                            <span class="nombrePestanya" aux="@ser.NombrePasoRegistro">@ser.NombrePasoRegistro</span>
+                            <span class="action eliminar">Eliminar</span>
+                            <span class="action editar">Editar</span>
+                        </section>
+                        <section class="panEdicion" style="left: 0px;">
+                            <div>
+                                <input type="hidden" name="ParentTabKey" value="00000000-0000-0000-0000-000000000000" />
+                                <input type="hidden" name="TabOrden" value="" />
+                                <input type="hidden" name="TabEliminada" value="false" />
+                                <p>
+                                    <span class="nombreServicio">Nombre del paso del registro:</span>
+                                    <input type="hidden" name="TabType" value="@ser.NombrePasoRegistro">
+                                    <input type="text" list="pasosPosibles" class="nombreDelPasoRegistro" name="nombreDelPasoRegistro" value="@ser.NombrePasoRegistro">
+                                    <datalist id="pasosPosibles" class="pasosPosibles">
+                                        <option value="Datos"></option>
+                                        <option value="Preferencias"></option>
+                                        <option value="Conecta"></option>
+                                        @foreach(string nombre in Model.ListaPestanyasMenu)
+                                        {
+                                            <option value="@nombre"></option>
+                                        }
+                                    </datalist>
+                                </p>
+                                <p>
+                                    <span class="urlServicio">Obligatorio:</span>
+                                    <input type="hidden" name="TabType" value="@ser.Obligatorio">
+                                    <input type="checkbox" class="pasoObligatorio" name="pasoObligatorio" @(ser.Obligatorio ? "checked" : "") />
+                                </p>
+                            </div>
+                        </section>
+                    </li>
+               }
+               <span class="vacio"></span>
+        </ol>
+     </form>
+    </div>     
+    <input type="button" class="guardarTodo" value="Guardar Todo" /> 
+</div>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script>
+    var OperativaOrdenacion = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+            //this.recalcularOrden();
+        },
+        config: function () {
+            this.lista = $('#sortable');
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            that.lista.sortable({
+                handle: 'span.handle.pestanya',
+                items: 'li.pestanya',
+                cancel: ".ui-state-disabled",
+                stop: function (event, ui) {
+                    that.recalcularOrden();
+                }
+            });
+            $('.header', that.lista).disableSelection();
+            return;
+        },
+        recalcularOrden: function () {
+            var that = this;
+
+            var arrayOrden = that.lista.nestedSortable('toArray');
+
+            for (var i = 0, len = arrayOrden.length; i < len; i++) {
+                var item_id = arrayOrden[i]['item_id'];
+                var parent_id = arrayOrden[i]['parent_id'];
+                var orden = arrayOrden[i]['orden'];
+                var depth = arrayOrden[i]['depth'];
+
+                if (parent_id == null) {
+                    parent_id = '00000000-0000-0000-0000-000000000000';
+                }
+
+                var fila = $('#' + item_id);
+                var panelEdicion = fila.children('.panEdicion');
+                panelEdicion.css('left', '-' + parseInt(depth) * 27 + 'px');
+                panelEdicion.find('[name="ParentTabKey"]').val(parent_id);
+                panelEdicion.find('[name="TabOrden"]').val(orden);
+            }
+
+            $('.row.pestanya').each(function () {
+                var id = $(this).attr('id');
+                var padre = arrayOrden
+
+            });
+        }
+    }
+        var OperativaAcciones = {
+        init: function (panelID) {
+            this.config(panelID);
+            if (this.id == '') {
+                this.engancharComportamiento();
+            }
+            $('.row.pestanya').each(function () {
+                $('#' + this.id + ' .tipoPestanya').html('(' + $('#' + this.id + ' .nombreTipoPestanya').val() + ')');
+            });
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            this.id = '';
+
+            if (typeof panelID != 'undefined' && panelID != '') {
+                this.id = '#' + panelID + ' ';
+            }
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.guardarTodo').click(function () {
+                that.guardarTodasPestanyas();
+            });
+            $('input.addPestanya').click(function () {
+                that.crearFila();
+            });
+            $(that.id + 'span.editar').click(function () {
+                that.editarPestanya($(this));
+            });
+            $(that.id + 'span.eliminar').click(function () {
+                that.eliminarPestanya($(this));
+            });
+            $(that.id + 'input.nombreDelPasoRegistro').keyup(function () {
+                that.cambiarNombreYUrl(this);
+            });
+            return;
+        },
+        crearFila : function (){
+            $('span.vacio').before('<li class="row pestanya" id="nuevoPasoRegistro" style><span class="handle pestanya ui-sortable-handle">:::</span><section class="header"><span class="nombrePestanya" aux="nuevoPasoRegistro">Nuevo paso del registro</span><span class="action eliminar" onclick="funcionEliminar($(this))">Eliminar</span><span class="action editar" onclick="funcionEditar($(this))">Editar</span></section><section class="panEdicion modified nueva" style="left: 0px;"><div><input type="hidden" name="ParentTabKey" value="00000000-0000-0000-0000-000000000000" /><input type="hidden" name="TabOrden" value="" /><input type="hidden" name="TabEliminada" value="false" /><p><span class="nombreServicio">Nombre del paso del registro:</span><input type="hidden" name="TabType" value="nombrePasoRegistro"><input type="text" list="pasosPosibles" class="nombreDelPasoRegistro" name="nombreDelPasoRegistro" value="" onkeyup="funcionCambiarNombreYUrl(this)" ><datalist id="pasosPosibles" class="pasosPosibles"><option value="Datos"></option><option value="Preferencias></option><option value="Conecta"></option>@foreach (string nombre in Model.ListaPestanyasMenu) {<option value="@nombre"></option>}</datalist></p><p><span class="urlServicio">Obligatorio:</span><input type="hidden" name="TabType" value=""><input type="checkbox" class="pasoObligatorio" name="pasoObligatorio" value=""></p></div></section></li>');
+        },
+        cambiarNombreYUrl : function(input){
+            var nombre = input.value;
+            var nombreTag = input.parentNode.parentNode.parentNode.previousElementSibling.getElementsByClassName('nombrePestanya')[0];
+            nombreTag.innerHTML = '<span class="nombrePestanya" aux="' + nombre + '">' + nombre + '</span>';
+        },
+        guardarTodasPestanyas: function () {
+            var that = this;
+            MostrarUpdateProgressTime(0);
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.ListaPestanyas = {};
+                var cont = 0;
+                $('.row.pestanya').each(function () {
+                    that.obtenerDatosPestanya($(this), cont++);
+                });
+                that.guardar();
+            }
+            else {
+                OcultarUpdateProgress();
+                that.mostrarErrorGuardado();
+            }
+        },
+        regenerarAutocompletar: function () {
+            var that = this;
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+
+            return error;
+        },
+        guardar: function () {
+            var that = this;
+
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.ListaPestanyas,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');                
+                if (error[0].startsWith("No es posible que")) {
+                    that.mostrarErrorObligatoriedad();
+                }
+                else if (error[0].startsWith("No es posible guardar")) {
+                    that.mostrarErrorPestanyas(error[0]);
+                }
+                else {
+                    that.mostrarErrorGuardado();
+                }
+                if (error[0] == "RUTA REPETIDA") {
+                    that.mostrarErrorUrlRepetida($('#' + error[1]));
+                }
+                else if (error[0] == "NOMBRE VACIO") {
+                    that.mostrarErrorNombreVacio($('#' + error[1]));
+                }
+                else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
+                    that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
+                }
+
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarErrorPestanyas: function (data){
+            $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
+        },
+        mostrarGuardadoUrlOK: function(){
+            $('input.guardarUrl').before('<div class="ok general">La Url se ha guardado correctamente</div>');
+        },
+        mostrarUrlError: function () {
+            $('input.guardarUrl').before('<div class="error general">Ha habido errores en el guardado de la Url</div>');
+        },
+        mostrarErrorObligatoriedad: function (){
+            $('input.guardarTodo').before('<div class="error general">No puede haber un paso obligatorio después de otro que no lo es</div>');
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
+        },
+        obtenerDatosPestanya: function (fila, num) {
+            var that = this;
+
+            var id = fila.attr('id');
+
+            var panelEdicion = fila.children('.panEdicion');
+            var prefijoClave = 'ListaPestanyas[' + num + ']';
+            that.ListaPestanyas[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
+
+            var nueva = panelEdicion.hasClass("nueva");
+            that.ListaPestanyas[prefijoClave + '.Nueva'] = nueva;
+
+            var nombre = panelEdicion.find('[name="nombreDelPasoRegistro"]').val();
+            var obligatorio = panelEdicion.find('[name="pasoObligatorio"]').is(':checked');
+            that.ListaPestanyas[prefijoClave + '.NombrePasoRegistro'] = nombre;
+            that.ListaPestanyas[prefijoClave + '.Obligatorio'] = obligatorio;
+
+        },
+        editarPestanya: function (botonEditar) {
+            var fila = botonEditar.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+
+            if (panEditar.hasClass('edit')) {
+                panEditar.removeClass('edit');
+            }
+            else {
+                panEditar.addClass('edit');
+                panEditar.addClass('modified');
+            }
+        },
+        deshacerEliminarPestanya: function (botonDeshacer) {
+            var fila = botonDeshacer.closest('.row');
+
+            fila.removeClass('ui-state-disabled');
+
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('[name="TabEliminada"]').val('false');
+
+            var panCabecera = fila.children('.header');
+            panCabecera.removeClass('deleted');
+            panEditar.addClass('modified');
+
+            var deshacer = panCabecera.children('.deshacer');
+            var eliminada = panCabecera.children('.eliminada');
+            deshacer.remove();
+            eliminada.remove();
+        },
+        eliminarPestanya: function(botonEliminar) {
+            var that = this;
+            var fila = botonEliminar.closest('.row');
+            var filas = fila.find('.row.pestanya');
+
+            fila.addClass('ui-state-disabled');
+            filas.addClass('ui-state-disabled');
+
+            var panelesEditar = panelesEditar = filas.children('.panEdicion');
+            panelesEditar = panelesEditar.add(fila.children('.panEdicion'));
+            panelesEditar.removeClass('edit');
+            panelesEditar.find('[name="TabEliminada"]').val('true');
+
+            var panelesCabecera = filas.children('.header:not(.deleted)');
+            panelesCabecera = panelesCabecera.add(fila.children('.header:not(.deleted)'));
+            panelesCabecera.addClass('deleted');
+            panelesCabecera.append('<span class="deshacer">deshacer</span>')
+            panelesCabecera.prepend('<span class="eliminada">(eliminada)</span>')
+
+            panelesCabecera.find('span.deshacer').click(function () {
+                that.deshacerEliminarPestanya($(this));
+            });
+        },
+        mostrarBorradoOK : function() {
+            $('input.guardarTodo').before('<div class="ok general">Se ha borrado correctamente</div>');
+        },
+        mostrarBorrardoError: function() {
+            $('input.guardarTodo').before('<div class="error general">No se ha borrado correctamente</div>');
+        }
+    }
+    function funcionEditar(botonEditar) {
+        var fila = botonEditar.closest('.row');
+        var panEditar = fila.children('.panEdicion');
+
+        if (panEditar.hasClass('edit')) {
+            panEditar.removeClass('edit');
+        }
+        else {
+            panEditar.addClass('edit');
+            panEditar.addClass('modified');
+        }
+    }
+    function funcionEliminar(botonEliminar){
+        var fila = botonEliminar.closest('.row');
+        var filas = fila.find('.row.pestanya');
+
+        fila.addClass('ui-state-disabled');
+        filas.addClass('ui-state-disabled');
+
+        var panelesEditar = panelesEditar = filas.children('.panEdicion');
+        panelesEditar = panelesEditar.add(fila.children('.panEdicion'));
+        panelesEditar.removeClass('edit');
+        panelesEditar.find('[name="TabEliminada"]').val('true');
+
+        var panelesCabecera = filas.children('.header:not(.deleted)');
+        panelesCabecera = panelesCabecera.add(fila.children('.header:not(.deleted)'));
+        panelesCabecera.addClass('deleted');
+        panelesCabecera.append('<span class="deshacer">deshacer</span>')
+        panelesCabecera.prepend('<span class="eliminada">(eliminada)</span>')
+
+        panelesCabecera.find('span.deshacer').click(function () {
+            deshacerEliminarPestanya($(this));
+        });
+    }
+    function funcionCambiarNombreYUrl(input) {
+        var nombre = input.value;
+        var nombreTag = input.parentNode.parentNode.parentNode.previousElementSibling.getElementsByClassName('nombrePestanya')[0];
+        nombreTag.innerHTML = '<span class="nombrePestanya" aux="' + nombre + '">' + nombre + '</span>';
+    }
+    function deshacerEliminarPestanya(botonDeshacer) {
+        var fila = botonDeshacer.closest('.row');
+
+        fila.removeClass('ui-state-disabled');
+
+        var panEditar = fila.children('.panEdicion');
+        panEditar.find('[name="TabEliminada"]').val('false');
+
+        var panCabecera = fila.children('.header');
+        panCabecera.removeClass('deleted');
+        panEditar.addClass('modified');
+
+        var deshacer = panCabecera.children('.deshacer');
+        var eliminada = panCabecera.children('.eliminada');
+        deshacer.remove();
+        eliminada.remove();
+    }
+    function quitarRepetidos() {
+        var listaInicial = ['Datos', 'Preferencias', 'Conecta'];        
+        //listaInicial = listaInicial.concat(listaPestanyas);
+        var restoDocumentos = Array.from(document.getElementsByClassName('pasosPosibles'));
+        restoDocumentos.forEach(function (lista) {
+            if (lista.previousElementSibling.value == "Datos") {
+                listaInicial.splice(listaInicial.indexOf('Datos'), 1);
+            }
+            else if (lista.previousElementSibling.value == "Preferencias") {
+                listaInicial.splice(listaInicial.indexOf('Preferencias'), 1);
+            }
+            else if (lista.previousElementSibling.value == "Conecta") {
+                listaInicial.splice(listaInicial.indexOf('Conecta'), 1);
+            }
+        });
+        var nuevos = [];
+        for (let i = 0; i < restoDocumentos.length; i++) {
+            var nuevo = document.createElement("DATALIST");
+            nuevo.id = "pasosPosibles";
+            nuevo.class = "pasosPosibles";
+            for (let k = 0; k < listaInicial.length; k++) {
+                var opt = document.createElement("OPTION");
+                opt.id = listaInicial[k];
+                opt.value = listaInicial[k];
+                nuevo.appendChild(opt);
+            }
+            nuevos.push(nuevo);
+        }
+        var cont = 0;
+        restoDocumentos.forEach(function (data) {
+            data.innerHTML = nuevos[cont].innerHTML;
+            cont++;
+        })
+    }
+    $(document).ready(function () {
+        OperativaOrdenacion.init();
+        OperativaAcciones.init();
+    });
+</script>
+<style>
+    
+    ol.table li.row section.panEdicion.edit {
+        display: block;
+        position: relative;
+        width: 770px;
+        padding: 20px 20px 10px;
+        border-top: 1px solid;
+    }
+    input.pasoObligatorio {
+        margin-left: 51px
+    }
+    input.nombreDelPasoRegistro {
+        margin-left: 20px;
+    }
+    .row .header .nombrePestanya {
+        font-weight: bold;
+    }
+    ol.table, ol.table ol {
+        list-style: none;
+    }
+    ol.table {
+        padding: 0;
+        margin: 20px 0 20px 20px;
+        border: 1px solid black;
+        border-bottom: 0;
+    }
+    ol {
+        display: block;
+        list-style-type: decimal;
+        margin-block-start: 1em;
+        margin-block-end: 1em;
+        margin-inline-start: 0px;
+        margin-inline-end: 0px;
+        padding-inline-start: 40px;
+    }
+    input[type="text"], textarea {
+        width: 590px;
+    }
+    div.content {
+        margin: 50px;
+    }
+
+    div.content form {
+        margin: 30px;
+    }
+
+    div#confCorreo .bloque {
+        border: 1px solid;
+        padding: 10px;
+    }
+
+    div.error.general {
+        background-color: Red;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.ok.general {
+        background-color: limegreen;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+    input.regenerarAutocompletar{
+        background: #ffa031 none repeat scroll 0 0;
+        float: left;
+        border: medium none;
+        border-radius: 5px;
+        color: white;
+        padding: 5px;
+        cursor: pointer;
+    }
+
+    div.content input.guardarTodo{
+        float:right;
+    }
+    
+    div.content input[type='text'],
+    div.content input[type='password'],
+    div.content select {
+        width: 590px;
+        margin-bottom:10px;
+    }
+    h4 {
+        padding-top:20px;
+        padding-bottom:20px;
+    }
+    div.content {
+        margin: 50px;
+    }
+
+    div.content form {
+        margin: 30px;
+    }
+
+    div#confCorreo .bloque {
+        border: 1px solid;
+        padding: 10px;
+    }
+    .wrap {
+        width: 80%;
+        padding: 1em 5%;
+        background: #fff;
+    }
+    div.error.general {
+        background-color: Red;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.ok.general {
+        background-color: limegreen;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.content input.guardarTodo{
+        float:right;
+    }
+    div.content input.eliminar{
+        float: right;
+    }
+    div content input.obligatoriedad{
+        float: right;
+    }
+    input.CrearNuevo{
+        background: #ffa031;
+        border: medium none;
+        border-radius: 5px;
+        color: white;
+        padding: 5px;
+        cursor: pointer;
+    }
+    div.content input[type='text'],
+    div.content input[type='password'],
+    div.content select {
+        width: 85%;
+        margin-bottom:10px;
+    }
+    h4 {
+        padding-top:20px;
+        padding-bottom:20px;
+    }
+    input.limpiador {
+        float: right;
+        margin-left: 20px;
+    }
+    div.content input[type='text'], div.content input[type='password'], div.content select {
+    width: 500px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+}
+    input.pasoObligatorio {
+    margin-left: 110px;
+}
+</style>

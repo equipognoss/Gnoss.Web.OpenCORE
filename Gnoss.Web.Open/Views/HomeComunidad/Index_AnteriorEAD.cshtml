@@ -1,0 +1,164 @@
+﻿@model HomeViewModel
+@{    
+    Html.SetBodyClass("comGnoss layout01 homeComunidad ");
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+    
+    @*
+	<script type="application/ld+json">
+	{
+		"@@context": "http://schema.org",
+		"@@type": "WebSite",
+		"url": "@Comunidad.Url",
+		"potentialAction": {
+			"@@type": "SearchAction",
+			"target": "@Comunidad.Url/@Html.GetText("URLSEM", "RECURSOS")?search={search_term_string}",
+			"query-input": "required name=search_term_string"
+		}
+	}
+	</script>*@
+}
+@if(Comunidad.ProjectState != CommunityModel.StateProject.Definition || !IdentidadActual.IsGuestIdentity)
+{
+    <div id="col01">
+        <div id="resumenActivity">
+            <div class="supertitle">
+                <p><strong>@Html.GetText("COMMON", "COMUNIDAD")</strong></p>
+            </div>
+            <div class="counters box links">
+                <ul>
+                    <li><span class="count">@Comunidad.NumberOfResources</span>  @Html.GetText("COMMON", "RECURSOS")</li>
+                    <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "PERSONASYORGANIZACIONES")" ><span class="count">@(Comunidad.NumberOfPerson + Comunidad.NumberOfOrganizations)</span> @Html.GetText("COMMON", "PERSONASYORGANIZACIONES")</a></li>
+                </ul>
+            </div>
+            <div class="admins">
+                <div>
+                    <h3>@Html.GetText("COMINICIO", "ADMININSTRADORES")</h3>
+                    <ul>
+                    @foreach (ProfileModel admin in Comunidad.Administrators)
+                    {
+                        string tipoPerfil = "persona";
+
+                        if (admin.TypeProfile == ProfileType.Organization || admin.TypeProfile == ProfileType.ProfessionalCorporate)
+                        {
+                            tipoPerfil = "organizacion";
+                        }
+                                    
+                        <li class="resourceType @tipoPerfil">
+                            <a href="@admin.UrlPerson">
+                                @if (!string.IsNullOrEmpty(admin.UrlFoto))
+                                {
+                                    <img title="@admin.NamePerson" alt="@admin.NamePerson" src="@Html.GetBaseUrlContent()@admin.UrlFoto" />
+                                }
+                            </a>
+                        </li>
+                    }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    
+        @if (Comunidad.ProjectState != CommunityModel.StateProject.Close && Comunidad.ProjectState != CommunityModel.StateProject.CloseTemporaly || IdentidadActual.IsProyectAdmin || IdentidadActual.IsProyectSupervisor)
+        {
+            <div class="resaltarAccion" id="facetaEncuentra" style="display:none">
+                <p>@Html.GetText("BUSCADORFACETADO", "ENCUENTRA")</p>
+            </div>
+            <div id="panFacetas">
+            </div>
+            <div id="users">
+                <div class="moreActivityUsers userList box">
+                    <h3>@Html.GetText("COMADMIN", "MASACTIVOS")</h3>
+                    <ul>
+                    @foreach (ProfileModel usuario in Model.MostActiveUsers)
+                    {
+                        string tipoPerfil = "persona";
+
+                        if (usuario.TypeProfile == ProfileType.Organization || usuario.TypeProfile == ProfileType.ProfessionalCorporate)
+                        {
+                            tipoPerfil = "organizacion";
+                        }
+                                    
+                        <li class="resourceType @tipoPerfil">
+                            <a href="@usuario.UrlPerson" title="@usuario.NamePerson">
+                                @if (!string.IsNullOrEmpty(usuario.UrlFoto))
+                                {
+                                    <img title="@usuario.NamePerson" alt="@usuario.NamePerson" src="@Html.GetBaseUrlContent()@usuario.UrlFoto" />
+                                }
+                            </a>
+                        </li>
+                    }
+                    </ul>
+                    <p class="vertodos"><a href="@Comunidad.Url/@Html.GetText("URLSEM", "PERSONASYORGANIZACIONES")">@Html.GetText("COMMON", "VERTODOS")</a></p>
+                </div>
+                <div class="lastReristeredUsers moreActivityUsers userList box">
+                    <h3>@Html.GetText("COMADMIN", "ULTIMOSUSUARIOS")</h3>
+                    <ul>
+                    @foreach (ProfileModel usuario in Model.LastUsers)
+                    {
+                        string tipoPerfil = "persona";
+
+                        if (usuario.TypeProfile == ProfileType.Organization || usuario.TypeProfile == ProfileType.ProfessionalCorporate)
+                        {
+                            tipoPerfil = "organizacion";
+                        }
+                                    
+                        <li class="resourceType @tipoPerfil">
+                            <a href="@usuario.UrlPerson" title="@usuario.NamePerson">
+                                @if (!string.IsNullOrEmpty(usuario.UrlFoto))
+                                {
+                                    <img title="@usuario.NamePerson" alt="@usuario.NamePerson" src="@Html.GetBaseUrlContent()@usuario.UrlFoto" />
+                                }
+                            </a>
+                        </li>
+                    }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+    <div id="col02">
+        <div class="supertitle">
+            <h2>
+                <span>@Html.GetText("CONTROLESLIVE", "TITULOCONTROLEVENTOS")</span>
+            </h2>
+        </div>
+        <div class="resource-list social-events-list">
+            <p class="tituloComponente"></p>
+
+            <div class="resource-list social-events-list widthTabs">
+                @if (Model.RecentActivity.RecentActivityItems.Count > 0)
+                {
+                    @Html.PartialView("ControlesMVC/_ActividadReciente", Model.RecentActivity)
+                }
+                else if (!IdentidadActual.IsExpelled && Comunidad.ProjectState != CommunityModel.StateProject.Close && Comunidad.ProjectState != CommunityModel.StateProject.CloseTemporaly && Comunidad.ProjectState != CommunityModel.StateProject.Definition || IdentidadActual.IsProyectAdmin || IdentidadActual.IsProyectSupervisor)
+                {
+                    <div>
+                        <div class="group content">
+                            <p>
+                                @Html.Raw(Html.GetText("CONTROLESLIVE", "ACTIVIDADRECIENTEVACIOCOM", (string)Comunidad.Url + "/" + Html.GetText("URLSEM", "SUBIRRECURSO")))
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div id="col03">
+        @if (Model.Gadgets != null && Model.Gadgets.Count > 0)
+        {
+            <div id="divContPanGadgets">
+                @foreach (GadgetModel gadget in ((List<GadgetModel>)Model.Gadgets).OrderBy(gadget => gadget.Order))
+                {
+                    @Html.PartialView("ControlesMVC/_FichaGadget", gadget)
+                }
+            </div>
+        }
+    </div>
+
+    @section javascript {          
+        <script type="text/javascript">
+            MontarFechas();
+            @Html.Raw(Html.GetJSExtra())
+        </script>
+    }
+}

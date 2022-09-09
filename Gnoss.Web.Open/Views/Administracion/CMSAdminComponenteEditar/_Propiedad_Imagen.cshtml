@@ -1,0 +1,40 @@
+﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
+
+@{
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS) + "_";
+    string valorPropiedad = Model.Value;
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += idiomaPanel;
+        valorPropiedad = Html.ObtenerTextoDeIdioma(Model.Value, idiomaPanel, null, true);
+    }
+
+    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+}
+
+<div id="contenedorPrincipal_@idPanel">
+    <p id="parrafo_@idPanel">
+        <label for="@idPanel">Imagen@(Model.Required ? " *" : "")</label>
+    </p>
+    <p class="panelImg" @Html.Raw(string.IsNullOrEmpty(valorPropiedad) ? "style=\"display:none\"" : "")>
+        <img style="height:200px;" id="img_@idPanel" src="@valorPropiedad" />
+        <input type="hidden" id="@idPanel" value="@valorPropiedad" />
+        <input type="button" onclick="Propiedad2_EliminarImagen($(this), '@idiomaPanel')" value="Eliminar">
+    </p>
+    <p class="selectorTipo" @Html.Raw(!string.IsNullOrEmpty(valorPropiedad) ? "style=\"display:none\"" : "")>
+        <select name="select_@idPanel" id="select_@idPanel" onchange="Propiedad2_CambiarSubidaImagen($(this), '@idiomaPanel')" class="ddlsubidaes">
+            <option value="0">Seleccionar opción</option>
+            <option value="1">Seleccionar imagen</option>
+            <option value="2">Indicar url imagen</option>
+        </select>
+    </p>
+    <p class="subirURL" style="display:none">
+        Url de la imagen
+        <input type="text" id="url_@idPanel" value="" />
+        <input type="button" style="display:inline" onclick="Propiedad2_SubirImagenDesdeUrl($(this), '@idiomaPanel');" value="Aceptar">
+    </p>
+    <p class="subirIMG" style="display:none">
+        <input type="file" accept="image/jpg, image/jpeg, image/png, image/gif" id="file_@idPanel" onchange="Propiedad2_SubirImagenDesdeFichero(this, '@idiomaPanel')" style="width:400px;">
+    </p>
+</div>

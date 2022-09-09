@@ -1,0 +1,259 @@
+﻿@model AdministrarSeoGoogleViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+<div class="content">
+    <h1>Configurar SEO y Google Analytics del proyecto</h1>
+
+    <input type="button" class="guardarTodo" value="Guardar Todo" />
+    <div>
+        <form autocomplete="off">
+            <h4>¿Desea que Google y el resto de buscadores indexe su sitio Web?</h4>
+            <p>
+                <input type="radio" name="RobotsBusqueda" id="robotBusquedaSi" value="all" @(Model.ValorRobotsBusqueda.Equals("1") && Model.ConfiguracionEnParametroProyecto ? "checked" : "") />
+                <label for="robotBusquedaSi">Sí</label><br />
+                <input type="radio" name="RobotsBusqueda" id="robotBusquedaNo" value="noindex,nofollow" @(Model.ValorRobotsBusqueda.Equals("0") && Model.ConfiguracionEnParametroProyecto ? "checked" : "") />
+                <label for="robotBusquedaNo">No</label><br />
+                <input type="radio" name="RobotsBusqueda" id="robotBusquedaNada" value="@(Model.RobotsBusqueda)" @(Model.ValorRobotsBusqueda.Equals("") ? "checked" : "") />
+                <label for="robotBusquedaNada">Utilizar la configuración de la plataforma</label><br />
+                @*<h5 id="avisoPlataforma" @(Model.ValorRobotsBusqueda == "0" || Model.ValorRobotsBusqueda == "1" || Model.ValorRobotsBusqueda == "" ? "hidden" : "")>En la plataforma está configurado como: @(Model.RobotsBusqueda == "all" ? "Sí" : "No")</h5>*@
+                <h5 id="avisoPlataforma" @(Model.ValorRobotsBusqueda == "" || Model.ValorRobotsBusqueda == null ? "hidden" : "")>En la plataforma está configurado como: @(Model.RobotsBusqueda == "all" ? "Sí" : "No")</h5>
+            </p>
+            <h4>Configuración de Google Analytics</h4>
+            <h5>¿Desea añadir un script propio o utilizar el de la plataforma?</h5><br />
+           
+                <input type="radio" name="Google" id="googleSi" value="Si" />
+                <label for="googleSi">Sí</label><br />
+
+
+                <input type="radio" name="Google" id="googleDefecto" value="Defecto" />
+                <label for="googleDefecto">Utilizar la configuración por defecto</label><br />
+
+
+            
+            <input type="radio" name="Google" id="googlePlataforma" value="No" />
+            <label for="googlePlataforma">Utilizar la configuración de la plataforma</label><br /><br />
+            <div id="panelGooglePlataforma" hidden>
+                <h5>Configuración en la plataforma</h5><br />
+                Código de Google Analytics de la cuenta en la que se van a registrar las visitas de esta comunidad (ej: UA-XXXXXXXX-1)
+                <input type="text" id="CodigoGoogleAnalytics" value="@Model.CodigoGoogleAnalytics" />
+                <br /><br />
+                Script de Google Analytics
+                <br />
+                <textarea style="width:100%" id="ScriptGoogleAnalytics" disabled>@Model.ScriptGoogleAnalytics</textarea>
+            </div>
+            <div id="panelScriptDefecto" hidden>
+                <h5>Configuración por defecto</h5><br />
+                Código de Google Analytics de la cuenta en la que se van a registrar las visitas de esta comunidad (ej: UA-XXXXXXXX-1)
+                <input type="text" id="CodigoGoogleAnalyticsDefecto" value="@Model.CodigoGoogleAnalytics" />
+                <br /><br />
+                Script de Google Analytics por defecto
+                <br />
+                <textarea style="width:100%" id="ScriptGoogleAnalyticsDefecto" disabled>@Model.ScriptPorDefecto</textarea>
+            </div>
+            <div id="panelScriptPropio" hidden>
+                Código de Google Analytics de la cuenta en la que se van a registrar las visitas de esta comunidad (ej: UA-XXXXXXXX-1)
+                <input type="text" id="CodigoGoogleAnalyticsPropio" value="@Model.CodigoGoogleAnalytics" />
+                <br /><br />
+                Script de Google Analytics, si se quiere usar un script distinto al de por defecto.
+                <br />
+                (ej: var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));)
+
+                <textarea style="width:100%" id="ScriptGoogleAnalyticsPropio"></textarea>
+            </div>
+        </form>
+    </div>
+    <input type="button" class="guardarTodo" value="Guardar Todo" />
+</div>
+<script>
+    var OperativaAcciones = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+            $('input:radio[name="RobotsBusqueda"]').change(function () {
+                that.avisarConfigPlataforma($(this).val());
+            });
+            $('input:radio[name="Google"]').change(function () {
+                that.mostrarPanelScript($(this).val());
+            });
+            return;
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');
+        },
+        mostrarErrorGuardadoScript: function () {
+            $('input.guardarTodo').before('<div class="error general">Debes introducir un Código y un Script</div>');
+        },
+        mostrarErrorGuardadoFallo: function (data) {
+            $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+
+            var codigoSeleccionado = $('input:radio[name="Google"]:checked').val();
+            var script = "";
+            var codigo = "";
+            if (codigoSeleccionado == 'Si') {
+                if ($("#CodigoGoogleAnalyticsPropio").val() == "" || $("#ScriptGoogleAnalyticsPropio").val() == "") {
+                    that.mostrarErrorGuardadoScript();
+                    return true;
+                }
+            } else if (codigoSeleccionado == 'No') {
+                if ($("#CodigoGoogleAnalytics").val() == "" || $("#ScriptGoogleAnalytics").val() == "") {
+                    that.mostrarErrorGuardadoScript();
+                    return true;
+                }
+            } else {
+                if ($("#CodigoGoogleAnalyticsDefecto").val() == "" || $("#ScriptGoogleAnalyticsDefecto").val() == "") {
+                    that.mostrarErrorGuardadoScript();
+                    return true;
+                }
+            }
+            return error;
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.Options = {};
+                that.obtenerDatos();
+                that.guardar();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        guardar: function () {
+            var that = this;
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.Options,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
+                    that.mostrarErrorGuardado();
+                }
+                else {
+                    that.mostrarErrorGuardadoFallo(data);
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        obtenerDatos: function () {
+            var that = this;
+            var valorParametro = '';
+            var valorSeleccionado = $('input:radio[name="RobotsBusqueda"]:checked').val();
+            that.Options['RobotsBusqueda'] = valorSeleccionado;
+            if (valorSeleccionado == 'all') {
+                valorParametro = '1';
+            } else if (valorSeleccionado == 'noindex,nofollow') {
+                valorParametro = '0';
+            }
+            that.Options['ValorRobotsBusqueda'] = valorParametro;
+
+            var codigoSeleccionado = $('input:radio[name="Google"]:checked').val();
+            var script = "";
+            var codigo = "";
+            if (codigoSeleccionado == 'Si') {
+                codigo = $("#CodigoGoogleAnalyticsPropio").val();
+                script = $("#ScriptGoogleAnalyticsPropio").val();
+            } else if (codigoSeleccionado == 'No') {
+                codigo = $("#CodigoGoogleAnalytics").val();
+                script = $("#ScriptGoogleAnalytics").text();
+            } else {
+                codigo = $("#CodigoGoogleAnalyticsDefecto").val();
+                script = $("#ScriptGoogleAnalyticsDefecto").text();
+            }
+            that.Options['CodigoGoogleAnalytics'] = encodeURIComponent(codigo);
+            that.Options['ScriptGoogleAnalytics'] = encodeURIComponent(script);
+
+        },
+        avisarConfigPlataforma: function (form) {
+            var valorMostrar = $('input:radio[name="RobotsBusqueda"]:checked').attr('id');
+
+            if (valorMostrar == 'robotBusquedaNada') {
+                $('#avisoPlataforma').show();
+            } else {
+                //$('#avisoPlataforma').hide();
+            }
+        },
+        mostrarPanelScript: function (form) {
+            var valorMostrar = $('input:radio[name="Google"]:checked').attr('id');
+
+            if (valorMostrar == 'googleSi') {
+                $('#panelScriptPropio').show();
+                $('#panelScriptDefecto').hide();
+                $('#panelGooglePlataforma').hide();
+            } else if (valorMostrar == 'googleDefecto') {
+                $('#panelScriptPropio').hide();
+                $('#panelScriptDefecto').show();
+                $('#panelGooglePlataforma').hide();
+            } else {
+                $('#panelScriptDefecto').hide();
+                $('#panelScriptPropio').hide();
+                $('#panelGooglePlataforma').show();
+            }
+        }
+    }
+    $(document).ready(function () {
+        OperativaAcciones.init();
+    });
+</script>
+<style>
+    div.content {
+        margin: 50px;
+    }
+
+        div.content form {
+            margin: 30px;
+        }
+
+    div.error.general {
+        background-color: Red;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.content input.guardarTodo {
+        float: right;
+    }
+
+    div.ok.general {
+        background-color: limegreen;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    h4 {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+</style>

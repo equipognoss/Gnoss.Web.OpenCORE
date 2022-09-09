@@ -1,0 +1,606 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarOpcionesMetaadministradorViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>Configurar proyecto por el metaadministrador del ecosistema</h1>
+    <div>
+        <form autocomplete="off">
+
+            <h4>Permisos</h4>
+            @*Booleanos*@
+            <p>
+                <input type="checkbox" id="CMSActivado" @(Model.CMSActivado ? "checked" : "") /> Activar CMS
+            </p>
+            <p>
+                <input type="checkbox" id="AdministracionPaginasPermitido" @(Model.AdministracionPaginasPermitido ? "checked" : "") /> Permitir administración páginas
+            </p>
+            <p>
+                <input type="checkbox" id="AdministracionSemanticaPermitido" @(Model.AdministracionSemanticaPermitido ? "checked" : "") /> Permitir administración semantica
+            </p>
+            <p>
+                <input type="checkbox" id="AdministracionDesarrolladoresPermitido" @(Model.AdministracionDesarrolladoresPermitido ? "checked" : "") /> Permitir administración desarrolladores
+            </p>
+            <p>
+                <input type="checkbox" id="EventosDisponibles" @(Model.EventosDisponibles ? "checked" : "") /> Permitir administración de eventos
+            </p>
+            <p>
+                <input type="checkbox" id="AdministracionVistasPermitido" @(Model.AdministracionVistasPermitido ? "checked" : "") /> Permitir administración vistas
+            </p>
+            <p>
+                <input type="checkbox" id="VistasActivadas" @(Model.VistasActivadas ? "checked" : "") /> Activar vistas personalizadas
+            </p>
+
+
+            @if (!Model.VistasActivadas)
+            {
+                <section class="bloque editarVista" style="display:none">
+                    Usar vistas de un proyecto existente
+                    <select id="PersonalizacionIDVistas">
+                        <option value="@Guid.Empty">Ninguna</option>
+                        @foreach (KeyValuePair<string, Guid> personalizacion in Model.ListaProyectosVistas.Values)
+                        {
+                            <option value="@personalizacion.Value">@personalizacion.Key</option>
+                        }
+                    </select>
+                </section>
+            }
+            @*else
+        {
+            <input type="hidden" id="PersonalizacionIDVistas" value="@Model.PersonalizacionIDVistas" />
+        }*@
+
+            @if (Model.TieneVistasEcosistema)
+            {
+                <p>
+                    <input type="checkbox" id="NoUsarVistasDelEcosistema" @(Model.NoUsarVistasDelEcosistema ? "checked" : "") /> No usar las vistas del ecosistema en el proyecto
+                </p>
+            }
+            <p>
+                <input type="checkbox" id="CargasMasivasDisponibles" @(Model.CargasMasivasDisponibles ? "checked" : "") /> Los usuarios pueden realizar cargas masivas de adjuntos
+            </p>
+
+            <p>
+                <input type="checkbox" id="EnviarNotificacionesDeSuscripciones" @(Model.EnviarNotificacionesDeSuscripciones ? "checked" : "") /> Enviar notificaciones de suscripciones
+            </p>
+
+            <p>
+                <input type="checkbox" id="OcultarCambiarPassword" @(Model.OcultarCambiarPassword ? "checked" : "") /> Ocultar la contraseña al cambiarla
+            </p>
+
+            <p>
+                <input type="checkbox" id="DuplicarRecursosDisponible" @(Model.DuplicarRecursosDisponible ? "checked" : "") /> Duplicar los recursos
+            </p>
+
+
+
+            <p>
+                Nombre de la Politica de Cookies
+            </p>
+            <input type="text" id="NombrePoliticaCookies" value="@Model.NombrePoliticaCookies" />
+
+
+            <h4>Permisos CMS</h4>
+            <p>
+                <input type="checkbox" id="ConsultaSparql" @(Model.ConsultaSparql ? "checked" : "") /> Consulta Sparql
+            </p>
+            <p>
+                <input type="checkbox" id="BuscadorSPARQL" @(Model.PreguntaTIC ? "checked" : "") /> PreguntaTIC
+            </p>
+            <p>
+                <input type="checkbox" id="PreguntaTIC" @(Model.BuscadorSPARQL ? "checked" : "") /> Buscador SPARQL
+            </p>
+            <p>
+                <input type="checkbox" id="FichaDescripcionDocumento" @(Model.FichaDescripcionDocumento ? "checked" : "") /> Ficha de descripción del documento
+            </p>
+            <p>
+                <input type="checkbox" id="ConsultaSQLServer" @(Model.ConsultaSQLServer ? "checked" : "") /> Consulta SQLServer
+            </p>
+
+
+            <h4>Apariencia</h4>
+            <p>
+                <input type="checkbox" id="CabeceraSimple" @(Model.CabeceraSimple ? "checked" : "") /> Mostrar cabecera simplificada (Oculta el resto de identidades de la cabecera)
+            </p>
+            <p>
+                <input type="checkbox" id="EtiquetasConLOD" @(Model.EtiquetasConLOD ? "checked" : "") /> Etiquetas enlazadas con Linked Open Data
+            </p>
+            <p>
+                <input type="checkbox" id="AgruparEventosNuevosUsuarios" @(Model.AgruparEventosNuevosUsuarios ? "checked" : "") /> Agrupar eventos de nuevos usuarios
+            </p>
+            <p>
+                <input type="checkbox" id="RdfDisponibles" @(Model.RdfDisponibles ? "checked" : "") /> La descarga de RDFs estará disponible en las páginas de búsqueda
+            </p>
+            <p>
+                <input type="checkbox" id="AvisoCookie" @(Model.AvisoCookie ? "checked" : "") /> Mostrar advertencia a los usuarios nuevos de que el sitio Web usa cookies
+            </p>
+            <p>
+                Versión CSS
+                <input type="text" id="VersionCSS" style="width:50px;" value="@(Model.VersionCSS > 0 ? Model.VersionCSS.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                Versión JS
+                <input type="text" id="VersionJS" style="width:50px;" value="@(Model.VersionJS > 0 ? Model.VersionJS.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                Copyright (Ej: RIAM I+L lab)
+                <input type="text" id="Copyright" value="@Model.Copyright" />
+            </p>
+            <p>
+                Enlace que va a aparecer en el pie de página como contacto. Ej: http://www.gnoss.com/sobre-la-empresa
+                <input type="text" id="EnlaceContactoPiePagina" value="@Model.EnlaceContactoPiePagina" />
+            </p>
+            <p>
+                Número de recursos relacionados
+                <input type="text" id="NumeroRecursosRelacionados" style="width:50px;" value="@(Model.NumeroRecursosRelacionados > 0 ? Model.NumeroRecursosRelacionados.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                Tamaño al que deben hacerse las capturas de las miniaturas de las imágenes (por defecto 240x200)
+            </p>
+            <p style="padding-left:20px;">
+                Alto (ej 280): <input type="text" id="CapturasImgSizeAlto" style="width:50px;" value="@(Model.CapturasImgSizeAlto > 0 ? Model.CapturasImgSizeAlto.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" /> Ancho (ej 280): <input type="text" id="CapturasImgSizeAncho" style="width:50px;" value="@(Model.CapturasImgSizeAncho > 0 ? Model.CapturasImgSizeAncho.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                <input type="checkbox" id="CargarEditoresLectoresEnBusqueda" @(Model.CargarEditoresLectoresEnBusqueda ? "checked" : "") /> Cargar los editores y lectores de los recursos en las páginas de búsqueda (Afecta al rendimiento de las búsquedas, no marcar si no es imprescindible)
+            </p>
+            <p>
+                Indica los items que se muestran en la actividad reciente
+                <input type="number" id="FilasPorPagina" min="0" pattern="^[0-9]+" value="@Model.FilasPorPagina" />
+            </p>
+            <h4>Usuarios</h4>
+            <p>
+                <input type="checkbox" id="BiosCortas" @(Model.BiosCortas ? "checked" : "") /> Los usuarios pueden definir una biografía corta en su perfil
+            </p>
+            <p>
+                <input type="checkbox" id="FechaNacimientoObligatoria" @(Model.FechaNacimientoObligatoria ? "checked" : "") /> Los usuarios deben introducir su fecha de nacimiento en el registro obligatoriamente
+            </p>
+            <p>
+                <input type="checkbox" id="PrivacidadObligatoria" @(Model.PrivacidadObligatoria ? "checked" : "") /> Los usuarios deben seleccionar el nivel de privacidad que quieren para su perfil obligatoriamente
+            </p>
+            <p>
+                <input type="checkbox" id="InvitacionesPorContactoDisponibles" @(Model.InvitacionesPorContactoDisponibles ? "checked" : "") /> Los usuarios pueden invitar a sus contactos a participar en la comunidad
+            </p>
+            <p>
+                <input type="checkbox" id="RecibirNewsletterDefecto" @(Model.RecibirNewsletterDefecto ? "checked" : "") /> Los usuarios reciben la newsletter por defecto
+            </p>
+            <p>
+                <input type="checkbox" id="EnviarNotificacionesDeSuscripciones" @(Model.EnviarNotificacionesDeSuscripciones ? "checked" : "") /> Enviar boletín de suscripciones por correo electrónico (diario o semanal según lo tenga configurado cada usuario)
+            </p>
+            <p style="padding-left:24px;">
+                Día de envío del boletín
+                <select id="DiaEnvioSuscripcion">
+                    <option value="0" @(Model.DiaEnvioSuscripcion.Equals(0) ? "selected=\"selected\"" : "")>Indiferente</option>
+                    <option value="1" @(Model.DiaEnvioSuscripcion.Equals(1) ? "selected=\"selected\"" : "")>Lunes</option>
+                    <option value="2" @(Model.DiaEnvioSuscripcion.Equals(2) ? "selected=\"selected\"" : "")>Martes</option>
+                    <option value="3" @(Model.DiaEnvioSuscripcion.Equals(3) ? "selected=\"selected\"" : "")>Miercoles</option>
+                    <option value="4" @(Model.DiaEnvioSuscripcion.Equals(4) ? "selected=\"selected\"" : "")>Jueves</option>
+                    <option value="5" @(Model.DiaEnvioSuscripcion.Equals(5) ? "selected=\"selected\"" : "")>Viernes</option>
+                    <option value="6" @(Model.DiaEnvioSuscripcion.Equals(6) ? "selected=\"selected\"" : "")>Sábado</option>
+                    <option value="7" @(Model.DiaEnvioSuscripcion.Equals(7) ? "selected=\"selected\"" : "")>Domingo</option>
+                </select>
+            </p>
+            <p>
+                <input type="checkbox" id="SuscribirATodaComunidad" @(Model.SuscribirATodaComunidad ? "checked" : "") /> Suscripción automática de cada usuario nuevo a todas las categorías de la comunidad
+            </p>
+            @if (Html.GetComunidad().AccessType.Equals(CommunityModel.TypeAccessProject.Private) || Html.GetComunidad().AccessType.Equals(CommunityModel.TypeAccessProject.Reserved))
+            {
+                <p>
+                    <input type="checkbox" id="SolicitarCookieLogin" @(Model.SolicitarCookieLogin ? "checked" : "") /> La duración de la cookie está restringida a 20 minutos. Además, si el usuario está logueado en otro dominio de la plataforma, se le pedirá login igualmente.
+                </p>
+                <p>
+                    <input type="checkbox" id="RegistroAbierto" @(Model.RegistroAbierto ? "checked" : "") /> Registro abierto. No es necesaria una invitación para entrar en la comunidad.
+                </p>
+            }
+            <p>
+                <input type="checkbox" id="PermitirDescargaIdentidadInvitada" @(Model.PermitirDescargaIdentidadInvitada ? "checked" : "") /> Permitir la descarga de adjuntos a usuarios no logueados
+            </p>
+
+            <p>
+                <input type="checkbox" id="EnviarNotificacionesDeSuscripciones" @(Model.EnviarNotificacionesDeSuscripciones ? "checked" : "") /> Enviar notificaciones de suscripciones
+            </p>
+
+            <p>
+                Caducidad de la contraseña
+                <input type="text" id="CaducidadPassword" style="width:50px;" value="@(Model.CaducidadPassword > 0 ? Model.CaducidadPassword.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                <input type="checkbox" id="RegistroAbiertoEnComunidad" @(Model.RegistroAbiertoEnComunidad ? "checked" : "") /> Indica si se debe usar la misma variable para entidades en facetas
+                Si su valor es 1, siempre que se haga referencia a una entidad en una consulta de facetas, la variable usada será la misma.
+                Ej: ?s ecidoc:author ?author. ?author dc:name ?name.
+                ?s ecidoc:author ?author. ?author ecidoc:birthDate ?birthDate
+            </p>
+
+            <h4>Sistemas</h4>
+            <p>
+                <input type="checkbox" id="SiteMapActivado" @(Model.SiteMapActivado ? "checked" : "") /> SiteMap activado
+            </p>
+            <p>
+                <input type="checkbox" id="GoogleDrive" @(Model.GoogleDrive ? "checked" : "") /> Los recursos se suben a Google Drive (NECESITA CONFIGURACIÓN EN SISTEMAS)
+            </p>
+            <p>
+                <input type="checkbox" id="ProyectoSinNombreCortoEnURL" @(Model.ProyectoSinNombreCortoEnURL ? "checked" : "") /> Quitar la parte de la URL /comunidad/nombrecomunidad (NECESITA CONFIGURACIÓN EN SISTEMAS)
+            </p>
+            <p>
+                Segundos que se dejan de intervalo entre un envío de newsletter y otro
+                <input type="text" id="SegundosDormirNewsletterPorCorreo" style="width:50px;" value="@(Model.SegundosDormirNewsletterPorCorreo > 0 ? Model.SegundosDormirNewsletterPorCorreo.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                <input type="checkbox" id="Replicacion" @(Model.Replicacion ? "checked" : "") /> Indica si esta permitida la replicacion convencional de Gnoss. Por defecto, está permitida
+            </p>
+
+            <h4>Semántica</h4>
+            <p>
+                <input type="checkbox" id="OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple" @(Model.OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple ? "checked" : "") /> Ocultar las facetas de objetos de conocimiento y mostrar sólo las comunes de recursos en las páginas de búsqueda donde aparezcan más de un objeto de conocimiento
+            </p>
+            <p>
+                <input type="checkbox" id="TerceraPeticionFacetasPlegadas" @(Model.TerceraPeticionFacetasPlegadas ? "checked" : "") /> Tercera petición de facetas trae las facetas plegadas. Hasta que el usuario no pincha en cada faceta, no se despliega. (Requiere personalizar las vistas para ver las facetas plegadas)
+            </p>
+            <p>
+                <input type="checkbox" id="TieneGrafoDbPedia" @(Model.TieneGrafoDbPedia ? "checked" : "") /> Mostrar grafo Dbpedia en recursos (NECESITA CONFIGURACIÓN EN SISTEMAS)
+            </p>
+            <p>
+                <input type="checkbox" id="TextoInvariableTesauroSemantico" @(Model.TextoInvariableTesauroSemantico ? "checked" : "") /> Mantener texto tesauro semántico invariable
+            </p>
+            <p>
+                Número de facetas que se pintan en la primera petición de facetas
+                <input type="text" id="NumeroFacetasPrimeraPeticion" style="width:50px;" value="@(Model.NumeroFacetasPrimeraPeticion > 0 ? Model.NumeroFacetasPrimeraPeticion.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                Número de facetas que se pintan en la segunda petición de facetas
+                <input type="text" id="NumeroFacetasSegundaPeticion" style="width:50px;" value="@(Model.NumeroFacetasSegundaPeticion > 0 ? Model.NumeroFacetasSegundaPeticion.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+            </p>
+            <p>
+                Propiedades que se desean usar en el algoritmo de personas recomendadas. Cada propiedad lleva asociado su peso en el algoritmo
+            </p>
+            <p>
+                Ej: http://www.w3.org/2006/vcard/ns#locality=4|||http://www.w3.org/2006/vcard/ns#country-name=3
+                <input type="text" id="AlgoritmoPersonasRecomendadas" value="@Model.AlgoritmoPersonasRecomendadas" />
+            </p>
+            <p>
+                Lista de facetas lentas que se van a obtener de manera asíncrona para que la tercera petición de facetas llegue antes
+            </p>
+            <p>
+                Ej: ecidoc:p108i_E12_p126_employed_support@@@@@@pm:supportNode|ecidoc:p62_E52_p79_has_time-span_beginning|ecidoc:has_school@@@@@@pm:schoolNode
+                <input type="text" id="FacetasCostosasTerceraPeticion" value="@Model.FacetasCostosasTerceraPeticion" />
+            </p>
+            <p>
+                Propiedad que especifica los idiomas en los que un recurso está descrito.
+            </p>
+            <p>
+                Si está configurada, los usuarios que lleguen en un idioma que no está definido en un recurso, no podrán encontrarlo en las búsquedas ni acceder a su ficha (salvo que se cambien de idioma).
+            </p>
+            <p>
+                Ej: dce:language
+                <input type="text" id="PropiedadContenidoMultiIdioma" value="@Model.PropiedadContenidoMultiIdioma" />
+            </p>
+            <p>
+                Si está activada, los usuarios que lleguen en un idioma que no está definido en un Componente del CMS, no podrán verlo (salvo que se cambien de idioma).
+            </p>
+            <p>
+                <input type="checkbox" id="PropiedadCMSMultiIdioma" @(Model.PropiedadCMSMultiIdioma ? "checked" : "") /> Indica si se activa la Visibilidad por idioma de los componentes del CMS
+            </p>
+            <p>
+                Lista de propiedades en las que se deben buscar entidades de dbpedia. Normalmente, sólo se busca en los tags
+            </p>
+            <p>
+                Ej: ernews:has_metadata@@@@@@bbvao:name|ernews:has_metadata@@@@@@bbvao:dbpediaUri|bbvao:name|bbvao:dbpediaUri
+                <input type="text" id="PropiedadesConEnlacesDbpedia" value="@Model.PropiedadesConEnlacesDbpedia" />
+            </p>
+            <p>
+                Condición para excluir recursos cuando se busque desde un móvil
+            </p>
+            <p>
+                Ej:  MINUS { ?s skos:ConceptID ?skosConceptIDexcluida.  FILTER(?skosConceptIDexcluida=gnoss:DA6D3DFD-CA97-4E5B-9D40-7C3BAFD80C16) }
+                <input type="text" id="ExcepcionBusquedaMovil" value="@Model.ExcepcionBusquedaMovil" />
+            </p>
+            <p>
+                <input type="checkbox" id="PermitirMayusculas" @(Model.PermitirMayusculas ? "checked" : "") /> Indica si se puden permitir las mayúsculas en el grafo de búsqueda
+            </p>
+            <h4>Redes sociales</h4>
+            <p>
+                Login con Facebook. Client Id y Client secret de la aplicación de Facebook
+            </p>
+            <p>
+                Ej: id|||579839168702303@@@@@@clientsecret|||b959a4485t0e88182834e4149b5d47c7
+                <input type="text" id="LoginFacebook" value="@Model.LoginFacebook" />
+            </p>
+            <p>
+                Login con Google. Client Id y Client secret de la aplicación de Google
+            </p>
+            <p>
+                Ej: id|||880006438141-r84hn261rtct92aqe3d5adjlod4umacn.apps.googleusercontent.com@@@@@@clientsecret|||0d8fxeZDl-qV0XRiTnCCB54n
+                <input type="text" id="LoginGoogle" value="@Model.LoginGoogle" />
+            </p>
+            <p>
+                Login con Twitter. Client Id y Client secret de la aplicación de Twitter
+            </p>
+            <p>
+                Ej: consumerkey|||lUwbKMGlYF9H6lPtm4Gkj4AY@@@@@@consumersecret|||2vY81oR1GFCAL818jafYyRglCZaDYUlxf1Z1qq5sUA6jf
+                <input type="text" id="LoginTwitter" value="@Model.LoginTwitter" />
+            </p>
+
+            <h4>Proyectos</h4>
+            <a id="lnkConfProyectos">Configurar Proyectos </a>
+
+            <div id="confProyectos" style="display:none">
+                <p>
+                    Configuración de los Proyectos
+                </p>
+                <div class="bloque">
+                    @foreach (KeyValuePair<string, bool> personalizacion in Model.ProyectosRegistroObligatorio)
+                    {
+                        if (personalizacion.Value)
+                        {
+                            <label><input type="checkbox" id="@personalizacion.Key" class="comSinRegistro" value="@personalizacion.Key" checked="checked">@personalizacion.Key</label>
+                        }
+                        else
+                        {
+                            <label><input type="checkbox" id="@personalizacion.Key" class="comSinRegistro" value="@personalizacion.Key"> @personalizacion.Key</label>
+                        }
+                    }
+                </div>
+            </div>
+
+            <h4>Estilos</h4>
+            <div id="confEstilos">
+
+                <p>
+                    Configuración de la ruta de estilos.
+                </p>
+                <input type="text" id="RutaEstilos" value="@Model.RutaEstilos" />
+            </div>
+            <h4>ServiceBus</h4>
+            <div id="confServiceBus">
+                <p>
+                    Indica los segundos a esperar para la siguiente comprobación en ServiceBus
+                    <input type="number" id="ServiceBusSegundos" min="0" pattern="^[0-9]+" value="@Model.ServiceBusSegundos" />
+                </p>
+                <p>
+                    Indica los reintentos para coger el fichero configurado con ServiceBus
+                    <input type="number" id="ServiceBusReintentos" min="0" pattern="^[0-9]+" value="@Model.ServiceBusReintentos" />
+                </p>
+            </div>
+        </form>
+    </div>
+    <input type="button" class="guardarTodo" value="Guardar Todo" />
+</div>
+
+<script>
+    var OperativaAcciones = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+            $('input#VistasActivadas').click(function () {
+                that.editarVistasActivas($(this));
+            });
+            $('#lnkConfProyectos').click(function () {
+                $('#confProyectos').show();
+                $('#lnkConfProyectos').hide();
+            });
+
+            return;
+        },
+        editarVistasActivas: function (chkVistasActivas) {
+            var panEditarVista = chkVistasActivas.parents('form').children('.editarVista');
+
+            if (panEditarVista.length > 0) {
+                if (chkVistasActivas.is(':checked')) {
+                    panEditarVista.show();
+                }
+                else {
+                    panEditarVista.hide();
+                }
+            }
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.Options = {};
+                that.obtenerDatos();
+                that.guardar();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">Se ha producido un error al guardar, intentelo de nuevo más tarde</div>');
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+
+            return error;
+        },
+        guardar: function () {
+            var that = this;
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+            that.urlPagina + '/save',
+            that.Options,
+            true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                that.mostrarErrorGuardado();
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
+        },
+        obtenerDatos: function () {
+            var that = this;
+
+            that.Options['CMSActivado'] = $("#CMSActivado").is(':checked');
+
+            that.Options['AdministracionSemanticaPermitido'] = $("#AdministracionSemanticaPermitido").is(':checked');
+            that.Options['AdministracionPaginasPermitido'] = $("#AdministracionPaginasPermitido").is(':checked');
+            that.Options['AdministracionVistasPermitido'] = $("#AdministracionVistasPermitido").is(':checked');
+            that.Options['AdministracionDesarrolladoresPermitido'] = $("#AdministracionDesarrolladoresPermitido").is(':checked');
+            that.Options['TextoInvariableTesauroSemantico'] = $("#TextoInvariableTesauroSemantico").is(':checked');
+
+            that.Options['VistasActivadas'] = $("#VistasActivadas").is(':checked');
+
+            if ($("#VistasActivadas").is(':checked') && $('#PersonalizacionIDVistas').length > 0)
+            {
+                that.Options['PersonalizacionIDVistas'] = $("#PersonalizacionIDVistas").val();
+            }
+
+            if ($("#NoUsarVistasDelEcosistema").length > 0) {
+                that.Options['NoUsarVistasDelEcosistema'] = $("#NoUsarVistasDelEcosistema").is(':checked');
+                that.Options['TieneVistasEcosistema'] = 'true';
+            }
+
+            that.Options['CabeceraSimple'] = $("#CabeceraSimple").is(':checked');
+
+            that.Options['EtiquetasConLOD'] = $("#EtiquetasConLOD").is(':checked');
+
+            that.Options['AgruparEventosNuevosUsuarios'] = $("#AgruparEventosNuevosUsuarios").is(':checked');
+
+            that.Options['SiteMapActivado'] = $("#SiteMapActivado").is(':checked');
+
+            that.Options['BiosCortas'] = $("#BiosCortas").is(':checked');
+            that.Options['RdfDisponibles'] = $("#RdfDisponibles").is(':checked');
+            that.Options['CargasMasivasDisponibles'] = $("#CargasMasivasDisponibles").is(':checked');
+            that.Options['ConsultaSparql'] = $("#ConsultaSparql").is(':checked');
+            that.Options['PreguntaTIC'] = $("#PreguntaTIC").is(':checked');
+            that.Options['BuscadorSPARQL'] = $("#BuscadorSPARQL").is(':checked');
+            that.Options['FechaNacimientoObligatoria'] = $("#FechaNacimientoObligatoria").is(':checked');
+            that.Options['ConsultaSQLServer'] = $("#ConsultaSQLServer").is(':checked');
+            that.Options['PrivacidadObligatoria'] = $("#PrivacidadObligatoria").is(':checked');
+            that.Options['EventosDisponibles'] = $("#EventosDisponibles").is(':checked');
+            that.Options['SolicitarCoockieLogin'] = $("#SolicitarCoockieLogin").is(':checked');
+            that.Options['InvitacionesPorContactoDisponibles'] = $("#InvitacionesPorContactoDisponibles").is(':checked');
+            that.Options['AvisoCookie'] = $("#AvisoCookie").is(':checked');
+            that.Options['RecibirNewsletterDefecto'] = $("#RecibirNewsletterDefecto").is(':checked');
+            that.Options['EnviarNotificacionesDeSuscripciones'] = $("#EnviarNotificacionesDeSuscripciones").is(':checked');
+            that.Options['SuscribirATodaComunidad'] = $("#SuscribirATodaComunidad").is(':checked');
+            that.Options['GoogleDrive'] = $("#GoogleDrive").is(':checked');
+            that.Options['OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple'] = $("#OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple").is(':checked');
+            that.Options['TerceraPeticionFacetasPlegadas'] = $("#TerceraPeticionFacetasPlegadas").is(':checked');
+            that.Options['TieneGrafoDbPedia'] = $("#TieneGrafoDbPedia").is(':checked');
+            that.Options['ProyectoSinNombreCortoEnURL'] = $("#ProyectoSinNombreCortoEnURL").is(':checked');
+            that.Options['RegistroAbierto'] = $("#RegistroAbierto").is(':checked');
+            that.Options['PermitirDescargaIdentidadInvitada'] = $("#PermitirDescargaIdentidadInvitada").is(':checked');
+            that.Options['CargarEditoresLectoresEnBusqueda'] = $("#CargarEditoresLectoresEnBusqueda").is(':checked');
+
+            that.Options['VersionCSS'] = $("#VersionCSS").val();
+            that.Options['VersionJS'] = $("#VersionJS").val();
+            that.Options['NumeroRecursosRelacionados'] = $("#NumeroRecursosRelacionados").val();
+            that.Options['Copyright'] = $("#Copyright").val();
+            that.Options['EnlaceContactoPiePagina'] = $("#EnlaceContactoPiePagina").val();
+            that.Options['AlgoritmoPersonasRecomendadas'] = $("#AlgoritmoPersonasRecomendadas").val();
+
+            that.Options['CapturasImgSizeAlto'] = $("#CapturasImgSizeAlto").val();
+            that.Options['CapturasImgSizeAncho'] = $("#CapturasImgSizeAncho").val();
+
+            that.Options['DiaEnvioSuscripcion'] = $("#DiaEnvioSuscripcion").val();
+            that.Options['SegundosDormirNewsletterPorCorreo'] = $("#SegundosDormirNewsletterPorCorreo").val();
+            that.Options['NumeroFacetasPrimeraPeticion'] = $("#NumeroFacetasPrimeraPeticion").val();
+            that.Options['NumeroFacetasSegundaPeticion'] = $("#NumeroFacetasSegundaPeticion").val();
+
+            that.Options['LoginFacebook'] = $("#LoginFacebook").val();
+            that.Options['LoginGoogle'] = $("#LoginGoogle").val();
+            that.Options['LoginTwitter'] = $("#LoginTwitter").val();
+            that.Options['FacetasCostosasTerceraPeticion'] = $("#FacetasCostosasTerceraPeticion").val();
+            that.Options['PropiedadContenidoMultiIdioma'] = $("#PropiedadContenidoMultiIdioma").val();
+            that.Options['PropiedadCMSMultiIdioma'] = $("#PropiedadCMSMultiIdioma").is(':checked');
+            that.Options['PropiedadesConEnlacesDbpedia'] = $("#PropiedadesConEnlacesDbpedia").val();
+            that.Options['ExcepcionBusquedaMovil'] = $("#ExcepcionBusquedaMovil").val();
+            that.Options['ServiceBusSegundos'] = $("#ServiceBusSegundos").val();
+            that.Options['ServiceBusReintentos'] = $("#ServiceBusReintentos").val();
+            that.Options['RegistroAbiertoEnComunidad'] = $("#RegistroAbiertoEnComunidad").is(':checked');
+            that.Options['Replicacion'] = $("#Replicacion").is(':checked');
+            that.Options['FilasPorPagina'] = $("#FilasPorPagina").val();
+            that.Options['PermitirMayusculas'] = $("#PermitirMayusculas").is(':checked');
+            //Recorrer los que tienen class="comSinRegistro"
+            //$('.comSinRegistro')
+            if ($('.comSinRegistro').length != 0)
+            {
+                var mapa = new Map();
+                var texto = "";
+                for(i = 0; i< $('.comSinRegistro').length; i++)
+                {
+                    var item = $('.comSinRegistro')[i];
+                    if (i != 0) {
+                        texto = texto + ",";
+                    }
+                    texto = texto +item.id+ ":"+item.checked;
+                    mapa.set(item.id, item.checked);
+                }
+            }
+            that.Options['ProyectosView'] = texto;
+            that.Options['RutaEstilos'] = $("#RutaEstilos").val();
+
+
+        }
+    }
+
+    $(document).ready(function () {
+        OperativaAcciones.init();
+    });
+</script>
+<style>
+    div.content {
+        margin: 50px;
+    }
+
+        div.content form {
+            margin: 30px;
+        }
+
+    div#confCorreo .bloque {
+        border: 1px solid;
+        padding: 10px;
+    }
+
+    div.error.general {
+        background-color: Red;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.ok.general {
+        background-color: limegreen;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.content input.guardarTodo {
+        float: right;
+    }
+
+    div.content input[type='text'],
+    div.content input[type='password'],
+    div.content select {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    h4 {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+</style>

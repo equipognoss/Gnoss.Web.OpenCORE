@@ -1,0 +1,16 @@
+﻿@model List<CategoriaCookieModel>
+
+<h1>@Html.GetText("COMADMINCOOKIES", "NOMBRECATEGORIAS")</h1>
+<p>
+    @Html.GetText("COMADMINCOOKIES", "INFOTITULOCATEGORIAS")
+</p>
+<div class="panAniadir">
+    <input type="button" class="addCategoria" value="@Html.GetText("COMADMINCOOKIES", "ADDCATEGORIA")" />
+</div>
+<ol class="table" id="sortableCategory">
+    @foreach (CategoriaCookieModel categoriaCookie in Model.OrderBy(item => item.CategoriaProyectoCookie.NombreCorto))
+    {
+        @Html.PartialView("_EdicionCategoriaCookie", categoriaCookie)
+    }
+</ol>
+

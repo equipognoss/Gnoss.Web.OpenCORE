@@ -1,0 +1,49 @@
+﻿@model ComAdminSemanticElemModel
+
+@{
+    Html.SetBodyClass("layout03 ");
+    string urlPagina = Html.GetUrlPagina();
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.ComAdminSemantica.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarSEMCMS.js?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+@if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition)
+{
+    @*@Html.PartialView("_Menu", Model.PageType)*@
+    @Html.PartialView("_EditarTesSem", Model)
+}
+else
+{
+    <div id="col02" style="width:730px">   
+        <div class="wrapeditTesSem">
+            @Html.PartialView("_Menu", Model.PageType)
+            @if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition)
+            {
+                @Html.PartialView("_EditarTesSem", Model)
+            }
+            else if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SecondaryEntitiesEdition)
+            {
+                @Html.PartialView("_EditarEntSecundarias", Model)
+            }
+            else if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SimpleGraphsEdition)
+            {
+                @Html.PartialView("_EditarGrafosSimples", Model)
+            }
+        </div>
+    </div>
+}
+<script type="text/javascript">
+    urlPaginaActual = '@urlPagina';
+
+    $(function () {
+        InicializarEdicionTesSem();
+    });
+</script>
+

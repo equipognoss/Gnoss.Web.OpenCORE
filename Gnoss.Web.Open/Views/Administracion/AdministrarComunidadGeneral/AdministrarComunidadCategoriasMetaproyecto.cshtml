@@ -1,0 +1,104 @@
+﻿@model AdministrarComunidadGeneralModel
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/JCrop/css/Jcrop.css?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMMON", "ADMINCOMTEXTOCATEGORIAS", Html.GetNombreProyectoEcosistema()))</h1>
+    <div>
+        <form autocomplete="off">
+            
+            <div id="panelTagsCategorias">
+                @Html.PartialView("~/Views/Administracion/AdministrarComunidadGeneral/_SeleccionarCategoriasMetaproyecto.cshtml", Model)
+            </div>
+        </form>
+    </div>
+    <input type="button" id="guardarTodo" class="guardarTodo" value="@Html.GetText("COMMON", "GUARDAR")" />
+</div>
+
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+
+<script type="text/javascript">
+    var OperativaAcciones = {
+        init: function (panelID) {
+            this.config(panelID);
+            this.engancharComportamientos();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href.replace(document.location.search, '');
+            return;
+        },
+        engancharComportamientos: function () {
+            var that = this;
+
+            $('.imgSelectorCat').click(function () {
+                MVCDesplegarTreeView(this);
+            });
+            $('#guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            that.Options = {};
+            ObtenerDatosCategorias(that.Options);
+            that.guardar();
+        },
+        mostrarErrorGuardado: function (error) {
+            if (error.length > 0) {
+                $('input.guardarTodo').before('<div class="error general">' + error[0] + '</div>');
+            }
+            else {
+                $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div>');
+            }
+        },
+        guardar: function () {
+            var that = this;
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save' + document.location.search,
+                that.Options,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                that.mostrarErrorGuardado(error);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
+        }
+    }
+
+    $(document).ready(function () {
+        OperativaAcciones.init();
+    });
+</script>
+
+
+<style>
+    div.content input[type="text"],
+    div.content textarea {
+        width: 100%;
+    }
+
+    #panelTagsCategorias {
+        margin-top: 20px;
+    }
+
+    #panelTagsCategorias .contenedor{
+        padding: 10px;
+    }
+</style>

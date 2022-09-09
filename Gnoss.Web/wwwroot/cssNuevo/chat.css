@@ -1,0 +1,87 @@
+/* chat */
+#divchatframe{}
+#divchatframe.chat{}
+#divchatframe.chat #divChat{}
+#divchatframe.chat #divChat #divChatsActivos{}
+#divchatframe.chat #divChat #divChatsActivos .menuChatInt{}
+#divchatframe.chat #divChat #divChatsActivos .chatCargando{}
+#divchatframe.chat #divChat #divChatsActivos div{}
+#divchatframe.chat #divChat #divChatsActivos div ul{}
+#divchatframe.chat #divChat #divChatsActivos div ul li{}
+#divchatframe.chat #divChat #divChatsActivos div ul li span.chatNoRead{}
+#divchatframe.chat #divChat #divChatsActivos div ul li a.chatName{}
+
+#divchatframe.chat #divChat #divChatAccion{}
+#divchatframe.chat #divChat #divChatAccion .menuChatInt{}
+#divchatframe.chat #divChat #divChatAccion .menuChatInt a.atrasmenuInt{}
+#divchatframe.chat #divChat #divChatAccion h5.hConversacion{}
+#divchatframe.chat #divChat #divChatAccion .divListMessages{}
+#divchatframe.chat #divChat #divChatAccion .divListMessages #listMessagesChat{}
+#divchatframe.chat #divChat #divChatAccion .divListMessages #listMessagesChat li{}
+#divchatframe.chat #divChat #divChatAccion .divListMessages #listMessagesChat li span.mensRemi{}
+#divchatframe.chat #divChat #divChatAccion .divListMessages #listMessagesChat li span.mensChat{}
+#divchatframe.chat #divChat #divChatAccion .divListMessages #listMessagesChat li span.mensFecha{}
+#divchatframe.chat #divChat #divChatAccion .divListMessages #listMessagesChat li span.mensAccionEnviando{}
+#divchatframe.chat #divChat #divChatAccion textarea#txtMessage.mensaje{}
+#divchatframe.chat #divChat #divChatAccion input#SendMessageChat{}
+
+#divchatframe.chat #divAlertaChat{}
+#divchatframe.chat #divAlertaChat .ko{}
+#divchatframe.chat #divAlertaChat .ko p{}
+
+#divchatframe.chat #menuChat{}
+#divchatframe.chat #menuChat #hlCerrChat{}
+#divchatframe.chat #menuChat #hlMaxChat{}
+#divchatframe.chat #menuChat #hlMinChat{}
+#divchatframe.chat #menuChat #txtHackPerfilActual{}
+#divchatframe.chat #menuChat #txtHackNombreActual{}
+
+
+.chat{background:#fff; border:1px solid #ddd; width:320px; position:fixed; left:0; bottom:0}
+ .chat h5#hConversacion{background:#ddd; text-align:center; padding:5px}
+.chat *{font-size:13px}
+.chat .menuChatInt, .chat .menuChat{background:#DF6A01; padding:6px 20px}
+.chat .menuChatInt, .chat .menuChat, .chat .menuChatInt *, .chat .menuChat *{color:#fff}
+.chat .menuChatInt *, .chat .menuChat *,
+.chat #divChatAccion #SendMessageChat{font-family:'Roboto Slab', serif}
+.chat .menuChatInt .accionmenuInt{float:right}
+.chat #divChatAccion ul, .chat #divChatsActivos ul
+{list-style:none; padding:0; margin:20px; border-top:1px solid #DF6A01}
+.chat #divChatAccion ul li, .chat #divChatsActivos ul li {border-bottom:1px solid #DF6A01; padding: 10px 0}
+.chat #divChatAccion ul li a, .chat #divChatsActivos ul li a{color:#515D69; font-weight:bold}
+.chat .chatCargando{margin:20px}
+.chat .chatCargando span{background:url('chatLoader.gif') no-repeat 0 0; display:block;height: 35px; line-height: 35px; padding-left: 40px; font-weight: bold;}
+.chat #divChatAccion .divListMessages ul{border:0}
+.chat #divChatAccion .divListMessages ul li{border:1px solid #ccc; -webkit-border-radius:2px; -moz-border-radius:2px; border-radius:2px; margin-bottom:10px; padding:15px 10px 5px 10px}
+.chat #divChatAccion .divListMessages ul li.mensAccionEnviando{background:#ccc}
+.chat #divChatAccion .divListMessages ul li.mensAccionEnviando *{color:#888}
+.chat #divChatAccion .divListMessages ul li.mensAccionEnviando .mensAccionEnviando{display:block; color:#DF6A01; font-weight:bold; margin-top:6px}
+.chat #divChatAccion .divListMessages ul li.mensAccionEnviando .mensAccionEnviado{display:none}
+.chat #divChatAccion .divListMessages ul{height:165px; overflow:auto; margin:20px 10px}
+.chat #divChatAccion .divListMessages ul li{width:60%; position:relative}
+.chat #divChatAccion .divListMessages ul li .mensRemi{display:block; border-bottom:1px solid #ddd; padding-bottom:4px; margin-bottom:4px}
+.chat #divChatAccion .divListMessages ul li .mensFecha{float:right; color:#aaa; font-size:11px; margin-top:0; position:absolute; top:2px; right:4px}
+.chat #divChatAccion .divListMessages ul li.ownerMessage{float:right; margin-right:10px}
+.chat #divChatAccion .divListMessages ul li.contactMessage{float:left; background:#EFE1D4}
+.chat #divChatAccion .divListMessages ul li.contactMessage .mensRemi{font-weight:bold; color:#DF6A01; border-bottom-color:#DF6A01}
+.chat #divChatAccion .divListMessages ul li.ownerMessage .mensRemi{display:none}
+.chat #divChatAccion textarea{margin-left:10px; width:195px; height:50px; border:1px solid #ccc; padding:1%; color:#000}
+.chat #divChatAccion #SendMessageChat{
+	border: 0;
+	border-radius: 2px;
+	background: #007B61;
+	color: #fff;
+	padding: 10px 20px;
+	margin: 0 0 0 10px;
+}
+.chat #divChatAccion textarea,
+.chat #divChatAccion #SendMessageChat{vertical-align:bottom; margin-bottom:5px}
+.chat .menuChat{}
+.chat .menuChat a{display:inline-block; margin-right:4px}
+.chat ul:after {
+   content: " "; /* Older browser do not support empty content */
+   visibility: hidden;
+   display: block;
+   height: 0;
+   clear: both;
+}

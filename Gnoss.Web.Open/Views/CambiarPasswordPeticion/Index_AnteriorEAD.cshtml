@@ -1,0 +1,145 @@
+﻿@model CambiarPasswordPeticionViewModel
+@{
+    Html.SetBodyClass("layout03 myGnoss");    
+}
+<script type="text/javascript" language="javascript">
+    function cambiarPassword() {
+        if ($('#txtLogin').val() == "") {
+            $('#lblErrorAceptar').html('@Html.GetText("CONFIRMACIONCAMBIOPASSWORD", "NOUSUARIO")');
+            $('#divErroresAceptar').show();
+        }
+        else if ($('#txtNueva').val() == "") {
+            $('#lblErrorAceptar').html('@Html.GetText("CONFIRMACIONCAMBIOPASSWORD", "NOPASSWORD")');
+            $('#divErroresAceptar').show();
+        }
+        else if ($('#txtNueva').val() != $('#txtConfirmarNueva').val()) {
+            $('#lblErrorAceptar').html('@Html.GetText("CONFIRMACIONCAMBIOPASSWORD", "PASSWORDNOIGUALES")');
+            $('#divErroresAceptar').show();
+        }
+        else {
+            MostrarUpdateProgress();
+            $('#divErroresAceptar').hide();
+            var dataPost = {
+                User: $('#txtLogin').val(),
+                Password: $('#txtNueva').val(),
+                PasswordConfirmed: $('#txtConfirmarNueva').val()
+            }
+
+            GnossPeticionAjax('@Model.UrlAceptar', dataPost, true).done(function () {
+                $('#panCambioPassword').remove()
+                $('#panRechazarPeticion').remove()
+                $('#lblOk').html('@Html.GetText("CONFIRMACIONCAMBIOPASSWORD", "EXITO")');
+                $('#divOK').show();
+            }).fail(function (data) {
+                $('#lblErrorAceptar').html(data);
+                $('#divErroresAceptar').show();
+            }).always(function (data) {
+                OcultarUpdateProgress();
+            });
+        }
+    }
+
+    function rechazarPeticion() {
+        MostrarUpdateProgress();
+        $('#divErroresAceptar').hide();
+        GnossPeticionAjax('@Model.UrlRechazar', null, true).done(function () {
+            $('#panCambioPassword').remove()
+            $('#panRechazarPeticion').remove()
+            $('#lblOk').html('@Html.Translate("La petición de cambio de contraseña ha sido rechazada")');
+            $('#divOK').show();
+            OcultarUpdateProgress();
+        });
+    }
+
+    $(document).ready(function () {
+        $('#btnCambiarPassword').click(function () { cambiarPassword(); });
+        $('#btnRechazarPeticion').click(function () { rechazarPeticion(); });
+        $('#txtLogin').keydown(function (event) {
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    return false;
+                }
+            }
+        });
+        $('#txtNueva').keydown(function (event) {
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    return false;
+                }
+            }
+        });
+        $('#txtConfirmarNueva').keydown(function (event) {
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    cambiarPassword();
+                    return false;
+                }
+            }
+        });
+    })
+
+</script>
+
+<div id="col02">
+    <h2>@Html.GetText("NUEVOPASSWORD", "TITULO")</h2>
+    <div class="form formtheme01">
+        <div id="divContenedor" class="box">
+            <div class="fieldset">
+                <fieldset class="labels" id="panCambioPassword">
+                    <div id="panels" style="display: block">
+                        <div id="action">
+                            <fieldset>
+                                <p>
+                                    <label for="txtLogin">@Html.GetText("SOLICITARCAMBIOPASSWORD", "NOMBREUSU")</label>
+                                    <input type="text" class="text medium" id="txtLogin" />
+                                </p>
+                                <p>
+                                    <label for="txtNueva">@Html.GetText("SOLICITARCAMBIOPASSWORD", "CONTRASEÑA")</label>
+                                    <input type="password" class="text medium" id="txtNueva" />
+                                </p>
+                                <p>
+                                    <label for="txtConfirmarNueva">@Html.GetText("SOLICITARCAMBIOPASSWORD", "CONFIRMARCONTRASEÑA")</label>
+                                    <input type="password" class="text medium" id="txtConfirmarNueva" />
+                                </p>
+                                <div class="fieldset actionButtons">
+                                    <fieldset>
+                                        <p>
+                                            <input type="button" value="@Html.GetText("SOLICITARCAMBIOPASSWORD", "ACEPTAR")" class="submit principal" id="btnCambiarPassword" />
+                                        </p>
+                                        <div class="ko" id="divErroresAceptar" style="display: none">
+                                            <p>
+                                                <span id="lblErrorAceptar"></span>
+                                            </p>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset style="margin-top: 10px;" class="labels" id="panRechazarPeticion">
+                    <div>
+                        <p>
+                            <span>@Html.GetText("SOLICITARCAMBIOPASSWORD", "PREGUNTARARA")</span>
+                        </p>
+                        <p>
+                            <span>@Html.GetText("SOLICITARCAMBIOPASSWORD", "PREGUNTARARA2")</span>
+                        </p>
+                        <div class="fieldset actionButtons">
+                            <p>
+                                <input type="button" value="@Html.GetText("SOLICITARCAMBIOPASSWORD", "RECHAZARPETICION")" class="submit principal" id="btnRechazarPeticion" />
+                            </p>
+                        </div>
+
+                    </div>
+                </fieldset>
+                <div style="display: none" class="ok" id="divOK">
+                    <p>
+                        <span id="lblOk"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

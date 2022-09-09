@@ -1,0 +1,63 @@
+﻿/* LOGIN */
+
+.login>main[role="main"]>.container>.row { background: none; }
+.login>main[role="main"]>.container>.row>#col02 { }
+
+.login #col02 { margin: 0 auto; }
+.login #col02 > .form { width: 555px; height: 327px; background-color: #ffffff; margin: 50px auto 0 auto; }
+.login #col02 > .form > div { display: flex; justify-content: center; align-items: flex-start; height: 100%; }
+.login #col02>.form+.separador { width: 555px; height: 82px; background-color: #e4e4e4; margin: 0 auto 50px auto; }
+.login .mediumLabels { margin-top: 40px; }
+.login .mediumLabels>legend { margin-bottom: 40px; font-family: 'Roboto Medium', 'Roboto'; font-weight: 500; font-style: normal; font-size: 16px; color: #000000; text-transform: uppercase; }
+
+.login .mediumLabels p { margin: 0; }
+
+.login #usuario_Login { height: 46px; width: 362px; margin-bottom: 10px; background-color: #f2f2f2; border: 1px solid #e4e4e4; border-radius: 3px; font-family: 'Roboto Medium', 'Roboto'; font-weight: 500; font-style: normal; font-size: 14px; color: #666666; text-indent: 20px; }
+.login #password_login { height: 46px; width: 362px; background-color: #f2f2f2; border: 1px solid #e4e4e4; border-radius: 3px; font-family: 'Roboto Medium', 'Roboto'; font-weight: 500; font-style: normal; font-size: 14px; color: #666666; text-indent: 20px; }
+.login #olvide_password { display: block; font-family: 'Roboto Regular', 'Roboto'; font-weight: 400; font-style: normal; font-size: 14px; color: #D81B60; text-decoration: underline; }
+.login #acceder_sesion { margin-top: 20px; display: inline-flex; position: relative; }
+.login #acceder_sesion::after { content: '\E315'; position: absolute; right: 5px; font-family: 'Material Icons'; top: 50%; transform: translateY(-50%); color: #ffffff; font-size: 30px; }
+.login #acceder_sesion > input { height: 46px; font-family: 'Roboto Regular', 'Roboto'; font-weight: 400; font-style: normal; font-size: 14px; color: #FFFFFF; background-color: #AD164D; border: none; border-radius: 3px; padding: 0 40px 0 20px; text-transform: uppercase; cursor: pointer; }
+
+@media (max-width: 767px) {
+
+    .login #col02>.form { width: auto; padding: 0 20px; }
+    .login #col02>.form+.separador { width: auto; }
+    .login #col02>.form .box.box01 { width: 100%; max-width: 100%; }
+    .login #usuario_Login { width: 100%; max-width: 100%; }
+    .login #password_login { width: 100%; max-width: 100%; }
+
+}
+
+/* MODAL DEL LOGIN */
+
+#modalFormularioLogin {}
+#modalFormularioLogin.show { display: flex !important; align-items: flex-start; justify-content: center; margin-top: 50px; }
+#modalFormularioLogin .modal-content { width: 555px; height: 327px; border: none; margin: 0 auto; border-radius: 0; }
+#modalFormularioLogin .modal-body { display: flex; justify-content: center; }
+#modalFormularioLogin .modal-body .mediumLabels { margin-top: 15px; }
+#modalFormularioLogin .modal-body .mediumLabels>legend { margin-bottom: 40px; font-family: 'Roboto Medium', 'Roboto'; }
+#modalFormularioLogin .modal-body .mediumLabels #txtUsuario { height: 46px; width: 362px; margin-bottom: 10px; background-color: #f2f2f2; border: 1px solid #e4e4e4; border-radius: 3px; font-family: 'Roboto Medium', 'Roboto'; font-weight: 500; font-style: normal; font-size: 14px; color: #666666; text-indent: 20px; }
+#modalFormularioLogin .modal-body .mediumLabels #txtContraseÃ±a { height: 46px; width: 362px; background-color: #f2f2f2; border: 1px solid #e4e4e4; border-radius: 3px; font-family: 'Roboto Medium', 'Roboto'; font-weight: 500; font-style: normal; font-size: 14px; color: #666666; text-indent: 20px; margin-bottom: 10px; }
+#modalFormularioLogin .modal-body .login { display: block; font-family: 'Roboto Regular', 'Roboto'; font-weight: 400; font-style: normal; font-size: 14px; color: #D81B60; text-decoration: underline; }
+#modalFormularioLogin .modal-body .btnAcceder { display: inline-flex; position: relative; cursor: pointer; margin-top: 30px; }
+#modalFormularioLogin .modal-body .btnAcceder::after { content: '\E315'; position: absolute; right: 5px; font-family: 'Material Icons'; top: 50%; transform: translateY(-50%); color: #ffffff; font-size: 30px; }
+#modalFormularioLogin .modal-body #btnEntrar { display: inline-flex; height: 46px; font-family: 'Roboto Regular', 'Roboto'; font-weight: 400; font-style: normal; font-size: 14px; color: #FFFFFF; background-color: #AD164D; border: none; border-radius: 3px; padding: 0 40px 0 20px; text-transform: uppercase; }
+
+#modalFormularioLogin .separador { width: 555px; height: 82px; background-color: #e4e4e4; margin: 0 auto 50px auto; }
+
+#modalFormularioLogin .modal-header { position: absolute; right: 0; }
+#modalFormularioLogin .modal-header .cerrarVentana { color: #ABABAB; font-size: 32px; font-weight: 300; }
+
+@media (max-width: 767px) {
+
+    #modalFormularioLogin.show { margin-top: 0; }
+    #modalFormularioLogin .modal-dialog { margin: 0 0 0 3px; }
+    #modalFormularioLogin .modal-content { width: 100%; max-width: 100%; }
+    #modalFormularioLogin #formLogin { width: 100%; max-width: 100%; }
+    #modalFormularioLogin .modal-body { padding: 0 30px; }
+    #modalFormularioLogin .modal-body .mediumLabels #txtUsuario { width: 100%; max-width: 100%; }
+    #modalFormularioLogin .modal-body .mediumLabels #txtContraseÃ±a { width: 100%; max-width: 100%; }
+    #modalFormularioLogin .separador { width: auto; }
+
+}

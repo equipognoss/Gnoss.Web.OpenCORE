@@ -1,0 +1,15 @@
+﻿@model PintarNombresIdiomasCharts
+
+
+@if (string.Compare(Model.idioma.Key, Model.nombreChartIdiomaUsuario, true) == 0)
+{
+    <div rel="0" class="block" id="@Model.chartID|||edicion|||@Model.idioma.Key" style="display: block;">
+        <p><input type="text" id="@Model.chartID|||texto|||@Model.idioma.Key" class="text big" value="@(Model.diccionarioNombres.ContainsKey(Model.idioma.Key) ? Model.diccionarioNombres[Model.idioma.Key] : "")"></p>
+    </div>
+}
+else
+{
+    <div rel="@Model.Contador" class="block" id="@Model.chartID|||edicion|||@Model.idioma.Key" style="display: none;">
+        <p><input type="text" id="@Model.chartID|||texto|||@Model.idioma.Key" class="text big" value="@(Model.diccionarioNombres.ContainsKey(Model.idioma.Key) ? Model.diccionarioNombres[Model.idioma.Key] : "")"></p>
+    </div>
+}

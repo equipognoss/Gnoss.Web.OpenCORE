@@ -1,0 +1,91 @@
+
+body{}
+				
+/* configuracion basica */		
+
+#wrap{background: #fff; padding:0; width:970px; margin-top:40px;}
+	
+ a.leerMas{display:none !important}
+
+.comGnoss  #section .tituloComunidad{margin:0; padding:20px 0; height:auto}
+
+/*panelFichaResumenProyecto*/
+.comGnoss .fichaRecurso h4{font-size:120%}
+.comGnoss .panelFichaResumenProyecto{
+	border:0;		
+	margin-bottom:10px;
+}
+.comGnoss .panelFichaResumenProyecto .TextoTiny p{line-height: 1.4}
+
+.comGnoss .panelEnlaceTwitter{text-align:right}
+.comGnoss .panelEnlaceTwitter a{display:block !important; float:none !important; padding:0 !important; margin:0 !important}
+
+.panelControlVoto {float:left;}
+
+/*botones
+	label a
+*/
+
+label.boton
+{
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	background:#eee;
+	border:1px solid #ddd;
+	font-size:13px;
+	height:auto;
+	min-height:22px;
+	padding:0 !important;
+	width:auto !important;
+	float:left;
+}
+label.boton a{background:none; height:auto; padding:4px 10px; margin:0; font-size:12px}
+label.floatRight{float:right !important}
+
+label.btAzul{background: #8186BD; border:1px solid #8186BD}
+
+.comGnoss .panelAcciones .botonera{height:auto; display:inline}
+.comGnoss .botonera label.floatRight{float:right}
+
+.comGnoss .botonera{height:36px; display:block}
+.comGnoss .botonera label.floatRight{float:right}
+
+/* indice */
+/* solicitar categoria */
+.comGnoss #SolicitarCategoria .floatRight{width:50%}
+.comGnoss #SolicitarCategoria .floatRight .floatRight{width:auto}
+.comGnoss .indiceCat h4 a{font-weight:bold}
+
+/* recursos */
+.comGnoss .imagenAsociada h3 a{letter-spacing:0; font-weight:normal}
+.comGnoss .busquedaAv label.btAzul{margin-right:6px} 
+
+/* ficha recurso, ficha debate */
+
+.comGnoss .panelAcciones{margin-top:7px}
+.comGnoss .panelAcciones div{display:inline-block}
+.comGnoss .panelAcciones div label.boton a{padding: 4px 7px !important}
+.comGnoss .panelAcciones div label.right10{margin-right:6px !important}
+.comGnoss .panelAcciones .btAzul a{display:block !important}
+
+/*665
+*/
+.comGnoss .panelFichaRecurso{}
+.comGnoss .panelFichaRecurso .panelControlVoto{width:40px; float:left}
+.comGnoss .panelFichaRecurso .panelContenidoRecurso  .TextoTiny{}
+.comGnoss #divRecursosRelacionadosFicha{position:relative; }
+.comGnoss #divRecursosRelacionadosFicha .botonAnterior,
+.comGnoss #divRecursosRelacionadosFicha .botonSiguiente{width:20px; position:absolute}
+.comGnoss #divRecursosRelacionadosFicha .botonAnterior{float:left; top:50px; left:0}
+.comGnoss #divRecursosRelacionadosFicha .botonSiguiente{float:right; top:50px; right:0}
+.comGnoss #divRecursosRelacionadosFicha #PanelRecursosRelacionados{width:625px; margin:0 auto}
+.comGnoss #divRecursosRelacionadosFicha #PanelRecursosRelacionados div.recurso{width:120px; height:120px}
+
+
+/* footer*/
+/* modelo de caja */
+div:after,
+#section #opcionesDestacadas ul:after{content: ""; display: block; clear: both; height: 0; visibility: hidden;}
+
+/*.desplegarEtiquetas{height:16px !important; font-size:12px; }*/

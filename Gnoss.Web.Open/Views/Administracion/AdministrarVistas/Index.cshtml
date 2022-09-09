@@ -1,0 +1,301 @@
+﻿@model ManageViewsViewModel
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+
+    Html.SetBodyClass("layout04 full");
+    Html.GetListaJS().Add("defer/" + Html.GetBaseUrlStatic() + "/jsNuevo/jquery.demo.js");
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/demo.css");
+
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#nav').hide();
+    });
+
+</script>
+
+<div id="col01">
+    <h2>Administrar vistas</h2>
+
+    <div class="box box01">
+        @if (Comunidad.PersonalizacionProyectoID == Guid.Empty && ViewBag.PersonalizacionAdministracionEcosistema == Guid.Empty)
+        { 
+            <div id="info" class="aviso columms">
+                <h3><span>Panel </span>Aviso</h3>
+                <div class="col-4">
+                    <div class="box">
+                        <p>@Html.Translate("La comunidad no tiene habilitada la personalización de vistas. Contacte con el administrador de la plataforma para activarla")</p>  
+                    </div>
+                </div>
+            </div>
+        }
+        else {
+            <div class="block  group tabsGroup ">
+                <div id="divInvalidarVistas">
+                    <input type="submit" class="actionView showConfirm"  idActualizar="#divInvalidarVistas" urlAction="@Model.UrlActionInvalidateViews" value="Invalidar todas las vistas" />
+                    @if (!string.IsNullOrEmpty(Model.OKMessage))
+                    {
+                        <div class="ok">
+                            <p>@Model.OKMessage</p>
+                        </div>
+                    }
+                    <div class="ko">
+                    </div>
+                </div>
+                <div class="acciones tabspresentation">
+                    <ul>
+                        <li class="active">
+                            <a href="#" class="tabMenuPlantillas" rel="0">Plantillas de la web</a>
+                        </li>
+                        <li class="">
+                            <a href="#" class="tabMenuPlantillas">Plantillas del servicio de Resultados</a>
+                        </li>
+                        <li class="">
+                            <a href="#" class="tabMenuPlantillas">Plantillas del servicio de Facetas</a>
+                        </li>
+                        <li class="">
+                            <a href="#" class="tabMenuPlantillas">Plantillas de los componentes del CMS</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="block" style="display:block">
+                    @Html.PartialView("_Web", Model)
+                </div>
+                <div class="block">
+                    @Html.PartialView("_Resultados", Model)
+                </div>
+                <div class="block">
+                    @Html.PartialView("_Facetas", Model)
+                </div>
+                <div class="block">
+                    @Html.PartialView("_CMS", Model)
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+@section javascript{
+    <script type="text/javascript">
+        //General
+        function mostrarEdicion() {
+            $('.vistaEdicion').show();
+            $('.vistaOriginal').hide();
+            limpiarOKKO();
+        }
+        function mostrarOriginal() {
+            $('.vistaEdicion').hide();
+            $('.vistaOriginal').show();
+            limpiarOKKO();
+        }
+        function mostrarPestanya(pestanya) {
+            mostrarEdicion();
+        }
+
+        function limpiarOKKO() {
+            $('.ko').html('');
+            $('.ok').html('');
+            $('.ko').hide();
+            $('.ok').hide();
+        }
+
+        function mostrarKo(pError) {
+            var esPre = "@Html.GetComunidad().EntornoEsPre";
+            var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
+
+            if (esPre == "True") {
+                $('.ko').html('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
+                $('.ok').html('');
+            }
+            else if (entornoBloqueado == "True") {
+                $('.ko').html('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
+                $('.ok').html('');
+            }
+            else {
+                $('.ko').html('<p>' + pError + '<p>');
+                $('.ok').html('');
+            }
+            $('.ko').show();
+            $('.ok').hide();
+        }
+
+        $(document).ready(function () {
+            //General
+            $('.tabMenuPlantillas').click(function (e) {
+                mostrarPestanya(this);
+                resetearConfirmacion();
+                resetearEdicion();
+                e.preventDefault();
+            });
+            engancharAcciones();
+        });
+
+        function engancharConfirmacion(elemento) {
+            if ($(elemento).hasClass('showConfirm')) {
+                var htmlOriginal = $('<div>').append($(elemento).clone()).html();
+                var parent = $(elemento).parent();
+                $(elemento).replaceWith("<span class='confirm'><div class='oculto'>" + htmlOriginal + "</div>¿Estas seguro?" + htmlOriginal.replace("showConfirm", "").replace($(elemento).html(), "Sí") + " <a class='noseguro'>No</a></span>");
+                engancharAcciones();
+            }
+        }
+
+        function resetearConfirmacion() {
+            $('.confirm').each(function () {
+                $(this).replaceWith($(this).find('.oculto').html());
+            });
+            engancharAcciones();
+        }
+
+        function resetearEdicion() {
+            $('.editar.showEdit').show();
+            $('.edit').hide();
+            engancharAcciones();
+        }
+
+        function descargarArchivo(texto, nombreArchivo) {
+            if (nombreArchivo.indexOf('.cshtml') == -1) {
+                nombreArchivo = nombreArchivo + ".cshtml";
+            }
+            var textoBlob = [];
+            textoBlob.push(texto);
+            var contenidoEnBlob = new Blob(textoBlob, {
+                encoding: "UTF-8", type: "text/plain;charset=UTF-8"
+            });
+
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                var save = document.createElement('a');
+                save.href = event.target.result;
+                save.target = '_blank';
+                save.download = nombreArchivo || 'archivo.dat';
+                var clicEvent = new MouseEvent('click', {
+                    'view': window,
+                    'bubbles': true,
+                    'cancelable': true
+                });
+                save.dispatchEvent(clicEvent);
+                (window.URL || window.webkitURL).revokeObjectURL(save.href);
+            };
+            reader.readAsDataURL(contenidoEnBlob);
+        };
+
+        function engancharAcciones() {
+            //WEB
+            $('#tipoPaginaEdicionPersonalizable').unbind().click(function (e) {
+                $(".vistaEdicion select[name='PaginasPersonalizables']").show();
+                $(".vistaEdicion select[name='FormulariosSemanticos']").hide();
+                $(".vistaEdicion select[name='FormulariosSemanticos']").val('');
+            });
+            $('#tipoPaginaEdicionSemantico').unbind().click(function (e) {
+                $(".vistaEdicion select[name='PaginasPersonalizables']").hide();
+                $(".vistaEdicion select[name='FormulariosSemanticos']").show();
+                $(".vistaEdicion select[name='PaginasPersonalizables']").val('');
+            });
+            $('#tipoPaginaOriginalPersonalizable').unbind().click(function (e) {
+                $(".vistaOriginal select[name='PaginasPersonalizables']").show();
+                $(".vistaOriginal select[name='FormulariosSemanticos']").hide();
+                $(".vistaOriginal select[name='FormulariosSemanticos']").val('');
+                $(".vistaOriginal input[action='@((short)ManageViewsViewModel.Action.DownloadOriginal)']").show();
+            });
+            $('#tipoPaginaOriginalSemantico').unbind().click(function (e) {
+                $(".vistaOriginal select[name='PaginasPersonalizables']").hide();
+                $(".vistaOriginal select[name='FormulariosSemanticos']").show();
+                $(".vistaOriginal select[name='PaginasPersonalizables']").val('');
+                $(".vistaOriginal input[action='@((short)ManageViewsViewModel.Action.DownloadOriginal)']").hide();
+            });
+
+            //GENERAL
+            $('.mostrarOriginal').unbind().click(function (e) {
+                mostrarOriginal();
+                resetearConfirmacion();
+                resetearEdicion();
+                e.preventDefault();
+            });
+            $('.mostrarEdicion').unbind().click(function (e) {
+                mostrarEdicion();
+                resetearConfirmacion();
+                resetearEdicion();
+                e.preventDefault();
+            });
+            $('.tabspresentation ul li').unbind().click(function (e) {
+                limpiarOKKO();
+            });
+            $('.showEdit').unbind().click(function (e) {
+                e.preventDefault();
+                $(this).hide();
+                $(this).parent().find('.edit').show();
+                resetearConfirmacion();
+            });
+            $('select').unbind().change(function (e) {
+                resetearConfirmacion();
+                resetearEdicion();
+            });
+            $('.confirm .noseguro').unbind().click(function (e) {
+                resetearConfirmacion();
+                resetearEdicion();
+            });
+            $('.actionView').unbind().click(function (e) {
+                var that = $(this);
+                e.preventDefault();
+                if ($(this).hasClass('showConfirm')) {
+                    resetearConfirmacion();
+                    resetearEdicion();
+                    engancharConfirmacion(this);
+                } else {
+                    var nombreFich = "";
+                    var dataPost = new FormData();
+                    $('.' + $(this).attr('form')).each(function () {
+                        if (this.tagName == "INPUT" && ($(this).attr('type') == "file")) {
+                            var files = $(this).get(0).files;
+                            if (files.length > 0) {
+                                dataPost.append($(this).attr('name'), files[0]);
+                            } else {
+                                dataPost.append($(this).attr('name'), null);
+                            }
+                        } else if (this.tagName == "INPUT" && ($(this).attr('type') == "checkbox")) {
+                            dataPost.append($(this).attr('name'), $(this).is(':checked'));
+                        }else {
+                            dataPost.append($(this).attr('name'), $(this).val());
+                            if ($(this).hasClass("nombreFich") && $(this).val() != '') {
+                                nombreFich = $(this).val();
+                            }
+                        }
+                    });
+                    var urlAction = $(this).attr('urlAction');
+                    var action = $(this).attr('action');
+                    dataPost.append("Accion", $(this).attr('action'));
+                    var idActualizar = $(this).attr('idActualizar');
+                    MostrarUpdateProgress();
+
+                    limpiarOKKO();
+
+                    GnossPeticionAjax(
+                        urlAction,
+                        dataPost,
+                        true
+                    ).done(function (response) {
+                        if (action == 1 || action == 3) {
+                            descargarArchivo(response, nombreFich);
+                        } else {
+                            var htmlRespuesta = document.createElement("div");
+                            htmlRespuesta.innerHTML = response;
+                            $(idActualizar).html($(htmlRespuesta).find(idActualizar).html());
+                            engancharAcciones();
+                        }
+                        OcultarUpdateProgress();
+                    }).fail(function (response) {
+                        mostrarKo(response)
+                        OcultarUpdateProgress();
+                    });
+                }
+            });
+        }
+
+    </script>
+}

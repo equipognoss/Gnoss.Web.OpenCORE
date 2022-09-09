@@ -1,0 +1,862 @@
+﻿@model AdministrarContextosViewModel
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMINCONTEXTOS", "TITULO")</h1>
+    <div>
+        <form autocomplete="off">
+            @{
+                string idiomas = "";
+
+                foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+                {
+                    idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+                }
+            }
+            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
+            <input type="hidden" id="idiomaDefecto" value="@Model.IdiomaPorDefecto" />
+            <p>
+                @Html.GetText("COMADMINCONTEXTOS", "INFOTITULO")
+            </p>
+            <div class="contenedorFiltros">
+                <div class="panFiltrar">
+                    <p>
+                        <span>Filtrar componentes </span>
+                    </p>
+                    <p>
+                        <span>por nombre</span>
+                        <input type="text" id="txtFiltro">
+                        @*<span> y por tipo </span>
+                            <select id="cmbFiltro">
+                        <option value="">Todas</option>
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.HtmlIncrustado) > 0)
+                        {
+                            <option value="@(TipoGadget.HtmlIncrustado)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADHTML")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltPreguntas) > 0)
+                        {
+                            <option value="@(TipoGadget.UltPreguntas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTPREGUNTAS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltDebates) > 0)
+                        {
+                            <option value="@(TipoGadget.UltDebates)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTDEBATES")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltEncuestas) > 0)
+                        {
+                            <option value="@(TipoGadget.UltEncuestas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTENCUESTAS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.Consulta) > 0)
+                        {
+                            <option value="@(TipoGadget.Consulta)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONSULTA")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.ProyRelacionados) > 0)
+                        {
+                            <option value="@(TipoGadget.ProyRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADPROYRELACIONADOS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.QueEstaPasando) > 0)
+                        {
+                            <option value="@(TipoGadget.QueEstaPasando)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADQUEESTAPASANDO")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosContextos) > 0)
+                        {
+                            <option value="@(TipoGadget.RecursosContextos)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONTEXTO")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosRelacionados) > 0)
+                        {
+                            <option value="@(TipoGadget.RecursosRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADRECURSOSRELACIONADOS")</option>
+                        }
+                        @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.CMS) > 0)
+                        {
+                            <option value="@(TipoGadget.CMS)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCMS")</option>
+                        }
+                    </select>*@
+                    </p>
+                </div>
+            </div>
+            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+            {
+                <input type="button" style="background-color: gray;" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" />
+                <input type="hidden" id="auxIC" value="NO" />
+            }
+            else
+            {
+                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
+                <input type="hidden" id="auxIC" value="SI" />
+            }
+            <div class="panAniadir">
+                @Html.GetText("COMADMINCONTEXTOS", "INFOADDGADGET")
+                <select id="cmbAddGadget">
+                    <option value="@((short)TipoGadget.HtmlIncrustado)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADHTML")</option>
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltPreguntas) == 0)
+                    {
+                        <option value="@((short)TipoGadget.UltPreguntas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTPREGUNTAS")</option>
+                    }
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltDebates) == 0)
+                    {
+                        <option value="@((short)TipoGadget.UltDebates)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTDEBATES")</option>
+                    }
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltEncuestas) == 0)
+                    {
+                        <option value="@((short)TipoGadget.UltEncuestas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTENCUESTAS")</option>
+                    }
+                    <option value="@((short)TipoGadget.Consulta)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONSULTA")</option>
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.ProyRelacionados) == 0)
+                    {
+                        <option value="@((short)TipoGadget.ProyRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADPROYRELACIONADOS")</option>
+                    }
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.QueEstaPasando) == 0)
+                    {
+                        <option value="@((short)TipoGadget.QueEstaPasando)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADQUEESTAPASANDO")</option>
+                    }
+                    @if (Model.AdministracionSemanticaPermitido)
+                    {
+                        <option value="@((short)TipoGadget.RecursosContextos)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONTEXTO")</option>
+                        if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosRelacionados) == 0)
+                        {
+                            <option value="@((short)TipoGadget.RecursosRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADRECURSOSRELACIONADOS")</option>
+                        }
+                    }
+                    @if (Model.CMSDisponible)
+                    {
+                        <option value="@((short)TipoGadget.CMS)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCMS")</option>
+                    }
+                </select>
+                <input type="button" class="addGadget" value="@Html.GetText("COMADMINCONTEXTOS", "ADDGADGET")" />
+            </div>
+            <ol class="table" id="sortable">
+                @foreach (ContextoModel gadget in Model.ListaGadgets.OrderBy(gadget => gadget.Orden))
+                {
+                    @Html.PartialView("_EdicionContexto", gadget);
+                }
+            </ol>
+        </form>
+    </div>
+    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+    {
+        <input type="button" style="background-color: gray;" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" />
+    }
+    else
+    {
+        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINCONTEXTOS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
+    }
+</div>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script>
+    var OperativaOrdenacion = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function () {
+            this.lista = $('#sortable');
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            that.lista.sortable({
+                handle: 'span.handle',
+                items: 'li',
+                cancel: ".ui-state-disabled"
+            });
+            $('.header', that.lista).disableSelection();
+            return;
+        }
+    }
+
+    var OperativaAcciones = {
+        init: function (panelID) {
+            this.config(panelID);
+            if (this.id == '') {
+                this.engancharComportamiento();
+            }
+            this.engancharComportamientoContextos();
+            this.engancharMultiIdioma();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            this.cargarIdiomas();
+            this.id = '';
+
+            if (typeof panelID != 'undefined' && panelID != '') {
+                this.id = '#' + panelID + ' ';
+            }
+            return;
+        },
+        engancharMultiIdioma: function () {
+            var that = this;
+            if (that.ListaIdiomas.length > 1) {
+                $(that.id + 'input[name="Name"]:not(:disabled)').each(function () {
+                    var inputName = $(this);
+                    that.montarMultidioma(inputName);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('keyup');
+                    }).blur(function () {
+                        inputName.val($(this).val());
+                        inputName.trigger('blur');
+                    });
+                });
+                $(that.id + 'textarea[name="Contenido"].multiidioma:not(:disabled)').each(function () {
+                    var inputUrl = $(this);
+                    that.montarMultidioma(inputUrl);
+
+                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
+                        inputUrl.trigger('blur');
+                    });
+                });
+                componenteTabulado.init();
+            }
+        },
+        obtenerTextoYClaveDeIdioma: function (texto) {
+            var that = this;
+            var idioma = that.IdiomaPorDefecto;
+            var textoIdioma = texto;
+            if (textoIdioma.length > 0) {
+                var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
+                if (auxIdioma[0] == '@('@')') {
+                    idioma = auxIdioma.substr(1);
+                    textoIdioma = textoIdioma.substr(0, textoIdioma.length - 3);
+                }
+            }
+            return { "key": idioma, "value": textoIdioma };
+        },
+        montarMultidioma: function (input) {
+            var that = this;
+
+            var esTextArea = input.is('textarea');
+            if (esTextArea) { input.css("display", "none"); }
+            else { input.attr("type", "hidden"); }
+
+            var textoMultiIdioma = input.val().split('|||')
+            var listaTextos = [];
+            $.each(textoMultiIdioma, function () {
+                if (this != "") {
+                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
+                    listaTextos.push(objetoIdioma);
+                }
+            });
+
+            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma" ><div class=" acciones tabspresentation "><ul>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
+            });
+
+            htmlMultIdioma += '</ul></div>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                var textoIdioma = listaTextos.findValueByKey(key);
+                if (textoIdioma == null || textoIdioma == '') {
+                    if (key.indexOf('-') > 0) {
+                        var keyAux = key.substr(0, key.indexOf('-'));
+                        textoIdioma = listaTextos.findValueByKey(keyAux);
+                    }
+                    if (textoIdioma == null || textoIdioma == '') {
+                        if (esIdiomaPorDefecto && listaTextos.length > 0) {
+                            textoIdioma = listaTextos[0].value;
+                        }
+                        else {
+                            textoIdioma = '';
+                        }
+                    }
+                }
+                htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p>';
+
+                if (esTextArea) { htmlMultIdioma += '<textarea id="texto_' + key + '" class="text big">' + textoIdioma + '</textarea>'; }
+                else { htmlMultIdioma += '<input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma.replace(/\'/g, "\'").replace(/\"/g, '&quot;') + '" />'; }
+
+                htmlMultIdioma += '</p></div>';
+            });
+
+            htmlMultIdioma += '</div>';
+
+            input.before(htmlMultIdioma);
+        },
+        engancharComportamientoContextos: function () {
+            var that = this;
+            $(that.id + 'span.eliminar').click(function () {
+                that.eliminarContexto($(this));
+                 if ($("#auxIC").val() == 'SI') {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
+            });
+            $(that.id + 'span.editar').click(function () {
+                that.editarContexto($(this));
+                if ($("#auxIC").val() == 'SI') {
+                    $('.guardarTodo').removeAttr('disabled');
+                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
+                }
+            });
+            $(that.id + 'input[name="Name"]').keyup(function () {
+                that.cambiarNombreContexto($(this));
+            }).blur(function () {
+                that.cambiarAuxNombreContexto($(this));
+            });
+            $(that.id + 'span.tipo').each(function () {
+                if ($(this).attr("title") != null && $(this).attr("title") != '') {
+                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
+                    $(this).removeAttr("title");
+                }
+            });
+
+            $(that.id + '.conToolTip').tooltip();
+            return;
+        },
+        cargarIdiomas: function (bototnEditar) {
+            var that = this;
+
+            that.IdiomaPorDefecto = $('#idiomaDefecto').val();
+
+            var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
+            that.ListaIdiomas = []
+
+            $.each(idiomasComunidad, function () {
+                if (this != "") {
+                    that.ListaIdiomas.push({ "key": this.split('|')[0], "value": this.split('|')[1] });
+                }
+            });
+        },
+        comprobarCamposVacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row:not(".ui-state-disabled") textarea[name = "Contenido"]');
+            inputsNombre.each(function () {
+                if ($(this).val() == "") {
+                    that.mostrarErrorCampoVacio($(this));
+                    error = true;
+                }
+            })
+            var inputsNombre = $('.row:not(".ui-state-disabled") textarea[name = "ComunidadOrigen"]');
+            inputsNombre.each(function () {
+                if ($(this).val() == "") {
+                    that.mostrarErrorCampoVacio($(this));
+                    error = true;
+                }
+            });
+            var inputsNombre = $('.row:not(".ui-state-disabled") textarea[name = "RelacionOrigenDestino"]');
+            inputsNombre.each(function () {
+                if ($(this).val() == "") {
+                    that.mostrarErrorCampoVacio($(this));
+                    error = true;
+                }
+            });
+            return error;
+        },
+        mostrarErrorCampoVacio: function (input) {
+            var fila = input.closest('.row');
+            input.after("<span class=\"error\">El campo no puede estar vacio</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        comprobarNombresCortosRepetidos: function () {
+            var that = this;
+            var errorRepetido = false;
+            var inputsNombresCortos = $('.row:not(".ui-state-disabled") input[name = "ShortName"]');
+            inputsNombresCortos.each(function () {
+                if (that.comprobarNombreCortoRepetido($(this))) {
+                    errorRepetido = true;
+                }
+            });
+            return errorRepetido;
+        },
+        comprobarNombreCortoRepetido: function (inputNombreCorto) {
+            var that = this;
+            $('.error', inputNombreCorto.parent()).remove();
+
+            var fila = inputNombreCorto.closest('.row');
+
+            var inputsNombresCortos = $('.row:not(".ui-state-disabled") input[name = "ShortName"]');
+            var nombreCorto = inputNombreCorto.val();
+            var errorRepetido = false;
+
+            inputsNombresCortos.each(function () {
+                var inputCompare = $(this);
+                if (inputCompare.closest('.row').attr('id') != fila.attr('id')) {
+                    if (inputCompare.val() == nombreCorto) {
+                        errorRepetido = true;
+                    }
+                }
+            });
+            if (errorRepetido) {
+                that.mostrarErrorNombreCortoRepetido(fila);
+            }
+            return errorRepetido;
+        },
+        mostrarErrorNombreCortoRepetido: function (fila) {
+            var inputNombreCorto = $('input[name = "ShortName"]', fila).first();
+            inputNombreCorto.after("<span class=\"error\">El Nombre Corto no puede estar repetido</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        comprobarContenidosVacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row:not(".ui-state-disabled") textarea[name = "Contenido"].multiidioma:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarContenidoVacio($(this))) {
+                    error = true;
+                }
+            });
+            return error;
+        },
+        comprobarContenidoVacio: function (inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' textarea').val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    that.mostrarErrorContenidoVacio(inputName.closest('.row'));
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' textarea').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+
+            return false;
+        },
+        mostrarErrorContenidoVacio: function (fila) {
+            var that = this;
+            var inputUrl = $('textarea[name = "Contenido"]', fila).first();
+            inputUrl.after("<span class=\"error\">El contenido en " + that.ListaIdiomas.findValueByKey(that.IdiomaPorDefecto) + " no puede estar vacio</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        comprobarNombresVacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row:not(".ui-state-disabled") input[name = "Name"]:not(":disabled")');
+            inputsNombre.each(function () {
+                if (that.comprobarNombreVacio($(this))) {
+                    error = true;
+                }
+            });
+            return error;
+        },
+        comprobarNombreVacio: function (inputName) {
+            var that = this
+            $('.error', inputName.parent()).remove();
+
+            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputName.val(textoMultiIdioma);
+            }
+
+            return false;
+        },
+        comprobarNombresCortosConEspacios: function () {
+            var that = this;
+            var error = false;
+            var inputsNombre = $('.row:not(".ui-state-disabled") input[name = "ShortName"]');
+            inputsNombre.each(function () {
+                if (that.comprobarNombreCortoConEspacios($(this))) {
+                    error = true;
+                }
+            });
+            return error;
+        },
+        comprobarNombreCortoConEspacios: function (inputShortName) {
+            var that = this
+            $('.error', inputShortName.parent()).remove();
+
+            var shortName = inputShortName.val();
+            if (shortName.trim().indexOf(" ") >= 0) {
+                that.mostrarErrorNombreCortoEspacios(inputShortName.closest('.row'));
+                return true;
+            }
+            if (shortName.indexOf("#") >= 0) {
+                that.mostrarErrorNombreCortoCaracteresEspeciales(inputShortName.closest('.row'));
+                return true;
+            }
+
+            return false;
+        },
+        mostrarErrorNombreVacio: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "Name"]', fila).first();
+            inputUrl.after("<span class=\"error\">El 'Nombre' en " + that.ListaIdiomas.findValueByKey(that.IdiomaPorDefecto) + " no puede estar vacio</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        mostrarErrorNombreCortoEspacios: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "ShortName"]', fila).first();
+            inputUrl.after("<span class=\"error\">El 'Nombre corto' no puede contener espacios</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        mostrarErrorNombreCortoCaracteresEspeciales: function (fila) {
+            var that = this;
+            var inputUrl = $('input[name = "ShortName"]', fila).first();
+            inputUrl.after("<span class=\"error\">El 'Nombre corto' no puede contener el caracter '#'</span>");
+            $('.panEdicion', fila).addClass('edit');
+        },
+        cambiarNombreContexto: function (inputName) {
+            var nombreContexto = inputName.val();
+            var fila = inputName.closest('.row');
+            var nombreFila = fila.find('.header .nombreContexto');
+
+            if (nombreContexto == '') {
+                nombreFila.text(nombreFila.attr('aux'));
+            }
+            else {
+                nombreFila.text(nombreContexto);
+            }
+        },
+        cambiarAuxNombreContexto: function (inputName) {
+            var that = this;
+
+            $('.error', inputName.parent()).remove()
+
+            var nombreContexto = inputName.val();
+            var fila = inputName.closest('.row');
+            var nombreFila = fila.find('.header .nombreContexto');
+
+            if (nombreContexto == '') {
+                nombreFila.text(nombreFila.attr('aux'));
+                //inputName.val(nombreFila.attr('aux'));
+                that.mostrarErrorNombreVacio(fila);
+            }
+            else {
+                nombreFila.text(nombreContexto);
+                nombreFila.attr('aux', nombreContexto);
+                //inputName.val(nombreContexto);
+            }
+        },
+        Filtrar: function () {
+            var filtro = $('input#txtFiltro').val();
+            var filtroTipo = '';//$('#cmbFiltro').val();
+
+            var listadoContextos = $('.row');
+
+            if (filtro == '' && filtroTipo == '') {
+                $('.table').removeClass("filtrado");
+            }
+            else {
+                $('.table').addClass("filtrado");
+            }
+
+            listadoContextos.each(function () {
+                var item = $(this);
+                var itemText = item.children('.header').find('span.nombreContexto').text();
+                var itemTipo = item.children('.panEdicion').find('[name="TipoGadget"]').val();
+
+                item.removeClass('oculto');
+                item.addClass('visible');
+
+                if ((filtro != '' && itemText.toLowerCase().indexOf(filtro.toLowerCase()) < 0) || (filtroTipo != '' && filtroTipo != itemTipo)) {
+                    item.addClass('oculto');
+                    item.removeClass('visible');
+                }
+            });
+
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.addGadget').click(function () {
+                that.anyadirGadget();
+            });
+            $('input.guardarTodo').click(function () {
+                that.guardarTodasContextos();
+            });
+            $('input#txtFiltro').keyup(function (event) {
+                if (event.which || event.keyCode) {
+                    if ((event.which == 13) || (event.keyCode == 13)) {
+                        return false;
+                    }
+                }
+                that.Filtrar();
+            });
+            $('#cmbFiltro').change(function (event) {
+                that.Filtrar();
+            });
+            return;
+        },
+        deshacerEliminarContexto: function (botonDeshacer) {
+            var fila = botonDeshacer.closest('.row');
+
+            fila.removeClass('ui-state-disabled');
+
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('[name="TabEliminada"]').val('false');
+
+            var panCabecera = fila.children('.header');
+            panCabecera.removeClass('deleted');
+
+            var deshacer = panCabecera.children('.deshacer');
+            var eliminada = panCabecera.children('.eliminada');
+            deshacer.remove();
+            eliminada.remove();
+        },
+        eliminarContexto: function (botonEliminar) {
+            var that = this;
+            var fila = botonEliminar.closest('.row');
+            var filas = fila.find('.row');
+
+            fila.addClass('ui-state-disabled');
+            filas.addClass('ui-state-disabled');
+
+            var panelesEditar = fila.find('.panEdicion');
+            panelesEditar.removeClass('edit');
+            panelesEditar.find('[name="TabEliminada"]').val('true');
+
+            var panelesCabecera = fila.find('.header:not(.deleted)');
+            panelesCabecera.addClass('deleted');
+            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
+            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
+
+            panelesCabecera.find('span.deshacer').click(function () {
+                that.deshacerEliminarContexto($(this));
+            });
+        },
+        editarContexto: function (botonEditar) {
+            var fila = botonEditar.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+
+            if (panEditar.hasClass('edit')) {
+                panEditar.removeClass('edit');
+            }
+            else {
+                panEditar.addClass('edit');
+            }
+        },
+        anyadirGadget: function () {
+            var tipoGadget = parseInt($('#cmbAddGadget').val());
+            MostrarUpdateProgress();
+            var dataPost = {
+                TipoGadget: tipoGadget
+            }
+            GnossPeticionAjax(
+                this.urlPagina + '/new-gadget',
+                dataPost,
+                true
+            ).done(function (data) {
+                var ultimaContexto = $('#sortable').children().last();
+                var panelEdicionUltimaContexto = ultimaContexto.children('.panEdicion');
+
+                $('#sortable').append(data);
+                var ContextoNueva = $('#sortable').children().last();
+                var idPanel = ContextoNueva.attr('id');
+                OperativaAcciones.init(idPanel);
+                ContextoNueva.find('span.editar').trigger('click');
+            }).fail(function (data) {
+                console.log("ERROR =>" + data);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        guardarTodasContextos: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.ListaGadgets = {};
+                var cont = 0;
+                $('.row').each(function () {
+                    that.obtenerDatosGadget($(this), cont++);
+                });
+                that.guardar();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        mostrarErrorGuardado: function () {
+            //$('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINCONTEXTOS", "GUARDARERROR")</div>');
+            var esPre = "@Html.GetComunidad().EntornoEsPre";
+            var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
+
+            if (esPre == "True") {
+                $('input.guardarTodo').before('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
+            }
+            else if (entornoBloqueado == "True") {
+                $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
+            }
+            else {
+                $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINCONTEXTOS", "GUARDARERROR")</div > ');
+            }
+        },
+        mostrarErrorGuardadoFallo: function (data) {
+            $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
+        },
+        guardarContexto: function (botonGuardar) {
+            var that = this;
+            var fila = botonGuardar.closest('.row');
+
+            that.ListaGadgets = {};
+            that.obtenerDatosGadget(fila, 0);
+            that.guardar();
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+            if (that.comprobarNombresVacios()) {
+                error = true;
+            }
+            if (that.comprobarContenidosVacios()) {
+                error = true;
+            }
+            if (!error && that.comprobarNombresCortosRepetidos()) {
+                error = true;
+            }
+            if (that.comprobarNombresCortosConEspacios()) {
+                error = true;
+            }
+            if (!error && that.comprobarCamposVacios()) {
+                error = true;
+            }
+
+            return error;
+        },
+        guardar: function () {
+            var that = this;
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.ListaGadgets,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
+                    that.mostrarErrorGuardado();
+                    if (error[0] == "NOMBRE VACIO") {
+                        that.mostrarErrorNombreVacio($('#' + error[1]));
+                    }
+                    else if (error[0] == "NOMBRECORTOGADGET ESPACIOS") {
+                        that.mostrarErrorNombreCortoEspacios($('#' + error[1]));
+                    }
+                    else if (error[0] == "NOMBRECORTOGADGET CARACTERESINC") {
+                        that.mostrarErrorNombreCortoCaracteresEspeciales($('#' + error[1]));
+                    }
+                }
+                else {
+                    that.mostrarErrorGuardadoFallo(data);
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINCONTEXTOS", "GUARDAROK")</div>');
+        },
+        obtenerDatosGadget: function (fila, num) {
+            var that = this;
+
+            var panelEdicion = fila.children('.panEdicion');
+
+            var id = fila.attr('id');
+            var tipoGadget = panelEdicion.find('[name="TipoGadget"]').val();
+
+            var prefijoClave = 'ListaGadgets[' + num + ']';
+
+            that.ListaGadgets[prefijoClave + '.Key'] = fila.attr('id');
+            that.ListaGadgets[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
+            that.ListaGadgets[prefijoClave + '.Orden'] = num;
+            that.ListaGadgets[prefijoClave + '.Name'] = panelEdicion.find('[name="Name"]').val();
+            that.ListaGadgets[prefijoClave + '.Clases'] = panelEdicion.find('[name="Clases"]').val();
+            that.ListaGadgets[prefijoClave + '.Visible'] = panelEdicion.find('[name="Visible"]').is(':checked');
+            that.ListaGadgets[prefijoClave + '.TipoGadget'] = tipoGadget;
+            that.ListaGadgets[prefijoClave + '.Ajax'] = panelEdicion.find('[name="Ajax"]').is(':checked');
+            that.ListaGadgets[prefijoClave + '.FiltrosDestino'] = panelEdicion.find('[name="FiltrosDestino"]').val();
+            that.ListaGadgets[prefijoClave + '.ShortName'] = panelEdicion.find('[name="ShortName"]').val();
+
+            if (tipoGadget == '@(TipoGadget.HtmlIncrustado)' || tipoGadget == '@(TipoGadget.Consulta)' || tipoGadget == '@(TipoGadget.CMS)') {
+                that.ListaGadgets[prefijoClave + '.Contenido'] = encodeURIComponent(panelEdicion.find('[name="Contenido"]').val());
+            }
+            else if (tipoGadget == '@(TipoGadget.RecursosContextos)') {
+                var prefijoClaveContexto = prefijoClave + '.Contexto';
+
+                that.ListaGadgets[prefijoClaveContexto + '.ComunidadOrigen'] = panelEdicion.find('[name="ComunidadOrigen"]').val();
+                that.ListaGadgets[prefijoClaveContexto + '.FiltrosOrigen'] = panelEdicion.find('[name="FiltrosOrigen"]').val();
+                that.ListaGadgets[prefijoClaveContexto + '.RelacionOrigenDestino'] = panelEdicion.find('[name="RelacionOrigenDestino"]').val();
+                that.ListaGadgets[prefijoClaveContexto + '.NumResultados'] = panelEdicion.find('[name="NumResultados"]').val();
+                that.ListaGadgets[prefijoClaveContexto + '.OrdenResultados'] = panelEdicion.find('[name="OrdenResultados"]').val();
+
+                that.ListaGadgets[prefijoClaveContexto + '.Imagen'] = panelEdicion.find('[name="Imagen"]').val();
+                that.ListaGadgets[prefijoClaveContexto + '.MostrarEnlaceOriginal'] = panelEdicion.find('[name="MostrarEnlaceOriginal"]').is(':checked');
+                that.ListaGadgets[prefijoClaveContexto + '.MostrarVerMas'] = panelEdicion.find('[name="MostrarVerMas"]').is(':checked');
+                that.ListaGadgets[prefijoClaveContexto + '.AbrirEnPestanyaNueva'] = panelEdicion.find('[name="AbrirEnPestanyaNueva"]').is(':checked');
+                that.ListaGadgets[prefijoClaveContexto + '.NamespacesExtra'] = panelEdicion.find('[name="NamespacesExtra"]').val();
+                that.ListaGadgets[prefijoClaveContexto + '.ResultadosExcluir'] = panelEdicion.find('[name="ResultadosExcluir"]').val();
+            }
+        }
+    }
+
+    $(document).ready(function () {
+        Array.prototype.findValueByKey = function (key) {
+            var resultado = $.grep(this, function (array) {
+                return array.key == key;
+            });
+
+            if (resultado[0] != null) {
+                return resultado[0].value;
+            }
+
+            return null;
+        };
+
+        OperativaOrdenacion.init();
+        OperativaAcciones.init();
+    });
+
+</script>
+
+
+<style>
+    .row .header .nombreContexto {
+        font-weight: bold;
+    }
+
+    .row .header .tipoContexto {
+        padding-left: 10px;
+    }
+</style>

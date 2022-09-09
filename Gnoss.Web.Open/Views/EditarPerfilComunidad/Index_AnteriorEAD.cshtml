@@ -1,0 +1,237 @@
+﻿@model EditProfileViewModel
+
+@{
+    UserProfileModel Perfil = Html.GetPerfil();
+    Html.SetBodyClass("layout02 comGnoss");
+}
+
+<div id="col01">
+
+    <div class="myusercard vertical">
+        <div class="box content">
+            <div class="group image">
+                @if (Model.ProfileProfesional != null)
+                {
+                    <div id="panUsarImagenPersonal">
+                        <input type="checkbox"  @(Model.UsarFotoPersonal ? "checked=checked" : "") onclick="MostrarPanelFoto(this);" />
+                        <span>@Html.GetText("PERFIL", "USARIMAGENPERSONAL")</span>
+                    </div>
+                }
+                <div id="foto" @(Model.ProfileProfesional != null && Model.UsarFotoPersonal ? "style=display:none" : "")>
+                    <fieldset class="foto">
+                        <div style="margin-top: 5px" class="claseImagenHack">
+                            @{
+                                string urlFoto = Html.GetBaseUrlContent() + "/" + Es.Riam.Util.UtilArchivos.ContentImagenes + "/" + Es.Riam.Util.UtilArchivos.ContentImagenesPersonas + "/anonimo_grande.png";
+                                if (Model.ProfileOrganization != null)
+                                {
+                                    urlFoto = Html.GetBaseUrlContent() + "/" + Es.Riam.Util.UtilArchivos.ContentImagenes + "/" + Es.Riam.Util.UtilArchivos.ContentImagenesOrganizaciones + "/anonimo_grande.png";
+                                }
+
+                                if (!string.IsNullOrEmpty(Model.UrlFoto))
+                                {
+                                    urlFoto = Html.GetBaseUrlContent() + "/" + Model.UrlFoto;
+                                }
+
+                                if (Model.ProfileTeacher != null)
+                                {
+                                <img style="width: 220px;" alt="@Html.GetText("PERFIL", "MIFOTODEPERFIL")" src="@urlFoto"  id="imgPerfil" />
+                                }
+                                else
+                                {
+                                <a onclick="ImagenClick();">
+                                    <img style="width: 220px;" alt="@Html.GetText("PERFIL", "MIFOTODEPERFIL")" src="@urlFoto"  id="imgPerfil" />
+                                </a>
+                                }
+                            }
+                        </div>
+                        @if (Model.ProfileTeacher == null)
+                        {
+                            <div class="group acciones01">
+                                <p>Acciones</p>
+                                <ul>
+                                    <li>
+                                        <a onclick="ImagenClick();" id="btnCambiarFoto">@Html.GetText("PERFIL", "CAMBIARFOTO")</a></li>
+                                    <li id="divEliminarFoto" @(string.IsNullOrEmpty(Model.UrlFoto) ? "style=display:none" : "")>
+                                        <a onclick="EliminarImagenPerfil();">@Html.GetText("PERFIL", "ELIMINARFOTO")</a></li>
+                                </ul>
+                                <span class="ko" id="lblErrorImagen"></span>
+                            </div>
+                            <div style="display: none" id="divFileUpload">
+                                <input type="file" accept="image/*" class="floatLeft" id="fileUpFotoPerfil" name="fileUpFotoPerfil" />
+                                <label for="fotoPerfil">
+                                    <small>
+                                        <span>@Html.GetText("PERFIL", "MAXIMO")</span>
+                                    </small>
+                                </label>
+                            </div>
+                        }
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="col02">
+
+    <h3>
+        @if (Model.ProfileOrganization != null)
+        { 
+            <span>Editar perfil de @Model.ProfileOrganization.NameOrganization</span>
+        }
+        else
+        {
+            <span>Editar perfil de @Perfil.CompleteProfileName</span>
+        }
+    </h3>
+    @if (Model.ProfilePersonal != null)
+    {
+        @Html.PartialView("_PerfilPersonal", Model)
+    }
+    else if (Model.ProfileOrganization != null)
+    {
+        @Html.PartialView("_PerfilOrganizacion", Model)
+    }
+    else if (Model.ProfileProfesional != null)
+    {
+        @Html.PartialView("_PerfilProfesional", Model)
+    }
+    else if (Model.ProfileTeacher != null)
+    {
+        @Html.PartialView("_PerfilProfesor", Model)
+    }
+
+    @if (Model.ProfileOrganization == null)
+    {
+        @Html.PartialView("_CVRapido", Model)
+    }
+    @Html.PartialView("_RedesSociales", Model)
+</div>  
+
+
+@*<script type="text/javascript">
+    document.getElementById('wrap').className = ' perfilEditar';
+</script>*@
+<script type="text/javascript">
+    $(document).ready(function () {
+        marcarObligatorios.init()
+        $('#editarPerfil .edicionPerfil input[type=text]').keydown(function (event) {
+            if (event.which || event.keyCode) { if ((event.which == 13) || (event.keyCode == 13)) { return false; } }
+        });
+
+        var urlServicio = $('#inpt_urlServicioAutocompletar').val();
+        var proyecto = $('input.inpt_proyID').val();
+        var esMyGnoss = $('input.inpt_bool_esMyGnoss').val() == 'True';
+        var estaEnProyecto = $('input.inpt_bool_estaEnProyecto').val() == 'True';
+        var esUsuarioInvitado = $('input.inpt_bool_esUsuarioInvitado').val() == 'True';
+        var identidad = $('input.inpt_identidadID').val();
+
+        CrearAutocompletarTags($('#Tags')[0], urlServicio, proyecto, esMyGnoss, estaEnProyecto, esUsuarioInvitado, identidad);
+    });
+
+    function ImagenClick() {
+        //if (navigator.appName == 'Microsoft Internet Explorer' || navigator.userAgent.indexOf('Safari') != -1) {
+        //    $('#fileUpFotoPerfil').css('width', '215px');
+        //    document.getElementById('btnCambiarFoto').style.display = 'none';
+        //    document.getElementById('divFileUpload').style.display = '';
+        //}
+        //else {
+        $('#fileUpFotoPerfil').trigger('click');
+        //}
+    }
+
+    $("#fileUpFotoPerfil").change(function () {
+        $('#lblErrorImagen').html('');
+
+        var dataPost = new FormData();
+        var files = $("#fileUpFotoPerfil").get(0).files;
+        if (files.length > 0) {
+            dataPost.append("FicheroImagen", files[0]);
+        }
+
+        GnossPeticionAjax(
+            '@Model.UrlActionSaveImage',
+            dataPost,
+            true
+        ).done(function (response) {
+            var urlFotoAnterior = $('#imgPerfil').attr('src').replace('_grande', '_peque');
+            var imgPerfil = $('#perfilUsuarioGnoss img[src="' + urlFotoAnterior + '"]')
+
+            var urlFoto = '@Html.GetBaseUrlContent()/' + response;
+
+            $('#imgPerfil').attr('src', urlFoto);
+            imgPerfil.attr('src', urlFoto.replace('_grande', '_peque'));
+            $('#divEliminarFoto').show();
+        }).fail(function (error) {
+            $('#lblErrorImagen').html(error);
+        });
+    });
+
+    function MostrarPanelFoto(check) {
+        if ($(check).is(':checked')) {
+            $('#foto').hide();
+        }
+        else {
+            $('#foto').show();
+        }
+        var dataPost = {
+            callback: "UsarFotoPersonal",
+            UsarFotoPersonal: $(check).is(':checked')
+        }
+        GnossPeticionAjax(
+            '@Html.GetUrlPagina()',
+            dataPost,
+            true
+        )
+    }
+
+    function EliminarImagenPerfil() {
+        var dataPost = {
+            callback: "EliminarImagen"
+        }
+
+        GnossPeticionAjax(
+            '@Html.GetUrlPagina()',
+            dataPost,
+            true
+        ).done(function () {
+            var urlFotoAnterior = $('#imgPerfil').attr('src').replace('_grande', '_peque');
+
+            var imgPerfil = $('#perfilUsuarioGnoss img[src="' + urlFotoAnterior + '"]')
+
+            @if (Model.ProfileOrganization != null)
+            {
+            @:var urlAnonimo = '@Html.GetBaseUrlContent()/@Es.Riam.Util.UtilArchivos.ContentImagenes/@Es.Riam.Util.UtilArchivos.ContentImagenesOrganizaciones/anonimo_grande.png';
+            }
+            else
+            {
+            @:var urlAnonimo = '@Html.GetBaseUrlContent()/@Es.Riam.Util.UtilArchivos.ContentImagenes/@Es.Riam.Util.UtilArchivos.ContentImagenesPersonas/anonimo_grande.png';
+            }
+
+            $('#imgPerfil').attr('src', urlAnonimo);
+            imgPerfil.attr('src', urlAnonimo.replace('_grande', '_peque'));
+            $('#divEliminarFoto').hide();
+        });
+    }
+
+    $("#Pais").change(function () {
+        var dataPost = {
+            callback: "CambiarPais",
+            pais: $(this).val()
+        }
+
+        GnossPeticionAjax(
+            '@Html.GetUrlPagina()',
+            dataPost,
+            true
+        ).done(function (response) {
+            $('#Provincia').parent().replaceWith(response);
+        });
+    });
+
+
+    function MostrarVisibilidadPerfil() {
+        MostrarPanelAccionDesp('despleRegUp', document.getElementById('panVisibilidadPerfil').innerHTML);
+        return false;
+    }
+
+</script>

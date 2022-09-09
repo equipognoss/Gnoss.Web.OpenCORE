@@ -1,0 +1,44 @@
+﻿@model ResourceViewModel
+@*
+    Descripción
+    -----------------------------------------------
+    Vista que se utiliza para mostrar la categoria Tesauro en formato Arbol.
+    Se trata de una vista parcial que se utiliza por ejemplo en vistas de "Categorizar" (_categories.cshtml)
+
+    Variables
+    ----------------------------------------------------------------
+*@
+@{
+    ResourceModel fichaRecurso = Model.Resource;
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista parcial de mostrar categorias Tesauro en modo Árbol --------------------
+*@
+
+@* Listado de Categorías en formato "ARBOL" *@
+<div class="tab-pane fade show active"
+     id="ver-arbol"
+     role="tabpanel"
+     aria-labelledby="ver-arbol-tab">
+    @* Buscador-Filtrador de Categorías*@
+    <div class="buscador-categorias">
+        <div class="form-group">
+            <input class="filtroRapido form-control not-outline"
+                   placeholder="Busca una categoría"
+                   type="text"
+                   onkeydown="javascript:if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}"
+                   onkeyup="javascript:MVCFiltrarListaSelCatArbol(this, 'despAccionRec_@fichaRecurso.Key');" />
+        </div>
+    </div>
+    <div class="divTesArbol divCategorias clearfix">
+        @foreach (CategoryModel categoria in ((List<CategoryModel>)Model.Categories).Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat => cat.Order))
+        {
+            PintarCategoriasFichaRecurso pintar = new PintarCategoriasFichaRecurso();
+            pintar.resourceView = Model;
+            pintar.categoryModel = categoria;
+            @Html.PartialView("../FichaRecurso/_PintarCategoria", pintar)
+        }
+    </div>
+</div>

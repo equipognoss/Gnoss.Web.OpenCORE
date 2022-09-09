@@ -1,0 +1,97 @@
+﻿@model AutenticationModel
+
+@{    
+
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel Cabecera = Html.GetCabecera();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+
+    string col01class = string.Empty;
+    if (!string.IsNullOrEmpty(Comunidad.ProjectLoginConfiguration))
+    {
+        Html.SetBodyClass("full operativaRegistro layout03");
+        col01class = " class=\"loginPersonalizado\" ";
+
+    }
+    else
+    {
+        if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Login)
+        {
+            Html.SetBodyClass("layout04 full operativaRegistro login");
+        }
+        else if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Registro || Model.TypePage == AutenticationModel.TypeAutenticationPage.RegistroConRedesSociales)
+        {
+            Html.SetBodyClass("layout04 full operativaRegistro registro");
+        }
+    }
+
+    Html.SetOcultarMenusComunidad(true);
+}
+
+<div id="col01" @Html.Raw(col01class)>
+    <div class="form formtheme01 formularioRegistroUsuarios">
+        <h2>
+            @if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Login)
+            { 
+                <text>Login</text>
+            }
+            else if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Registro || Model.TypePage == AutenticationModel.TypeAutenticationPage.RegistroConRedesSociales)
+            { 
+               <text>@Html.GetText("COMMON", "REGISTRO")</text>
+            }
+        </h2>
+        <div>
+            <div class="box box01">
+            @if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Login)
+            {
+                @Html.PartialView("_FormularioLogin");
+            }
+            else if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Registro || Model.TypePage == AutenticationModel.TypeAutenticationPage.RegistroConRedesSociales)
+            {
+                @Html.PartialView("_FormularioRegistro", Model);
+            }
+            else if (Model.TypePage == AutenticationModel.TypeAutenticationPage.InvitacionUsada)
+            {
+                @Html.PartialView("_InvitacionUsada");
+            }
+            </div>
+            @if (Model.TypePage != AutenticationModel.TypeAutenticationPage.InvitacionUsada && Model.TypePage != AutenticationModel.TypeAutenticationPage.RegistroConRedesSociales)
+            {
+            <div class="box box02">
+                <div class="fieldset fieldset04 registroRedesSociales">
+                    @if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Login)
+                    {
+                        <fieldset>
+                            <legend></legend>
+                            <p>
+                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "HAZTEMIEMBRO")" id="hlRegistrate">@Html.GetText("COMMON", "REGISTRARSE")</a>
+                            </p>
+                        </fieldset>
+                    }
+
+                    @if(IdentidadActual.IsGuestUser && Cabecera.SocialNetworkRegister.Keys.Count > 0)
+                    {
+			            <fieldset id="fsPrefieresRedesSociales">
+				        <legend>@Html.GetText("REGISTRO", "OSILOPREFIERES")</legend>			
+				            <ul>
+                                @foreach (string nombre in Cabecera.SocialNetworkRegister.Keys)
+                                {
+                                    string classLi = "icon" + nombre;
+                                    <li class="@classLi">@Html.GetText("LOGIN", "CONECTATECON") <a href="@Cabecera.SocialNetworkRegister[nombre]">@nombre</a>
+                                    </li>
+                                }
+                            </ul>			
+			            </fieldset>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div> 
+<div id="col02">
+    @if (!string.IsNullOrEmpty(Comunidad.ProjectLoginConfiguration))
+    {
+       @Html.Raw(Comunidad.ProjectLoginConfiguration)
+    }
+</div>

@@ -1,0 +1,81 @@
+﻿@model ManageRegisterClausesViewModel.RegisterClauseModel
+
+@{
+    string nombreTipoClausula = Model.Type.ToString();
+    switch (Model.Type)
+    {
+        case ManageRegisterClausesViewModel.ClauseType.CondicionesUso:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCONDICIONESUSO");
+            break;
+        case ManageRegisterClausesViewModel.ClauseType.ClausulasTexo:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICAPRIVACIDAD");
+            break;
+        case ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICACOOKIES");
+            break;
+        case ManageRegisterClausesViewModel.ClauseType.Opcional:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCLAUSULAOPCIONAL");
+            break;
+    }
+}
+
+<li class="row" id="@Model.Key">
+    <span class="handle">:::</span>
+    <section class="header">
+        <span class="nombreClausula" aux="@Html.ObtenerTextoIdiomaUsuario(Model.Title, true)">@Html.ObtenerTextoIdiomaUsuario(Model.Title, true)</span><span class="tipoClausula">(@nombreTipoClausula)</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <div>
+            <input type="hidden" name="TabEliminada" value="false" />
+            <p>
+                <span class="tipo">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCLAUSULA")</span>
+                <input type="text" disabled value="@nombreTipoClausula" />
+                <input type="hidden" name="TipoClausula" value="@Model.Type" />
+            </p>
+            @if (!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
+            {
+                <p>
+                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TITULOCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TITULOCLAUSULA")</span>
+                    <input type="text" name="Title" value="@Model.Title" />
+                </p>
+            }
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "ORDENCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "ORDENCLAUSULA")</span>
+                <input type="text" name="Order" value="@Model.Order" />
+            </p>
+
+            @if (!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina) && !Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
+            {
+                <p>
+                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")</span>
+                    <textarea cols="40" rows="3" class="multiidioma cke" name="TextoClausula">@Model.Text1</textarea>
+                </p>
+            }
+            else if (Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
+            {
+                <p>
+                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")</span>
+                    <textarea cols="40" rows="3" class="multiidioma"  name="TextoClausula">@Model.Text1</textarea>
+                </p>
+            }
+            else
+            {
+                <p>
+                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "NOMBRECOOKIEPOLITICACOOKIES")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "NOMBRECOOKIEPOLITICACOOKIES")</span>
+                    <input type="text" name="TextoNombreCookie" value="@Model.CookieName" />
+                    <span class="AvisoCambioCookie" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "AVISOCAMBIONOMBRECOOKIE")" style="display:none">@Html.GetText("COMADMINCLAUSULASREGISTRO", "AVISOCAMBIONOMBRECOOKIE")</span>
+                </p>
+                <p>
+                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCABECERACLAUSULACOOKIES")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCABECERACLAUSULACOOKIES")</span>
+                    <textarea cols="40" rows="3" class="multiidioma cke" name="TextoCabeceraClausula">@Model.Text1</textarea>
+                </p>
+                <p>
+                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOPAGINACLAUSULACOOKIES")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOPAGINACLAUSULACOOKIES")</span>
+                    <textarea cols="40" rows="3" class="multiidioma cke" name="TextoPaginaClausula">@Model.Text2</textarea>
+                </p>
+            }
+        </div>
+    </section>
+</li>

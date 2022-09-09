@@ -1,0 +1,122 @@
+﻿@model IndexViewModel
+@*
+    Descripción
+    -----------------------------------------------
+    Vista que muestra las diferentes categorías que hay en la comunidad.
+
+    Variables
+    ----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista de listado de categorías de la comunidad  --------------------
+*@
+
+@{
+    Html.SetBodyClass("indice");
+}
+
+
+<div class="row">
+    @* Breadcrumb / Migas de pan en la ficha del recurso *@
+    <div class="col col-12 col-breadcrumb" id="breadcrumb">
+        <ul>
+            <li><a href="@Comunidad.Url"><strong>@Html.GetText("COMMON", "HOME")</strong></a></li>
+            <li>@Html.GetText("COMMON", "INDICE")</li>
+        </ul>
+    </div>
+
+    <div class="col col-12 header-listado">
+        <div class="h1-container">
+            <h1>@Html.GetText("TESAURO", "INDICE")</h1>
+        </div>
+        @if (Comunidad.Key != ProyectoAD.MetaProyecto && !IdentidadActual.IsGuestIdentity)
+        {
+            <div class="acciones-listado">
+                <div class="wrap">
+                    <a class="btn btn-outline-grey"
+                       data-toggle="modal"
+                       data-target="#modal-request-category"
+                       href="#">
+                        <span class="material-icons">add</span>
+                        <span>@Html.GetText("TESAURO", "SOLICITARCATEGORIA")</span>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* Buscador de categorías *@
+    <div class="col col-12">
+        <div class="buscador-categorias">
+            <div class="form-group">
+                <input class="filtroRapido form-control not-outline"
+                       placeholder="@Html.GetText("COMMON","BUSCAR")"
+                       type="text"
+                       data-filterlistid="indice"
+                       onkeydown="javascript:if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}" />
+            </div>
+        </div>
+    </div>
+
+    @* Listado de categorías *@
+    <div id="indice" class="col col-12">
+        <div class="divTesArbol divCategorias clearfix mt-3" style="margin-left:0;">
+            @foreach (CategoryModel categoria in ((List<CategoryModel>)Model.Categories).Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat => cat.Order))
+            {
+
+                PintarCategoriasIndice pintar = new PintarCategoriasIndice();
+                pintar.indexView = Model;
+                pintar.categoryModel = categoria;
+                @Html.PartialView("../Indice/_PintarCategoriaIndice", pintar)
+            }
+        </div>
+    </div>
+</div>
+
+@* Vista modal para poder solicitar nuevas categorías *@
+@Html.PartialView("_modal-views/_request_category", Model)
+
+
+@section javascript
+{
+    <script type="text/javascript">
+        function Categorias_SolicitarCategoria(urlPagina) {
+            MostrarUpdateProgress();
+            var datosPost = {
+                callback: "Categorias|SolicitarCategoria",
+                nombreCategoria: $('#txtBoxNombreNuevaCategoria').val(),
+                categoriaSupID: $('#txtHackCatTesSel').val(),
+            };
+            $.post(urlPagina, datosPost, function (data) {
+                var html = "";
+                var ok = true;
+                if (data != "OK") {
+                    ok = false;
+                    html = textoRecursos.SolicitarCatFALLO;
+                }
+                else {
+                    html = textoRecursos.SolicitarCatOK;
+                    ok = true;
+                }
+
+                if (ok == true) {
+                    // 2 - Cerrar modal
+                    $('#modal-request-category').modal('hide');
+                    // 3 - Mostrar mensaje OK
+                    setTimeout(() => {
+                        mostrarNotificacion('success', html);
+                    }, 1500)
+                } else {
+                    mostrarNotificacion('error', html);
+                }
+                OcultarUpdateProgress();
+            });
+        }
+    </script>
+}

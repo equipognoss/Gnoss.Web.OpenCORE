@@ -1,0 +1,83 @@
+﻿@model ManageXMLViewModel
+
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/semcms.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    Html.SetBodyClass("layout04 full");
+}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#nav').hide();
+    });
+
+</script>
+
+<div id="col01">
+    <form method="post" action="@Model.UrlActionFile" enctype="multipart/form-data">
+        <div class="fieldset fieldset01">
+            <fieldset class="mediumLabels">
+                <legend>@Html.GetText("COMADMINDISENIO", "TITULOCMS")</legend>
+                <div class="fieldsetContent">
+                    <p>
+                        <label for="Fichero">@Html.GetText("COMADMINDISENIO", "SELDOC")</label>
+                        <input type="file" id="Fichero" name="Fichero">
+                    </p>
+                    <p>
+                        <input type="submit" id="Submit" name="Submit" value="@Html.GetText("COMADMINDISENIO", "BOTONSUBIR")">
+                    </p>
+                </div>
+            </fieldset>
+        </div>
+    </form>
+    @if (!string.IsNullOrEmpty(Model.KOMessage))
+    {
+        <div class="ko" style="display: block">
+            <p>@Model.KOMessage</p>
+        </div>    
+    }
+    else if (!string.IsNullOrEmpty(Model.OKMessage))
+    {
+        <div class="ok" style="display: block">
+            <p>@Model.OKMessage</p>
+        </div>    
+    }
+
+    <form method="post" action="@Model.UrlActionDownloadDynamicFile" >
+        <input type="submit" value="@Html.GetText("COMADMINDISENIO", "BOTONDESCARGAR")">
+    </form>
+    <form method="post" action="@Model.UrlActionHistory" >
+        <input type="submit" value="@Html.GetText("COMADMINDISENIO", "BOTONHISTORIAL")">
+    </form>
+
+    @if (Model.ListXMLVersion != null && Model.ListXMLVersion.Count > 0)
+    {
+        <div>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>@Html.GetText("COMADMINDISENIO", "HISTORIAL")</th>
+                    </tr>
+                    @foreach (DateTime fechaSubida in Model.ListXMLVersion.Keys)
+                    {                  
+                        <tr>
+                            <td>@Html.GetText("COMADMINDISENIO", "FECHADESUBIDA") @fechaSubida.ToString()</td>
+                            <td>
+                            @*<a href="@Model.UrlActionDownloadFile/@Model.ListXMLVersion[fechaSubida]">@Html.GetText("COMADMINDISENIO", "BOTONDESCARGAR")</a>*@
+                                <form method="post" action="@Model.UrlActionDownloadFile/@Model.ListXMLVersion[fechaSubida]">
+                                    <input class="oculto" type="submit" value="@Html.GetText("COMADMINDISENIO", "BOTONHISTORIAL")">
+                                    <a onclick="$(this).parent().find('input').click()">@Html.GetText("COMADMINDISENIO", "BOTONDESCARGAR")</a>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>

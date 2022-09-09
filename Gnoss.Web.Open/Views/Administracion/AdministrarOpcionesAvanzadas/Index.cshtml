@@ -1,0 +1,462 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarOpcionesAvanzadasViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="content">
+    <h1>Configurar opciones avanzadas del proyecto</h1>
+    <input type="button" class="guardarTodo" value="Guardar Todo" />
+    <div>
+        <form autocomplete="off">
+            <h4>Búsquedas</h4>
+            @if (Model.CMSActivado)
+            {
+                <p>
+                    <input type="checkbox" id="AutocompletarSiempreVirtuoso" @(Model.AutocompletarSiempreVirtuoso ? "checked" : "") /> Autocompletar siempre desde virtuoso
+                </p>
+                <p>
+                    <input type="checkbox" id="MostrarAccionesListados" @(Model.MostrarAccionesListados ? "checked" : "") /> Mostrar acciones en los listados
+                </p>
+            }
+            <p>
+                <input type="checkbox" id="BuscarTodoEcosistema" @(Model.BuscarTodoEcosistema ? "checked" : "") /> Buscar en todo el ecosistema disponible
+            </p>
+            <p>
+                <input type="checkbox" id="BuscarTodoProyecto" @(Model.BuscarTodoProyecto ? "checked" : "") /> Buscar en todo el proyecto disponible
+            </p>
+            <p>
+                Pestañas de búsqueda
+                <select id="PestanyasSeleccionadas">
+                    <option value="@Guid.Empty">Ninguna</option>                   
+                    @foreach (Guid pestanyas in Model.PestanyasDeBusqueda.Keys)
+                    {
+                        <option value="@pestanyas" @(Model.PestanyasSeleccionadas == pestanyas ? "selected" : "")>@Model.PestanyasDeBusqueda[pestanyas]</option>
+                    }
+                </select>
+
+            </p>
+            @*<p>
+                Meta robots que aparecerá en las páginas de búsqueda. Ej: noindex, follow
+                <input type="text" id="RobotsBusqueda" value="@Model.RobotsBusqueda" />
+            </p>*@
+
+            <h4>Usuarios</h4>
+            <p>
+                <input type="checkbox" id="InvitacionesDisponibles" @(Model.InvitacionesDisponibles ? "checked" : "") /> Invitaciones disponibles
+            </p>
+            <p>
+                <input type="checkbox" id="VotacionesDisponibles" @(Model.VotacionesDisponibles ? "checked" : "") /> Votaciones disponibles
+            </p>
+            <p class="votaciones" style="padding-left:20px; @(!Model.VotacionesDisponibles ? "display:none" : "")">
+                <input type="checkbox" id="PermitirVotacionesNegativas" @(Model.PermitirVotacionesNegativas ? "checked" : "") /> Permitir votaciones negativas
+            </p>
+            <p class="votaciones" style="padding-left:20px; @(!Model.VotacionesDisponibles ? "display:none" : "")">
+                <input type="checkbox" id="MostrarVotaciones" @(Model.MostrarVotaciones ? "checked" : "") /> Mostrar las votaciones
+            </p>
+            <p>
+                <input type="checkbox" id="ComentariosDisponibles" @(Model.ComentariosDisponibles ? "checked" : "") /> Comentarios disponibles
+            </p>
+            <p>
+                <input type="checkbox" id="SupervisoresPuedenAdministrarGrupos" @(Model.SupervisoresPuedenAdministrarGrupos ? "checked" : "") /> Permitir a los supervisores administrar los grupos
+            </p>
+            <p>
+                <input type="checkbox" id="CompartirRecursoPermitido" @(Model.CompartirRecursoPermitido ? "checked" : "") /> Los usuarios pueden compartir recursos de esta comunidad a otras comunidades
+            </p>
+            <p>
+                <input type="checkbox" id="PermitirRecursosPrivados" @(Model.PermitirRecursosPrivados ? "checked" : "") /> Los usuarios pueden crear recursos privados en la comunidad
+            </p>
+            <p>
+                Número de caracteres máximo de la descripcion de cada recurso en el boletín de suscripciones
+                <input type="text" id="NumeroCaracteresDescripcionSuscripcion" value="@Model.NumeroCaracteresDescripcionSuscripcion" />
+            </p>
+
+            <h4>Google</h4>
+            @if (Model.CMSActivado)
+            {
+                <p>
+                    <input type="checkbox" id="IncluirGoogleSearch" @(Model.IncluirGoogleSearch ? "checked" : "") /> Incluir script de google search para que google muestre la caja de búsqueda de esta comunidad cuando aparezca en los resultados
+                </p>
+            }
+            @*<p>
+                Código de Google Analytics de la cuenta en la que se van a registrar las visitas de esta comunidad (ej: UA-XXXXXXXX-1)
+                <input type="text" id="CodigoGoogleAnalytics" value="@Model.CodigoGoogleAnalytics" />
+            </p>
+            <p>
+                Script de Google Analytics, si se quiere usar un script distinto al de por defecto.
+                <br />
+                (ej: var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));)
+                <br />
+                <br />
+                <textarea style="width:100%" id="ScriptGoogleAnalytics" >@Model.ScriptGoogleAnalytics</textarea>
+            </p>*@
+
+            <h4>Otras configuraciones</h4>
+            <p>
+                Parámetros extra para los vídeos de youtube (ej: &modestbranding=1)
+                <input type="text" id="ParametrosExtraYoutube" value="@Model.ParametrosExtraYoutube" />
+            </p>
+            @if (Model.CMSActivado)
+            {
+                string listaIDsGrupos = "";
+                string htmlNombresGrupos = "";
+
+                foreach (Guid grupoID in Model.GruposVisibilidadAbierto.Keys)
+                {
+                    listaIDsGrupos += "g_" + grupoID.ToString() + ", ";
+                    htmlNombresGrupos += "<li>" + Model.GruposVisibilidadAbierto[grupoID] + "<a aux=\"" + grupoID.ToString() + "\" class=\"remove\">eliminar</a></li>";
+                }
+
+                <div class="panPrivacidad">
+                    <p style="margin-bottom:0">
+                        <span class="tipo">Grupos con permiso para seleccionar privacidad de recurso abierto</span>
+                        <input type="text" id="GruposVisibilidadAbierto">
+                        <input type="hidden" id="GruposVisibilidadAbierto_Hack" class="valores privacidadGrupos" value="@listaIDsGrupos">
+                    </p>
+                    <ul style="margin-left:0" class="resultado">@Html.Raw(htmlNombresGrupos)</ul>
+                </div>
+                <p>
+                    Usar las ontologias de otro proyecto que administras
+                    <select id="OntologiaOtroProyecto">
+                        <option value="@Guid.Empty">Ninguno</option>
+                        @foreach (Guid proyectoID in Model.ProyectosConOntologias.Keys)
+                        {
+                            <option value="@proyectoID" @(Model.OntologiaOtroProyecto == proyectoID ? "selected" : "")>@Model.ProyectosConOntologias[proyectoID]</option>
+                        }
+                    </select>
+                    
+                </p>
+            } 
+            @if (Model.ConfiguracionCorreo == null)
+            {
+            <a id="lnkConfCorreo">Configurar buzón de correo </a>
+            }
+            <div id="confCorreo" @Html.Raw(Model.ConfiguracionCorreo == null ? "style=\"display:none\"" : "")>
+                <p>
+                    Configuración del buzón de correo
+                </p>
+                <div class="bloque">
+                    <p>
+                        Email <input type="text" value="@(Model.ConfiguracionCorreo?.Email)" id="Email">
+                    </p>
+                    <p>
+                        SMTP <input type="text" value="@(Model.ConfiguracionCorreo?.SMTP)" id="SMTP">
+                    </p>
+                    <p>
+                        Puerto <input type="text" value="@(Model.ConfiguracionCorreo?.Port)" id="Port">
+                    </p>
+                    <p>
+                        Usuario <input type="text" value="@(Model.ConfiguracionCorreo?.User)" id="User">
+                    </p>
+                    <p>
+                        Contraseña <input type="password" @Html.Raw(Model.ConfiguracionCorreo != null ? "style=\"display:none\"" : "") id="Password">@if (Model.ConfiguracionCorreo != null) {<a id="lnkEditPass">Editar contraseña</a>}
+                    </p>
+                    <p>
+                        Tipo de servidor de envio 
+                        <select id="Type">
+                            <option @(Model.ConfiguracionCorreo?.Type == "smtp" ? "selected" : "") value="smpt">smtp</option>
+                            <option @(Model.ConfiguracionCorreo?.Type == "EWS" ? "selected" : "") value="EWS">Exchange Web Service</option>
+                        </select>
+                    </p>
+                    <p>
+                        <input type="checkbox" id="SSL" @Html.Raw(Model.ConfiguracionCorreo?.SSL == true ? "checked" : "")> Usar servidor seguro
+                    </p>
+                    <p>
+                        Email de sugerencias <input type="text" value="@(Model.ConfiguracionCorreo?.SuggestEmail)" id="SuggestEmail">
+                    </p>
+                </div>
+            </div>
+
+            <p id="linkEnlazarTwitter">
+                <a id="btnEnlazarTwitter" href="@Model.UrlEnvioTwitter">Enlazar con la cuenta de twitter</a>
+            </p>
+            <p style="@(string.IsNullOrEmpty(Model.CuentaTwitter) ? "display:none" : "")">
+                Cuenta Twitter de la comunidad
+                <input type="text" style="width: 200px" id="CuentaTwitter" value="@Model.CuentaTwitter" disabled="disabled" />
+                <a id="btnDesenlazarTwitter">Desenlazar de la cuenta de twitter</a>
+            </p>
+            <p style="padding-left:20px; @(string.IsNullOrEmpty(Model.CuentaTwitter) ? "display:none" : "")">
+                Etiqueta Twitter
+                <input type="text" style="width: 200px" id="HasTagTwitter" name="HasTagTwitter" value="@Model.HasTagTwitter" />
+
+                <input type="hidden" id="TokenTwitter" />
+                <input type="hidden" id="TokenSecretTwitter" />
+            </p>           
+        </form>
+    </div>
+    <input type="button" class="guardarTodo" value="Guardar Todo" />
+</div>
+
+<script>
+    var OperativaAcciones = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+            $("#VotacionesDisponibles").click(function () {
+                if ($("#VotacionesDisponibles").is(':checked')) {
+                    $(".votaciones").show();
+                }
+                else {
+                    $(".votaciones").hide();
+                }
+            });
+            $("#btnEnlazarTwitter").click(function () {
+                window.open(this.href, 'auth', 'width=600,height=500');
+                return false;
+            });
+            $("#btnDesenlazarTwitter").click(function () {
+                $('#CuentaTwitter').val('');
+                $('#CuentaTwitter').parent().hide();
+                $('#HasTagTwitter').val('');
+                $('#HasTagTwitter').parent().hide();
+                $('#TokenTwitter').val('');
+                $('#TokenSecretTwitter').val('');
+                $('#linkEnlazarTwitter').show();
+            });
+            $('input#GruposVisibilidadAbierto').autocomplete(
+                null,
+                {
+                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                    delay: 0,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 300,
+                    cacheLength: 0,
+                    NoPintarSeleccionado: true,
+                    multiple: true,
+                    //classTxtValoresSelecc: 'privacidadGrupos',
+
+                    extraParams: {
+                        grupo: '',
+                        identidad: $('#inpt_identidadID').val(),
+                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                        proyecto: $('#inpt_proyID').val(),
+                        bool_edicion: 'true',
+                        bool_traergrupos: 'true',
+                        bool_traerperfiles: 'false'
+                    }
+                }
+            );
+            $('input#GruposVisibilidadAbierto').result(function (event, data, formatted) {
+                that.aceptarEditorSelectorGrupo(this, data[0], data[1]);
+            });
+            $('ul.resultado li a').click(function () {
+                that.eliminarUsuarioSelecUsu($(this));
+            });
+            $('#lnkConfCorreo').click(function () {
+                $('#confCorreo').show();
+                $('#lnkConfCorreo').hide();
+            });
+            $('#lnkEditPass').click(function () {
+                $('#Password').show();
+                $('#lnkEditPass').hide();
+            });
+            return;
+        },
+        aceptarEditorSelectorGrupo: function (txtautocomp, nombre, id) {
+            var that = this;
+
+            var padreTxt = $(txtautocomp).closest('.panPrivacidad');
+            var txtValores = $('input.valores', padreTxt);
+            txtValores.val(txtValores.val() + id + ',');
+
+            $('ul.resultado', padreTxt).append('<li>' + nombre + '<a class="remove" aux=' + id + ' >' + borr.eliminar + '</a></li>');
+            $(txtautocomp).val('');
+
+            $('ul.resultado li a', padreTxt).unbind().click(function () {
+                that.eliminarUsuarioSelecUsu($(this));
+            });
+        },
+        eliminarUsuarioSelecUsu: function (enlaceEliminar) {
+            var id = enlaceEliminar.attr('aux');
+
+            var padreTxt = enlaceEliminar.closest('.panPrivacidad');
+            var txtValores = $('input.valores', padreTxt);
+
+            txtValores.val(txtValores.val().replace(id + ',', ''));
+            enlaceEliminar.parent().remove();
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.Options = {};
+                that.obtenerDatos();
+                that.guardar();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');
+        },
+        mostrarErrorGuardadoFallo: function (data) {
+            $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+
+            return error;
+        },
+        guardar: function () {
+            var that = this;
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+            that.urlPagina + '/save',
+            that.Options,
+            true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
+                    that.mostrarErrorGuardado();
+                }
+                else
+                {
+                    that.mostrarErrorGuardadoFallo(data);
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
+        },
+        obtenerDatos: function () {
+            var that = this;
+
+            @if (Model.CMSActivado)
+            {
+                <text>
+                that.Options['AutocompletarSiempreVirtuoso'] = $("#AutocompletarSiempreVirtuoso").is(':checked');
+
+                //that.Options['LoginFacebook'] = $("#LoginFacebook").val();
+
+                //that.Options['LoginTwitter'] = $("#LoginTwitter").val();
+
+                //that.Options['LoginGoogle'] = $("#LoginGoogle").val();
+
+                var grupos = $("#GruposVisibilidadAbierto_Hack").val().split(',');
+                @Html.Raw("for (var i = 0; i < grupos.length; i++) {")
+                    if (grupos[i].trim() != "") {
+                        var prefijoGrupos = 'GruposVisibilidadAbierto[' + i + ']';
+                        that.Options[prefijoGrupos + '.Key'] = grupos[i].substr(2);
+                        that.Options[prefijoGrupos + '.Value'] = "";
+                    }
+                }
+
+                that.Options['OntologiaOtroProyecto'] = $("#OntologiaOtroProyecto").val();
+                </text>
+            }
+
+            that.Options['BuscarTodoEcosistema'] = $("#BuscarTodoEcosistema").is(':checked');
+
+            that.Options['BuscarTodoProyecto'] = $("#BuscarTodoProyecto").is(':checked');
+
+            that.Options['PestanyasSeleccionadas'] = $("#PestanyasSeleccionadas").val();
+
+            that.Options['PermitirRecursosPrivados'] = $("#PermitirRecursosPrivados").is(':checked');
+
+            that.Options['InvitacionesDisponibles'] = $("#InvitacionesDisponibles").is(':checked');
+            that.Options['VotacionesDisponibles'] = $("#VotacionesDisponibles").is(':checked');
+            that.Options['PermitirVotacionesNegativas'] = $("#PermitirVotacionesNegativas").is(':checked');
+            that.Options['MostrarVotaciones'] = $("#MostrarVotaciones").is(':checked');
+            that.Options['ComentariosDisponibles'] = $("#ComentariosDisponibles").is(':checked');
+            that.Options['SupervisoresPuedenAdministrarGrupos'] = $("#SupervisoresPuedenAdministrarGrupos").is(':checked');
+            that.Options['CompartirRecursoPermitido'] = $("#CompartirRecursoPermitido").is(':checked');
+
+            that.Options['CuentaTwitter'] = $("#CuentaTwitter").val();
+            that.Options['HasTagTwitter'] = $("#HasTagTwitter").val();
+            that.Options['TokenTwitter'] = $("#TokenTwitter").val();
+            that.Options['TokenSecretTwitter'] = $("#TokenSecretTwitter").val();
+
+            that.Options['MostrarAccionesListados'] = $("#MostrarAccionesListados").is(':checked');
+
+            that.Options['IncluirGoogleSearch'] = $("#IncluirGoogleSearch").is(':checked');
+
+            that.Options['RobotsBusqueda'] = $("#RobotsBusqueda").val();
+            that.Options['NumeroCaracteresDescripcionSuscripcion'] = $("#NumeroCaracteresDescripcionSuscripcion").val();
+            that.Options['ParametrosExtraYoutube'] = $("#ParametrosExtraYoutube").val();
+            that.Options['CodigoGoogleAnalytics'] = encodeURIComponent($("#CodigoGoogleAnalytics").val());
+            that.Options['ScriptGoogleAnalytics'] = encodeURIComponent($("#ScriptGoogleAnalytics").val());
+
+            var prefijoConfCorreo = "ConfiguracionCorreo";
+            that.Options[prefijoConfCorreo + '.Email'] = $("#Email").val();
+            that.Options[prefijoConfCorreo + '.SMTP'] = $("#SMTP").val();
+            that.Options[prefijoConfCorreo + '.Port'] = $("#Port").val();
+            that.Options[prefijoConfCorreo + '.User'] = $("#User").val();
+            that.Options[prefijoConfCorreo + '.Password'] = $("#Password").val();
+            that.Options[prefijoConfCorreo + '.Type'] = $("#Type").val();
+            that.Options[prefijoConfCorreo + '.SSL'] = $("#SSL").is(':checked');
+            that.Options[prefijoConfCorreo + '.SuggestEmail'] = $("#SuggestEmail").val();
+        }
+    }
+
+    $(document).ready(function () {
+        OperativaAcciones.init();
+    });
+</script>
+<style>
+    div.content {
+        margin: 50px;
+    }
+
+    div.content form {
+        margin: 30px;
+    }
+
+    div#confCorreo .bloque {
+        border: 1px solid;
+        padding: 10px;
+    }
+
+    div.error.general {
+        background-color: Red;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.ok.general {
+        background-color: limegreen;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.content input.guardarTodo{
+        float:right;
+    }
+    
+    div.content input[type='text'],
+    div.content input[type='password'],
+    div.content select {
+        width: 100%;
+        margin-bottom:10px;
+    }
+    h4 {
+        padding-top:20px;
+        padding-bottom:20px;
+    }
+</style>

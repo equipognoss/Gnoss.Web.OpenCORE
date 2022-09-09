@@ -1,0 +1,19 @@
+﻿@model PintarComboAdministrarCategorias
+
+<select style="width: 280px;" id="@("cmb" + Model.nombreCombo)" name="@("cmb" + Model.nombreCombo)">
+    <option value="@Guid.Empty.ToString()">@Html.GetText("PERFILBASE", "SELECCIONACAT")</option>
+    <option value="@Guid.Empty.ToString()">@Html.GetText("COMADMINCATEGORIAS", "CATEGORIARAIZ")</option>
+    @foreach (CategoryModel categoria in Model.Thesaurus.ThesaurusCategories.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
+    {
+        if (Model.Thesaurus.SharedCategories.Contains(categoria.Key) || (Model.pExcluirSeleccionadas && Model.Thesaurus.SelectedCategories.Contains(categoria.Key)))
+        {
+            continue;
+        }
+        <option value="@categoria.Key">@categoria.Name</option>
+        PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
+        pintar.Thesaurus = Model.Thesaurus;
+        pintar.pCategoria = categoria;
+        pintar.pExcluirSeleccionadas = Model.pExcluirSeleccionadas;
+        @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategoriasHijas", pintar)
+    }
+</select>

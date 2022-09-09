@@ -1,0 +1,22 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista donde se podrá añadir código JS personalizado por cualquier persona que necesite añadir funcionalidad adicional al Front. Por defecto estará vacío.
+Esta vista se carga desde FicherosJavascript.cshtml
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+CommunityModel Comunidad = Html.GetComunidad();
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial para código JS personalizado --------------------
+*@
+
+@if (Comunidad != null && Comunidad.VersionJS.HasValue)
+{
+    <script type="text/javascript" src="@Html.GetBaseUrlPersonalizacion()/community.js?v=@Comunidad.VersionJS"></script>    
+}

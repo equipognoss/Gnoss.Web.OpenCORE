@@ -1,0 +1,94 @@
+﻿@model ManageRedirectionsViewModel.RedirectionModel
+@{
+    bool esRedirecDirecta = !string.IsNullOrEmpty(Model.OriginalUrl) && Model.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Direct);
+    bool esRedirecParametrizada = !string.IsNullOrEmpty(Model.OriginalUrl) && Model.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Parameterised);
+}
+
+<li class="row" id="@Model.Key">
+    <section class="header">
+        @{
+            string urlOrigen = Model.OriginalUrl.Equals(string.Empty) ? @Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONNUEVA") : Model.OriginalUrl;
+        }
+        <span class="urlOrigen" aux="@urlOrigen">@urlOrigen</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <div>
+            <input type="hidden" name="TabEliminada" value="false" />
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "URLORIGEN")">@Html.GetText("COMADMINREDIRECCIONES", "URLORIGEN")</span>
+                <input type="text" name="txtUrlOrigen" id="txtUrlOrigen_@Model.Key" value="@Model.OriginalUrl" />
+            </p>
+            <span class="tipo noFloat tipoRedireccion">@Html.GetText("COMADMINREDIRECCIONES", "ELIGETIPOREDIRECCION")</span>
+            <div>
+                <input type="radio" id="rbDirecta_@Model.Key" name="tipoRedireccion_@Model.Key" value="Direct" @(esRedirecDirecta ? "checked":"") />
+                <label for="rbDirecta_@Model.Key">@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONDIRECTA")</label>
+                <div class="redireccionDirecta" @Html.Raw(esRedirecParametrizada ? "style=\"display:none\"":"")>
+                    <p>
+                        <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")">@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")</span>
+                        <input type="text" id="txtUrlDestino_@Model.Key" value="@Model.DestinationUrl" />
+                    </p>
+                    <p>
+                        <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "MANTENERFILTROSORIGEN")">@Html.GetText("COMADMINREDIRECCIONES", "MANTENERFILTROSORIGEN")</span>
+                        <input type="checkbox" name="mantenerFiltros" @(Model.PreserveFilters ? "checked":"") />
+                    </p>
+                </div>
+            </div>
+            <div>
+                <input type="radio" id="rbParametrizada_@Model.Key" name="tipoRedireccion_@Model.Key" value="Parameterised" @(esRedirecParametrizada ? "checked":"") />
+                <label for="rbParametrizada_@Model.Key">@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONPARAMETRIZADA")</label>
+                <div class="redireccionParametrizada" @Html.Raw(esRedirecDirecta ? "style=\"display:none\"":"")>
+                    @{
+                        bool tieneParametros = Model.ParameterValues != null && Model.ParameterValues.Count > 0;
+                        string nombreParametro = string.Empty;
+                        if (tieneParametros)
+                        {
+                            nombreParametro = Model.ParameterName;
+                        }
+                        <p>
+                            <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "NOMBREPARAMETRO")">@Html.GetText("COMADMINREDIRECCIONES", "NOMBREPARAMETRO")</span>
+                            <input type="text" id="txtNombreParametro_@Model.Key" value="@nombreParametro" />
+                        </p>
+                        <div>
+                            <div class="cabeceraParametro">
+                                <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "VALORPARAMETRO")">@Html.GetText("COMADMINREDIRECCIONES", "VALORPARAMETRO")</span>
+                                <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")">@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")</span>
+                                @*<span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "ORDENPARAMETRO")">@Html.GetText("COMADMINREDIRECCIONES", "ORDENPARAMETRO")</span>*@
+                            </div>
+                            <ol id="listaParametros_@Model.Key">
+                            @{
+                                if (tieneParametros)
+                                {
+                                    int indiceParam = 0;
+                                    foreach (ManageRedirectionsViewModel.ParameterValue parametro in Model.ParameterValues)
+                                    {
+                                        string redireccion = parametro.DestinationUrl;
+                                        <li class="itemParametro">
+                                            <input type="text" class="InputParametro" id="txtValorParametro_@(Model.Key + "_" + indiceParam)" @indiceParam value="@parametro.Value" />
+                                            <input type="text" class="InputParametro" id="txtUrlRedireccionParametrizada_@(Model.Key + "_" + indiceParam)" @indiceParam value="@redireccion" />
+                                            @*<input type="text" class="InputParametro" id="txtOrdenParametro_@(Model.Key + "_" + indiceParam)" @indiceParam value="@parametro.Order" />*@
+                                        </li>
+                                        indiceParam++;
+                                    }
+                                }
+                                else
+                                {
+                                    int indiceParam = 0;
+                                    <li class="itemParametro">
+                                        <input type="text" class="InputParametro" id="txtValorParametro_@(Model.Key + "_" + indiceParam)" value="" />
+                                        <input type="text" class="InputParametro" id="txtUrlRedireccionParametrizada_@(Model.Key + "_" + indiceParam)" value="" />
+                                        @*<input type="text" class="InputParametro" id="txtOrdenParametro_@(Model.Key + "_" + indiceParam)" value="" />*@
+                                    </li>
+                                }
+                            }
+                            </ol>
+                        </div>
+                    }
+                    <input type="button" class="addParametro" value="@Html.GetText("COMADMINREDIRECCIONES", "ADDPARAMETRO")" />
+                </div>
+            </div>
+            @*<input type="button" class="aceptarRedireccion" value="@Html.GetText("COMMON", "ACEPTAR")" />*@
+        </div>
+    </section>
+</li>

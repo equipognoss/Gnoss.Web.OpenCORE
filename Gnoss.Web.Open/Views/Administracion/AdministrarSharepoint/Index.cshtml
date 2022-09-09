@@ -1,0 +1,177 @@
+﻿@model AdministrarSharepointViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+<div class="content">
+    <h1>Configuración de aplicación para integración con SharePoint</h1><br /><br />
+    <input type="button" class="guardarTodo" value="Guardar Todo" />
+    <form autocomplete="off">
+        <p>
+            Esta página sirve para configurar la integración con SharePoint en la plataforma. Esta integración permite que a la hora de crear un recurso de tipo enlace que apunte a un archivo de SharePoint se pueda:
+        </p>
+        <ul>
+            <li>Ir a la edición colaborativa</li>
+            <li>Descargar el archivo adjunto (el archivo de SharePoint)</li>
+            <li>Crear versiones</li>           
+            <li>Comprobar si el archivo de la última versión del recurso y el archivo en SharePoint están alineados. Si no lo están habría que crear una nueva versión</li>
+        </ul>
+        <p>
+            Para obtener los datos de Cliente ID, Directorio inquilino y Secreto de cliente es necesario registrar una aplicación en Azure Active Directory. Al final del formulario hay un enlace al manual que explica paso a paso las instrucciones que hay que seguir para registrar y configurar dicha aplicación.
+        </p>
+        <div>
+            <h4>Id de aplicación (<i>ClientID</i>)</h4>
+            <input required type="hidden" id="dominio" value="@Model.DominioBase" />
+            <input required type="text" id="clientID" value="@Model.ClientID" placeholder="Introduce el Id de la aplicación" />
+            <span id="errorClientId" style="display:none; color:red;">Error, este campo no puede estar vacío<br />
+        </div><br />
+        <div>
+            <h4>Id de directorio inquilino (<i>TenantID</i>)</h4>
+            <input required type="text" id="tenantID" value="@Model.TenantID" placeholder="Introduce el Id de directorio inquilino" />
+            <span id="errorTenantId" style="display:none; color:red;">Error, este campo no puede estar vacío<br />
+        </div><br />
+        <div>
+            <h4>Secreto de cliente (<i>ClientSecret</i>)</h4>
+            <input required type="text" id="clientSecret" value="@Model.ClientSecret" placeholder="Introduce el secreto de cliente" />
+            <span id="errorClientSecret" style="display:none; color:red;">Error, este campo no puede estar vacío<br />
+        </div><br />
+        
+        <div id="urls">
+            <h4>URLs de redirección</h4><br />
+            <p>
+                Estas URLs son necesarias para que la aplicación de Azure AD funcione correctamente y obtener los datos de los campos de arriba. Sigue el manual para saber dónde hay que configurarlas.
+            </p>
+            <label for="urlLoginSharepoint">Login SharePoint: </label><br />
+            <input disabled type="text" id="urlLoginSharepoint" value="@Model.UrlLoginSharepoint" placeholder="Introduce la URL de redirección al login de SharePoint" /><br />
+            <span id="errorLoginSP" style="display:none; color:red;">La URI introducida no es válida, debe tener el formato https://dominio/login/LoginSharepoint</span><br />
+            <label for="urlObtenerTokenSharepoint">Obtener token SharePoint: </label><br />
+            <input disabled type="text" id="urlObtenerTokenSharepoint" value="@Model.UrlObtenerTokenSharepoint" placeholder="Introduce la URL de redirección para obtener un token de SharePoint" /><br />
+            <span id="errorToken" style="display:none; color:red;">La URI introducida no es válida, debe tener el formato https://dominio/login/ObtenerTokenSharepoint</span><br />
+            <label for="urlRedireccionSharepoint">Redirección de SharePoint: </label><br />
+            <input disabled type="text" id="urlRedireccionSharepoint" value="@Model.UrlRedireccionSharepoint" placeholder="Introduce la URL de redirección general" /><br />
+            <input type="hidden" value="@Model.UrlAdminConsent" id="urlAdminConsent" />
+            <span id="errorRedireccion" style="display:none; color:red;">La URI introducida no es válida, debe tener el formato https://dominio/login/Redireccion</span>
+        </div><br />
+        <span><b>*Antes de guardar debes seguir los pasos del manual y registrar una aplicación en Azure Active Directory si no está ya registrada*</b></span><br /><br />
+    </form>
+    <a href="@Comunidad.Url/@Html.GetText("URLSEM", "MANUALSHAREPOINT")">Ver manual de configuración de aplicación</a><br />
+    <a onclick="PedirConsentimiento();">Conceder permisos por parte de un Administrador</a>
+    <input type="button" class="guardarTodo" value="Guardar Todo" />
+</div>
+
+<script>
+    $('input.guardarTodo').click(function () {
+        guardarTodo();
+    });
+
+    function guardarTodo(){
+        var urlPagina = document.location.href;
+        var urlLoginSharepoint = $("#urlLoginSharepoint").val();
+        var urlObtenerTokenSharepoint = $("#urlObtenerTokenSharepoint").val();
+        var urlRedireccionSharepoint = $("#urlRedireccionSharepoint").val();
+        var dominio = $("#dominio").val();
+        var clientID = $("#clientID").val();
+        var clientSecret = $("#clientSecret").val();
+        var tenantID = $("#tenantID").val();
+        var urlAdminConsent = "https://login.microsoftonline.com/"+tenantID+"/adminconsent?client_id="+clientID;
+
+        if(comprobarCampos()){
+            var dataPost = {
+                DominioBase: dominio,
+                ClientID: clientID,
+                ClientSecret: clientSecret,
+                TenantID: tenantID,
+                UrlAdminConsent: urlAdminConsent,
+                UrlLoginSharepoint: urlLoginSharepoint,
+                UrlObtenerTokenSharepoint: urlObtenerTokenSharepoint,
+                UrlRedireccionSharepoint: urlRedireccionSharepoint
+            }
+
+            GnossPeticionAjax(
+                urlPagina + "/save",
+                dataPost,
+                true,
+                false
+            ).done(function (data) {
+                mostrarGuardadoOK(urlAdminConsent);
+            }).fail(function (data) {
+                mostrarGuardadoError();
+            });
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    function comprobarCampos(){
+        var urlLoginSharepoint = $("#urlLoginSharepoint").val();
+        var urlObtenerTokenSharepoint = $("#urlObtenerTokenSharepoint").val();
+        var urlRedireccionSharepoint = $("#urlRedireccionSharepoint").val();
+        var clientid = $("#clientID").val();
+        var clientsecret = $("#clientSecret").val();
+        var tenantid = $("#tenantID").val();
+        var dominio = $("#dominio").val();
+        var error = 0;
+
+        if(clientid != ""){
+            $("#errorClientId").css("display","none");
+        }else{
+            $("#errorClientId").css("display","block");
+            error++;
+        }
+
+        if(clientsecret != ""){
+            $("#errorClientSecret").css("display","none");
+        }else{
+            $("#errorClientSecret").css("display","block");
+            error++;
+        }
+
+        if(tenantid != ""){
+            $("#errorTenantId").css("display","none");
+        }else{
+            $("#errorTenantId").css("display","block");
+            error++;
+        }
+
+        if(urlLoginSharepoint.includes("https://") && urlLoginSharepoint.includes("/login/LoginSharepoint")){  
+            $("#errorLoginSP").css("display","none");
+        }else{
+            $("#errorLoginSP").css("display","block");
+            error++;
+        }
+
+        if(urlObtenerTokenSharepoint.includes("https://") && urlObtenerTokenSharepoint.includes("/login/ObtenerTokenSharepoint")){
+            $("#errorToken").css("display","none");
+        }else{
+            $("#errorToken").css("display","block");
+            error++;
+        }
+
+        if(urlRedireccionSharepoint.includes("https://") && urlRedireccionSharepoint.includes("/login/Redireccion")){
+            $("#errorRedireccion").css("display","none");
+        }else{
+            $("#errorRedireccion").css("display","block");
+            error++;
+        }
+
+        return (error == 0);
+    }
+
+    function PedirConsentimiento(){
+        var clientID = $("#clientID").val();
+        var tenantID = $("#tenantID").val();
+        var urlAdminConsent = "https://login.microsoftonline.com/"+tenantID+"/adminconsent?client_id="+clientID;
+        window.open(urlAdminConsent,'popup','width=500px,height=500px');
+    }
+
+    function mostrarGuardadoOK(urlAdminConsent) {
+        $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
+        window.open(urlAdminConsent,'popup','width=500px,height=500px');
+    }
+    function mostrarGuardadoError(){
+        $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');
+    }
+</script>

@@ -1,0 +1,197 @@
+﻿@model List<PermisosPaginaViewModel>
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMINPERMISOSPAGINA", "TITULO")</h1>
+    <div>
+        <form autocomplete="off">
+            <p>
+                @Html.GetText("COMADMINPERMISOSPAGINA", "INFOTITULO")
+            </p>
+            <div id="panPermisos">
+                @foreach (TipoPaginaAdministracion pagina in Enum.GetValues(typeof(TipoPaginaAdministracion)))
+                {
+                    string nombrePagina = "";
+                    switch (pagina)
+                    {
+                        case TipoPaginaAdministracion.Diseño:
+                            nombrePagina = Html.GetText("COMADMINPERMISOSPAGINA", "TIPOPAGADMINDISEÑO");
+                            break;
+                        case TipoPaginaAdministracion.Pagina:
+                            nombrePagina = Html.GetText("COMADMINPERMISOSPAGINA", "TIPOPAGADMINPAGINA");
+                            break;
+                        case TipoPaginaAdministracion.Semantica:
+                            nombrePagina = Html.GetText("COMADMINPERMISOSPAGINA", "TIPOPAGADMINSEMANTICA");
+                            break;
+                        case TipoPaginaAdministracion.Tesauro:
+                            nombrePagina = Html.GetText("COMADMINPERMISOSPAGINA", "TIPOPAGADMINTESAURO");
+                            break;
+                        case TipoPaginaAdministracion.Texto:
+                            nombrePagina = Html.GetText("COMADMINPERMISOSPAGINA", "TIPOPAGADMINTEXTO");
+                            break;
+                    }
+                    string listaIDsPerfiles = "";
+                    string htmlNombresPerfiles = "";
+
+                    PermisosPaginaViewModel permiso = Model.Find(perfisosPagina => perfisosPagina.TipoPagina == pagina);
+
+                    if (permiso != null)
+                    {
+                        foreach (PermisosPaginaViewModel.PerfilPermisoModel perfil in permiso.Perfiles)
+                        {
+                            listaIDsPerfiles += perfil.Key.ToString() + ", ";
+                            htmlNombresPerfiles += "<li>" + perfil.Name + "<a aux=\"" + perfil.Key.ToString() + "\" class=\"remove\">eliminar</a></li>";
+                        }
+                    }
+                    <section class="panPrivacidad">
+                        <p>
+                            <span class="tipo">Permisos Paginas de @nombrePagina</span>
+                            <input type="hidden" class="inpt_paginaPermisos" value="@((short)pagina)">
+                            <input type="text" id="usuariosPermisos_@((short)pagina)" name="TabPermisosUsuarios">
+                            <input type="hidden" id="usuariosPermisos_@((short)pagina)_Hack" class="valores usuariosPermisos" name="TabValoresPermisosUsuarios" value="@listaIDsPerfiles" />
+                        </p>
+                        <ul id="resultado_@((short)pagina)" class="resultado">@Html.Raw(htmlNombresPerfiles)</ul>
+                    </section>
+                }
+            </div>
+            <div id="panGuardar">
+                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        $('input[name="TabPermisosUsuarios"]').autocomplete(
+            null,
+            {
+                servicio: new WS($('#inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
+                metodo: 'AutoCompletarSupervisoresProyecto',
+                url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarSupervisoresProyecto",
+                delay: 0,
+                scroll: false,
+                selectFirst: false,
+                minChars: 1,
+                width: 300,
+                cacheLength: 0,
+                NoPintarSeleccionado: true,
+                multiple: true,
+                extraParams: {
+                    proyecto: $('#inpt_proyID').val()
+                }
+            }
+        );
+        $('input.guardarTodo').click(function () {
+            guardarTodasPaginas();
+        });
+        $('input[name="TabPermisosUsuarios"]').result(function (event, data, formatted) {
+            aceptarEditorSelectorUsuRec(this, data[0], data[1]);
+        });
+        $('ul.resultado li a').click(function () {
+            eliminarUsuarioSelecUsu($(this));
+        });
+
+        function aceptarEditorSelectorUsuRec(txtautocomp, nombre, id) {
+            var padreTxt = $(txtautocomp).closest('.panPrivacidad');
+            var txtValores = $('input.valores', padreTxt);
+            txtValores.val(txtValores.val() + id + ',');
+
+            $('ul.resultado', padreTxt).append('<li>' + nombre + '<a class="remove" aux=' + id + ' >' + borr.eliminar + '</a></li>');
+            $(txtautocomp).val('');
+
+            $('ul.resultado li a', padreTxt).unbind().click(function () {
+                eliminarUsuarioSelecUsu($(this));
+            });
+        }
+
+        function eliminarUsuarioSelecUsu(enlaceEliminar) {
+            var id = enlaceEliminar.attr('aux');
+            var padreTxt = enlaceEliminar.closest('.panPrivacidad');
+            var txtValores = $('input.valores', padreTxt);
+            txtValores.val(txtValores.val().replace(id + ',', ''));
+            enlaceEliminar.parent().remove();
+        }
+
+        function guardarTodasPaginas() {
+            $('.ok.general').remove();
+            $('.error').remove();
+            guardar();
+        }
+
+        function CargarPermisosUsuarios() {
+            var PermisosUsuarios = {};
+            var cont = 0;
+            $('.panPrivacidad').each(function () {
+                var tipoPagina = $('.inpt_paginaPermisos', this).val();
+                var txtValores = $('input.valores', this);
+                var prefijoClave = 'Permisos[' + cont + ']';
+                var perfiles = txtValores.val().split(',');
+                var tienePerfiles = false;
+                PermisosUsuarios[prefijoClave + '.TipoPagina'] = tipoPagina;
+                for (var i = 0; i < perfiles.length; i++) {
+                    if (perfiles[i].trim() != "") {
+                        var prefijoPerfiles = prefijoClave + '.Perfiles[' + i + '].Key';
+                        PermisosUsuarios[prefijoPerfiles] = perfiles[i].trim();
+                        tienePerfiles = true;
+                    }
+                }
+                cont++;
+            });
+            return PermisosUsuarios;
+        }
+
+        function guardar() {
+            var urlPagina = document.location.href + '/save';
+            var PermisosUsuarios = CargarPermisosUsuarios();
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                urlPagina,
+                PermisosUsuarios,
+                true
+            ).done(function (data) {
+                mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                mostrarErrorGuardado();
+                if (error[0] == "PERFIL REPETIDO") {
+                    mostrarErrorPerfilRepetido($('#' + error[1]));
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        }
+
+        function mostrarErrorUrlRepetida(pagina) {
+            var inputUsuarios = $('input[id = "usuariosPermisos_' + pagina + '"]');
+            inputUsuarios.after("<span class=\"error\">@Html.GetText("COMADMINPERMISOSPAGINA", "ERRORPERFILREPETIDO")</span>");
+        }
+
+        function mostrarGuardadoOK() {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
+        }
+
+        function mostrarErrorGuardado() {
+            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div>');
+        }
+    });
+
+</script>
+
+<style>
+    #panGuardar {
+        margin-top: 10px;
+    }
+    #panPermisos {
+        margin-top: 20px;
+    }
+    #panPermisos .panPrivacidad .tipo{
+        display: inline-block;
+        width: 215px;
+    }
+</style>

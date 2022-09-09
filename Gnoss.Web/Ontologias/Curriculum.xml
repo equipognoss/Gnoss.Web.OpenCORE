@@ -1,0 +1,711 @@
+﻿<config>
+	<ConfiguracionGeneral>
+		<idiomasOnto>
+			<idiomaOnto>es</idiomaOnto>
+		</idiomasOnto>
+	</ConfiguracionGeneral>
+	<EspefPropiedad>
+		<Propiedad ID="PersonName" EntidadID="CandidatePerson">
+			<AtrNombre>Nombre</AtrNombre>
+			<AtrNombreLectura>Nombre</AtrNombreLectura>
+      <CampoDeshabilitado></CampoDeshabilitado>
+		</Propiedad>
+    <Propiedad ID="FatherName" EntidadID="CandidatePerson">
+      <AtrNombre>Apellidos</AtrNombre>
+      <AtrNombreLectura>Apellidos</AtrNombreLectura>
+      <CampoDeshabilitado></CampoDeshabilitado>
+    </Propiedad>
+    <Propiedad ID="TipoDocumentoAcreditativo" EntidadID="CandidatePerson">
+      <AtrNombre>Tipo documento</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>DNI</ValorCombo>
+        <ValorCombo>Pasaporte</ValorCombo>
+        <ValorCombo>NIF</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="PersonLegalID" EntidadID="CandidatePerson">
+      <AtrNombre>Número documento</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="foto" EntidadID="UserArea_CandidatePerson">
+      <TipoCampo>Imagen</TipoCampo>
+      <AtrNombre>Fotografia (Máx 300 x 300 píxels y formato jpg).</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="GenderCode" EntidadID="CandidatePerson">
+      <AtrNombre>Sexo</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>H</ValorCombo>
+        <ValorCombo>M</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="BirthDate" EntidadID="CandidatePerson">
+      <AtrNombre>Fecha de nacimiento</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="AddressLine" EntidadID="Address">
+      <AtrNombre>Dirección</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="DialNumber" EntidadID="Communication">
+      <AtrNombre>Teléfono de contacto</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="CountrySubDivisionCode" EntidadID="Address">
+      <AtrNombre>Provincia</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PostalCode" EntidadID="Address">
+      <AtrNombre>Código postal</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="CityName" EntidadID="Address">
+      <AtrNombre>Localidad</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="NationalityCode" EntidadID="CandidatePerson">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="URI" EntidadID="Communication">
+      <AtrNombre>Correo electrónico de contacto</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="CurrentWork" EntidadID="UserArea_CandidatePerson">
+      <AtrNombre>Estado laboral</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>Ocupado</ValorCombo>
+        <ValorCombo>En paro</ValorCombo>
+        <ValorCombo>Por cuenta propia</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="MaritalStatusCode" EntidadID="CandidatePerson">
+      <AtrNombre>Estado civil</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>Soltero</ValorCombo>
+        <ValorCombo>Casado</ValorCombo>
+        <ValorCombo>Divorciado</ValorCombo>
+        <ValorCombo>Viudo</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="CountryCode" EntidadID="Address">
+      <AtrNombre>País</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="Tags" EntidadID="UserArea_CandidatePerson">
+      <AtrNombre>Etiquetas separadas por comas*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresSepComas></ValoresSepComas>
+    </Propiedad>
+    <Propiedad ID="HonoresYPremios" EntidadID="UserArea_CandidateProfile">
+      <AtrNombre>Honores y premios (separados por comas)</AtrNombre>
+      <AtrNombreLectura>Honores y premios</AtrNombreLectura>
+      <ValoresSepComas></ValoresSepComas>
+    </Propiedad>
+    <Propiedad ID="Licencias" EntidadID="UserArea_CandidateProfile">
+      <AtrNombre>Nombre de la licencia (separados por comas)</AtrNombre>
+      <AtrNombreLectura>Licencias/Premios</AtrNombreLectura>
+      <ValoresSepComas></ValoresSepComas>
+    </Propiedad>
+    <Propiedad ID="Asociaciones" EntidadID="UserArea_CandidateProfile">
+      <AtrNombre>Nombre de grupos y asociaciones (separados por comas)</AtrNombre>
+      <AtrNombreLectura>Afiliación en organizaciones</AtrNombreLectura>
+      <ValoresSepComas></ValoresSepComas>
+    </Propiedad>
+    <Propiedad ID="OrganizationName" EntidadID="EmployerHistory">
+      <AtrNombre>Empresa</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <AutoCompletar>
+        <Grafo>empresa</Grafo>
+        <TipoResultado>2</TipoResultado>
+      </AutoCompletar>
+    </Propiedad>
+    <Propiedad ID="OrganizationName" EntidadID="EducationOrganizationAttendance">
+      <AtrNombre>Centro de estudios</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <AutoCompletar>
+        <Grafo>universidad</Grafo>
+        <TipoResultado>2</TipoResultado>
+      </AutoCompletar>
+    </Propiedad>
+    <Propiedad ID="IndustryCode" EntidadID="EmployerHistory">
+      <AtrNombre>Actividad de la empresa*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <AutoCompletar>
+        <Grafo>actividadempresa</Grafo>
+        <TipoResultado>2</TipoResultado>
+      </AutoCompletar>
+    </Propiedad>
+    <Propiedad ID="EndDate" EntidadID="EmploymentPeriod">
+      <AtrNombre>Fecha de finalización</AtrNombre>
+      <AtrNombreLectura>Fecha de finalización</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="EndDate" EntidadID="AttendancePeriod">
+      <AtrNombre>Fecha de finalización</AtrNombre>
+      <AtrNombreLectura>Fecha de finalización</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="EndDate" EntidadID="EmploymentPeriodPosition">
+      <AtrNombre>Fecha de finalización</AtrNombre>
+      <AtrNombreLectura>Fecha de finalización</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="StartDate" EntidadID="EmploymentPeriod">
+      <AtrNombre>Fecha de inicio</AtrNombre>
+      <AtrNombreLectura>Fecha de inicio</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="StartDate" EntidadID="AttendancePeriod">
+      <AtrNombre>Fecha de inicio</AtrNombre>
+      <AtrNombreLectura>Fecha de inicio</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="StartDate" EntidadID="EmploymentPeriodPosition">
+      <AtrNombre>Fecha de inicio</AtrNombre>
+      <AtrNombreLectura>Fecha de inicio</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="FechaInicio" EntidadID="UserArea_PersonQualifications">
+      <AtrNombre>Fecha de inicio</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="FechaFin" EntidadID="UserArea_PersonQualifications">
+      <AtrNombre>Fecha de finalización</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PositionTitle" EntidadID="PositionHistory">
+      <AtrNombre>Puesto*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <AutoCompletar>
+        <Grafo>puesto</Grafo>
+        <TipoResultado>2</TipoResultado>
+      </AutoCompletar>
+    </Propiedad>
+    <Propiedad ID="OrganizationUnitName" EntidadID="PositionHistory">
+      <AtrNombre>Área de trabajo</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="OrganizationUnitName" EntidadID="EducationOrganizationAttendance">
+      <AtrNombre>Disciplina</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <AutoCompletar>
+        <Grafo>titulacion</Grafo>
+        <TipoResultado>2</TipoResultado>
+      </AutoCompletar>
+    </Propiedad>
+    <Propiedad ID="JobGradeCode" EntidadID="JobLevel">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PersonasASuCargo" EntidadID="UserArea_PositionHistory">
+      <AtrNombre>Personas a su cargo</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PresupuestoManejado" EntidadID="UserArea_PositionHistory">
+      <AtrNombre>Presupuesto manejado</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="Description" EntidadID="PositionHistory">
+      <AtrNombre>Descripción</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TipoCampo>TextEditor</TipoCampo>
+    </Propiedad>
+    <Propiedad ID="Description" EntidadID="AttendancePeriod">
+      <AtrNombre>Descripción</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TipoCampo>TextEditor</TipoCampo>
+    </Propiedad>
+    <Propiedad ID="ProficiencyLevel" EntidadID="PersonCompetency">
+      <AtrNombre>Nivel de competencia</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo valorDefecto="">
+        <ValorCombo>Competencia básica</ValorCombo>
+        <ValorCombo>Competencia básica limitada</ValorCombo>
+        <ValorCombo>Competencia básica profesional</ValorCombo>
+        <ValorCombo>Competencia profesional completa</ValorCombo>
+        <ValorCombo>Competencia bilingüe o nativa</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="EducationLevelCode" EntidadID="EducationOrganizationAttendance">
+      <AtrNombre>Titulación académica</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>Titulación</ValorCombo>
+        <ValorCombo>Estudios primarios</ValorCombo>
+        <ValorCombo>Certificado de escolaridad</ValorCombo>
+        <ValorCombo>Graduado escolar</ValorCombo>
+        <ValorCombo>EGB</ValorCombo>
+        <ValorCombo>ESO</ValorCombo>
+        <ValorCombo>Bachillerato</ValorCombo>
+        <ValorCombo>FP Grado Medio</ValorCombo>
+        <ValorCombo>FP Grado Superior</ValorCombo>
+        <ValorCombo>Diplomado</ValorCombo>
+        <ValorCombo>Grado</ValorCombo>
+        <ValorCombo>Licenciado</ValorCombo>
+        <ValorCombo>Ingeniero Técnico</ValorCombo>
+        <ValorCombo>Ingeniero Técnico Superior</ValorCombo>
+        <ValorCombo>Master</ValorCombo>
+        <ValorCombo>Postgrado</ValorCombo>
+        <ValorCombo>DEA</ValorCombo>
+        <ValorCombo>Doctor</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="Escribir" EntidadID="UserArea_PersonCompetency">
+      <AtrNombre>Escribir</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>A1</ValorCombo>
+        <ValorCombo>A2</ValorCombo>
+        <ValorCombo>B1</ValorCombo>
+        <ValorCombo>B2</ValorCombo>
+        <ValorCombo>C1</ValorCombo>
+        <ValorCombo>C2</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="InteraccionOral" EntidadID="UserArea_PersonCompetency">
+      <AtrNombre>Interaccion oral</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>A1</ValorCombo>
+        <ValorCombo>A2</ValorCombo>
+        <ValorCombo>B1</ValorCombo>
+        <ValorCombo>B2</ValorCombo>
+        <ValorCombo>C1</ValorCombo>
+        <ValorCombo>C2</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="ComprensionAuditiva" EntidadID="UserArea_PersonCompetency">
+      <AtrNombre>Comprension auditiva</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>A1</ValorCombo>
+        <ValorCombo>A2</ValorCombo>
+        <ValorCombo>B1</ValorCombo>
+        <ValorCombo>B2</ValorCombo>
+        <ValorCombo>C1</ValorCombo>
+        <ValorCombo>C2</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="ComprensionLectura" EntidadID="UserArea_PersonCompetency">
+      <AtrNombre>Comprension lectura</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>A1</ValorCombo>
+        <ValorCombo>A2</ValorCombo>
+        <ValorCombo>B1</ValorCombo>
+        <ValorCombo>B2</ValorCombo>
+        <ValorCombo>C1</ValorCombo>
+        <ValorCombo>C2</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="ExpresionOral" EntidadID="UserArea_PersonCompetency">
+      <AtrNombre>Expresion oral</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <ValoresCombo>
+        <ValorCombo>A1</ValorCombo>
+        <ValorCombo>A2</ValorCombo>
+        <ValorCombo>B1</ValorCombo>
+        <ValorCombo>B2</ValorCombo>
+        <ValorCombo>C1</ValorCombo>
+        <ValorCombo>C2</ValorCombo>
+      </ValoresCombo>
+    </Propiedad>
+    <Propiedad ID="DescripcionFormacion" EntidadID="Formacion">
+      <TipoCampo>TextEditor</TipoCampo>
+      <AtrNombre>Descripción</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="ExecutiveSummary" EntidadID="CandidateProfile">
+      <TipoCampo>TextEditor</TipoCampo>
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="ProfileName" EntidadID="CandidateProfile">
+      <AtrNombre>Nombre de este CV</AtrNombre>
+      <AtrNombreLectura>Nombre de este CV</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="Comment" EntidadID="Publication">
+      <TipoCampo>TextEditor</TipoCampo>
+      <AtrNombre>Resumen</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PublisherName" EntidadID="Publication">
+      <AtrNombre>Autores</AtrNombre>
+      <AtrNombreLectura>Autores</AtrNombreLectura>
+      <ValoresSepComas></ValoresSepComas>
+    </Propiedad>
+    <Propiedad ID="Communications" EntidadID="CandidatePerson">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="Formaciones" EntidadID="HistorialFormacion">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TextoAgregarElem>Añadir y volver</TextoAgregarElem>
+      <TextoAceptarElem>Añadir y volver</TextoAceptarElem>
+    </Propiedad>
+    <Propiedad ID="ImpartidoPor" EntidadID="Formacion">
+      <AtrNombre>Impartido por*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="NombreCurso" EntidadID="Formacion">
+      <AtrNombre>Nombre curso o seminario*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="FechaInicioFormacion" EntidadID="Formacion">
+      <AtrNombre>Fechas*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="FechaFinFormacion" EntidadID="Formacion">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="Horas" EntidadID="Formacion">
+      <AtrNombre>Horas</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PublicationTitle" EntidadID="Publication">
+      <AtrNombre>Título*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PublicationContributor" EntidadID="Publication">
+      <AtrNombre>Publicación/Editorial</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PublicationDate" EntidadID="Publication">
+      <AtrNombre>Fecha de publicación</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PublisherLocation" EntidadID="Publication">
+      <AtrNombre>Url de la publicación</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="PublisherName" EntidadID="Publication">
+      <AtrNombre>Autores</AtrNombre>
+      <AtrNombreLectura>Autores:</AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="EmployerHistories" EntidadID="EmploymentHistory">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TextoAgregarElem>Añadir y volver</TextoAgregarElem>
+      <TextoAceptarElem>Añadir y volver</TextoAceptarElem>
+      <TextoAceptarElemYAgreElemVinc>Añadir y volver</TextoAceptarElemYAgreElemVinc>
+      <TextoEdicionEntSel>Editar puesto</TextoEdicionEntSel>
+      <TextoAgregarEntSel>Añadir otro puesto</TextoAgregarEntSel>
+    </Propiedad>
+    <Propiedad ID="PositionsHistory" EntidadID="EmployerHistory">
+      <AtrNombre>Datos del puesto ocupado</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TextoAgregarElem>Añadir puesto</TextoAgregarElem>
+      <TextoAceptarElem>Guardar puesto</TextoAceptarElem>
+    </Propiedad>
+    <Propiedad ID="PersonCompetencies" EntidadID="PersonQualifications">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TextoEdicionEntSel>Editar idioma</TextoEdicionEntSel>
+      <TextoAgregarEntSel>Añadir otra entrada al idioma</TextoAgregarEntSel>
+      <TextoCancelarElem>Cancelar</TextoCancelarElem>
+      <TextoEliminarEntSel>¿Estas seguro de que quieres eliminar este idioma?</TextoEliminarEntSel>
+    </Propiedad>
+    <Propiedad ID="CompetencyName" EntidadID="PersonCompetency">
+      <AtrNombre>Idioma*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="Publications" EntidadID="PublicationHistory">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TextoAgregarElem>Añadir y volver</TextoAgregarElem>
+      <TextoAceptarElem>Añadir y volver</TextoAceptarElem>
+    </Propiedad>
+    <Propiedad ID="EducationOrganizationAttendances" EntidadID="EducationHistory">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <TextoAgregarElem>Añadir y volver</TextoAgregarElem>
+      <TextoAceptarElem>Añadir y volver</TextoAceptarElem>
+    </Propiedad>
+    <Propiedad ID="PaisEstancia" EntidadID="UserArea_PersonQualifications">
+      <AtrNombre>Pais de estancia*</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="CentroEstudios" EntidadID="UserArea_PersonQualifications">
+      <AtrNombre>Centro de estudios</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="IdiomaMaterno" EntidadID="PersonQualifications">
+      <AtrNombre>Idioma materno</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="EmploymentPeriodsPosition" EntidadID="PositionHistory">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Propiedad>
+    <Propiedad ID="UserAreas_PersonQualifications" EntidadID="PersonQualifications">
+      <AtrNombre>Estancias</AtrNombre>
+      <AtrNombreLectura>Estancias en el extranjero</AtrNombreLectura>
+    </Propiedad>
+	</EspefPropiedad>
+	<EspefEntidad>
+    <Entidad ID="CandidatePerson">
+      <AtrNombre>Datos Personales</AtrNombre>
+      <AtrNombreLectura>Datos Personales</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+      <TextoLinkEditarDespliegue></TextoLinkEditarDespliegue>
+      <OrdenEntidad>
+        <NameProp>PersonName</NameProp>
+        <NameProp>FatherName</NameProp>
+        <NameProp>TipoDocumentoAcreditativo</NameProp>
+        <NameProp>PersonLegalID</NameProp>
+        <NameProp>BirthDate</NameProp>
+        <NameProp>GenderCode</NameProp>
+        <NameProp>PersonID</NameProp>
+        <NameProp>MaritalStatusCode</NameProp>
+        <NameProp>Communications</NameProp>
+        <NameProp>NationalityCode</NameProp>
+        <NameProp>UserAreas_CandidatePerson</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="HistorialFormacion">
+      <AtrNombre>Formación</AtrNombre>
+      <AtrNombreLectura>Formación</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+      <TextoLinkEditarDespliegue>Añadir curso o seminario</TextoLinkEditarDespliegue>
+    </Entidad>
+    <Entidad ID="EmploymentHistory">
+      <AtrNombre>Experiencia Laboral</AtrNombre>
+      <AtrNombreLectura>Experiencia Laboral</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+      <TextoLinkEditarDespliegue>Añadir organización y puesto de trabajo</TextoLinkEditarDespliegue>
+    </Entidad>
+    <Entidad ID="EducationHistory">
+      <AtrNombre>Educación</AtrNombre>
+      <AtrNombreLectura>Educación</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+      <TextoLinkEditarDespliegue>Añadir titulación</TextoLinkEditarDespliegue>
+    </Entidad>
+    <Entidad ID="PersonQualifications">
+      <AtrNombre>Idiomas y estancias en el extranjero</AtrNombre>
+      <AtrNombreLectura>Idiomas y estancias en el extranjero</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+      <TextoLinkEditarDespliegue>Añadir idiomas</TextoLinkEditarDespliegue>
+      <OrdenEntidad>
+        <NameProp>IdiomaMaterno</NameProp>
+        <NameProp>PersonCompetencies</NameProp>
+        <NameProp>UserAreas_PersonQualifications</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="Licenses">
+      <AtrNombre>Licencias</AtrNombre>
+      <AtrNombreLectura>Licencias</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+    </Entidad>
+    <Entidad ID="OrganizationAffiliations">
+      <AtrNombre>Afiliaciones a organizaciones</AtrNombre>
+      <AtrNombreLectura>Afiliaciones a organizaciones</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+    </Entidad>
+    <Entidad ID="UserArea_CandidateProfile">
+      <AtrNombre>Información adicional</AtrNombre>
+      <AtrNombreLectura>Información adicional</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+    </Entidad>
+    <Entidad ID="EmployerHistory">
+      <AtrNombre>Datos de la empresa</AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <VincularEntConEntHija>PositionHistory</VincularEntConEntHija>
+      <!--<Repesentantes>
+        <Repesentante tipo="2">OrganizationName</Repesentante>
+        <Repesentante tipo="2" PropInterna="true">PositionsHistory/EmploymentPeriodsPosition/StartDate</Repesentante>
+        <Repesentante tipo="2" PropInterna="true">EmploymentPeriodsPosition/EndDate</Repesentante>
+        <Repesentante tipo="2">PositionTitle</Repesentante>
+        <Repesentante tipo="2" PropInterna="true">StartDate</Repesentante>
+        <Repesentante tipo="2" PropInterna="true">EndDate</Repesentante>
+      </Repesentantes>-->
+      <OrdenEntidad>
+        <NameProp>OrganizationName</NameProp>
+        <NameProp>IndustryCode</NameProp>
+        <NameProp>EmploymentPeriods</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="PublicationHistory">
+      <AtrNombre>Publicaciones</AtrNombre>
+      <AtrNombreLectura>Publicaciones</AtrNombreLectura>
+      <DivEntidadDesplegable></DivEntidadDesplegable>
+      <TextoLinkEditarDespliegue>Añadir publicación</TextoLinkEditarDespliegue>
+    </Entidad>
+    <Entidad ID="Candidate">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>CandidatePersons</NameProp>
+        <NameProp>CandidateProfiles</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="EmploymentPeriod">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Entidad>
+    <Entidad ID="EmploymentPeriodPosition">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Entidad>
+    <Entidad ID="UserArea_PersonQualifications">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <Repesentantes>
+        <Repesentante tipo="2">PaisEstancia</Repesentante>
+        <Repesentante tipo="2">CentroEstudios</Repesentante>
+        <Repesentante tipo="2">FechaInicio</Repesentante>
+        <Repesentante tipo="2">FechaFin</Repesentante>
+      </Repesentantes>
+      <OrdenEntidad>
+        <NameProp>PaisEstancia</NameProp>
+        <NameProp>CentroEstudios</NameProp>
+        <NameProp>FechaInicio</NameProp>
+        <NameProp>FechaFin</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="JobLevel">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Entidad>
+    <Entidad ID="UserArea_PositionHistory">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>PersonasASuCargo</NameProp>
+        <NameProp>PresupuestoManejado</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="UserArea_PersonCompetency">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>ComprensionAuditiva</NameProp>
+        <NameProp>ComprensionLectura</NameProp>
+        <NameProp>InteraccionOral</NameProp>
+        <NameProp>ExpresionOral</NameProp>
+        <NameProp>Escribir</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="AttendancePeriod">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>StartDate</NameProp>
+        <NameProp>EndDate</NameProp>
+        <NameProp>Description</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="CompetencyEvidence">
+      <AtrNombre>Estancias</AtrNombre>
+      <AtrNombreLectura>Estancias en el extranjero</AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>EvidenceName</NameProp>
+        <NameProp>Description</NameProp>
+        <NameProp>VerificationSourceName</NameProp>
+        <NameProp>FreeFormEffectivePeriods</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="FreeFormEffectivePeriod">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+    </Entidad>
+    <Entidad ID="PersonCompetency">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <!--<Repesentantes>
+        <Repesentante tipo="2">CompetencyName</Repesentante>
+        <Repesentante tipo="2">CompetencyDimension</Repesentante>
+        <Repesentante tipo="2">ProficiencyLevel</Repesentante>
+      </Repesentantes>-->
+      <OrdenEntidad>
+        <NameProp>CompetencyName</NameProp>
+        <NameProp>CompetencyDimension</NameProp>
+        <NameProp>ProficiencyLevel</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="PositionHistory">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>PositionTitle</NameProp>
+        <NameProp>OrganizationUnitName</NameProp>
+        <NameProp>JobLevels</NameProp>
+        <NameProp>UserAreas_PositionHistory</NameProp>
+        <NameProp>EmploymentPeriodsPosition</NameProp>
+        <NameProp>Description</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="EducationOrganizationAttendance">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <Repesentantes>
+        <Repesentante tipo="2">OrganizationUnitName</Repesentante>
+        <Repesentante tipo="2">OrganizationName</Repesentante>
+      </Repesentantes>
+      <OrdenEntidad>
+        <NameProp>EducationLevelCode</NameProp>
+        <NameProp>OrganizationUnitName</NameProp>
+        <NameProp>OrganizationName</NameProp>
+        <NameProp>AttendancePeriods</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="Communication">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>Addresses</NameProp>
+        <NameProp>DialNumber</NameProp>
+        <NameProp>URI</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="Address">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>CityName</NameProp>
+        <NameProp>PostalCode</NameProp>
+        <NameProp>CountrySubDivisionCode</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="CandidateProfile">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>ExecutiveSummary</NameProp>
+        <NameProp>CandidateObjective</NameProp>
+        <NameProp>EmploymentHistories</NameProp>
+        <NameProp>EducationHistories</NameProp>
+        <NameProp>HistorialesFormacion</NameProp>
+        <NameProp>PublicationHistories</NameProp>
+        <NameProp>PersonQualifications_Property</NameProp>
+        <NameProp>Licenses_Property</NameProp>
+        <NameProp>OrganizationAffiliations_Property</NameProp>
+        <NameProp>UserAreas_CandidateProfile</NameProp>
+        <NameProp>ProfileName</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="Formacion">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>NombreCurso</NameProp>
+        <NameProp>ImpartidoPor</NameProp>
+        <NameProp>FechaInicioFormacion</NameProp>
+        <NameProp>FechaFinFormacion</NameProp>
+        <NameProp>Horas</NameProp>
+        <NameProp>DescripcionFormacion</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+    <Entidad ID="Publication">
+      <AtrNombre></AtrNombre>
+      <AtrNombreLectura></AtrNombreLectura>
+      <OrdenEntidad>
+        <NameProp>PublicationTitle</NameProp>
+        <NameProp>PublicationContributor</NameProp>
+        <NameProp>PublicationDate</NameProp>
+        <NameProp>PublisherLocation</NameProp>
+        <NameProp>PublisherName</NameProp>
+      </OrdenEntidad>
+    </Entidad>
+	</EspefEntidad>
+</config>

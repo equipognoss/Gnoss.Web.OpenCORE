@@ -1,0 +1,50 @@
+﻿@model bool
+
+@{
+    bool RecibirNewsletter = Model;
+    Html.SetBodyClass("layout03 comGnoss");    
+}
+
+<div id="col02">
+    <h2>
+        <span>@Html.GetText("COMMON", "NEWSLETTERSINGULAR")</span>
+    </h2>
+    <div>
+        <div class="box">
+            <label>@Html.GetText("SUSCRIPCIONES", "DESEASRECIBIRNEWSLETTER")</label>
+            <input type="radio" onclick="recibirNewsletter_change('TRUE');" value="rbRecibirNewsletter" name="chkRecibirNewsletter" id="chkRecibirNewsletter" @(RecibirNewsletter?"checked=checked":"") />
+            <label for="chkRecibirNewsletter">@Html.GetText("COMMON", "SI")</label>
+            <input type="radio" onclick="recibirNewsletter_change('FALSE');" value="rbNoRecibirNewsletter" name="chkRecibirNewsletter" id="chkRecibirNewsletterNO" @(!RecibirNewsletter?"checked=checked":"") />
+            <label for="chkRecibirNewsletterNO">@Html.GetText("COMMON", "NO")</label>
+        </div>
+        <div style="display: block" id="menssages">
+            <div style="display: none"  id="respuesta"></div>
+        </div>
+
+    </div>
+</div>
+<script type="text/javascript">
+    function recibirNewsletter_change(option) {
+        MostrarUpdateProgress();
+        $('#respuesta').hide();
+
+        var dataPost = {
+            recibirNewsletter: option == "TRUE"
+        }
+
+        GnossPeticionAjax(
+            '@Html.GetUrlPagina()/save-changes', 
+            dataPost, 
+            true
+        ).done(function () {
+            claseDiv = "ok";
+        }).fail(function(){
+            claseDiv = "ko";
+        }).always(function (response) {
+            $('#respuesta').attr("class", claseDiv);
+            $('#respuesta').html("<p>" + response + "</p>");
+            $('#respuesta').show();
+            OcultarUpdateProgress();
+        });
+    }
+</script>

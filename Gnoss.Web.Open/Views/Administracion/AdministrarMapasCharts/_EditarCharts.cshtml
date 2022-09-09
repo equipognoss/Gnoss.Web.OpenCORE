@@ -1,0 +1,327 @@
+﻿@model AdministrarChartsViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+    string nombreChartIdiomaUsuario = Model.Idiomas.FirstOrDefault(x => string.Compare(x, Model.IdiomaUsuario, true) == 0);
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+    Html.ViewData.Add("0", nombreChartIdiomaUsuario);
+    Html.ViewData.Add("1", Model.Idiomas);
+
+}
+<div class="content">
+    <h1>Configurar Charts</h1>
+    <br />
+    <div>Si quieres puedes crear un chart <input type="Button" value="Crear Chart" class="add" /> </div>
+    <ol class="table ui-sortable" id="sortable">
+        @foreach (ChartViewModel chart in Model.ListaCharts)
+        {
+            @Html.PartialView("_EditarChart", chart, Html.ViewData);
+        }
+    </ol>
+    <input type="button" class="guardarTodo" value="Submit" />
+</div>
+
+
+<script>
+    var OperativaOrdenacion = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function () {
+            this.lista = $('#sortable');
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            that.lista.sortable({
+                handle: 'span.handle',
+                items: 'li',
+                cancel: ".ui-state-disabled",
+                stop: function (event, ui) {
+                    console.log(event);
+                }
+            });
+            $('.header', that.lista).disableSelection();
+            return;
+        },
+    };
+    var OperativaAcciones = {
+        init: function () {
+            this.urlPagina = document.location.href;
+            this.engancharComportamiento();
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('span.action.eliminar').click(function () {
+                that.eliminar($(this));
+            });
+            $("span.action.editar").click(function () {
+                that.editar($(this));
+            });
+            $('input.text.big').keyup(function () {
+                if ($(this.parentNode.parentNode).attr("rel") == "0") {
+                    that.cambiarNombre($(this))
+                }
+            })
+            $('ul li a').click(function () {
+                that.ChangeBlockHidden($(this));
+            })
+            $('input.add').click(function () {
+                that.anyadir();
+            });
+            $('input.guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+            return;
+        },
+        ChangeBlockHidden: function (elemento) {
+            let elementosBlock = $("div[class=block]").filter(function () {
+                return $(this).attr("id").includes(elemento[0].attributes[1].value)
+            });
+            var rel = elemento[0].attributes[0].value;
+            $(elemento[0].parentNode.parentNode).find("li").each(function (index, bloque) {
+                if ($(bloque.firstChild).attr("rel") != rel)
+                {
+                    $(bloque).attr("class", "emptyClassCharts");
+                }else
+                {
+                    $(bloque).attr("class", "active");
+                }
+            });
+            $(elementosBlock).each(function (index, bloque) {
+                if ($(bloque).attr("rel") == rel) {
+                    $(bloque).attr("style", "display: block;")
+                } else {
+                    $(bloque).attr("style", "display: none;")
+                }
+            });
+            return false;
+        },
+        cambiarNombre: function (inputName) {
+            var nombre = inputName.val();
+            var fila = inputName.closest('.row');
+            var nombreFila = fila.find('.header .nombre');
+            nombreFila.text(nombre);
+        },
+        deshacerEliminar: function (botonDeshacer) {
+            var fila = botonDeshacer.closest('.row');
+
+            fila.removeClass('ui-state-disabled');
+
+            var panEditar = fila.children('.panEdicion');
+            panEditar.find('[name="TabEliminada"]').val('false');
+
+            var panCabecera = fila.children('.header');
+            panCabecera.removeClass('deleted');
+
+            var deshacer = panCabecera.children('.deshacer');
+            var eliminada = panCabecera.children('.eliminada');
+            deshacer.remove();
+            eliminada.remove();
+        },
+        eliminar: function (botonEliminar) {
+            var that = this;
+            var fila = botonEliminar.closest('.row');
+            var filas = fila.find('.row');
+
+            fila.addClass('ui-state-disabled');
+            filas.addClass('ui-state-disabled');
+
+            var panelesEditar = fila.find('.panEdicion');
+            panelesEditar.removeClass('edit');
+            panelesEditar.find('[name="TabEliminada"]').val('true');
+
+            var panelesCabecera = fila.find('.header:not(.deleted)');
+            panelesCabecera.addClass('deleted');
+            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
+            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
+
+            panelesCabecera.find('span.deshacer').click(function () {
+                that.deshacerEliminar($(this));
+            });
+        },
+        editar: function (botonEditar) {
+            var fila = botonEditar.closest('.row');
+            var panEditar = fila.children('.panEdicion');
+
+            if (panEditar.hasClass('edit')) {
+                panEditar.removeClass('edit');
+            }
+            else {
+                panEditar.addClass('edit');
+            }
+        },
+        anyadir: function () {
+            var that = this;
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                this.urlPagina + '/new-fila',
+                true
+            ).done(function (data) {
+                $('#sortable').append(data);
+                let ultima = $('#sortable').children().last();
+                $(ultima).find('span.action.eliminar').click(function () {
+                    that.eliminar($(this));
+                });
+                $(ultima).find('span.action.editar').click(function () {
+                    that.editar($(this))
+                });
+                $(ultima).find('input.text.big').keyup(function () {
+                    $(this.parentNode.parentNode).attr("rel")
+                    {
+                        that.cambiarNombre($(this))
+                    }
+                })
+                $('ul li a').click(function () {
+                    that.ChangeBlockHidden($(this));
+                })
+                $(ultima).find('span.editar').trigger('click');
+            }).fail(function (data) {
+                console.log("ERROR =>" + data);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.pCharts = {};
+                var cont = 0;
+                $('.row').each(function () {
+                    that.obtenerDatos($(this), cont++);
+                });
+                that.guardar();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div>');
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+            var error = false;
+            if (that.comprobarCamposVacios()) {
+                error = true;
+            }
+            return error;
+        },
+        comprobarCamposVacios:function (){
+            var that = this;
+            var error = false;
+            $('.row').each(function (index, bloque) {
+                if ($(bloque).find('span[class*=nombre]').text() == undefined)
+                {
+                    error = true;
+                    return false;
+                }
+                if ($(bloque).find('input[id*=pSelect]').val() == undefined) {
+                    error = true;
+                    return false
+                }
+                if ($(bloque).find('textarea[id*=pTextWhere]').val() == undefined) {
+                    error = true;
+                    return false
+                }
+                if ($(bloque).find('textarea[id*=pTextJavascript]') == undefined) {
+                    error = true;
+                    return false
+                }
+                if ($(bloque).find('input[id*=pNombreFuncionJS]') == undefined) {
+                    error = true;
+                    return false
+                }
+            });
+            return error;
+        },
+        guardar: function () {
+            var that = this;
+
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save-charts',
+                that.pCharts,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                that.mostrarErrorGuardado();
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('#sortable').find('li[class *= row]').each(function (index, bloque) {
+                if ($(bloque).attr("class") == "row ui-state-disabled") {
+                    $(bloque).remove();
+                }
+            });
+            $('section.panEdicion.edit').attr("class", "panEdicion");
+            
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
+        },
+        obtenerDatos: function (fila, num) {
+            let that = this;
+            let panelEdicion = fila.children('.panEdicion');
+            let prefijoClave = 'pCharts[' + num + ']';
+            var nombre = "";
+            panelEdicion.find('[class="text big"]').each(function (index, bloque) {
+                if ($(bloque).val() != "") {
+                    if (index == 0) {
+                        nombre = $(bloque).val() + "@@" + $(bloque).attr("id").split("|||")[2];
+
+                    } else {
+                        nombre = nombre + "|||" + $(bloque).val() + "@@" + $(bloque).attr("id").split("|||")[2];
+                    }
+                }
+            });
+            that.pCharts[prefijoClave + '.Nombre'] = nombre;
+            that.pCharts[prefijoClave + '.Select'] = panelEdicion.find('input[id*=pSelect]').val();
+            that.pCharts[prefijoClave + '.Where'] = panelEdicion.find('textarea[id*=pTextWhere]').val();
+            that.pCharts[prefijoClave + '.Javascript'] = panelEdicion.find('textarea[id*=pTextJavascript]').val();
+            that.pCharts[prefijoClave + '.FuncionJS'] = panelEdicion.find('input[id*=pNombreFuncionJS]').val();
+            that.pCharts[prefijoClave + '.ChartID'] = $(fila).attr("id");
+            that.pCharts[prefijoClave + '.Orden'] = num;
+            that.pCharts[prefijoClave + '.Eliminada'] = $(fila).attr("class") === 'row ui-state-disabled';
+        }
+    }
+    $(document).ready(function () {
+        OperativaOrdenacion.init();
+        OperativaAcciones.init();
+    });
+
+</script>
+<style>
+    input[type="text"], textarea {
+        width: 90%;
+    }
+
+    textarea {
+        height: 70%;
+    }
+
+    ul li {
+        display: inline;
+    }
+
+    ol.table li.row section.panEdicion div {
+        width: 93.4%;
+    }
+
+    .acciones {
+        border-bottom: 0px;
+    }
+
+    ol.table li.row section.panEdicion p {
+        margin-left: 0px;
+    }
+</style>

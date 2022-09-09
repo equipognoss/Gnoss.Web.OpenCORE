@@ -1,0 +1,2001 @@
+/*                                                                                       Do the reset!
+------------------------------------------------------------------------------------------------------
+*/
+
+* { 
+    padding: 0; 
+    margin: 0;
+    line-height: 1.3em;
+    /*border: solid 1px red;*/
+}
+
+/*Hace que el texto en safari y chrome sea del mismo tamaño que en IE y firefox*/
+@media screen and (-webkit-min-device-pixel-ratio:0)
+{
+	*
+	{
+		line-height: 1.4em;
+	}
+}
+
+/*                                                                     Elementos definidos globalmente
+------------------------------------------------------------------------------------------------------
+*/
+
+body 
+{    
+	font: normal 71%/1.3em  "Lucida Grande","Lucida Sans Unicode",Helvetica,sans-serif;
+    color: #4C4C4C;
+	background:#E6E7E8;
+    text-align: center;    
+    margin-top: 10px;  
+    margin-bottom: 20px;
+}
+
+textarea.cke
+{
+	display:none;	
+}
+
+#section {
+	background:#FFF;
+	padding: 0;
+	float:right;
+    /*margin-top: -140px;*/  
+    width: 719px;
+    margin-right:10px;
+	z-index:90 !important;
+}
+
+.error #section {  
+    width: 100%;
+    padding: 0 0 0 0;
+}
+
+.error .wrap710
+{
+	margin: 50px 0px 50px 150px;
+}
+
+/*.comGnoss #section {
+     margin-top: 0;
+}
+
+.menu #wrap #section
+{
+    margin-top: 0;
+}
+
+.registro #wrap #section
+{
+    margin-top: 0;
+}*/
+
+a {
+    color: #477CA8;
+	text-decoration:none;
+	cursor:pointer;
+}
+
+
+a:hover {
+    text-decoration: underline;
+}
+
+a img {
+    border: 0;
+	outline:none;
+}
+
+label.botonBuscarFechaFaceta
+{
+    border: 1px solid #DDDDDD;
+	float:left;
+}
+
+label.botonBuscarFaceta
+{
+	border-color: #DDDDDD;
+	border-style: solid solid solid none;
+	border-width: 1px 1px 1px 0;
+	float:left;
+}
+
+label.botonBuscarFechaFaceta,
+label.botonBuscarFaceta
+{
+	background: none repeat scroll 0 0 #F5F5F5;
+	height: 19px;
+	line-height: 19px;
+	margin: 2px 0;
+	position: relative;
+	width: 20px;
+}
+
+label.botonBuscarFechaFaceta a,
+label.botonBuscarFaceta a
+{
+	background: url("../img/spriteIcons.gif") no-repeat scroll 4px -3px transparent;
+	display: block;
+	height: 19px;
+	line-height: 19px;
+	margin: 2px 0;
+	text-indent: 9000px;
+	width: 20px;
+}
+
+input.filtroFaceta
+{
+    float: left;
+    padding: 2px 0;
+    width: 170px;
+}
+
+.icoEliminar img {
+    width: 18px;
+    height: 18px;
+    margin: 0 1px;
+    background: url(../img/iconBorrar.gif) no-repeat 100% 0;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.interrogante  {
+    width: 18px;
+    height: 18px;
+    margin: 0 1px;
+    background: url(../img/icono_gnoss_ayuda3.png) no-repeat 0 0;
+    vertical-align: middle;
+    cursor: pointer;
+	padding-left:20px;
+}
+
+.interrogantePost  {
+    margin: 0 1px;
+    background: url(../img/icono_gnoss_ayuda3.png) no-repeat 0 0;
+    vertical-align: middle;
+    cursor: pointer;
+	padding-left:20px;
+}
+
+/********  AGREGADO POR RIAM *******/
+
+img.icoDelete  {
+    width: 18px;
+    height: 18px;
+    margin: 0 1px;
+    background: url(../img/iconBorrar.gif) no-repeat 100% 0;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+/**********no lo borres en la fusión Juan********/
+
+a.icoEliminar:hover,
+.icoEliminar a:hover {
+    text-decoration: none;   
+    cursor: pointer; 
+}
+
+a.icoEliminar:hover img,
+.icoEliminar a:hover img {
+    background-position: 100% -25px;
+}
+
+/*                                                                         Headings y bloques de texto
+------------------------------------------------------------------------------------------------------
+*/
+/*
+.gnoss h1 a{
+	background:url(../img/logoGnoss.gif) no-repeat;
+	width:152px;
+	height:38px;
+	top:15px;
+	left:15px;
+}
+
+.myGnoss h1 a{
+	background:url(../img/logoMyGnoss.gif) no-repeat;
+	width:143px;
+	height:33px;
+	top:30px;
+	left:15px;
+}*/
+
+h2 {
+    font-size: 1.3em;
+	color:#8186BD;
+	font-weight:normal;
+	background:url(../img/sepHz.gif) repeat-x bottom;
+	padding:4px 0;
+	margin:15px 0 10px 0;
+}  
+
+h2.sinBorde {
+	background:none;
+	margin-bottom:0px !important; 
+	padding-bottom:0px !important;
+}
+
+.myGnoss h2{
+	background:none;
+	margin-bottom:-13px;
+}
+
+/*Comentado por Riam
+.comGnoss h2{
+	background:none;
+	margin-bottom:-13px;
+}
+*/
+
+/*Modificado por Riam*/
+
+h3 {
+    font-size: 1.1em;
+	color:#8186BD;
+	font-weight:normal;
+	padding:5px 0;
+} 
+
+h3.generico {
+	margin-top:30px;
+}
+h4 {
+    font-size: 1.1em;
+	color:#8186BD;
+	padding:5px 0;
+}  
+
+h4.textBox {
+	font-size:1em;
+	font-weight:normal; 
+	padding:5px 0;
+	margin:20px 0 5px 0;
+}
+
+h5{
+    font-size: 1em;
+	color:#8186BD;
+}  
+
+p {
+    margin-bottom: 0.8em;
+}
+
+p.small, span.small, div.small{
+    font-size:0.92em;
+	margin-bottom:0;
+}
+
+.textBox {
+	padding:10px 15px 10px 30px;
+}
+
+
+ul {
+	list-style: none;
+}
+
+.listaGris li {	height: auto;}del {
+	color:#E24973;
+}
+/*                                                                             Elementos estructurales
+------------------------------------------------------------------------------------------------------
+*/
+#wrap {
+    width: 958px;
+	padding:0 6px;
+	background:url(../img/bgWrap.png) repeat-y;
+    margin: 0 auto;
+    text-align: left;
+}
+
+#sidebar {
+	float: left;
+    padding-bottom: 40px;
+    padding-left: 10px;
+    width: 144px;
+    margin-top:-20px;
+    clear:both;
+}
+
+.comGnoss #sidebar {
+	padding-top: 20px;
+    margin-top:0;
+}
+
+#sidebar .menuSidebarSup{display:none}
+#sidebar .menuSidebar{background:#F5F5F5; padding-top:10px}
+
+/*                                                                                       pie de pagina
+------------------------------------------------------------------------------------------------------
+*/
+#footer {
+	width:970px;
+	padding:20px 0px 0;
+	text-align:left;
+	background:#adacbb;
+	overflow:hidden;
+}
+#footer h3 {
+	color:#555;
+	text-transform:uppercase;
+	margin:0;
+	padding:0;
+	font-size:1.1em; 
+	letter-spacing:0
+}
+#footer a {
+	color:#FFF;
+}
+#footer .miniLista {
+	display:inline-block;
+	*display:inline;
+	zoom:1;
+	vertical-align:top;
+	padding:0 10px;
+	border-left:1px solid #999;
+	margin:0 0 20px 10px;
+}
+#footer .miniLista h3 {
+	text-transform:none;
+	color:#6C6E7F;
+}
+#footer span {
+	display:block;
+	background:#82849a;
+	padding:5px 20px;
+	margin-top:5px;
+}
+#footer span a {
+	border-left:#AAA7B5 1px solid;
+}
+#footer span a.fin {
+	border-right:#AAA7B5 1px solid;
+}
+#footer span a,
+#footer span a.fin {
+	padding:0 10px 0 10px;
+}
+
+/*                                                                                       Menu personal
+------------------------------------------------------------------------------------------------------
+*/
+#desplegarMenu {
+    position: relative;
+    cursor: pointer;
+	z-index:3;
+}
+#desplegarMenu img {
+    position: absolute;
+    top: 8px;
+    left: 6px;
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+}
+#desplegarMenu .mascaraBoton {
+    position: relative;
+    z-index: 3;
+    height: 35px;
+    padding: 10px 26px 0 42px;
+    font-size: 0.9em;
+}
+#desplegarMenu .personal {
+    background: url(../img/menuPersonalBt.png) no-repeat 0 0;
+}
+#desplegarMenu .profesional {
+    color: #FFF;
+    background: url(../img/menuProfesionalBt.png) no-repeat 0 0;
+}
+#desplegarMenu .contenedor {
+    overflow: hidden;
+    width: 76px;
+    text-align: left;
+}
+#desplegarMenu .contenedor * {
+    display: block;
+    margin-bottom: 0.2em;
+    white-space: nowrap;
+}
+
+#menuLateral ul li a{
+	background:url(../img/dotListadoGris.gif) no-repeat left 65%;
+	padding-left:9px;
+	margin-left:8px;
+	background-position:0px 5px;
+}
+#menuLateral {
+	position:absolute;
+	z-index:2;
+    width: 125px;
+    padding: 15px 8px 5px;
+    margin: -10px 0 0 2px;
+    background: url(../img/menuLateral.gif) no-repeat 0 100%;
+}
+#menuLateral div {
+    padding: 7px 2px 7px;
+    background: url(../img/sepHz.gif) repeat-x bottom;
+}
+
+#menuLateral div.final {
+    background:none;
+    padding: 0;
+}
+
+#menuLateral div.final div{
+    background:none;
+    padding: 7px 2px 7px;
+}
+
+#menuLateral a {
+	color:#4D4D4D;
+	display:block;
+	cursor:pointer;
+}
+
+
+.menuGeneral{background:url('../img/bgNavegacionLateral.gif') no-repeat 0 0;margin-bottom:-20px;}
+.menuGeneral ul{padding:20px}
+.menuGeneral li{margin-bottom:4px}
+.menuGeneral a{color:#fff}
+			           
+
+#menuLateral a:hover,
+#menuSidebar ul li a:hover, 
+#menuSidebar a:hover {
+	color:#477CA8;
+	text-decoration:none;
+}
+
+#menuLateral ul.profesional li.activo a {
+	color:#1199A5;
+	background:url(../img/perfilOkVerde.gif) no-repeat left 5px !important;
+	font-weight:bold;
+}
+
+#menuLateral ul.personal li.activo a {
+	color:#8186BD;
+	background:url(../img/perfilOkLila.gif) no-repeat left!important;
+	font-weight:bold;
+}
+/*                                                                                            Sidebar
+------------------------------------------------------------------------------------------------------
+*/
+#menuSidebarSup {
+	width: 141px;
+	height:16px;
+	background: url(../img/menuLateralSup.gif) no-repeat;
+}
+#menuSidebar {
+	position: relative;
+	z-index: 1;
+    width: 141px;
+	background: url(../img/menuLateral.gif) no-repeat 0 100%;
+	top:30px;
+	padding-bottom:12px;
+}
+
+#menuSidebar ul li a, 
+#menuSidebar a {
+	margin:0 6px 0 10px;
+	color:#4D4D4D;
+	display:block;
+}
+#menuSidebar ul {
+	padding-bottom:5px;
+}
+#menuSidebar li {	height:17px;}
+
+#menuSidebar p {
+	margin-left:10px;
+	font-weight:bold;
+	margin-bottom:5px !important;
+}
+/*
+#menuSidebar .sepHz {
+	margin:0px auto !important;
+	padding-bottom:0px !important;
+	margin-bottom:0px;
+	font-size:1px;	}
+*/
+
+#menuSidebar ul li a:hover, 
+#menuSidebar a:hover {
+	color:#477CA8;
+	text-decoration:none;
+}
+
+.menuSidebarSup { /*RIAM*/
+	width: 141px;
+	height:16px;
+	background: url(../img/menuLateralSup.gif) no-repeat;
+}
+.menuSidebar { /*RIAM*/
+	position: relative;
+	z-index: 1;   
+	background: url(../img/menuLateral.gif) no-repeat 0 100%;
+	top:30px;
+	padding-bottom:12px;
+}
+
+#sidebar
+{
+	width:220px;
+	padding-right:11px;
+	padding-left:10px;
+}
+
+
+.menuSidebar ul li a, 
+.menuSidebar a { /*RIAM*/
+	color:#4D4D4D;
+	display:block;
+}
+
+.menuSidebar div { /*RIAM*/
+	padding:0 6px 0 10px;
+}
+
+.menuSidebar div div { /*RIAM*/
+	padding:0;
+}
+
+.menuSidebar li {	/*height:17px;*/
+	margin-bottom:4px;
+}
+
+.menuSidebar p { /*RIAM*/
+	margin-left:10px;
+	font-weight:bold;
+	margin-bottom:5px !important;
+}
+
+.menuSidebar ul p 
+{
+	margin-left:0px;
+}
+/*.menuSidebar .sepHz {
+	margin:0px auto !important;
+	width:120px !important;
+	padding-bottom:0px !important;
+	margin-bottom:0px;
+	font-size:1px;	}
+*/
+
+.menuSidebar ul li a:hover, /*RIAM*/
+.menuSidebar a:hover {
+	color:#477CA8;
+	text-decoration:none;
+}
+
+	
+/*                                                                                          Navegación
+------------------------------------------------------------------------------------------------------
+*/
+
+.breadCrumb {
+	color:#477CA8;
+	font-weight:bold;
+	font-size:0.92em;
+}
+.breadCrumb a {
+	font-weight:normal;
+}
+/*
+#wrap .menuSuperior
+{
+	width:230px;
+}
+
+.menu #wrap .menuSuperior
+{
+	width:auto;
+}*/
+
+#navegacion {
+    background: transparent url("https://static.gnoss.com/img/bgMenuLateral.gif") no-repeat scroll 10px 15px;
+	height:143px;
+	font-size:1.15em;
+	margin:0;
+	padding-left:10px;
+	clear:both;
+	float:left;
+	width:230px;
+}
+
+.menu #wrap #navegacion {
+    background: url("../img/bgMenuSup.gif") no-repeat scroll 0 0;	
+    height:64px;
+	padding-left:0;
+	width:auto;
+}
+
+#navegacion ul {
+	padding:30px;
+}
+
+.comGnoss #navegacion ul {
+	padding:0;
+}
+
+.menu #wrap #navegacion ul {
+    list-style: none;
+	margin-left:100px;
+	padding:0;
+}
+
+.comGnoss #navegacion  li,
+.menu #wrap #navegacion  li {
+    float: left;
+    display: inline;
+	text-align:center;
+}
+
+#navegacion a {
+    display: block;
+	color: #FFFFFF;
+	padding:8px 0 0;
+    text-decoration: none;
+    cursor: pointer;    
+    font-size: 11px;
+}
+
+.menu #wrap #navegacion a 
+{    
+    font-size: 13px;
+}
+
+/*                                                                             Navegacion Comunidades
+------------------------------------------------------------------------------------------------------
+*/
+ 
+.comGnoss #section #navegacion{
+	background: #5A5B5D;
+    height: auto;
+    margin-left: -241px;/*-214px*/
+    padding: 0;
+    width: 970px;
+}
+
+.comGnoss #section #navegacion ul li a{
+	color:#fff; 
+	font-size:13px; 
+	margin-top:0; 
+	padding:6px 10px; 
+	height:18px;
+    cursor: pointer;
+    display: block;
+	float:left;
+    text-decoration: none;
+}
+
+.comGnoss #navegacion ul li a:hover {
+	color:#C8C8C8;
+}
+
+.comGnoss #section #navegacion ul li.activo{
+	margin:0;
+    background: #333;
+}
+
+
+.comGnoss #section #navegacion ul li.irAMyGnoss{width:167px}
+.comGnoss #section #navegacion ul li.irAMyGnoss a{font-weight:bold}
+
+
+/*           Elementos menu superior                                                                     
+------------------------------------
+*            nav0                                                           
+-----------------
+*/
+.menu #wrap #navegacion .nav0 {
+	width:167px;
+	margin-left:7px;
+	margin-top:5px;
+}
+.menu #wrap #navegacion .nav0 a:hover {
+	color:#DAC1E8;
+}
+div.indice #navegacion .nav0 a {
+	/*background-color:#FFFFFF;
+	color:#7F5990;
+	height:44px;*/
+	font-weight:bold;
+}
+
+/*          nav1                                                           
+-----------------
+*/
+.menu #wrap #navegacion .nav1 {
+	width:192px;
+	margin-left:13px;
+	margin-top:5px;
+}
+.menu #wrap #navegacion .nav1 a:hover {
+	color:#B5DDF1;
+}
+div.comunidades #navegacion .nav1 a {
+	/*background-color:#FFFFFF;
+	color:#357582;
+	height:34px;
+	margin-top:9px;*/
+	font-weight:bold;
+}
+
+/*          nav2                                                           
+-----------------
+*/
+.menu #wrap #navegacion .nav2 {
+	width:165px;
+	margin-left:23px;
+	margin-top:5px;
+}
+.menu #wrap #navegacion .nav2 a:hover {
+	color:#F8DBA9;
+}
+div.blogs #navegacion .nav2 a {
+	/*background-color:#FFFFFF;
+	color:#D46F36;
+	height:43px;*/
+	font-weight:bold;
+}
+
+/*          nav3                                                           
+-----------------
+*/
+.menu #wrap #navegacion .nav3 {
+	width:282px;
+	margin-left:0px;
+	margin-top:5px;
+}
+.menu #wrap #navegacion .nav3 a:hover {
+	color:#F9CBE1;
+}
+div.personasOrganizaciones #navegacion .nav3 a {
+	/*background-color:#FFFFFF;
+	color:#D13C68;
+	height:44px;*/
+	font-weight:bold;
+}
+
+/*            Elementos menu superior                                                                     
+-------------------------------------
+*/
+
+
+/*                 Elementos SubNav                                                                     
+-------------------------------------
+*/  
+
+.subNav
+{
+	background:none;
+	margin-left:30px;
+}
+
+.comGnoss .subNav
+{	
+	margin-left:0;
+}
+
+.subNav table {
+	height:38px;
+	/*background:url(../img/bgSubMenu.gif) no-repeat center;*/
+	margin:10px 0px;
+	/*width:700px;*/
+	border:0;
+	background:#AAA;
+	width:100%
+}
+.subNav ul {
+	margin:0px auto;
+	text-align:center;
+}
+
+.subNav a {
+	color:#FFF;
+	line-height:1em;
+	text-align:center;
+	height:18px;
+	display:block;
+	width:auto;
+	padding:10px 13px; /*MODIFICADO POR RIAM*/
+}
+
+.subNav  a:hover {
+	text-decoration:none;
+	color:#d5d6dd;
+}
+div.gnoss .subNav tr.perfil td.nav0,
+div.perfilEditar .subNav tr.perfil td.nav1,
+div.perfilInicio .subNav tr.perfil td.nav2,
+div.perfilContribuciones .subNav tr.perfil td.nav3,
+div.baseRecursos .subNav tr.perfil td.nav3,
+div.Usuarios .subNav tr.perfil td.nav4,
+div.perfilBiografia .subNav tr.perfil td.nav5,
+div.perfilComunidades .subNav tr.perfil td.nav5,
+div.borradores .subNav tr.bandeja td.nav0,
+div.mensajes .subNav tr.bandeja td.nav1,
+div.comentarios .subNav tr.bandeja td.nav2,
+div.invitaciones .subNav tr.bandeja td.nav3,
+div.suscripciones .subNav tr.bandeja td.nav4,
+div.inicio .subNav tr.bandeja td.nav0 ,
+div.SoliciUsu .subNav tr.solicitudes .nav0,
+div.SoliciOrg .subNav tr.solicitudes .nav1,
+div.SoliciPro .subNav tr.solicitudes .nav3,
+div.SoliciCom .subNav tr.solicitudes .nav2 ,
+div.infoGeneral .subNav tr.comAdminGris td.nav0 ,
+div.utilidades .subNav tr.comAdminGris td.nav1 ,
+div.plantillas .subNav tr.comAdminGris td.nav2 ,
+div.categorias .subNav tr.comAdminGris td.nav3 ,
+div.miembros .subNav tr.comAdminGris td.nav4 ,
+div.importacion .subNav tr.comAdminGris td.nav5,
+div.widget .subNav tr.comAdminGris td.nav6,
+div.importacionning .subNav tr.comAdminGris td.nav7,
+div.eventos .subNav tr.comAdminGris td.nav8,
+div.DafoFinalizado .subNav tr.dafoGris td.nav0 ,
+div.DafoUnificar .subNav tr.dafoGris td.nav1 ,
+div.DafoVotar .subNav tr.dafoGris td.nav2,
+div.DafoCriterios .subNav tr.dafoGris td.nav3 ,
+div.DafoConclusiones .subNav tr.dafoGris td.nav4 ,
+div.DafoEstadisticas .subNav tr.dafoGris td.nav5 ,
+div.DafoVotado .subNav tr.dafoGris td.nav6 ,
+div.DafoMensajes .subNav tr.dafoGris td.nav7 , 
+div.DafoEditar .subNav tr.dafoGris td.nav8 , 
+div.DafoInvitarParticipante .subNav tr.dafoGris td.nav9 {
+	/*background: url(../img/bgSubNavLi.gif) no-repeat left center;*/
+	background:#888;
+}
+div.gnoss .subNav tr.perfil .nav0  a,
+div.perfilEditar .subNav tr.perfil .nav1 a,
+div.perfilInicio .subNav tr.perfil .nav2 a,
+div.perfilContribuciones .subNav tr.perfil .nav3 a ,
+div.baseRecursos .subNav tr.perfil .nav3 a,
+div.Usuarios .subNav tr.perfil .nav4 a,
+div.perfilBiografia .subNav tr.perfil .nav5 a ,
+div.perfilComunidades .subNav tr.perfil .nav5 a ,
+div.borradores .subNav tr.bandeja .nav0 a,
+div.mensajes .subNav tr.bandeja .nav1 a,
+div.comentarios .subNav tr.bandeja .nav2 a,
+div.invitaciones .subNav tr.bandeja .nav3 a,
+div.suscripciones .subNav tr.bandeja .nav4 a,
+div.inicio .subNav tr.bandeja .nav0 a,
+div.SoliciUsu .subNav tr.solicitudes .nav0 a,
+div.SoliciOrg .subNav tr.solicitudes .nav1 a,
+div.SoliciPro .subNav tr.solicitudes .nav3 a,
+div.SoliciCom .subNav tr.solicitudes .nav2 a,
+div.infoGeneral .subNav tr.comAdminGris .nav0 a ,
+div.utilidades .subNav tr.comAdminGris .nav1 a ,
+div.eventos .subNav tr.comAdminGris .nav8 a ,
+div.plantillas .subNav tr.comAdminGris .nav2 a ,
+div.categorias .subNav tr.comAdminGris .nav3 a ,
+div.miembros .subNav tr.comAdminGris .nav4 a,
+div.importacion .subNav tr.comAdminGris .nav5 a,
+div.widget .subNav tr.comAdminGris .nav6 a,
+div.importacionning .subNav tr.comAdminGris .nav7 a , 
+div.DafoFinalizado .subNav tr.dafoGris .nav0 a ,
+div.DafoUnificar .subNav tr.dafoGris .nav1 a ,
+div.DafoVotar .subNav tr.dafoGris .nav2 a,
+div.DafoCriterios .subNav tr.dafoGris .nav3 a ,
+div.DafoConclusiones .subNav tr.dafoGris .nav4 a ,
+div.DafoEstadisticas .subNav tr.dafoGris .nav5 a ,
+div.DafoVotado .subNav tr.dafoGris .nav6 a ,
+div.DafoMensajes .subNav tr.dafoGris .nav7 a ,
+div.DafoEditar .subNav tr.dafoGris .nav8 a ,
+div.DafoInvitarParticipante .subNav tr.dafoGris .nav9 a{
+	/*background:url(../img/activoSubMenu.gif) no-repeat right;*/
+	display:block;
+	padding:10px 20px 10px 10px;
+	height:18px;
+	margin-left:10px;
+}
+
+
+/*           Elementos subSubNav Gris                                                                    
+-------------------------------------
+*/
+/*
+.subNav table.gris {
+	height:38px;
+	background:url(../img/bgSubMenuGris.gif) no-repeat center;
+	margin:10px auto;
+	width:700px;
+	border:0px;
+}
+*/
+#section #navegacion a,
+#section .subNav a{color:#fff}
+/*
+#section .btAzul{background:#aaa;border: 1px solid #aaa;}
+*/
+#section .btAzul a{color:#fff}
+#section .btGris a{color:#000}
+
+/*           SubNav administracion de comunidades                                                                    
+-------------------------------------------------
+*/
+/*
+div.infoGeneral .subNav tr.comAdminGris td.nav0 ,
+div.utilidades .subNav tr.comAdminGris td.nav1 ,
+div.plantillas .subNav tr.comAdminGris td.nav2 ,
+div.categorias .subNav tr.comAdminGris td.nav3 ,
+div.miembros .subNav tr.comAdminGris td.nav4 ,
+div.importacion .subNav tr.comAdminGris td.nav5,
+div.widget .subNav tr.comAdminGris td.nav6,
+div.importacionning .subNav tr.comAdminGris td.nav7 {
+	background: url(../img/bgSubNavLiGris.gif) no-repeat left center;
+}
+
+
+div.infoGeneral .subNav tr.comAdminGris .nav0 a ,
+div.utilidades .subNav tr.comAdminGris .nav1 a ,
+div.plantillas .subNav tr.comAdminGris .nav2 a ,
+div.categorias .subNav tr.comAdminGris .nav3 a ,
+div.miembros .subNav tr.comAdminGris .nav4 a,
+div.importacion .subNav tr.comAdminGris .nav5 a,
+div.widget .subNav tr.comAdminGris .nav6 a,
+div.importacionning .subNav tr.comAdminGris .nav7 a {
+	background:url(../img/activoSubMenuGris.gif) no-repeat right;
+	display:block;
+	padding:10px 20px;
+	height:18px;
+	margin-left:10px;
+}
+*/
+
+/*                                   SubNav DAFO                                                                 
+-------------------------------------------------
+*/
+/*
+div.DafoFinalizado .subNav tr.dafoGris td.nav0 ,
+div.DafoUnificar .subNav tr.dafoGris td.nav1 ,
+div.DafoVotar .subNav tr.dafoGris td.nav2,
+div.DafoCriterios .subNav tr.dafoGris td.nav3 ,
+div.DafoConclusiones .subNav tr.dafoGris td.nav4 ,
+div.DafoEstadisticas .subNav tr.dafoGris td.nav5 ,
+div.DafoVotado .subNav tr.dafoGris td.nav6 ,
+div.DafoMensajes .subNav tr.dafoGris td.nav7 , 
+div.DafoEditar .subNav tr.dafoGris td.nav8 , 
+div.DafoInvitarParticipante .subNav tr.dafoGris td.nav9 {
+	background: url(../img/bgSubNavLiGris.gif) no-repeat left center;
+}
+
+
+div.DafoFinalizado .subNav tr.dafoGris .nav0 a ,
+div.DafoUnificar .subNav tr.dafoGris .nav1 a ,
+div.DafoVotar .subNav tr.dafoGris .nav2 a,
+div.DafoCriterios .subNav tr.dafoGris .nav3 a ,
+div.DafoConclusiones .subNav tr.dafoGris .nav4 a ,
+div.DafoEstadisticas .subNav tr.dafoGris .nav5 a ,
+div.DafoVotado .subNav tr.dafoGris .nav6 a ,
+div.DafoMensajes .subNav tr.dafoGris .nav7 a ,
+div.DafoEditar .subNav tr.dafoGris .nav8 a ,
+div.DafoInvitarParticipante .subNav tr.dafoGris .nav9 a
+{
+	background:url(../img/activoSubMenuGris.gif) no-repeat right;
+	display:block;
+	padding:10px 20px;
+	height:18px;
+	margin-left:10px;
+}
+*/
+/*              Elementos subSubNav                                                                     
+-------------------------------------
+*/
+.subSubNav {
+    margin: -10px 0 30px 0;
+    position: relative;
+	visibility:visible;
+	display:inline;
+}
+.subSubNav li {
+    display: inline;
+    padding-right: 10px;
+    margin-right: 10px;
+    background: url(../img/sepVt.gif) repeat-y right;
+}
+.subSubNav li.ultimo {
+    padding-right:0;
+    margin-right:0;
+    background: none;
+}
+
+
+/*                                                                                         Separadores
+------------------------------------------------------------------------------------------------------
+*/
+.sepHz,
+.sepMiniHz,
+.sepSuperHz
+.sepSuperSuperHz{
+	width:100%;
+	height:2px;
+	padding:5px 0;
+	background:url(../img/sepHz.gif) repeat-x;
+}
+
+.editarBiografia .sepHz
+{
+	padding-bottom:0px;
+	padding-top:3px;
+}
+
+.editarBiografia .tituloDesplegable
+{
+	padding-top:10px;
+}
+
+.sepMiniHz
+{
+	padding:4px 0;
+}
+
+.sepSuperHz 
+{
+	padding:10px 0;
+	background-position:50% 50%;
+}
+
+.sepSuperSuperHz 
+{
+	padding:20px 0;
+	background-position:70% 70%;
+}
+	
+/*                                                                                           Paginacion
+------------------------------------------------------------------------------------------------------
+*/
+
+.pag {
+	text-align:center;
+	margin:0 auto;
+	font-size:0.92em;
+	font-weight:bold;
+}
+
+/*                                                                                         Contenedores
+------------------------------------------------------------------------------------------------------
+*/
+
+#section .wrap710 {width:710px;background:none;}
+#section .wrap710Sup,
+#section .wrap710Inf{display:none}
+#section .wrap710 .columna { width:320px; text-align:left;}
+
+#section .wrap375 .textBox { padding-right: 30px; }
+#section .wrap375 .columna { width: 145px; }
+#section .wrap375Sup,
+#section .wrap375Inf{display:none}
+#section .wrap375{background:#F5F5F5; padding-top:20px;width:375px; }
+
+#section .wrap300Sup,
+#section .wrap300Inf{display:none}
+#section .wrap300{background:none;width:300px;}
+
+#section .wrap524Sup,
+#section .wrap524Inf{display:none;}
+#section .wrap524{background:none; width:524px;}
+
+#section .wrap176Sup,
+#section .wrap176Inf{display:none;}
+#section .wrap176{background:none;width:176px;}
+.wrap176  div.textBox { margin-left:-15px !important; }
+
+
+#section .wrap710.login {background:#f5f5f5; margin-bottom:20px;}
+
+.dosCols div.floatLeft,
+.dosCols div.floatRight {
+    width: 45%;
+}
+.asimCols div.floatLeft {
+    width: 58%;
+}
+.asimCols div.floatRight {
+    width: 39%;
+}
+
+.asimCols2 div.floatLeft 
+{
+	width: 62%;
+}
+.asimCols2 div.floatRight
+{
+	width: 35%;
+}
+
+.trescolLeft{
+	margin-right:5px;
+	width:33%
+}
+.trescolRight {
+	width:32%
+}
+/*                                                                  Classe panel para loa contenedores------------------------------------------------------------------------------------------------------*/.panelGrande {	width:665px;}ul.imagenAsociada div.panel{	padding-top:20px;}/*                                                                                            Listados
+------------------------------------------------------------------------------------------------------
+*/
+.panel,#menuLateral {
+	display:none;
+}
+
+.panelGrande {
+	width:665px;
+}
+
+ul.imagenAsociada div.panel{
+	padding-top:20px;
+}
+
+
+/*                                                                                            Listados
+------------------------------------------------------------------------------------------------------
+*/
+
+
+ol li {
+	padding-bottom:5px;
+	margin-left:30px;
+}
+
+tr.par td {
+    background-color: #DDD;
+}
+
+ul.listaGris li a {
+	color:#4C4C4C;
+	text-decoration:none;
+}
+ul.listaGris li a:hover {
+	color:#477CA8;
+}
+/*LOZA : antes tenia 600px, ahora se le pone 580 y padding de 10(al .imagenAsociada li), para igualarlo a los destacados y tratarlos todos igual*/
+.imagenAsociada div {
+	width: 580px;
+	float:right;
+	display:inline;
+}
+ul.comentarios div {
+	width: 550px;
+}
+ul.comentarios div.sepHz{	margin-top:10px;	width:100% !important;}ul.imagenAsociada div div {
+    width: auto;
+    float: none;
+	display:block;}
+.imagenAsociada li 
+{
+	/*Modificado por riam para que no se separen tanto las fichas y tratar las fichas normales igual que las de destacados*/
+	/*padding:10px;
+	padding-bottom: 15px;*/ 
+	padding-left:10px;
+	padding-right:10px;
+	/*-------------------*/
+	overflow:hidden;
+	clear: both;
+	margin-bottom:15px;
+}
+
+ul.comentarios li.ultimo {
+	background: none;
+}
+.imagenAsociada h3,
+#baseRecursos .recursoDetalle h4 {
+	background:url(../img/sepHz.gif) repeat-x bottom;
+	font-size:1.2em;
+	font-weight: normal;
+	margin-bottom:10px;
+	padding-top:0;
+}
+
+.imagenAsociada h3 a,
+.imagenAsociada ul li h3 a {
+	color:#8186BD;
+}
+		
+.imagenAsociada img.icono,
+.imagenAsociada span.fotoPerfil ,
+.imagenAsociada span.fotoPerfilMaxi {
+	float:left;
+	display:inline;
+	margin-right:10px;
+}
+
+/*****RIAM*******/
+.imagenAsociada span.iconoGrupo {
+	float:left;
+	display:inline;
+}
+
+.imagenAsociada ul li {
+	margin:0 0 0 45px;
+	padding-left:15px;
+	background:url(../img/comunidades/dotSubcomunidad.gif) no-repeat left 10px;
+	background-position:0% 6px;
+}
+ul.generico {
+	margin-bottom:30px;
+}
+ul.generico li {
+	padding-left:20px;
+	margin:5px 0 0 30px;
+	background: url(../img/dotListadoGris.gif) no-repeat left 5px;
+}
+
+/*****RIAM*******/
+/* Modificado
+.imagenAsociada ul li h3 {
+	padding-left:15px;
+}
+*/
+span.fotoPerfilBlog,
+span.fotoPerfil {
+	position:relative;
+	width:54px;
+	height:54px;
+	overflow:hidden;
+}/*PROBLEMA IE*/
+
+/*****RIAM*******/
+span.iconoGrupo
+{
+	position:relative;
+	width:54px;
+	height:54px;
+	overflow:hidden;
+}
+
+div.recursoDetalle .miniSnapshot {
+	width: auto;
+	height: auto;
+}
+div.recursoDetalle span.floatLeft {
+	/*width: auto;*/
+}
+div.recursoDetalle span.floatLeft .icono {	width: 70px;}.imagenAsociada span.karma {
+    float: left;
+    display: inline;
+	clear: left;
+	width: 64px;
+	font-weight:bold;
+	font-size:0.82em;
+}
+
+span.fotoPerfil a {/*QUITADO: , .miniSnapshot a*/
+	position:absolute;
+	width:54px;
+	height:54px;
+	/*background:url(../img/mascFotoPerfil.png) no-repeat;*/
+	top:0;
+	left:0;
+	cursor:pointer;
+	text-indent:-100000px;
+	
+}
+
+.pestanya span.fotoPerfil a {
+	/*background:url(../img/mascFotoPerfilClara.png) no-repeat;*/
+	
+}/*PROBLEMA IE*/
+/********RIAM**********/
+.busquedaDestacada span.fotoPerfil a{
+	/*background:url(../img/mascFotoPerfilOscura.png) no-repeat;	*/
+}
+span.fotoPerfilMaxi a {
+	position:absolute;
+	width:150px;
+	height:150px;
+	background:url(../img/mascMaxiSnapshot.png) no-repeat;
+	top:0;
+	left:0;
+	cursor:pointer;
+	text-indent:-100000px;
+}
+
+span.fotoPerfilMaxi {
+	margin-right:15px;
+}
+.imagenAsociada span.fotoPerfilBlog {
+	float:left;
+	display:inline;
+	margin-right:10px;
+}
+span.fotoPerfilBlog a {/*, .miniSnapshot a*/
+	position:absolute;
+	width:54px;
+	height:54px;
+	/*background:url(../img/mascFotoPerfil.png) no-repeat;*/
+
+	left:0;
+	cursor:pointer;
+	text-indent:-100000px;
+	
+}/*PROBLEMA IE*/
+/*LOZA antes tenia 600px, ahora se le pone 580 y padding de 10(al .imagenAsociada li), para igualarlo a los destacados y tratarlos todos igual*/
+.imagenAsociada div.multiFuncion {
+    width: 580px;
+}
+
+/*Modificado por RIAM
+.imagenAsociada div.multiFuncion h3 {
+    width: 580px;
+}
+-----------------*/
+
+.imagenAsociada div.funciones {
+    width: 120px;
+}
+.imagenAsociada div.funciones label {
+    float: right;
+    margin-bottom: 5px;
+}
+.imagenAsociada div.funciones a,
+.imagenAsociada div.funciones button {
+    width: 110px !important;
+}
+li.busquedaDestacada {
+	background:#e0e0e0;
+	padding:20px 10px;
+	margin-top:-18px;
+	height:100%;
+}
+
+li.busquedaDestacadaBlanco {
+	background:#ffffff;
+	padding:20px 10px;
+	margin-top:-18px;
+	height:100%;
+}
+
+li.busquedaDestacadaGris {
+	background:#F5F5F5;
+	padding:20px 10px;
+	margin-top:-18px;
+	height:100%;
+}
+
+.busquedaDestacadaBlanco span.fotoPerfil a{
+	/*background:url(../img/mascFotoPerfilBlanca.png) no-repeat;*/	
+}
+
+.busqueda ul.imagenAsociada {
+	margin-top:40px;
+}
+/*LOZA:Lo comento para que no pise los estilos de la ficha, ahora se tratan los destacados como fichas normales*/
+ul.imagenAsociada  li.busquedaDestacada div{
+	/*width:570px !important;*/
+}
+.busquedasGuardadas li {
+    position: relative;
+    padding: 3px;
+}
+.busquedasGuardadas li.odd {
+    background: #FFF;
+}
+.busquedasGuardadas li.even {
+    background: #F0F0F0;
+}
+.miniEliminar {
+    position: absolute;
+    top: 50%;
+    right: 3px;
+    z-index: 1;
+    height: 16px;
+    margin-top: -8px;
+    text-align: right;
+    overflow: hidden;
+}
+.miniEliminar:hover img {
+    margin-top: -25px;
+}
+.miniConfirmar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    background-color: inherit;
+    padding: 1px 0;
+}
+.miniConfirmar span {
+    margin-right: 6px;
+}
+.miniConfirmar button {
+    margin: 0 2px;
+    padding: 1px;
+    width: 17px;
+    border: 0;
+    background: url(../img/microBoton.gif) no-repeat 50% 50%;
+    color: #FFF;
+    font-size: 10px;
+    vertical-align: baseline;
+}
+
+/* reglas para la mascara oscura para confimar accion */
+div.confirmar,
+div.confirmar .pregunta,
+div.confirmar .mascara {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-height:100px;
+}
+div.confirmar {
+	z-index:200;
+}
+div .mascara {
+    background: #000;
+
+    z-index: 3;
+}
+div.pregunta {
+    color: #FFF;
+    text-align: center;
+    z-index: 4;
+}
+div.pregunta span {
+	font-size:1.1em;
+}
+div.pregunta .btMini {
+	background:url(../img/btMini.gif) no-repeat;
+	width:31px!important;
+	height:31px;
+	border:0;
+	color:#FFF;
+	padding-top:0;
+	margin-left:5px;
+	cursor:pointer;
+}
+
+p.remitente {
+    margin: -10px 0 10px 15px;
+    position: relative;
+    z-index: 1;
+}
+
+table.listadoMails{
+    width: 100%;
+    clear: right;
+}
+table.listadoMails th,
+table.listadoMails td {
+    font-weight: normal;
+    padding: 2px;
+    border-bottom: 1px solid #B2B2B2;
+}
+
+tr.porLeer td {
+    background: #FFF;
+}
+
+.editarElemento {
+    position: relative;
+    float: right !important;
+    display: inline;
+    width: auto !important;
+}
+.editarElemento a {
+    font-size: 0.91em;
+}
+.editarElemento img {
+    cursor: pointer;
+    margin-left: 5px;
+    vertical-align: text-top;
+}
+.editarElemento ul,
+#editar-clon {
+    display: none;
+    position: absolute;
+    z-index: 10;
+    top: 0;
+    font-size: 0.9em;
+    text-align: left;
+    margin-top: 1px;
+    margin-left: -22px; /* debe ser igual a -(padding-left + border-left-width) * 2 */
+    background: #E6E6E6;
+    padding: 5px 10px 10px;
+    border: 1px solid #D9D9D9; 
+z-index: 9990;
+}
+
+.editarElemento li,
+#editar-clon li {
+    padding-bottom: 2px;
+    border-bottom: 1px solid #D9D9D9;
+    margin: 0 0 2px 0 !important;
+    background: none !important;
+    overflow: visible !important;
+}
+#editar-clon li.ultimo {
+    border-bottom: 0;
+}
+.editarElemento li a {
+    font-size: 1em;
+}
+
+/*                                                                                           TagClouds
+------------------------------------------------------------------------------------------------------
+*/
+.tagCloud {
+	font-size:1.25em;
+	text-align:center;
+	background:#F5F5F5;
+	padding:10px;
+	width:97%;
+	margin:0 auto;
+}
+
+.tagCloud big {
+	font-size:1.5em;
+	line-height:1.25em;
+}
+
+.tagCloud small{
+	font-size:0.82em;
+}
+
+#comunidades .tagCloud {
+	font-size:1.05em;
+}
+
+#comunidades .tagCloud big {
+	font-size:1.2em;
+}
+
+#comunidades .tagCloud small{
+	font-size:0.9em;
+}
+
+.tagCloud a {
+    /*white-space: nowrap;  /* Comentado por Riam "Tags en una sola linea" */
+	color:#477CA8;
+	text-decoration:none;
+}
+
+.tagCloud a:hover {
+	color:#8D8D8D;
+	background-position: 0 -25px;
+	text-decoration:none;}
+
+.tagCloud a img {
+	background: url(../img/iconAnyadir.gif) no-repeat 0 0;
+	width: 18px;
+	height: 18px;
+	vertical-align: text-bottom;
+}
+
+.tagCloud a:hover img {
+    background-position: 0 -25px;
+}
+
+
+/*                                                                           No encuentra resultados
+------------------------------------------------------------------------------------------------------
+*/
+
+.noResult {
+	font-size:1.25em;
+	text-align:center;
+	padding:10px;
+	width:97%;
+	margin:0 auto;
+}
+
+/*                                                                           resultados de formularios
+------------------------------------------------------------------------------------------------------
+*/
+div.ko {
+    color: #E24973;
+}
+
+div.ko ul,
+div.ko li {
+	padding-bottom: 4px;
+}
+
+
+/*                                                                           Movimiento de elementos
+------------------------------------------------------------------------------------------------------
+*/
+.botonMovidoIz {
+	margin-right:10px;
+}
+/*                                                                           Elementos modales VerMas------------------------------------------------------------------------------------------------------*/
+.wrap524 div.verMas {
+	width:471px;
+}
+
+/*																			WebTreeNode (JAVIER)
+---------------------------------------------------------------------------------------------------
+*/
+img.WebTreeNode
+{
+	padding-right: 5px; 
+	padding-bottom:2px;
+}
+
+/*
+---------------------------------------------------------------------------------------------------
+*/
+.quitar a
+{
+    cursor: pointer;
+    padding-right: 20px;
+    *width: 20px;
+    *height: 20px;
+	background: url(../images/icoReset.png) no-repeat 100% 0;
+	*background: #FFFFFF url(../images/icoReset.png) no-repeat;
+	/**background-position:left bottom;*/
+	*border: solid thin red;
+	
+	
+	*z-index:1;
+}
+span.quitar
+{
+	*display:inline;
+	*float:left;
+	*border: solid thin red;
+	*margin: 0px 100px;
+    *width: 20px;
+    *height: 20px;
+}
+
+.quitar a:hover 
+{
+	background: url(../images/icoReset2.png) no-repeat 100% 0;
+	*background: url(../images/icoReset2.png) no-repeat;
+}
+
+.cod1
+{
+	text-decoration: line-through;
+	color:#E24973;
+}
+
+.cod2
+{
+	background-color:#666666;
+	color:#FFFFFF;
+}
+
+/*                                                                           entrada y salida
+------------------------------------------------------------------------------------------------------
+*/
+body.entraSale {
+	background-color:#FFF !important;
+	background-image: none;
+	text-align:left;
+}
+
+body.entraSale div {
+	position: absolute;
+	left:40%;
+	top:250px;
+}
+.entraSale p {
+	text-align:left;
+}
+
+.entraSale div img.loader {
+	margin-left:77px;
+	margin-top:20px;
+}
+
+
+
+/*											      ToolTips
+------------------------------------------------------------------------------------------------------
+*/
+.tooltip {
+	position: absolute;
+	z-index: 2000;
+	padding: 3px;
+	border: 1px solid #CCC;
+    	background: #FFF;
+    	text-align: left;
+}
+
+.tooltip .nombre {
+	color:#477CA8;
+	font-weight:bold;
+}
+
+
+
+/**SLIDER DE IMAGENES**/
+.gallery-area{
+	width:920px;
+	margin-top : 20px;
+}
+.gallery{
+	overflow:hidden;
+	width:100%;
+	margin:0 auto;
+}
+#carousel li.active{
+	z-index: 2;
+}
+
+.gallery .text{
+	overflow:hidden;
+	line-height:16px;
+	float:left;
+	position:absolute;
+	width:395px;
+	z-index:10;
+	
+}
+.gallery .text p{margin:0 0 10px;}
+.gallery .title{
+	display:block;
+	font-weight:normal;
+	margin:0 0 8px;
+	color:#6a6a6a;
+	font-size:12px;
+}
+
+
+/*COLORES SLIDER*/
+
+.gallery .items .item.uno.active {
+	background:url(../img/slider/fondos/azul.png) no-repeat;
+}
+
+
+/*-----------*/
+.gallery .items .item.dos.active {
+	background:url(../img/slider/fondos/lila.png) no-repeat;
+}
+
+/*-----------*/
+
+.gallery .items .item.tres.active {
+	background:url(../img/slider/fondos/naranja.png) no-repeat;
+}
+
+/*-----------*/
+
+.gallery .items .item.cuatro.active {
+	background:url(../img/slider/fondos/rosa.png) no-repeat;
+}
+
+/*-----------*/
+
+.gallery .items .item.cinco.active {
+	background:url(../img/slider/fondos/verde.png) no-repeat;
+}
+
+/*-----------*/
+
+.gallery .items .item.seis.active{
+	background:url(../img/slider/fondos/verde-claro.png) no-repeat;
+	opacity:0.7;
+}
+
+
+.switcher{
+	list-style:none;
+	margin:0 0 33px;
+	padding:0;
+	width:100%;
+	overflow:hidden;
+}
+.switcher li{
+	float:left;
+	margin:0 1px 0 0;
+	padding-right:15px;
+}
+.switcher a{
+	float:left;
+	width:8px;
+	height:8px;
+	text-indent:-9999px;
+	overflow:hidden;
+	background: url(http://static.gnoss.com/img/slider/selectors/gris.gif) no-repeat 0 -8px;
+}
+.switcher .active a,
+.switcher a:hover{background-position:0 0px;}
+
+.gallery h2, .gallery h3{margin-bottom:5px; color:#FFF;}
+
+.gallery h3 { margin-bottom:20px; margin-top:0px;}
+.gallery .items {
+	position: relative;
+	height: 328px;
+	width:395px;
+	margin-bottom:15px;
+}
+.gallery .items .item {
+	width: 100%;
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 1;
+	height: 328px;
+	/*background: #f3f3f3;*/
+}
+.gallery .items .active {
+	z-index: 2;
+}
+.gallery .items h2 {
+	/*font-family: 'Ubuntu', arial, serif;*/
+	/*font-family: 'MisoRegular';*/
+	font-size:34px !important;
+	color:#FFF !important;
+	border:none;
+	padding-left:20px;
+	padding-right:20px;	
+	padding-top: 20px;
+	font-weight:bold !important;
+	line-height:1.1;
+}
+
+.gallery .items h2 span{
+	font-size:24px;
+	/*font-family:"Lucida Grande","Lucida Sans Unicode",Helvetica,sans-serif !important;*/
+	font-weight:normal !important;
+}
+
+.gallery .items h2 a {
+	color:#4C4C4C !important;
+	font-size:18px;
+	text-decoration:underline;
+	padding-right:14px;
+}
+
+.gallery .items h2 a:hover {
+	font-weight:bold;
+}
+
+
+#carousel{
+	width:562px;
+	overflow:hidden;
+	position:relative;
+	float:right;
+	height: 374px;
+	margin-right:-20px;
+}
+#carousel ul{
+	padding:0;
+	margin:0;
+	list-style:none;
+}
+#carousel ul img{display:block;}
+#carousel li{
+	width:562px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 1;
+}
+#carousel li.active{
+	z-index: 2;
+}
+
+.imagenAsociada .recursoRSS{
+	width:570px;
+	*margin-top:-50px;
+}
+
+.editarBiografia h4
+{
+	padding: 0;	
+}
+
+/* Facetas (los nombres están reducidos al mínimo para que la respuesta del servicio ocupe lo menos posible)*/
+
+.menuSidebar div.mgb10,
+div.mgb10
+{
+	margin-bottom: 10px;
+}
+
+.menuSidebar a.mgl10
+{
+	margin-left: 10px;
+}
+
+.menuSidebar span.izq
+{
+	float: left;
+}
+
+.menuSidebar span.dcha
+{
+	float: right;
+}
+
+.menuSidebar a.inline
+{
+	display: inline !important;
+}
+
+.menuSidebar input.flt
+{
+	width: 40px; color:gray;
+}
+
+.menuSidebar input.flt-l
+{
+	width: 40px; color:gray; margin-left:10px;
+}
+
+.menuSidebar div.flt70-i,
+.menuSidebar .fechaDesdeHasta input.flt70-i
+{
+	width: 70px; color:gray; display:inline;
+}
+
+.menuSidebar div.flt70,
+.menuSidebar .fechaDesdeHasta input.flt70
+{
+	width: 70px; color:gray;
+}
+
+.menuSidebar img.top
+{
+	vertical-align: top;
+}
+
+.menuSidebar img.imgMas
+{
+	float: left; margin-top: 4px; cursor: pointer;
+}
+
+.menuSidebar div.pdb4
+{
+	padding-bottom: 4px;
+}
+
+#divSelCatTesauro div.externo {
+	background-color:#ddd;
+}
+
+
+/****************AVISOS USUARIOS******************/
+#capaModal .mascara {
+    background: none repeat scroll 0 0 #000000;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;    
+    opacity: 0.7;    
+    z-index: 800;    
+}
+
+#capaModal .modalSup,
+#capaModal .modalInf {
+    height: 15px;
+    width: 435px;
+    position: absolute;
+    top: -15px;
+    left: 0;
+    z-index: 900;
+    background: url(../img/capaModalSup.gif) no-repeat 0 0;
+}
+
+#capaModal .modalInf {
+    top: 100%;
+    background-image: url(../img/capaModalInf.gif)
+}
+
+.notificacionInicio {
+	background: none repeat scroll 0 0 #F0F0F0;   
+    max-height:710px;
+    width: 335px;
+    z-index: 1000;
+    padding: 5px 50px;
+    position: absolute;      
+    left: 50%;
+    margin-left: -218px;
+    margin-top: 65px;     
+    text-align: left;
+    top: 0;    
+}
+/*********************************************/
+/*control grupo editores ontología */
+ul.icoEliminar{}
+ul.icoEliminar li{min-height:18px}
+ul.icoEliminar li .remove{float:right; width:18px; height:18px; text-indent:-6666em; background: url('../img/iconBorrar.gif') no-repeat 0 0}

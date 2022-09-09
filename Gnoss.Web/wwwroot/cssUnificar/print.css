@@ -1,0 +1,13 @@
+@charset "utf-8";
+/* Impresion */
+@media print { 
+    body {
+ 	    font: 12pt/1.5em georgia, serif;
+	    background: #ffffff;
+	    color: #000000;
+    }
+
+    a img {
+	    border: 0;
+    }
+}

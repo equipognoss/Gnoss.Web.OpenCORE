@@ -1,0 +1,23 @@
+﻿@model AdministrarComunidadGeneralModel.ImageCoordenadas
+
+Imagen del logo:
+<div class="panContenedorImagen" style="@(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "") margin-bottom:140px;">
+    <img src="@(string.IsNullOrEmpty(Model.Ruta) ? "" : Model.Ruta + "?" + Guid.NewGuid().ToString())" id="ImageLogo_Ruta">
+    <input type="hidden" value="@Model.Ruta" id="ImageLogo_src" />
+</div>
+<div class="panImgSize" style="display:none">
+    <input type="hidden" id="ImageLogo_Pos_X_0" value="@Model.Pos_X_0" />
+    <input type="hidden" id="ImageLogo_Pos_Y_0" value="@Model.Pos_Y_0" />
+    <input type="hidden" id="ImageLogo_Pos_X_1" value="@Model.Pos_X_1" />
+    <input type="hidden" id="ImageLogo_Pos_Y_1" value="@Model.Pos_Y_1" />
+</div>
+<div class="panAccionesNew" style="@(!string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
+    <input type="button" id="addImgLogo" value="Seleccionar imagen" onclick="$('#fileUploadAddImgLogo').trigger('click')" />
+    <input type="file" style="display:none" id="fileUploadAddImgLogo" accept="image/*" />
+</div>
+<div  class="panAccionesChange" style="@(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
+    <input type="button" id="changeImgLogo" value="Cambiar imagen" onclick="$('#fileUploadChangeImgLogo').trigger('click')" />
+    <input type="file" style="display:none" id="fileUploadChangeImgLogo" accept="image/*" />
+    <input type="button" id="eliminarImgLogo" value="Eliminar imagen" />
+</div>
+<div id="lblErrorImgLogo" class="error general" style="display:none"></div>

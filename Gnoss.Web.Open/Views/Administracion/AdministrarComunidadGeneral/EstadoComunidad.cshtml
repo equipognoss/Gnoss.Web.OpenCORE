@@ -1,0 +1,84 @@
+﻿@model AdministrarComunidadGeneralModel.StateCommunity
+@{
+    CommunityModel Comunidad = Html.GetComunidad(); 
+}
+
+<h3>@Html.GetText("COMMON", "ADMINCOMTITESTADOCOMUNIDAD")</h3>
+<div class="contenedor">
+    <p>
+        @Html.GetText("COMADMIN", "ESTADO")
+        @if (Model.State.Equals((short)EstadoProyecto.Definicion))
+        {
+            <span style="font-weight:bold;">@Html.GetText("COMADMIN", "DEFINICION")</span>
+            <input type="hidden" id="cmbEstado" value="2" />
+        }
+        else
+        {
+            <select style="width:250px" id="cmbEstado" name="cmbEstado">
+                @if (Model.State.Equals((short)EstadoProyecto.Cerrado))
+                {
+                    <option value="0" selected="selected">@Html.GetText("COMADMIN", "CERRADO")</option>
+                }
+                <option value="1" @Html.Raw(Model.State.Equals((short)EstadoProyecto.CerradoTemporalmente) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "CERRADOTMP")</option>
+
+                <option value="3" @Html.Raw(Model.State.Equals((short)EstadoProyecto.Abierto) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "ABIERTO")</option>
+                <option value="4" @Html.Raw(Model.State.Equals((short)EstadoProyecto.Cerrandose) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "CERRANDOSE")</option>
+            </select>
+        }
+    </p>
+    @if (Model.State.Equals((short)EstadoProyecto.Definicion))
+    {
+        <div id="estado2" class="explicacionEstado activo">
+            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONDEFINICION"))
+            <input id="lbAbrirCom" class="abrirComunidad" @(!Model.CanBeOpened ? "disabled" : "") value="@Html.GetText("COMADMIN", "ABRIRCOM")" />
+        </div>
+        <div id="opcionestado2" class="opcionesEstado activo">
+            @{
+                string urlAdminCat = @Html.GetGeneradorURLs().ObtenerURLComunidad(Html.GetUtilIdiomas(), Html.GetBaseUrlIdioma(), Comunidad.ShortName) + "/" + Html.GetText("URLSEM", "ADMINISTRARCATEGORIASCOM");
+            }
+            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONABRIRCOM", urlAdminCat));
+        </div>
+    }
+    else
+    {
+        <div id="estado0" class="explicacionEstado">
+            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRADA", Html.GetNombreProyectoEcosistema()))
+        </div>
+        <div id="estado1" class="explicacionEstado">
+            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRADATMP"))
+        </div>
+        <div id="estado3" class="explicacionEstado">
+            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONABIERTA"))
+        </div>
+        <div id="estado4" class="explicacionEstado">
+            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRANDOSE", Html.GetNombreProyectoEcosistema()))
+        </div>
+        <div id="opcionestado0" class="opcionesEstado">
+        </div>
+        <div id="opcionestado1" class="opcionesEstado">
+            Fecha de reapertura (YYYY/MM/DD)
+            <input type="text" class="selDesde" id="txtFechaReapertura" name="txtFechaReapertura" value="@(!Model.ReOpenDate.Equals(DateTime.MinValue) ? Model.ReOpenDate.ToString("yyyy/MM/dd") : "")">
+            @Html.Raw(Html.GetText("COMADMIN", "MOTIVOCIERRETMP"))
+            <textarea id="txtMotivoCierre" rows="4" name="txtMotivoCierre">@Model.CauseOfClose</textarea>
+        </div>
+        <div id="opcionestado3" class="opcionesEstado">
+        </div>
+        <div id="opcionestado4" class="opcionesEstado">
+            <p>
+                @Html.GetText("COMADMIN", "DIASDEGRACIA")
+                <select style="width: 50px;" id="ddlDiasGracia" name="ddlDiasGracia">
+                    <option value="5" @Html.Raw(Model.DaysOfGrace.Equals(5) ? "selected=\"selected\"" : "")>5</option>
+                    <option value="10" @Html.Raw(Model.DaysOfGrace.Equals(10) ? "selected=\"selected\"" : "")>10</option>
+                    <option value="15" @Html.Raw(Model.DaysOfGrace.Equals(15) ? "selected=\"selected\"" : "")>15</option>
+                    <option value="20" @Html.Raw(Model.DaysOfGrace.Equals(20) ? "selected=\"selected\"" : "")>20</option>
+                    <option value="25" @Html.Raw(Model.DaysOfGrace.Equals(25) ? "selected=\"selected\"" : "")>25</option>
+                    <option value="30" @Html.Raw(Model.DaysOfGrace.Equals(30) ? "selected=\"selected\"" : "")>30</option>
+                </select>
+            </p>
+            <p>
+                @Html.GetText("COMADMIN", "FECHACIERRE") <span id="fechaFinalGracia"></span>
+            </p>
+        </div>
+    }
+</div>
+<div id="infoAbrirCom" class="ok general" style="display:none"></div>

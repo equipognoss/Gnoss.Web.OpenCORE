@@ -1,0 +1,696 @@
+﻿@model AdministrarComunidadGeneralModel
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/JCrop/css/Jcrop.css?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMIN", "INFOGENERAL")</h1>
+    <div>
+        <form autocomplete="off">
+            @{
+                string idiomas = "";
+
+                foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+                {
+                    idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+                }
+            }
+            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
+            <input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto">
+            <input type="text" style="display: none" id="txtHayCambios" name="txtHayCambios">
+
+            <div id="panEstadoComunidad">
+                @Html.PartialView("EstadoComunidad", Model.State)
+            </div>
+            <div id="panInfoComunidad">
+                <h4>@Html.GetText("COMMON", "ADMINCOMTITINFORMACION")</h4>
+                <div class="contenedor">
+                    <p>
+                        @Html.GetText("COMMON", "NOMBRE"):
+                        <input type="text" id="txtNombre" value="@Model.Name" name="txtNombre">
+                    </p>
+                    <p>
+                        @Html.GetText("COMADMIN", "NOMBRECORTO"):
+                        <input type="text" id="txtNombreCorto" value="@Comunidad.ShortName" name="txtNombreCorto" disabled="disabled">
+                    </p>
+                    <p>
+                        @Html.GetText("COMADMIN", "TIPOACCESO")
+                        <input type="text" id="txtTipoAcceso" value="@((TipoAcceso)((short)Comunidad.AccessType))" name="txtTipoAcceso" disabled="disabled">
+                    </p>
+                    <p>
+                        @Html.GetText("COMMON", "DESCRIPCION"):
+                        <textarea id="txtDescripcion" rows="6" name="txtDescripcion">@Model.Desciption</textarea>
+                    </p>
+                    <h4>Imágenes de la comunidad</h4>
+                    <ul>
+                        <li>Dimensión de las imágenes  mínimo (60 px x 20 px)  máximo (850 px x 400 px)</li>
+                        <li>Tamaño máximo de cada archivo de imagen: 10Mb</li>
+                    </ul>
+                    <div id="imgCabecera">
+                        @Html.PartialView("ImagenCabecera", Model.ImageHead)
+                    </div>
+                    <div id="imgLogo">
+                        @Html.PartialView("ImagenLogo", Model.ImageLogo)
+                    </div>
+                </div>
+            </div>
+            <div id="panelTagsCategorias">
+                <h4>@Html.GetText("COMMON", "ADMINCOMTITENGNOSS", Html.GetNombreProyectoEcosistema())</h4>
+                <div class="contenedor">
+                    <p>
+                        @Html.GetText("COMADMIN", "EXPLICACIONTAGSYCATEGORIAS", Html.GetNombreProyectoEcosistema())
+                    </p>
+                    <p>
+                        @Html.GetText("COMMON", "ETIQUETAS"):
+                        <textarea id="txtEtiquetas" rows="4" name="txtEtiquetas">@Model.Tags</textarea>
+                    </p>
+                    <p>
+                        @Html.GetText("COMMON", "ADMINCOMTEXTOCATEGORIAS", Html.GetNombreProyectoEcosistema())
+                    </p>
+                    @Html.PartialView("_SeleccionarCategoriasMetaproyecto", Model)
+                </div>
+            </div>
+            <div id="panelIdiomasComunidad">
+                <h4>@Html.GetText("COMADMIN", "IDIOMACOMUNIDAD")</h4>
+                <div class="contenedor">
+                    <p>
+                        @{ 
+                            string urlAdminCat = Comunidad.Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCATEGORIASCOM");
+                            string urlAdminGadgets = Comunidad.Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCONTEXTOSCOM");
+                        }
+
+                        @Html.Raw(Html.GetText("COMADMIN", "DESCRIPCIONIDIOMACOMUNIDAD", urlAdminCat, urlAdminGadgets, Html.GetNombreProyectoEcosistema()))
+                    </p>
+                    <span @Html.Raw(Model.HasMultiLanguageObjects?"disabled=\"disabled\"":"")>
+                        <input type="checkbox" @Html.Raw(Model.HasMultiLanguageObjects?"disabled=\"disabled\"":"") @Html.Raw(Model.MultiLanguage? "checked=\"checked\"" : "") name="chkIdioma" id="chkIdioma" >
+                        @Html.GetText("COMADMIN", "ACTIVARIDIOMACOMUNIDAD")
+                    </span>
+                    <select id="ddlIdioma" name="ddlIdioma"  @Html.Raw(!Model.MultiLanguage?"disabled=\"disabled\"":"")>
+                        @foreach (string idiomaKey in Model.ListaIdiomasPlataforma.Keys)
+                        {
+                            <option value="@idiomaKey" @Html.Raw(idiomaKey.Equals(Model.IdiomaPorDefecto)?"selected=\"selected\"":"")>@Model.ListaIdiomasPlataforma[idiomaKey]</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <input type="button" id="guardarTodo" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+</div>
+
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/JCrop/js/Jcrop.js?v=@Html.GetVersion()"></script>
+
+<script type="text/javascript">
+    var OperativaAcciones = {
+        init: function (panelID) {
+            this.config(panelID);
+            this.engancharMultiIdioma();
+            this.engancharJCropHead();
+            this.engancharJCropLogo();
+            this.engancharComportamientos();
+        },
+        config: function (panelID) {
+            this.urlPagina = document.location.href;
+            this.cargarIdiomas();
+            return;
+        },
+        engancharComportamientos: function () {
+            var that = this;
+            $('#cmbEstado').change(function(){
+                cambiarDescEstadoCom(this);
+                Cambios('true');
+            });
+            $('#txtFechaReapertura').change(function(){
+                Cambios('true');
+            });
+            $('#txtMotivoCierre').change(function(){
+                Cambios('true');
+            });
+            $('#ddlDiasGracia').change(function(){
+               cambiarFechaFin(this);
+                Cambios('true');
+            });
+            $('#txtNombre').change(function(){
+                Cambios('true');
+            });
+            $('#txtEtiquetas').change(function(){
+                Cambios('true');
+            });
+            $('.imgSelectorCat').click(function(){
+                MVCDesplegarTreeView(this);
+            });
+            $('#chkIdioma').click(function () {
+                if ($(this).is(':checked')) {
+                    $('#ddlIdioma').removeAttr('disabled');
+                } else {
+                    $('#ddlIdioma').attr('disabled', 'disabled');
+                }
+            });
+            $('#lbAbrirCom').click(function () {
+                that.abrirCom();
+            });
+            $('#guardarTodo').click(function () {
+                that.guardarTodo();
+            });
+
+            $('#cmbEstado').trigger('change');
+            $('#ddlDiasGracia').trigger('change');
+        },
+        abrirCom: function (fileUpload) {
+            $('#lblErrorAbrirCom').hide();
+            var that = this;
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/open-community',
+                null,
+                true
+            ).done(function (response) {
+                $('#panEstadoComunidad').html(response);
+                $('#infoAbrirCom').removeClass('ko').addClass('ok').html('La comunidad se ha abierto correctamente').show();
+                OcultarUpdateProgress();
+            }).fail(function (error) {
+                $('#infoAbrirCom').removeClass('ok').addClass('ko').html(error).show();
+                OcultarUpdateProgress();
+            });
+        },
+        subirImagenHead: function (fileUpload) {
+            $('#lblErrorImgCabecera').hide();
+            var that = this;
+            MostrarUpdateProgress();
+            var dataPost = new FormData();
+            var files = fileUpload.get(0).files;
+            if (files.length > 0) {
+                dataPost.append("fileUpload", files[0]);
+            }
+
+            GnossPeticionAjax(
+                that.urlPagina + '/upload-head-image',
+                dataPost,
+                true
+            ).done(function (response) {
+                $('#imgCabecera').html(response);
+                that.engancharJCropHead();
+                OcultarUpdateProgress();
+            }).fail(function (error) {
+                $('#lblErrorImgCabecera').html(error);
+                $('#lblErrorImgCabecera').show();
+                OcultarUpdateProgress();
+            });
+        },
+        subirImagenLogo: function (fileUpload) {
+            $('#lblErrorImgLogo').hide();
+            var that = this;
+            MostrarUpdateProgress();
+            var dataPost = new FormData();
+            var files = fileUpload.get(0).files;
+            if (files.length > 0) {
+                dataPost.append("fileUpload", files[0]);
+            }
+
+            GnossPeticionAjax(
+                that.urlPagina + '/upload-logo-image',
+                dataPost,
+                true
+            ).done(function (response) {
+                $('#imgLogo').html(response);
+                that.engancharJCropLogo();
+                OcultarUpdateProgress();
+            }).fail(function (error) {
+                $('#lblErrorImgLogo').html(error);
+                $('#lblErrorImgLogo').show();
+                OcultarUpdateProgress();
+            });
+        },
+        resizeJCropHead: function () {
+            var that = this;
+            var Alto = $('#ImageHead_Alto').val();
+            var Ancho = $('#ImageHead_Ancho').val();
+
+            $('#imgCabecera .panImgSize').css('margin-top', (parseInt(Alto) + 20) + 'px');
+
+            that.jcropThumbnail.resize(Ancho, Alto);
+        },
+        engancharJCropHead: function () {
+            var that = this;
+            try {
+                var Pos_X_0 = parseInt($('#ImageHead_Pos_X_0').val());
+                var Pos_Y_0 = parseInt($('#ImageHead_Pos_Y_0').val());
+                var Pos_X_1 = parseInt($('#ImageHead_Pos_X_1').val());
+                var Pos_Y_1 = parseInt($('#ImageHead_Pos_Y_1').val());
+
+                var Alto = $('#ImageHead_Alto').val();
+                var Ancho = $('#ImageHead_Ancho').val();
+
+                $('#ImageHead_Ruta').Jcrop({
+                    aspectRatio: 0,
+                    setSelect: [Pos_X_0, Pos_Y_0, Pos_X_1 - Pos_X_0, Pos_Y_1 - Pos_Y_0]
+                }, function () {
+                    that.jcrop_api = this;
+                    that.jcropThumbnail = this.initComponent('Thumbnailer', { width: Ancho, height: Alto });
+
+                    this.container.on('cropmove', function (e, s, c) {
+                        $('#ImageHead_Pos_X_0').val(c.x);
+                        $('#ImageHead_Pos_Y_0').val(c.y);
+                        $('#ImageHead_Pos_X_1').val(c.x2);
+                        $('#ImageHead_Pos_Y_1').val(c.y2);
+                    });
+                });
+            }
+            catch (err) { }
+
+            $('#ImageHead_Alto').change(function () {
+                that.resizeJCropHead();
+            });
+            $('#ImageHead_Ancho').change(function () {
+                that.resizeJCropHead();
+            });
+            $('#eliminarImgCabecera').click(function () {
+                that.jcrop_api.destroy();
+                $('#ImageHead_Ruta').attr('src', '');
+                $('#ImageHead_src').val('');
+                $('#imgCabecera .panAccionesNew').show();
+                $('#imgCabecera .panAccionesChange').hide();
+                $('#imgCabecera .panContenedorImagen').hide();
+                $('#imgCabecera .panImgSize').hide();
+            });
+            $('#fileUploadChangeImgCabecera').change(function () {
+                that.subirImagenHead($(this));
+            });
+            $('#fileUploadAddImgCabecera').change(function () {
+                that.subirImagenHead($(this));
+            });
+        },
+        engancharJCropLogo: function () {
+            var that = this;
+            try {
+                var Pos_X_0 = parseInt($('#ImageLogo_Pos_X_0').val());
+                var Pos_Y_0 = parseInt($('#ImageLogo_Pos_Y_0').val());
+                var Pos_X_1 = parseInt($('#ImageLogo_Pos_X_1').val());
+                var Pos_Y_1 = parseInt($('#ImageLogo_Pos_Y_1').val());
+
+                $('#ImageLogo_Ruta').Jcrop({
+                    aspectRatio: 1,
+                    setSelect: [Pos_X_0, Pos_Y_0, Pos_X_1 - Pos_X_0, Pos_Y_1 - Pos_Y_0]
+                }, function () {
+                    that.jcropLogo_api = this;
+                    that.jcropLogoThumbnail = this.initComponent('Thumbnailer', { width: 120, height: 120 });
+
+                    this.container.on('cropmove', function (e, s, c) {
+                        $('#ImageLogo_Pos_X_0').val(c.x);
+                        $('#ImageLogo_Pos_Y_0').val(c.y);
+                        $('#ImageLogo_Pos_X_1').val(c.x2);
+                        $('#ImageLogo_Pos_Y_1').val(c.y2);
+                    });
+                });
+            }
+            catch (err) { }
+
+            $('#eliminarImgLogo').click(function () {
+                that.jcropLogo_api.destroy();
+                $('#ImageLogo_Ruta').attr('src', '');
+                $('#ImageLogo_src').val('');
+                $('#imgLogo .panAccionesNew').show();
+                $('#imgLogo .panAccionesChange').hide();
+                $('#imgLogo .panContenedorImagen').hide();
+            });
+            $('#fileUploadChangeImgLogo').change(function () {
+                that.subirImagenLogo($(this));
+            });
+            $('#fileUploadAddImgLogo').change(function () {
+                that.subirImagenLogo($(this));
+            });
+        },
+        engancharMultiIdioma: function () {
+            var that = this;
+            var inputTitulo = $('#txtNombre');
+            var textareaDescripcion = $('#txtDescripcion');
+            if (that.ListaIdiomas.length > 1) {
+                that.montarMultidioma(inputTitulo);
+                that.montarMultidioma(textareaDescripcion);
+
+                componenteTabulado.init();
+            }
+            else {
+                textareaDescripcion.addClass("cke mensajes");
+            }
+
+
+        },
+        obtenerTextoYClaveDeIdioma: function (texto) {
+            var that = this;
+            var idioma = that.IdiomaPorDefecto;
+            var textoIdioma = texto;
+            if (textoIdioma.length > 3) {
+                var indice = 3;
+                var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
+                if (auxIdioma[0] == '-' && textoIdioma.length > 6) {
+                    indice = 6;
+                    auxIdioma = textoIdioma.substr(textoIdioma.length - 6);
+                }
+                if (auxIdioma[0] == '@('@')') {
+                    idioma = auxIdioma.substr(1);
+                    textoIdioma = textoIdioma.substr(0, textoIdioma.length - indice);
+                }
+            }
+            return { "key": idioma, "value": textoIdioma };
+        },
+        montarMultidioma: function (input) {
+            var that = this;
+
+            var esTextArea = input.is('textarea');
+            if (esTextArea) { input.css("display", "none"); }
+            else { input.attr("type", "hidden"); }
+
+            var textoMultiIdioma = input.val().split('|||')
+            var listaTextos = [];
+            $.each(textoMultiIdioma, function () {
+                if (this != "") {
+                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
+                    listaTextos.push(objetoIdioma);
+                }
+            });
+
+            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma_' + input.attr("id") + '" ><div class=" acciones tabspresentation "><ul>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
+            });
+
+            htmlMultIdioma += '</ul></div>';
+
+            $.each(that.ListaIdiomas, function (id, idioma) {
+                var key = idioma.key;
+                var value = idioma.value;
+                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
+                var textoIdioma = listaTextos.findValueByKey(key);
+                if (textoIdioma == null || textoIdioma == '')
+                {
+                    if (key.indexOf('-') > 0) {
+                        var keyAux = key.substr(0, key.indexOf('-'));
+                        textoIdioma = listaTextos.findValueByKey(keyAux);
+                    }
+                    if (textoIdioma == null || textoIdioma == '') {
+                        if (esIdiomaPorDefecto) {
+                            textoIdioma = listaTextos[0].value;
+                        }
+                        else {
+                            textoIdioma = '';
+                        }
+                    }
+                }
+
+                htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + input.attr("id") + '_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p>';
+
+                if (esTextArea) { htmlMultIdioma += '<textarea id="texto_' + key + '" class="cke mensajes">' + textoIdioma + '</textarea>'; }
+                else { htmlMultIdioma += '<input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma.replace(/\'/g, "\'").replace(/\"/g, '&quot;') + '" />'; }
+
+                htmlMultIdioma += '</p></div>';
+
+            });
+
+            htmlMultIdioma += '</div>';
+
+            input.before(htmlMultIdioma);
+
+            RecargarTodosCKEditor();
+        },
+        cargarIdiomas: function (bototnEditar) {
+            var that = this;
+
+            that.IdiomaPorDefecto = $('#idiomaDefecto').val();
+
+            var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
+            that.ListaIdiomas = []
+
+            $.each(idiomasComunidad, function () {
+                if (this != "") {
+                    that.ListaIdiomas.push({ "key": this.split('|')[0], "value": this.split('|')[1] });
+                }
+            });
+        },
+        guardarTodo: function () {
+            var that = this;
+            $('.ok.general').remove();
+            $('.error').remove();
+            if (!that.comprobarErroresGuardado()) {
+                that.Options = {};
+                that.obtenerDatos();
+                that.guardar();
+            }
+            else {
+                that.mostrarErrorGuardado();
+            }
+        },
+        obtenerDatos: function () {
+            var that = this;
+            that.Options['State.State'] = $("#cmbEstado").val();
+            that.Options['State.ReOpenDate'] = $("#txtFechaReapertura").val();
+            that.Options['State.CauseOfClose'] = encodeURIComponent($("#txtMotivoCierre").val());
+            that.Options['State.DaysOfGrace'] = $("#ddlDiasGracia").val();
+
+            that.Options['Name'] = $("#txtNombre").val();
+            that.Options['Desciption'] = encodeURIComponent($("#txtDescripcion").val());
+
+            that.Options['ImageHead.Ruta'] = $("#ImageHead_src").val();
+            that.Options['ImageHead.Pos_X_0'] = $("#ImageHead_Pos_X_0").val();
+            that.Options['ImageHead.Pos_Y_0'] = $("#ImageHead_Pos_Y_0").val();
+            that.Options['ImageHead.Pos_X_1'] = $("#ImageHead_Pos_X_1").val();
+            that.Options['ImageHead.Pos_Y_1'] = $("#ImageHead_Pos_Y_1").val();
+            that.Options['ImageHead.Alto'] = $("#ImageHead_Alto").val();
+            that.Options['ImageHead.Ancho'] = $("#ImageHead_Ancho").val();
+
+            that.Options['ImageLogo.Ruta'] = $("#ImageLogo_src").val();
+            that.Options['ImageLogo.Pos_X_0'] = $("#ImageLogo_Pos_X_0").val();
+            that.Options['ImageLogo.Pos_Y_0'] = $("#ImageLogo_Pos_Y_0").val();
+            that.Options['ImageLogo.Pos_X_1'] = $("#ImageLogo_Pos_X_1").val();
+            that.Options['ImageLogo.Pos_Y_1'] = $("#ImageLogo_Pos_Y_1").val();
+
+
+            that.Options['Tags'] = $("#txtEtiquetas").val().trim();
+            ObtenerDatosCategorias(that.Options);
+
+            that.Options['MultiLanguage'] = $("#chkIdioma").is(':checked');
+            that.Options['IdiomaPorDefecto'] = $("#ddlIdioma").val();
+        },
+        mostrarErrorGuardado: function () {
+            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div>');
+        },
+        comprobarErroresGuardado: function () {
+            var that = this;
+
+            var error = that.comprobarErrorTitulo();
+            var error = that.comprobarErrorDescripcion();
+
+            return error;
+        },
+        comprobarErrorTitulo: function () {
+            var that = this;
+            var inputTitulo = $('#txtNombre');
+            var panMultiIdioma = $('#edicion_multiidioma_' + inputTitulo.attr("id"));
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = $('#edicion_' + inputTitulo.attr("id") + '_' + that.IdiomaPorDefecto + ' input', panMultiIdioma).val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    $('input.guardarTodo').before('<div class="error general">El nombre en ' + that.ListaIdiomas.findValueByKey(that.IdiomaPorDefecto) + ' no puede estar vacia</div>');
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = $('#edicion_' + inputTitulo.attr("id") + '_' + idioma + ' input', panMultiIdioma).val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputTitulo.val(textoMultiIdioma);
+            }
+            return false;
+        },
+        comprobarErrorDescripcion: function () {
+            var that = this;
+            var inputDescription = $('#txtDescripcion');
+            var panMultiIdioma = $('#edicion_multiidioma_' + inputDescription.attr("id"));
+            var listaTextos = [];
+            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+                var textoMultiIdioma = "";
+
+                var textoIdiomaDefecto = $('#edicion_' + inputDescription.attr("id") + '_' + that.IdiomaPorDefecto + ' textarea', panMultiIdioma).val();
+                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                    $('input.guardarTodo').before('<div class="error general">La descripcion en' + that.ListaIdiomas.findValueByKey(that.IdiomaPorDefecto) + ' no puede estar vacia</div>');
+                    return true;
+                }
+
+                $.each(that.ListaIdiomas, function () {
+                    var idioma = this.key;
+                    var textoIdioma = $('#edicion_' + inputDescription.attr("id") + '_' + idioma + ' textarea', panMultiIdioma).val();
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = textoIdiomaDefecto;
+                    }
+                    else {
+                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
+                    }
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputDescription.val(textoMultiIdioma);
+            }
+            return false;
+        },
+        guardar: function () {
+            var that = this;
+            MostrarUpdateProgress();
+            GnossPeticionAjax(
+                that.urlPagina + '/save',
+                that.Options,
+                true
+            ).done(function (data) {
+                that.mostrarGuardadoOK();
+            }).fail(function (data) {
+                var error = data.split('|||');
+                that.mostrarErrorGuardado();
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        },
+        mostrarGuardadoOK: function () {
+            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
+        }
+    }
+
+    $(document).ready(function () {
+        Array.prototype.findValueByKey = function (key) {
+            var resultado = $.grep(this, function (array) {
+                return array.key == key;
+            });
+
+            if (resultado[0] != null)
+            {
+                return resultado[0].value;
+            }
+
+            return null;
+        };
+
+        OperativaAcciones.init();
+    });
+
+    function Cambios(valor) {
+        $('#txtHayCambios').val(valor);
+    }
+
+    function ComprobarCambios() {
+        $('#txtDescripcion').val();
+        if ((hayCambios || $('#txtHayCambios').val() == 'true') && !esRedireccionadaPorSiMisma) {
+            return (form.perderdatosbio);
+        }
+    }
+
+    function cambiarDescEstadoCom(ddl)
+    {
+        $('.explicacionEstado').removeClass('activo');
+        $('#estado' + ddl.value).addClass('activo');
+
+        $('.opcionesEstado').removeClass('activo');
+        $('#opcionestado' + ddl.value).addClass('activo');
+
+        $('#panEstadoComunidad .contenedor').removeClass('activo');
+        if(ddl.value != 3)
+        {
+            $('#panEstadoComunidad .contenedor').addClass('activo');
+        }
+    }
+
+    function cambiarFechaFin(ddl)
+    {
+        var miFecha= new Date();
+        miFecha.setDate(miFecha.getDate() + (ddl.value * 1));
+
+        var fechaFormato = tiempo.fechaBarras.replace('@("@1@")', miFecha.getDate()).replace('@("@2@")', (miFecha.getMonth()+1)).replace('@("@3@")', miFecha.getFullYear());
+
+        $("#fechaFinalGracia").html(fechaFormato);
+    }
+</script>
+
+<style>
+    div.content input[type="text"],
+    div.content textarea {
+        width: 100%;
+    }
+    
+    #panEstadoComunidad,
+    #panInfoComunidad,
+    #panelTagsCategorias,
+    #panelTipoComunidad,
+    #panelIdiomasComunidad{
+        margin-top: 20px;
+    }
+
+    #panEstadoComunidad .contenedor,
+    #panInfoComunidad .contenedor,
+    #panelTagsCategorias .contenedor,
+    #panelTipoComunidad .contenedor,
+    #panelIdiomasComunidad .contenedor{
+        padding: 10px;
+    }
+
+    input.jcropText{
+        width: 100px !important;
+    }
+
+    .jcrop-thumb {
+      border: 1px black solid;
+    }
+    
+    .opcionesEstado,
+    .explicacionEstado {
+        display: none;
+    }
+
+    .opcionesEstado.activo,
+    .explicacionEstado.activo {
+        display: block;
+    }
+
+    #panEstadoComunidad .contenedor.activo {
+        background: #F5F5C3;
+    }
+
+    #imgLogo{
+        margin-top: 20px;
+    }
+
+    input.abrirComunidad {
+        background-color: #8186bd;
+        border: medium none;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+
+    input.abrirComunidad:disabled {
+        background-color: #eee;
+        color:#000;
+        border: 1px solid #ccc;
+    }
+
+</style>

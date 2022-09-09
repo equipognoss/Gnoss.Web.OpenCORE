@@ -1,0 +1,58 @@
+﻿@model string
+@*
+Descripción
+-----------------------------------------------
+Vista modal que se utiliza para mostrar la política de privacidad de la Gnoss.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+@* Título de la política de privacidad *@
+string titulo = Html.GetText("POLITICAPRIVACIDAD", "TITULO");
+@* Contenido de la política de privacidad *@
+string descripcion = "";
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista Modal que muestra la política de privacidad de la empresa --------------------
+*@
+
+@* Controlar el título que tendrá la página *@
+@{
+
+    if (string.IsNullOrEmpty(Model))
+    {
+        descripcion = Html.GetText("POLITICAPRIVACIDAD", "INFO");
+    }
+    else
+    {
+        descripcion = Model;
+    }
+}
+
+@*<div id="modal-politica-privacidad" class="modal modal-top fade modal--wide-content" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">*@
+            <div class="modal-header">
+                <p class="modal-title"><span class="material-icons">privacy_tip</span>@titulo</p>
+            </div>
+            <div class="modal-body">
+                <div class="box form activeForm" id="action">
+                    <div id="clausulasTextoGenericas" class="politica-privacidad">
+                        <div>
+                            <fieldset>
+                            @Html.Raw(descripcion)
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+                <span class="btn btn-primary " data-dismiss="modal" aria-label="Close">
+                    @Html.GetText("COMMON", "CERRAR")
+                </span>
+            </div>
+@*
+        </div>
+    </div>
+</div>*@

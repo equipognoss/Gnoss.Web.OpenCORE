@@ -1,0 +1,318 @@
+﻿@model TabModel
+
+@{
+    TabModel pestanya = Model;
+    List<FacetaModel> listaFacetas = new List<FacetaModel>();
+    AdministrarFacetasEnPestanyasViewModel facetaPest = new AdministrarFacetasEnPestanyasViewModel();
+    facetaPest.ListadoFacetas = new List<FacetaModel>();
+    List<TabModel.FacetasTabModel> lista = new List<TabModel.FacetasTabModel>();
+    if (pestanya.Type.Equals(TipoPestanyaMenu.Recursos) || pestanya.Type.Equals(TipoPestanyaMenu.Home) || pestanya.Type.Equals(TipoPestanyaMenu.BusquedaSemantica))
+    {
+        lista = pestanya.ListaFacetas;
+    }
+
+    //facetaPest.FacetasPestanya = pestanya.ListaFacetas;
+    //facetaPest.Pestanya = pestanya;
+    //facetaPest.ListadoFacetas = listaFacetas;
+}
+
+<section class="panEdicion" name="@pestanya.Key">
+    <div>
+        <input type="hidden" name="ParentTabKey" value="@pestanya.ParentTabKey" />
+        <input type="hidden" name="TabOrden" value="@pestanya.Order" />
+        <input type="hidden" name="TabEliminada" value="false" />
+        <input type="hidden" name="TabShortName" value="@pestanya.ShortName" />
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "NOMBRE")">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</span>
+            <input type="@(pestanya.EsNombrePorDefecto?"hidden":"text")" name="TabName" value="@pestanya.Name" @(pestanya.EsNombrePorDefecto ? "disabled" : "") />
+            @if (pestanya.EsNombrePorDefecto)
+            {
+                <input type="text" class="tabNameAux" value="@Html.ObtenerTextoIdiomaUsuario(pestanya.Name)" disabled />
+                <a class="editDefaultName">@Html.GetText("COMMON", "EDITAR")</a>
+            }
+        </p>
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "TIPOPESTANYA")</span>
+            @{
+                string nombreTipoPestanya = "";
+
+                switch (pestanya.Type)
+                {
+                    case TipoPestanyaMenu.Home:
+                        nombreTipoPestanya = Html.GetText("COMMON", "HOME");
+                        break;
+                    case TipoPestanyaMenu.Indice:
+                        nombreTipoPestanya = Html.GetText("COMMON", "INDICE");
+                        break;
+                    case TipoPestanyaMenu.Recursos:
+                        nombreTipoPestanya = Html.GetText("COMMON", "RECURSOS");
+                        break;
+                    case TipoPestanyaMenu.Preguntas:
+                        nombreTipoPestanya = Html.GetText("COMMON", "PREGUNTAS");
+                        break;
+                    case TipoPestanyaMenu.Debates:
+                        nombreTipoPestanya = Html.GetText("COMMON", "DEBATES");
+                        break;
+                    case TipoPestanyaMenu.Encuestas:
+                        nombreTipoPestanya = Html.GetText("COMMON", "ENCUESTAS");
+                        break;
+                    case TipoPestanyaMenu.PersonasYOrganizaciones:
+                        nombreTipoPestanya = Html.GetText("COMMON", "PERSONASYORGANIZACIONES");
+                        break;
+                    case TipoPestanyaMenu.AcercaDe:
+                        nombreTipoPestanya = Html.GetText("COMMON", "ACERCADE");
+                        break;
+                    case TipoPestanyaMenu.CMS:
+                        nombreTipoPestanya = Html.GetText("COMMON", "CMS");
+                        break;
+                    case TipoPestanyaMenu.BusquedaSemantica:
+                        nombreTipoPestanya = Html.GetText("COMMON", "BUSQUEDASEMANTICA");
+                        break;
+                    case TipoPestanyaMenu.EnlaceInterno:
+                        nombreTipoPestanya = Html.GetText("COMMON", "ENLACEINTERNO");
+                        break;
+                    case TipoPestanyaMenu.EnlaceExterno:
+                        nombreTipoPestanya = Html.GetText("COMMON", "ENLACEEXTERNO");
+                        break;
+                    case TipoPestanyaMenu.BusquedaAvanzada:
+                        nombreTipoPestanya = Html.GetText("COMMON", "BUSQUEDAAVANZADA");
+                        break;
+                }
+            }
+            <input type="hidden" name="TabType" value="@pestanya.Type" />
+            <input type="text" class="nombreTipoPestanya" disabled value="@nombreTipoPestanya" />
+        </p>
+        @if (pestanya.Type == TipoPestanyaMenu.CMS && !pestanya.Nueva)
+        {
+            <p class="editarCMS">
+                <span class="tipo"><a target="_blank" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/@pestanya.Key">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS")</a></span>
+                <span class=""></span>
+            </p>
+        }
+        @*<p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "NOMBRECORTO")</span>
+            <input type="text" name="TabShortName" value="@pestanya.ShortName"/>
+        </p>*@
+        @if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+        {
+            <p style="display:none;">
+                <input type="hidden" name="TabUrl" value="" disabled />
+                <input type="checkbox" name="TabOpenInNewWindow" />
+            </p>
+        }
+        else
+        {
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "RUTA")">@Html.GetText("COMADMINPESTANYAS", "RUTA")</span>
+                <input type="@(pestanya.EsUrlPorDefecto?"hidden":"text")" name="TabUrl" value="@pestanya.Url" @(pestanya.EsUrlPorDefecto ? "disabled" : "") />
+                @if (pestanya.EsUrlPorDefecto)
+                {
+                    <input type="text" class="tabUrlAux" value="@Html.ObtenerTextoIdiomaUsuario(pestanya.Url)" disabled />
+                    <a class="editDefaultURL">@Html.GetText("COMMON", "EDITAR")</a>
+                }
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "ABRIRNUEVAPESTANYA")">@Html.GetText("COMADMINPESTANYAS", "ABRIRNUEVAPESTANYA")</span>
+                <input type="checkbox" name="TabOpenInNewWindow" @(pestanya.OpenInNewWindow ? "checked" : "") />
+            </p>
+        }
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "CLASECSSBODY")">@Html.GetText("COMADMINPESTANYAS", "CLASECSSBODY")</span>
+            <input type="text" name="TabClassCSSBody" value="@pestanya.ClassCSSBody" />
+        </p>
+
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "METADESCRIPTION")">@Html.GetText("COMADMINPESTANYAS", "METADESCRIPTION")</span>
+            <input type="text" name="TabMetaDescription" value="@pestanya.MetaDescription" />
+        </p>
+
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "VISIBLEMENU")">@Html.GetText("COMADMINPESTANYAS", "VISIBLEMENU")</span>
+            <input type="checkbox" name="TabVisible" @(pestanya.Visible ? "checked" : "") />
+        </p>
+        @if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+        {
+            <input type="hidden" name="TabPrivacidad" value="0" />
+            <input type="checkbox" style="display:none" name="TabActive" checked />
+        }
+        else
+        {
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "ACTIVA")">@Html.GetText("COMADMINPESTANYAS", "ACTIVA")</span>
+                <input type="checkbox" name="TabActive" @(pestanya.Active ? "checked" : "") />
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "PRIVACIDAD")">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDAD")</span>
+                @{
+                    string textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPRIVADA");
+                    bool showOption1 = true;
+
+                    if (Html.GetComunidad().AccessType == CommunityModel.TypeAccessProject.Private || Html.GetComunidad().AccessType == CommunityModel.TypeAccessProject.Reserved)
+                    {
+                        textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPUBLICA");
+                        showOption1 = false;
+                    }
+                }
+                <select class="cmbEditarPrivacidad" name="TabPrivacidad">
+                    <option @(pestanya.Privacidad == 0 ? "selected" : "") value="0">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADNORMAL")</option>
+                    <option @(pestanya.Privacidad == 1 ? "selected" : "") value="1">@textoPrivacidadEspecial</option>
+                    <option @(pestanya.Privacidad == 2 ? "selected" : "") value="2">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADLECTORES")</option>
+                </select>
+            </p>
+            <section class="bloque editarPrivacidad" @Html.Raw(pestanya.Privacidad == 0 ? "style=\"display:none\"" : "")>
+                @{
+                    string listaIDsPerfiles = "";
+                    string listaIDsGrupos = "";
+                    string htmlNombresPerfiles = "";
+                    string htmlNombresGrupos = "";
+
+                    if (pestanya.Privacidad == 2)
+                    {
+                        foreach (Guid perfilID in pestanya.PrivacidadPerfiles.Keys)
+                        {
+                            listaIDsPerfiles += perfilID.ToString() + ",";
+                            htmlNombresPerfiles += "<li>" + pestanya.PrivacidadPerfiles[perfilID] + "<a aux=\"" + perfilID.ToString() + "\" class=\"remove\">eliminar</a></li>";
+                        }
+
+                        foreach (Guid grupoID in pestanya.PrivacidadGrupos.Keys)
+                        {
+                            listaIDsGrupos += "g_" + grupoID.ToString() + ",";
+                            htmlNombresGrupos += "<li>" + pestanya.PrivacidadGrupos[grupoID] + "<a aux=\"g_" + grupoID.ToString() + "\" class=\"remove\">eliminar</a></li>";
+                        }
+                    }
+                }
+                <section class="@(showOption1?"opcion1 ":"")opcion2" @Html.Raw((showOption1 && pestanya.Privacidad == 1) || pestanya.Privacidad == 2 ? "" : "style=\"display:none\"")>
+                    <p>
+                        <span class="tipo">
+                            @Html.GetText("COMADMINPESTANYAS", "VISIBLEUSUARIOSSINACCESO")
+                        </span>
+                        <input type="checkBox" name="TabVisibleSinAcceso" @(pestanya.VisibleSinAcceso ? "checked" : "")>
+                    </p>
+                </section>
+                <section class="opcion2" @Html.Raw(pestanya.Privacidad == 2 ? "" : "style=\"display:none\"")>
+                    <p>
+                        @Html.GetText("COMADMINPESTANYAS", "SELECCIONAPERFILES")
+                    </p>
+                </section>
+                <section class="opcion2 panPrivacidad" @Html.Raw(pestanya.Privacidad == 2 ? "" : "style=\"display:none\"")>
+                    <p>
+                        <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "PRIVACIDADPERFILES")">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPERFILES")</span>
+                        <input type="text" id="privacidadPerfiles_@(pestanya.Key)" name="TabPrivacidadPerfiles">
+                        <input type="hidden" id="privacidadPerfiles_@(pestanya.Key)_Hack" class="valores privacidadPerfiles" name="TabValoresPrivacidadPerfiles" value="@listaIDsPerfiles" />
+                    </p>
+                    <ul class="resultado">@Html.Raw(htmlNombresPerfiles)</ul>
+                </section>
+                <section class="opcion2 panPrivacidad" @Html.Raw(pestanya.Privacidad == 2 ? "" : "style=\"display:none\"")>
+                    <p>
+                        <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "PRIVACIDADGRUPOS")">
+                            @Html.GetText("COMADMINPESTANYAS", "PRIVACIDADGRUPOS")
+                        </span>
+                        <input type="text" id="privacidadGrupos_@(pestanya.Key)" name="TabPrivacidadGrupos">
+                        <input type="hidden" id="privacidadGrupos_@(pestanya.Key)_Hack" class="valores privacidadGrupos" name="TabValoresPrivacidadGrupos" value="@listaIDsGrupos">
+                    </p>
+                    <ul class="resultado">@Html.Raw(htmlNombresGrupos)</ul>
+                </section>
+                <p class="@(showOption1?"opcion1 ":"")opcion2" @Html.Raw((showOption1 && pestanya.Privacidad == 1) || pestanya.Privacidad == 2 ? "" : "style=\"display:none\"")>
+                    <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "HTMLALTERNATIVO")">
+                        @Html.GetText("COMADMINPESTANYAS", "HTMLALTERNATIVO")
+                    </span>
+                    <textarea rows="3" cols="40" name="TabHtmlAlternativoPrivacidad">@pestanya.HtmlAlternativoPrivacidad</textarea>
+                </p>
+            </section>
+        }
+        @if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+        {
+            PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+
+            bool activa = permisosPaginas.CMSActivado && pestanya.HomeCMS != null && (pestanya.HomeCMS.HomeTodosUsuarios || pestanya.HomeCMS.HomeMiembros || pestanya.HomeCMS.HomeNoMiembros);
+
+            <p @Html.Raw(permisosPaginas.CMSActivado ? "" : "style=\"display:none\"")>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "EDITARHOMECMS")">@Html.GetText("COMADMINPESTANYAS", "EDITARHOMECMS")</span>
+                <input type="checkbox" name="TabHomeCMS" @(activa ? "checked" : "")>
+            </p>
+            <section class="bloque editarHomeCMS" @Html.Raw(activa ? "" : "style=\"display:none\"")>
+                <div>
+                    <p>
+                        <input type="radio" name="TabTypeHomeCMS" value="Unica" @(!activa || pestanya.HomeCMS.HomeTodosUsuarios ? "checked" : "") />
+                        @Html.GetText("COMADMINPESTANYAS", "HOMETODOSUSUARIOS")
+                        @if (pestanya.HomeCMS.HomeTodosUsuarios)
+                        {
+                            <a target="_blank" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/2">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
+                        }
+                    </p>
+                </div>
+                <div>
+                    <p>
+                        <input type="radio" name="TabTypeHomeCMS" value="Distinta" @(pestanya.HomeCMS.HomeMiembros || pestanya.HomeCMS.HomeNoMiembros ? "checked" : "") />
+                        @Html.GetText("COMADMINPESTANYAS", "HOMEDISTINTAS")
+                    </p>
+                    <section class="bloque HomeCMSMiembros" @Html.Raw(pestanya.HomeCMS.HomeMiembros || pestanya.HomeCMS.HomeNoMiembros ? "" : "style=\"display:none\"")>
+                        <p>
+                            <input type="checkbox" name="TabHomeMienbrosCMS" @(!activa || pestanya.HomeCMS.HomeMiembros ? "checked" : "") />
+                            @Html.GetText("COMADMINPESTANYAS", "HOMEMIEMBROS")
+                            @if (pestanya.HomeCMS.HomeMiembros)
+                            {
+                                <a target="_blank" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/0">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
+                            }
+                        </p>
+                        <p>
+                            <input type="checkbox" name="TabHomeNoMienbrosCMS" @(!activa || pestanya.HomeCMS.HomeNoMiembros ? "checked" : "") />
+                            @Html.GetText("COMADMINPESTANYAS", "HOMENOMIEMBROS")
+                            @if (pestanya.HomeCMS.HomeNoMiembros)
+                            {
+                                <a target="_blank" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/1">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
+                            }
+                        </p>
+                    </section>
+                </div>
+            </section>
+        }
+        @{
+            bool esPestanyaBusqueda = pestanya.Type == TipoPestanyaMenu.Recursos || pestanya.Type == TipoPestanyaMenu.Preguntas || pestanya.Type == TipoPestanyaMenu.Debates || pestanya.Type == TipoPestanyaMenu.Encuestas || pestanya.Type == TipoPestanyaMenu.PersonasYOrganizaciones || pestanya.Type == TipoPestanyaMenu.BusquedaSemantica || pestanya.Type == TipoPestanyaMenu.BusquedaAvanzada;
+
+            if (esPestanyaBusqueda)
+            {
+                @Html.PartialView("_OpcionesBusqueda", pestanya)
+
+                @Html.PartialView("_ExportarBusqueda", pestanya.ListaExportaciones)
+            }
+        }
+        @if (pestanya.Type.Equals(TipoPestanyaMenu.CMS) && ViewBag.ContenidoMultiIdioma && pestanya.ListaIdiomasDisponibles != null)
+        {
+            <section class="idiomasDisponibles">
+                <p>
+                    <span class="tipo" title="Idiomas disponibles">Idiomas disponibles</span>
+                    @foreach (string idioma in ViewBag.ListaIdiomas.Keys)
+                    {
+                        <input type="checkbox" name="@("chkIdioma" + idioma)" id="@("chkIdioma" + idioma)" @Html.Raw(pestanya.ListaIdiomasDisponibles.Contains(idioma) ? "checked=\"checked\"" : "") lang="@idioma" value="@idioma" class="idioma"><span>@ViewBag.ListaIdiomas[idioma]</span>
+                    }
+                </p>
+            </section>
+        }
+        @if (pestanya.Type.Equals(TipoPestanyaMenu.Recursos) || pestanya.Type.Equals(TipoPestanyaMenu.BusquedaSemantica) || pestanya.Type.Equals(TipoPestanyaMenu.Home))
+        {
+            //<input type="button" value="Crear faceta" class="addFaceta" id="btnFaceta"/>
+            if (pestanya.ListaFacetas != null && pestanya.ListaFacetas.Count == 0)
+            {
+                @Html.PartialView("_AgregarFaceta", lista)
+            }
+            else
+            {
+                int i = 0;
+                foreach (var numFac in pestanya.ListaFacetas)
+                {
+                    i++;
+                }
+                <input type="hidden" class="numeroFacetas" name="@i" />
+                <p><a class="verFacetas" name="@pestanya.Key">Ver facetas</a></p>
+                <section class="seleccionarFacetas" style="display:none">
+                    <p>Agregar faceta específica</p>
+                    <ol class="facetasSortable">
+                    </ol>
+                    <input type="button" value="Añadir faceta" class="addFaceta" />
+                </section>
+            }
+        }
+    </div>
+        @*<input type="button" class="guardar" value="Guardar" />*@
+        </section>

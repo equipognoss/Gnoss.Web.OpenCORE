@@ -1,0 +1,24 @@
+﻿@model ObjetoConocimientoModel.PresentacionPersonalizadoModel.PropiedadPersonalizadoModel
+
+<li class="row propiedadpersonalizada" id="@Guid.NewGuid()">
+    <span class="handle propiedad">:::</span>
+    <section class="header">
+        <span class="identificador" aux="@Model.Select">@Model.Identificador</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")</span>
+            <input type="text" name="Identificador" value="@Model.Identificador" />
+        </p>
+        <p>
+            <span class="tipo">Select</span>
+            <input type="text" name="Select" value="@Model.Select" />
+        </p>
+        <p>
+            <span class="tipo">Where</span>
+            <textarea name="Where">@Model.Where</textarea>
+        </p>
+    </section>
+</li>

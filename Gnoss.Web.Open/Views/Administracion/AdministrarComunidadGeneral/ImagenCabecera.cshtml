@@ -1,0 +1,25 @@
+﻿@model AdministrarComunidadGeneralModel.ImageCoordenadas
+
+Imagen de la cabecera:
+<div class="panContenedorImagen" style="@(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
+    <img src="@(string.IsNullOrEmpty(Model.Ruta) ? "" : Model.Ruta + "?" + Guid.NewGuid().ToString())" id="ImageHead_Ruta">
+    <input type="hidden" value="@Model.Ruta" id="ImageHead_src" />
+</div>
+<div class="panImgSize" style="margin-bottom:20px; margin-top: @(20 + Model.Alto)px; @(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
+    <input type="hidden" id="ImageHead_Pos_X_0" value="@Model.Pos_X_0" />
+    <input type="hidden" id="ImageHead_Pos_Y_0" value="@Model.Pos_Y_0" />
+    <input type="hidden" id="ImageHead_Pos_X_1" value="@Model.Pos_X_1" />
+    <input type="hidden" id="ImageHead_Pos_Y_1" value="@Model.Pos_Y_1" />
+    Ancho <input type="text" class="jcropText image_width" id="ImageHead_Ancho" value="@Model.Ancho" />
+    Alto <input type="text" class="jcropText image_height" id="ImageHead_Alto" value="@Model.Alto" />
+</div>
+<div class="panAccionesNew" style=" @(!string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
+    <input type="button" id="addImgCabecera" value="Seleccionar imagen" onclick="$('#fileUploadAddImgCabecera').trigger('click')" />
+    <input type="file" style="display:none" id="fileUploadAddImgCabecera" accept="image/*" />
+</div>
+<div  class="panAccionesChange" style=" @(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
+    <input type="button" id="changeImgCabecera" value="Cambiar imagen" onclick="$('#fileUploadChangeImgCabecera').trigger('click')" />
+    <input type="file" style="display:none" id="fileUploadChangeImgCabecera" accept="image/*" />
+    <input type="button" id="eliminarImgCabecera" value="Eliminar imagen" />
+</div>
+<div id="lblErrorImgCabecera" class="error general" style="display:none"></div>

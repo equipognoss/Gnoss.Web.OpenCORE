@@ -1,0 +1,142 @@
+﻿@model PermisosPaginasAdministracionViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMINCOMUNIDAD", "TITULO")</h1>
+    <div>
+        <ul class="principal">
+            @{
+                CommunityModel Comunidad = Html.GetComunidad();
+            }
+
+            <li>
+                Administración básica
+                <ul>
+                    @if (Model.EsAdministradorProyecto)
+                    {
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADGENERAL")</a></li>
+                    }
+                    @if (Model.EsAdministradorProyecto || (Model.PaginasPermisosUsuarios != null && Model.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Tesauro)))
+                    {
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCATEGORIASCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCATEGORIASCOM")</a></li>
+                        @*<li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARFOTOSCATEGORIASCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFOTOSCATEGORIASCOM")</a></li>*@
+                    }
+                    @if (Model.EsAdministradorProyecto)
+                    {
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADUTILIDADES")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADUTILIDADES")</a></li>
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADFUENTES")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADFUENTES")</a></li>
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "COMADMINCOMMIEMBROS")">@Html.GetText("COMADMINCOMUNIDAD", "COMADMINCOMMIEMBROS")</a></li>
+                        <li class="nivel01"><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCLAUSULASREGISTRO")" target="_blank">@Html.GetText("COMADMINCLAUSULASREGISTRO", "CLAUSULASREGISTRO")</a></li>
+                    }
+                    @if (Model.EsAdministradorProyecto || (Model.PaginasPermisosUsuarios != null && Model.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)))
+                    {
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCONTEXTOSCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCONTEXTOSCOM")</a></li>
+                    }
+                    @if (Model.EsAdministradorProyecto)
+                    {
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINADVANCEDOPTIONS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINADVANCEDOPTIONS")</a></li>
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARPEPERMISOSPAGINAS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARPEPERMISOSPAGINAS")</a></li>
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSEOGOOGLE")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")</a></li>
+                        if (Model.AdministracionEventosDisponible)
+                        {
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "COMADMINCOMEVENTOS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINEVENTOS")</a></li>
+                        }
+                    }
+                    @if (Model.EsMetaAdministrador)
+                    {
+                        <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINMETAADMINOPTIONS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINMETAADMINOPTIONS")</a></li>
+                    }
+                </ul>
+            </li>
+            @if (Model.AdministracionSemanticaPermitido)
+            {
+                if (Model.EsAdministradorProyecto || (Model.PaginasPermisosUsuarios != null && Model.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Semantica)))
+                {
+                    <li>
+                        Administración semántica
+                        <ul>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARPLANTILLASCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARPLANTILLASCOM")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINTESSEM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINTESSEM")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINENTSECUND")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINENTSECUND")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINGRAFSIMPLE")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINGRAFSIMPLE")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARFACETASCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOM")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")</a></li>
+
+                        </ul>
+                    </li>
+                }
+            }
+            @if (Model.AdministracionPaginasPermitido)
+            {
+                <li>
+                   Administración páginas
+                    <ul>
+                        @if (Model.EsAdministradorProyecto || (Model.PaginasPermisosUsuarios != null && Model.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)))
+                        {
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARPESTANYASCOM")</a></li>
+                        }
+                        @if (Model.CMSActivado)
+                        {
+                            @*<li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMS")</a></li>*@
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")</a></li>
+                        }
+                    </ul>
+                </li>
+            }
+            @if (Model.AdministracionVistasPermitido && Model.VistasActivadas)
+            {
+                <li>
+                    Administración vistas
+                    <ul>
+                        @if (Model.EsAdministradorProyecto || (Model.PaginasPermisosUsuarios != null && Model.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)))
+                        {
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARVISTAS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")</a></li>
+                        }
+                        @if (Model.EsAdministradorProyecto || (Model.PaginasPermisosUsuarios != null && Model.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)))
+                        {
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")</a></li>
+                        }
+                    </ul>
+                </li>
+            }
+            @if (Model.AdministracionDesarrolladoresPermitido)
+            {
+                <li>
+                    Administración desarrolladores
+                    <ul>
+                        @if (Model.EsAdministradorProyecto || (Model.PaginasPermisosUsuarios != null && Model.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)))
+                        {
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "DESCARGAROAUTH")">@Html.GetText("COMADMINCOMUNIDAD", "DESCARGAROAUTH")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINESTILOS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINESTILOS")</a></li>
+                            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOOKIESCOM")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOOKIESCOM")</a></li>
+
+                            if (Model.AdministracionVistasPermitido && Model.VistasActivadas)
+                            {
+                                <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "PASARAPRODUCCIONVISTAS")">@Html.GetText("COMADMINCOMUNIDAD", "PASARAPRODUCCION")</a></li>
+                            }
+                        }
+                    </ul>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+<style>
+    div.content {
+        margin: 50px;
+    }
+    
+    div.content ul.principal {
+        margin: 30px;
+    }
+    div.content ul {   
+         margin: 10px 30px;
+        list-style: none;
+        padding: 0;
+    }
+</style>

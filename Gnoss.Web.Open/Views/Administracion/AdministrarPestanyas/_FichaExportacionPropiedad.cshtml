@@ -1,0 +1,47 @@
+﻿@model TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel
+
+@{
+    TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel propiedadExport = Model; 
+}
+<li class="bloque row propiedad" id="@Guid.NewGuid()">
+    <span class="handle propiedad">:::</span>
+    <section class="header">
+        <span>@propiedadExport.Nombre</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <input type="hidden" name="TabEliminada" value="false"/>
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</span>
+            <input type="text" name="Nombre" value="@propiedadExport.Nombre" />
+        </p>
+        @if (ViewBag.ListaOntologias != null && ViewBag.ListaOntologias.Count > 0)
+        {
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "ONTOLOGIA")</span>
+			<select name="Ontologia">
+            @{
+                <option value="" @(string.IsNullOrEmpty(propiedadExport.Ontologia) ? "selected" : "")>@Html.GetText("COMADMINPESTANYAS", "SINONTOLOGIA")</option>
+                foreach (string oc in ViewBag.ListaOntologias.Keys)
+                {
+					<option value="@oc" @(propiedadExport.Ontologia == oc ? "selected" : "")>@ViewBag.ListaOntologias[oc]</option>
+                }
+            }
+			</select>
+        </p>
+        }
+        else
+        {
+            <input type="hidden" name="Ontologia" value="" />
+        }
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "PROPIEDAD")</span>
+            <input type="text" name="Propiedad" value="@propiedadExport.Propiedad"/>
+        </p>
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "DATOEXTRAPROPIEDAD")</span>
+            <input type="text" name="DatoExtraPropiedad" value="@propiedadExport.DatoExtraPropiedad" />
+        </p>
+    </section>
+</li>

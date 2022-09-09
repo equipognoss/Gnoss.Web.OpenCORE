@@ -1,0 +1,436 @@
+﻿@model ComAdminSemanticElemModel
+
+@{
+    string srcImagenEspera = Html.GetBaseUrlStatic() + "/images/espera.gif";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMIN", "TESSEMEDITABLES")</h1>
+    <div>
+        <form autocomplete="off">
+            <p>
+                Añade un nuevo tesauro semantico a tu comunidad
+            </p>
+            <div id="panAniadirTesauro">
+                <p>
+                    <span class="tipo" title="Nombre que se presentará en el listado de edición para representar el tesauro.<br/> El texto puede ser multi-idioma con el siguiente formato:<br/>tesauro1@es|||thesaurus1@en|||...">Nombre</span>
+                    <input type="text" name="Nombre"/>
+                </p>
+                <p>
+                    <span class="tipo" title="Contiene los códigos de los idiomas que usa el tesauro semántico separados por &quot;,&quot;.<br>Los nombres de las categorías podrán editarse en los idiomas configurados.<br/>Ejemplo: es, en, it...">Idiomas</span>
+                    <input type="text" name="Idiomas"/>
+                </p>
+                <p>
+                    <span class="tipo" title="Nombre del OC del tesauro semántico.">Ontologia</span>
+                    <select name="Ontologia">
+                        <option value="">Selecciona una ontologia</option>
+                        @foreach (string ontologia in Model.SemanticThesaurus.ListaOntologias.Keys)
+                        {
+                            <option value="@ontologia">@Model.SemanticThesaurus.ListaOntologias[ontologia]</option>
+                        }
+                    </select>
+                </p>
+                <p>
+                    <span class="tipo" title="Prefijo que tienen los sujetos de las categorías de los tesauros semánticos.<br/>Ejemplo: Para el sujeto &quot;http://museodelprado.es/items/technique_150&quot; sería &quot;technique&quot;.">Prefijo</span>
+                    <input type="text" name="Prefijo" />
+                </p>
+                <p>
+                    <span class="tipo" title="Contiene el valor de la propiedad &quot;http://purl.org/dc/elements/1.1/source&quot; del tesauro semántico.">Fuente</span>
+                    <input type="text" name="Source" />
+                </p>
+                <p>
+                    <input type="button" class="addTesauro" value="Añadir tesauro" />
+                </p>
+            </div>
+            <div id="divErroTesSem"></div>
+            <div id="divMensOK"></div>
+            <p>
+                Configura los tesauros semanticos de tu comunidad
+            </p>
+            <div>
+                <ol class="table">
+                    @foreach (KeyValuePair<string, string> urlOnto in Model.SemanticThesaurus.SemanticThesaurusEditables.Keys)
+                    {
+                        Tuple<string, string, string> datosFicha = new Tuple<string, string, string>(Model.SemanticThesaurus.SemanticThesaurusEditables[urlOnto], urlOnto.Key, urlOnto.Value);
+                        @Html.PartialView("_EditarTesSemFicha", datosFicha)
+                    }
+                </ol>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="divAuxTesSem" >
+    <div id="divEditTesSem" style="display:none;">
+        <div id="divCargandoTesSem">
+            <img ID="imgEsperaArchivo" src="@srcImagenEspera" alt="Espere..." />
+            <span>@Html.GetText("COMMON", "CARGANDO")</span>
+        </div>
+        <div id="divEditTesSemInt">
+            <div id="updBotonera" class="messagetools listToolBar box">
+                <div id="adminComCate" class="toolbar">
+                    <ul class="floatLeft">
+                        <li>
+                            <input id="lbMostarCreacionCategoria" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "CREARNUEVA")" />
+                        </li>
+                        <li>
+                            <input id="lbMostarCambiarNombreCategoria" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "CAMBIARNOMBRE")" />
+                        </li>
+                        <li>
+                            <input id="lbMostarMoverCategoria" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "MOVER")" />
+                        </li>
+                        @*<li> NO BORRAR, SE USARÁ DENTRO DE POCO
+                                <input id="lbMostarOrdenarCategoria" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "ORDENAR")"/>
+                            </li>*@
+                        <li>
+                            <input id="lbMostarEliminacionCategoria" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "ELIMINAR")" />
+                        </li>
+                        <li id="liMostarEdicionPropExtraCategoria" class="oculto">
+                            <input id="lbMostarEdicionPropExtraCategoria" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "EDITARPROPSEXTRA")" />
+                        </li>
+                    </ul>
+                    <div id="panBuscar" style="text-align:right">
+                        <span class="filtroRapido floatRight">
+                            <p>
+                                @Html.GetText("COMMON", "BUSCAR")
+                                <input type="text" id="filtroRapido" onkeyup="if(this.value.indexOf('|')>-1){this.value=this.value.replace(/\\|/g,'')}" />
+                            </p>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div id="panAccionesTes"></div>
+            <div class="fieldset actionButtons box">
+                <fieldset>
+                    <p>
+                        <label class="boton btAzul floatRight">
+                            <a id="lbGuardarInf" class="submit principal">@Html.GetText("COMADMINCATEGORIAS", "GUARDAR")</a>
+                        </label>
+                        <label class="boton btAzul floatRight">
+                            <a id="lbVolver" class="submit principal">@Html.GetText("PERFILBASERECURSOEDITAR", "VOLVER")</a>
+                        </label>
+                    </p>
+                </fieldset>
+            </div>
+            <div id="panInfoPerderDatos" style="display:none;">
+                <div id="panels" class="stateShowForm" style="display:block">
+                    <div id="action" class="box form activeForm" style="display:block">
+                        <fieldset>
+                            <p></p>
+                            <p>
+                                <input type="button" id="btnOkPerderDatos" value="@Html.GetText("COMMON", "SI")" />
+                                <input type="button" id="btnNoPerderDatos" value="@Html.GetText("COMMON", "NO")" />
+                            </p>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
+<script>
+
+    var OperativaAcciones = {
+        init: function () {
+            this.config();
+            this.engancharComportamiento();
+        },
+        config: function () {
+            this.urlPagina = document.location.href;
+            return;
+        },
+        engancharComportamiento: function () {
+            var that = this;
+            $('input.addTesauro').click(function () {
+                that.anyadirTesauro();
+            });
+            $('span.tipo').each(function () {
+                if ($(this).attr("title") != null && $(this).attr("title") != '') {
+                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
+                    $(this).removeAttr("title");
+                }
+            });
+
+            $('.conToolTip').tooltip({
+                tooltipSource: 'attributeHTML'
+            });
+            return;
+        },
+        anyadirTesauro: function () {
+            CrearErrorEditTesSem(null);
+            $('#divMensOK').html('');
+
+            var panAddTesauro = $('#panAniadirTesauro');
+
+            var nombre = panAddTesauro.find('[name="Nombre"]').val();
+            var idiomas = panAddTesauro.find('[name="Idiomas"]').val();
+            var ontologia = panAddTesauro.find('[name="Ontologia"]').val();
+            var prefijo = panAddTesauro.find('[name="Prefijo"]').val();
+            var source = panAddTesauro.find('[name="Source"]').val();
+
+            if (ontologia == "") {
+                CrearErrorEditTesSem("Debes seleccionar una ontologia");
+                return false;
+            }
+            else if (nombre == "" || prefijo == "" || source == "")
+            {
+                CrearErrorEditTesSem("Los campos nombre, prefijo y fuente NO pueden estar vacios");
+                return false;
+            }
+
+            MostrarUpdateProgress();
+
+            var dataPost = {
+                Nombre: nombre,
+                Idiomas: idiomas,
+                Ontologia: ontologia,
+                Prefijo: prefijo,
+                Source: source
+            }
+
+            GnossPeticionAjax(
+                this.urlPagina + '/add-thesaurus',
+                dataPost,
+                true
+            ).done(function (data) {
+                $('ol.table').append(data);
+                panAddTesauro.find('[name="Nombre"]').val('');
+                panAddTesauro.find('[name="Idiomas"]').val('');
+                panAddTesauro.find('[name="Ontologia"]').val('');
+                panAddTesauro.find('[name="Prefijo"]').val('');
+                panAddTesauro.find('[name="Source"]').val('');
+            }).fail(function (data) {
+                console.log("ERROR =>" + data);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        }
+    }
+
+    $(document).ready(function () {
+        OperativaAcciones.init();
+    });
+</script>
+
+<style>
+	span.action {
+		background: rgba(0, 0, 0, 0) url("@Html.GetBaseUrlStatic()/cssNuevo/resources/spriteTools.png?v=2.2.1400") no-repeat scroll 0 0;
+	}
+
+    ol.table li.row .resultado a.remove {
+        background: transparent url("@Html.GetBaseUrlStatic()/cssNuevo/resources/spriteIcons.png?v=2.1.1880") no-repeat scroll -222px -678px;
+    }
+</style>
+<style>
+    #panAniadirTesauro p{
+        height: 20px;
+    }
+    #panAniadirTesauro span.tipo{
+       float:left;
+    }
+    #panAniadirTesauro input[type=text],
+    #panAniadirTesauro select{
+        position: absolute; 
+        margin-left: 100px;
+        display: block;
+    }
+    div.content{
+		margin:50px;
+		/*width:800px;*/
+	}
+    .panAniadirContexto{
+		/*width:800px;*/
+        margin:20px;
+	}
+    ol.table{
+        padding:0;
+		margin:20px 0 20px 20px;
+		border: 1px solid black;
+        border-bottom: 0;
+    }
+    #section .content li.row {
+        margin: 0;
+    }
+
+	li.row{
+		border-bottom: 1px solid black;
+        width:auto;
+	}
+    ol.table ol {
+        border-top: 1px solid;
+    }
+    ol.table ol li.row {
+        border-left: 1px solid;
+    }
+
+	ol.table ol li.row:last-child{
+		border-bottom: none;
+	}
+	ol.table li.row section.header{
+		background-color: #ccc;
+		padding: 5px;
+	}
+    ol.table li.row.ui-sortable-helper {
+        height: 25px !important;
+    }
+    ol.table li.row.ui-sortable-helper section.panEdicion.edit,
+	ol.table li.row section.panEdicion{
+		display:none;
+	}
+	ol.table li.row section.panEdicion.edit{
+		display:block;
+        position: relative;
+        width: 830px;
+        background-color: #fff;
+        padding: 20px 20px 10px;
+        border-top: 1px solid;
+	}
+	ol.table li.row section.panEdicion p{
+		margin-left: 20px;
+		display: inline-block;
+		width: 800px;
+	}
+	ol.table li.row section.panEdicion .bloque p{
+		width: 750px;
+	}
+	ol.table li.row section.panEdicion div{
+		width: 800px;
+	}
+	ol.table li.row section.panEdicion .bloque{
+		border: 1px solid;
+		margin-left: 20px;
+        margin-bottom: 10px;
+        width: 100%;
+        padding-top:10px;
+	}
+	ol.table li.row section.panEdicion .bloque .bloque{
+        margin: 0 10px 10px;
+        width: auto;
+	}
+	ol.table li.row section.panEdicion .tipo{
+		width:200px;
+		float:left;
+	}
+	span.action {
+		float: right;
+		text-indent: -999999px;
+		width: 20px;
+        height: 20px;
+        cursor:pointer;
+	}
+	span.eliminar {
+		background-position: -63px -42px;
+	}
+	span.editar {
+		background-position: -84px -84px;
+	}
+    textarea {
+        height: 60px
+    }
+    input[type="text"], textarea {
+        width: 590px;
+    }
+    ol.table li.row .panEdicion.edit input[name="Name"]:disabled,
+    ol.table li.row .panEdicion.edit input.NameAux:disabled{
+        margin-right: 5px;
+        width: 540px;
+    }
+    .bloque input[type="text"],
+    .bloque textarea {
+        width: 540px;
+    }
+    .bloque .bloque input[type="text"],
+    .bloque .bloque textarea {
+        width: 510px;
+    }
+    .table select {
+        width: 597px;
+    }
+    .bloque select {
+        width: 497px;
+    }
+	li.ui-sortable-placeholder {
+		border: 1px dashed #CCC;
+		background: #eee;
+        visibility:visible !important;
+        height: 25px;
+	}
+	li.ui-sortable-placeholder.ui-state-error {
+		background: #ffc6c6;
+	}
+    li.row span.handle {
+        cursor: move;
+        float: left;
+        width: 25px;
+        text-align: center;
+        padding-top: 5px;
+    }
+    ol.table,
+    ol.table ol {
+        list-style:none;
+    }
+
+    ol.table:empty,
+    ol.table ol:empty {
+        display : none;
+    }
+
+    input.guardar,
+    input.guardarTodo {
+        float:right;
+    }
+
+    ol.table li.row.ui-state-disabled {
+        opacity: 1;
+    }
+
+    ol.table li.row.ui-state-disabled .handle {
+        cursor:not-allowed;
+    }
+
+    ol.table li.row.ui-state-disabled .handle {
+        cursor:not-allowed;
+    }
+
+	ol.table li.row section.header.deleted{
+		background-color: #fbe3e4;
+	}
+	ol.table li.row section.header.deleted .action.eliminar,
+    ol.table li.row section.header.deleted .action.editar{
+		display:none
+	}
+
+	ol.table li.row section.header.deleted .deshacer{
+		float:right;
+        color:red;
+        cursor:pointer;
+	}
+	ol.table li.row section.header.deleted .eliminada{
+        color:red;
+	}
+
+    #updBotonera ul{
+        list-style:none;
+    }
+    #updBotonera ul li {
+        display: inline-block;
+    }
+    #updBotonera #panBuscar input#filtroRapido {
+        width: 200px;
+    }
+    #panAccionesTes input[type="text"],
+    #panAniadirTesauro input[type="text"]{
+        width: auto;
+    }
+    #panAniadirTesauro {
+        padding-left: 20px;
+        padding-bottom: 20px;
+    }
+
+    input.addTesauro{
+        margin-left: 0;
+    }
+
+</style>

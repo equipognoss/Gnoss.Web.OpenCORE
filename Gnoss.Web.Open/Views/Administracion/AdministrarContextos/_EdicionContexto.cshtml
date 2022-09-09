@@ -1,0 +1,169 @@
+﻿@model ContextoModel
+
+@{
+    string nombreTipoGadget = Model.TipoGadget.ToString();
+    switch (Model.TipoGadget)
+    {
+        case TipoGadget.HtmlIncrustado:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADHTML");
+            break;
+        case TipoGadget.UltPreguntas:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTPREGUNTAS");
+            break;
+        case TipoGadget.UltDebates:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTDEBATES");
+            break;
+        case TipoGadget.UltEncuestas:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTENCUESTAS");
+            break;
+        case TipoGadget.Consulta:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONSULTA");
+            break;
+        case TipoGadget.ProyRelacionados:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADPROYRELACIONADOS");
+            break;
+        case TipoGadget.QueEstaPasando:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADQUEESTAPASANDO");
+            break;
+        case TipoGadget.RecursosContextos:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONTEXTO");
+            break;
+        case TipoGadget.RecursosRelacionados:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADRECURSOSRELACIONADOS");
+            break;
+        case TipoGadget.CMS:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADCMS");
+            break;
+    }
+}
+
+<li class="row" id="@Model.Key" >
+    <span class="handle">:::</span>
+	<section class="header">
+        <span class="nombreContexto" aux="@Html.ObtenerTextoIdiomaUsuario(Model.Name)">@Html.ObtenerTextoIdiomaUsuario(Model.Name)</span><span class="tipoContexto">(@nombreTipoGadget)</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+	</section>
+    <section class="panEdicion">
+	<div>
+        <input type="hidden" name="TabEliminada" value="false" />
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "NOMBRE")">@Html.GetText("COMADMINCONTEXTOS", "NOMBRE")</span>
+			<input type="text" name="Name" value="@Model.Name" />                
+		</p>
+        <p>
+            <span class="tipo">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADGET")</span>
+            <input type="text" disabled  value="@nombreTipoGadget" />
+            <input type="hidden" name="TipoGadget" value="@Model.TipoGadget" />
+        </p>
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "NOMBRECORTO")">@Html.GetText("COMADMINCONTEXTOS", "NOMBRECORTO")</span>
+            <input type="text" name="ShortName" value="@Model.ShortName" />
+        </p>
+        @if (Model.TipoGadget == TipoGadget.CMS)
+        {
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "CARGARPORAJAX")">@Html.GetText("COMADMINCONTEXTOS", "CARGARPORAJAX")</span>
+                <input type="checkbox" name="Ajax" @(Model.Ajax ? "checked" : "") />
+            </p>
+        }
+        else
+        {
+            <input style="display:none" type="checkbox" name="Ajax" />
+        }
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "CLASES")">@Html.GetText("COMADMINCONTEXTOS", "CLASES")</span>
+            <input type="text" name="Clases" value="@Model.Clases" />
+        </p>
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "VISIBLE")">@Html.GetText("COMADMINCONTEXTOS", "VISIBLE")</span>
+            <input type="checkbox" name="Visible" @(Model.Visible ? "checked" : "") />
+        </p>
+        <p>
+            <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "FILTROSDESTINO")">@Html.GetText("COMADMINCONTEXTOS", "FILTROSDESTINO")</span>
+            <textarea cols="40" rows="3" name="FiltrosDestino">@Model.FiltrosDestino</textarea>
+        </p>
+        @if (Model.TipoGadget == TipoGadget.RecursosContextos)
+        {
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "COMUNIDADORIGEN")">@Html.GetText("COMADMINCONTEXTOS", "COMUNIDADORIGEN")</span>
+			<textarea cols="40" rows="3" name="ComunidadOrigen" >@Model.Contexto.ComunidadOrigen</textarea>
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "FILTROSORIGEN")">@Html.GetText("COMADMINCONTEXTOS", "FILTROSORIGEN")</span>
+			<textarea cols="40" rows="3" name="FiltrosOrigen" >@Model.Contexto.FiltrosOrigen</textarea>
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "RELACIONORIGENDESTINO")">@Html.GetText("COMADMINCONTEXTOS", "RELACIONORIGENDESTINO")</span>
+			<textarea cols="40" rows="3" name="RelacionOrigenDestino" >@Model.Contexto.RelacionOrigenDestino</textarea>
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "NUMRESULTADOSCONTEXTO")">@Html.GetText("COMADMINCONTEXTOS", "NUMRESULTADOSCONTEXTO")</span>
+			<input type="text" name="NumResultados" value="@Model.Contexto.NumResultados" />
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "ORDENRESULTADOSCONTEXTO")">@Html.GetText("COMADMINCONTEXTOS", "ORDENRESULTADOSCONTEXTO")</span>
+			<input type="text" name="OrdenResultados" value="@Model.Contexto.OrdenResultados" />
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "IMAGEN")">@Html.GetText("COMADMINCONTEXTOS", "IMAGEN")</span>
+			<select name="Imagen" >
+				<option @(Model.Contexto.Imagen == 0 ? "selected" : "") value="0">@Html.GetText("COMADMINCONTEXTOS", "IMAGENSINIMAGEN")</option>
+				<option @(Model.Contexto.Imagen == 1 ? "selected" : "") value="1">@Html.GetText("COMADMINCONTEXTOS", "IMAGENNORMAL")</option>
+				<option @(Model.Contexto.Imagen == 2 ? "selected" : "" )value="2">@Html.GetText("COMADMINCONTEXTOS", "IMAGENREDUCIDA")</option>
+			</select>
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "MOSTRARENLACEORIGINAL")">@Html.GetText("COMADMINCONTEXTOS", "MOSTRARENLACEORIGINAL")</span>
+			<input type="checkbox" name="MostrarEnlaceOriginal" @(Model.Contexto.MostrarEnlaceOriginal ? "checked" : "") />
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "MOSTRARVERMAS")">@Html.GetText("COMADMINCONTEXTOS", "MOSTRARVERMAS")</span>
+			<input type="checkbox" name="MostrarVerMas" @(Model.Contexto.MostrarVerMas ? "checked" : "") />
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "ABRIRNUEVAPESTANYA")">@Html.GetText("COMADMINCONTEXTOS", "ABRIRNUEVAPESTANYA")</span>
+			<input type="checkbox" name="AbrirEnPestanyaNueva" @(Model.Contexto.AbrirEnPestanyaNueva ? "checked" : "") />
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "NAMESPACESEXTRA")">@Html.GetText("COMADMINCONTEXTOS", "NAMESPACESEXTRA")</span>
+			<input type="text" name="NamespacesExtra" value="@Model.Contexto.NamespacesExtra" />
+		</p>
+		<p>
+			<span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "RESULTADOSEXCLUIR")">@Html.GetText("COMADMINCONTEXTOS", "RESULTADOSEXCLUIR")</span>
+			<input type="text" name="ResultadosExcluir" value="@Model.Contexto.ResultadosExcluir" />
+		</p>
+        }
+        else if (Model.TipoGadget == TipoGadget.HtmlIncrustado)
+        {
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "CONTENIDO")">@Html.GetText("COMADMINCONTEXTOS", "CONTENIDO")</span>
+                <textarea cols="40" rows="3" name="Contenido" class="multiidioma">@Model.Contenido</textarea>
+            </p>
+        }
+        else if (Model.TipoGadget == TipoGadget.Consulta)
+        {
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "PAGINABUSQUEDA")">@Html.GetText("COMADMINCONTEXTOS", "PAGINABUSQUEDA")</span>
+                <textarea cols="40" rows="3" name="Contenido">@Model.Contenido</textarea>
+            </p>
+        }
+        else if (Model.TipoGadget == TipoGadget.CMS)
+        {
+            <p>
+                <span class="tipo" title="@Html.GetText("AYUDACOMADMINCONTEXTOS", "SELECCIONACOMPONENTECMS")">@Html.GetText("COMADMINCONTEXTOS", "SELECCIONACOMPONENTECMS")</span>
+                <select name="Contenido">
+                    @{
+                        Guid contenidoID = new Guid(Model.Contenido);
+                        foreach (Guid componenteID in ViewBag.ListaComponentesCMS.Keys)
+                        {
+                            <option @(contenidoID.Equals(componenteID) ? "selected" : "") value="@componenteID">@ViewBag.ListaComponentesCMS[componenteID]</option>
+                        }
+                    }
+                </select>
+            </p>
+        }
+	</div>
+    @*<input type="button" class="guardar" value="Guardar" />*@
+</section>
+</li>

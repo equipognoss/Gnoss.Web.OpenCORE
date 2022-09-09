@@ -1,0 +1,1151 @@
+/*                                                                             			Indice global
+------------------------------------------------------------------------------------------------------
+*/
+
+.ComunidadesH3 {
+    margin-bottom: 10px;
+}
+
+.tagCloud,
+.tagCloudComunidades{
+	padding-left:-1px !important;
+}
+
+.indiceCom .wrap300 .listaGris li a {
+	background:url(../img/dotListadoGris.gif) no-repeat left 65%;
+	padding-left:9px;
+}
+
+.indiceCom .wrap300 a.desplegable {
+	background:url(../img/offAzul.gif) no-repeat right 65%;
+	padding-right:15px;
+	outline:none;
+	cursor: pointer;
+	text-decoration:none !important;
+}
+.indiceCom .wrap300 a.activo {
+	background:url(../img/onAzul.gif) no-repeat right 65%;
+}
+
+.inicioCom h2 {
+	background:none;
+	margin-bottom: -13px;
+}
+
+/*------------------------------------------------------------------------------------------------
+*/
+
+#footer.comGnoss {
+    background:url(../img/comunidades/bgFooter.png) no-repeat top;
+    width:925px;
+    padding:0;
+    padding-left:35px;
+    *padding-left:38px;
+    padding-top:10px;
+}
+#footer.comGnoss p 
+{
+	float:left;
+	color:#4d4d4d;
+	font-size:0.82em;
+}
+#footer.comGnoss span 
+{
+	margin-left:155px;
+}
+ 
+
+/*                                                                                   Home Comunidades
+------------------------------------------------------------------------------------------------------
+*/
+
+.comGnoss  ul.tareasPendientes {
+	margin-bottom:40px;
+}
+
+.comGnoss .inicio .tagCloud {
+	margin-bottom:40px !important;
+}
+
+.comGnoss .contenedor250 {
+padding:0 10px 0 20px;
+width:250px;
+}
+
+
+.comGnoss .contenedor400 {
+padding:0 10px 0 20px;
+width:380px;
+}
+
+/*contenedor260*/
+.comGnoss .contenedor260 {
+	width:260px;
+}
+
+.comGnoss .contenedor355 ul li,
+.comGnoss .contenedor300 ul li,
+.comGnoss .contenedor260 ul li,
+.comGnoss .contenedor250 ul li  {
+	padding:10px 0;
+}
+
+.comGnoss .contenedor355 h3,
+.comGnoss .contenedor300 h3,
+.comGnoss .contenedor260 h3,
+.comGnoss .contenedor250 h3 {
+    background: url(../img/sepHz.gif) repeat-x bottom;
+}
+
+.comGnoss .contenedor300
+{
+	width:300px; 
+	padding:0; 
+	margin:0 10px
+}
+
+.comGnoss .contenedor355 {
+	width:325px;
+	padding:0 10px 0 20px;
+}
+
+.comGnoss .contenedor355 span.floatLeft,
+.comGnoss .contenedor355 div.floatLeft {
+	margin-left:10px;
+}
+
+.comGnoss h3.articulos {
+	padding-top:40px;
+}
+
+.comGnoss span.fotoPerfil  {
+	display:block;
+
+}
+
+.comGnoss .privada label {
+	margin:30px 0 0 200px;
+	width:100%;
+}
+
+.comGnoss div.loginCom fieldset{
+	width:280px;
+	padding-bottom:30px;
+}
+
+.comGnoss div.loginCom  {
+	width:365px;
+	
+}
+
+.comGnoss div.loginCom input {
+	width:250px;
+}
+.comGnoss div.loginCom label#loginComunidad {
+	margin-top:58px;
+}
+.comGnoss div.botonesLogin {
+	float:right;
+	display:inline;
+	width:200px;
+	margin-top:20px;
+	text-align:right;
+
+}
+
+.comGnoss p.botonesLogin {
+	float:left;
+	width:440px;
+	display:inline;
+	margin-top:20px;
+}
+ 
+
+/*                                                                                 Indice Categorias
+------------------------------------------------------------------------------------------------------
+*/
+.indiceCat{
+    padding: 10px 0 30px;
+}
+.indiceCat h3 {
+    background: url(../img/sepHz.gif) repeat-x bottom;
+    margin-bottom: 5px;
+}
+.indiceCat h3.sinSepComunidades {
+    background: none no-repeat;
+    margin-bottom: 5px;
+}
+.indiceCat h4 {
+    font-weight: normal;
+}
+.indiceCat h4 a {
+    color: #8186BD
+}
+.indiceCat ul {
+    padding: 0 0 1em 1em;
+}
+.indiceCat ul ul {
+    padding: 0.5em 0 0.5em 1em;
+}
+.indiceCat ul ul a{
+    color: #477CA8;
+    white-space: normal;
+}
+.dosCols div.floatLeft,
+.dosCols div.floatRight {
+    width: 45%;
+}
+.asimCols div.floatLeft {
+    width: 58%;
+}
+.asimCols div.floatRight {
+    width: 39%;
+}
+
+/*                                                                                 Base de recursos
+------------------------------------------------------------------------------------------------------
+*/
+#descripcionBase {
+    padding-bottom: 1em;
+}
+#descripcionBase p.floatLeft {
+    margin: 19px 1em 0 0;
+}
+#descripcionBase label {
+    margin-top: 10px;
+}
+/*.dosCols .imagenAsociada div {
+    width: 330px;
+}*/
+.dosCols .tagCloud {
+    width: auto;
+}
+.artículosRelacionados li {
+    margin-bottom: 0.5em;
+    font-weighT: bold;
+}
+.dosCols .estadoElemento {
+	font-size:1em;
+	margin-bottom: 10px;
+}
+
+.selectorAdd{
+ margin-bottom: 10px;
+    padding: 0;
+}
+
+
+.selectorAdd ul.plegada{
+  display:none;
+}
+
+.selectorAdd p{
+   height: 20px;
+   line-height: 20px;  
+}
+#sidebar .selectorAdd p{
+ margin: 0 0 10px;
+}
+
+.selectorAdd li
+{
+	height: 20px;
+    line-height: 20px;
+    margin: 0;  
+	padding: 0 10px;
+}
+
+.selectorAdd a:active
+{
+ outline: medium none;
+} 
+    
+/*.selectorAdd p,*/
+.selectorAdd ul{
+    float: left;
+}
+
+#sidebar .menuAnyadir ul li a{
+    display:inline;
+    vertical-align:50%;
+    margin-left:5px;
+}
+
+#sidebar .menuAnyadir .desplegar a{
+	background: url("../img/spriteIcons.gif") no-repeat scroll right -35px transparent;
+	padding:0px 25px 0px 0px;
+}
+
+#sidebar .menuAnyadir li {	
+	margin-bottom:10px;
+}
+ 
+/*                                                                                 				Wiki
+------------------------------------------------------------------------------------------------------
+*/
+
+.dosColsWiki div.floatLeft,
+.dosColsWiki div.floatRight {
+    width: 45%;
+}
+
+.dosColsWiki div.floatLeft .leerMas,
+.dosColsWiki div.floatRight .leerMas {
+	width: auto !important;
+	float:right;
+}
+.estadoElemento {
+    background: #D9D9D9;
+    padding: 8px 10px;
+    margin-bottom:40px;
+}
+.recursoDetalle .estadoElemento {
+	margin-bottom: 30px;
+}
+.estadoElemento span {
+	font-size:1.6em;
+}
+.estadoElemento img {
+    vertical-align: middle;
+    margin-right: 10px;
+}
+.estadoElemento select {
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+h3 a  {
+	color:#8186BD !important;
+	font-size:1.1em;
+	font-weight:normal;
+	padding:5px 0;
+	cursor:pointer;}
+
+#historialArticulo {
+    margin-bottom: 2em;
+}
+#historialArticulo table {
+    width: 650px;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #BBB;
+}
+#historialArticulo th {
+    border-bottom: 1px solid #BBB;    
+}
+#historialArticulo th,
+#historialArticulo td {
+    text-align: left;
+    padding: 4px 2px;
+}
+#historialArticulo tr.par td {
+    background-color: #DDD;
+}
+
+#wikiNuevoArticulo textarea{
+	width:650px;
+}
+
+.WikiCompara h4,
+.wikiComparaTexto h4{
+    color: #4D4D4D;
+	font-size:1em;
+}
+
+.wikiFormCompara{
+	background-color:#d9d9d9;
+	width:550px;
+	margin:0px auto;
+}
+
+
+form#WikiCompara{
+	width:450px;
+	margin:0px auto;
+	padding-top:20px;
+	padding-bottom:20px;
+}
+.wikiComparaTexto{
+	width:650px;
+}
+
+.wikiComparaTextoResaltadoCaja{
+	background-color:#666666;
+	color:#FFFFFF;
+	margin-left:20px;
+	padding-left:10px;
+	margin-right:20px;
+	padding-right:10px;	
+}
+
+.wikiComparaTextoResaltado{
+	background-color:#666666;
+	color:#FFFFFF;
+}
+
+/*                                                                                               DAFO
+------------------------------------------------------------------------------------------------------
+*/
+.dafoContainerOscuro{
+	background-color:#d9d9d9;
+	/*width:585px;*/
+	margin:10px 0;
+	padding:30px;
+	position:relative;
+}
+.dafoContainerOscuro .floatLeft{
+	width:300px;
+}
+.dafoContainerOscuro .icoEliminar{
+	position:absolute;
+	right:2px;
+	top:4px;
+	width:20px;
+}
+.dosCols .floatLeft .panelDosColDafo,
+.dosCols .floatRight .panelDosColDafo{
+	width:276px;
+	padding-bottom:10px;
+	border-bottom:1px solid #DDD;
+}
+
+.dosCols .floatLeft .leerMasDafo,
+.dosCols .floatRight .leerMasDafo{
+	text-align:right;
+}
+.dosCols  ul.DosColDafo {
+	margin-bottom:15px;
+}
+.dosCols  ul.DosColDafo li{
+	margin:0 0 8px 5px;
+	background:url(../img/dotListadoGris.gif) no-repeat scroll 0 4px;
+	padding:0 0 0 10px;
+} 
+.dosCols  ul.DosColDafo ul {
+	padding:0.5em 0 0.5em 1em;
+}
+
+ul.dafoProgreso{
+	padding-top:20px;
+}
+
+ul.dafoProgreso li{
+	padding-bottom:10px;
+	padding-top:10px;
+	padding-right:57px;
+}
+
+.dafoProgreso h3{
+	background:transparent url(../img/sepHz.gif) repeat-x scroll center bottom;
+	font-size:1.2em;
+	font-weight:normal;
+	margin-bottom:10px;
+}
+
+ul.dafoProgreso div.floatLeft,
+ul.dafoProgreso div.floatRight {
+	width:47%;
+}
+
+ul.dafoProgreso li div.floatLeft a.dafoTitulo{
+	vertical-align:middle;
+	top:23px;
+	position:relative;
+}
+
+#creadorDafo img{
+	width:35px;
+}
+
+#creadorDafo .creador{	
+	font-size:0.9em;
+	height:35px;
+	position:relative;
+}
+div.barraProgreso  {
+	width:299px;
+}
+div.barraProgreso .total{
+	width:100%;
+	background:#C8C8C8;
+	height:23px;
+}
+div.barraProgreso .progreso {
+	background:#8186BD;
+	height:23px;
+}
+form#dafoCrear {
+	margin:20px 0 70px 0;
+}
+#dafoCrear label{
+	display:table;
+	width: auto;
+	margin:10px 0;
+}
+#dafoCrear input{
+	width:700px;
+}
+#dafoCrear textarea{
+	width:700px;
+	overflow:auto;
+}
+#dafoCrear div.addCategoria {
+	padding-left:15px;
+	padding-top:4px;
+	width:520px;
+}
+
+div.textodetalleDafo  {
+	width:280px;
+}
+.dafodetallesInfoExtra {
+	margin-top:25px;
+}
+.dafodetallesInfoExtra p {
+	font-size:0.92em;
+	margin-bottom:0;
+}
+
+#navDafo {
+	width:100%;
+	margin:20px 0;
+}
+#navDafo ul {
+    list-style: none;
+	background: url(../img/comunidades/bgNavDafo.gif) no-repeat bottom ;
+	width:500px;
+	padding-left:60px;
+	font-size:0.92em;
+	margin-bottom:30px
+}
+#navDafo li {
+    float: left;
+    display: inline;
+    position: relative;
+	text-align:center;
+	padding:3px 5px;
+}
+#navDafo a {
+    display: block;
+	color: #FFF;
+    text-decoration: none;
+    cursor: pointer;
+	padding-top:13px;
+	height:20px;
+	width:103px;
+}
+
+#navDafo li.D a {
+	background:url(../img/comunidades/navDafoD.gif) no-repeat bottom;
+}
+#navDafo li.D a:hover {
+	color:#fccfe4;
+}
+#navDafo li.D a.activo{
+	background:url(../img/comunidades/navDafoDActivo.gif) no-repeat bottom;
+}
+#navDafo li.A a {
+	background:url(../img/comunidades/navDafoA.gif) no-repeat bottom;
+}
+#navDafo li.A a:hover {
+	color:#f8d8c6;
+}
+#navDafo li.A a.activo{
+	background:url(../img/comunidades/navDafoAActivo.gif) no-repeat bottom;
+}
+#navDafo li.F a {
+	background:url(../img/comunidades/navDafoF.gif) no-repeat bottom;
+}
+#navDafo li.F a:hover {
+	color:#c0e0dc;
+}
+#navDafo li.F a.activo{
+	background:url(../img/comunidades/navDafoFActivo.gif) no-repeat bottom;
+}
+#navDafo li.O a {
+	background:url(../img/comunidades/navDafoO.gif) no-repeat bottom;
+}
+#navDafo li.O a:hover {
+	color:#c5dfee;
+}
+#navDafo li.O a.activo{
+	background:url(../img/comunidades/navDafoOActivo.gif) no-repeat bottom;
+}
+.crearDafo ol {
+	list-style-position:inside;
+	list-style:none;
+}
+.crearDafo ol li {
+	padding:20px;
+	margin-left:0px !important;
+
+}	
+.crearDafo ol li.odd {
+	background:#D9D9D9;
+}
+.crearDafo  ol li .dragDrop {
+	width:30px;
+	margin-right:30px;
+	font-size:0.92em;
+
+}
+.crearDafo  ol li .dragDrop a {
+	cursor:move;
+}
+.crearDafo  ol li .dragDrop a:hover {
+	text-decoration:none;
+}
+
+
+ul.dafoCrearLista li {
+	padding:10px;
+}
+
+ul.dafoCrearLista li.grisClaro {
+	background-color:#D9DADA;
+}
+ul.dafoCrearLista li.grisOscuro {
+	background-color:#CBCACB;
+}
+
+ul.leyendaDafo {
+	display:inline;
+}
+ul.leyendaDafo li {
+	display:inline;
+	background-position:0px !important;
+}
+ul.leyendaDafo li span {
+	padding-left:16px;
+}
+ul.leyendaDafo li.vinculado span {
+	padding-left:25px;
+}
+ul.leyendaDafo li.referenciado {
+	background:url(../img/comunidades/icoReferenciado.gif) no-repeat ;
+}
+ul.leyendaDafo li.vinculado {
+	background:url(../img/comunidades/icoVinculado.gif)no-repeat ;
+}
+
+.casillaDafo div {
+	padding-top:10px;
+}
+
+div.dafoEtiqueta {
+	margin-bottom:-1px;
+}
+
+div.dafoEtiqueta a{
+    display: block;
+	color: #FFF;
+    text-decoration: none;
+    cursor: pointer;
+	padding-top:7px;
+	height:20px;
+	width:103px;
+	text-align:center;
+}
+
+div.dafoEtiqueta a.D {
+	background:url(../img/comunidades/navDafoD.gif) no-repeat 0 0 ;
+}
+div.dafoEtiqueta a.A {
+	background:url(../img/comunidades/navDafoA.gif) no-repeat 0 0 ;
+}
+div.dafoEtiqueta a.F {
+	background:url(../img/comunidades/navDafoF.gif) no-repeat 0 0 ;
+}
+div.dafoEtiqueta a.O {
+	background:url(../img/comunidades/navDafoO.gif) no-repeat 0 0 ;
+}
+
+.dosColDafoVer div.floatLeft ,
+.dosColDafoVer div.floatRight {
+	width:48%;
+}
+
+div.factores {
+	margin-bottom:10px;
+}
+
+ul.dafoVer li {
+	padding:10px;
+}
+
+ul.dafoVer li.grisClaro {
+	background-color:#D9DADA;
+}
+ul.dafoVer li.grisOscuro {
+	background-color:#CBCACB;
+}
+
+/*
+ul.ComentarioDafoCol li {
+	background:url(../img/sepHz.gif) repeat-x 100% 0;
+}*/
+
+ul.ComentarioDafoCol li p {
+	padding-left:22px;
+}
+ul.dafoVer a.desplegable ,
+ul.dafoCrearLista a.desplegable {
+	background:url(../img/comunidades/offAzul.gif) no-repeat right 65%;
+	padding-right:15px;
+	outline:none;
+	cursor: pointer;
+	text-decoration:none !important;
+}
+ul.dafoVer a.activo ,
+ul.dafoCrearLista a.activo {
+	background:url(../img/comunidades/onAzul.gif) no-repeat right 65%;
+}
+ul.dafoVer a.activo img{
+	display:none;
+}
+ul.dafoVer a ,
+ul.dafoCrearLista a {
+	cursor:pointer;
+}
+
+form#selectoresBase.dafoSelectoresBase {
+	text-align:center;
+}
+form#selectoresBase.dafoSelectoresBase select {
+	width:150px;
+	margin-left:10px;
+}
+
+#dafoUnificarMensajes fieldset {
+	width:700px;
+}
+#dafoUnificarMensajes select {
+	margin-left:20px;
+}
+#dafoUnificarMensajes div.addCategoria {
+	padding-left:60px;
+}
+#dafoUnificarMensajes {
+    display: inline;
+    width: 600px;
+}
+
+#dafoUnificarMensajes label {
+    display: block;
+    clear: both;
+}
+#dafoUnificarMensajes label span {
+    float: left;
+    margin-top: 3px;
+}
+#dafoUnificarMensajes input,
+#dafoUnificarMensajes textarea {
+    float: right;
+    clear: right;
+    position: relative;
+    width: 600px;
+}
+
+/*especifico para las estuadisticas de dafo*/
+
+.dafoEstadisticas {
+	margin-left:10px;
+}
+.dafoEstadisticas select {
+	width:150px;
+}
+.dafoEstadisticas label {
+	margin-left:10px !important;
+}
+
+table.analisisMuestra {
+	width:650px;
+	margin-bottom:10px;
+}
+table.analisisMuestra th {
+	text-align:left;
+}
+table.analisisMuestra tr {
+	vertical-align:top;
+}
+.estadistGrande {
+	font-size:1.8em;
+}
+
+.estadistPeque {
+	color:#8186BD;
+	padding-left:5px;
+}
+
+div.miniTabla {
+	float: left;
+	margin-left:10px;
+	margin-top:10px;
+}
+table.miniTabla {
+	width:70px;
+	text-align:center;
+}
+
+table.miniTabla tr.negro {
+	font-weight:bold;
+}
+table.miniTabla tr.morado {
+	color:#8186BD;
+}
+
+table.miniTabla td,
+table.escalaTipo td {
+	border-right:1px solid;
+	width:20%;
+}
+table.miniTabla td.ultimo, 
+table.escalaTipo td.ultimo,
+table.escalaTipo td.primero {
+	border-right: none;
+	width:20%;
+}
+
+table.escalaTipo {
+	width:100%;
+	border:none;
+	text-align:center;
+}
+table.escalaTipo tr {
+	height:20px;
+}
+table.escalaTipo tr.gris {
+	background-color:#DBDBDC;
+}
+
+table.escalaTipo td {
+	width:auto !important;
+}
+
+table.escalaTipo .estadistPeque {
+	padding-left:0px !important;
+}
+.analisisComent td.ultimo {
+	width:14% !important;
+}
+
+
+div.grisOscuro {
+	background-color:#CBCACB !important;
+	margin-bottom:10px;
+	padding-top:17px;
+	padding-bottom:5px;
+}
+div.grisClaro {
+	margin-bottom:10px;
+	padding-top:5px;
+	padding-bottom:5px;
+}
+table.dafoRespTable th {
+	color:#8186BD;
+	text-align:left;
+}
+table.dafoRespTable td {
+	text-align:left;
+}
+table.dafoRespTable td.primero {
+	text-align:center;
+}
+table.dafoRespTable p {
+	margin-right:17px;
+	padding-top:10px;
+	text-align:justify;
+}
+
+#RespDafoPerfil fieldset {
+	width:600px;
+}
+#RespDafoPerfil label {
+	display:block;
+}
+#RespDafoPerfil select {
+	width:270px;
+	float:right;
+}
+
+#wrap.DafoVotar ul.comentarios li
+{
+	padding-right:0px;
+}
+#wrap.DafoInvitarParticipante div.anyadirGnoss textarea {
+    width: 702px;
+}
+/*                                                                             Admin Comunidades
+------------------------------------------------------------------------------------------------------
+*/
+
+.AdminComunidades h2 {
+	background:transparent url(../img/sepHz.gif) repeat-x scroll center bottom;
+	color:#8186BD;
+	font-size:1.3em;
+	font-weight:normal;
+	margin:15px 0 10px;
+	padding:4px 0;
+}
+	
+
+.AdminComunidades .dosCols .imagenAsociada div.floatLeft {
+	width:215px;
+}
+
+.AdminComunidades .botones label.floatRight{
+	margin-left:10px;
+}
+.AdminComunidades .dosCols .imagenAsociada div.sepHz{
+	width: 100% !important;
+}
+
+/*LOZA : Cambio form por div (no usamos formularios)
+div#adminComunidad {
+	width:500px;
+}
+*/
+#adminComunidad label.labelBlock,
+#adminComunid label.labelBlock{
+	display:block;
+}
+
+
+#adminComunidad input,
+#adminComunid input,
+#adminComunid select {
+	/*LOZA : Lo comento porque hace que todos los input, contando checks y demás salgan desalineados a la izquierda
+			 Si en algún sitio hace que se vea mal (lo minimo) se pone a mano solo en ese sitio*/
+	/*margin-left:10px;*/
+	margin-right:10px;
+}
+
+#adminComunidad input.text,
+#adminComunid input.text{
+	width:200px;
+}
+#adminComunidad input.text400,
+#adminComunidad textarea.text400,
+#adminComunid input.text400,
+#adminComunid textarea.text400{
+	width:400px;
+	float:right;
+	margin-right:0px;
+}
+#adminComunidad fieldset.fieldset355 , 
+#adminComunid fieldset.fieldset355{
+	width:355px;
+}
+
+.fieldset355 label {
+	float:left;
+}
+.fieldset355 select {
+	width:200px;
+	display:inline;
+	float:right;
+}
+#adminComunidad #reencuadrar .boton
+{
+	margin-top:0px;
+}
+#adminComunidad #reencuadrar div {
+	margin-left:0px;
+}
+#adminComunidad #reencuadrar div.floatRight {
+	margin-left:70px;
+}
+#adminComunidad #reencuadrar .boton {
+	margin-top:15px;
+}
+#adminComunidad p.categorias {
+	float: left;
+	padding-left:30px;
+}
+#adminComunidad select.adminCom {
+	width:100px;
+}
+
+ul.AdminComunidades {
+	margin-top:17px;
+}
+ul.AdminComunidades li{
+	margin-bottom:10px;
+}
+#adminComCate input#filtroRapido {
+    width: 200px;
+}
+#adminComCate #panAcciones input{
+    width: 300px;
+}
+
+#adminComCate input,
+#adminComCate select {
+	/*margin-right:10px;
+	margin-left:10px;*/
+}
+#adminComCate select {
+	width:128px;
+}
+#adminComCate label{
+	margin-right:10px;
+}
+#adminAnyadirCategorias {
+
+    width: 335px;
+    height: auto;
+    padding: 5px 50px;
+    text-align: left;
+}
+#adminAnyadirCategorias ul {
+    padding: 0.5em 0 0.5em 15px;
+}
+
+#adminAnyadirCategorias li {
+    margin-bottom: 2px;
+	position:relative;
+}
+#adminAnyadirCategorias li.propuesta label {
+	color:#E37F4F;
+}
+
+#adminAnyadirCategorias a.verMas {
+    position: absolute;
+    top: 1px;
+    left: -14px;
+}
+
+.AdminComunidades .bgGris {
+	background:#f9f7f7;
+	margin-bottom:20px;
+	height:auto;
+	padding:10px 0 10px 0;
+}
+
+#AdminComuindadFiltro select,
+#AdminComuindadFiltro label {
+	margin-left:10px;
+}
+#AdminComuindadFiltro input {
+	width:190px;
+}
+
+/*
+                                                                    HardcKorismos Variados del tuneo
+------------------------------------------------------------------------------------------------------
+*/
+
+.comGnoss .listadoCategorias a.desplegable {
+	background-image: url(../img/comunidades/verMas.gif);
+}
+
+.comGnoss .listadoCategorias a.activo {
+	/*background-image:url(../img/comunidades/verMenos.gif);Comentado por Javier. Esto jode el estilo de los contribuciones de una comunidad. Si comentandolo se fastidia algo hablar con él*/
+}
+
+.comGnoss .filtroRapido .activo {
+	background-image:url(../img/comunidades/flechaFiltroActivo.gif);
+}
+
+.comGnoss .indice .wrap176 a.desplegable,
+.comGnoss .comunidades ul.imagenAsociada a.desplegable,
+.comGnoss #baseRecursos h3 a {
+	background-image:url(../img/comunidades/offAzul.gif);
+}
+
+.comGnoss .indice .wrap176 a.activo,
+.comGnoss .comunidades ul.imagenAsociada a.activo,
+.comGnoss #baseRecursos h3 a.activo  {
+	background-image:url(../img/comunidades/onAzul.gif);
+}
+.comGnoss .imagenAsociada div {
+/*width:500px;*//*Comentado por Javier. Esto jode el estilo de los comentarios*/
+}
+.comGnoss .imagenAsociada div /*p*/ {/* p comentada por Javier*/
+	margin-bottom:0px;
+}
+
+/*                                                                                 Sistema de votación
+------------------------------------------------------------------------------------------------------
+*/
+/* jQuery.Rating Plugin CSS - http://www.fyneworks.com/jquery/star-rating/ */
+div.rating-cancel,div.star-rating{float:left;width:17px;height:15px;text-indent:-999em;cursor:pointer;display:block;background:transparent;overflow:hidden}
+div.rating-cancel,div.rating-cancel a{background:url(../img/comunidades/delete.png) no-repeat 0 -16px}
+div.star-rating,div.star-rating a{background:url(../img/comunidades/bola.png) no-repeat 0 0px}
+div.rating-cancel a,div.star-rating a{display:block;width:16px;height:100%;background-position:0 0px;border:0}
+div.star-rating-on a{background-position:0 -16px!important}
+div.star-rating-hover a{background-position:0 -32px}
+/* Read Only CSS */
+div.star-rating-readonly a{cursor:default !important}
+/* Partial Star CSS */
+div.star-rating{background:transparent!important;overflow:hidden!important}
+/* END jQuery.Rating Plugin CSS */
+
+
+/*
+---------------------------------------------------------------------Estilos del control ratinf de ajax
+*/
+.ratingStar {
+background-repeat:no-repeat;
+cursor:pointer;
+display:block;
+font-size:0pt;
+height:12px;
+margin:0px;
+padding:0px;
+width:13px;
+border:solid thin red;
+}
+.filledRatingStar {
+background:url(../img/comunidades/bola.png) no-repeat 0 -32px;
+border:solid thin blue;
+}
+.emptyRatingStar {
+background:url(../img/comunidades/delete.png) no-repeat 0 0px;
+
+}
+.savedRatingStar {
+background-position:0 -32px;
+border:solid thin yellow;
+}
+
+
+
+
+#divSelCatTesauro.filtrado div.panHijos {
+    display: block !important;
+    margin-left: 0 !important;
+}
+
+#divSelCatTesauro.filtrado img {
+    display: none !important;
+}
+
+body.administracionComunidad .aaCabecera #perfilUsuarioGnoss,
+body.administracionComunidad div#header #buscador,
+body.administracionComunidad div#tools.columms,
+body.administracionComunidad div#header #corporativo .content .logoCustomRIAM p,
+body.administracionComunidad #footer .cols-5,
+body.administracionComunidad .textBox.tituloComunidad .breadCrumb,
+body.administracionComunidad .subNav,
+body.administracionComunidad #nav,
+body.administracionComunidad #formats
+ {
+    display:none !important;
+}
+body.administracionComunidad div#header #corporativo {
+    width:100%
+}
+body.administracionComunidad div#header #corporativo .content{
+    margin: 25px 0 !important;
+}
+body.administracionComunidad div#header #corporativo .content .logoCustomRIAM h1 a{
+    font-size: 50px !important;
+}
+body.administracionComunidad #section,
+body.administracionComunidad #section .wrap710{
+    width: auto;
+}
+
+body.administracionComunidad #footer{
+    padding: 0;
+}

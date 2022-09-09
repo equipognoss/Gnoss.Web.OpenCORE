@@ -1,0 +1,143 @@
+﻿@model PersonalSpaceModel
+
+@{
+    Html.SetBodyClass("layout02 listadoComunidad comGnoss listadoMisFavoritos ");
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+    string jsExtra = Html.GetJSExtra();
+
+    string numResult = Model.TotalNumberResults + Html.GetText("PERFILBASE", "RECURSOS_PEQUE");
+    string mbutilizados = Model.UsedMegaBytes + "MB";
+    string mblibres = Model.FreeMegaBytes + "MB";
+
+    string nombreProyectoEcosistema = Html.GetNombreProyectoEcosistema();
+    string srcImgAyuda = Html.GetBaseUrlStatic() + "/img/icono_gnoss_ayuda3.png";
+
+    string urlPagina = Html.GetUrlPagina();
+}
+
+<div id="col01">
+    <div id="sidebar">
+        <div id="panelPerfil">
+            <div class="menuSidebar facetedSearch espacioDisponible" style="margin-bottom: 10px;">
+                <div class="box noCollapse">
+                    <p>@numResult <strong>@mbutilizados</strong> @Html.GetText("PERFILBASE", "DEESPACIOOCUPADO") <strong>@mblibres</strong> @Html.GetText("PERFILBASE", "DISPONIBLES2")</p>
+                </div>
+            </div>
+            <div class="menuSidebar facetedSearch" style="margin-bottom: 30px; height:45px;">
+                <div class="box noCollapse" style="margin-bottom: 5px;">
+                    <p>
+                        <strong>@Html.GetText("PERFILBASE", "ORGANIZACONOCIMIENTO")</strong>
+                        <a class="floatRight" style="display:inline;" title="@Html.GetText("PERFILBASE", "ORGANIZACONOCIMIENTOAYUDA", nombreProyectoEcosistema)">
+                            <img src="@srcImgAyuda" style="border-width:0px;" alt="help" title="@Html.GetText("PERFILBASE", "ORGANIZACONOCIMIENTOAYUDA", nombreProyectoEcosistema)" />
+                        </a>
+                        <label class="btAzul boton" style="margin-left:10px;">
+                            <a href="@Model.AdminCategoriesUrl">@Html.GetText("PERFILBASE", "EDITACATEGORIAS") </a>
+                        </label>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="facetaEncuentra" class="resaltarAccion" style="display: none">
+        <p>@Html.GetText("BUSCADORFACETADO", "ENCUENTRA")</p>
+    </div>
+    <div id="panFacetas">
+         @Html.Raw(Model.SearchViewModel.HTMLFaceted)
+    </div>
+</div>
+<div id="col02">
+    <h2>@Model.PageTitle</h2>
+    <div id="messagetools" class="messagetools listToolBar">
+        <div id="divMensajeInicioCont">
+            <div class="toolbar">
+                <div id="divContMensajeNoResultados">
+                </div>
+                <div id="divMisRecursos">
+                    <div class="botonera" id="divContBotonesAcciones">
+                        <ul>
+                            <li class="looksbutton principal">
+                                <a id="hlBotonAgnadir" href="@Model.AddNewResourceUrl">@Html.GetText("BUSQUEDAAVANZADA", "NUEVORECURSO")</a>
+                            </li>
+
+                            <li class="toolsGroup">
+                                <a id="hlOrganizarCategorias" href="@Model.AdminCategoriesUrl">@Html.GetText("PERFILBASE", "EDITACATEGORIAS") </a>
+                            </li>
+
+                            <li class="toolsGroup">
+                                <a id="hlOrganizarCat">@Html.GetText("PERFIL", "ORGANIZARENCATEGORIAS")</a>
+                            </li>
+                            <li class="looksLink deletes">
+                                <a id="hlEliminar">@Html.GetText("COMMON", "ELIMINAR")</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="ko" id="lblErrorMisRecursos" Style="display: none">
+                        <span>@Html.GetText("PERFILBASE", "NOSELECCIONADO")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="divContBusqueda" style="display: block">
+        <div id="finderUtils" class="finderUtils">
+            <div class="group filterSpace">
+                <div style="display: none;" id="panFiltros">
+                    <p class="searchBy" style="">
+                        <span id="lblFiltros" class="floatLeft">@Html.GetText("COMBUSQUEDAAVANZADA", "FILTROS"): </span>
+                        <a style="margin-left: 5px;" id="btnLimpiarFiltros" class="limpiarfiltros">@Html.GetText("COMBUSQUEDAAVANZADA", "LIMPIARFILTROS")</a>
+                    </p>
+                    <ul class="facetedSearch tags" id="panListadoFiltros"><li style="display: none;"></li></ul>
+                </div>
+                <p id="panNumResultados">
+                    @*<span class="counter" id="lblNumResultadosBusqueda"></span>*@
+                </p>
+            </div>
+            <div id="panOrdenContenedor" class="panelOrdenContenedor">
+                <div id="panFiltrosOrden">
+                    <label>
+                        <select id="ddlOrdenarPor" class="filtro">
+                            <option value="gnoss:hasfechapublicacion" selected="selected">@Html.GetText("PERFILRECURSOSCOMPARTIDOS", "FECHA")</option>
+				            <option value="gnoss:hasPopularidad">@Html.GetText("PERFILRECURSOSCOMPARTIDOS", "POPULARIDAD")</option>
+                        </select>
+                    </label>
+                    <ul>
+                        <li class="ordenDescendente">
+                            <a id="lbOrdenDescendente" name="orden|desc" class="filtro"></a>
+                        </li>
+                        <li class="ordenAscendente">
+                            <a id="lbOrdenAscendente" name="orden|asc" class="filtro"></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div id="panListado" class="resource-list withSelector">
+            <div class="confirmar confirmacionMultiple" style="display: none; z-index: 1000;" id="panContenedorCategorias">
+                <div class="mascara">
+                </div>
+                <div id="panCategorias12" class="categorias">
+                    <a onclick="$('.confirmar').css('display', 'none')" style="float: right;">@Html.GetText("COMMON","OCULTAR")</a>
+                    <input id="btnAceptarCatsRecs" value="@Html.GetText("COMMON","ACEPTAR")" type="button">
+                </div>
+                <input type="hidden" ID="txtSeleccionados" />
+            </div>
+            <div id="panResultados" class="listadoRecursos">
+                @Html.Raw(Model.SearchViewModel.HTMLResourceList)
+            </div>
+        </div>
+    </div>
+    <div id="navegadorBusqueda">
+        <div id="PlaceHolderNavegador">
+        </div>
+    </div>
+</div>  
+
+<script type="text/javascript">
+    @Html.Raw(jsExtra);
+    urlPaginaActual = '@urlPagina';
+
+    $(function () {
+        InicializarEspacioPersonal();
+    });
+</script>

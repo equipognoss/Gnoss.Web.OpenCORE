@@ -1,0 +1,711 @@
+/* version 27.06.2013.16.20 */
+/* cabecera usuario conectado 
+*/
+#perfilUsuarioGnoss{}
+	.wrapper{}
+		.usuarioConectado{}
+		.espacios{}
+		.otrasIdentidades{}
+		.identidadGNOSS{}
+		
+	.usuarioConectado{}
+		p.usuario{}
+		.novedades{}
+
+.usuarioConectado,
+.espacios,
+.otrasIdentidades{margin-right:10px}
+	
+.perfilUsuarioGnoss
+	{background:#888888 url('resources/bgUsuarioConectado.png') repeat-x 0 0; position:relative; z-index:9980}
+	.perfilPersonal{background-color:#3B75A1}
+	.perfilProfesional{background-color:#259FC3}
+	.perfilProfesor{background-color:#E3773B}
+	.perfilAlumno{background-color:#DF1777}	
+.perfilUsuarioGnoss a
+	{color:#eee}
+.perfilUsuarioGnoss ul
+	{list-style:none; padding:0; margin:0}
+.perfilUsuarioGnoss{width:100%}
+.perfilUsuarioGnoss .wrapper
+	{margin:0 auto; height:40px; width:992px;}
+.perfilUsuarioGnoss .perfilUsuarioGnoss p, 
+.perfilUsuarioGnoss .perfilUsuarioGnoss li, 
+.perfilUsuarioGnoss .perfilUsuarioGnoss a{}
+.perfilUsuarioGnoss .usuarioConectado,
+.perfilUsuarioGnoss .espacios,
+.perfilUsuarioGnoss .otrasIdentidades,
+.perfilUsuarioGnoss .identidadGNOSS
+	{height:40px; display:inline-block; float:left}
+.perfilUsuarioGnoss p.usuario,
+.perfilUsuarioGnoss .espacios li,
+.perfilUsuarioGnoss .otrasIdentidades li,
+.perfilUsuarioGnoss .identidadGNOSS li
+	{height:40px; line-height:40px; display:inline-block; float:left}
+
+.perfilUsuarioGnoss .otrasIdentidades li{overflow:hidden; position:relative}
+.perfilUsuarioGnoss .otrasIdentidades li a img{position:absolute; top:0; left:0; width:40px; background-color: #ffffff;}
+
+
+.perfilUsuarioGnoss p.usuario img{width:40px; margin-right:5px}
+.perfilUsuarioGnoss p.usuario img,
+.perfilUsuarioGnoss p.usuario span{display:inline-block; float:left;}
+
+.perfilUsuarioGnoss p.usuario{margin-right:5px}
+.perfilUsuarioGnoss p.usuario,
+.perfilUsuarioGnoss .novedades
+{float:left; display:inline-block}
+.perfilUsuarioGnoss .novedades li{position:relative; width:40px; height:40px; float:left; display:inline-block; line-height:40px; margin-right:1px}
+.perfilUsuarioGnoss .novedades li a{width:40px; height:40px; display:block; text-indent:-9999em; background:#ffffff url('resources/spriteIconsUsuarioConectado.png') no-repeat 0 0}
+
+.perfilUsuarioGnoss .novedades li span.novedades,
+.perfilUsuarioGnoss .novedades li span.avisos,
+.perfilUsuarioGnoss .otrasIdentidades li span.novedades
+{
+	font-family: Arial, sans;
+	font-size: 10px;
+	position: absolute;
+	height: auto;
+	line-height: 1;
+	width: auto;
+	right: 0;
+	text-align: right;
+	padding: 2px;
+	font-weight: bold;
+	color: white;
+}
+.perfilUsuarioGnoss .novedades li span.novedades{background: orangeRed; top: 0;}
+.perfilUsuarioGnoss .novedades li span.avisos{background: none; bottom: 0; color:#888; width:40px; text-align:center}
+.perfilUsuarioGnoss .otrasIdentidades li span.novedades{bottom:0; right:0; background:orangeRed}
+
+.perfilUsuarioGnoss .novedades .usuarioHome a{background-position:-440px -200px}
+.perfilUsuarioGnoss .novedades .usuarioMensajes a{background-position:-320px -40px}
+.perfilUsuarioGnoss .novedades .usuarioComentarios a{background-position:-200px 0}
+.perfilUsuarioGnoss .novedades .usuarioInvitaciones a{background-position:0 -80px}
+.perfilUsuarioGnoss .novedades .usuarioSuscripciones a{background-position:-320px -200px}
+.perfilUsuarioGnoss .novedades .usuarioContactos a{background-position:-40px -360px}
+
+.perfilUsuarioGnoss .espacios li{padding:0 5px}
+.perfilUsuarioGnoss .listadoAmpliado,
+.mgHerramientas .listadoAmpliado{display:none}
+.mgHerramientas .mostrarListadoAmpliado{border-top:0}
+.mostrarListadoAmpliado,
+.mostrarListadoTodos
+{text-align:right; border-top:1px dotted #ddd; margin-top:4px; padding-top:4px}
+.mostrarListadoAmpliado a,
+.mostrarListadoTodos a
+{color:orangeRed}
+.mostrarListadoTodos{display:none}
+.perfilUsuarioGnoss a.menuDesplegable,
+.perfilUsuarioGnoss p.menuDesplegable a{background:url('resources/verticalSprite.png') no-repeat center 7px; padding:6px 0}
+
+.perfilUsuarioGnoss .otrasIdentidades li{width:40px; height:40px; float:left; display:inline-block; line-height:40px; margin-right:1px}
+.perfilUsuarioGnoss .otrasIdentidades li .identidadProfesor{width:14px; height:14px; position:absolute; left:0; bottom:0; background:transparent url('resources/verticalSprite.png') no-repeat 0 -47px}
+.perfilUsuarioGnoss .otrasIdentidades li a{width:40px; height:40px; display:block; text-indent:-9999em; background:#ffffff url('resources/spriteIconsUsuarioConectado.png') no-repeat -80px 0}
+.perfilUsuarioGnoss .otrasIdentidades li a.organizacion{background-position:-120px -360px}
+.perfilUsuarioGnoss .otrasIdentidades li.masIdentidades a{background-position:-80px -80px}
+
+
+.perfilUsuarioGnoss .identidadGNOSS{float:right}
+.perfilUsuarioGnoss .identidadGNOSS li{padding: 0 2px}
+.perfilUsuarioGnoss .identidadGNOSS li.logo{}
+.perfilUsuarioGnoss .identidadGNOSS li.logo{padding:0; width:70px; background:url('resources/gnossCabecera.png') no-repeat 0 0; display:block}
+.perfilUsuarioGnoss .identidadGNOSS li.logo a{text-indent:-9999em; width:100%; display:block}
+.perfilUsuarioGnoss .identidadGNOSS li.logo li a{text-indent: inherit}
+
+.perfilUsuarioGnoss .espacios li li,
+.identidadGNOSS #gnoss li li
+{height:auto; line-height:1; display:block; float:none}
+.perfilUsuarioGnoss  .usuarioConectado,
+.perfilUsuarioGnoss .espacios li.usuarioClases,
+.perfilUsuarioGnoss .espacios li.usuarioComunidades,
+.perfilUsuarioGnoss .espacios li.usuarioBlogs,
+.perfilUsuarioGnoss .espacios li.usuarioDafos,
+.identidadGNOSS li
+	{position:relative}
+
+.perfilUsuarioGnoss .desplegable,
+.identidadGNOSS .desplegable
+	{display:none; position:absolute; min-width: 240px; top:40px; left:0; border:1px solid #ddd; border-width:0 2px 2px 1px;  background:#ffffff; padding:8px 16px}
+.identidadGNOSS .desplegable{left:auto; right:0; min-width:160px}
+.identidadGNOSS .desplegable li{text-align:right}
+.perfilUsuarioGnoss .showDesplegable .desplegable,
+.identidadGNOSS .showDesplegable .desplegable
+	{display:block}
+.perfilUsuarioGnoss .showDesplegable a.activo,
+.identidadGNOSS .showDesplegable a.activo
+	{color:#fff}
+.perfilUsuarioGnoss .desplegable li,
+.identidadGNOSS .desplegable li
+{padding:4px 0}
+.perfilUsuarioGnoss .desplegable li a,
+.identidadGNOSS .desplegable li a
+	{white-space:nowrap}
+.perfilUsuarioGnoss .desplegable li.salir a,
+.identidadGNOSS .desplegable li.salir a
+	{color:orangeRed}
+.perfilUsuarioGnoss .desplegable li.salir,
+.perfilUsuarioGnoss .desplegable li.administrar,
+.identidadGNOSS .desplegable li.salir,
+.identidadGNOSS .desplegable li.administrar
+	{border-top:1px dotted #ddd; margin-top:2px}
+.perfilUsuarioGnoss .desplegable li a,
+.identidadGNOSS .desplegable li a
+	{white-space:nowrap; color:#3B75A1}
+.perfilUsuarioGnoss  li a.activado,
+.identidadGNOSS  li a.activado
+	{font-weight:bold}
+.perfilUsuarioGnoss .listado.listadoMisContribuciones{border-bottom:1px dotted #ddd; padding-bottom:4px; margin-bottom:4px}
+	
+.perfilUsuarioGnoss .otrasIdentidades{position:relative}
+.perfilUsuarioGnoss .otrasIdentidades ul{height:40px;width:164px; overflow:hidden}
+.perfilUsuarioGnoss .otrasIdentidades .panelMasIdentidades.desplegable
+	{display:none; position:absolute; min-width: 240px; top:40px; left:auto; right:0; border:1px solid #ddd; border-width:0 2px 2px 1px;  background:#ffffff; padding:8px 16px}
+.perfilUsuarioGnoss .otrasIdentidades .panelMasIdentidades ul{height:auto; width:auto}
+.perfilUsuarioGnoss .otrasIdentidades .panelMasIdentidades li{float:none; display:block; width:auto; height:auto; line-height:inherit}
+.perfilUsuarioGnoss .otrasIdentidades .panelMasIdentidades li img{display:none}
+.perfilUsuarioGnoss .otrasIdentidades .panelMasIdentidades li a{background:none; text-indent:inherit; color:#3B75A1; width:auto; height:auto; line-height:inherit}
+
+.perfilUsuarioGnoss .otrasIdentidades.showDesplegable .panelMasIdentidades.desplegable{display:block}
+
+.perfilUsuarioGnoss .otrasIdentidades li .identidadProfesor{line-height:inherit;}
+
+#identidad ul#gnoss li.beta{color:#fff; font-size:13px;padding: 5px;}
+#identidadGNOSS ul#gnoss li.beta {color:#fff; font-size:13px}
+
+/* fin cabecera usuario conectado */
+
+/*	layout.css	*/
+
+#header{background:white;}
+#header .wrapper{width:992px; margin:0 auto; padding:0; background:white; position:relative}
+
+
+/*  */
+#corporativo p.ecosistema{position:absolute; top:0; right:50px; font-family:Arial, sans; color:#FF6600; text-transform:uppercase; font-size:11px}
+#corporativo p.ecosistema span{color:#fff; background:#FF6600; text-transform:lowercase; padding:0 2px}
+
+
+/* componentes aside */
+.formularioLoginHeader{display:none; background:whiteSmoke; width:992px; margin:0 auto}
+
+.formularioLoginHeader .wrap{padding:2em; background:#fff}
+.formularioLoginHeader h3,
+#identidad .formularioLoginHeader p,
+.formularioLoginHeader legend,
+.formularioLoginHeader label
+{color:#000}
+.formularioLoginHeader .mediumLabels label{width:120px; text-align:right; padding-top:6px}
+.formularioLoginHeader .mediumLabels input.text.medium{width:260px}
+.formularioLoginHeader fieldset{margin:0}
+.formularioLoginHeader .supertitle{margin-bottom:6px}
+.formularioLoginHeader legend{display:none}
+.formularioLoginHeader fieldset{clear:both}
+
+/* login redes sociales */
+.formularioLoginHeader .mediumLabels,
+.formularioLoginHeader .registroRedesSociales{width:50%; float:left; clear:none}
+.formularioLoginHeader legend{display:block; color:#444; margin-bottom:10px}
+.formularioLoginHeader .submit{margin-left:125px}
+.formularioLoginHeader .registroRedesSociales ul{margin:0; padding:0; list-style:none}
+.formularioLoginHeader .registroRedesSociales ul li{width:180px; float:left}
+.formularioLoginHeader .registroRedesSociales ul{margin:0; padding:0; list-style:none}
+.formularioLoginHeader .registroRedesSociales ul li
+{padding-left:40px; height:31px; background:url('resources/spriteIconosSocialMedia.png') no-repeat 0 0; margin-bottom:10px}
+.formularioLoginHeader .registroRedesSociales ul li a{display:block}
+.formularioLoginHeader .registroRedesSociales ul li.iconFacebook{background-position:0 0}
+.formularioLoginHeader .registroRedesSociales ul li.iconTwitter{background-position:0 -40px}
+.formularioLoginHeader .registroRedesSociales ul li.iconGoogle{background-position:0 -80px}
+.formularioLoginHeader .registroRedesSociales ul li.iconGnoss{background-position:0 -122px}
+
+/* usuario conectado */
+#perfilUsuarioGnoss{}
+	#identidad{}
+	.contenedorSidebar{}
+	.opcionesPanel,
+	#identidad ul ul
+	{display:none}
+	.itemActivo .opcionesPanel
+	{display:block}
+
+	#perfilUsuarioGnoss #identidad,
+	#perfilUsuarioGnoss .perfilPersonal,
+	#perfilUsuarioGnoss .perfilProfesional,
+	#perfilUsuarioGnoss .perfilProfesor
+	{background:#9DA3DA}
+	.contenedorSidebar,
+	#perfilUsuarioGnoss #identidad ul li.activo
+		{background:#8186BD}
+	
+	.contenedorSidebar,
+	#perfilUsuarioGnoss #identidad{width:99.2em; margin:0 auto}
+	#perfilUsuarioGnoss #identidad ul li.identidad {border-right:1px solid #8186BD; padding:0 10px;}
+	#perfilUsuarioGnoss #identidad ul li.activo {padding:0;}
+	#perfilUsuarioGnoss #identidad ul li.identidad a{display:inline-block; padding:0; height:30px; line-height:30px;}
+	#perfilUsuarioGnoss #identidad ul li.activo a.iconoUsuario{margin-right:10px}
+	#perfilUsuarioGnoss #identidad ul li.activo a.iconoUsuario img{display:block; float:left; width:25px; margin-right:5px}
+		*:first-child+html #perfilUsuarioGnoss #identidad ul li.identidad.activo{width:360px; position:relative}
+		*:first-child+html #perfilUsuarioGnoss #identidad ul li.identidad.activo ul.infoCuenta{position:absolute; top:0; right:0}
+		*:first-child+html #perfilUsuarioGnoss #identidad ul li.activo a.iconoUsuario{padding-left:30px; position:relative}
+		*:first-child+html #perfilUsuarioGnoss #identidad ul li.activo a.iconoUsuario img{position:absolute; top:0; left:0;}
+	
+	#identidad li.activo .infoCuenta{display:block; float:right; position:relative; height:30px;}
+	#identidad li.activo .infoCuenta li{height:30px; line-height:30px}
+	#identidad li.activo .infoCuenta li,
+	#identidad li.activo .infoCuenta li a,
+	#identidad li.activo .infoCuenta li span
+	{display:block; float:left; font-size:100%}
+	span#infoNumMensajesSinLeer,
+	span#infoNumComentariosSinLeer,
+	span#infoNumInvitacionesSinLeer,
+	span#infoNumSuscripcionesSinLeer{position:relative; left:-2px; font-weight:bold; color:#eee; top:2px}
+	#identidad ul ul.infoCuenta li a{
+		height:inherit; line-height:inherit; width:20px;
+		background:url('resources/spriteIdentidad.png') no-repeat
+	}
+	.infoCuenta .NumElementNuevos{margin-right:5px}
+	#identidad ul ul.infoCuenta li.item01 a{background-position: -4px 0}
+	#identidad ul ul.infoCuenta li.item02 a{background-position: -4px -26px}
+	#identidad ul ul.infoCuenta li.item03 a{background-position: -4px -52px}
+	#identidad ul ul.infoCuenta li.item04 a{background-position: -4px -80px}
+
+	#identidad ul ul.infoCuenta li.item01,
+	#identidad ul ul.infoCuenta li.item02,
+	#identidad ul ul.infoCuenta li.item03,
+	#identidad ul ul.infoCuenta li.item04{position:relative; background:none; padding-right:5px}
+	#identidad ul ul.infoCuenta span.aviso{position:absolute; right:0; top:0}
+	
+	
+	#perfilUsuarioGnoss #identidad ul ul.infoCuenta span.aviso{
+		background: orangeRed;
+		font-family: Tahoma, Arial, sans;
+		font-size: 9px;
+		font-weight: bold;
+		height: 9px;
+		line-height: 9px;
+		padding: 2px;	
+	}
+	
+	.item.itemActivo {position:relative; top:1px}
+		*:first-child+html #identidad,
+		*:first-child+html .item.itemActivo
+			{z-index:9999}
+	.item.itemActivo .opcionesPanel{
+		background:#fff; position:absolute; padding:1em; top:24px; left:0; z-index:9980; 
+		border:1px solid #ddd; 
+		border-top:0;
+		border-bottom-color:#8186BD; 
+	}
+	.item.itemActivo .opcionesPanel ul{list-style-type:none; padding:0}
+	.item.itemActivo .opcionesPanel ul li{padding:2px 0; padding-left:0 !important; margin-top:4px}
+	.item.itemActivo .opcionPrincipal{background:#fff; border:1px solid #ddd; border-bottom:#fff; height:24px; line-height:24px}
+	.item.itemActivo .opcionPrincipal a{font-weight:bold; color:#8186BD}
+	.itemConOpcionesSegundoNivel .opcionPrincipal a{padding-right:28px; background:url('resources/spriteIdentidad.png') no-repeat right -145px}
+	.itemConOpcionesSegundoNivel.itemActivo .opcionPrincipal a{background-position: right -185px}
+	.itemConOpcionesSegundoNivel a{cursor:pointer}
+	.contenedorSidebar{}
+	.opcionPrincipal{float:left; height:25px; line-height:25px; padding:0 10px}
+	.itemConOpcionesSegundoNivel .opcionPrincipal{padding-right:0}
+	.opcionPrincipal a{color:#fff; font-size:1.3em}
+	.opcionesPanel div#panVerTodas{border-top:1px dotted #ddd; margin-top:10px}
+	.opcionesPanel div#panVerTodas a{font-size:1.3em; position:relative; top:4px}
+	
+	/*otras identidades */
+	#perfilUsuarioGnoss  #identidad  #otrasIdentidades .wrap a{cursor:pointer; padding-right:28px; background:url('resources/spriteIdentidad.png') no-repeat right -212px}
+	#perfilUsuarioGnoss  #identidad  #otrasIdentidades.itemActivo{background:#fff}
+	#perfilUsuarioGnoss  #identidad  #otrasIdentidades.itemActivo .wrap a{color:#8186BD; font-weight:bold; background-position: right -182px}
+	#identidad  .listadoOtrasIdentidades{display:none}
+	#identidad  .listadoOtrasIdentidades ul{display:block}
+	#identidad  .listadoOtrasIdentidades a{color:#8186BD}
+	.listadoOtrasIdentidades{
+		background:#fff; 
+		position:absolute; 
+		padding:1em; top:24px; left:0; z-index:9970; 
+		border:1px solid #ddd; 
+		border-top:0;
+		border-bottom-color:#8186BD; 	
+	}
+	#identidad .listadoOtrasIdentidades ul li{font-size:100%; float:none}
+	#perfilUsuarioGnoss #identidad .listadoOtrasIdentidades ul li a{height:22px; line-height:22px}
+	
+	/* ajustes 13.06.2012 
+	*/
+	#perfilUsuarioGnoss #identidad li li span{font-family:Tahoma, Arial, sans; font-weight:normal; font-size:11px}
+	#identidad ul ul.infoCuenta li.item01, 
+	#identidad ul ul.infoCuenta li.item02, 
+	#identidad ul ul.infoCuenta li.item03, 
+	#identidad ul ul.infoCuenta li.item04{padding-right:2px}	
+	
+	/* color perfil personal
+	*/
+	#perfilUsuarioGnoss .perfilPersonal{}
+	#perfilUsuarioGnoss .perfilPersonal .contenedorSidebar,
+	#perfilUsuarioGnoss .perfilPersonal #identidad ul li.activo	{background-color:#3B75A1}
+	#perfilUsuarioGnoss .perfilPersonal #identidad ul li.identidad{border-right-color:#759EBD}
+	.perfilPersonal #identidad ul ul.infoCuenta li a,
+	.perfilPersonal .itemConOpcionesSegundoNivel .opcionPrincipal a{background-image:url('resources/spriteIdentidadPersonal.png')}
+	#perfilUsuarioGnoss .perfilPersonal  #identidad, 
+	#perfilUsuarioGnoss .perfilPersonal{background-color:#eee}
+	.perfilPersonal #identidad .identidad .wrap a,
+	.perfilPersonal #identidad .identidad .wrap span{color:#999}
+	.perfilPersonal #identidad .identidad.activo a,
+	.perfilPersonal #identidad .identidad.activo span{color:#fff}
+
+	/* color perfil corporativo
+	*/
+	#perfilUsuarioGnoss .perfilProfesional{}
+	#perfilUsuarioGnoss .perfilProfesional .contenedorSidebar,
+	#perfilUsuarioGnoss .perfilProfesional #identidad ul li.activo{background-color:#259FC3}
+	#perfilUsuarioGnoss .perfilProfesional #identidad ul li.identidad{border-right-color:#66BCD5}
+	.perfilProfesional #identidad ul ul.infoCuenta li a,
+	.perfilProfesional .itemConOpcionesSegundoNivel .opcionPrincipal a{background-image:url('resources/spriteIdentidadProfesional.png')}
+	#perfilUsuarioGnoss .perfilProfesional  #identidad, 
+	#perfilUsuarioGnoss .perfilProfesional{background-color:#eee}
+	.perfilProfesional #identidad .identidad .wrap a,
+	.perfilProfesional #identidad .identidad .wrap span{color:#999}
+	.perfilProfesional #identidad .identidad.activo a,
+	.perfilProfesional #identidad .identidad.activo span{color:#fff}
+	
+	/* color perfil profesor
+	*/
+	#perfilUsuarioGnoss .perfilProfesor{}
+	#perfilUsuarioGnoss .perfilProfesor .contenedorSidebar,
+	#perfilUsuarioGnoss .perfilProfesor #identidad ul li.activo{background-color:#E3773B}
+	#perfilUsuarioGnoss .perfilProfesor #identidad ul li.identidad{border-right-color:#EBA075}
+	.perfilProfesor #identidad ul ul.infoCuenta li a,
+	.perfilProfesor .itemConOpcionesSegundoNivel .opcionPrincipal a{background-image:url('resources/spriteIdentidadProfesor.png')}
+	#perfilUsuarioGnoss .perfilProfesor  #identidad, 
+	#perfilUsuarioGnoss .perfilProfesor{background-color:#eee}
+	.perfilProfesor #identidad .identidad .wrap a,
+	.perfilProfesor #identidad .identidad .wrap span{color:#999}
+	.perfilProfesor #identidad .identidad.activo a,
+	.perfilProfesor #identidad .identidad.activo span{color:#fff}	
+
+	/* color perfil alumno
+	*/
+	#perfilUsuarioGnoss .perfilAlumno{}
+	#perfilUsuarioGnoss .perfilAlumno .contenedorSidebar,
+	#perfilUsuarioGnoss .perfilAlumno #identidad ul li.activo{background-color:#DF1777}
+	#perfilUsuarioGnoss .perfilAlumno #identidad ul li.identidad{border-right-color:#E95CA0}
+	.perfilAlumno #identidad ul ul.infoCuenta li a,
+	.perfilAlumno .itemConOpcionesSegundoNivel .opcionPrincipal a{background-image:url('resources/spriteIdentidadAlumno.png')}
+	#perfilUsuarioGnoss .perfilAlumno  #identidad, 
+	#perfilUsuarioGnoss .perfilAlumno{background-color:#eee}
+	.perfilAlumno #identidad .identidad .wrap a,
+	.perfilAlumno #identidad .identidad .wrap span{color:#999}
+	.perfilAlumno #identidad .identidad.activo a,
+	.perfilAlumno #identidad .identidad.activo span{color:#fff}	
+	
+	
+body #identidad ul#gnoss{top:0}
+body #identidad ul#gnoss a{color:#fff}
+body #identidad ul#gnoss a span{color:#ddd}
+
+.usuarioComunidades  .listado-comunidades .listado li span, .usuarioComunidades  .listado-comunidades .listadoAmpliado li span{display:block; float:left; width:14px; height:14px; margin-right:2px; background:url('resources/spriteTools.png?v=2.1.1881_001') no-repeat -2px -186px}
+.usuarioComunidades  .listado-comunidades .listado li.abierta span, .usuarioComunidades  .listado-comunidades .listadoAmpliado li.abierta span{background-position:-18px -186px}
+
+
+#perfilUsuarioGnoss, #identidad.idiomasCustomizado {
+    z-index: 9995;
+}
+.idiomasCustomizado #gnoss li {
+    display: none;
+}
+.idiomasCustomizado #gnoss li.logo {
+    display: block;
+}
+.idiomasCustomizado #idiomas, .idiomasCustomizado #gnoss {
+    float: left;
+}
+.idiomasCustomizado #idiomas {
+    position: relative;
+}
+.idiomasCustomizado #idiomasSelector {
+    background: none repeat scroll 0 0 #fff;
+    border: 1px solid #ddd;
+    display: none;
+    padding: 10px;
+    position: absolute;
+    right: 0;
+    top: 40px;
+}
+#identidad.idiomasCustomizado #idiomasSelector {
+    top: 26px;
+}
+.idiomasCustomizado #idiomasSelector ul {
+}
+.idiomasCustomizado #idiomasSelector ul li {
+    height: 24px;
+    line-height: 24px;
+}
+.idiomasCustomizado #idiomasSelector ul li.beta {
+    display: none;
+}
+.idiomasCustomizado #idiomasSelector ul li a {
+    color: #3b75a1;
+    white-space: nowrap;
+}
+.idiomasCustomizado .desplegar {
+    background: url("resources/verticalSprite.png") no-repeat scroll -6px -13px rgba(0, 0, 0, 0);
+    display: inline-block;
+    height: 10px;
+    position: relative;
+    text-indent: -9999em;
+    top: 17px;
+    width: 10px;
+}
+#identidad.idiomasCustomizado .desplegar {
+    top: 8px;
+}
+#identidad.idiomasCustomizado #idiomas {
+    float: right;
+    margin-right: 70px;
+}
+.perfilUsuarioGnoss .identidadGNOSS {
+    position: relative;
+}
+#identidad .beta {
+    display: none;
+}
+.perfilUsuarioGnoss .beta {
+    color: #cccccc;
+    font-size: 10px;
+    font-style: italic;
+    position: absolute;
+    right: 30px;
+    top: -13px;
+    z-index: 9999;
+}
+
+/*	mygnoss.css	*/
+
+#identidad{background:#386C94}
+
+
+#identidad .wrapper {position:relative}
+#identidad ul#gnoss{top:0}
+#identidad ul#gnoss a.enlaceDesplegable {background:url('resources/verticalSprite.png') no-repeat 48px -5px; padding-right:20px}
+#identidad ul#gnoss a{color:#fff}
+#identidad li.logo{position:relative}
+#identidad li.showDesplegable{position:relative; z-index:9980}
+#identidad li .desplegable{display:none}
+#identidad li.showDesplegable .desplegable{display:block; position:absolute; top:24px; right:0; background:white; 
+border: 1px solid #ddd; border-top-width:0; border-bottom-width:2px; border-right-width:2px; }
+#identidad li.showDesplegable .desplegable ul{display:block}
+#identidad li.showDesplegable .desplegable ul li{white-space:nowrap; display:block; font-size:100%; float:none; text-align:right}
+#identidad ul#gnoss ul li a{color:#386C94}
+
+/*
+#identidad, #header{position:fixed; width:100%}
+#identidad{z-index:9980; top:0; left:0}
+#header{z-index:9970; top:24px; left:0; border-bottom:1px solid #ddd}
+#page{margin-top:145px !important}
+*/
+
+
+div.identidadGNOSS ul#gnoss li a{color: #EEEEEE;}
+div.identidadGNOSS ul#gnoss ul.listado li a{color: #3B75A1;}
+div.identidadGNOSS ul#gnoss{position:inherit;}
+/*div#section div.subNav{margin-left: 0;}*/
+div.usuarioConectado div.desplegable li, div.espacios div.desplegable li, div.otrasIdentidades div.desplegable li {text-align: left;}
+
+
+
+.perfilUsuarioGnoss .otrasIdentidades li .identidadProfesor{line-height:inherit;}
+
+
+#identidad ul#gnoss li.beta{color:#fff; font-size:13px;padding: 3px;}
+#identidadGNOSS ul#gnoss li.beta {color:#fff; font-size:13px}
+
+
+
+/* responsive to ie */
+.widescreen{}
+	/* ajustes layout */
+	.widescreen .perfilUsuarioGnoss{width:100%}
+	.widescreen #header{}
+	.widescreen body #identidad .wrapper,
+	.widescreen #header .wrapper,
+	.widescreen #perfilUsuarioGnoss .wrapper
+	{width:1108px}
+	/* identidad */
+	.widescreen #identidad .wrapper{width:1108px}
+	/* header */
+	.widescreen .myGnoss #corporativo{width:536px}
+
+
+@media only screen and (min-width: 1024px){
+	/*
+	.perfilUsuarioGnoss{width:100%}
+	#header{}
+	body #identidad .wrapper,
+	#header .wrapper,
+	#perfilUsuarioGnoss .wrapper
+	{width:1108px}
+	
+	.formularioLoginHeader,
+	#identidad .wrapper{width:1108px}
+	.formularioLoginHeader{margin:0 auto}
+
+	.myGnoss #corporativo{width:536px}
+	*/
+}
+
+/* feb 2013 */
+/* header theme 01. header simplificada */
+#header-theme-01{background:#fff}
+#identidad-theme-01{background:whitesmoke}
+#identidad-theme-01 .wrapper,
+#header-theme-01 .wrapper{width:992px; margin:0 auto}
+#header-theme-01 .wrapper{height:90px}
+
+#identidad-theme-01{}
+#identidad-theme-01 ul#gnoss{list-style:none; margin:0; padding:0}
+#identidad-theme-01 ul#gnoss li{display:inline-block}
+	.ie7 #identidad-theme-01 ul#gnoss li{display:inline}
+#corporativo-theme-01 h1{font-family: 'MisoBold', Lucida Sans, sans; font-size:60px; line-height:1; padding:0}	
+#corporativo-theme-01{}
+#buscador-theme-01{}
+#opciones-theme-01{}
+#nav-theme-01{}
+#formats-theme-01{}
+
+#corporativo-theme-01 .content{margin-top:10px}
+#corporativo-theme-01,
+#buscador-theme-01,
+#opciones-theme-01{float:left; height:90px}
+#corporativo-theme-01,
+#buscador-theme-01{margin-right:10px}
+#corporativo-theme-01{width:230px}
+#nav-theme-01, #formats-theme-01{display:none}
+
+#opciones-theme-01 ul{list-style:none; margin:0; padding:0}
+#opciones-theme-01 ul li{
+	display: inline-block;
+	margin-left: 4px;
+	overflow: hidden;
+	background: whitesmoke;
+	height: 30px;
+	line-height: 30px;
+	vertical-align:top
+}
+#opciones-theme-01 ul li.opUsuario,
+#opciones-theme-01 ul li.opMensajes,
+#opciones-theme-01 ul li.opComentarios,
+#opciones-theme-01 ul li.opInvitaciones
+{width:30px}
+
+	.ie7 #opciones-theme-01 ul li{display:inline; margin-left:2px}
+
+/*opciones theme 01*/
+#opciones-theme-01{}
+#opciones-theme-01 ul{margin-top:30px}
+/*buscador theme 01*/
+#buscador-theme-01{}
+.buscador-theme-01 select{display:none}
+
+
+.busquedas-sugeridas{margin:5px 0 0 0; padding:0}
+.busquedas-sugeridas li{display:inline-block}
+	.ie7 .busquedas-sugeridas li{display:inline}
+.buscador-theme-01{width:420px}
+		.buscador-theme-01 fieldset{margin:28px 0 0 0; padding:0; display:none}
+		.buscador-theme-01 fieldset div.fieldsetGroup label{color:#666; display:none}
+		.buscador-theme-01 fieldset div.fieldsetGroup.searchGroup{margin-bottom:0}
+		.buscador-theme-01 fieldset select{display:none}
+		.buscador-theme-01 fieldset div.searchGroup,
+		.buscador-theme-01 fieldset{
+			-moz-border-radius:3px;
+			-webkit-border-radius:3px;
+			border-radius:3px;		
+		}
+		.buscador-theme-01 fieldset div.searchGroup{
+			background:white;
+			border:1px solid #ccc;
+			border-bottom-color:#bbb
+		}
+		.buscador-theme-01 fieldset div.searchGroup input.defaultText{color:#aaa; font-style:italic}
+		.buscador-theme-01 fieldset div.searchGroup input.text,
+		.buscador-theme-01 fieldset div.searchGroup input.encontrar{border:0; padding:0; margin:0; height:30px}
+		.ie7 .buscador-theme-01 fieldset div.searchGroup input.encontrar{position:relative; top:-1px; right:1px; height:32px}
+		.buscador-theme-01 fieldset div.searchGroup input.text{width:50%; padding:0 2px; height:30px; margin-left:2px}
+		.buscador-theme-01 fieldset div.searchGroup input.encontrar{
+			color:#fff; padding:0; float:right; cursor:pointer;
+			background-color: #FF8300;
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -webkit-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -moz-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -ms-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -o-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880');			
+			background-repeat: no-repeat;
+			background-position:-214px -494px;
+			border: 0 solid #3079ED;
+			color: white;
+			text-shadow: 0 1px #666;	
+			text-indent:-999em; 
+			width:34px
+		}		
+		.buscador-theme-01  #buscador fieldset div.searchGroup input.encontrar{
+			background-color: #ddd;
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -webkit-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -moz-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -ms-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -o-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880');				
+		}
+		.ie7 .buscador-theme-01 fieldset div.searchGroup input.encontrar{margin-top:-32px}	
+		.buscador-theme-01 #selector{
+			float:left; 
+			height:30px; 
+			position:relative; 
+			z-index:999;		
+		}
+		.ie7 .buscador-theme-01 #selector{height:32px}
+		.buscador-theme-01 #selector p.seleccionado{line-height:30px; margin:0; padding:0 24px 0 10px; position:relative}
+		.ie7 .buscador-theme-01 #selector p.seleccionado{line-height:32px}
+		.buscador-theme-01 #selector p.seleccionado a{color:#666; font-weight:bold}
+		.buscador-theme-01 #selector p.seleccionado span{
+			display:block; 
+			position:absolute; 
+			width:12px; height:12px;
+			top:13px; right:4px;
+			background:url('resources/spriteIcons.png?v=2.1.1880') no-repeat -229px -280px;}
+		.ie7 .buscador-theme-01 #selector p.seleccionado span{top:5px}
+		.buscador-theme-01 #selector,
+		.buscador-theme-01 #selector #opciones{
+			background-color: whiteSmoke;
+			background-image: -webkit-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: -moz-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: -ms-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: -o-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: linear-gradient(top,whiteSmoke,#dedede);			
+		}
+		.buscador-theme-01 #selector.desplegado{background:whiteSmoke}
+		.buscador-theme-01 #selector #opciones{border-width:0 1px 1px 1px; border-style:solid; border-color:#ccc; margin-left:-1px; display:none}
+		.buscador-theme-01 #selector #opciones ul{list-style-type:none; margin:0; padding:0 10px 10px 10px}
+		.buscador-theme-01 #selector #opciones ul li{padding:2px 0}
+
+/* ajustes ie7 */
+*:first-child+html #page{}
+*:first-child+html .row.destacadoPrincipal{}
+*:first-child+html .buscador-theme-01 fieldset input.text{float:left}
+*:first-child+html .buscador-theme-01 fieldset div.searchGroup{height:30px}
+*:first-child+html .busquedas-sugeridas li{display:inline; margin-right:6px}
+*:first-child+html .buscador-theme-01 #selector p.seleccionado span{top:4px}
+
+*:first-child+html #opciones-theme-01 #opciones li{display:inline}
+*:first-child+html #opciones-theme-01 #opciones li.opExplora,
+*:first-child+html #opciones-theme-01 #opciones li.widthOpciones
+{position:relative; padding-right:12px}
+*:first-child+html #opciones-theme-01 #opciones li.opExplora a{}
+*:first-child+html #opciones-theme-01 #opciones li a{padding-top:0}
+*:first-child+html #opciones-theme-01 #opciones li a.desplegar{position:absolute; top:0; right:0}
+
+
+
+@media only screen and (min-width: 1024px){
+	/*
+	#identidad-theme-01 .wrapper, 
+	#header-theme-01 .wrapper{width:1108px}
+	*/
+}

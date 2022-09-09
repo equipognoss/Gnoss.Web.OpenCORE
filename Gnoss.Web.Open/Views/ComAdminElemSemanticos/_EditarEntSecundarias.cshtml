@@ -1,0 +1,25 @@
+﻿@model ComAdminSemanticElemModel
+
+@{
+    string srcImagenEspera = ViewBag.BaseUrlStatic + "/images/espera.gif";
+}
+
+<div id="listEntSecEdit">
+    <h2>@Html.GetText("COMADMIN","ENTSECEDITABLES")</h2>
+    <ul>
+        @foreach (string urlOnto in Model.SecondaryEntities.SecondaryEntitiesEditables.Keys)
+        {
+            <li><span>@Model.SecondaryEntities.SecondaryEntitiesEditables[urlOnto]</span> <a onclick="EditarEntSec('@urlOnto');">@Html.GetText("COMMON", "EDITAR")</a></li>
+        }
+    </ul>
+</div>
+<div id="divEditEntSec" style="display:none;">
+    <div id="divCargandoEntSec">
+        <img ID="imgEsperaArchivo" src="@srcImagenEspera" alt="Espere..." />
+        <span>@Html.GetText("COMMON", "CARGANDO")</span>
+    </div>
+    <div id="divEditEntSecInt">
+        <div id="panAccionesEntSec"></div>
+    </div>
+</div>
+<div id="divErroEntSec"></div>

@@ -1,0 +1,45 @@
+﻿@model ThesaurusEditorModel
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utilizará para mostrar las categorías del tesauro en modo Árbol. 
+Esta vista se utiliza en la vista que la contiene, como es EditorTesauro, dentro de EditarRecurso
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de mostrar categorias Tesauro en modo Árbol --------------------
+*@
+
+@* Listado de Categorías en formato "ARBOL" *@
+<div class="tab-pane fade show active"
+     id="ver-arbol"
+     role="tabpanel"
+     aria-labelledby="ver-arbol-tab">
+    @* Buscador-Filtrador de Categorías*@
+    <div class="buscador-categorias">
+        <div class="form-group">
+            <input class="filtroRapido form-control not-outline"
+                placeholder="Busca una categoría"
+                type="text"
+                onkeydown="javascript:if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}"
+                onkeyup="javascript:MVCFiltrarListaSelCatArbol(this, 'panDesplegableSelCat');" />                
+        </div>
+    </div>
+    <div class="divTesArbol divCategorias clearfix">
+        @foreach (CategoryModel categoria in ((List<CategoryModel>)Model.ThesaurusCategories).Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat => cat.Order))
+        {
+            PintarCategoriaEditorTesauro pintar = new PintarCategoriaEditorTesauro();
+            pintar.categoryModel = categoria;
+            pintar.thesaurusEditor = Model;
+            @Html.PartialView("../Shared/EditorTesauro/_PintarCategoria", pintar)
+        }
+    </div>
+</div>

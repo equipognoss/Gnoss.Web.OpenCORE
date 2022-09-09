@@ -1,0 +1,31 @@
+﻿@model ComAdminSemanticElemModel
+
+<h3>@Html.GetText("COMADMIN","INSTANCIASSIMPGRAFEDITABLES", Model.SimpleGraphs.SimpleGraphsNameSelected):</h3>
+<div id="updBotonera" class="messagetools listToolBar box" >
+    <div id="adminComCate"class="toolbar">
+        <ul class="floatLeft">
+            <li>
+                <label class="boton btAzul floatRight">
+                    <a id="lbVolverSimpGraf" class="submit principal">@Html.GetText("PERFILBASERECURSOEDITAR", "VOLVER")</a>
+                </label>
+            </li>
+            <li>
+                <input id="lbCrearNuevInsSimpGraf" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "CREARNUEVA")"/>
+            </li>
+            <li>
+                <input id="lbEliminarInsSimpGraf" class="submit" type="button" value="@Html.GetText("COMMON", "ELIMINAR")"/>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="panCrearSimpGraf" style="display:none;" class="messagetools listToolBar box">
+    <label id="lbCrearSimpGraf">@Html.GetText("COMMON", "NUEVO")</label>
+    <input id="txtCrearSimpGraf" type="text" />
+    <input id="btnCrearSimpGraf" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "GUARDAR")" />
+</div>
+<ul>
+    @foreach (string sujetoEnt in Model.SimpleGraphs.SimpleGraphsInstancesEditables)
+    {
+        <li><input type="checkbox" class="chkSimpGraf" rel="@sujetoEnt" /> <span>@sujetoEnt</span></li>
+    }
+</ul>

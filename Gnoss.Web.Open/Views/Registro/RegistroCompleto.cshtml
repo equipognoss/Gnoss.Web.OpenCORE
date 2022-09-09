@@ -1,0 +1,15 @@
+﻿@model string
+
+@{ 
+    Html.SetBodyClass("full operativaRegistro layout03");
+}
+
+
+<div class="row">
+    <div class="col">
+        <div class="panel-centrado">
+            <h1>@Html.GetText("COMINICIOLOGIN", "INVITACIONACEPTADA")</h1>            
+            <p>@Html.GetText("ACEPTARINVITACION", "BIENVENIDO", Model)</p>
+        </div>
+    </div>
+</div>

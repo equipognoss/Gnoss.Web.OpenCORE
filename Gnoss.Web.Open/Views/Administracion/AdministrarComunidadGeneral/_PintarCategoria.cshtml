@@ -1,0 +1,33 @@
+﻿@model PintarCategoriaAdministrarComunidadGeneral
+
+@{
+    bool tieneHijos = Model.EcosistemaCategories.Count(cat => cat.ParentCategoryKey == Model.pCategoriaTesauro.Key) > 0;
+    <div>
+        @if (tieneHijos)
+        {
+            <img style="border-width:0px;margin-right:5px;cursor:pointer;" src="@Html.GetBaseUrlStatic()/img/verMas.gif" class="imgSelectorCat" />
+        }
+        else
+        {
+            <img style="border-width:0px;" src="@Html.GetBaseUrlStatic()/img/miniWhiteSpace.gif" />
+        }
+        <span class="@Model.pCategoriaTesauro.Key" @Html.GetParam("rel", Model.pCategoriaTesauro.StringKey)>
+            <input type="checkbox" @(Model.SelectedCategories.Contains(Model.pCategoriaTesauro.Key) ? "checked=\"checked\"" : "") @(Model.pCategoriaTesauro.Required ? "disabled=\"disabled\"" : "" ) class="chekSelectorCat" onclick="marcarElementoSelCat(this, 'selectorCategoriastxtSeleccionados', '@Model.pCategoriaTesauro.Key')" />
+            <label for="">@Model.pCategoriaTesauro.Name</label>
+        </span>
+        @if (tieneHijos)
+        {
+            <div style="margin-left:15px;display:none;" class="panHijos">
+                @foreach (CategoryModel categoria in Model.EcosistemaCategories.Where(cat => cat.ParentCategoryKey == Model.pCategoriaTesauro.Key).OrderBy(cat => cat.Order))
+                {
+                    PintarCategoriaAdministrarComunidadGeneral pintar = new PintarCategoriaAdministrarComunidadGeneral();
+                    pintar.EcosistemaCategories = Model.EcosistemaCategories;
+                    pintar.pCategoriaTesauro = categoria;
+                    pintar.SelectedCategories = Model.SelectedCategories;
+                    @Html.PartialView("../Administracion/AdministrarComunidadGeneral/_PintarCategoria", pintar)
+                }
+            </div>
+        }
+    </div>
+}
+

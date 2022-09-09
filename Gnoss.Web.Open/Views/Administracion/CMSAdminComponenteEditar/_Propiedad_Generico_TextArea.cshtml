@@ -1,0 +1,27 @@
+﻿@using Es.Riam.Gnoss.AD.CMS
+@model CMSAdminComponenteEditarViewModel.PropiedadComponente
+
+@{    
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+    string valorPropiedad = Model.Value;
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+        valorPropiedad = Html.ObtenerTextoDeIdioma(Model.Value, idiomaPanel, null, true);
+    }
+
+    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+
+    string classTextArea = "";
+    if (Model.TipoPropiedadCMS.Equals(TipoPropiedadCMS.HTML) && Model.TypeComponent.Equals(TipoComponenteCMS.Destacado))
+    {
+        classTextArea = "cke mensajes";
+    }
+}
+<div id="contenedorPrincipal_@idPanel">
+    <p id="parrafo_@idPanel" class="textarea">
+        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+        <textarea id="@idPanel" class="@classTextArea">@valorPropiedad</textarea>
+    </p>
+</div>

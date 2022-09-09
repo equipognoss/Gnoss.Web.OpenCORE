@@ -1,0 +1,32 @@
+﻿@model ObjetoConocimientoModel.PresentacionModel
+
+<section class="bloque">
+	<p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "LISTAPROPIEDADES")</p>
+    <ol class="propiedadesSortable">
+        @if (Model.ListaPropiedades != null)
+        {
+            foreach (ObjetoConocimientoModel.PresentacionModel.PropiedadModel propiedad in Model.ListaPropiedades.OrderBy(prop => prop.Orden))
+            {
+                @Html.PartialView("_FichaPropiedad", propiedad)
+            }
+        }
+    </ol>
+	<input type="button" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "ADDPROPIEDAD")" class="addProperty"/>
+
+	<p>
+		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARDESCRIPCION")</span>
+		<input type="checkbox" name="MostrarDescripcion"  @(Model.MostrarDescripcion?"checked":"") />
+	</p>
+	<p>
+		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARPUBLICADOR")</span>
+		<input type="checkbox" name="MostrarPublicador"  @(Model.MostrarPublicador?"checked":"") />
+	</p>
+	<p>
+		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARETIQUETAS")</span>
+		<input type="checkbox" name="MostrarEtiquetas"  @(Model.MostrarEtiquetas?"checked":"") />
+	</p>
+	<p>
+		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARCATEGORIAS")</span>
+		<input type="checkbox" name="MostrarCategorias"  @(Model.MostrarCategorias?"checked":"") />
+	</p>
+</section>

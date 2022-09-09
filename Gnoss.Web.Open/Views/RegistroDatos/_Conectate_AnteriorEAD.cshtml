@@ -1,0 +1,52 @@
+﻿@model RegisterDataViewModel
+
+<div class="span-fila-04">
+    <div class="fieldset fieldset01 span-03">
+        <div class="componente cp0401">
+            <div class="titulo">
+                <div class="contenido">
+                    <div class="resource-list">
+					@foreach (ProfileModel perfil in Model.ListProfiles)
+					{
+						<div class="resource">
+							<div class="box description">
+								<div class="group title">
+									<h4>@perfil.NamePerson</h4>
+									<div class="logoComunidad">
+										<p rel="sioc:has_creator" class="imagenIcono personaSinImagen"></p>
+										@if(!string.IsNullOrEmpty(perfil.UrlFoto))
+										{
+											<img src="@Html.GetBaseUrlContent()/@perfil.UrlFoto" />
+										}
+									</div>
+								</div>
+								<div class="group acciones">
+									<p></p>
+									<ul>
+										<li><a onclick="AccionPerfil_Seguir(this, '@perfil.ListActions.UrlFollow')">Seguir</a></li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<form method="post" id="formConectateRegistro">
+    <div class="box box02">
+        <div class="fieldset fieldset03 actionButtons">
+            <fieldset>
+                <p>
+                    <input type="hidden" name="paginaOriginal" value="@Model.ReferrerPage"/>
+                    <input type="hidden" name="paginaConectate" value="true"/>
+                    <input type="hidden" name="tienePaginaDatosRegistro" value="@Model.TabData.ToString().ToLower()" />
+                    <input type="submit" class="principal submit btn btn-default btn-registrate" value="CONTINUAR" />
+                </p>
+            </fieldset>
+        </div>
+    </div>
+</form>

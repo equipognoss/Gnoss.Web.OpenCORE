@@ -1,0 +1,32 @@
+﻿@model AdministrarComunidadGeneralModel
+
+<div id="selectorCategorias">
+    @{
+        string catsSeleccionadas = "";
+        foreach (Guid catID in Model.SelectedCategories)
+        {
+            catsSeleccionadas += catID + ",";
+        }
+    }
+    <input type="hidden" id="selectorCategoriastxtSeleccionados" value="@catsSeleccionadas" name="selectorCategoriastxtSeleccionados">
+    <div id="divSelCatTesauro">
+        @foreach (CategoryModel categoria in Model.EcosistemaCategories.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat => cat.Order))
+        {
+            PintarCategoriaAdministrarComunidadGeneral pintar = new PintarCategoriaAdministrarComunidadGeneral();
+            pintar.EcosistemaCategories = Model.EcosistemaCategories;
+            pintar.pCategoriaTesauro = categoria;
+            pintar.SelectedCategories = Model.SelectedCategories;
+            @Html.PartialView("../Administracion/AdministrarComunidadGeneral/_PintarCategoria", pintar)
+        }
+    </div>
+</div>
+
+<script type="text/javascript">
+    function ObtenerDatosCategorias(options) {
+        var categoriasSeleccionadas = $("#selectorCategoriastxtSeleccionados").val();
+        if (categoriasSeleccionadas.endsWith(',')) {
+            categoriasSeleccionadas = categoriasSeleccionadas.substr(0, (categoriasSeleccionadas.length - 1));
+        }
+        options['SelectedCategories'] = categoriasSeleccionadas.split(',');
+    }
+</script>

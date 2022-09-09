@@ -1,0 +1,51 @@
+﻿@model AdministrarUsuariosOrganizacionViewModel
+@{
+    string urlCrearGrupo = Html.GetPerfil().Url + Html.GetText("URLSEM", "ADMINISTRACION") + "/" + Html.GetText("URLSEM", "GRUPOS") + "/" + Html.GetText("URLSEM", "CREARGRUPO");
+} 
+<h2>
+    @Html.GetText("CONTACTOS", "GRUPOS")
+</h2>
+<a id="btnCrearGrupo" href="@urlCrearGrupo">@Html.GetText("GRUPO", "CREARGRUPO")</a>
+<form autocomplete="off" id="divFiltros">
+    <fieldset>
+        <legend>@Html.GetText("COMMON", "FILTRAR")</legend>
+        <input type="hidden" id="urlFilter" value="@Model.UrlFilter" />
+        <span style="margin-right: 20px;" class="filtroTexto">
+            <input type="text" style="width: 448px; padding: 4px;" id="txtFiltrarMiembros" name="txtFiltrarMiembros" value="@Model.SearchFilter" aux="@Model.SearchFilter">
+            <input class="encontrar" type="button" value="buscar" />
+        </span>
+        <span class="filtroOrden" style="font-size: 13px;">
+            @Html.GetText("COMMON", "ORDENADOPOR") @Html.GetText("COMMON", "NOMBREM")
+            <a id="aOrdenDescendente" class="@(Model.OrderAsc ? "" : "activo" )"></a>
+            <a id="aOrdenAscendente" class="@(Model.OrderAsc ? "activo" : "" )"></a>
+            <input type="hidden" name="ordenFiltros" id="ordenFiltros" value="@(Model.OrderAsc ? "ASC" : "DESC" )" />
+        </span>
+    </fieldset>
+</form>
+<div id="panContenidoMiembros">
+    <div class="listadoPersonas">
+        <div class="resource-list">
+            @foreach (GroupCardModel grupo in Model.Grupos)
+            {
+                <div id="@grupo.Clave" class="resource">
+                    <div class="box description">
+                        <div class="group title">
+                            <h2><a href="@grupo.UrlGroup">@grupo.Name</a></h2>
+                            <p class="resourceType  conImagenPerfil">
+                                <a href="@grupo.UrlGroup">
+                                    <img src="@ViewBag.BaseURLStatic/img/iconos/grupos/grupo.gif" alt="@grupo.Name" />
+                                </a>
+                            </p>
+                        </div>
+                        <div class="group acciones">
+                            <ul>
+                                <li><a href="@grupo.UrlGroup/@Html.GetText("URLSEM", "EDITARGRUPO")">@Html.GetText("COMMON", "EDITAR")</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    @Html.PartialView("_Paginador", Model)
+</div>

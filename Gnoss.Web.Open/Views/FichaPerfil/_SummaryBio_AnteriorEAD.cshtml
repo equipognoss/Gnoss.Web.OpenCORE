@@ -1,0 +1,154 @@
+﻿@model ProfilePageViewModel
+@{
+    ProfileModel Perfil = Model.Profile;
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+
+    string nombreCompleto = Html.ObtenerNombreCompletoDeFichaIdentidad(Perfil);
+}
+
+<div class="summaryBio">
+    <div style="height: auto;" class="resource">
+        <div class="box description">
+            <div class="group title">
+                <h3>@nombreCompleto</h3>
+            </div>
+            @if (IdentidadActual.IsGuestIdentity)
+            {
+                <div class="group content">
+                    <p>
+                        @if (IdentidadActual.IsGuestUser)
+                        {
+                            @Html.GetText("BUSQUEDAAVANZADA", "INICIOPERESPECIFICA")
+                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "HAZTEMIEMBRO")">@Html.GetText("COMINICIOLOGIN", "REGISTRATEPARTICIPA")</a>
+                            @Html.GetText("COMADMINCATEGORIAS", "O")
+                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "LOGIN")/redirect/@(new Uri($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}").AbsoluteUri)">@Html.GetText("COMINICIOLOGIN", "INICIASESION")</a>
+                        }
+                        else
+                        {
+                            @Html.GetText("BUSQUEDAAVANZADA", "INICIOPERESPECIFICA")
+                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "HAZTEMIEMBRO")">@Html.GetText("COMINICIOLOGIN", "HACERSEMIEMBRO")</a>
+                        }
+                    </p>
+                </div>
+            }
+            else if (Perfil.Key == Guid.Empty)
+            {
+                <div class="group content">
+                    <p>No se ha encontrado el perfil que está buscando</p>
+                </div>
+            }
+            else
+            {
+                <div class="group content">
+                @if (Model.ShowDemographicsDataProfile)
+                {
+                    <p>
+                        @if (!string.IsNullOrEmpty(Model.Curriculum.ProvinceOrState))
+                        {
+                            string province = Model.Curriculum.ProvinceOrState;
+                            string country = Model.Curriculum.Countryname;
+                            @Html.ConvertirPrimeraLetraPalabraAMayusculas(province)
+                            if (!string.IsNullOrEmpty(Model.Curriculum.Countryname))
+                            {
+                                @Html.Raw(", ")@Html.ConvertirPrimeraLetraPalabraAMayusculas(country)
+                            }
+                        }
+                        else if (!string.IsNullOrEmpty(Model.Curriculum.Countryname))
+                        {
+                            string country = Model.Curriculum.Countryname;
+                            @Html.ConvertirPrimeraLetraPalabraAMayusculas(country)
+                        }
+                    </p>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Curriculum.PositionTitleEmpresaActual))
+                {
+                    string position = Model.Curriculum.PositionTitleEmpresaActual;
+                    <p>
+                        @Html.ConvertirPrimeraLetraDeFraseAMayusculas(position)
+
+                        @if (!string.IsNullOrEmpty(Model.Curriculum.CurrentOrganizationName))
+                        {
+                            string empresa = Model.Curriculum.CurrentOrganizationName;
+                            @Html.GetText("COMMON", "EN") 
+                            <text> </text> 
+                            @Html.ConvertirPrimeraLetraDeFraseAMayusculas(empresa)
+                        }
+                    </p>
+                }
+
+                @if (Perfil.ExtraInfo != null && Perfil.ExtraInfo.ExtraData != null && Perfil.ExtraInfo.ExtraData.Count > 0)
+                {
+                    foreach (string DatoExtra in Perfil.ExtraInfo.ExtraData.Keys)
+                    {
+                        <p><span class="clave">@DatoExtra:</span> <span class="valor">@Perfil.ExtraInfo.ExtraData[DatoExtra]</span></p>
+                    }
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Curriculum.Description))
+                {
+                    string description = Model.Curriculum.Description;
+                    <div class="TextoTiny descripcionResumida">
+
+                        @if (Model.Curriculum.Description.IndexOf("<p>") != 0)
+                        {
+                            <p>@Html.AcortarTexto(description, 250).Replace("\n", "<br />")</p>
+                        }
+                        else
+                        {
+                            @Html.AcortarTexto(description, 250).Replace("\n", "<br />")
+                        }
+                    </div>
+                    <div>
+                        <p>
+                            <a onclick="javascript:AgregarFiltroPerfil('bio')">...</a>
+                        </p>
+                    </div>
+                }
+                </div>
+
+                if (Model.Curriculum.ListTags != null && Model.Curriculum.ListTags.Count > 0)
+                {
+                <div class="group etiquetas">
+                    <p>@Html.GetText("LISTARECURSOS", "ETIQUETAS")</p>
+                    <ul>
+                        @{
+                        int contador = 0;
+                        }
+                        @foreach (string tag in Model.Curriculum.ListTags)
+                        {
+                            <li>
+                                @if (contador > 0){<text>, </text>}
+                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "PERSONASYORGANIZACIONES")?sioc_t:Tag=@tag">@tag</a>
+                            </li>
+                            contador++;
+                        }
+                    </ul>
+                </div>
+                }
+
+                if (Perfil.SocialNetworks != null && Perfil.SocialNetworks.Count > 0)
+                {
+                <div class="group social">
+                    <p>@Html.GetText("PERFIL", "SIGUEMEEN")</p>
+                    <ul>
+                        @foreach (ProfileModel.SocialNetworkProfileModel redSocialPerfil in Perfil.SocialNetworks)
+                        {
+                            <li>
+                                <a title="@redSocialPerfil.Name" href="@redSocialPerfil.UrlProfile" target="_blank">
+                                    <img src="@redSocialPerfil.UrlFavicon" style="height: 18px; width: 18px;" alt="@redSocialPerfil.Name" />
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                }
+                if (Perfil.Actions != null)
+                {
+                    @Html.PartialView("ControlesMVC/_AccionesPerfil", Perfil)
+                }
+            }
+        </div>
+    </div>
+</div>

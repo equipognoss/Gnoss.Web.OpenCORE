@@ -1,0 +1,40 @@
+﻿@model CategoriaCookieModel
+@using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
+
+@{
+    CategoriaProyectoCookie categoriaCookie = Model.CategoriaProyectoCookie;
+}
+
+<li class="row categoriaCookie" id="@categoriaCookie.CategoriaID">
+    <span class="handle cookieProyecto">:::</span>
+    <section class="header">
+        <span class="nombreCategoria" aux="@Html.ObtenerTextoIdiomaUsuario(categoriaCookie.Nombre, true)">@Html.ObtenerTextoIdiomaUsuario(categoriaCookie.Nombre, true)</span><span class="tipoCategoriaCookie"></span>
+        @if (!categoriaCookie.EsCategoriaTecnica)
+        {
+            if (!Model.CookiesVinculadas)
+            {
+                <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+            }
+            <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+        }
+    </section>
+    <section class="panEdicion" name="@categoriaCookie.CategoriaID">
+        <div>
+            <input type="hidden" name="TabEliminada" value="false" />
+            <input type="hidden" name="CategoriaModificada" value="@Model.Modificada.ToString()" />
+            <input type="hidden" name="TabEliminada" value="false" />
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "NOMBRE")">@Html.GetText("COMADMINCOOKIES", "NOMBRE")</span>
+                <input @(categoriaCookie.EsCategoriaTecnica ? "disabled" : "") type="text" name="CategoryName" value="@categoriaCookie.Nombre" />
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "NOMBRECORTO")">@Html.GetText("COMADMINCOOKIES", "NOMBRECORTO")</span>
+                <input @(categoriaCookie.EsCategoriaTecnica ? "disabled" : "") type="text" name="CategoryShortName" value="@categoriaCookie.NombreCorto" />
+            </p>
+            <p>
+                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")">@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")</span>
+                <textarea @(categoriaCookie.EsCategoriaTecnica ? "disabled" : "") rows="3" cols="40" name="CategoryDescription">@categoriaCookie.Descripcion</textarea>
+            </p>
+        </div>
+    </section>
+</li>

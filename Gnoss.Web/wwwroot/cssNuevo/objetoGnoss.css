@@ -1,0 +1,87 @@
+﻿/*
+	Copyright (c) 2011, Dewenir Inc. All rights reserved.
+	Code licensed under the BSD License:
+	http://dewenir.es/avisolegal
+	version: 1.0.1
+*/
+.widget{}
+	.widget-usuario-gnoss{}
+		.wrap-widget-usuario-gnoss{}
+			.widget-usuario-head-gnoss{}
+			.widget-usuario-body-gnoss{}
+		.widget-usuario-foot-gnoss{}
+
+
+.widget-usuario-gnoss{}
+.widget-usuario-gnoss *{font-family: 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; margin:0; padding:0; font-size:13px; color:#555; line-height:1.1}
+.widget-usuario-gnoss h3 a{margin:0; padding:0; font-size:13px; color:#333}
+.widget-usuario-gnoss a{color:#8186BD; text-decoration:none;}
+.widget-usuario-gnoss strong{color:inherit}
+.widget-usuario-gnoss{background:#D9DBF7; padding:10px 10px 5px}
+.widget-usuario-gnoss .wrap-widget-usuario-gnoss{
+	background:white; 
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;	
+}
+.widget-usuario-gnoss .widget-usuario-head-gnoss{}
+.widget-usuario-gnoss .widget-usuario-body-gnoss{}
+.widget-usuario-gnoss .widget-usuario-foot-gnoss{}
+
+/* head */
+.widget-usuario-gnoss .widget-usuario-head-gnoss{border-bottom:1px solid #eee; padding:8px}
+.widget-usuario-gnoss .widget-usuario-head-gnoss img#imgComunidad{border:1px solid #eee; width:35px; height:35px; float:left; margin-right:10px}
+.widget-usuario-gnoss .widget-usuario-head-gnoss img#imgLogoComunidad{border:0;max-height:70px;float:left;}
+
+/* body */
+.widget-usuario-gnoss .widget-usuario-body-gnoss{padding:8px}
+.author-gnoss{}
+.author-gnoss .by-gnoss{display:none}
+.author-gnoss a.author-image-gnoss{display:block; float:left; margin-right:5px}
+.author-gnoss a.author-image-gnoss,
+.author-gnoss a.author-image-gnoss img{width:30px}
+.author-gnoss p.publicacion-gnoss {font-size:10px}
+.author-gnoss p.publicacion-gnoss span{display:none}
+.author-gnoss p.publicacion-gnoss strong{font-weight:normal}
+
+
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss{position:relative; padding-left: 45px; margin-bottom:6px; border-bottom:1px solid #eee; padding-bottom:6px}
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss h4{margin-bottom:10px}
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss p{}
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss p.resourceType {width:35px; height:35px; position:absolute; top:0; left:0; overflow:hidden}
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType  span{position:absolute; top:999em; left:999em}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType  a{background:url('resources/spriteIcons.png?v=2.1.1880') no-repeat 0 -599px; font-size:100%; width:100%; height:35px; display:block; text-indent:-999em}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resource-list .publicacion{line-height:1.4; margin:2px 0; color:#555; font-size:11px}
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.hipervinculo a{background-position:0 -599px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.digital a{background-position:0 -638px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.blog a{background-position:0 -675px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.nota a{background-position:0 -714px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.video a{background-position:0 -754px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.newsletter a{background-position:0 -791px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.imagen a{background-position:0 -791px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.wiki a{background-position:0 -867px}	
+.widget-usuario-gnoss .widget-usuario-body-gnoss .resource-gnoss .resourceType.documento a{background-position:0 -907px}	
+
+.widget-codigo-gnoss{background:#eee; padding:1em}
+.widget-codigo-gnoss p.textarea label,
+.widget-codigo-gnoss p.textarea textarea{display:block; float:none}
+.widget-codigo-gnoss fieldset.largeLabels p label,
+.widget-codigo-gnoss p.textarea textarea{width: 98%}
+.widget-codigo-gnoss fieldset.largeLabels p label{margin-bottom:4px}
+
+.widget-activador-gnoss{margin:1em 0}
+.widget-activador-gnoss ul{list-style-type:none; padding:0}
+
+
+/* footer */
+.widget-usuario-gnoss .widget-usuario-foot-gnoss p{text-align:right; padding:5px 0 0}
+.widget-usuario-gnoss .widget-usuario-foot-gnoss p span{background: url('resources/spriteWidgetGnoss.png') no-repeat 0 0; display:inline-block; width:60px; overflow:hidden; text-indent:999em; height:15px; position:relative; top: 3px}
+*:first-child+html .widget-usuario-gnoss .widget-usuario-foot-gnoss p span{display:inline}  /*ie7*/
+.widget-usuario-gnoss .default1 p span{background-position:0 -25px}
+.widget-usuario-gnoss .default1 p a{color:#fff}
+.widget-usuario-gnoss .default2 p span{background-position:0 -50px}
+.widget-usuario-gnoss .default2 p a{color:#888}
+/* modelo de caja*/
+.widget-usuario-gnoss div:after{content:".";display:block;height:0;clear:both;visibility:hidden;} /*ie8, ff, chrome, ...*/
+* html .widget-usuario-gnoss div{height:1%;}  /*ie6*/
+*:first-child+html .widget-usuario-gnoss div{zoom:1}  /*ie7*/

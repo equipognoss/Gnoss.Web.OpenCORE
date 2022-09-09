@@ -1,0 +1,101 @@
+﻿@model ChartViewModel
+@{
+    string nombreChartIdiomaUsuario = "";
+    if (ViewData["0"] is (KeyValuePair<string, string>))
+    {
+        nombreChartIdiomaUsuario = ((KeyValuePair<string, string>)ViewData["0"]).Key;
+    }
+    else
+    {
+        nombreChartIdiomaUsuario = (string)ViewData["0"];
+    }
+    Dictionary<string, string> Idiomas = new Dictionary<string, string>();
+    if (ViewData["1"] is (Dictionary<string, string>))
+    {
+        Idiomas = (Dictionary<string, string>)ViewData["1"];
+    }
+    else
+    {
+        List<string> listaIdiomas = (List<string>)ViewData["1"];
+        foreach (string lang in listaIdiomas)
+        {
+            Idiomas.Add(lang, lang);
+        }
+    }
+
+    string[] stringSeparatorIdiomas = new string[] { "|||" };
+    string[] stringSeparatorTextosLenguajes = new string[] { "@" };
+    string[] splitIdiomasTexto = new string[Idiomas.Count - 1];
+    Dictionary<string, string> diccionarioNombres = new Dictionary<string, string>();
+    if (!string.IsNullOrEmpty(Model.Nombre))
+    {
+        splitIdiomasTexto = Model.Nombre.Split(stringSeparatorIdiomas, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var idiomaTexto in splitIdiomasTexto)
+        {
+            string[] splitTextosLenguages = idiomaTexto.Split(stringSeparatorTextosLenguajes, StringSplitOptions.RemoveEmptyEntries);
+            diccionarioNombres.Add(splitTextosLenguages[1], splitTextosLenguages[0]);
+        }
+    }
+}
+@{
+    int Contador = 1;
+}
+<li class="row" id="@Model.ChartID">
+    <span class="handle ui-sortable-handle">:::</span>
+    <section class="header">
+        <span class="nombre">@diccionarioNombres[nombreChartIdiomaUsuario]</span>
+        <span class="action eliminar">Eliminar</span>
+        <span class="action editar">Editar</span>
+    </section>
+    <section class="panEdicion">
+        <div class="tipo" name="tabName">Nombre<span class="conToolTip" title="Nombre del Model">?</span></div><br />
+        <div class="block tabsGroup">
+            <div class="acciones tabspresentation">
+                <ul>
+                    @foreach (KeyValuePair<string, string> idioma in Idiomas)
+                    {
+                        PintarNombresIdiomasCharts pintar = new PintarNombresIdiomasCharts();
+                        pintar.Contador = Contador;
+                        pintar.chartID = Model.ChartID;
+                        pintar.idioma = idioma;
+                        pintar.nombreChartIdiomaUsuario = nombreChartIdiomaUsuario;
+                        @Html.PartialView("../Administracion/AdministrarMapasCharts/_PintarNombresIdiomasCharts", pintar)
+                        Contador++;
+                    }
+                </ul>
+            </div>
+        </div>
+        @{
+            Contador = 1;
+        }
+        <div class="clases textos">
+            @foreach (KeyValuePair<string, string> idioma in Idiomas)
+            {
+                PintarNombresIdiomasCharts pintar = new PintarNombresIdiomasCharts();
+                pintar.Contador = Contador;
+                pintar.chartID = Model.ChartID;
+                pintar.idioma = idioma;
+                pintar.nombreChartIdiomaUsuario = nombreChartIdiomaUsuario;
+                pintar.diccionarioNombres = diccionarioNombres;
+                @Html.PartialView("../Administracion/AdministrarMapasCharts/_PintarTextoNombresIdiomasCharts", pintar)
+                Contador++;
+            }
+        </div>
+        <p>
+            <span class="tipo">Texto del select</span>
+            <input type="text" id="pSelect|||@Model.ChartID" value="@Model.Select">
+        </p>
+        <p>
+            <span class="tipo">Texto del where</span>
+            <textarea id="pTextWhere|||@Model.ChartID">@Model.Where</textarea>
+        </p>
+        <p>
+            <span class="tipo">Javascript para pintar Model</span>
+            <textarea rows="6" id="pTextJavascript|||@Model.ChartID">@Model.Javascript</textarea>
+        </p>
+        <p>
+            <span class="tipo">Nombre de la función JS</span>
+            <input type="text" id="pNombreFuncionJS|||@Model.ChartID" value="@Model.FuncionJS">
+        </p>
+    </section>
+</li>

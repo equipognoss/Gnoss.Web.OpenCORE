@@ -1,0 +1,88 @@
+﻿@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+
+    string UrlNuevaFuente = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADFUENTE");
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMIN", "ADMINFUENTES")</h1>
+    <div>
+        <form autocomplete="off">
+            <fieldset class="nuevaFuente">
+                <h4>Nueva fuente</h4>
+                <div id="divURLFuente">
+                    <p>
+                        <span class="tipo">URL</span>
+                        <input type="text" class="text" id="txtUrl">
+                    </p>
+                </div>
+                <div id="divUsuarioInicio" style="display:none">
+                    <p>
+                        <span class="tipo">Usuario</span>
+                        <input type="text" class="text" id="txtUser" style="width:150px">
+                    </p>
+                    <p>
+                        <span class="tipo">Contraseña</span>
+                        <input type="password" id="txtPassword" style="width:150px">
+                    </p>
+                </div>
+                <div id="divBotonValidar">
+                    <div class="error general"></div>
+                    <input type="button" id="btValidar" value="Validar">
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.nuevaFuente input#btValidar').click(function () {
+            $('#divBotonValidar .error').html('').hide();
+
+            MostrarUpdateProgress();
+            var dataPost = {
+                url: $('#txtUrl').val(),
+                user: $('#txtUser').val(),
+                password: $('#txtPassword').val()
+            }
+
+            GnossPeticionAjax(
+                "@UrlNuevaFuente/validate",
+                dataPost,
+                true
+            ).done(function (data) {
+                $('#divURLFuente').hide();
+                $('#divUsuarioInicio').hide();
+                $('#divBotonValidar').hide();
+                $('#divBotonValidar').after(data);
+            }).fail(function (response) {
+                if (response == 'UserRequired') {
+                    $('#divUsuarioInicio').show();
+                }
+                else {
+                    $('#divBotonValidar .error').html(response).show();
+                }
+            }).always(function (response) {
+                OcultarUpdateProgress();
+            })
+        });
+    });
+
+   
+</script>
+
+<style>
+
+
+    #section .content .nuevaFuente input[type=button]{
+        margin-left: 0;
+    }
+    
+
+    div.error.general{
+        display:none;
+        margin-left: 0;
+    }
+</style>

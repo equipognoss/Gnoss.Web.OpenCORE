@@ -1,0 +1,23 @@
+﻿@model PintarPestanyaAdministrar
+
+<li class="row pestanya" id="@Model.pestanya.Key">
+    <span class="handle pestanya">:::</span>
+    <section class="header">
+        <span class="nombrePestanya" aux="@Html.ObtenerTextoIdiomaUsuario(Model.pestanya.Name, true)">@Html.ObtenerTextoIdiomaUsuario(Model.pestanya.Name, true)</span><span class="tipoPestanya"></span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    @Html.PartialView("_EdicionPestanya", Model.pestanya)
+    @if (Model.ListaPestanyas.Where(p => p.ParentTabKey == Model.pestanya.Key).OrderBy(p2 => p2.Order).Count() > 0)
+    {
+        <ol class="subPestanyas">
+            @foreach (TabModel pestanyaHija in Model.ListaPestanyas.Where(p => p.ParentTabKey == Model.pestanya.Key).OrderBy(p2 => p2.Order))
+            {
+                PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
+                pintar.pestanya = pestanyaHija;
+                pintar.ListaPestanyas = Model.ListaPestanyas;
+                @Html.PartialView("_PintarPestanya", pintar)
+            }
+        </ol>
+    }
+</li>

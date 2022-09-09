@@ -1,0 +1,61 @@
+﻿@model string
+@*
+Descripción
+-----------------------------------------------
+Vista modal que muestra las condiciones de uso de la página. Esta vista estará accesible al hacer click en la opción correspondiente del pie o footer de la página.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+// Título de las condiciones de uso
+String titulo = "";
+// Cuerpo de las condiciones de uso
+String descripcion = "";
+// Título de la comunidad o ecosistema para añadirlo al título
+String nombreProyecto = ViewBag.NombreProyClausulas;
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista Modal que muestra las condiciones de uso de la empresa --------------------
+*@
+
+@{
+    @* Controlar el título de la página y el contenido *@
+    if (string.IsNullOrEmpty(Model) || string.IsNullOrEmpty(nombreProyecto))
+    {
+        titulo = Html.GetText("CONDICIONESUSO", "TITULO");
+        descripcion = Html.GetText("CONDICIONESUSO", "INFO");
+    }
+    else
+    {
+        titulo = Html.GetText("CONDICIONESUSO", "TITULOCOM", nombreProyecto);
+        descripcion = Model;
+    }
+}
+
+
+
+@*<div id="modal-condiciones-uso" class="modal modal-top fade modal--wide-content" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">*@
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">privacy_tip</span>@titulo</p>
+            </div>
+            <div class="modal-body">
+                <div class="box form activeForm" id="action">
+                    <div class="box">
+                        @Html.Raw(descripcion)
+                    </div>
+                </div>
+                <span class="btn btn-primary" data-dismiss="modal" aria-label="Close">
+                    @Html.GetText("COMMON", "CERRAR")
+                </span>
+            </div>
+@*
+        </div>
+    </div>
+</div>*@

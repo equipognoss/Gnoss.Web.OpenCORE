@@ -1,0 +1,142 @@
+﻿@model AboutTheCommunityViewModel
+
+@{    
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserProfileModel Perfil = Html.GetPerfil();
+    
+    Html.SetBodyClass("layout04 pagina about comGnoss");
+}
+
+<div id="col01">
+
+    @if (Comunidad.ProyectType == CommunityModel.TypeProyect.Catalogo || Comunidad.ProyectType == CommunityModel.TypeProyect.CatalogoNoSocial || Comunidad.ProyectType == CommunityModel.TypeProyect.CatalogoNoSocialConUnTipoDeRecurso)
+    {
+        <h2>@Html.GetText("COMACERCADE", "ACERCACATALOGO")</h2>
+    }
+    else
+    {
+        <h2>@Html.GetText("COMACERCADE", "ACERCACOMUNIDAD")</h2>
+    }
+    <div class="box community-name">
+        <div class="supertitle">
+            <p>@Comunidad.Name</p>
+        </div>
+    </div>
+    <div class="box community-stadistics">
+        <ul class="global">
+            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "RECURSOS")" ><strong>@Model.NumberOfResources</strong>  @Html.GetText("COMMON", "RECURSOS")</a></li>
+            <li><a href="@Comunidad.Url/@Html.GetText("URLSEM", "PERSONASYORGANIZACIONES")" ><strong>@Model.NumberOfPersonOrganizations</strong> @Html.GetText("COMMON", "PERSONASYORGANIZACIONES")</a></li>
+        </ul>
+    </div>
+    <div class="box community-description">
+        <p class="title"><strong>@Html.GetText("COMMON", "DESCRIPCION")</strong></p>
+        @Html.Raw(Model.Description)
+    </div>
+    <div class="box community-date">
+        <p class="title"><strong>@Html.GetText("COMACERCADE", "COMCREADAEL")</strong></p>
+        <p class="fecha">@Model.FoundationDate.Day @Html.GetText("COMACERCADE", "FECHADE" + Model.FoundationDate.Month.ToString()) @Model.FoundationDate.Year</p>
+    </div>
+    @if (!string.IsNullOrEmpty(Comunidad.TwitterLink))
+    {
+    <div class="box community-twitter">	
+	    <p class="title"><strong>Twitter</strong></p>
+	    <p>
+            @{
+                string nombreCuenta = Comunidad.TwitterLink.Substring(Comunidad.TwitterLink.LastIndexOf("/") + 1);
+            }
+            <a href="@Comunidad.TwitterLink" target="_blank">@nombreCuenta</a>
+	    </p>
+    </div>
+    }
+
+    <div class="box community-categorias">
+        <p class="title"><strong>@Html.GetText("COMMON", "CATEGORIAS"):</strong></p>
+        <ul>
+            @foreach (CategoryModel categoria in Model.Categories)
+            {
+                string urlBaseCategorias = Perfil.Url + Html.GetText("URLSEM", "COMUNIDADES") + "/" + Html.GetText("URLSEM", "CATEGORIA");
+                
+                <li><a href="@urlBaseCategorias/@Html.EliminarCaracteresUrlSem(categoria.Name)/@categoria.Key">@categoria.Name</a>, </li>
+            }
+        </ul>
+    </div>
+    <div class="box community-etiquetas">
+        <p class="title"><strong>@Html.GetText("COMMON", "ETIQUETAS"):</strong></p>
+        <ul>
+            @foreach (string etiqueta in Model.Tags)
+            {
+                string urlBaseEtiquetas = Perfil.Url + Html.GetText("URLSEM", "COMUNIDADES") + "?sioc_t:Tag=";
+                
+                <li><a href="@urlBaseEtiquetas@etiqueta">@etiqueta</a>, </li>
+            }
+        </ul>
+    </div>
+
+    @if (Model.CertificationLevels != null && Model.CertificationLevels.Count > 0)
+    {
+        <div class="box community-certificacion">
+            <p class="title"><strong>@Html.GetText("COMACERCADE", "POLICERTI")</strong></p>
+            <div class="box community-etiquetas">
+                <ul>
+                    <li>@Html.GetText("COMACERCADE","NIVELESCERTIFICACION"): </li>
+                    @foreach (string nivelCertificacion in Model.CertificationLevels)
+                    { 
+                        <li>@nivelCertificacion, </li>
+                    }
+                </ul>
+            </div>
+            <div class="politica-cer" id="ctl00_ctl00_CPH1_CPHContenido_divDesCerti">
+                <p>@Html.GetText("COMACERCADE", "DEFINICIONPOLITICA"): </p>
+                <p>@Html.Raw(Model.CertificationPolicy)</p>
+            </div>
+        </div>
+    }
+
+    @if (Model.InvitationsAvailable || Model.RatingsAvailable || Model.CommentsAvailable)
+    {
+        <div class="box community-certificacion">
+            <p class="title"><strong>@Html.GetText("COMACERCADE", "REGLASSOCCOM")</strong></p>
+            <div>
+                @if (Model.InvitationsAvailable)
+                {
+                <p>@Html.GetText("COMACERCADE", "PERMITEINVCOM")</p>
+                }
+                @if (Model.RatingsAvailable)
+                {
+                <p>@Html.GetText("COMACERCADE", "PERMITEVALREC")</p>
+                }
+                @if (Model.CommentsAvailable)
+                {
+                <p>@Html.GetText("COMACERCADE", "PERMITECOMREC")</p>
+                }
+            </div>
+        </div>
+    }
+</div>
+<div id="col02">
+    <div class="box community-admins">
+        <p class="title"><strong>@Html.GetText("COMINICIO", "ADMININSTRADORES")</strong></p>
+        <div>
+            <ul>
+                @foreach (ProfileModel admin in Model.Administrators)
+                {
+                    string tipoPerfil = "persona";
+
+                    if (admin.TypeProfile == ProfileType.Organization || admin.TypeProfile == ProfileType.ProfessionalCorporate)
+                    {
+                        tipoPerfil = "organizacion";
+                    }
+                                    
+                    <li class="resourceType @tipoPerfil">
+                        <a href="@admin.UrlFoto">
+                            @if(!string.IsNullOrEmpty(admin.UrlFoto))
+                            {
+                                <img title="@admin.NamePerson" alt="@admin.NamePerson" src="@Html.GetBaseUrlContent()@admin.UrlFoto" />
+                            }
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel
+@{
+    Html.SetTitle("Editar");
+    string urlBase = this.Context.Request.Path.ToString().ToLower();
+    if(urlBase.LastIndexOf("/editar") > 0)
+    {
+        urlBase = urlBase.Substring(0,urlBase.LastIndexOf("/editar"));
+        urlBase = string.Concat(urlBase, "/editar");
+    }
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+}
+
+<div class="content">
+    <form action="@urlBase" method="post">
+        @Html.ValidationSummary()
+        @if (this.Context.Request.Path.ToString().ToLower().Contains("/crear"))
+        {
+            <h1>Crear traduccion</h1>
+            <br />
+            <div>TextoID:  @Html.EditorFor(m => m.TextoID) @Html.ValidationMessageFor(m => m.TextoID)</div>
+        }
+        else {
+            <h1>Editar traduccion</h1>
+            <input type="hidden" name="TextoID" value="@Model.TextoID" />
+            <br />
+            <h2>@Model.TextoID</h2>
+        }
+        <br />
+        @for (int i = 0; i < Model.Traducciones.Count; i++)
+        {
+            string idioma = string.Empty;
+            Model.Idiomas.TryGetValue((string)Model.Traducciones[i].Idioma, out idioma);
+            <input type="hidden" name="Traducciones[@i].Idioma" value="@Model.Traducciones[i].Idioma" />
+            <div>
+                @idioma<br />
+            @Html.TextAreaFor(m => m.Traducciones[i].Texto, new { cols = "60", rows = "10" })  @Html.ValidationMessageFor(m => m.Traducciones[i].Texto)
+        </div>
+                <br />
+        }
+        <input type="submit" value="Guardar" />
+    </form>
+</div>
+<style>
+    textarea{
+        width: 100%; 
+        height: 150px;
+    }
+</style>

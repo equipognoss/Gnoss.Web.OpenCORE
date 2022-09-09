@@ -1,0 +1,333 @@
+﻿@model EditProfileViewModel
+
+@{
+    EditProfileViewModel.ProfilePersonalViewModel Perfil = Model.ProfilePersonal;
+    HeaderModel Cabecera = Html.GetCabecera();
+}
+
+<form autocomplete="off" method="post" id="formularioEdicionPerfilPersonal" action="@Model.UrlActionSaveProfile">
+    <div class="box" id="editarPerfil">
+        <div>
+            <div class="fieldset01 edicionPerfil">
+                <fieldset class="labels">
+                    <legend>@Html.GetText("PERFIL", "DATOSPERSONALES")</legend>
+                    <div>
+                        <div id="divErrorPersonal">
+                        </div>
+                        <p>
+                            <label for="ProfilePersonal.Name" class="datoObligatorio">@Html.GetText("REGISTRO", "NOMBRE")</label>
+                            <input type="text" class="text medium" value="@Perfil.Name" id="Nombre" name="ProfilePersonal.Name" />
+                        </p>
+                        <p>
+                            <label for="ProfilePersonal.LastName" class="datoObligatorio">@Html.GetText("REGISTRO", "APELLIDOS")</label>
+                            <input type="text" class="text medium" value="@Perfil.LastName" id="Apellidos" name="ProfilePersonal.LastName" />
+                        </p>
+                        @if (Model.CountryList != null && Model.CountryList.Count > 0)
+                        {
+                            <p>
+                                <label for="ProfilePersonal.Country">@Html.GetText("PERFIL", "PAIS")</label>
+                                <select class="select medium" id="Pais" name="ProfilePersonal.Country">
+                                    @foreach (Guid paisID in Model.CountryList.Keys)
+                                    { 
+                                        <option value="@paisID" @(paisID == Perfil.Country ? "selected=selected" : "")>@Model.CountryList[paisID]</option>
+                                    }
+                                </select>
+                            </p>
+                        }
+                        <p>
+                            <label for="ProfilePersonal.Lang">@Html.GetText("COMMON", "IDIOMA")</label>
+                            <select class="select medium" id="Idioma" name="ProfilePersonal.Lang">
+                                @foreach (KeyValuePair<string, string> idioma in Cabecera.Languajes)
+                                {
+                                    <option value="@idioma.Key" @(Perfil.Lang == idioma.Key ? "selected=selected" : "")>@Cabecera.Languajes[idioma.Key]</option>
+                                }
+                            </select>
+                        </p>
+                        @if (Model.CountryList != null && Model.CountryList.Count > 0)
+                        {
+                            @Html.PartialView("_Provincia", Model)
+                        }
+                        <p>
+                            <label for="ProfilePersonal.Sex">@Html.GetText("REGISTRO", "SEXO")</label>
+                            <select class="select medium" name="ProfilePersonal.Sex">
+                                @if (Perfil.Sex != "H" && Perfil.Sex != "M")
+                                {
+                                    <option value=""></option>
+                                }
+                                <option value="H" @(Perfil.Sex == "H" ? "selected=selected" : "")>@Html.GetText("REGISTRO", "HOMBRE")</option>
+                                <option value="M" @(Perfil.Sex == "M" ? "selected=selected" : "")>@Html.GetText("REGISTRO", "MUJER")</option>
+                            </select>
+                        </p>
+                        <p>
+                            <label for="ProfilePersonal.PostalCode">@Html.GetText("REGISTRO", "CODIGOPOSTAL")</label>
+                            <input type="text" class="text medium" maxlength="15" value="@Perfil.PostalCode" name="ProfilePersonal.PostalCode" />
+                        </p>
+                        @if (Model.CountryList != null && Model.CountryList.Count > 0)
+                        {
+                            <p>
+                                <label for="ProfilePersonal.Location" class="datoObligatorio">@Html.GetText("REGISTRO", "POBLACION")</label>
+                                <input type="text" class="text medium" value="@Perfil.Location" name="ProfilePersonal.Location" />
+                            </p>
+                        }
+                        <p>
+                            <label for="ProfilePersonal.BornDate" class="datoObligatorio">@Html.GetText("REGISTRO", "FECHANACIMIENTO")</label>
+                            <input type="text" id="txtFechaNac" name="ProfilePersonal.BornDate" class="datepicker text medium" value="@Perfil.BornDate"/>
+                        </p>
+                        <p>
+                            <label for="ProfilePersonal.Email" class="datoObligatorio">@Html.GetText("REGISTROUSUARIOORGANIZACION", "EMAIL")</label>
+                            <input type="text" class="text medium" id="Email" value="@Perfil.Email" name="ProfilePersonal.Email" />
+                        </p>
+
+                        @if (Html.ComprobarPersonaEsMayorAnios(Html.GetPerfil().BornDate, 14) && !Html.ComprobarPersonaEsMayorAnios(Html.GetPerfil().BornDate, 18) /* && String.IsNullOrEmpty(Perfil.EmailTutor)*/)
+                        {
+                            <p>
+                                <label for="ProfilePersonal.EmailTutor">@Html.GetText("REGISTROUSUARIOORGANIZACION", "EMAILTUTOR")</label>
+                                <input type="text" class="text medium" id="EmailTutor" value="@Perfil.EmailTutor" name="ProfilePersonal.EmailTutor" />
+                            </p>
+                        }
+
+                        @if (Html.ComprobarPersonaEsMayorAnios(Html.GetPerfil().BornDate, 18) && !string.IsNullOrEmpty(Perfil.EmailTutor))
+                        {
+                            <p>Al ser mayor de edad puedes eliminar tu Email de Tutor.</p>
+                            <p>
+                                <label for="ProfilePersonal.EmailTutor">@Html.GetText("REGISTROUSUARIOORGANIZACION", "EMAILTUTOR")</label>
+                                <input type="text" class="text medium" id="EmailTutor" value="@Perfil.EmailTutor" name="ProfilePersonal.EmailTutor" />
+                            </p>
+                        }
+
+
+                        @if (Perfil.AdditionalFields != null && Perfil.AdditionalFields.Count > 0)
+                        {
+                            <div id="panCamposConfigurablesProyecto">
+                                @foreach (AdditionalFieldAutentication campoExtra in Perfil.AdditionalFields)
+                                {                        
+                                    <p>
+                                        <label for="@campoExtra.FieldName" @(campoExtra.Required ? "class=datoObligatorio" : "")>@campoExtra.Title</label>
+                                        @if (campoExtra.Options != null && campoExtra.Options.Count > 0)
+                                        { 
+                                            <select name="@campoExtra.FieldName" id="@campoExtra.FieldName" class="dato select medium @campoExtra.FieldName">
+                                                <option value="@Guid.Empty">@Html.GetText("REGISTRO", "SINESPECIFICAR")</option>
+                                                @foreach (Guid idCampo in campoExtra.Options.Keys)
+                                                {
+                                                    bool selected = campoExtra.FieldValue == idCampo.ToString();
+                                                    <option @(selected ? "selected=selected" : "") value="@idCampo">@Html.ObtenerTextoDeIdioma(campoExtra.Options[idCampo])</option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            string claseInput = "text medium";
+                                            if (campoExtra.AutoCompleted)
+                                            {
+                                                claseInput += " txtBusqueda autocompletar " + campoExtra.FieldName;
+                                            }
+                                            <input type="text" class="@claseInput" id="@campoExtra.FieldName" name="@campoExtra.FieldName" value="@(campoExtra.FieldValue != null ? campoExtra.FieldValue : "")"/>
+                                
+                                            if (campoExtra.AutoCompleted)
+                                            {
+                                                string inputHack = campoExtra.FieldName + "hack";
+                                            <input type="hidden" id="@inputHack" class="@inputHack" />
+                                            }
+                                        }
+                                    </p>
+                                }
+                            </div>
+                        }
+                        @if (Perfil.IsSearched.HasValue || Perfil.IsExternalSearched.HasValue)
+                        {
+                            <div class="fieldset fieldset02">
+                                <fieldset>
+                                    <legend>
+                                        @if (Html.GetNombreProyectoEcosistema().Contains("GNOSS"))
+                                        {
+                                            <strong class="logognoss">GNOSS</strong> 
+                                        }
+                                        @Html.GetText("REGISTRO", "PORQUEPRIVACIDAD", Html.GetNombreProyectoEcosistema())
+                                    </legend>
+                                    <div class="fieldsetContent">
+                                        <ul class="radioList">
+                                            @if (Perfil.IsSearched.HasValue)
+                                            {
+                                                <li>
+                                                    <input type="checkbox" @(Perfil.IsSearched.Value ? "checked=checked" : "") name="ProfilePersonal.IsSearched" />
+                                                    <label for="ProfilePersonal.IsSearched">@Html.GetText("REGISTRO", "LISTARPERFILCORTO", Html.GetNombreProyectoEcosistema())</label>
+                                                </li>
+                                            }
+                                            @if (Perfil.IsExternalSearched.HasValue)
+                                            {
+                                                <li>
+                                                    <input type="checkbox" @(Perfil.IsExternalSearched.Value ? "checked=checked" : "") name="ProfilePersonal.IsExternalSearched" />
+                                                    <label for="ProfilePersonal.IsExternalSearched">@Html.GetText("REGISTRO", "LISTARPERFILEXTERNOSCORTO")</label>
+                                                </li>
+                                            }
+                                            <li>
+                                                <em class="help ">
+                                                    <a onclick="javascript:MostrarVisibilidadPerfil();" style="cursor: pointer;">@Html.GetText("REGISTRO", "TITULOINFOVISIBILIDADPERFIL")</a>
+                                                </em>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div style="display: none;" id="ctl00_ctl00_CPH1_CPHContenido_despleRegUp">
+                                        <div style="display: none;" class="stateShowForm" id="panels">
+                                            <div class="box form activeForm" id="action">
+                                                <div id="despleRegUpInt"></div>
+                                            </div>
+                                            <div class="box form activeForm" id="aux_despleRegUpInt"></div>
+                                            <p class="cerrar"><a onclick="CerrarPanelAccion('despleRegUp')" title="cerrar formulario">cerrar x</a></p>
+                                        </div>
+                                    </div>
+                                    <div class="oculto">
+                                        <div id="panVisibilidadPerfil">
+                                            <fieldset>
+                                                <legend>
+                                                    <span>@Html.GetText("INFOVISIBILIDADPERFIL", "TITULO")</span>
+                                                </legend>
+                                            </fieldset>
+                                            <fieldset>@Html.Raw(Html.GetText("INFOVISIBILIDADPERFIL", "INFO"))</fieldset>
+                                            <p>
+                                                <input type="button" onclick="CerrarPanelAccion('despleRegUp')" />
+                                            </p>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        }
+
+                        <div class="fieldset actionButtons">
+                            <fieldset>
+                                <p>
+                                    <input type="button" value="@Html.GetText("PERFIL", "GUARDAR")" onclick="EnviarFormularioEdicion();" class="submit principal" />
+                                </p>
+                            </fieldset>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#txtFechaNac").datepicker({
+            changeMonth: true,
+            changeYear: true,
+            yearRange: "@(DateTime.Now.Year - 90):@(DateTime.Now.Year - Html.GetEdadMinimaRegistro())",
+            maxDate: "@DateTime.Today.AddYears(-Html.GetEdadMinimaRegistro()).ToString("dd/MM/yyyy")"
+        });
+        $('#Nombre').focus();
+        @Html.PartialView("ControlesMVC/_AutoCompletarCampoExtra", Perfil.AdditionalFields)
+		$('#ProfilePersonalIsExternalSearched').click( function () {
+			if($(this).is(':checked')){
+				$('#ProfilePersonalIsSearched').prop('checked', true);
+			}
+		});
+		$('#ProfilePersonalIsSearched').click( function () {
+			if(!$(this).is(':checked')){
+				$('#ProfilePersonalIsExternalSearched').prop('checked', false);
+			}
+		});
+    });
+
+    function validarPerfilUsuario() {
+        var $dP = $('#divErrorPersonal');
+        var error = '';
+
+        $('label[title=\'campo obligatorio\']').each(function () {
+            var label = $(this);
+            var campo = $(this).next();
+            if (campo.is('select')) {
+                error += AgregarErrorReg(error, ValidarCampoSelectObligatorio(campo, label));
+            }
+            else {
+                error += AgregarErrorReg(error, ValidarCampoObligatorio(campo, label));
+            }
+        });
+
+        if ($('#Provincia').is('select') && $("#Provincia")[0].selectedIndex == 0) {
+            error += '<li>' + form.provinciaincorrecta + '</li>';
+        }
+
+        error += ValidacionesEmail('Email', 'EmailTutor');
+
+        //if (!validarEmail($('#Email').val())) {
+        //    error += '<li>' + form.emailValido + '</li>';
+        //}
+
+        //if (typeof RecogerDatosExtra != "undefined") {
+        //    error += RecogerDatosExtra();
+        //}
+        //if (typeof RecogerDatosExtraVirtuoso != "undefined") {
+        //    error += RecogerDatosExtraVirtuoso();
+        //}
+
+        if (error.length > 0) {
+            $('#divErrorPersonal').html('');
+            crearError('<ul>' + error + '</ul>', '#divErrorPersonal');
+            return false;
+        }
+        else { return true; }
+    }
+
+    function RecogerDatosExtra() {
+        var error = '';
+        $('#panCamposConfigurablesProyecto label[title=\'campo obligatorio\']').each(function () {
+            var label = $(this);
+            var campo = $(this).next();
+            if (campo.is('select')) {
+                error += AgregarErrorReg(error, ValidarCampoSelectObligatorio(campo, label));
+            }
+            else {
+                error += AgregarErrorReg(error, ValidarCampoObligatorio(campo, label));
+            }
+        });
+        return error;
+    }
+
+    function EnviarFormularioEdicion() {
+        if (validarPerfilUsuario()) {
+            MostrarUpdateProgress();
+
+            var dataPost = new FormData();
+            dataPost.append('peticionAJAX', true);
+            $("#formularioEdicionPerfilPersonal").find(':input').each(function () {
+                var valor = "";
+                if ($(this).is(':checkbox')) {
+                    valor = $(this).is(':checked')
+                }
+                else {
+                    valor = $(this).val();
+                }
+                dataPost.append($(this).attr('name'), valor);
+            });
+            ////Ocultamos los errrores
+            //$('#divKodatosUsuario .ko').remove();
+            //$('#lblMailRepetido.contenedorError .ko').remove();
+            //$('#divKoCaptcha.contenedorError').hide();
+            //$('#divKoCaptcha.contenedorError p').hide();
+
+
+            GnossPeticionAjax('@Model.UrlActionSaveProfile', dataPost, true)
+                .done(function (data) {
+                    $('#divErrorPersonal').html('<div class=\"ok\">' + data + '</div>');
+                })
+                .fail(function (data) {
+                    var errores = data.split('||');
+                    var error = "";
+                    for (i = 0; i < errores.length; i++) {
+                        if (errores[i].indexOf("&&") != -1) {
+                            var claveError = errores[i].split('&&')[0];
+                            var mensajeError = errores[i].split('&&')[1];
+                            error += '<li>' + mensajeError + '</li>';
+                        }
+                    }
+                    $('#divErrorPersonal').html('');
+                    crearError('<ul>' + error + '</ul>', '#divErrorPersonal');
+                })
+                .always(function () {
+                    OcultarUpdateProgress();
+                });
+        }
+        return false;
+    }
+</script>

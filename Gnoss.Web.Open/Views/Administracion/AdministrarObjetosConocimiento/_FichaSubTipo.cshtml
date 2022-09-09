@@ -1,0 +1,19 @@
+﻿@model KeyValuePair<string, string>
+
+<li class="bloque row subTipo" id="@Guid.NewGuid()">
+    <section class="header">
+        <span class="nombre" aux="@Html.ObtenerTextoIdiomaUsuario(Model.Value)">@Html.ObtenerTextoIdiomaUsuario(Model.Value)</span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+	</section>
+    <section class="panEdicion">
+        <p>
+			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")</span>
+			<input type="text" name="Nombre" value="@Model.Value" />
+		</p>
+		<p>
+			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")</span>
+			<input type="text" name="Tipo" value="@Model.Key"/>
+		</p>
+	</section>
+</li>

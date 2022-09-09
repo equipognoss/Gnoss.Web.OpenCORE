@@ -1,0 +1,66 @@
+﻿@model AdministrarEventosViewModel
+
+@{ 
+    bool editando = Model.SelectedEvent.Key != Guid.Empty;
+    AdministrarEventosViewModel.EventModel evento = Model.SelectedEvent;
+}
+
+<div style="margin-top:20px; @(!editando ? "display:none;":"")" id="panEdicionEvento">
+    <fieldset>
+        @if (editando)
+        {
+            <legend>Editar evento</legend>
+        }
+        else
+        {
+            <legend>Agregar nuevo evento</legend>
+        }
+        <div style="padding: 10px">
+            <input type="hidden" id="txtEventoID" name="evento.Key" value="@evento.Key"/>
+            <p>
+                Nombre
+                <input type="text" id="txtTitulonuevoEvento" name="evento.Name" value="@evento.Name">
+            </p>
+            <p>
+                Información al finalizar y cuerpo de correo
+                <textarea rows="7" id="txtContenidoNuevoEvento" name="evento.Desciption">@evento.Desciption</textarea>
+            </p>
+            <p>
+                Tipo de evento
+                <select id="ddlTipoNuevoEvento" name="evento.Type">
+                    <option @Html.Raw(evento.Type.Equals(0) ? "selected=\"selected\"" : "") value="0">@Model.ListaTiposEventos[0]</option>
+                    <option @Html.Raw(evento.Type.Equals(1) ? "selected=\"selected\"" : "") value="1">@Model.ListaTiposEventos[1]</option>
+                    <option @Html.Raw(evento.Type.Equals(2) ? "selected=\"selected\"" : "") value="2">@Model.ListaTiposEventos[2]</option>
+                </select>
+            </p>
+            <p>
+                Código evento
+                <input type="text" id="txtCodigoNuevoEvento" name="evento.InfoExtra" value="@evento.InfoExtra">
+            </p>
+            <p>
+                Grupo
+                <input type="text" id="txtGrupoNuevoEvento" name="evento.Group" value="@evento.Group">
+            </p>
+            <p>
+                Url Redirect
+                <input type="text" id="txtUrlRedirectNuevoEvento" name="evento.UrlRedirect" value="@evento.UrlRedirect">
+            </p>
+            <p>
+                Componente CMS
+                <select id="cmbNuevoComponente" name="evento.ComponenteCMS">
+                    <option value="00000000-0000-0000-0000-000000000000">Ninguno</option>
+                    @foreach (Guid componenteID in Model.ListaComponentesCMS.Keys)
+                    {
+                        <option @Html.Raw(evento.ComponenteCMS.Equals(componenteID) ? "selected=\"selected\"" : "") value="@componenteID">@Model.ListaComponentesCMS[componenteID]</option>
+                    }
+                </select>
+            </p>
+            <div id="panError" class="error general"></div>
+            <input type="button" value="Guardar" class="guardarTodo">
+            @if (!editando)
+            {
+        <a class="cancelar">@Html.GetText("COMMON", "CANCELAR")</a>
+            }
+        </div>
+    </fieldset>
+</div>

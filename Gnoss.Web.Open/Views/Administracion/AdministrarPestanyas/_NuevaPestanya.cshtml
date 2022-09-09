@@ -1,0 +1,12 @@
+﻿@model TabModel
+
+
+<li class="row pestanya " id="@Model.Key" >
+    <span class="handle pestanya ">:::</span>
+	<section class="header">
+        <span class="nombrePestanya" aux="@Model.Name">@Html.ObtenerTextoIdiomaUsuario(Model.Name)</span><span class="tipoPestanya"></span>
+        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+	</section>
+    @Html.PartialView("_EdicionPestanya", Model)
+</li>

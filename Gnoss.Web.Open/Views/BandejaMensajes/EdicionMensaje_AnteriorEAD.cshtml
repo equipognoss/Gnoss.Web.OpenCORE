@@ -1,0 +1,294 @@
+﻿@model MessageModel
+
+@{
+    UserProfileModel Perfil = Html.GetPerfil();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+
+    Html.SetBodyClass("layout02 nuevoMensajeMyGnoss");
+
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+}
+
+<div id="col01">
+    <div class="mgHerramientas">
+        @Html.PartialView("../Shared/ControlesMVC/_Novedades", "Messages")
+        <div class="resaltarAccion" id="facetaEncuentra">
+            <h2>@Html.GetText("BUSCADORFACETADO", "ENCUENTRA")</h2>
+        </div>
+        <div id="divFac"></div>
+    </div>
+</div>
+<div id="col02">
+    @{
+        string url = "&" + Context.Request.QueryString.ToString();
+        bool responder = false;
+        bool responderTodos = false;
+        bool reenviar = false;
+
+        if (url.Contains("&responder&"))
+        {
+            responder = true;
+        }
+        else if (url.Contains("&responderATodos&"))
+        {
+            responderTodos = true;
+        }
+        else if (url.Contains("&reenviar&"))
+        {
+            reenviar = true;
+        }
+    }
+
+    <h2>Mis mensajes</h2>
+    @{
+        string urlVuelta = Perfil.Url + Html.GetText("URLSEM", "MENSAJES");
+
+        if (Context.Request.Headers.ContainsKey("Referer") && Context.Request.Headers["Referer"].ToString().Contains("?") && Context.Request.Headers["Referer"].ToString().Contains(urlVuelta))
+        {
+            urlVuelta += Context.Request.Headers["Referer"].ToString().Substring(Context.Request.Headers["Referer"].ToString().IndexOf("?"));
+        }
+    }
+    <div>
+        <div class="newmessagetools listToolBar" id="messagetools">
+            <div class="toolbar">
+                <ul>
+                    <li class="looksbutton principal"><a onclick="javascript:chequearUsuarioLogueado('enviarCorreo()');">@Html.GetText("COMMON", "ENVIAR")</a></li>
+                    <li class="looksLink descartar"><a href="@urlVuelta">@Html.GetText("COMMON", "DESCARTAR")</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="form formtheme01 activeForm" id="action">
+            <div class="box">
+                <div class="fieldset">
+                    <fieldset>
+                        @{
+                            Dictionary<Guid, string> destinatarios = new Dictionary<Guid, string>();
+                            if (Model != null)
+                            {
+                                if (responder || responderTodos)
+                                {
+                                    if (Model.Sender.Key != IdentidadActual.KeyIdentity)
+                                    {
+                                        destinatarios.Add(Model.Sender.Key, Html.ObtenerNombrePerfil(Model.Sender));
+                                    }
+                                }
+                                if (responderTodos)
+                                {
+                                    foreach (ProfileModel destinatario in Model.Receivers)
+                                    {
+                                        if (destinatario.Key != IdentidadActual.KeyIdentity)
+                                        {
+                                            destinatarios.Add(destinatario.Key, Html.ObtenerNombrePerfil(destinatario));
+                                        }
+                                    }
+                                    foreach (GroupCardModel destinatarioGrupo in Model.ReceiversGroup)
+                                    {
+                                        destinatarios.Add(destinatarioGrupo.Clave, destinatarioGrupo.CompleteName);
+                                    }
+                                }
+                            }
+                        }
+                        <legend></legend>
+                        <div class="fieldsetContent">
+                            @if (IdentidadActual.IsOrgAdmin)
+                            {
+                                <p>
+                                    <input type="radio" onclick="$('#txtDestinatario').parent().show(); $('#txtDestinatarioOrg').parent().hide(); $('#txtDestinatarioOrg').parent().find('.contenedor').html(''); $('#txtDestinatarioOrg_Hack').val(''); PintarTagsMensajes($('#txtDestinatario'));" name="CuentaUsuario" checked="checked" />@Html.GetText("BANDEJAENTRADA", "ENVIARCOMOUSU")<label style="color:#477CA8">@Perfil.CompleteProfileName</label>
+                                    <input type="radio" onclick="$('#txtDestinatarioOrg').parent().show(); $('#txtDestinatario').parent().hide; $('#txtDestinatario').parent().find('.contenedor').html(''); $('#txtDestinatario_Hack').val(''); PintarTagsMensajes($('#txtDestinatarioOrg'));" name="CuentaUsuario" id="chkOrganizacion" />@Html.GetText("BANDEJAENTRADA", "ENVIARCOMOORG")<label style="color:#477CA8">@Perfil.NameOrg</label>
+                                </p>
+                            }
+                            <p>
+                                <label class="small">@Html.GetText("CORREO", "PARA")</label>
+                            </p>
+                            <div class="autocompletar">
+                                <span class="contenedor">
+                                    @foreach (var destinatario in destinatarios)
+                                    {
+                                        <div class="tag" title="@destinatario.Value">
+                                            <div>
+                                                @destinatario.Value<a class="remove"></a>
+                                            </div>
+                                            <input type="text" value="@destinatario.Value">
+                                        </div>
+                                    }
+                                </span>
+                                <input id="txtDestinatario" type="text" class="txtAutocomplete text big" style="width: 100%; top: 0px; left: 0px;" value="" />
+                                <input id="txtDestinatario_Hack" type="text" style="display: none" class="text big" value="@string.Join(", ",destinatarios.Select(x=>$"{x.Value.ToLower()}|||{x.Key}"))," />
+                            </div>
+                        </div>
+                        @if (IdentidadActual.IsOrgAdmin)
+                        {
+                            <div class="autocompletar" style="display:none">
+                                <span class="contenedor">
+                                    @foreach (var destinatario in destinatarios)
+                                    {
+                                        <div class="tag" title="@destinatario.Value">
+                                            <div>
+                                                @destinatario.Value<a class="remove"></a>
+                                            </div>
+                                        </div>
+                                    }
+                                </span>
+                                <input id="txtDestinatarioOrg" type="text" class="txtAutocomplete text big" style="width: 100%; top: 0px; left: 0px;" value="" />
+                                <input id="txtDestinatarioOrg_Hack" type="text" style="display: none" class="text big" value="@string.Join(", ",destinatarios.Select(x=>$"{x.Value.ToLower()}|||{x.Key}"))," />
+                            </div>
+                        }
+                        <p />
+                        <p>
+                            <label class="small">@Html.GetText("CORREO", "ASUNTO")</label>
+                            @{
+                                string asunto = "";
+                                if (Model != null)
+                                {
+                                    asunto = Model.Subject;
+                                    if (responder || responderTodos)
+                                    {
+                                        asunto = "RE: " + asunto;
+                                    }
+                                    else if (reenviar)
+                                    {
+                                        asunto = "Fwd: " + asunto;
+                                    }
+                                }
+                            }
+                            <input id="txtAsunto" type="text" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}" class="text big" maxlength="255" value="@asunto" />
+                        </p>
+                </div>
+                <div class="fieldsetContent">
+                    <p class="textarea">
+                        <label>@Html.GetText("CORREO", "ESCRIBIRNUEVO")</label>
+                        @{
+                            string cuerpo = "";
+                            if (Model != null)
+                            {
+                                cuerpo = "<p>&nbsp;</p><strong>" + Html.GetText("CORREO", "MENSAJEORIGINAL") + " " + Html.ObtenerNombrePerfil(Model.Sender) + ": </strong>" + Model.Body;
+                            }
+                        }
+                        <textarea id="txtMensaje" class="cke mensajes" cols="20" rows="8">@cuerpo</textarea>
+                    </p>
+                </div>
+                </fieldset>
+            </div>
+            <div class="fieldset actionButtons">
+                <fieldset>
+                    <p>
+                        <a onclick="javascript:chequearUsuarioLogueado('enviarCorreo()');" class="submit principal">@Html.GetText("COMMON", "ENVIAR")</a>
+                    </p>
+                </fieldset>
+            </div>
+            <div class="ko floatRight" id="divError">
+                <span id="lblError"></span>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script defer="defer" lang="javascript" type="text/javascript">
+    $(function () {
+        $(window).bind('beforeunload', function () {
+            return ComprobarCambios();
+        });
+        MontarFacetas("", false, 1, '#divFac', 'dce:type');
+    });
+
+    @Html.Raw(Html.GetJSExtra());
+
+    function enviarCorreo(urlPost) {
+        $('#divError').html('');
+        $('#divError').hide();
+        comprobarCambios = false;
+
+        MostrarUpdateProgress();
+
+        var Org = $('#chkOrganizacion').is("checked");
+
+        var Destinatarios = "";
+        if (Org) {
+            //Destinatario Org
+            Destinatarios = $('#txtDestinatarioOrg_Hack').val();
+        } else {
+            //Destinatario Usu
+            Destinatarios = $('#txtDestinatario_Hack').val();
+        }
+         
+        if (Destinatarios != "")
+        {
+            var Asunto = $('#txtAsunto').val();
+            var Cuerpo = $('#txtMensaje').val();
+
+            //obtengo la accion a partir del ancla, almacenando la accion y el id del mensaje
+            var urlAccion = ObtenerHash2();
+
+            var params = {
+                Subject: Asunto,
+                Body: encodeURIComponent(Cuerpo.replace(/\n/g, '')),
+                Receivers: Destinatarios,
+                OrgIsSender: Org,
+                UrlAction: urlAccion
+            }
+
+            GnossPeticionAjax("@Html.GetUrlPagina()/sendMessage", params, true).fail(function (data) {
+                $('#divError').html("<p>" + data + "</p>");
+                $('#divError').show();
+            }).always(function (data) {
+                OcultarUpdateProgress();
+            });
+        }else
+        {
+            ('#divError').html("<p> Es necesario anyadir algun destinatario</p>");
+        }
+        
+    }
+
+    var comprobarCambios = true;
+
+    function ComprobarCambios() {
+        var Asunto = $('#txtAsunto');
+        var Cuerpo = $('#txtMensaje');
+
+        if (comprobarCambios && ((Asunto.length > 0 && Asunto.val().trim() != '') || (Cuerpo.length > 0 && Cuerpo.val().trim() != ''))) {
+            return (mensajes.infoPerderMen);
+        }
+    }
+
+    function autocompletarMensajes(control, identidad, identidadOrg, esGnossOrganiza) {
+        $(control)
+        .unbind()
+        .autocomplete(
+            null,
+            {
+                url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarEnvioMensajes",
+                delay: 200,
+                multiple: true,
+                scroll: false,
+                selectFirst: false,
+                minChars: 1,
+                width: 300,
+                cacheLength: 0,
+                extraParams: {
+                    bool_esGnossOrganiza: esGnossOrganiza,
+                    identidad: identidad,
+                    identidadOrg: identidadOrg
+                }
+            }
+        );
+    }
+    
+    $(".tag .remove").bind('click', function (evento) {
+        cancelEvent(evento);
+        EliminarTag($(this).parents('.tag'), evento)
+    });
+
+    $('#txtDestinatario').focus(function (event) {
+        autocompletarMensajes(this, '@IdentidadActual.KeyIdentity.ToString()', '@IdentidadActual.KeyIdentityOrg.ToString()', 'FALSE');
+    });
+    @if (IdentidadActual.IsOrgAdmin)
+    {
+        string autocompletarOrg = "$('#txtDestinatarioOrg').focus(function (event) { autocompletarMensajes(this, '" + IdentidadActual.KeyIdentityOrg.ToString() + "', '" + IdentidadActual.KeyIdentityOrg.ToString() + "', 'FALSE'); });";
+
+        Html.Raw(autocompletarOrg);
+    }
+
+</script>

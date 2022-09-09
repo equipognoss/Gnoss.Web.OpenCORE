@@ -1,0 +1,329 @@
+﻿<script type="text/javascript">
+
+    filter.isAppliedTags = true;
+
+    function AgregarFiltroComponentes(filtro) {
+        MostrarUpdateProgress();
+        parametroNuevo = filtro.substr(0, filtro.indexOf("="));
+        valorNuevo = filtro.substr(filtro.indexOf("=") + 1);
+
+        filtrosActuales = "";
+        if (document.location.href.indexOf('?') > -1) {
+            filtrosActuales = document.location.href.substr(document.location.href.indexOf('?') + 1);
+        }
+
+        if (filtrosActuales.indexOf(filtro) != -1) {
+            //Contiene el filtro tal cual, lo eliminamos
+            filtrosActuales = filtrosActuales.replace(filtro + "&", "");
+            filtrosActuales = filtrosActuales.replace("&" + filtro, "");
+            filtrosActuales = filtrosActuales.replace(filtro, "");
+        } else if (filtrosActuales.indexOf(parametroNuevo + "=") != -1) {
+            //Contiene el filtro pero con diferente valor, lo cambiamos
+            inicioFiltro = filtrosActuales.indexOf(parametroNuevo + "=");
+            finfiltro = filtrosActuales.indexOf("&", inicioFiltro) - 1;
+            filtroAntiguo = "";
+            if (finfiltro < 0) {
+                filtroAntiguo = filtrosActuales.substr(inicioFiltro);
+            } else {
+                filtroAntiguo = filtrosActuales.substr(inicioFiltro, finfiltro - inicioFiltro);
+            }
+            filtrosActuales = filtrosActuales.replace(filtroAntiguo, filtro);
+        } else {
+            //No contiene el filtro, lo añadimos
+            if (filtrosActuales == "") {
+                filtrosActuales = filtro;
+            } else {
+                filtrosActuales += "&" + filtro;
+            }
+        }
+
+        if (filtrosActuales.indexOf("?") == -1) {
+            filtrosActuales = "?" + filtrosActuales;
+        }
+        nuevaPagina = "";
+        if (document.location.href.indexOf("?") == -1) {
+            nuevaPagina = document.location.href + filtrosActuales;
+        } else {
+            indice = document.location.href.indexOf("?");
+            nuevaPagina = document.location.href.substr(0, indice) + filtrosActuales;
+        }
+
+        document.location = nuevaPagina;
+    }
+
+    function LimpiarFiltroComponentes(filtro) {
+        MostrarUpdateProgress();
+        nuevaPagina = "";
+        indice = document.location.href.indexOf("?");
+        nuevaPagina = document.location.href.substr(0, indice + 1);
+        document.location = nuevaPagina;
+    }
+
+    function MostrarPanelConfirmacionEliminar(evento, pPregunta, pFuncionEjecutar) {
+        $("#lbSi_ConfirmacionEliminar").attr('value', borr.si);
+        $("#lbNo_ConfirmacionEliminar").attr('value', borr.no);
+        $("#lbNo_ConfirmacionEliminar").show();
+
+        document.getElementById('lblPregunta_ConfirmacionEliminar').innerHTML = pPregunta;
+        $("#lbSi_ConfirmacionEliminar").unbind('click');
+
+        $("#lbSi_ConfirmacionEliminar").click(function () {
+            eval(pFuncionEjecutar);
+            eval("document.getElementById('divPreguntaConfirmacionEventos').style.display='none';document.getElementById('mascaraBlanca').style.display='none';");
+        });
+
+        CalcularTopPanelEliminarYMostrar(evento, 'divPreguntaConfirmacionEventos');
+    }
+
+    function MostrarPanelInfo(evento, pInfo) {
+        $("#lbSi_ConfirmacionEliminar").attr('value', 'Aceptar');
+        $("#lbNo_ConfirmacionEliminar").hide();
+        document.getElementById('lblPregunta_ConfirmacionEliminar').innerHTML = pInfo;
+        $("#lbSi_ConfirmacionEliminar").unbind('click');
+        $("#lbSi_ConfirmacionEliminar").click(function () {
+            eval("document.getElementById('divPreguntaConfirmacionEventos').style.display='none';document.getElementById('mascaraBlanca').style.display='none';");
+        });
+
+        CalcularTopPanelEliminarYMostrar(evento, 'divPreguntaConfirmacionEventos');
+    }
+
+    function CalcularTopPanelEliminarYMostrar(evento, panelID) {
+        document.getElementById('mascaraBlanca').style.display = 'block';
+        if (evento != null) {
+            if (!evento.target) {
+                var hijo = evento.srcElement;
+            }
+            else {
+                var hijo = evento.target;
+            }
+            if (hijo.nodeName == 'IMG') {
+                hijo = $(hijo).parent();
+            }
+            var $padre = $(hijo).parent();
+
+            $(document.getElementById(panelID)).css({
+                top: $padre.offset().top + 'px',
+                left: $padre.offset().left - 200 + 'px',
+                display: ''
+            });
+        } else {
+            if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
+                posX = document.body.scrollLeft + (document.documentElement.clientWidth / 2);
+                posY = document.body.scrollTop + (document.documentElement.clientHeight / 2);
+            } else//si no es chrome
+            {
+                posX = document.documentElement.scrollLeft + (document.documentElement.clientWidth / 2);
+                posY = document.documentElement.scrollTop + (document.documentElement.clientHeight / 2);
+            }
+            $('#' + panelID).css({
+                top: posY + 'px',
+                left: posX - ($('#' + panelID).width() / 2) + 'px',
+                display: ''
+            });
+        }
+        return false;
+    }
+
+    function EliminarMultimedia(nombreComponente) {
+        MostrarUpdateProgress();
+        var datosPost =
+        {
+            callback: "eliminarComponenteMultimedia",
+            nombreComponente: nombreComponente
+        };
+
+        $.post('@Html.GetUrlPagina()', datosPost, function (data) {
+            var html = "";
+            if (data.indexOf("OK") == 0) {
+                document.location = document.location;
+            }
+            else {
+                MostrarPanelInfo(null, data);
+            }
+            OcultarUpdateProgress();
+        });
+    }
+
+
+</script>
+
+
+
+
+@{
+    ResultadoModel resultado = Html.GetResultado();
+    List<FacetModel> facetas = Html.GetFacetas();
+    List<FacetItemModel> filtros = Html.GetFiltros();
+}
+
+@{    
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div id="wrap">
+    <div id="page">
+        <div id="section">
+            <div id="content">
+                <div id="divPreguntaConfirmacionEventos" class="confirmar" style="display: none; z-index: 2000;">
+                    <div class="pregunta">
+                        <span id="lblPregunta_ConfirmacionEliminar"></span>
+                        <input type="button" id="lbSi_ConfirmacionEliminar" onclick="" />
+                        <input type="button" id="lbNo_ConfirmacionEliminar" onclick="document.getElementById('divPreguntaConfirmacionEventos').style.display = 'none'; document.getElementById('mascaraBlanca').style.display = 'none';" />
+                    </div>
+                </div>
+                <div id="col02">
+                    <div id="divBusqueda">
+                        <div id="divBusquedaInt" class="finderUtils">
+                            <div class="group finderSection">
+                                <label id="lblEncontrar" for="finderSection">
+                                    Encontrar</label>
+                                <input type="text" autocomplete="off" name="finderSection" id="finderSectionCMS" class="finderSectionText ac_input">
+                                <input type="button" name="inputLupa" onclick="AgregarFiltroComponentes('search=' + $('#finderSectionCMS').val()); return false;" id="inputLupa" class="encontrar findAction">
+                            </div>
+                            <div id="panFiltrosPulgarcito" class="group filterSpace">
+                                @if (filtros.Count > 0)
+                                {
+                                    <div id="divFiltros">
+                                        <p>
+                                            <span id="lblFiltros">Criterios aplicados: </span><a style="margin-left: 5px;"
+                                                onclick="javascript:LimpiarFiltroComponentes(true);" id="btnLimpiarFiltros">Limpiar filtros</a>
+                                        </p>
+                                        <ul class="tags" id="panListadoFiltrosPulgarcito">
+                                            @foreach (FacetItemModel item in filtros)
+                                            {
+                                                <li>@item.Name <a href="#" class="remove" name="@item.Filter" onclick="AgregarFiltroComponentes('@item.Filter', this);return false;">eliminar</a></li>
+                                            }
+                                        </ul>
+                                    </div>
+                                }
+                                <p id="divNumResultadosBusqueda">
+                                    <span class="counter">
+                                        <strong>@resultado.NumeroResultadosTotal</strong> resultados
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <!--Listado recursos-->
+                    <div id="panListado">
+                        <div id="ListadoGenerico_panContenedor" class="resource-list ">
+                            @if (resultado != null && resultado.ListaResultados != null)
+                            {
+                                foreach (CMSMultimediaModel ficha in resultado.ListaResultados)
+                                {
+                                    string extension = ficha.Title.Substring(ficha.Title.LastIndexOf(".")).ToLower();
+                                    bool esImagen = ViewBag.ExtensionesImagenes.Contains(extension);
+                                <div class="resource">
+                                    <div class="box description">
+                                        <div class="wrapDescription">
+                                            <div class="group title">
+                                                <h3><a href="@ficha.Link">@ficha.Title</a></h3>
+                                            </div>
+                                            @if (esImagen)
+                                            {
+                                                <div>
+                                                    <img style="max-height:100px"  src="@ficha.Link">
+                                                </div>
+                                            }
+                                            <div class="group acciones">
+                                                <ul>
+                                                    <li>
+                                                        <a onclick="MostrarPanelInfo(event,'@ficha.Link');">Copiar al portapapeles</a>
+                                                    </li>
+                                                    <li>
+                                                        <a onclick="MostrarPanelConfirmacionEliminar(event, '¿Desea eliminar el multimedia?','EliminarMultimedia(\'@ficha.Title\');MostrarUpdateProgress()')">@Html.GetText("COMMON", "ELIMINAR")</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                    <!--Paginador-->
+
+                    @{//Paginador
+                        int numTotal = resultado.NumeroResultadosTotal;
+                        int numResultadosPagina = resultado.NumeroResultadosPagina;
+                        int PaginaActual = resultado.NumeroPaginaActual;
+                        string urlNavegador = resultado.UrlBusqueda;
+                        int numPaginas = (int)Math.Ceiling((double)numTotal / (double)numResultadosPagina);
+
+                        if (numPaginas > 1)
+                        {
+                        <div id="navegadorBusqueda">
+                            <div class="paginadorResultados">
+                                <div class="pag">
+                                    @if (PaginaActual > 1)
+                                    {
+                                        <a onclick="AgregarFiltroComponentes('pagina=@(PaginaActual-1)');return false;" class="indiceNavegacion primeraPagina">Página anterior</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="deshabilitado primeraPagina">Página anterior</span>
+                                    }
+                                    @for (int i = 1; i < numPaginas; i++)
+                                    {
+                                        if (PaginaActual == i)
+                                        {
+                                            <span class="actual indiceNavegacion">@i</span>
+                                        }
+                                        else
+                                        {
+                                            <a onclick="AgregarFiltroComponentes('pagina=@i');return false;" class="indiceNavegacion">@i</a>
+                                        }
+                                    }
+                                    @if (PaginaActual < numPaginas)
+                                    {
+                                        <a onclick="AgregarFiltroComponentes('pagina=@(PaginaActual+1)');return false;" class="indiceNavegacion ultimaPagina">Página siguiente</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="deshabilitado ultimaPagina">Página siguiente</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    }
+                </div>
+                <!--Facetas-->
+                <div id="col01">
+                    <div id="divFacetas">
+                        @foreach (FacetModel faceta in facetas)
+                        {
+                            <div class="facetedSearch">
+                                <div id="component_type" class="box noCollapse">
+                                    <h3>@faceta.Name</h3>
+                                    <ul>
+                                        @foreach (FacetItemModel facetaItem in faceta.FacetItemList)
+                                        {
+                                            string estilos = "";
+                                            if (facetaItem.Selected)
+                                            {
+                                                estilos = "applied";
+                                            }
+                                            <li><a class="@estilos" onclick="AgregarFiltroComponentes('@facetaItem.Filter');return false;" title="@facetaItem.Name">@facetaItem.Name<span>(@facetaItem.Number)</span></a></li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+                        <form target="_self" method="post" enctype="multipart/form-data">
+                            <input type="file" name="Fichero" id="Fichero" multiple/>
+                            <input type="submit" value="Súbelo!" />
+                        </form>
+                        @if (!string.IsNullOrEmpty(Html.GetTextoSubida()))
+                        {
+                            <p>@Html.GetTextoSubida()</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,209 @@
+﻿@model CreateResourceModel
+
+<script type="text/javascript">
+    urlPaginaActual = '@Html.GetUrlPagina()';
+    $(InicializarSubirRecurso);
+    $(document).ready(function () {
+        documentoID = guidGenerator().toLowerCase();
+    });
+</script>
+
+@if (Model.BrightcoveVideoAvailable || Model.TOPVideoAvailable)
+{
+    <script type="text/javascript">
+        URLVideo = '@Model.UrlVideoIframe';
+        URLAudio = '@Model.UrlAudioIframe';
+    </script>
+}
+
+@{
+    string claseTitulo = "";
+
+    CommunityModel Comunidad = Html.GetComunidad();
+     
+    if (Comunidad.Key == ProyectoAD.MetaProyecto)
+    {
+        claseTitulo = "class=\"BRConPading\" style=\"margin-bottom: -7px;\"";
+    }
+}		
+<h2 @Html.Raw(claseTitulo)>@Html.GetText("PERFILBASESUBIR", "TITULO")</h2>
+<div id="seleccTipoRecurso" class="box">	      
+    <fieldset class="labels">
+        @{
+            bool recursosGnossNoDisponibles = (!Model.FileAvailable && !Model.DocumentReferenceAvailable && !Model.LinkAvailable && !Model.BrightcoveVideoAvailable && !Model.TOPVideoAvailable && !Model.NoteAvailable && !Model.WikiAvailable);
+                
+            if (!recursosGnossNoDisponibles)
+            {
+                <p>
+                    <span>@Html.GetText("PERFILBASESUBIR", "SELECCIONARECURSO")</span>
+                </p>
+            }
+        }
+    </fieldset>
+    <ul id="listadoRecursos">
+        @if (Model.NoteAvailable)
+        {
+            <li id="liNota">
+                <a id="linkNota">@Html.GetText("PERFILBASESUBIR", "NOTA")</a>
+            </li>
+        }
+        @if (Model.FileAvailable)
+        {
+            <li id="liArchivo">
+                <a onclick="mostrarPanSubirRecurso('Archivo')">@Html.GetText("PERFILBASESUBIR", "NUEVOARCHIVO", "50")</a>
+                <div id="divArchivo" class="oculto">
+                    <fieldset class="labels">
+                        <p>
+                            <label id="lblSelecionaUnDoc">@Html.GetText("PERFILBASESUBIR", "NUEVOARCHIVO_T")</label>   
+                            <input type="file" id="fuExaminar" name="fuExaminar" />
+		                </p>
+		                <p>
+                            <style>
+                                .progress {
+                                    position: relative;
+                                    border: 1px solid #ddd;
+                                    border-radius: 3px;
+                                    display: block;
+                                }
+
+                                .bar {
+                                    background-color: #8186BD;
+                                    width: 0%;
+                                    height: 20px;
+                                    border-radius: 3px;
+                                    display: block;
+                                }
+
+                                .percent {
+                                    position: absolute;
+                                    display: inline-block;
+                                    top: 3px;
+                                    left: 48%;
+                                }
+                            </style>
+		                    <input id="lbSiguienteArchivo" type="submit" value="@Html.GetText("PERFILBASESUBIR", "SIGUIENTE")" />
+                            <span id="progressBarArchivo" class="progress" style="display:none;">
+                                <span class="bar" style="width: 0%;"></span>
+                                <span class="percent">0%</span>
+                            </span>
+		                </p>
+		            </fieldset>
+		        </div>
+            </li>
+        }
+        @if (Model.LinkAvailable)
+        {
+            <li id="liURL">
+                <a onclick="mostrarPanSubirRecurso('URL')">@Html.GetText("PERFILBASESUBIR", "DIRECCIONURL")</a>
+                <div id="divURL" class="oculto">
+                    <fieldset class="labels">
+                        <p>
+                            <label id="lblIntroducirURL">@Html.GetText("PERFILBASESUBIR", "DIRECCIONURL_T")</label> 
+                            <input id="txtURLDoc" type="text" class="text big" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}" />
+		                </p>
+		                <p>
+	                        <input id="lbSiguienteURL" type="button" value="@Html.GetText("PERFILBASESUBIR", "SIGUIENTE")" />            
+	                    </p>
+	                </fieldset>
+                </div>		        
+            </li>
+        }
+        @if (Model.BrightcoveVideoAvailable)
+        {
+            <li id="liBrightcove">
+                <a onclick="mostrarPanSubirRecurso('Brightcove');">@Html.GetText("PERFILBASESUBIR", "VIDEOBRIGHTCOVE")</a>
+                <div id="divBrightcove" class="oculto">                       
+                    <fieldset class="labels">	
+                        <p>	
+                            <label>@Html.GetText("PERFILBASESUBIR", "BRIGHTCOVE_T")</label>
+                            <iframe id="iframeBrightcove" srcAux="@Model.SrcIframeBrightcove" height="70px" width="800px" onloadAux="comprobarSubidaBrightcove()"></iframe>		         
+                        </p>
+                    </fieldset>
+		        </div>
+            </li>
+        }	
+        @if (Model.TOPVideoAvailable)
+        {		            
+            <li id="liTOP">
+                <a onclick="mostrarPanSubirRecurso('TOP');">@Html.GetText("PERFILBASESUBIR", "VIDEOTOP")</a>
+                <div id="divTOP" class="oculto">                       
+                    <fieldset class="labels">	
+                        <p>	
+                            <label>@Html.GetText("PERFILBASESUBIR", "TOP_T")</label>
+                            <iframe id="iframeTOP" srcAux="@Model.SrcIframeTOP" height="70px" width="800px" onloadAux="comprobarSubidaTOP()"></iframe>		         
+                        </p>
+                    </fieldset>
+		        </div>
+            </li>
+        }
+        @if (Model.WikiAvailable)
+        {	
+            <li id="liWiki">
+                <a onclick="mostrarPanSubirRecurso('Wiki')">@Html.GetText("PERFILBASESUBIR", "ARTICULOWIKI")</a>
+                <div id="divWiki" class="oculto">
+                    <fieldset class="labels">	
+                        <p>	
+                            <label>@Html.GetText("PERFILBASESUBIR", "WIKI_T")</label>
+		                    <input id="txtArticuloWiki" maxlength="1000" type="text" class="text big" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}"/>
+		                </p>
+		                <p>
+		                    <input id="lbSiguienteWiki" type="button" value="@Html.GetText("PERFILBASESUBIR", "SIGUIENTE")" />	
+		                </p>
+		            </fieldset>
+		        </div>
+            </li>	
+        }
+        @if (Model.DocumentReferenceAvailable)
+        {
+            <li id="liReferenciaDoc">
+                <a onclick="mostrarPanSubirRecurso('Referencia')">@Html.GetText("PERFILBASESUBIR", "REFERENCIAADOC")</a>
+                <div id="divReferenciaDoc" class="oculto">
+                    <fieldset class="labels">	
+                        <p>	
+                            <label id="lblDescribaUbic">@Html.GetText("PERFILBASESUBIR", "REFERENCIAADOC_T")</label>
+		                    <input id="txtUbicacionDoc" type="text" class="text big" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}" />  
+		                </p>
+		                <p>	
+	                        <input id="lbSiguienteReferencia" type="button" value="@Html.GetText("PERFILBASESUBIR", "SIGUIENTE")" />	            
+	                    </p>
+	                </fieldset>
+	            </div>	             
+            </li>	
+        }
+    </ul>
+    @if (Model.SemanticResourceAvailable)
+    {		
+        string textoLblOnto = null;
+            
+        if (recursosGnossNoDisponibles)
+        {
+            textoLblOnto = Html.GetText("PERFILBASESUBIR", "CREARDOCUMENTO");
+        }
+        else
+        {
+            textoLblOnto = Html.GetText("PERFILBASESUBIR", "OCREARDOCUMENTO");
+        }
+            
+        <div id="divContOnto">
+            <p>
+                <span>@textoLblOnto</span>
+            </p>
+            <div id="divOnto">
+	            <ul id="listadoOntologia">
+                    @foreach (string nombreOnto in Model.OntologyNameUrls.Keys)
+                    {
+                        if (!string.IsNullOrEmpty(Model.OntologyNameUrls[nombreOnto].Value))
+                        {
+                            string textoNombreOnto = nombreOnto + ": ";
+                            <li>@textoNombreOnto<a href="@Model.OntologyNameUrls[nombreOnto].Key">@Html.GetText("CREARDOCUMENTO", "SOLOUNO")</a> | <a href="@Model.OntologyNameUrls[nombreOnto].Value">@Html.GetText("CREARDOCUMENTO", "VARIOSALAVEZ")</a></li>
+                        }
+                        else
+                        {
+                            <li><a href="@Model.OntologyNameUrls[nombreOnto].Key">@nombreOnto</a></li>
+                        }
+                    }
+	            </ul>
+	        </div>
+        </div>	
+    }
+</div>

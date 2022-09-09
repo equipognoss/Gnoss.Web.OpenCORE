@@ -1,0 +1,11 @@
+﻿@model PintarNombresIdiomasCharts
+
+
+@if (string.Compare(Model.idioma.Key, Model.nombreChartIdiomaUsuario, true) == 0)
+{
+    <li class="active"><a rel="0" name="@Model.chartID" href="javascript:void(0)">@Model.idioma.Value *</a></li>
+}
+else
+{
+    <li class=""><a rel="@Model.Contador" name="@Model.chartID" href="javascript:void(0)">@Model.idioma.Value</a></li>
+}

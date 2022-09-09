@@ -1,0 +1,92 @@
+﻿@model EditProfileViewModel
+
+@{
+    EditProfileViewModel.QuickCurriculum Curriculum = Model.Curriculum;
+}
+
+<div class="box">
+    <div id="cvSimp">
+        <div class="titulo">
+            <h2>@Html.GetText("BIORAPIDA", "CURRICULUM")</h2>
+        </div>
+        <div class="componente cp0200">
+            <div class="contenido">
+                <div class="wrap">
+                    <div class="fieldset fieldset01">
+                        <fieldset class="smallLabels">
+                            <div class="fieldsetContent">
+                                <p>@Html.GetText("BIORAPIDA", "INFO")</p>
+                                <p class="textarea horizontal">
+                                    <label for="Curriculum.Description">@Html.GetText("PERFILBASESUBIRRECURSO", "DESCRIPCION"):</label>
+                                    <textarea id="Descripcion" name="Curriculum.Description" class="text big">@Curriculum.Description</textarea>
+                                </p>
+                                <p>
+                                    <label>@Html.GetText("CONTROLSUBIRRECRAPIDO", "ETIQUETAS"): </label>
+                                </p>
+                                <div onclick="$('#Tags').focus();" class="autocompletar">
+                                    <span class="contenedor"></span>
+                                    <input type="text" value="@Curriculum.Tags" id="Tags" class="txtAutocomplete ac_input" autocomplete="off" />
+                                    <input type="hidden" id="Tags_Hack" name="Curriculum.Tags"/>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="fieldset actionButtons">
+                        <fieldset>
+                            <p>
+                                <input type="button" class="submit principal" onclick="ValidarCVRapido()" value="@Html.GetText("PERFILBASESUBIRRECURSO", "GUARDAR")" />
+                            </p>
+                        </fieldset>
+                    </div>
+                    <div id="divContErrorCVRap">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function ValidarCVRapido()
+    {
+        var error = "";
+        if ($('#Descripcion').val() == "") {
+            error = controlesRapidos.errorFaltaDesc;
+        }
+        else if ($('#Tags_Hack').val() == "") {
+            error = controlesRapidos.errorFaltanTags;
+        }
+        if (error == "") {
+            MostrarUpdateProgress();
+            var dataPost = {
+                Description: $('#Descripcion').val(),
+                Tags: $('#Tags_Hack').val()
+            }
+
+            GnossPeticionAjax('@Model.UrlActionSaveBio', dataPost, true).done(function (data) {
+                GuardadoCVRapido('OK');
+            }).fail(function () {
+                GuardadoCVRapido('KO');
+            });
+        }
+        else {
+            $('#divContErrorCVRap').html("<div class=\"ko\" style=\"display: block;\"><p>" + error + "</p></div>");
+        }
+        return false;
+    }
+
+    function GuardadoCVRapido(data)
+    {
+        OcultarUpdateProgress();
+        $('#divContErrorCVRap').html('');
+        if (data == 'OK')
+        {
+            $('#divContErrorCVRap').html("<div class=\"ok\" style=\"display: block;\"><p>" + controlesRapidos.CVGuardCorrect + "</p></div>");
+        }
+        else if (data == 'KO')
+        {
+            $('#divContErrorCVRap').html("<div class=\"ko\" style=\"display: block;\"><p>" + controlesRapidos.errorMalGuard + "</p></div>");
+        }
+    }
+
+</script>

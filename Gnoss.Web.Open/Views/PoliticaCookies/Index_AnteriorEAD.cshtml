@@ -1,0 +1,11 @@
+﻿@model string
+
+
+<div id="info" class="info columms">
+	<h3><span>Panel </span>@Html.GetText("POLITICACOOKIES", "TITULO")</h3>
+	<div class="col-4">
+		<div class="box">
+            @Html.Raw(Model)
+		</div>
+	</div>
+</div>

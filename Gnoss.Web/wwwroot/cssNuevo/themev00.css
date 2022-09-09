@@ -1,0 +1,254 @@
+﻿/*
+	Copyright (c) 2011, Dewenir Inc. All rights reserved.
+	Code licensed under the BSD License:
+	http://dewenir.es/avisolegal
+	version: 1.0.1
+*/
+
+/* fuentes 
+h1{font-size:2.2em}
+h2{font-size:1.6em}
+h3{font-size:1.4em}
+h4{font-size:1.3em}
+h5{font-size:1.3em}
+h6{font-size:1.3em}
+h1, h2, h3, h4, h5, h6{font-weight:normal; line-height:1.2}
+p, li, dt, dd, td, th, 
+caption, legend, label, input, select, textarea {font-size:1.3em; line-height:1.1}
+th, caption {font-weight:bold}
+*/
+body{background:#DDDDDD}
+#identidad p,
+#identidad li
+{font-size:1.3em; color:#fff}
+#identidad a{color:#fff}
+
+/*  
+	html5 template
+	http://coding.smashingmagazine.com/wp-content/uploads/images/smashing-html5/files/index.html
+	<head></head>
+	<nav></nav>
+	<section>
+		<article>
+			<head></head>
+			<section></section>
+		</article>
+		...
+	</section>
+	<aside></aside>
+	<footer></footer>
+*/
+/* layouts
+*/
+/* layout comun */
+
+/* layout1: home */
+
+/* layout2: listados, ficha */
+
+/* layout3: buscador */
+
+/* 
+componentes
+	grid1 224 18
+	grid2 446 18 
+	grid3 708 18 
+	grid4 950 (full)
+*/
+/* estructura */
+	#header{}
+	#page{}
+		#section{}
+		#aside{}
+	#footer{}
+
+#section{}
+/* componentes generales */
+/* componentes header */
+#header{}
+	#corporativo{}
+	#buscador{}
+	#nav{}
+	#identidad{}
+#header{position:relative;}
+	#corporativo{min-height:11em; width:42em; margin-right:1em; float:left}
+		#corporativo .content{}
+		#corporativo h1{font-family: 'MisoBold', Lucida Sans, sans; font-size:48px; line-height:0.8; padding:5px 0}		
+		#corporativo h1 a,		
+		#corporativo h1 a img{display:block}		
+		#corporativo h1 a img{max-width:420px; max-height:76px}		
+		#corporativo p{padding:5px 0}		
+		#corporativo p span.subcomunidadDe{display:block}		
+		#corporativo p.identificadorClase{font-family: 'MisoRegular', Lucida Sans, sans; font-size:17px; line-height:1; color:#FF8300}		
+		#corporativo h1 a:hover{text-decoration:none}		
+		
+	#buscador{height:11em; width:56em; float:left}
+		*:first-child+html #buscador{width:56.2em; float:none}
+		#buscador fieldset{margin:15px 0 0 0; padding:1em; background:#D9DBF7; display:none}
+		.listadoComunidad  #buscador fieldset{background:none}
+		#buscador fieldset div.fieldsetGroup label{color:#666}
+		#buscador fieldset div.fieldsetGroup{margin-bottom:4px}
+		#buscador fieldset div.fieldsetGroup.searchGroup{margin-bottom:0}
+		#buscador fieldset select{display:none}
+		#buscador fieldset div.searchGroup,
+		#buscador fieldset{
+			-moz-border-radius:3px;
+			-webkit-border-radius:3px;
+			border-radius:3px;		
+		}
+		#buscador fieldset div.searchGroup{
+			background:white;
+			border:1px solid #ccc;
+			border-bottom-color:#bbb
+		}
+		#buscador fieldset div.searchGroup input.defaultText{color:#aaa; font-style:italic}
+		#buscador fieldset div.searchGroup input.text,
+		#buscador fieldset div.searchGroup input.encontrar{border:0; padding:0; margin:0; height:32px}
+		#buscador fieldset div.searchGroup input.text{width:38%; padding:8px; height:14px}
+		#buscador fieldset div.searchGroup input.encontrar{
+			color:#fff; padding:0; float:right; cursor:pointer;
+			background-color: #FF8300;
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -webkit-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -moz-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -ms-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -o-linear-gradient(top,#FF8300,#EB6F00);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880');			
+			background-repeat: no-repeat;
+			background-position:-214px -494px;
+			border: 0 solid #3079ED;
+			color: white;
+			text-shadow: 0 1px #666;	
+			text-indent:-999em; 
+			width:34px
+		}		
+		.listadoComunidad  #buscador fieldset div.searchGroup input.encontrar{
+			background-color: #ddd;
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -webkit-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -moz-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -ms-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880'), -o-linear-gradient(top,#f0f0f0,#ddd);
+			background-image: url('resources/spriteIcons.png?v=2.1.1880');				
+		}
+		*:first-child+html #buscador fieldset div.searchGroup input.encontrar{margin-top:-32px}	
+		#buscador #selector{
+			float:left; 
+			height:32px; 
+			position:relative; 
+			z-index:999;		
+		}
+		#buscador #selector p.seleccionado{line-height:32px; margin:0; padding:0 24px 0 10px; position:relative}
+		#buscador #selector p.seleccionado a{color:#666; font-weight:bold}
+		#buscador #selector p.seleccionado span{
+			display:block; 
+			position:absolute; 
+			width:12px; height:12px;
+			top:13px; right:4px;
+			background:url('resources/spriteIcons.png?v=2.1.1880') no-repeat -229px -280px;}
+		*:first-child+html #buscador #selector p.seleccionado span{top:5px}
+		#buscador #selector,
+		#buscador #selector #opciones{
+			background-color: whiteSmoke;
+			background-image: -webkit-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: -moz-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: -ms-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: -o-linear-gradient(top,whiteSmoke,#dedede);
+			background-image: linear-gradient(top,whiteSmoke,#dedede);			
+		}
+		#buscador #selector.desplegado{background:whiteSmoke}
+		#buscador #selector #opciones{border-width:0 1px 1px 1px; border-style:solid; border-color:#ccc; margin-left:-1px; display:none}
+		#buscador #selector #opciones ul{list-style-type:none; margin:0; padding:0 10px 10px 10px}
+		#buscador #selector #opciones ul li{padding:2px 0}
+		#buscador #selector #opciones ul li a.seleccionado{}
+		
+		#buscador p,
+		#buscador label,
+		#buscador select{font-size:13px; line-height:1.1}
+		#buscador label{float:left}
+		#buscador #opciones li{text-align:left; font-size:13px}
+		#buscador input.text{float:left; font-size:13px}
+	/*	
+	#nav{height:2.8em; clear:both; overflow:hidden}
+		#nav ul{list-style-type:none; padding:0}
+		#nav ul li{font-size:100%}
+		#nav ul li a{font-size:1.4em; text-decoration:none}
+		#nav ul.principal{height:2.8em}
+		#nav ul.principal li.nivel01{background:whiteSmoke; float:left; width:auto; line-height:2.8em; padding:0 1.2em}
+		#nav ul.principal li.activo{background:#dddddd}
+		#nav ul.principal li.activo a{font-weight:bold}
+	*/
+	.comGnoss #section #nav ul li a{padding:4px 6px}
+	
+	#identidad{background:#8186BD; position:relative}
+		#identidad .wrapper{width:99em; margin:0 auto; background:transparent; padding:0}
+		#identidad ul{list-style-type:none; padding:0}
+		#identidad ul li{float:left}
+		#identidad ul li a{padding:5px; display:block}
+		#identidad ul li.active{background:#fff}
+		#identidad ul li.active a{padding:5px 10px 4px}
+		#identidad ul li.active a{color:#8186BD; font-weight:bold}
+		#identidad ul li.logo a{margin-left:10px}
+		#identidad ul li.logo a span{font-size:11px; color:#eee}
+		#identidad ul#opciones{float:left}
+		#identidad ul#gnoss{}
+		#identidad ul#gnoss,
+		#identidad ul#opciones,
+		#identidad ul#opciones li{}
+		#identidad ul#opciones li{}
+		#identidad ul#gnoss{}
+		#identidad ul#gnoss,
+		#identidad ul#opciones{}
+	
+	#identidad ul#gnoss{float:right; position:absolute; top:4px; right:0}
+	#identidad ul#gnoss a,
+	#identidad ul#gnoss span
+		{color:#aaa}
+
+/* componentes section */
+/* componentes formularios */
+.submit{
+	padding:6px 12px; 
+	cursor:pointer;	
+	border:1px solid #ddd;
+	border-color:#ddd #bbb #bbb #ddd;
+	-moz-border-radius:2px;
+	-webkit-border-radius:2px;
+	border-radius:2px;					
+}
+.principal.submit{
+	font-weight:bold;
+	background-color: #8186BD;
+	border-color:#8186BD;
+	color:#fff;
+	/*
+	background-image: -webkit-linear-gradient(top,#eee,#ddd);
+	background-image: -moz-linear-gradient(top,#eee,#ddd);
+	background-image: -ms-linear-gradient(top,#eee,#ddd);
+	background-image: -o-linear-gradient(top,#eee,#ddd);
+	background-image: linear-gradient(top,#eee,#ddd);	
+	*/
+}
+.submit.secundario{color:#444}
+p.button .submit{color:#444; padding:2px 6px}
+
+
+/* listados */
+.links{background:none}
+.links ul{list-style-type:none; padding:0}
+.links ul li{line-height:1.5}
+
+/* componentes aside */
+/* componentes footer */
+
+/* modelo de caja
+*/
+.clear:after, 
+#identidad:after,
+#identidad ul:after{content:".";display:block;height:0;clear:both;visibility:hidden;} /*ie8, ff, chrome, ...*/
+* html .clear,
+* html #identidad,
+* html #identidad ul
+{height:1%;}  /*ie6*/
+*:first-child+html .clear,
+*:first-child+html #identidad,
+*:first-child+html #identidad ul
+{zoom:1}  /*ie7*/

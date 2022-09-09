@@ -1,0 +1,285 @@
+﻿@model SolicitudesGrupoViewModel
+@{
+    Html.SetBodyClass("layout02 comGnoss");
+}
+<div id="col01">
+	<div id="facetaEncuentra" class="resaltarAccion">
+		<p>@Html.GetText("GRUPO", "GRUPOS")</p>
+	</div>
+	<fieldset style="display: block">
+		<div id="panFacetas">
+			<div class="facetedSearch" >
+				<div class="box noCollapse" >
+					<ul>
+                    @if(Model.GrupoFiltroID.Equals(Guid.Empty)){
+                        foreach(Guid grupoid in Model.Grupos.Keys){
+						    <li>
+							    <a href="@Model.UrlPagina?grupoID=@grupoid">@Model.Grupos[grupoid]</a>
+						    </li>
+                        }
+                    }
+                    else
+                    {
+						<li>
+							<a href="@Model.UrlPagina">@Html.GetText("GRUPO", "VERTODOS")</a>
+						</li>
+                    }
+					</ul>
+				</div>
+			</div>                
+		</div>
+	</fieldset>
+</div>
+<div id="col02">
+    <h3 id="h2TituloPagina">
+        <span id="lblTituloPagina">
+        @if (Model.GrupoFiltroID.Equals(Guid.Empty) || !Model.Grupos.ContainsKey(Model.GrupoFiltroID))
+        {
+            @Html.GetText("GRUPO", "SOLICITUDES")
+        }
+        else
+        {
+            @Html.GetText("GRUPO", "SOLICITUDESALGRUPO", Model.Grupos[Model.GrupoFiltroID])
+        }
+        </span>
+    </h3>
+    <div class="box">
+        <div id="contenedorSolicitudes">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 56px;"></th>
+                        <th style="padding-left: 10px; width: 220px;"><b>@Html.GetText("COMMON", "NOMBRE")</b></th>
+                        <th style="padding-left: 10px; width: 130px;"><b>@Html.GetText("GRUPO", "GRUPO")</b></th>
+                        <th style="padding-left: 10px; width: 100px;"><b>@Html.GetText("GRUPO", "FECHASOLICITUD")</b></th>
+                        <th style="padding-left: 10px; width: 56px;"></th>
+                        <th style="padding-left: 10px; width: 56px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (SolicitudesGrupoViewModel.SolicitudModel solicitud in Model.ListaSolicitudes)
+                    { 
+                        <tr style="height: 58px;" id="@(solicitud.KeyIdentity + "_" + solicitud.KeyGroup)">
+                            <td style="padding-left: 10px;">
+                                <img src="@Html.GetBaseUrlContent()/imagenes/@solicitud.UrlFoto" style="max-height:54px; max-width:54px"></td>
+                            <td style="padding-left: 10px;">@solicitud.NameIdentity</td>
+                            <td style="padding-left: 10px;">@solicitud.NameGroup</td>
+                            <td style="padding-left: 10px;">@solicitud.Date.ToShortDateString()</td>
+                            <td class="aceptar" style="padding-left: 10px;"><a onclick="AceptarSolicitud('@solicitud.KeyIdentity', '@solicitud.KeyGroup')">@Html.GetText("GRUPO", "ACEPTAR")</a></td>
+                            <td class="rechazar" style="padding-left: 10px;"><a onclick="RechazarSolicitud('@solicitud.KeyIdentity', '@solicitud.KeyGroup')">@Html.GetText("COMMON", "RECHAZAR")</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if (Model.NumPaginas > 1)
+    {
+        int NUM_PAG_INICIO = 3;
+        int NUM_PAG_PROX_CENTRO = 2;
+        int NUM_PAG_FIN = 3;
+
+        string urlNavegador = Model.UrlPagina;
+        if (Model.GrupoFiltroID.Equals(Guid.Empty))
+        {
+            urlNavegador = urlNavegador + "?";
+        }
+        else
+        {
+            urlNavegador = urlNavegador + "?grupoID=" + Model.GrupoFiltroID.ToString() + "&";
+        }
+        
+        <div class="box">
+            <div id="contenedorPaginacion">
+                <div class="paginadorResultados">
+                    <div class="pag">
+                    @{
+        if (Model.PaginaActual == 1)
+        {
+                            <span class="deshabilitado primeraPagina">@Html.GetText("COMMON", "PAGANTERIOR")</span>
+        }
+        else
+        {
+            string url = urlNavegador + "pagina=1";
+                            <a href="@url" class="indiceNavegacion filtro primeraPagina">@Html.GetText("COMMON", "PAGANTERIOR")</a>
+        }
+
+        //INICIO
+        for (int i = 1; i <= NUM_PAG_INICIO; i++)
+        {
+            if (i > Model.NumPaginas) //Hemos excedio el número máximo de páginas, así que dejamos de pintar.
+            {
+                break;
+            }
+
+            if (i == Model.PaginaActual)
+            {
+                                <span class="actual indiceNavegacion">@i </span>
+            }
+            else
+            {
+                string url = urlNavegador + "pagina=" + i;
+                                <a href="@url" class="indiceNavegacion filtro">@i </a>
+            }
+        }
+
+        if (Model.NumPaginas > NUM_PAG_INICIO) //Continuamos si ha más páginas que las que ya hemos pintado
+        {
+            int inicioRango = Model.PaginaActual - NUM_PAG_PROX_CENTRO;
+            int finRango = Model.PaginaActual + NUM_PAG_PROX_CENTRO;
+
+            if (Model.PaginaActual < (NUM_PAG_INICIO + NUM_PAG_PROX_CENTRO + 1))
+            {
+                inicioRango = NUM_PAG_INICIO + 1;
+                if (Model.PaginaActual <= NUM_PAG_INICIO) //En el rango de las primeras
+                {
+                    finRango = Model.PaginaActual + NUM_PAG_INICIO + NUM_PAG_PROX_CENTRO - 1;
+                }
+                else
+                {
+                    finRango = NUM_PAG_INICIO + (2 * NUM_PAG_PROX_CENTRO) + 1; //Ultimo número de la serie.
+                }
+            }
+            else if (Model.PaginaActual > (Model.NumPaginas - NUM_PAG_FIN - NUM_PAG_PROX_CENTRO))
+            {
+                finRango = Model.NumPaginas - NUM_PAG_FIN;
+                if (Model.PaginaActual > Model.NumPaginas - NUM_PAG_FIN) //En el rango de las últimas
+                {
+                    inicioRango = Model.PaginaActual - NUM_PAG_FIN - NUM_PAG_PROX_CENTRO + 1;//finRango - (pNumPaginas - PaginaActual + 1);
+                }
+                else
+                {
+                    inicioRango = Model.NumPaginas - (NUM_PAG_FIN + (2 * NUM_PAG_PROX_CENTRO)); //Ultimo número de la serie empezando atrás.
+                }
+
+                //Avanzamos el inicio de la zona final para que no agrege páginas ya pintadas
+                while (inicioRango <= NUM_PAG_INICIO)
+                {
+                    inicioRango++;
+                }
+            }
+
+            if (inicioRango > (NUM_PAG_INICIO + 1))
+            {
+                                <span class="separador">...</span>
+            }
+
+            for (int i = inicioRango; i <= finRango; i++)
+            {
+                if (i > Model.NumPaginas) //Hemos excedio el número máximo de páginas, así que dejamos de pintar.
+                {
+                    break;
+                }
+
+                if (i == Model.PaginaActual)
+                {
+                                    <span class="actual indiceNavegacion">@i </span>                            
+                }
+                else
+                {
+                    string url = urlNavegador + "pagina=" + i;
+                                    <a href="@url" class="indiceNavegacion filtro">@i </a>
+                }
+            }
+
+            if (finRango < Model.NumPaginas)
+            {
+                //Continuamos si ha más páginas que las que ya hemos pintado
+                inicioRango = Model.NumPaginas - NUM_PAG_FIN + 1;
+
+                if ((inicioRango - 1) > finRango)
+                {
+                                    <span class="separador">...</span>
+                }
+
+                //Avanzamos el inicio de la zona final para que no agrege páginas ya pintadas
+                while (inicioRango <= finRango)
+                {
+                    inicioRango++;
+                }
+
+                finRango = Model.NumPaginas;
+
+                for (int i = inicioRango; i <= finRango; i++)
+                {
+                    if (i > Model.NumPaginas) //Hemos excedio el número máximo de páginas, así que dejamos de pintar.
+                    {
+                        break;
+                    }
+
+                    if (i == Model.PaginaActual)
+                    {
+                                        <span class="actual indiceNavegacion">@i </span>
+                    }
+                    else
+                    {
+                        string url = urlNavegador + "pagina=" + i;
+                                        <a href="@url" class="indiceNavegacion filtro">@i </a>
+                    }
+                }
+            }
+        }
+        if (Model.PaginaActual == Model.NumPaginas)
+        {
+                            <span class="deshabilitado ultimaPagina">@Html.GetText("COMMON", "PAGSIGUIENTE")</span>
+        }
+        else
+        {
+            string url = urlNavegador + "pagina=" + ++Model.PaginaActual;
+                            <a href="@url" class="indiceNavegacion filtro ultimaPagina">@Html.GetText("COMMON", "PAGSIGUIENTE")</a>
+        }
+                    }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<script type="text/javascript">
+
+    function crearCeldaRespuesta(panSolicitud, estado, texto)
+    {
+        panSolicitud.find('td.loading').remove();
+        panSolicitud.append('<td colspan="2"><div class="' + estado + '" style="display: block"><p>' + texto + '</p></div></td>');
+    }
+
+    function mostrarCargando(panSolicitud)
+    {
+        panSolicitud.find('td.aceptar').remove();
+        panSolicitud.find('td.rechazar').remove();
+        panSolicitud.append('<td colspan="2" class="loading"><img src="@Html.GetBaseUrlStatic()/img/espera.gif" alt="Cargando..." style="margin: 0px auto; display: block;"></td>');
+    }
+
+    function AceptarSolicitud(identidadid, grupoid) {
+        var solicitud = $('#' + identidadid + '_' + grupoid);
+        mostrarCargando(solicitud);
+
+        var dataPost = {
+            IdentidadID: identidadid,
+            GrupoID: grupoid
+        }
+
+        GnossPeticionAjax('@Model.UrlAccept', dataPost, true).done(function (data) {
+            crearCeldaRespuesta(solicitud, 'ok', '@Html.GetText("GRUPO", "SOLICITUDACEPTADAOK")');
+        }).fail(function (data) {
+            crearCeldaRespuesta(solicitud, 'ko', '@Html.GetText("GRUPO", "SOLICITUDACEPTADAERROR")');
+        });
+    }
+
+    function RechazarSolicitud(identidadid, grupoid) {
+        var solicitud = $('#' + identidadid + '_' + grupoid);
+        mostrarCargando(solicitud);
+        
+        var dataPost = {
+            IdentidadID: identidadid,
+            GrupoID: grupoid
+        }
+
+        GnossPeticionAjax('@Model.UrlReject', dataPost, true).done(function (data) {
+            crearCeldaRespuesta(solicitud, 'ok', '@Html.GetText("GRUPO", "SOLICITUDRECHAZADAOK")');
+        }).fail(function (data) {
+            crearCeldaRespuesta(solicitud, 'ko', '@Html.GetText("GRUPO", "SOLICITUDRECHAZADAERROR")');
+        });
+    }
+
+</script>

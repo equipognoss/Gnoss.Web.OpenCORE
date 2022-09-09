@@ -1,0 +1,7 @@
+/* AUTOCOMPLETAR */
+    .ac_results {position: absolute !important;top: 100% !important;left: 0 !important;right: 0;z-index: 1;background: var(--c-blanco);padding: 25px 20px;width: auto !important;}
+  .ac_results ul { list-style: none; margin: 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+  .ac_results ul li { display: -webkit-box; display: -ms-flexbox; display: flex; }
+  .ac_results ul li:before { content: '\E873'; font-family: var(--ff-material); font-size: 30px; color: var(--c-gris-85); margin-right: 10px; -webkit-box-flex: 0; -ms-flex: 0 0 30px; flex: 0 0 30px; max-width: 30px; }
+  .ac_results ul li a { display: block; padding-bottom: 20px; margin-bottom: 10px; border-bottom: 1px solid var(--c-gris-e4); -webkit-box-flex: 0; -ms-flex: 0 0 calc(100% - 40px); flex: 0 0 calc(100% - 40px); max-width: calc(100% - 40px); }
+/**/

@@ -1,0 +1,24 @@
+﻿@model string
+
+@{
+    string titulo = Html.GetText("POLITICAPRIVACIDAD", "TITULO");
+    string descripcion = "";    
+    
+    if (string.IsNullOrEmpty(Model))
+    { 
+        descripcion = Html.GetText("POLITICAPRIVACIDAD", "INFO");
+    }
+    else
+    {
+        descripcion = Model;
+    }
+}
+
+<div id="info" class="info columms">
+	<h3><span>Panel </span>@titulo</h3>
+	<div class="col-4">
+		<div class="box">
+            @Html.Raw(descripcion)
+		</div>
+	</div>
+</div>

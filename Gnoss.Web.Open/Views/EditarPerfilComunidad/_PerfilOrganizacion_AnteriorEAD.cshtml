@@ -1,0 +1,200 @@
+﻿@model EditProfileViewModel
+
+@{
+    EditProfileViewModel.ProfileOrganizationViewModel Perfil = Model.ProfileOrganization;
+}
+
+<form method="post" action = "@Model.UrlActionSaveProfile">
+    <div class="box" id="editarPerfil">
+        <div>
+            <div class="fieldset01 edicionPerfil">
+                <fieldset class="labels">
+                    @{
+                        string textoTitulo = Html.GetText("PERFIL", "DATOSORGANIZACION");
+                        string textoNombre = Html.GetText("REGISTROORGANIZACION", "RAZONSOCIAL");
+                        string textoAlias = Html.GetText("REGISTROORGANIZACION", "ALIAS");
+                        string textoDireccion = Html.GetText("REGISTROORGANIZACION", "DIRECCIONSEDE");
+
+                        if (Perfil.IsClass)
+                        {
+                            textoTitulo = Html.GetText("PERFIL", "DATOSOCLASE");
+                            textoNombre = Html.GetText("REGISTROORGANIZACION", "NOMBRECLASE");
+                            textoAlias = Html.GetText("REGISTROORGANIZACION", "ALIASCLASE");
+                            textoDireccion = Html.GetText("REGISTROORGANIZACION", "DIRECCIONCLASE");
+                        }
+                    }
+
+                    <legend>@textoTitulo</legend>
+                    <div>
+                        
+                        <p>
+
+                            <label for="ProfileOrganization.NameOrganization" class="datoObligatorio">@textoNombre</label>
+                            <input type="text" class="text medium" id="NombreOrganizacion" value="@Perfil.NameOrganization" name="ProfileOrganization.NameOrganization" />
+                        </p>
+                        @if (Model.CountryList != null && Model.CountryList.Count > 0)
+                        {
+                            <p>
+                                <label for="ProfileOrganization.Country" class="datoObligatorio">@Html.GetText("REGISTRO", "PAIS")</label>
+                                <select class="select medium dato" id="Pais" name="ProfileOrganization.Country" >
+                                    @foreach (Guid paisID in Model.CountryList.Keys)
+                                    { 
+                                        <option value="@paisID" @(paisID == Perfil.Country ? "selected=selected" : "")>@Model.CountryList[paisID]</option>
+                                    }
+                                </select>
+                            </p>
+                        }
+                        <p>
+                            <label for="ProfileOrganization.PostalCode" class="datoObligatorio">@Html.GetText("REGISTRO", "CODIGOPOSTAL")</label>
+                            <input type="text" class="text medium" id="CodigoPostal" maxlength="15" value="@Perfil.PostalCode" name="ProfileOrganization.PostalCode" />
+                        </p>
+                        <p>
+                            <label for="ProfileOrganization.Location" class="datoObligatorio">@Html.GetText("REGISTROORGANIZACION", "POBLACION")</label>
+                            <input type="text" class="text medium" id="Localidad" value="@Perfil.Location" name="ProfileOrganization.Location" />
+                        </p>
+                        <p>
+                            <label for="ProfileOrganization.Alias">@textoAlias</label>
+                            <input type="text" class="text medium" id="Alias" value="@Perfil.Alias" name="ProfileOrganization.Alias" />
+                        </p>
+                        <p>
+                            <label for="ProfileOrganization.WebSite">@Html.GetText("REGISTROORGANIZACION", "WEB")</label>
+                            <input type="text" class="text medium" id="PaginaWeb" value="@Perfil.WebSite" name="ProfileOrganization.WebSite" />
+                        </p>
+                        @if (Model.CountryList != null && Model.CountryList.Count > 0)
+                        {
+                            @Html.PartialView("_Provincia", Model)
+                        }
+                        <p>
+                            <label for="ProfileOrganization.Address" class="datoObligatorio">@textoDireccion</label>
+                            <input type="text" class="text medium" id="Direccion" value="@Perfil.Address" name="ProfileOrganization.Address" />
+                        </p>
+                        @if (Perfil.IsClass)
+                        {
+                        <p>
+                            <label for="ProfileOrganization.Group">@Html.GetText("REGISTROORGANIZACION", "GRUPO")</label>
+                            <input type="text" class="text medium" id="Grupo" value="@Perfil.Group" name="ProfileOrganization.Group" />
+                        </p>
+                        }
+
+                        <div id="divErrorOrganizacion">
+                        </div>
+
+                        <div class="fieldset actionButtons">
+                            <fieldset>
+                                <p>
+                                    <input type="button" value="@Html.GetText("PERFIL", "GUARDAR")" onclick="EnviarFormularioEdicionOrganizacion()" class="submit principal" />
+                                </p>
+                            </fieldset>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#FechaFundacion").datepicker({
+            changeMonth: true,
+            changeYear: true,
+            maxDate: "@DateTime.Today.ToString("dd/MM/yyyy")"
+        });
+    });
+
+    function validarPerfilOrganizacion() {
+        var $dP = $('#divErrorOrganizacion');
+        var error = '';
+
+        $('label[title=\'campo obligatorio\']').each(function () {
+            var label = $(this);
+            var campo = $(this).next();
+            if (campo.is('select')) {
+                error += AgregarErrorReg(error, ValidarCampoSelectObligatorio(campo, label));
+            }
+            else {
+                error += AgregarErrorReg(error, ValidarCampoObligatorio(campo, label));
+            }
+        });
+
+        var ddlTipoOrg = document.getElementById('TipoOrganizacion');
+
+        if (ddlTipoOrg != null && ddlTipoOrg.selectedIndex == 0) {
+            error += '<li>' + form.tipoorgincorrecta + '</li>';
+        }
+
+        var ddlSector = document.getElementById('Sector');
+        if (ddlSector != null && ddlSector.selectedIndex == 0) {
+            error += '<li>' + form.sectorincorrecto + '</li>';
+        }
+
+        var ddlProv = document.getElementById('Provincia');
+        if ((ddlProv != null) && (ddlProv.selectedIndex == 0)) {
+            error += '<li>' + form.provinciaincorrecta + '</li>';
+        }
+
+        //Comprobamos el alias
+        var aliasOrg = document.getElementById('Alias').value;
+        var RegExPatternaliasOrg = /<|>$/;
+        if (aliasOrg.match(RegExPatternaliasOrg) || aliasOrg.indexOf(',') != -1) {
+            error += '<li>' + form.formatoAlias + '</li>';
+        }
+
+        //Comprobamos si la URL se ha introducido si es válida
+        var url = document.getElementById("PaginaWeb");
+        if (url.value.length > 0 && !esURL(url.value)) {
+            error += '<li>' + form.paginaweb + '</li>';
+        }
+
+        if (error.length) {
+            OcultarUpdateProgress();
+            crearError('<ul>' + error + '</ul>', '#divErrorOrganizacion');
+            return false;
+        }
+        else {
+            $('#divErrorOrganizacion').html('');
+            return true;
+        }
+    }
+
+    function EnviarFormularioEdicionOrganizacion() {
+        if (validarPerfilOrganizacion()) {
+            MostrarUpdateProgress();
+
+            var dataPost = new FormData();
+            dataPost.append('peticionAJAX', true);
+            $("#editarPerfil").find(':input').each(function () {
+                dataPost.append($(this).attr('name'), $(this).val());
+            });
+            ////Ocultamos los errrores
+            //$('#divKodatosUsuario .ko').remove();
+            //$('#lblMailRepetido.contenedorError .ko').remove();
+            //$('#divKoCaptcha.contenedorError').hide();
+            //$('#divKoCaptcha.contenedorError p').hide();
+
+
+            GnossPeticionAjax('@Model.UrlActionSaveProfile', dataPost, true)
+                .done(function (data) {
+                    $('#divErrorOrganizacion').html('<div class=\"ok\"><p>' + data + '</p></div>');
+                })
+                .fail(function (data) {
+                    var errores = data.split('||');
+                    var error = "";
+                    for (i = 0; i < errores.length; i++) {
+                        if (errores[i].indexOf("&&") != -1) {
+                            var claveError = errores[i].split('&&')[0];
+                            var mensajeError = errores[i].split('&&')[1];
+                            error += '<li>' + mensajeError + '</li>';
+                        }
+                    }
+                    $('#divErrorOrganizacion').html('');
+                    crearError('<ul>' + error + '</ul>', '#divErrorOrganizacion');
+                })
+                .always(function () {
+                    OcultarUpdateProgress();
+                });
+        }
+        return false;
+    }
+
+</script>

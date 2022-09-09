@@ -1,0 +1,18 @@
+﻿@model PintarCategoriaEditorTesauro
+
+@{
+    <div>
+        <img style="border-width:0px;" src="@Html.GetBaseUrlStatic()/img/miniWhiteSpace.gif" />
+
+        <span class="@Model.categoryModel.Key" @Html.GetParam("rel", Model.categoryModel.StringKey)>
+            <input type="checkbox" disabled="disabled" />
+            <label style="color:#E37F4F;">@Model.categoryModel.Name</label>
+            <a onclick="javascript:aceptarSolicitudCategoria('@Model.categoryModel.Key');" style="cursor:pointer;">aceptar</a>
+            o
+            <a onclick="javascript:rechazarSolicitudCategoria('@Model.categoryModel.Key');" style="cursor:pointer;">rechazar</a>
+        </span>
+    </div>
+
+}
+
+

@@ -1,0 +1,366 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarPreferenciaProyectoViewModel
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+
+    string CategoriasSeleccionadas = "";
+    string CategoriasExpandidas = "";
+    string PasosRealizados = "";
+
+    if(Model.Thesaurus.SelectedCategories != null)
+    {
+        foreach(Guid tesauro in Model.Thesaurus.SelectedCategories)
+        {
+            CategoriasSeleccionadas += tesauro.ToString() + ",";
+        }
+    }
+    if(Model.Thesaurus.ExpandedCategories != null)
+    {
+        foreach(Guid tesauro in Model.Thesaurus.ExpandedCategories)
+        {
+            CategoriasExpandidas += tesauro.ToString() + ",";
+        }
+    }
+    if (!string.IsNullOrEmpty(Model.PasosRealizados))
+    {
+        PasosRealizados = Model.PasosRealizados;
+    }
+}
+
+<div class="content">
+    <h1>Preferencia del proyecto</h1>
+    <div>
+        <p>
+            Esta página se podrán seleccionar las categorías en las que el usuario tiene interés.<br />
+            Si no se selecciona ninguna, el usuario se podrá subscribir a todas las subcategorías de la página.<br />
+            En el caso de que se seleccione alguna, únicamente se podrá subscribir a las subcategorías de las categorías seleccionadas.<br />
+        </p>
+        <form autocomplete="off">
+            <h3>Árbol de categorías</h3>
+            <div id="panTesauro">
+                <input type="hidden" id="txtAccionesTesauroHack" name="txtAccionesTesauroHack" value="@PasosRealizados">
+                <input type="hidden" id="txtCategoriasSeleccionadas" name="txtCategoriasSeleccionadas" value="@CategoriasSeleccionadas">
+                <input type="hidden" id="txtCategoriasExpandidas" name="txtCategoriasExpandidas" value="@CategoriasExpandidas">
+                <input type="hidden" id="txtGuardarObligatorio" name="txtGuardarObligatorio">
+                <input type="hidden" id="txtHackIdiomaTesauro" value="@Model.IdiomaTesauro" name="thtHackdiomaTesauro">
+                <input type="hidden" id="txtHackIdiomaTesauroDefecto" value="@Model.IdiomaDefecto" name="thtHackdiomaTesauroDefecto">
+
+                <div class="ko" id="panError">
+                    <span id="lblError"></span>
+                </div>
+                <div class="ok" id="panGuardado" style="display:none">
+                    <span id="lblGuardado">
+                        @Html.GetText("COMADMINCATEGORIAS", "GUARDADOCORRECTO")
+                    </span>
+                </div>
+                <div class="clear"></div>
+
+                <div @Html.Raw(Model.MultiLanguaje ? "" : "style=\"display:none\"") id="divIdioma">
+                    @{
+                        bool primero = true;
+                        foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+                        {
+                            if (!primero)
+                            {
+                                @Html.Raw("/");
+                            }
+                            <span>
+                                <a @Html.Raw(Model.IdiomaTesauro == idioma.Key ? "style=\"display:none\"" : "") rel="@idioma.Key" onclick="seleccionarIdioma('@idioma.Key')" class="enlaceIdioma" id="@("lbVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                                <span @Html.Raw(Model.IdiomaTesauro != idioma.Key ? "style=\"display:none\"" : "") rel="@idioma.Key" class="litIdioma" id="@("litVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</span>
+                            </span>
+                            primero = false;
+                        }
+                    }
+                </div>
+                <div class="clear"></div>
+                <div style="padding: 5px" id="adminAnyadirCategorias">
+                    <div id="PanParaSelectorCategorias">
+                        <div id="selectorCategoriasEdicionComunidad">
+                            <div id="divSelCatTesauro">
+                                @Html.PartialView("EditorTesauro/_EditorTesauro_CatArbol", Model.Thesaurus)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </form>
+    </div>     
+    <input type="button" class="guardarTodo" value="Guardar Todo" onclick="Guardar()"/>
+</div>
+
+<script type="text/javascript">
+    var urlPagina = "@Html.GetUrlPagina()";
+
+
+    $(document).ready(function () {
+        window.onbeforeunload = function (e) {
+            return ComprobarCambios();
+        }
+        $("#chkMultiIdioma").change(function () {
+            clickMultiIdioma();
+        });
+    });
+
+    function ObtenerParametrosComunes() {
+        var params = {
+            IdiomaSeleccionado: $('#txtHackIdiomaTesauro').val(),
+            multiLanguage: $('#chkMultiIdioma').is(':checked'),
+            CategoriasExpandidas: $('#txtCategoriasExpandidas').val(),
+            CategoriasSeleccionadas: $('#txtCategoriasSeleccionadas').val(),
+            PasosRealizados: $('#txtAccionesTesauroHack').val()
+        }
+        return params;
+    }
+    /*GUARDAR*/
+
+    var guardando = 'false';
+
+    function Guardar() {
+            LimpiarError();
+            MostrarUpdateProgress();
+            guardando = 'true'
+            var params = ObtenerParametrosComunes();
+
+        GnossPeticionAjax(
+                urlPagina + "/save",
+                params,
+                true
+            ).done(function (data) {
+                location.reload();
+            }).fail(function (data) {
+                MostrarERROR(error);
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+    }
+
+    function ComprobarCambios() {
+        if (guardando != 'true' && document.getElementById('txtAccionesTesauroHack').value != "") {
+            return (form.perderdatosbio);
+        }
+    }
+    /*CAMBIO IDIOMAS*/
+
+    function PintarListaIdiomas() {
+        var esMultiIdioma = $('#chkMultiIdioma').is(':checked');
+        if (esMultiIdioma) {
+            $('#divIdioma a.enlaceIdioma').each(function () {
+                if ($(this).attr('rel') == $('#txtHackIdiomaTesauro').val()) {
+                    $(this).hide();
+                }
+                else {
+                    $(this).show();
+                }
+            });
+            $('#divIdioma .litIdioma').each(function () {
+                if ($(this).attr('rel') == $('#txtHackIdiomaTesauro').val()) {
+                    $(this).show();
+                }
+                else {
+                    $(this).hide();
+                }
+            });
+            $('#divIdioma').show();
+        }
+        else {
+            $('#divIdioma').hide();
+        }
+    }
+
+    function seleccionarIdioma(idioma) {
+        $('#txtHackIdiomaTesauro').val(idioma)
+
+        MostrarUpdateProgress();
+        PintarListaIdiomas();
+
+        var params = ObtenerParametrosComunes();
+
+        GnossPeticionAjax(urlPagina + "/action/multilanguaje", params, true).done(function (data) {
+            $('#panTesauro').html(data);
+            SlideUp();
+        }).fail(function (data) {
+            MostrarERROR(data);
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    }
+
+    function clickMultiIdioma() {
+        if (!$('#chkMultiIdioma').is(':checked')) {
+            var $confirmar = $(['<div class="confirmar"><div class="pregunta"><span>', categorias.desactivarEdicionMultIidioma, '</span></br><span id="divRespuestaInicial" ><button onclick="return false;" class="btMini">', borr.si, '</button><button onclick="return false;" class="btMini">', borr.no, '</button></span></div><div class="mascara"></div></div>'].join(''));
+
+            $('#pActivarMultiidioma').after($confirmar);
+
+            $confirmar.find('button').eq(0).click(function () {
+                SeleccionarUnicoIdioma(this);
+            });
+            $confirmar.find('button').eq(1).click(function () {
+                RemarcarMultiIdioma(this);
+            });
+
+        } else {
+            $('#txtHackIdiomaTesauro').val($('#txtHackIdiomaTesauroDefecto').val());
+            MultiIdioma();
+        }
+    }
+
+    function MarcarCatSelEditorTes(nodo) {
+        var padre = $(nodo).parent();
+        var checked = nodo.checked;
+        var catID = padre.attr('class');
+
+        var txtHack = $('#txtCategoriasSeleccionadas');
+
+        if (checked) {
+            txtHack.val(txtHack.val() + catID + ',');
+        }
+        else {
+            txtHack.val(txtHack.val().replace(catID + ',', ''));
+        }
+    }
+
+    function MarcarDesplegarTreeView(pImagen) {
+        var imagen = $(pImagen);
+
+        var txtHack = $('#txtCategoriasExpandidas');
+        var catID = imagen.next().attr('class');
+
+        if (pImagen.src.indexOf('verMas') > 0) {
+            txtHack.val(txtHack.val() + catID + ',');
+        }
+        else {
+            txtHack.val(txtHack.val().replace(catID + ',', ''));
+        }
+    }
+
+    function SeleccionarUnicoIdioma(boton) {
+        guardando = 'true';
+        MostrarUpdateProgress();
+        MultiIdioma();
+
+        var params = ObtenerParametrosComunes();
+
+        GnossPeticionAjax(urlPagina + "/action/onlylanguaje", params, true).done(function (data) {
+            $('#panTesauro').html(data);
+            SlideUp();
+        }).fail(function (data) {
+            MostrarERROR(data);
+        }).always(function () {
+            boton.closest('.confirmar').remove();
+            OcultarUpdateProgress();
+        });
+    }
+
+    function RemarcarMultiIdioma(boton) {
+        $('#chkMultiIdioma').prop("checked", true);
+        boton.closest('.confirmar').remove();
+    }
+
+    /*METODOS COMUNES*/
+
+    function MultiIdioma() {
+        SlideUp();
+        PintarListaIdiomas();
+    }
+
+    function MostrarGuardadoOK() {
+        $('#panGuardado').show();
+    }
+
+    function MostrarERROR(error) {
+        $('#lblError').text(error);
+        $('#panError').show();
+    }
+    function mostrarGuardadoOK() {
+        $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
+    }
+    function mostrarErrorGuardado() {
+        $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');
+    }
+    function LimpiarError() {
+        $('#panError').hide();
+        $('#lblError').html('');
+        $('#panGuardado').hide();
+    }
+
+    function SlideDown() {
+        $('#panAcciones').slideDown();
+    }
+
+    function SlideUp() {
+        $('#panAcciones').slideUp();
+    }
+
+    function endsWith(str, suffix) {
+        return str.indexOf(suffix, str.length - suffix.length) !== -1;
+    }
+</script>
+<style>
+
+    div.content {
+        margin: 50px;
+    }
+
+    div.content form {
+        margin: 30px;
+    }
+
+    div#confCorreo .bloque {
+        border: 1px solid;
+        padding: 10px;
+    }
+    .wrap {
+        width: 80%;
+        padding: 1em 5%;
+        background: #fff;
+    }
+    div.error.general {
+        background-color: Red;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.ok.general {
+        background-color: limegreen;
+        color: white;
+        padding: 10px 20px;
+        margin-left: 20px;
+        margin-bottom: 5px;
+    }
+
+    div.content input.guardarTodo{
+        float:right;
+    }
+    div.content input.eliminar{
+        float: right;
+    }
+    div content input.obligatoriedad{
+        float: right;
+    }
+    input.CrearNuevo{
+        background: #ffa031;
+        border: medium none;
+        border-radius: 5px;
+        color: white;
+        padding: 5px;
+        cursor: pointer;
+    }
+    div.content input[type='text'],
+    div.content input[type='password'],
+    div.content select {
+        width: 85%;
+        margin-bottom:10px;
+    }
+    h4 {
+        padding-top:20px;
+        padding-bottom:20px;
+    }
+    input.limpiador {
+        float: right;
+        margin-left: 20px;
+    }
+</style>

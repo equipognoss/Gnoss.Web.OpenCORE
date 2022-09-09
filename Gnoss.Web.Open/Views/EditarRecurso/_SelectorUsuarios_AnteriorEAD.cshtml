@@ -1,0 +1,60 @@
+﻿@model UsersSelectorModel
+
+<div class="divSelectorUsuRec">
+    <div style="display: block;" class="stateShowForm" id="panels">
+        <div class="box form activeForm" id="action" style="display: block;">
+            <input name="txtBaseUrlHack_selectorUsuarios" type="text" value="http://comunidades.gnoss.net/" id="txtBaseUrlHack_selectorUsuarios" style="display:none;">
+            <fieldset>
+	            <legend>@Model.TextInfoSelectUsers</legend>
+                <div>
+		            <fieldset class="filtroRapido box labels">
+			            <p>
+                            <!--<input type="text" class="filtroFaceta ac_input" autocomplete="off">-->
+                            <input type="text" class="filtroFaceta filtroFacetaSelectUsuRec">
+                            <span class="searchButton"></span>
+			            </p>
+		            </fieldset>
+                    <!--<div id="panContactos_selectorUsuarios" style="display: none;" class="contactos"></div>-->
+	            </div>
+                <!--<fieldset class="oculto">
+		            <legend>
+			            Editores: 
+		            </legend><div id="panContenedorInvitados_selectorUsuarios" class="editorLector"><ul class="icoEliminar"><li>Javier Altuzarra Martínez<a class="remove" onclick="javascript:eliminarInvitado_selectorUsuarios('ebfdff52-9ab2-444f-affe-1805208c496a',this,'ebfdff52-9ab2-444f-affe-1805208c496a');">Eliminar</a></li><li>Xavier Martínez Altuzarra<a class="remove" onclick="javascript:eliminarInvitado_selectorUsuarios(null,this,'7a9fac97-547e-4de7-9293-3ff48a3169a7');">Eliminar</a></li></ul></div>
+	            </fieldset>-->
+                <!--<div id="panChecksContactos_selectorUsuarios">
+	            </div>
+                <input name="txtHackInvitados_selectorUsuarios" type="text" value=" &amp; ebfdff52-9ab2-444f-affe-1805208c496a" id="txtHackInvitados_selectorUsuarios" style="display: none;">
+                <input name="txtCorreosNoValidosHack_selectorUsuarios" type="text" id="txtCorreosNoValidosHack_selectorUsuarios" style="display: none;">-->
+                @{
+                    string idsSelecc = "";
+
+                    foreach (Guid perfilID in Model.SelectedProfilesList.Keys)
+                    {
+                        idsSelecc += perfilID + ",";
+                    }
+
+                    foreach (Guid grupoID in Model.SelectedGroupsList.Keys)
+                    {
+                        idsSelecc += "g_" + grupoID + ",";
+                    }
+                }
+            </fieldset>
+        </div>
+    </div>
+    <div class="editorLector">
+        <input type="hidden" class="hackUsuSeleccionadoRec" value="@idsSelecc" />
+        <label>@Model.TextSelectUsers</label>
+        <div class="ususSeleccionados">
+            <ul class="icoEliminar">
+                @foreach (Guid perfilID in Model.SelectedProfilesList.Keys)
+                {
+                    <li>@Model.SelectedProfilesList[perfilID]<a class="remove" onclick="EliminarUsuarioSelecUsu(this, '@perfilID');">@Html.GetText("COMMON", "ELIMINAR")</a></li>
+                }
+                @foreach (Guid grupoID in Model.SelectedGroupsList.Keys)
+                {
+                    <li>@Model.SelectedGroupsList[grupoID]<a class="remove" onclick="EliminarUsuarioSelecUsu(this, 'g_@grupoID');">@Html.GetText("COMMON", "ELIMINAR")</a></li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

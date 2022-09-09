@@ -1,0 +1,126 @@
+﻿@model AdministrarUsuariosOrganizacionViewModel
+
+@{ 
+    string urlBaseAcciones = Model.UrlFilter;
+}
+<h2>
+    @Html.GetText("USUARIOS", "USUARIOS")
+</h2>
+@*<div style="padding-bottom: 15px; display:none" id="divIntroMiembros">
+    <span id="lblIntroMiembros">Determina los roles (<a href="http://gnoss.com/comunidad/ayudayfaqs/recurso/Guia-GNOSS-para-crear-una-organizacion-la-figura/4af62022-6469-43a7-8c97-958f241b82d6">administrador</a>; <a href="http://gnoss.com/comunidad/ayudayfaqs/recurso/Guia-GNOSS-para-crear-una-organizacion-diferenci/7b617339-3c11-4638-8b9d-b6c48df137ce">editor</a>; o <a href="http://gnoss.com/comunidad/ayudayfaqs/recurso/Guia-GNOSS-para-crear-una-organizacion-diferenci/7b617339-3c11-4638-8b9d-b6c48df137ce">usuario</a>) que quieres darles a los miembros de tu organización.</span>
+</div>*@
+<form autocomplete="off" id="divFiltros">
+    <fieldset>
+        <legend>@Html.GetText("COMMON", "FILTRAR")</legend>
+        <input type="hidden" id="urlFilter" value="@Model.UrlFilter" />
+        <span style="margin-right: 20px;" class="filtroTexto">
+            <input type="text" style="width: 260px; padding: 4px;" id="txtFiltrarMiembros" name="txtFiltrarMiembros" value="@Model.SearchFilter" aux="@Model.SearchFilter">
+            <input  class="encontrar" type="button" value="buscar"/>
+        </span>
+        <span style="margin-right: 20px;" class="filtroCombo">
+            <select style="width: 165px;"  name="tipoFiltro" id="tipoFiltro">
+                <option value="-1">@Html.GetText("USUARIOS", "TODOSLOSUSUARIOS")  (@Model.Organization.NumUsersOrg)</option>
+                <option @Html.Raw(Model.TypeFilter == 0 ? "selected=\"selected\"" : "") value="0">@Html.GetText("USUARIOS", "ADMINISTRADORES")  (@Model.Organization.NumUsersOrgTypeAdmin)</option>
+                <option @Html.Raw(Model.TypeFilter == 1 ? "selected=\"selected\"" : "")  value="1">@Html.GetText("USUARIOS", "EDITORES")  (@Model.Organization.NumUsersOrgTypeSuper)</option>
+                <option @Html.Raw(Model.TypeFilter == 2 ? "selected=\"selected\"" : "")  value="2">@Html.GetText("USUARIOS", "USUARIOS")  (@Model.Organization.NumUsersOrgTypeUser)</option>
+            </select>
+        </span>
+        <span class="filtroOrden" style="font-size: 13px;">
+            @Html.GetText("COMMON", "ORDENADOPOR") @Html.GetText("COMMON", "NOMBREM")
+            <a id="aOrdenDescendente" class="@(Model.OrderAsc ? "" : "activo" )"></a>
+            <a id="aOrdenAscendente" class="@(Model.OrderAsc ? "activo" : "" )"></a>
+            <input type="hidden" name="ordenFiltros" id="ordenFiltros" value="@(Model.OrderAsc ? "ASC" : "DESC" )" />
+
+        </span>
+    </fieldset>
+</form>
+
+<div id="panContenidoMiembros">
+    <div class="listadoPersonas">
+        <div class="resource-list">
+            @foreach (AdministrarUsuariosOrganizacionViewModel.UserOrganizationModel usuario in Model.Usuarios)
+            {
+                string tipoUsuario = "";
+                switch (usuario.Type)
+                {
+                    case TipoAdministradoresOrganizacion.Administrador:
+                        tipoUsuario = Html.GetText("USUARIOS", "ADMINISTRADOR");
+                        break;
+                    case TipoAdministradoresOrganizacion.Editor:
+                        tipoUsuario = Html.GetText("USUARIOS", "EDITOR");
+                        break;
+                    case TipoAdministradoresOrganizacion.Comentarista:
+                        tipoUsuario = Html.GetText("USUARIOS", "USUARIO");
+                        break;
+                }
+                bool tieneFoto = !string.IsNullOrEmpty(usuario.Foto);
+
+                <div class="resource" id="@usuario.Person_Key">
+                    <div class="box description">
+                        <div class="group title">
+                            <h4><a href="@Html.GetPerfil().Url@usuario.Url">@usuario.Name</a></h4>
+                            <div class="logoComunidad resourceType persona @(tieneFoto ? "conImagenPerfil" : "")">
+                                <a href="@Html.GetPerfil().Url@usuario.Url" title="@usuario.Name">
+                                    @if (tieneFoto)
+                                    {
+                                        <img title="@usuario.Name" alt="@usuario.Name" src="@Html.GetBaseUrlContent()@usuario.Foto">
+                                    }
+                                </a>
+                            </div>
+                        </div>
+                        <div class="group acciones">
+                            <ul>
+                                <li>
+                                    <a onclick="DesplegarAccionMVC('@urlBaseAcciones/load-asign-community/@usuario.Person_Key', this, 'desplegable_@usuario.Person_Key', '');">Asignar a comunidad</a>
+                                </li>
+                                <li>
+                                    <a onclick="DelplegarCambiarRol(this, '@usuario.Person_Key');">Cambiar rol</a>
+                                </li>
+                                <li>
+                                    <a onclick="DelplegarEliminarUsuario(this, '@usuario.Person_Key');">Eliminar</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <p class="tipoUsuario" rel="@((short)usuario.Type)">@tipoUsuario</p>
+                        <div style="display: none;" id="desplegable_@usuario.Person_Key">
+                            <div style="display: none;" class="stateShowForm" id="panels">
+                                <div class="loading" id="loading">
+                                    <p>@Html.GetText("CONTROLDESPLEGAR", "CARGANDO")</p>
+                                </div>
+                                <div id="menssages">
+                                    <div class="ok"></div>
+                                    <div class="ko"></div>
+                                </div>
+                                <div class="box form activeForm" id="action"></div>
+                                <p class="cerrar"><a clickJS="CerrarPanelAccion('desplegable_@usuario.Person_Key')" title="@Html.GetText("CONTROLDESPLEGAR", "CERRARFORM")">@Html.GetText("CONTROLDESPLEGAR", "CERRARX")</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    @Html.PartialView("_Paginador", Model)
+</div>
+
+<div id="panCambiarRol" class="cambiarRol" style="margin-right:70px">
+    <div>
+        <input type="radio" rel="0" aux="Administrador" name="SelectorRolUsuario" />
+        Administrador
+    </div>
+    <div>
+        <input type="radio" rel="1" aux="Editor" name="SelectorRolUsuario" />
+        Editor
+    </div>
+    <div>
+        <input type="radio" rel="2" aux="Usuario" name="SelectorRolUsuario" />
+        Usuario
+    </div>
+    <a class="botonAceptar">Aceptar</a>
+</div>
+<div id="panEliminarUsu" class="eliminarUsu" style="margin-right:70px">
+    <div>
+        Si continúas, se expulsará al usuario de la organización.
+    </div>
+    <a class="botonAceptar">Aceptar</a>
+</div>

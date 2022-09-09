@@ -1,0 +1,112 @@
+﻿@model ManageXMLViewModel
+
+@{
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/semcms.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+}
+
+<div class="content">
+    <h1>@Html.GetText("COMADMINDISENIO", "TITULO")</h1>
+    <div id="panSubirXmlComunidad">
+        <form autocomplete="off">
+            <div class="fieldset fieldset01">
+                <fieldset class="mediumLabels">
+                    <h3>@Html.GetText("COMADMINDISENIO", "TEXTOSUBIR")</h3>
+                    <div class="fieldsetContent">
+                        <p>
+                            <input type="file" id="ficheroConfig" name="ficheroConfig" accept="text/xml">
+                        </p>
+                        <p>
+                            <input type="button" id="subirFicheroConfig" value="@Html.GetText("COMADMINDISENIO", "BOTONSUBIR")">
+                        </p>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="ok" id="panSubirOK" style="display: none"></div>
+            <div class="ko" id="panSubirERROR" style="display: none"></div>
+        </form>
+    </div>
+    <div id="panDescargarXmlComunidad">
+        <h3>@Html.GetText("COMADMINDISENIO", "TEXTODESCARGAR")</h3>
+        <form method="post" action="@Model.UrlActionDownloadDynamicFile">
+            <input type="submit" value="@Html.GetText("COMADMINDISENIO", "BOTONDESCARGAR")">
+        </form>
+    </div>
+    <div id="panHistorialXmlComunidad">
+        <h3>@Html.GetText("COMADMINDISENIO", "TEXTOHISTORIAL")</h3>
+        <input type="button" id="verHistorial" value="@Html.GetText("COMADMINDISENIO", "BOTONHISTORIAL")">
+        <div id="panContenedorHistorial" style="display:none"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function DescargarFicheroHistorial(urlFichero) {
+        MostrarUpdateProgress();
+        $.post(urlFichero).always(function () {
+            OcultarUpdateProgress();
+        });
+    }
+
+    $(document).ready(function () {
+
+        $('#verHistorial').click(function () {
+            var botonVerHistorial = $(this);
+
+            $('#panContenedorHistorial').html('');
+            MostrarUpdateProgress();
+
+            GnossPeticionAjax(
+                '@Model.UrlActionHistory',
+                null,
+                true
+            ).done(function (data) {
+                $('#panContenedorHistorial').html(data).show();
+                botonVerHistorial.hide();
+            }).fail(function (data) {
+                $('#panContenedorHistorial').html('<div class="ko" style="display: block"><p>' + data + '</p></div>').show();
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+
+        $('#subirFicheroConfig').click(function(){
+            if($(ficheroConfig)[0].files.length > 0)
+            {
+                $('#panSubirOK').html('').hide();
+                $('#panSubirERROR').html('').hide();
+
+                MostrarUpdateProgress();
+                var dataPost = new FormData();
+                dataPost.append("Fichero", $(ficheroConfig)[0].files[0]);
+
+                GnossPeticionAjax(
+                    '@Model.UrlActionFile',
+                    dataPost,
+                    true
+                ).done(function (data) {
+                    $('#panSubirOK').html('<p>' + data + '</p>').show();
+                    $('#panContenedorHistorial').html('').hide();
+                    $('#verHistorial').show();
+                }).fail(function (data) {
+                    $('#panSubirERROR').html('<p>' + data + '</p>').show();
+                }).always(function () {
+                    OcultarUpdateProgress();
+                });
+            }
+        });
+    });
+</script>
+
+<style>
+    #panSubirXmlComunidad,
+    #panDescargarXmlComunidad,
+    #panHistorialXmlComunidad {
+        margin-top: 20px;
+    }
+
+    input[type="button"]{
+        margin-left:0;
+    }
+</style>
