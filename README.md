@@ -11,7 +11,7 @@ Configuración estandar de esta aplicación en el archivo docker-compose.yml:
 
 ```yml
 web:
-    image: gnoss/web
+    image: gnoss/gnoss.web.opencore 
     env_file: .env
     ports:
      - ${puerto_web}:80
