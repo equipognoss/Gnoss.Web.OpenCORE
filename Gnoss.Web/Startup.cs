@@ -332,7 +332,7 @@ namespace Gnoss.Web
             {
                 LoggingService.InicializarLogstash(configLogStash);
             }
-            FirstDataLoad firstDataLoad = new FirstDataLoad(entity, configService);
+            FirstDataLoad firstDataLoad = new FirstDataLoad(entity, configService, entityOauth);
             firstDataLoad.InsertDataIfPossible();
             BaseCL.UsarCacheLocal = UsoCacheLocal.SiElServicioLoUsanPocosProyectos;
             string rutaVersionCacheLocal = $"{AppDomain.CurrentDomain.SetupInformation.ApplicationBase}/config/versionCacheLocal/";
