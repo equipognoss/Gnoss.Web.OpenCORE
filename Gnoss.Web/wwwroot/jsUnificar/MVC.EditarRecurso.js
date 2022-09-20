@@ -169,7 +169,7 @@ function EnviarDatosServidor(pFuncion) {
         arg.Vinculado = document.getElementById('txtVinculado_Hacks').value;
     }
 
-    if ($("#modificacionVinculado")[0] != null) {
+    if ($("#modificacionVinculado")[0] != null && $("#modificacionVinculado")[0] != undefined) {
         var vinculados = $(".vinculado input[name='txtTitulo']");
 
         var numVinculado = vinculados.length;
