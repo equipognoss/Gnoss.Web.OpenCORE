@@ -10,7 +10,8 @@ CKEDITOR.editorConfig = function( config ) {
 };
 
 CKEDITOR.config["toolbar_Gnoss-Mensajes"] = [
-	['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
+	// Quitar Pegar por funcionamiento en ckEditor
+	// ['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
 	['Undo', 'Redo', '-', 'RemoveFormat'],
 	['Bold', 'Italic', 'Underline'],
 	['Table', '-', 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
@@ -23,7 +24,8 @@ CKEDITOR.config["toolbar_Gnoss-Mensajes"] = [
 ];
 
 CKEDITOR.config["toolbar_Gnoss-Blogs"] = [
-	['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
+	// Quitar Pegar por funcionamiento en ckEditor
+	// ['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
 	['Undo', 'Redo', '-', 'RemoveFormat'],
 	['Bold', 'Italic', 'Underline'],
 	['Table', '-', 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
@@ -36,7 +38,8 @@ CKEDITOR.config["toolbar_Gnoss-Blogs"] = [
 ];
 
 CKEDITOR.config["toolbar_Gnoss-Recursos"] = [
-	['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
+	// Quitar Pegar por funcionamiento en ckEditor
+	// ['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
 	['Undo', 'Redo', '-', 'RemoveFormat'],
 	['Bold', 'Italic', 'Underline', 'Strike'],
 	['Table', '-', 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
@@ -50,7 +53,8 @@ CKEDITOR.config["toolbar_Gnoss-Recursos"] = [
 ];
 
 CKEDITOR.config["toolbar_Gnoss-Bios"] = [
-	['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
+	// Quitar Pegar por funcionamiento en ckEditor
+	// ['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
 	['Undo', 'Redo', '-', 'RemoveFormat'],
 	['Bold', 'Italic', 'Underline'],
 	['Table', '-', 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
@@ -62,7 +66,8 @@ CKEDITOR.config["toolbar_Gnoss-Bios"] = [
 ];
 
 CKEDITOR.config["toolbar_Gnoss-Dafo"] = [
-	['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
+	// Quitar Pegar por funcionamiento en ckEditor
+	// ['Cut', 'Copy', 'PasteText', 'PasteFromWord'],
 	['Undo', 'Redo', '-', 'RemoveFormat'],
 	['Bold', 'Italic', 'Underline'],
 	['Table', '-', 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
@@ -105,6 +110,24 @@ CKEDITOR.on('instanceReady', function(event) {
 			ckeEditorContentLength: ckeEditorContentLength, 	// Longitud de textos que hay en el editor CKEditor
 		}
 		$ckEditorInstance.ckEditorSimple(options); 
-	}	
+	}
+
+
+	// Evitar errores de copiar/pegar por incompatibilidad del navegador
+	event.editor.on("beforeCommandExec", function (event) {
+		// Show the paste dialog for the paste buttons and right-click paste
+		if (event.data.name == "paste") {
+			event.editor._.forcePasteDialog = false;
+		}
+		// No mostrar el cuadro de dialogo de Ctrl+Shift+V
+		if (event.data.name == "pastetext" && event.data.commandData.from == "keystrokeHandler") {
+			event.cancel();
+		}
+	});
+
+	// Eliminar la opción de pegar del ckeditor	
+	if (event.editor.contextMenu) {
+		event.editor.removeMenuItem('paste');
+	}
 });
 

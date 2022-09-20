@@ -2180,11 +2180,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             //Insertar Vinculados.
 
-            if (!string.IsNullOrEmpty(Request.Headers["Vinculado"]))
+            if (!string.IsNullOrEmpty(RequestParams("Vinculado")))
             {
-                if (!Request.Headers["Vinculado"].Equals("SinModificacion"))
+                if (!RequestParams("Vinculado").Equals("SinModificacion"))
                 {
-                    List<String> listaVinculados = UtilCadenas.SepararTexto(Request.Headers["Vinculado"]);
+                    List<String> listaVinculados = UtilCadenas.SepararTexto(RequestParams("Vinculado"));
 
                     foreach (string vinculado in listaVinculados)
                     {
@@ -3689,11 +3689,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (!pCreandoVersion)
             {
-                if (!string.IsNullOrEmpty(Request.Headers["Vinculado"]))
+                if (!string.IsNullOrEmpty(RequestParams("Vinculado")))
                 {
-                    if (!Request.Headers["Vinculado"].Equals("SinModificacion"))
+                    if (!RequestParams("Vinculado").Equals("SinModificacion"))
                     {
-                        List<String> listaVinculados = UtilCadenas.SepararTexto(Request.Headers["Vinculado"]);
+                        List<String> listaVinculados = UtilCadenas.SepararTexto(RequestParams("Vinculado"));
 
                         List<Guid> listaVinculadosBD = VinculadosEnBD(pDocumentoID);
                         if (listaVinculadosBD != null)
