@@ -15,11 +15,14 @@
  */
 
 // Permitir envío de Cookies a otro dominio
-$.ajaxSetup({
-    crossDomain: true,
-    xhrFields: {
-        withCredentials: true
-    }
+$(document).ready(function () {
+    if (location.protocol == 'https:')
+    $.ajaxSetup({
+        crossDomain: true,
+        xhrFields: {
+            withCredentials: true
+        }
+    });
 });
 
 

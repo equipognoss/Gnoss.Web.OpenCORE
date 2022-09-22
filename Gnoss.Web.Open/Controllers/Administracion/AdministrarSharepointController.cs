@@ -45,6 +45,7 @@ namespace Gnoss.Web.Controllers.Administracion
         private string mUrlObtenerTokenSharepoint;
         private string mUrlRedireccionSharepoint;
         private bool mPermisosConcedidos;
+        private bool mPermitirVincularOneDrive;
 
         public AdministrarSharepointController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth) 
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
@@ -72,20 +73,24 @@ namespace Gnoss.Web.Controllers.Administracion
             {               
                 mEntityContext.NoConfirmarTransacciones = true;
                 transaccionIniciada = proyAD.IniciarTransaccion(true);
-
                 GuardarConfiguracion(pModel);
+                mEntityContext.SaveChanges();
+
                 if (transaccionIniciada)
                 {
                     mEntityContext.TerminarTransaccionesPendientes(true);
                 }
+
                 return GnossResultOK();
 
-            } catch (Exception ex)
+            } 
+            catch (Exception ex)
             {
                 if (transaccionIniciada)
                 {
                     proyAD.TerminarTransaccion(false);
                 }
+
                 return GnossResultERROR("Error: " + ex.Message);
             }
         }
@@ -116,7 +121,9 @@ namespace Gnoss.Web.Controllers.Administracion
                     mPaginaModel.UrlObtenerTokenSharepoint = UrlObtenerTokenSharepoint;
                     mPaginaModel.UrlRedireccionSharepoint = UrlRedireccionSharepoint;
                     mPaginaModel.PermisosConcedidos = PermisosConcedidos;
+                    mPaginaModel.PermitirOneDrive = PermitirVincularOneDrive;
                 }
+
                 return mPaginaModel;
             }
         }
@@ -126,6 +133,7 @@ namespace Gnoss.Web.Controllers.Administracion
             GuardarParametro(pModel.ClientID, ParametroAD.SharepointClientID);
             GuardarParametro(pModel.ClientSecret, ParametroAD.SharepointClientSecret);
             GuardarParametro(pModel.TenantID, ParametroAD.SharepointTenantID);
+            GuardarParametro(pModel.PermitirOneDrive.ToString(), ParametroAD.PermitirEnlazarDocumentosOneDrive);
             InvalidarCaches();
         }
 
@@ -151,6 +159,7 @@ namespace Gnoss.Web.Controllers.Administracion
 
                     mGestorParametrosAplicacion = paramCL.ObtenerGestorParametros();
                 }
+
                 return mGestorParametrosAplicacion;
             }
         }
@@ -161,10 +170,12 @@ namespace Gnoss.Web.Controllers.Administracion
             {
                 mClientID = "";
                 ParametroAplicacion parametroAplicacion = GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals(ParametroAD.SharepointClientID)).FirstOrDefault();
+                
                 if (parametroAplicacion != null)
                 {
                     mClientID = parametroAplicacion.Valor;
-                }               
+                }     
+                
                 return mClientID;
             }
             set
@@ -179,10 +190,12 @@ namespace Gnoss.Web.Controllers.Administracion
             {
                 mTenantID = "";
                 ParametroAplicacion parametroAplicacion = GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals(ParametroAD.SharepointTenantID)).FirstOrDefault();
+                
                 if (parametroAplicacion != null)
                 {
                     mTenantID = parametroAplicacion.Valor;
                 }
+
                 return mTenantID;
             }
             set
@@ -197,10 +210,12 @@ namespace Gnoss.Web.Controllers.Administracion
             {
                 ClientSecret = "";
                 ParametroAplicacion parametroAplicacion = GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals(ParametroAD.SharepointClientSecret)).FirstOrDefault();
+                
                 if (parametroAplicacion != null)
                 {
                     mClientSecret = parametroAplicacion.Valor;
                 }
+
                 return mClientSecret;
             }
             set
@@ -209,11 +224,32 @@ namespace Gnoss.Web.Controllers.Administracion
             }
         }
 
+        private bool PermitirVincularOneDrive
+        {
+            get
+            {
+                PermitirVincularOneDrive = false;
+                ParametroAplicacion parametroAplicacion = GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals(ParametroAD.PermitirEnlazarDocumentosOneDrive)).FirstOrDefault();
+
+                if (parametroAplicacion != null)
+                {
+                    mPermitirVincularOneDrive = bool.Parse(parametroAplicacion.Valor);
+                }
+
+                return mPermitirVincularOneDrive;
+            }
+            set
+            {
+                mPermitirVincularOneDrive = value;
+            }
+        }
+
         private string UrlAdminConsent
         {
             get
             {
                 mUrlAdminConsent = $"https://login.microsoftonline.com/{TenantID}/adminconsent?client_id={ClientID}";
+                
                 return mUrlAdminConsent;
             }
             set
@@ -227,6 +263,7 @@ namespace Gnoss.Web.Controllers.Administracion
             get
             {
                 mPermisosConcedidos = false;
+                
                 return mPermisosConcedidos;
             }
             set
@@ -246,6 +283,7 @@ namespace Gnoss.Web.Controllers.Administracion
                 {
                     mUrlLoginSharepoint = $"{urlServicioLogin}/LoginSharepoint";
                 }
+
                 return mUrlLoginSharepoint;
             }
             set
@@ -265,6 +303,7 @@ namespace Gnoss.Web.Controllers.Administracion
                 {
                     mUrlRedireccionSharepoint = $"{urlServicioLogin}/Redireccion";
                 }
+
                 return mUrlRedireccionSharepoint;
             }
             set
@@ -284,6 +323,7 @@ namespace Gnoss.Web.Controllers.Administracion
                 {
                     mUrlObtenerTokenSharepoint = $"{urlServicioLogin}/ObtenerTokenSharepoint";
                 }
+
                 return mUrlObtenerTokenSharepoint;
             }
             set
@@ -298,10 +338,12 @@ namespace Gnoss.Web.Controllers.Administracion
             {
                 mDominioBase = "";
                 string dominio = mConfigService.ObtenerDominio();
+                
                 if (!string.IsNullOrEmpty(dominio))
                 {
                     mDominioBase = dominio;
                 }
+
                 return mDominioBase;
             }
             set

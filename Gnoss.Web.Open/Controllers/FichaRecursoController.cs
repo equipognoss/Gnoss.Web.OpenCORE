@@ -2015,24 +2015,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 ActionResult redireccion = FuncionalidadSharepoint();
+
                 if (redireccion != null)
                 {
                     return redireccion;
                 }
+
                 //cambiamos el Tipo de Hipervínculo a Adjunto
                 DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 DataWrapperDocumentacion dwDocumentacion = documentoCN.ObtenerDocumentoPorID(new Guid(pDocumentoID));
                 dwDocumentacion.ListaDocumento[0].Tipo = (short)TiposDocumentacion.FicheroServidor;
+
                 //Obtenemos el nombre del fichero para ponerlo como Enlace y cambiamos la fecha de modificacion
-                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
+                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);     
                 spController.Token = tokenSP;
                 string nombre = spController.ObtenerNombreFichero(dwDocumentacion.ListaDocumento[0].Enlace);
                 dwDocumentacion.ListaDocumento[0].Enlace = nombre;
                 dwDocumentacion.ListaDocumento[0].FechaModificacion = DateTime.Now;
                 AD.EntityModel.Models.Documentacion.Documento doc = dwDocumentacion.ListaDocumento[0];
-
                 mEntityContext.Documento.Update(doc);
                 mEntityContext.SaveChanges();
+
                 //El tipo se guarda en caché, así que la borramos
                 DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
                 docCL.InvalidarFichaRecursoMVC(new Guid(pDocumentoID), (Guid)dwDocumentacion.ListaDocumento[0].ProyectoID);
@@ -2042,6 +2045,71 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             catch (Exception ex)
             {
                 return GnossResultERROR(ex.Message);
+            }
+        }
+
+        [HttpGet, HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+        public ActionResult VincularDocumentoSharepoint(string pEnlace, string pDocumentoID)
+        {
+            try
+            {
+                // Comprobamos si esta configurado SharePoint
+                ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
+                
+                if (string.IsNullOrEmpty(sharepointConfigurado))
+                {
+                    return GnossResultERROR("SharePoint no esta vinculado para este entorno.");
+                }
+
+                ActionResult redireccion = FuncionalidadSharepoint(false, pEnlace);
+
+                if (redireccion != null)
+                {
+                    return redireccion;
+                }
+
+                // Comprobamos si el enlace pasado es valido
+                string oneDrivePermitido = paramCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                
+                if (!UtilCadenas.EsEnlaceSharepoint(pEnlace, oneDrivePermitido))
+                {
+                    return GnossResultERROR("El enlace seleccionado no corresponde a SharePoint/OneDrive o no esta permitido enlazar documentos con OneDrive");
+                }
+
+                // Cambiamos el tipo de documento de Adjunto a Hipervinculo
+                DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DataWrapperDocumentacion dwDocumentacion = documentoCN.ObtenerDocumentoPorID(new Guid(pDocumentoID));               
+                dwDocumentacion.ListaDocumento[0].Tipo = (short)TiposDocumentacion.Hipervinculo;
+                dwDocumentacion.ListaDocumento[0].FechaModificacion = DateTime.Now;             
+
+                // Guardarmos el fichero de SharePoint en el servidor
+                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
+                spController.Token = tokenSP;
+                string nombreFichero = spController.GuardarArchivoDesdeAPI(pEnlace);
+
+                if (!pEnlace.Contains("|||"))
+                {
+                    dwDocumentacion.ListaDocumento[0].Enlace = $"{pEnlace}|||{nombreFichero}";
+                }
+                else
+                {
+                    dwDocumentacion.ListaDocumento[0].Enlace = pEnlace;
+                }
+
+                AD.EntityModel.Models.Documentacion.Documento doc = dwDocumentacion.ListaDocumento[0];
+                mEntityContext.Documento.Update(doc);
+                mEntityContext.SaveChanges();
+
+                // El tipo de documento se guarda en cache, asi que la borramos
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                docCL.InvalidarFichaRecursoMVC(new Guid(pDocumentoID), (Guid)doc.ProyectoID);
+
+                return GnossResultOK();
+            }
+            catch (Exception ex)
+            {
+                return GnossResultERROR($"Ha ocurrido un error al tratar de vincular el documento con SharePoint: {ex.Message}");
             }
         }
 
@@ -6030,8 +6098,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             break;
                         case DocumentType.Hipervinculo:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCHIPERVINCULO");
-                            paginaModel.Resource.EsEnlaceSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace);
                             ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                            paginaModel.Resource.EsEnlaceSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrive);
                             string sharepointConfigurado = parametroCN.ObtenerParametroAplicacion("SharepointClientID");
                             if (string.IsNullOrEmpty(sharepointConfigurado))
                             {
@@ -6268,9 +6337,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     ActualizarConsultaRecurso();
                 }
-
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
                 //Si es recurso tipo enlace de sharepoint
-                if (Documento.TipoDocumentacion == TiposDocumentacion.Hipervinculo && UtilCadenas.EsEnlaceSharepoint(Documento.Enlace))
+                if (Documento.TipoDocumentacion == TiposDocumentacion.Hipervinculo && UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrivePermitido))
                 {
                     ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
@@ -6450,7 +6520,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        private ActionResult FuncionalidadSharepoint(bool pDescargando = false)
+        private ActionResult FuncionalidadSharepoint(bool pDescargando = false, string pEnlace = "")
         {
             ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
@@ -6465,7 +6535,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 string enlace = docCN.ObtenerEnlaceDocumentoPorDocumentoID(new Guid(documentoID));
-
+                if (!string.IsNullOrEmpty(pEnlace))
+                {
+                    enlace = pEnlace;
+                }
                 if (string.IsNullOrEmpty(enlace))
                 {
                     if (Session.Get("EnlaceDocumentoAgregar") != null)
@@ -6473,8 +6546,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         enlace = Session.GetString("EnlaceDocumentoAgregar");
                     }
                 }
-
-                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace, oneDrivePermitido))
                 {
                     string urlRedirect = $"{urlServicioLogin}/LoginSharepoint?urlInicio={RequestUrl}&usuario={UsuarioActual.UsuarioID}";
 

@@ -6,11 +6,14 @@
 */
 
 // Permitir envío de Cookies a otro dominio
-$.ajaxSetup({
-    crossDomain: true,
-    xhrFields: {
-        withCredentials: true
-    }
+$(document).ready(function () {
+    if (location.protocol == 'https:')
+        $.ajaxSetup({
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            }
+        });
 });
 
 
@@ -22992,6 +22995,33 @@ function AccionRecurso_Vincular_Aceptar(urlVincularRecurso, urlCargarVinculados,
     }).fail(function (data) {
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, data);
         OcultarUpdateProgress();
+    });
+}
+
+function AccionRecurso_VincularSharepoint(prueba, documentoID) {
+    MostrarUpdateProgress();
+    var enlace = $("#txtUrlDocVinculado_" + documentoID).val();
+    let urlSinVersioned = location.href.replace('?versioned', '');
+    let urlSinCreated = urlSinVersioned.replace('?created', '');
+    let urlSinModified = urlSinCreated.replace('?modified', '');
+    let url = urlSinModified.replace("/recurso/", "/link-resourceSP/");
+    url = url.replace('#', '');
+    //url += "?pEnlace=" + enlace + "&pDocumentoID=" + documentoID;
+    var datosPost = {
+        pEnlace: enlace,
+        pDocumentoID: documentoID
+    }
+    GnossPeticionAjax(url, datosPost, true, true).done(function (data) {
+        //mostrarNotificacion("success", "El recurso ha sido desvinculado correctamente.");
+        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, "El recurso ha sido vinculado correctamente.");
+        OcultarUpdateProgress();
+        setTimeout(function () {
+            location.reload();
+        }, 1000);
+    }).fail(function (data) {
+        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, data);
+        OcultarUpdateProgress();
+        //mostrarNotificacion("error", "Se ha producido un error al tratar de desvincular el recurso.");
     });
 }
 
