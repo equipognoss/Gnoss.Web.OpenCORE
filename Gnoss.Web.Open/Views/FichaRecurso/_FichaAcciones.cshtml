@@ -148,10 +148,12 @@
             case "link-resource":
                 @Html.PartialView("_modal-views/_link", Model);
                 break;
+            case "link-resourceSP":
+                @Html.PartialView("_modal-views/_link-sharepoint", Model);
+                break;
             case "lock-unlock-comments":
                 @Html.PartialView("_modal-views/_lock-comments", Model);
-                break;
-                
+                break;               
             case "certify":
                 @Html.PartialView("_modal-views/_certify", Model);
                 break;

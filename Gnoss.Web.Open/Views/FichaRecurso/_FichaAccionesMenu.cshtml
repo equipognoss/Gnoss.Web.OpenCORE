@@ -326,7 +326,17 @@
                                     </a>
                                 </li>
                             }
-
+                            @* Opcion Vincular recurso con SharePoint *@
+                            @if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.FicheroServidor)
+                            {
+                                <li>
+                                    <a id="op_LinkUpSP" onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionLinkResourceSP', this, 'modal-dinamic-content', '');"
+                               class="item-dropdown" data-toggle="modal" data-target="#modal-container">
+                                        <span class="material-icons">attach_file</span>
+                                        <span class="texto">@Html.GetText("VINCULACIONDOCUMENTACION", "INFOVINCULARSP")</span>
+                                    </a>
+                                </li>
+                            }
                             @* Opción Certificar recurso *@
                             @if (acciones.Certify)
                             {

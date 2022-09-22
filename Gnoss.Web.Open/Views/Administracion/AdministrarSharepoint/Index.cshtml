@@ -54,6 +54,8 @@
             <input type="hidden" value="@Model.UrlAdminConsent" id="urlAdminConsent" />
             <span id="errorRedireccion" style="display:none; color:red;">La URI introducida no es válida, debe tener el formato https://dominio/login/Redireccion</span>
         </div><br />
+        <label for="VincularOneDrive">¿Permitir vincular los documentos con OneDrive?</label>
+        <input type="checkbox" id="VincularOneDrive" name="VincularOneDrive" @(Model.PermitirOneDrive ? "checked" : "") /><br /><br />
         <span><b>*Antes de guardar debes seguir los pasos del manual y registrar una aplicación en Azure Active Directory si no está ya registrada*</b></span><br /><br />
     </form>
     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "MANUALSHAREPOINT")">Ver manual de configuración de aplicación</a><br />
@@ -75,7 +77,17 @@
         var clientID = $("#clientID").val();
         var clientSecret = $("#clientSecret").val();
         var tenantID = $("#tenantID").val();
+        var oneDriveChk = $("#VincularOneDrive");
         var urlAdminConsent = "https://login.microsoftonline.com/"+tenantID+"/adminconsent?client_id="+clientID;
+        var oneDrive = "True";
+        if (oneDriveChk.is(':checked'))
+        {
+            oneDrive = "True";
+        }
+        else
+        {
+            oneDrive = "False";
+        }
 
         if(comprobarCampos()){
             var dataPost = {
@@ -86,7 +98,8 @@
                 UrlAdminConsent: urlAdminConsent,
                 UrlLoginSharepoint: urlLoginSharepoint,
                 UrlObtenerTokenSharepoint: urlObtenerTokenSharepoint,
-                UrlRedireccionSharepoint: urlRedireccionSharepoint
+                UrlRedireccionSharepoint: urlRedireccionSharepoint,
+                PermitirOneDrive: oneDrive
             }
 
             GnossPeticionAjax(

@@ -74,9 +74,7 @@ namespace Gnoss.Web.Controllers
             else
             {
                 this.documentoID = new Guid();
-            }
-            
-            
+            }                      
         }
 
         public string RenovarToken(string pRefreshToken, Guid pUsuarioID)
@@ -91,12 +89,14 @@ namespace Gnoss.Web.Controllers
                 //Almacenamos los nuevos tokens en BD (los tokens de refresco duran 90 dias)
                 string token = respuestaObj.access_token;
                 string refreshTokenNuevo = respuestaObj.refresh_token;
+
                 ActualizarTokensUsuario(pUsuarioID, token, refreshTokenNuevo);
 
                 return token;
             }
             catch (Exception ex)
             {
+                GuardarLogError($"Se ha producido un error al renovar el Token de SharePoint: {ex.Message}");
                 return "";
             }
             
@@ -106,6 +106,7 @@ namespace Gnoss.Web.Controllers
         {
             UsuarioVinculadoLoginRedesSociales usuarioSP = mEntityContext.UsuarioVinculadoLoginRedesSociales.Where(parametroApp => parametroApp.UsuarioID.Equals(pUsuarioID) && parametroApp.TipoRedSocial == 6).FirstOrDefault();
             UsuarioVinculadoLoginRedesSociales usuarioRefresco = mEntityContext.UsuarioVinculadoLoginRedesSociales.Where(parametroApp => parametroApp.UsuarioID.Equals(pUsuarioID) && parametroApp.TipoRedSocial == 7).FirstOrDefault();
+
             usuarioSP.IDenRedSocial = pToken;
             usuarioRefresco.IDenRedSocial = pTokenRefresco;
             mEntityContext.UsuarioVinculadoLoginRedesSociales.Update(usuarioSP);
@@ -117,6 +118,7 @@ namespace Gnoss.Web.Controllers
         {
             string peticionComprobarToken = $"{baseUrl}me";
             string response = UtilGeneral.WebRequest("GET", peticionComprobarToken, token, null);
+
             if (response != "")
             {
                 return true;
@@ -129,10 +131,12 @@ namespace Gnoss.Web.Controllers
         {
             string[] enlaceConNombre = url.Split("|||");
             string enlace = url;
+
             if (enlaceConNombre.Length > 1)
             {
                 enlace = enlaceConNombre[0];
             }
+
             string base64Value = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(enlace));
             string encodedUrl = "u!" + base64Value.TrimEnd('=').Replace('/', '_').Replace('+', '-');
 
@@ -198,7 +202,7 @@ namespace Gnoss.Web.Controllers
             webRequest.Headers.Add("Authorization", "Bearer " + mToken);
 
             FileInfo archivoInfo = new FileInfo(nombreFichero);
-            string extensionArchivo = System.IO.Path.GetExtension(archivoInfo.Name).ToLower();
+            string extensionArchivo = Path.GetExtension(archivoInfo.Name).ToLower();
             GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
             gd.Url = UrlServicioWebDocumentacion;
             Stream streamFichero = webRequest.GetResponse().GetResponseStream();
@@ -210,7 +214,7 @@ namespace Gnoss.Web.Controllers
                 buffer1 = memoryStream.ToArray();
             }
 
-            string idAuxGestorDocumental = gd.AdjuntarDocumento(buffer1, TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, mControladorBase.UsuarioActual.OrganizacionID, mControladorBase.UsuarioActual.ProyectoID, documentoID, extensionArchivo);
+            gd.AdjuntarDocumento(buffer1, TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, mControladorBase.UsuarioActual.OrganizacionID, mControladorBase.UsuarioActual.ProyectoID, documentoID, extensionArchivo);
 
             return nombreFichero;
         }

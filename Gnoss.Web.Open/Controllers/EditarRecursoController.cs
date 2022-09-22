@@ -654,8 +654,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     Environment.SetEnvironmentVariable("UrlPaginaSubir", pUrlPaginaSubir);
                     Environment.SetEnvironmentVariable("SkipRepeat", $"{pSkipRepeat}");
                 }
-
-                if (UtilCadenas.EsEnlaceSharepoint(pLink))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (UtilCadenas.EsEnlaceSharepoint(pLink, oneDrivePermitido))
                 {
                     ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
@@ -776,7 +777,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Acción resultado</returns>
         private ActionResult lbSiguienteURL_Click_SubirRecurso(SelectResourceModel pModel)
         {
-            if (!UtilCadenas.EsEnlaceSharepoint(pModel.Link) && !mEditRecCont.CreateResourceModel.LinkAvailable)
+            ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+            if (!UtilCadenas.EsEnlaceSharepoint(pModel.Link, oneDrivePermitido) && !mEditRecCont.CreateResourceModel.LinkAvailable)
             {
                 return new EmptyResult();
             }
@@ -2033,7 +2036,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             else//Es enlace
             {
                 rutaFichero = mNombreDocumento.Trim();
-                if (UtilCadenas.EsEnlaceSharepoint(rutaFichero)) {
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (UtilCadenas.EsEnlaceSharepoint(rutaFichero, oneDrivePermitido)) {
                     AD.EntityModel.Models.Documentacion.Documento docAux = new AD.EntityModel.Models.Documentacion.Documento();
                     docAux.Enlace = rutaFichero;
                     FuncionalidadSharepoint(docAux);
@@ -3615,7 +3620,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
-                if (!string.IsNullOrEmpty(sharepointConfigurado) && UtilCadenas.EsEnlaceSharepoint(enlaceNuevoAux))
+                string oneDrivePermitido = paramCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (!string.IsNullOrEmpty(sharepointConfigurado) && UtilCadenas.EsEnlaceSharepoint(enlaceNuevoAux, oneDrivePermitido))
                 {
                     Documento.Enlace = enlaceNuevoAux;
                     Documento.FilaDocumento.Enlace = enlaceNuevoAux;
@@ -10691,7 +10697,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (mTipoDocumento == TiposDocumentacion.Hipervinculo && (ExtraerTexto(mModelSaveRec.Link).Trim().Equals(string.Empty) || !reg.IsMatch(ExtraerTexto(mModelSaveRec.Link).Trim())))
             {
-                if (!UtilCadenas.EsEnlaceSharepoint(mModelSaveRec.Link))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (!UtilCadenas.EsEnlaceSharepoint(mModelSaveRec.Link, oneDrivePermitido))
                 {
                     return "errorEnlace|" + UtilIdiomas.GetText("PERFILBASESUBIRRECURSO", "ERROR_DWEB");
                 }
@@ -11085,7 +11093,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (!AñadiendoAGnoss)
             {
-                if (UtilCadenas.EsEnlaceSharepoint(enlaceRepeticion))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (UtilCadenas.EsEnlaceSharepoint(enlaceRepeticion, oneDrivePermitido))
                 {
                     DataWrapperDocumentacion dwDocumentacion = new DataWrapperDocumentacion();
                     docCN.ObtenerBaseRecursosProyecto(dwDocumentacion, ProyectoSeleccionado.FilaProyecto.ProyectoID);
@@ -11538,8 +11548,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         enlace = (string)Session.GetString("EnlaceDocumentoAgregar");
                     }
                 }
-
-                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace, oneDrivePermitido))
                 {
                     string urlRedirect = $"{urlServicioLogin}/LoginSharepoint?urlInicio={RequestUrl}&usuario={UsuarioActual.UsuarioID}";
 
@@ -11616,8 +11627,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         enlace = (string)Session.GetString("EnlaceDocumentoAgregar");
                     }
                 }
-
-                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace, oneDrivePermitido))
                 {
                     string urlRedirect = $"{urlServicioLogin}/LoginSharepoint?urlInicio={RequestUrl}&usuario={UsuarioActual.UsuarioID}";
 
@@ -11700,8 +11712,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         enlace = (string)Session.GetString("EnlaceDocumentoAgregar");
                     }
                 }
-
-                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace, oneDrivePermitido))
                 {
                     string urlRedirect = $"{urlServicioLogin}/LoginSharepoint?urlInicio={RequestUrl}&usuario={UsuarioActual.UsuarioID}";
 
@@ -11772,8 +11785,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         enlace = (string)Session.GetString("EnlaceDocumentoAgregar");
                     }
                 }
-
-                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace))
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace, oneDrivePermitido))
                 {
                     string urlRedirect = $"{urlServicioLogin}/LoginSharepoint?urlInicio={RequestUrl}&usuario={UsuarioActual.UsuarioID}";
 

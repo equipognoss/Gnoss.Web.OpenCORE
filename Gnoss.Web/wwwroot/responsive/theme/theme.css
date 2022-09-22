@@ -2021,7 +2021,7 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .fichaRecurso .col-contenido .contenido {word-wrap: break-word;}
 .fichaRecurso .col-contenido .contenido .grupo { padding-top: 5px; padding-bottom: 5px; position: relative; }
 
-.fichaRecurso .col-contenido .contenido .grupo table {width: 100% !important;max-width: 100% !important;table-layout: fixed;}
+.fichaRecurso .col-contenido .contenido .grupo table {width: 100% !important;max-width: 100% !important; /*table-layout: fixed;*/}
 .fichaRecurso .col-contenido .contenido .grupo table thead { }
 .fichaRecurso .col-contenido .contenido .grupo table thead > tr { border-bottom: 1px solid var(--c-gris-borde); }
 .fichaRecurso .col-contenido .contenido .grupo table thead > tr > th { font-size: 0.875rem; font-weight: 500; line-height: 21px; color: #555; letter-spacing: .28px; padding: 8px 0; }
