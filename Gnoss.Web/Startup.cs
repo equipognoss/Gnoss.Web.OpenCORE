@@ -326,6 +326,7 @@ namespace Gnoss.Web
             //var migrations = entity.Database.GetPendingMigrations();
             entity.Migrate();
             entityBASE.Migrate();
+            entityOauth.Migrate();
 
             string configLogStash = configService.ObtenerLogStashConnection();
             if (!string.IsNullOrEmpty(configLogStash))
