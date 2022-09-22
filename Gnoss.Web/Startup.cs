@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.MVC;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
+using Es.Riam.Gnoss.Web.OAuthAD;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.InterfacesOpenArchivos;
@@ -243,7 +244,9 @@ namespace Gnoss.Web
                         );
                 services.AddDbContext<EntityContextBASE, EntityContextBASEOracle>(options =>
                         options.UseOracle(baseConnection)
-
+                        );
+                services.AddDbContext<EntityContextOauth, EntityContextOauthOracle>(options =>
+                        options.UseOracle(baseConnection)
                         );
             }
             else if (bdType.Equals("2"))
@@ -262,7 +265,7 @@ namespace Gnoss.Web
                     opt.UseNpgsql(baseConnection);
 
                 });
-                services.AddDbContext<EntityContextOauth>(opt =>
+                services.AddDbContext<EntityContextOauth, EntityContextOauthPostgres>(opt =>
                 {
                     var builder = new NpgsqlDbContextOptionsBuilder(opt);
                     builder.SetPostgresVersion(new Version(9, 6));
