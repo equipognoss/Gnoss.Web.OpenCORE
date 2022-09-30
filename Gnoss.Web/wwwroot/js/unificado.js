@@ -26804,9 +26804,23 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
         if (url.value.length > 0 && url.value.match(regexURL)) {          
             let enlaceASubir = url.value;
             if (enlaceASubir.includes("riamlab.sharepoint.com") || enlaceASubir.includes("riamlab-my.sharepoint.com")) {
-                let urlDestino = $("#inpt_baseUrlBusqueda").val();
-                urlDestino = urlDestino + "/comprobar-token-sp?pLink=" + enlaceASubir + "&pTypeResourceSelected=1&pSkipRepeat="+omitirCompRep+"&pUrlPaginaSubir="+urlPaginaSubir;
-                window.location.href = urlDestino;
+                var oneDrive = $("#inpt_oneDrivePermitido").val();
+                if (enlaceASubir.includes("riamlab-my.sharepoint.com") && oneDrive == "False") {
+                    MostrarUpdateProgress();
+                    GnossPeticionAjax(urlPaginaSubir + '/selectresource', { TypeResourceSelected: 1, Link: url.value, SkipRepeat: omitirCompRep }, true).done(function (data) {
+                        panelResourceFileErrorMessage.append(data).show();
+                    }).fail(function (data) {
+                        document.getElementById("lblIntroducirURL").style.color = "Red";
+                    }).always(function () {
+                        OcultarUpdateProgress();
+                    });
+
+                    return true;
+                } else {
+                    let urlDestino = $("#inpt_baseUrlBusqueda").val();
+                    urlDestino = urlDestino + "/comprobar-token-sp?pLink=" + enlaceASubir + "&pTypeResourceSelected=1&pSkipRepeat=" + omitirCompRep + "&pUrlPaginaSubir=" + urlPaginaSubir;
+                    window.location.href = urlDestino;
+                }           
             } else {
                 MostrarUpdateProgress();
                 GnossPeticionAjax(urlPaginaSubir + '/selectresource', { TypeResourceSelected: 1, Link: url.value, SkipRepeat: omitirCompRep }, true).done(function (data) {

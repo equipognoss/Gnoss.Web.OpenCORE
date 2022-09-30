@@ -190,7 +190,17 @@ namespace Gnoss.Web.Controllers
         public string GuardarArchivoDesdeAPI(string url)
         {
             string urlCodificada = CodificarUrl(url);
-            string nombreFichero = ExtraerNombreFichero(urlCodificada);
+            string nombreFichero;
+
+            if (url.Contains("|||") && !string.IsNullOrEmpty(url.Split("|||")[1]))
+            {
+                nombreFichero = url.Split("|||")[1];
+            }
+            else
+            {
+                nombreFichero = ExtraerNombreFichero(urlCodificada);
+            }
+
             string peticion = $"{baseUrl}shares/{urlCodificada}/root/content";
             HttpWebRequest webRequest = null;
 

@@ -640,24 +640,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 claseYvista.CrearObjetos(diccionarioOntologias);
                 claseYvista.CrearRelaciones();
                 
-                foreach (var ontologiaPrimaria in PaginaModel.Templates)
+                foreach (var ontologiaPrincipal in PaginaModel.Templates)
                 {
                     try
                     {
-                        byte[] bytesOntologia = ObtenerOntologia(ontologiaPrimaria.OntologyID);
-                        byte[] bytesXmlOntologia = ObtenerXmlOntologia(ontologiaPrimaria.OntologyID);
+                        byte[] bytesOntologia = ObtenerOntologia(ontologiaPrincipal.OntologyID);
+                        byte[] bytesXmlOntologia = ObtenerXmlOntologia(ontologiaPrincipal.OntologyID);
 
                         Ontologia ontologia = new Ontologia(bytesOntologia);
-
-
-                        OntologiaGenerar contenedorOntologia = new OntologiaGenerar(ontologiaPrimaria.OntologyName, ontologia, bytesXmlOntologia, true, listaIdiomas, directorio);
+                        OntologiaGenerar contenedorOntologia = new OntologiaGenerar(ontologiaPrincipal.OntologyName, ontologia, bytesXmlOntologia, true, listaIdiomas, directorio);
 
                         claseYvista.CrearClases(contenedorOntologia);
                         claseYvista.CrearVistas(contenedorOntologia, ProyectoSeleccionado.NombreCorto);
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLogError(ex, $"error en la ontología {ontologiaPrimaria.OntologyName}");
+                        mLoggingService.GuardarLogError(ex, $"error en la ontología {ontologiaPrincipal.OntologyName}");
                         throw new Exception(ex.Message);
                     }
                 }
@@ -671,8 +669,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
 
                     Ontologia ontologia = new Ontologia(bytesOntologia);
-
                     OntologiaGenerar contenedorOntologia = new OntologiaGenerar(ontologiaSecundaria.OntologyName, ontologia, bytesXmlOntologia, false, listaIdiomas, directorio);
+
                     claseYvista.CrearClases(contenedorOntologia);
                 }
                 //claseYvista.ObtenerDLL(ProyectoSeleccionado.NombreCorto);
