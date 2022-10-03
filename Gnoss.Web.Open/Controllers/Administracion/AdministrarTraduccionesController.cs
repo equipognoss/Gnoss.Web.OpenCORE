@@ -63,7 +63,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
             modelo.URLActionCrearTexto = $"{baseUrl}crear";
-            modelo.URLActionEditarTexto = $"{baseUrl} editar";
+            modelo.URLActionEditarTexto = $"{baseUrl}editar";
             modelo.URLActionCrearEntradas = $"{baseUrl}crearentradas";
             modelo.URLActionEliminarEntradas = $"{baseUrl}eliminarentradas";
 
