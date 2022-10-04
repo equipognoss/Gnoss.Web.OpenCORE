@@ -138,7 +138,7 @@ const operativaMensajeriaGnoss = {
      * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-
+        operativaCrossDomainCookies.init();
         // Inicialización de botones (Select para selección de mensajes)        
         this.messageActionSelectAll = $(`#${pParams.actionButtons.idMessageActionSelectAll}`);
         this.messageActionSelectNone = $(`#${pParams.actionButtons.idMessageActionSelectNone}`);

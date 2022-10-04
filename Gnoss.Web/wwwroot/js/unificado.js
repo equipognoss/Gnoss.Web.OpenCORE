@@ -7,15 +7,21 @@
 
 // Permitir envío de Cookies a otro dominio
 $(document).ready(function () {
-    if (location.protocol == 'https:')
-        $.ajaxSetup({
-            crossDomain: true,
-            xhrFields: {
-                withCredentials: true
-            }
-        });
+    operativaCrossDomainCookies.init();
 });
 
+
+const operativaCrossDomainCookies = {
+    init: function () {
+        if (location.protocol == 'https:')
+            $.ajaxSetup({
+                crossDomain: true,
+                xhrFields: {
+                    withCredentials: true
+                }
+            });
+    }
+}
 
 /**
  * Operativa para detectar comportamiento de navegación cuando se pulsa en "Back Button" del navegador
