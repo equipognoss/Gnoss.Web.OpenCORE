@@ -71,7 +71,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             FacetadoCN facetaCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetaCN.FacetadoAD.TimeOutVirtuoso = 6000;
+            facetaCN.FacetadoAD.TimeOutVirtuoso = 12000;
             pOptions.OntologiaSeleccionada = HayOntologiaSeleccionada(pOptions);
             try
             {

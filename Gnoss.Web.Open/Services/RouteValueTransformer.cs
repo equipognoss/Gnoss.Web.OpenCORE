@@ -46,9 +46,9 @@ namespace Gnoss.Web.Services
                 values = new RouteValueDictionary();
                 string rutaPedida = "";
                 string idioma = "";
-                
+
                 string comunidadTxt = "";
-                    
+
                 string nombreCortoComunidad = "";
                 if (segmentos[0].Length == 2)
                 {
@@ -68,7 +68,7 @@ namespace Gnoss.Web.Services
                         {
                             nombreCortoComunidad = segmentos[2];
                             urlCorta = false;
-                        }                        
+                        }
                     }
 
                 }
@@ -89,7 +89,7 @@ namespace Gnoss.Web.Services
                     {
                         nombreCortoComunidad = segmentos[1];
                         urlCorta = false;
-                    }                   
+                    }
                 }
 
                 if (string.IsNullOrEmpty(nombreCortoComunidad) && string.IsNullOrEmpty(PROYECTO_DEFECTO))
@@ -106,16 +106,16 @@ namespace Gnoss.Web.Services
                         {
                             EntityContext entityContext = scope.ServiceProvider.GetRequiredService<EntityContext>();
                             string valor = entityContext.ParametroProyecto.Where(item => item.ProyectoID.Equals(proyectoDefectoID) && item.Parametro.Equals("ProyectoSinNombreCortoEnURL")).Select(item => item.Valor).FirstOrDefault();
-                            
+
                             if (!string.IsNullOrEmpty(valor) && valor.Equals("1"))
                             {
                                 PROYECTO_DEFECTO = entityContext.Proyecto.Where(proyecto => proyecto.ProyectoID.Equals(proyectoDefectoID)).Select(item => item.NombreCorto).FirstOrDefault();
                                 nombreCortoComunidad = PROYECTO_DEFECTO;
                             }
-                        }                        
+                        }
                     }
                 }
-                else if (!string.IsNullOrEmpty(PROYECTO_DEFECTO))
+                else if (string.IsNullOrEmpty(nombreCortoComunidad) && !string.IsNullOrEmpty(PROYECTO_DEFECTO))
                 {
                     nombreCortoComunidad = PROYECTO_DEFECTO;
                 }
@@ -275,7 +275,7 @@ namespace Gnoss.Web.Services
                 indiceRutaPedida = 1;
             }
 
-            while(indiceRutaPedida < pSegmentos.Length)
+            while (indiceRutaPedida < pSegmentos.Length)
             {
                 rutaPedida = $"{rutaPedida}/{pSegmentos[indiceRutaPedida]}";
                 indiceRutaPedida++;
