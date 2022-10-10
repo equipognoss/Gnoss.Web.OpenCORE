@@ -33,7 +33,5 @@ COPY --from=build-env /app/out .
 
 COPY --from=build-env /app/Gnoss.Web.Open/Views/ Views/
 
-COPY --from=build-env /app/Gnoss.Web.Enterprise/Views/ Views/
-
 ENTRYPOINT ["dotnet", "Gnoss.Web.dll"]
 
