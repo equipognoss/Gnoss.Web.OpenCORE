@@ -199,7 +199,7 @@ string privado = "";
             <div id="divContPanGadgets">
                 @foreach (GadgetModel gadget in ((List<GadgetModel>)FichaDocumento.Gadgets).OrderBy(gadget => gadget.Order))
                 {
-                    @Html.PartialView("ControlesMVC/_FichaGadget", gadget)
+                    @Html.PartialView("../Shared/ControlesMVC/_FichaGadget", gadget)
                 }
             </div>              
         }
