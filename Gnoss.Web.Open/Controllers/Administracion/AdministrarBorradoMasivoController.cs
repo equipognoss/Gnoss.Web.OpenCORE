@@ -69,8 +69,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Eliminar(BorradoMasivoViewModel pOptions)
         {
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);            
             FacetadoCN facetaCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            mServicesUtilVirtuosoAndReplication.UsarClienteTradicional = true;
             facetaCN.FacetadoAD.TimeOutVirtuoso = 12000;
             pOptions.OntologiaSeleccionada = HayOntologiaSeleccionada(pOptions);
             try
@@ -79,7 +80,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     string url = docCN.OntologiaSeleccionada(guid).Enlace.ToLower();
                     // Borro el grafo de la ontología
-                    string query = $"clear graph <{UrlIntragnoss}{url}>";
+                    string query = $"SPARQL clear graph <{UrlIntragnoss}{url}>";
 
                     string nombreConexionReplica = mConfigService.ObtenerVirtuosoEscritura().Value;
 
@@ -168,10 +169,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/var/lib/virtuoso/db/dumps/. Pruebo en /opt/virtuoso/database/dumps/");
+                try
+                {
+                    GuardarLogError(ex, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/var/lib/virtuoso/db/dumps/. Pruebo en /opt/virtuoso/database/dumps/");
 
-                querySetLoadList = $"ld_dir ('/opt/virtuoso/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
-                facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                    querySetLoadList = $"ld_dir ('/opt/virtuoso/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
+                    facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                }
+                catch (Exception exception)
+                {
+                    GuardarLogError(exception, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/database/dumps/. Pruebo en /opt/virtuoso-opensource/database/dumps/");
+
+                    querySetLoadList = $"ld_dir ('/opt/virtuoso-opensource/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
+                    facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                }
+
             }
             finally
             {

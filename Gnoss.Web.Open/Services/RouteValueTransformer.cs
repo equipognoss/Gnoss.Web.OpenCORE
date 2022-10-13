@@ -311,48 +311,55 @@ namespace Gnoss.Web.Services
 
         private static void CargarRutasProyecto(string pNombreCortoProyecto, ConfigService pConfigService, IServiceScopeFactory pServiceScopeFactory)
         {
+
             lock (DICTIONARY_PROJECT_TABS)
             {
                 using (var scope = pServiceScopeFactory.CreateScope())
                 {
-                    EntityContext entityContext = scope.ServiceProvider.GetRequiredService<EntityContext>();
-                    LoggingService loggingService = scope.ServiceProvider.GetRequiredService<LoggingService>();
-                    RedisCacheWrapper redisCacheWrapper = scope.ServiceProvider.GetRequiredService<RedisCacheWrapper>();
-                    VirtuosoAD virtuosoAD = scope.ServiceProvider.GetRequiredService<VirtuosoAD>();
-
-                    ProyectoCL proyectoCL = new ProyectoCL(entityContext, loggingService, redisCacheWrapper, pConfigService, virtuosoAD, null);
-                    Guid proyectoID = Guid.Empty;
-                    proyectoID = proyectoCL.ObtenerProyectoIDPorNombreCorto(pNombreCortoProyecto);
-                    var listTabsDB = entityContext.ProyectoPestanyaMenu.Where(item => item.ProyectoID.Equals(proyectoID) && !string.IsNullOrEmpty(item.Ruta) && !item.TipoPestanya.Equals((short)TipoPestanyaMenu.EnlaceInterno) && !item.TipoPestanya.Equals((short)TipoPestanyaMenu.EnlaceExterno)).Select(item => new { item.PestanyaID, item.TipoPestanya, item.Ruta }).ToList();
                     List<PestanyaRouteModel> listTabs = new List<PestanyaRouteModel>();
-                    foreach (var tab in listTabsDB)
+                    if (!string.IsNullOrEmpty(pNombreCortoProyecto))
                     {
-                        string[] rutas = tab.Ruta.Split("|||");
-                        foreach (string ruta in rutas)
+                        EntityContext entityContext = scope.ServiceProvider.GetRequiredService<EntityContext>();
+                        LoggingService loggingService = scope.ServiceProvider.GetRequiredService<LoggingService>();
+                        RedisCacheWrapper redisCacheWrapper = scope.ServiceProvider.GetRequiredService<RedisCacheWrapper>();
+                        VirtuosoAD virtuosoAD = scope.ServiceProvider.GetRequiredService<VirtuosoAD>();
+
+                        ProyectoCL proyectoCL = new ProyectoCL(entityContext, loggingService, redisCacheWrapper, pConfigService, virtuosoAD, null);
+                        List<Guid> proyectoYProyectoSuperiorID = new List<Guid>();
+
+                        proyectoYProyectoSuperiorID = proyectoCL.ObtenerProyectoYProyectoSuperiorIDs(pNombreCortoProyecto);
+
+                        var listTabsDB = entityContext.ProyectoPestanyaMenu.Where(item => proyectoYProyectoSuperiorID.Contains(item.ProyectoID) && !string.IsNullOrEmpty(item.Ruta) && !item.TipoPestanya.Equals((short)TipoPestanyaMenu.EnlaceInterno) && !item.TipoPestanya.Equals((short)TipoPestanyaMenu.EnlaceExterno)).Select(item => new { item.PestanyaID, item.TipoPestanya, item.Ruta }).ToList();
+
+
+                        foreach (var tab in listTabsDB)
                         {
-                            if (!string.IsNullOrEmpty(ruta))
+                            string[] rutas = tab.Ruta.Split("|||");
+                            foreach (string ruta in rutas)
                             {
-                                PestanyaRouteModel pestanyaRouteModel = new PestanyaRouteModel();
-                                if (ruta.Contains("@"))
+                                if (!string.IsNullOrEmpty(ruta))
                                 {
-                                    string[] ruta_idioma = ruta.Split("@");
-                                    pestanyaRouteModel.Idioma = ruta_idioma[1];
-                                    pestanyaRouteModel.PestanyaID = tab.PestanyaID;
-                                    pestanyaRouteModel.RutaPestanya = ruta_idioma[0];
-                                    pestanyaRouteModel.TipoPestanya = tab.TipoPestanya;
+                                    PestanyaRouteModel pestanyaRouteModel = new PestanyaRouteModel();
+                                    if (ruta.Contains("@"))
+                                    {
+                                        string[] ruta_idioma = ruta.Split("@");
+                                        pestanyaRouteModel.Idioma = ruta_idioma[1];
+                                        pestanyaRouteModel.PestanyaID = tab.PestanyaID;
+                                        pestanyaRouteModel.RutaPestanya = ruta_idioma[0];
+                                        pestanyaRouteModel.TipoPestanya = tab.TipoPestanya;
+                                    }
+                                    else
+                                    {
+                                        pestanyaRouteModel.Idioma = "";
+                                        pestanyaRouteModel.PestanyaID = tab.PestanyaID;
+                                        pestanyaRouteModel.RutaPestanya = ruta;
+                                        pestanyaRouteModel.TipoPestanya = tab.TipoPestanya;
+                                    }
+                                    listTabs.Add(pestanyaRouteModel);
                                 }
-                                else
-                                {
-                                    pestanyaRouteModel.Idioma = "";
-                                    pestanyaRouteModel.PestanyaID = tab.PestanyaID;
-                                    pestanyaRouteModel.RutaPestanya = ruta;
-                                    pestanyaRouteModel.TipoPestanya = tab.TipoPestanya;
-                                }
-                                listTabs.Add(pestanyaRouteModel);
                             }
                         }
                     }
-
                     DICTIONARY_PROJECT_TABS.Add(pNombreCortoProyecto, listTabs);
                 }
             }

@@ -38,9 +38,9 @@
     @* Opción Descargar Recurso *@
     @if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Imagen || fichaRecurso.TypeDocument == Es.Riam.Gnoss.Web.MVC.Models.ResourceModel.DocumentType.FicheroServidor)
     {
-        <li>
+        <li class="download-resource">
             @* Recurso a descargar *@
-            <a id="op_Download" class="btn btn-primary" href="@fichaRecurso.UrlDocument">
+            <a id="op_Download" class="btn btn-primary class btnDownload" href="@fichaRecurso.UrlDocument">
                 <span class="material-icons">get_app</span>
                 <span class="texto">@Html.GetText("HISTORIALVERSIONES", "DESCARGAR")</span>
             </a>
@@ -156,6 +156,89 @@
                     <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right" aria-labelledby="dropdownMasOpciones" style="">
                         <p class="dropdown-title">@Html.GetText("CONTROLESDOCUMENTACION", "ACCIONES")</p>
                         <ul class="no-list-style">
+                                                       
+                            @* El recurso no es descargable. Mostrar "Ir a Web" solo cuando el recurso sea de tipo Enlace *@                                
+                            if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Hipervinculo)
+                            {
+                                if (fichaRecurso.EsEnlaceSharepoint)
+                                {
+                                    @if (acciones.Edit)
+                                    {
+                                        //FRAN
+                                        <li>
+                                            <a id="op_GoToWeb_mobile" class="item-dropdown" href="@fichaRecurso.UrlDocument" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
+                                                <span class="material-icons">open_in_new</span>
+                                                <span class="texto">@Html.GetText("HISTORIALVERSIONES", "IRVERSIONCOLABORATIVA")</span>
+                                            </a>
+                                        </li>
+                                    }
+                                    <li>
+                                        <a id="op_DownloadSharepoint_mobile" class="item-dropdown" onclick="DescargarFicheroSharepoint()" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
+                                            <span class="material-icons">get_app</span>
+                                            <span class="texto">@Html.GetText("HISTORIALVERSIONES", "DESCARGARSHAREPOINT") @fichaRecurso.PublishDate.ToString("dd-MM-yyyy")</span>
+                                        </a>
+                                    </li>
+
+                                    @if (acciones.Edit && !fichaRecurso.EstaAlineadoConSharepoint)
+                                    {
+                                        <li>
+                                            <a id="op_AddCreateVersion_mobile" class="item-dropdown" onclick="CrearVersionRapidaEnlaceSharepoint();">
+                                                <span class="material-icons">file_copy</span>
+                                                <span class="texto">@Html.GetText("HISTORIALVERSIONES", "CREARVERSIONRAPIDA")</span>
+                                            </a>
+                                        </li>
+                                    }              
+                                }
+                                else
+                                {
+                                    <li>
+                                        <a id="op_AddCreateVersion_mobile" class="item-dropdown" href="@fichaRecurso.UrlDocument" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
+                                            <span class="material-icons">open_in_new</span>
+                                            <span class="texto">@Html.GetText("COMMON", "IRALAWEB")</span>
+                                        </a>
+                                    </li>
+                                }
+                            }
+                            
+
+                            @* Opción Editar Recurso*@
+                            @if (acciones.Edit && !fichaRecurso.EsEnlaceSharepoint)
+                            {
+                                <li>
+                                    <a id="op_Edit" class="btn btn-outline-grey" href="@Model.UrlEdit">
+                                        <span class="material-icons">mode_edit</span>
+                                        <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "EDITAR")</span>
+                                    </a>
+                                </li>
+                            }
+
+                            @* Opción Enviar Link del Recurso *@
+                            @if (acciones.SendLink && !fichaRecurso.EsEnlaceSharepoint)
+                            {
+                                @* Opción EnviarEnlace (Sólo visible para móviles ) *@
+                                <li>
+                                    <a id="op_SendLink_mobile" class="item-dropdown" 
+                                       onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionSendLink', this, 'modal-dinamic-content', '');"
+                                       data-toggle="modal" data-target="#modal-container">
+                                        <span class="material-icons">send</span>
+                                        <span class="texto">@Html.GetText("ENVIOENLACE", "ENVIARENLACE")</span>
+                                    </a>
+                                </li>  
+                            }
+
+                            @* Opción Añadir Etiquetas (Sólo visible para móviles ) *@
+                            @if (acciones.AddTags && !fichaRecurso.EsEnlaceSharepoint)
+                            {
+                                <li> CAMBIAR
+                                    <a id="op_AddTags_mobile" class="item-dropdown"
+                                       onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionAddTags', this, 'modal-dinamic-content', '');"
+                                       data-toggle="modal" data-target="#modal-container">
+                                        <span class="material-icons">label</span>
+                                        <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "AGREGARTAGS")</span>
+                                    </a>
+                                </li>
+                            }                       
+
                             @* Opción Editar Recurso*@
                             @if (acciones.Edit && fichaRecurso.EsEnlaceSharepoint)
                             {

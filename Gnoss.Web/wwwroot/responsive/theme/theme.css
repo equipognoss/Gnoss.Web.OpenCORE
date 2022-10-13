@@ -2111,9 +2111,11 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
     .header-resource { margin-bottom: 3px; }
     
     .fichaRecurso .col-contenido { padding-left: 8px; }
-    .fichaRecurso .col-contenido ul.acciones-recurso > li { display: none; }
+    /* No ocultar el botón de descargar recurso para móviles */
+    .fichaRecurso .col-contenido ul.acciones-recurso > li:not(.download-resource) { display: none; }
     .fichaRecurso .col-contenido ul.acciones-recurso > li:last-child { display: flex; }    
-    .fichaRecurso .col-contenido ul.acciones-recurso > li > a { font-size: 0; }
+    /* Mostrar el texto del botón de "Descargar recurso" para móviles */
+    .fichaRecurso .col-contenido ul.acciones-recurso > li > a:not(.btnDownload) { font-size: 0; }
     .fichaRecurso .col-contenido ul.acciones-recurso > li > a .material-icons { padding-right: 0; }
     .fichaRecurso .col--recurso .contenido .grupo { padding: 16px 26px; border-bottom: 1px solid var(--c-gris-borde); }
     .fichaRecurso .col--recurso .contenido .grupo .titulo-principal { display: flex; align-items: center; position: relative; }

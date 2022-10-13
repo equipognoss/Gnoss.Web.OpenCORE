@@ -5883,7 +5883,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             {
                                 if (((GadgetResourceListModel)gadgetModel).Resources != null && ((GadgetResourceListModel)gadgetModel).Resources.Count > 0)
                                 {
-                                    result.AddView("ControlesMVC/_FichaGadget", $"FichaGadget_{gadgetID}", gadgetModel);
+                                    result.AddView("../Shared/ControlesMVC/_FichaGadget", $"FichaGadget_{gadgetID}", gadgetModel);
                                 }
                                 else
                                 {
@@ -5894,7 +5894,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             {
                                 if (((GadgetCMSModel)gadgetModel).CMSComponent != null)
                                 {
-                                    result.AddView("ControlesMVC/_FichaGadget", $"FichaGadget_{gadgetID}", gadgetModel);
+                                    result.AddView("../Shared/ControlesMVC/_FichaGadget", $"FichaGadget_{gadgetID}", gadgetModel);
                                 }
                                 else
                                 {
