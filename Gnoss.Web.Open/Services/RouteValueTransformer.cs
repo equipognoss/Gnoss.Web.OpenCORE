@@ -50,6 +50,7 @@ namespace Gnoss.Web.Services
                 string comunidadTxt = "";
 
                 string nombreCortoComunidad = "";
+                UtilIdiomas utilIdiomas = null;
                 if (segmentos[0].Length == 2)
                 {
                     if (mConfigService.ObtenerListaIdiomasDictionary().ContainsKey(segmentos[0]))
@@ -58,7 +59,7 @@ namespace Gnoss.Web.Services
                         urlConIdioma = true;
                     }
 
-                    UtilIdiomas utilIdiomas = new UtilIdiomas(idioma, null, null, mConfigService);
+                    utilIdiomas = new UtilIdiomas(idioma, null, null, mConfigService);
                     comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
 
                     if (segmentos.Length > 2 && !string.IsNullOrEmpty(segmentos[2]))
@@ -81,7 +82,7 @@ namespace Gnoss.Web.Services
                     }
                     IDIOMA_DEFECTO = idioma;
 
-                    UtilIdiomas utilIdiomas = new UtilIdiomas(idioma, null, null, mConfigService);
+                    utilIdiomas = new UtilIdiomas(idioma, null, null, mConfigService);
                     comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
 
                     string comunidadSegmento = segmentos[0].ToLower();
@@ -90,6 +91,10 @@ namespace Gnoss.Web.Services
                         nombreCortoComunidad = segmentos[1];
                         urlCorta = false;
                     }
+                }
+                else
+                {
+                    utilIdiomas = new UtilIdiomas(idioma, null, null, mConfigService);
                 }
 
                 if (string.IsNullOrEmpty(nombreCortoComunidad) && string.IsNullOrEmpty(PROYECTO_DEFECTO))
@@ -168,6 +173,12 @@ namespace Gnoss.Web.Services
                 }
 
                 PestanyaRouteModel pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida));
+
+                if(pestanyaRouteModel == null)
+                {
+                    pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => rutaPedida.StartsWith(item.RutaPestanya) && (item.TipoPestanya.Equals((short)TipoPestanyaMenu.BusquedaSemantica) || (item.TipoPestanya.Equals((short)TipoPestanyaMenu.BusquedaAvanzada))));
+                }
+
                 if (pestanyaRouteModel != null)
                 {
                     switch (pestanyaRouteModel.TipoPestanya)
@@ -177,6 +188,14 @@ namespace Gnoss.Web.Services
                             values.Add("action", "Index");
                             values.Add("semanticos", "true");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
+                            if (segmentos.Contains(utilIdiomas.GetText("URLSEM", "CATEGORIA")))
+                            {
+                                int lugarCategoria = Array.IndexOf(segmentos, utilIdiomas.GetText("URLSEM", "CATEGORIA"));
+                                if (segmentos.Length >= lugarCategoria + 2 && Guid.TryParse(segmentos[lugarCategoria + 2], out Guid categoria))
+                                {
+                                    values.Add("categoria", segmentos[lugarCategoria + 2]);
+                                }
+                            }
                             break;
                         case (short)TipoPestanyaMenu.Recursos:
                             values.Add("controller", "Busqueda");

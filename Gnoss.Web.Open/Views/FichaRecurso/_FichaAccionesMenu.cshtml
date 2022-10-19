@@ -158,7 +158,7 @@
                         <ul class="no-list-style">
                                                        
                             @* El recurso no es descargable. Mostrar "Ir a Web" solo cuando el recurso sea de tipo Enlace *@                                
-                            if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Hipervinculo)
+                            @if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Hipervinculo)
                             {
                                 if (fichaRecurso.EsEnlaceSharepoint)
                                 {
@@ -204,8 +204,9 @@
                             @* Opción Editar Recurso*@
                             @if (acciones.Edit && !fichaRecurso.EsEnlaceSharepoint)
                             {
-                                <li>
-                                    <a id="op_Edit" class="btn btn-outline-grey" href="@Model.UrlEdit">
+                                 @* Opción EnviarEnlace (Sólo visible para móviles ) *@
+                                <li class="option_mobile">
+                                    <a id="op_Edit_mobile" class="item-dropdown" href="@Model.UrlEdit">
                                         <span class="material-icons">mode_edit</span>
                                         <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "EDITAR")</span>
                                     </a>
@@ -216,7 +217,7 @@
                             @if (acciones.SendLink && !fichaRecurso.EsEnlaceSharepoint)
                             {
                                 @* Opción EnviarEnlace (Sólo visible para móviles ) *@
-                                <li>
+                                <li class="option_mobile">
                                     <a id="op_SendLink_mobile" class="item-dropdown" 
                                        onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionSendLink', this, 'modal-dinamic-content', '');"
                                        data-toggle="modal" data-target="#modal-container">
@@ -229,7 +230,7 @@
                             @* Opción Añadir Etiquetas (Sólo visible para móviles ) *@
                             @if (acciones.AddTags && !fichaRecurso.EsEnlaceSharepoint)
                             {
-                                <li> CAMBIAR
+                                <li class="option_mobile">
                                     <a id="op_AddTags_mobile" class="item-dropdown"
                                        onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionAddTags', this, 'modal-dinamic-content', '');"
                                        data-toggle="modal" data-target="#modal-container">

@@ -102,24 +102,6 @@ string privado = "";
             }
             @* Mostrar Descripción del documento *@
             <div class="contenido">
-                @if(FichaDocumento.TypeDocument == ResourceModel.DocumentType.Video)
-                {
-                    if (FichaDocumento.UrlPreview.Contains("mp3"))
-                    {
-                        <audio controls>
-                            <source src="@FichaDocumento.UrlPreview" type="audio/mpeg">
-                        </audio>
-                    }
-                    else
-                    {
-                        string tipo = FichaDocumento.UrlPreview.Substring(FichaDocumento.UrlPreview.LastIndexOf("."));
-                        <video width="320" height="240" controls>
-                            <source src="@FichaDocumento.UrlPreview" type="video/@tipo">
-                        </video>
-                    }
-
-                }
-
                 @if (FichaDocumento.TypeDocument != ResourceModel.DocumentType.Semantico)
                 {
                     <div class="grupo grupo-principal">
