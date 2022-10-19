@@ -156,7 +156,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string queryCopiaGrafo = $"dump_one_graph_distinto_de_tipo('{UrlIntragnoss}{ProyectoSeleccionado.Clave}','{nombreArchivos}',1000000,'{nombreOnt}')";
             string queryBorradoGrafo = $"sparql clear graph <{UrlIntragnoss}{ProyectoSeleccionado.Clave}>";
             string queryDeleteLoadList = "delete from DB.DBA.load_list";
-            string querySetLoadList = $"ld_dir ('/opt/virtuoso/var/lib/virtuoso/db/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
+            string querySetLoadList = $"ld_dir ('./dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
             string queryLoaderRun = "rdf_loader_run()";
 
             facetaCN.ActualizarVirtuoso(queryCopiaGrafo, ProyectoSeleccionado.Clave.ToString(), true, 0);
@@ -171,19 +171,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 try
                 {
-                    GuardarLogError(ex, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/var/lib/virtuoso/db/dumps/. Pruebo en /opt/virtuoso/database/dumps/");
-
-                    querySetLoadList = $"ld_dir ('/opt/virtuoso/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
+                    GuardarLogError(ex, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/var/lib/virtuoso/db/dumps/ Pruebo en /opt/virtuoso/database/dumps/");
+                    querySetLoadList = $"ld_dir ('/opt/virtuoso/var/lib/virtuoso/db/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";                    
                     facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
                 }
                 catch (Exception exception)
                 {
-                    GuardarLogError(exception, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/database/dumps/. Pruebo en /opt/virtuoso-opensource/database/dumps/");
+                    try
+                    {
+                        GuardarLogError(exception, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/var/lib/virtuoso/db/dumps/. Pruebo en /opt/virtuoso/database/dumps/");
 
-                    querySetLoadList = $"ld_dir ('/opt/virtuoso-opensource/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
-                    facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                        querySetLoadList = $"ld_dir ('/opt/virtuoso/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
+                        facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                    }
+                    catch (Exception exception2)
+                    {
+                        GuardarLogError(exception2, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/database/dumps/. Pruebo en /opt/virtuoso-opensource/database/dumps/");
+
+                        querySetLoadList = $"ld_dir ('/opt/virtuoso-opensource/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
+                        facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                    }
                 }
-
             }
             finally
             {

@@ -108,8 +108,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             consumerData = mOAuthCN.ObtenerConsumerPorConsumerId(pModelo.ConsumerId).ConsumerData.FirstOrDefault();
             documentoCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, dataWrapperDocumentacion, false, false, false);
-
-            xmlModel.API = parmetroaAppGBD.ObtenerURLAPIV3();
+            
+            xmlModel.API = mConfigService.ObtenerUrlApi();
             xmlModel.DevEmail = usuarioCN.ObtenerEmailPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID);
             xmlModel.OntologyName = dataWrapperDocumentacion.ListaDocumento.FirstOrDefault()?.Titulo;
             xmlModel.ShortName = ProyectoSeleccionado.NombreCorto;

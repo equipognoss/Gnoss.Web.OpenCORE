@@ -6837,6 +6837,7 @@ null,
     pintarConcatenadores: true,
     max: limite,
     extraParams: {
+        identidad: $('input.inpt_identidadID').val(),
         pGrafo: grafo,
         pEntContenedora: entContenedora,
         pPropiedad: propiedad,

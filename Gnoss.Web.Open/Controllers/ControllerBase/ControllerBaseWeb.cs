@@ -254,7 +254,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             ObtenerCookieSesionUsuarioActiva();
 
             ObtenerCookieIdiomaActual(filterContext);
-
             if (Session.Get("Usuario") == null || (Session.Get<GnossIdentity>("Usuario")).EsUsuarioInvitado)
             {
                 //Carga la sesión desde la cookie si existe, si no existe redirige a la página de solicitar cookie al servicio de login para verificar si el usuario se había logueado antes en otro dominio
@@ -279,7 +278,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
             }
-
             if (Session.Get("Usuario") == null)
             {
                 //Si después de lo anterior no hay sesión de usuario, el usuario no se ha logueado en ningún dominio, le conecto como invitado
@@ -294,7 +292,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 
             // Si el usuario tiene que ir al Master, 
-          if (mControladorBase.UsuarioActual.UsarMasterParaLectura)
+            if (mControladorBase.UsuarioActual.UsarMasterParaLectura)
             {
                 mControladorBase.AgregarObjetoAPeticionActual("UsarMasterParaLectura", true);
             }
@@ -310,7 +308,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             base.OnActionExecuting(filterContext);
 
             mLoggingService.AgregarEntrada("TiemposMVC_OnActionExecuting_Inicio");
-
             if (ProyectoSeleccionado == null)
             {
                 if (!(filterContext.Controller is ErrorController))
@@ -471,7 +468,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             IncluirAvisoCookies(filterContext);
 
             ObtenerUrlSiguientePasoAsistenteNuevaComunidad();
-
             mLoggingService.AgregarEntrada("TiemposMVC_OnActionExecuting_Fin");
         }
 
@@ -774,7 +770,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private void ComprobarRedirecciones(ActionExecutingContext pFilterContext)
         {
             string urlPropiaProyecto = "";
-
             if (!BaseURL.Contains("depuracion") && !BaseURL.Contains("localhost"))
             {
                 if (ProyectoVirtual.FilaProyecto.URLPropia != null)
@@ -782,27 +777,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     urlPropiaProyecto = ProyectoVirtual.UrlPropia(IdiomaUsuario);
                 }
             }
-
             //Si ya se ha declarado una redirección, no seguimos comprobando, porque la vamos a sobreescribir.
             if (pFilterContext.Result == null)
             {
                 //Si el dominio es un proyecto con url propia, compruebo que el usuario no se está saliendo del proyecto
                 ComprobarRedireccionAMyGnoss(urlPropiaProyecto, pFilterContext);
-                mLoggingService.AgregarEntrada("Comprobada ComprobarRedireccionAMyGnoss");
             }
             if (pFilterContext.Result == null)
             {
                 //Comprueba si el usuario está intentando acceder a un proyecto con url propia, en cuyo caso le redirecciona a esa url
                 ComprobarRedireccionProyectoConUrlPropia(urlPropiaProyecto, pFilterContext);
-
-                mLoggingService.AgregarEntrada("Comprobada ComprobarRedireccionProyectoConUrlPropia");
             }
             if (pFilterContext.Result == null)
             {
                 //Comprueba si el usuario tiene acceso al proyecto. Si no es así le redirecciono a la home de la comunidad
                 ComprobarRedireccionHomeProyecto(pFilterContext);
 
-                mLoggingService.AgregarEntrada("Comprobada ComprobarRedireccionHomeProyecto");
             }
             if (pFilterContext.Result == null)
             {
@@ -819,12 +809,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 ComprobarRedireccionesUsuario(pFilterContext);
             }
-
             if (pFilterContext.Result == null && this.Request.Path.ToString().EndsWith("/login") && Request.Headers.ContainsKey("Referer"))
             {
                 // Si redirige a una página de login, agrega al final el redirect a la página de la que viene.
                 string urlRefferer = new Uri(Request.Headers["Referer"].ToString()).AbsolutePath;
-
+                mLoggingService.GuardarLogError("Entra en el ultimo if");
                 if (!string.IsNullOrEmpty(urlRefferer) && !string.IsNullOrEmpty(urlRefferer.TrimEnd('/')) && !urlRefferer.EndsWith("/login") && !urlRefferer.Contains("redirect") && !urlRefferer.EndsWith("/home") && !Request.Headers["Referer"].Equals(Comunidad.Url))
                 {
                     string redirect = ObtenerUrlRedirect(ref urlRefferer);
@@ -4837,12 +4826,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (!string.IsNullOrEmpty(UrlApiIntegracionContinua) && !string.IsNullOrEmpty(EntornoIntegracionContinua))
                 {
+                    GuardarLogError("Entra en la peticion para mandarla a IC");
                     pObjeto = EncapsularRutas(pObjeto);
                     if (!pTipoCambio.Contains("Facetas"))
                     {
                         pObjeto = EncapsularRutas(pObjeto);
                     }
                     string peticion = UrlApiIntegracionContinua + "/integracion/upload-changes";
+                    GuardarLogError("LA peticion es: " + peticion);
                     string requestParameters = $"User={mControladorBase.UsuarioActual.UsuarioID}&Project={ProyectoSeleccionado.Clave}&Environment={EntornoIntegracionContinua}&Type={pTipoCambio}&Content={System.Net.WebUtility.UrlEncode(pObjeto)}";
                     StringContent content = new StringContent(requestParameters, Encoding.UTF8, "application/x-www-form-urlencoded");
                     var response = mHttpClient.PostAsync(peticion, content);
@@ -4964,7 +4955,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 replaces.Add(ProyectoSeleccionado.UrlPropia(IdiomaUsuario), "[%%%_URL_PROJECT_%%%]");
             }
             replaces.Add(mControladorBase.BaseURLPersonalizacion, "[%%%_URL_PERSONALIZACION_%%%]");
-            replaces.Add(mControladorBase.BaseURLStatic, "[%%%_URL_STATIC_%%%]");
+            if (!replaces.ContainsKey(mControladorBase.BaseURLStatic))
+            {
+                replaces.Add(mControladorBase.BaseURLStatic, "[%%%_URL_STATIC_%%%]");
+            }
             replaces.Add(ProyectoSeleccionado.FilaProyecto.ProyectoID.ToString(), "[%%%_PROYECTO_ID_%%%]");
             if (!replaces.ContainsKey(mControladorBase.BaseURLContent))
             {

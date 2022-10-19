@@ -331,7 +331,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
                     contrPest.GuardarPestanyas(ListaPestanyas);
-
                     if (iniciado)
                     {
                         ListaPestanyas = ModificarOrdenPestanyas(paginaModelPestanyas, ListaPestanyas);
@@ -359,7 +358,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         mEntityContext.TerminarTransaccionesPendientes(false);
                     }
-
                     return GnossResultERROR(e.Message);
                 }
                 catch (Exception ex)

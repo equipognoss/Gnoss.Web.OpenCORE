@@ -624,7 +624,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string filtroPag = string.Empty;
             string urlReal = HttpUtility.UrlDecode(new Uri($"{Request.Scheme}://{Request.Host}{Request.Path}").AbsoluteUri).ToLower();
             string urlNueva = ProcesarUrlParaRedireccion(urlReal, "");
-            if (!urlNueva.ToLower().Equals(urlReal))
+            if (!urlNueva.Replace("https",Request.Scheme).ToLower().Equals(urlReal))
             {
                 return RedirigirAPaginaCon301(urlNueva);
             }
