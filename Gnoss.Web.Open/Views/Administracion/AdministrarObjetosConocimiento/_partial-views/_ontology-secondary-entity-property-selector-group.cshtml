@@ -1,0 +1,37 @@
+﻿@model SemanticPropertyModel
+@using Microsoft.AspNetCore.Mvc.Razor;
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra la propiedad de un elemento que forma parte de un objeto secundario cuando la propiedad es de tipo Selector Grupo.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@{
+    int count = 0;
+}
+    
+<div class="viewGroups">
+    <ul>
+        @foreach (string idOpcion in Model.Element.OpcionesSelectorGrupo.Keys)
+        {
+            string clase = "";
+                
+            if (count == 0)
+            {
+                clase = "class=\"activo\"";
+            }
+                
+            <li @Html.Raw(clase)><a onclick="SeleccOpcionTab(this, '@idOpcion');">@Model.Element.OpcionesSelectorGrupo[idOpcion]</a></li>
+                
+            count++;
+        }
+    </ul>
+</div>
+

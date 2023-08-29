@@ -44,7 +44,7 @@
     if (Model.Element.TipoGrupo == "subtitulo")
     {
         <h2 @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
-            @AddChildren()
+        @Html.Raw(@AddChildren())
             
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
         {
@@ -55,7 +55,7 @@
     else if (Model.Element.TipoGrupo == "titulo")
     {
         <h1 @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
-            @AddChildren()
+        @Html.Raw(@AddChildren())
             
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
         {
@@ -87,7 +87,7 @@
     else if (Model.Element.TipoGrupo == "dl")
     {
         <dl @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
-            @AddChildren()
+            @Html.Raw(@AddChildren())
             
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
         {
@@ -98,7 +98,7 @@
     else
     {
         @Html.Raw("<" + Model.Element.TipoGrupo + idGrupo + claseGrupo + display + ">")
-        @AddChildren()
+        @Html.Raw(@AddChildren())
         
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
         {
@@ -110,7 +110,7 @@
 else
 {
     <div @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
-        @AddChildren()
+        @Html.Raw(@AddChildren())
         
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
         {
@@ -122,6 +122,7 @@ else
 @{
     string AddChildren()
     {
+        string devolver = "";
         if (!string.IsNullOrEmpty(Model.GroupInfo.GroupName))
         {
             string claseNombreGrupo = "";
@@ -133,16 +134,17 @@ else
 
             if (!string.IsNullOrEmpty(Model.GroupInfo.GroupNameTag))
             {
-                @Html.Raw("<" + Model.GroupInfo.GroupNameTag + claseNombreGrupo + ">" + Model.GroupInfo.GroupName + "</" + Model.GroupInfo.GroupNameTag + ">");
+                
+                devolver = "<" + Model.GroupInfo.GroupNameTag + claseNombreGrupo + ">" + Model.GroupInfo.GroupName + "</" + Model.GroupInfo.GroupNameTag + ">";
             }
             else
             {
-                @Html.Raw("<h" + Model.Depth + claseNombreGrupo + ">" + Model.GroupInfo.GroupName + "</h" + Model.Depth + ">");
+                devolver = "<h" + Model.Depth + claseNombreGrupo + ">" + Model.GroupInfo.GroupName + "</h" + Model.Depth + ">";
             }
 
             Model.Depth++;
         }
-        return string.Empty;
+        return devolver;
     }
 }
 @*@functions{

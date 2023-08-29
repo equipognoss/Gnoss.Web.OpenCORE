@@ -37,7 +37,7 @@ const operativaCrossDomainCookies = {
  * En ciertas páginas, se podían producir errores debido a que podían sobreescribir datos previos insertados: Ej: Creación de un recurso desde ckEditor
  * Esta operativa detecta este tipo de navegación y realiza una carga de la web
  */
- const operativaDetectarNavegacionBackButton = {
+const operativaDetectarNavegacionBackButton = {
     init: function() {
         this.iniciarComportamiento();
     },
@@ -109,7 +109,7 @@ const operativaFiltroRapido = {
                         that.isSearching = false
                     });
                 }
-                
+
             }, that.timeWaitingForUserToType);
         });
     },
@@ -1492,7 +1492,7 @@ var mostrarNumeroEtiquetas = {
 
 
 /**
- * Calcular y recortar la longitud de las facetas que aparecen en el panel izquierdo de "B�squedas". 
+ * Calcular y recortar la longitud de las facetas que aparecen en el panel izquierdo de "Búsquedas". 
  */
 var limiteLongitudFacetas = {
     init: function () {
@@ -1652,7 +1652,7 @@ var limpiarActividadRecienteHome = {
     },
 
     /**
-    * Limpiar el contenido de recursos o comentarios para que no aparezcan formatos HTML. Adem�s de acortarlos textos de comentarios (Vista preliminar)".
+    * Limpiar el contenido de recursos o comentarios para que no aparezcan formatos HTML. Además de acortarlos textos de comentarios (Vista preliminar)".
     */
     limpiar: function () {
         var that = this;
@@ -1687,7 +1687,7 @@ var limpiarActividadRecienteHome = {
                     var item = $(this);
                     var hasParrafos = false;
                     var parrafos = $('p', item);
-                    // Deprecado la funci�n size -> Usar propiedad length
+                    // Deprecado la función size -> Usar propiedad length
                     //if (parrafos.size() > 0) hasParrafos = true;                    
                     if (parrafos.length > 0) hasParrafos = true;
                     if (!hasParrafos) {
@@ -2313,7 +2313,7 @@ var desplegableGenerico = {
 }
 
 // Cambiado por antiguo front
-// Lo eliminar�
+// Lo eliminará
 /*var marcarPasosFormulario = {
 	init: function(){
 		this.config();
@@ -2502,12 +2502,12 @@ var presentacionVotosRecurso = {
     }
 }
 /**
- * Clase jquery para poder gestionar la aparici� y login de una vista modal para que el usuario haga login.
- * Aparecer� siempre y cuando el usuario realice una acci�n y no disponga de permisos para ejecutarla.
+ * Clase jquery para poder gestionar la aparición y login de una vista modal para que el usuario haga login.
+ * Aparecerá siempre y cuando el usuario realice una acción y no disponga de permisos para ejecutarla.
  * */
 var operativaLoginEmergente = {
     /**
-     * Acci�n que dispara directamente el panel modal de Login
+     * Acción que dispara directamente el panel modal de Login
      */
     init: function () {
         this.config();
@@ -2516,88 +2516,123 @@ var operativaLoginEmergente = {
         this.configEvents();
     },
     /*
-     * Acci�n de cerrar la vista modal 
+     * Acción de cerrar la vista modal 
      */
     closeModal: function () {
         $(this.idModalPanel).modal('toggle');
 		return;
     },
     /*
-     * Acci�n de mostrar la vista modal
+     * Acción de mostrar la vista modal
      * */
     showModal: function () {
-        $(this.idModalPanel).modal('show');
-        return;
+        // Cerrar el "modal container"
+        $("#modal-container").modal('hide');
+        let modalToShow = $(this.idModalPanel).length > 0 ? $(this.idModalPanel) : $(this.idModalRestrictedAccess);
+        modalToShow.modal('show');
     },
     /*
-     * Opciones de configuraci�n de la vista con el formulario modal
+     * Opciones de configuración de la vista con el formulario modal
      * */
     config: function () {
-        // Inicializar las vistas cuando est�n visibles
+        // Inicializar las vistas cuando están visibles
         // Panel Modal
-        this.idModalPanel = '#modal-login',
+        this.idModalPanel = '#modal-login';
+        this.idModalRestrictedAccess = "#modal-restringed-community-access";
         // Referencia al formulario
         this.idForm = '#formPaginaLogin';
+        this.formClassName = "formPaginaLogin"
         this.bodyClassNameRegistro = 'operativaRegistro';
 
-        // Captar el formulario Login si se est� en la p�gina Login. Si no est� en p�gina Login --> Coger el formulario del modal
-        this.form = this.isLoginCurrentPage ? $('body').find(this.idForm) : $(this.idModalPanel).find(this.idForm);
+        // Captar el formulario Login si se está en la página Login. Si no está en página Login --> Coger el formulario del modal
+        //this.form = this.isLoginCurrentPage ? $('body').find(this.idForm) : $(this.idModalPanel).find(this.idForm);
+        this.loginForms = $(`.${this.formClassName}`);
+        
 
         // Inputs y botones
-        this.idInputEmail = '#usuario_Login',
-        this.inputEmail = $(this.form).find(this.idInputEmail),
-        this.idInputPassword= '#password_login',    
-        this.inputPassword= $(this.form).find(this.idInputPassword),
-        this.idButtonLogin= '#btnSubmit',
-        this.buttonLogin= $(this.form).find(this.idButtonLogin),	
+        this.idInputEmail = '#usuario_Login';
+        this.inputEmailClassName = "usuario_Login";
+        //this.inputEmail = $(this.form).find(this.idInputEmail),
+        this.idInputPassword= '#password_login';
+        this.inputPasswordClassName = "password_login";
+        //this.inputPassword = $(this.form).find(this.idInputPassword);
+        this.idButtonLogin= '#btnSubmit';
+        this.buttonLoginClassName= 'btnSubmit';
+        //this.buttonLogin = $(this.form).find(this.idButtonLogin);
         // Paneles de error
-        this.idLoginPanelError= '#loginError .ko',
-        this.loginPanelError= $(this.form).find(this.idLoginPanelError),
-        this.idLoginPanelErrorTwice= '#logintwice .ko',
-        this.loginPanelErrorTwice= $(this.form).find(this.idLoginPanelErrorTwice),
-        this.idLoginErrorAutenticacionExterna = '#loginErrorAutenticacionExterna .ko',
-        this.loginErrorAutenticacionExterna = $(this.form).find(this.idLoginErrorAutenticacionExterna),
-        this.panelesError = [this.loginPanelError, this.loginPanelErrorTwice, this.loginErrorAutenticacionExterna];
+        //this.idLoginPanelError = '#loginError .ko';
+        //this.loginPanelError = $(this.form).find(this.idLoginPanelError);
+        this.loginPanelErrorClassName = "loginErrorKo";
+        //this.idLoginPanelErrorTwice = '#logintwice .ko';
+        this.loginPanelErrortwiceKoClassName = "logintwiceKo";
+        //this.loginPanelErrorTwice = $(this.form).find(this.idLoginPanelErrorTwice);
+        //this.idLoginErrorAutenticacionExterna = '#loginErrorAutenticacionExterna .ko';
+        //this.loginErrorAutenticacionExterna = $(this.form).find(this.idLoginErrorAutenticacionExterna);
+        this.loginErrorAutenticacionExternaClassName = "loginErrorAutenticacionExternaKo"
+        //this.panelesError = [this.loginPanelError, this.loginPanelErrorTwice, this.loginErrorAutenticacionExterna];
+        this.panelesError = $(".ko");
+        // Formulario actual usado
+        this.currentLoginFormUsed = undefined;
     },
 
     /**
-    * Configuraci�n de los eventos (clicks, focus) de los inputs del panel/formulario  
+    * Configuración de los eventos (clicks, focus) de los inputs del panel/formulario  
     */
     configEvents: function () {
         // Referencia al 'emergente panel login'
         const that = this;
 
-        // Bot�n Login
-        this.buttonLogin.click(function (event) {
+        // Botón Login
+        $(`.${this.buttonLoginClassName}`).click(function (event) {
             // Ocultar por defecto posibles mensajes de error
-            that.panelesError.forEach(panelError => panelError.hide());
+            $.each(that.panelesError, function() {
+                $(this).hide();
+            });                            
             // Hacer login solo si los datos han sido introducidos
-            if (that.validarCampos() == true) {
+            const loginButton = $(this);
+            const currentForm = loginButton.closest(`.${that.formClassName}`);
+            if (that.validarCampos(loginButton) == true) {
                 // Mostrar loading
-                MostrarUpdateProgress();
-                that.form.submit();
+                MostrarUpdateProgress();                
+                currentForm.submit();
             } else {
-                that.loginPanelError.show();
+                const loginPanelError = currentForm.find(`.${that.loginPanelErrorClassName}`);
+                loginPanelError.show();
             }
         });
 
         // Input Password (Hacer login si se pulsa "Enter" desde input password)
+        /*
         this.inputPassword.keypress(function (event) {
             event.keyCode === 13 ? that.buttonLogin.click() : null
+        });
+        */
+        
+        $(`.${this.inputPasswordClassName}`).keypress(function(event){
+            const inputPassword = $(this);
+            const currentForm = inputPassword.closest(`.${that.formClassName}`);
+            if (event.keyCode === 13){
+                const buttonLogin = currentForm.find(`.${that.buttonLoginClassName}`);
+                buttonLogin.click();
+            } 
         });
 
     },
  
     /**
-    * Comprobar que los campos (email y password) no est�n vac�os
+    * Comprobar que los campos (email y password) no están vacíos
     * @returns {bool}    
     */
-    validarCampos: function () {
-        return (this.inputEmail.val() != '' && this.inputPassword.val() != '');
+    validarCampos: function (loginButton) {        
+        // Encontrar el formulario desde el que se está haciendo la validación o el Login
+        const currentForm = loginButton.closest(`.${this.formClassName}`);
+        const inputEmail = currentForm.find(`.${this.inputEmailClassName}`);   
+        const inputPassWord = currentForm.find(`.${this.inputPasswordClassName}`);     
+        return (inputEmail.val() != '' && inputPassWord.val() != '');
     },
 
     /**
-    * Comprobar si la p�gina actual es la p�gina principal de Login de una comunidad
+    * Comprobar si la página actual es la página principal de Login de una comunidad
     * Se puede saber comprobando si se dispone de una clase en el Login concreta    
     * @returns {bool}    
     */
@@ -2606,33 +2641,40 @@ var operativaLoginEmergente = {
     },
 
     /**
-    * Gest�n de los Hash que hac�a en la p�gina Login anterior -> Gesti�n de errores
-    * Solo ha de ejecutarse cuando el usuario se encuentre en la p�gina Login
+    * Gestán de los Hash que hacía en la página Login anterior -> Gestión de errores
+    * Solo ha de ejecutarse cuando el usuario se encuentre en la página Login
     */
     doHashManagement: function () {
+        const that = this;        
+        
+        const loginPanelError = $(`.${that.loginPanelErrorClassName}`);
+        const loginPanelErrorTwice = $(`.${that.loginPanelErrortwiceKoClassName}`);
+        const loginPanelErrorAutenticacionExterna = $(`.${that.loginErrorAutenticacionExternaClassName}`);
+                       
         if (this.isLoginCurrentPage()) {
             if (ObtenerHash() == '#error') {
-                this.loginPanelError.show();
+                //this.loginPanelError.show();                                
+                loginPanelError.show();
             }
             else if (ObtenerHash().indexOf('&') > 0) {
                 var mensajeError = ObtenerHash().split('&')[1];
                 if (mensajeError != '') {
-                    $('#mensajeError').text(mensajeError);
-                    this.loginPanelError.show();
+                    //$('#mensajeError').text(mensajeError);
+                    loginPanelError.show();
                 }
             }
             else if (document.location.href.endsWith('logintwice')) {
-                this.loginPanelErrorTwice.show();
+                loginPanelErrorTwice.show();
             }
             if (ObtenerHash() == '#errorAutenticacionExterna') {
-                this.loginErrorAutenticacionExterna.show();
+                loginPanelErrorAutenticacionExterna.show();
             }
         }        
     },
 };
 
 /**
- * Comprobar si el bot�n de may�sculas est� activado
+ * Comprobar si el botón de mayúsculas está activado
  *
  * @param {Object} e A keypress event
  * @returns {Boolean} isCapsLock
@@ -2667,12 +2709,12 @@ function isCapsLock(e) {
 
 /**
  * Clase jquery para poder gestionar el proceso de registro de un usuario
- * Este proceso en cuesti�n se encarga de la gesti�n del paso 1 de registro del usuario
+ * Este proceso en cuestión se encarga de la gestión del paso 1 de registro del usuario
  * Ej: Proceso de registro al acceder a la url: http://depuracion.net/comunidad/gnoss-developers-community/hazte-miembro
  * */
 const operativaRegistroUsuarioPaso1 = {    
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
@@ -2680,10 +2722,10 @@ const operativaRegistroUsuarioPaso1 = {
     },
 
     /*
-     * Opciones de configuraci�n de la vista con todas los inputs necesarios para realizar el registro del usuario
+     * Opciones de configuración de la vista con todas los inputs necesarios para realizar el registro del usuario
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas    
+        // Inicialización de las vistas
         this.txtFechaNac = $(`#${pParams.idTxtFechaNac}`);
         this.txtFechaNacDia = $(`#${pParams.idTxtFechaNacDia}`);
         this.txtFechaNacMes = $(`#${pParams.idTxtFechaNacMes}`);
@@ -2734,12 +2776,12 @@ const operativaRegistroUsuarioPaso1 = {
             ComprobarEmailUsuario(that.currentUrl);
         });   
 
-        // Input para Contrase�a (Quitar foco del input)
+        // Input para Contraseña (Quitar foco del input)
         this.txtContrasenya.blur(function () {
             ComprobarCampoRegistroMVC(that.nombreCampoTxtContrasenya);
         });
 
-        // Configuraci�n del datepicker
+        // Configuración del datepicker
         this.txtFechaNac.datepicker({
             changeMonth: true,
             changeYear: true,
@@ -2913,13 +2955,13 @@ const operativaSolicitudCreacionComunidad = {
 };
 
 /**
- * Clase para poder gestionar la edici�n de perfil de un usuario en la comunidad
+ * Clase para poder gestionar la edición de perfil de un usuario en la comunidad
  * 
  * */
  const operativaEditarPerfilUsuario = {
 
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      * @param {any} pParams
      */
     init: function (pParams) {
@@ -2928,12 +2970,12 @@ const operativaSolicitudCreacionComunidad = {
     },
 
     /**
-     * Opciones de configuraci�n de la vista (recoger ids para poder interactuar)
+     * Opciones de configuración de la vista (recoger ids para poder interactuar)
      * @param {any} pParams
      */
     config: function (pParams) {
 
-        // Inicializaci�n de las vistas
+        // Inicialización de las vistas
         this.deleteProfileImage = $(`#${pParams.perfilPersonal.idDeleteProfileImage}`),
         this.name = $(`#${pParams.perfilPersonal.idName}`);
         this.lastName = $(`#${pParams.perfilPersonal.idLastName}`);
@@ -2960,11 +3002,11 @@ const operativaSolicitudCreacionComunidad = {
         this.websiteOrganization = $(`#${pParams.perfilPersonal.idWebsiteOrganization}`);
         this.addressOrganization = $(`#${pParams.perfilPersonal.idAddressOrganization}`);
               
-        // Edici�n secci�n Bio (CV)
+        // edición sección Bio (CV)
         this.description = $(`#${pParams.curriculum.idDescription}`);
         this.tags = $(`#${pParams.curriculum.idTags}`);
 
-        //Edici�n secci�n Redes Sociales
+        //edición sección Redes Sociales
         this.urlUsuario = $(`#${pParams.redesSociales.idUrlUsuario}`);
         this.tblRedesSociales = $(`#${pParams.redesSociales.idTblRedesSociales}`);
         this.btnRedSocial = $(`#${pParams.redesSociales.idBtnRedSocial}`);
@@ -2972,7 +3014,7 @@ const operativaSolicitudCreacionComunidad = {
         this.facebookSocial = $(`#${pParams.redesSociales.idFacebookSocial}`);
         this.linkedinSocial = $(`#${pParams.redesSociales.idLinkedinSocial}`);       
 
-        // Se utilizar� la clase ya que hay muchos elementos para borrar (bot�n papelera con clase btnBorrarURL)
+        // Se utilizará la clase ya que hay muchos elementos para borrar (botón papelera con clase btnBorrarURL)
         this.classBorrarURL = pParams.redesSociales.idBtnBorrarUrl;
         this.btnBorrarUrl = $(`.${pParams.redesSociales.idBtnBorrarUrl}`);
 
@@ -2984,7 +3026,7 @@ const operativaSolicitudCreacionComunidad = {
         this.urlPersonalProfileSaveSocialWebs = pParams.others.urlPersonalProfileSaveSocialWebs;
         this.urlImagenAnonima = pParams.others.urlImagenAnonima;
 
-        // Inputs que NO podr�n quedar vac�os
+        // Inputs que NO podrán quedar vacíos
         this.inputsNoEmpty = [this.name,
             this.lastName,
             this.email,
@@ -3003,9 +3045,9 @@ const operativaSolicitudCreacionComunidad = {
     },
 
     /**
-     * Validar que los campos aqu� mencionados no est�n vac�os
-     * @param {any} inputs: Array de inputs para ser recorridos y verificar que ninguno de los aqu� indicados est�n vac�os
-     * @returns {bool}: Devolver� true o false siempre y cuando los inputs pasados sean diferente de vac�o
+     * Validar que los campos aquí mencionados no están vacíos
+     * @param {any} inputs: Array de inputs para ser recorridos y verificar que ninguno de los aquí indicados están vacíos
+     * @returns {bool}: Devolverá true o false siempre y cuando los inputs pasados sean diferente de vacío
      */
     validarCampos: function (inputs) {
         let areInputsOK = false;
@@ -3028,10 +3070,10 @@ const operativaSolicitudCreacionComunidad = {
     },
 
     /**
-     * Mostrar el panel informativo con un mensaje de error o ko. Si los dos son falsos, el panel quedar� oculto
+     * Mostrar el panel informativo con un mensaje de error o ko. Si los dos son falsos, el panel quedará oculto
      * @param {boolean} showOK: Si se desea mostrar el mensaje de OK
      * @param {boolean} showError: Si se desea mostrar el mensaje KO
-     * @param {string} message: El mensaje que ir� en el panel informativo
+     * @param {string} message: El mensaje que irá en el panel informativo
      */
     showInfoPanelErrorOrOK: function (showOK, showError, message) {
         const that = this;
@@ -3056,7 +3098,7 @@ const operativaSolicitudCreacionComunidad = {
     },
 
     /**
-     * Configuraci�n de los eventos de los elementos html (click, focus...)
+     * Configuración de los eventos de los elementos html (click, focus...)
      * */
     configEvents: function (pParams) {
         const that = this;
@@ -3068,7 +3110,7 @@ const operativaSolicitudCreacionComunidad = {
             that.eliminarImagenPerfil();
         });
 
-        // Valor cambiado de inputs -> Avisar al usuario con sobreado rojo (o quitarlo) si es vac�o campo obligatorio
+        // Valor cambiado de inputs -> Avisar al usuario con sobreado rojo (o quitarlo) si es vacío campo obligatorio
         this.inputsNoEmpty.forEach(input => {
             input.on("change", function () {
                 if ($(this).val().length == 0) {                    
@@ -3079,24 +3121,24 @@ const operativaSolicitudCreacionComunidad = {
             });
         });
 
-        // Bot�n de guardado de los datos
+        // Botón de guardado de los datos
         this.saveButton.on("click", function () {            
             if (that.validarCampos(that.inputsNoEmpty)) {
-                // Guardar secci�n de datos personales (Nombre, Apellidos)
+                // Guardar sección de datos personales (Nombre, Apellidos)
                 that.savePersonalDataProfile();
-                // Guardar secci�n de Curriculum (Tags, Descripcion)
+                // Guardar sección de Curriculum (Tags, Descripcion)
                 that.saveBioUserProfile(true);            
             } 
         });
 
-        // Bot�n click para añadir url del input en perfil del usuario
+        // Botón click para añadir url del input en perfil del usuario
         this.btnRedSocial.on("click", function () {
             that.addSocialWebsFromInputToTable(that.urlUsuario.val());
             // Vaciar el input rellenado
             that.urlUsuario.val('');
         });
 
-        // Pulsaci�n Enter para guardado de URL en perfil de usuario
+        // Pulsación Enter para guardado de URL en perfil de usuario
         this.urlUsuario.keypress(function (event) {
             if (event.keyCode === 13) {
                 that.addSocialWebsFromInputToTable(that.urlUsuario.val());
@@ -3104,7 +3146,7 @@ const operativaSolicitudCreacionComunidad = {
             }
         });
 
-        // Bot�n/Icono de papelera para borrar una red social-web
+        // Botón/Icono de papelera para borrar una red social-web
         $(document).on("click", `.${that.classBorrarURL}`, function () {
             const urlName = $(this).data("urlname");
             // Detectar si es twitter, facebook o linkedin y eliminarlo del input correspondiente
@@ -3199,13 +3241,13 @@ const operativaSolicitudCreacionComunidad = {
      },
 
     /**
-     * Acci�n de guardar los datos del perfil del secci�n 'Datos Personales' (Nombre, Apellidos...)
+     * Acción de guardar los datos del perfil del sección 'Datos Personales' (Nombre, Apellidos...)
      * */
     savePersonalDataProfile: function () {
         const that = this;
         // Mostrado de Loading
         MostrarUpdateProgress();
-        // Construcci�n de objeto formData
+        // Contrucción de objeto formData
         const dataPost = new FormData();
         dataPost.append('peticionAJAX', true);
 
@@ -3221,7 +3263,7 @@ const operativaSolicitudCreacionComunidad = {
             dataPost.append($(this).attr('name'), valor);
         });
 
-        // Realizar petici�n de guardado de datos personales del perfil del usuario        
+        // Realizar petición de guardado de datos personales del perfil del usuario        
         GnossPeticionAjax(this.urlPersonalProfileSaveProfile, dataPost, true, false)
             .done(function (data) {
                 //GuardadoCVRapido('OK'); 
@@ -3241,18 +3283,18 @@ const operativaSolicitudCreacionComunidad = {
     },
 
     /**
-     * Acci�n de guardar los datos del perfil del usuario, secci�n 'Curriculum' (Tags, Descripci�n)   
+     * Acción de guardar los datos del perfil del usuario, sección 'Curriculum' (Tags, Descripción)
      * */
 
     /**     
-     * @param {boolean} isNecessaryToHaveTagsAndDescription: El API exige que haya al menos una descripci�n y un Tag para el guardado de estos datos. Tenerlo en cuenta. 
-     * La idea es quitar esta restricci�n tal y como se ha comentado a Juan (29-06-2021)
+     * @param {boolean} isNecessaryToHaveTagsAndDescription: El API exige que haya al menos una descripción y un Tag para el guardado de estos datos. Tenerlo en cuenta. 
+     * La idea es quitar esta restricción tal y como se ha comentado a Juan (29-06-2021)
      */
     saveBioUserProfile: function (isNecessaryToHaveTagsAndDescription) {
 
         const that = this;
 
-        // Controlar que los items existan en la web (Organizaci�n no los suele cargar)
+        // Controlar que los items existan en la web (Organización no los suele cargar)
         if (this.tags.length > 0 && this.description.length > 0) {
             if (isNecessaryToHaveTagsAndDescription == true) {
                 if (this.tags.val().length <= 1 && this.description.val().length == 0) {
@@ -3266,7 +3308,7 @@ const operativaSolicitudCreacionComunidad = {
         MostrarUpdateProgress();
 
         
-        // Construcci�n del objeto POST
+        // Contrucción del objeto POST
         const dataPost = {
             Description: that.description.val(),                       
             Tags: that.tags.val()
@@ -3343,9 +3385,9 @@ const operativaSolicitudCreacionComunidad = {
     },
 
     /**
-     * Mostrar la url reci�n agregada en la tabla correspondiente de urls del usuario al haber sido agregada habiendo pulsado en el bot�n "A�adir"
-     * @param {any} data: Nombre de la url. No se refiere a la URL o direcci�n de la web a�adida, sino al nombre propiamente dicho
-     * @param {any} url: Url a�adida por el usuario
+     * Mostrar la url recién agregada en la tabla correspondiente de urls del usuario al haber sido agregada habiendo pulsado en el botón "Añadir"
+     * @param {any} data: Nombre de la url. No se refiere a la URL o dirección de la web añadida, sino al nombre propiamente dicho
+     * @param {any} url: Url añadida por el usuario
      */
     montarUrlRedSocial: function (data, url) {
         const htmlFila = `
@@ -3364,8 +3406,8 @@ const operativaSolicitudCreacionComunidad = {
     },
 
     /**
-     * Acci�n de eliminar una URL del servidor y tambi�n de la tabla de url del usuario     
-     * @param {any} btnDeleteUrl: Bot�n de borrado pulsado
+     * Acción de eliminar una URL del servidor y también de la tabla de url del usuario     
+     * @param {any} btnDeleteUrl: Botón de borrado pulsado
      */
     eliminarUrlRedSocial: function (btnDeleteUrl) {
         const that = this;
@@ -3375,7 +3417,7 @@ const operativaSolicitudCreacionComunidad = {
 
         // Mostrar Loading
         MostrarUpdateProgress();
-        // Construcci�n del objeto dataPost
+        // Contrucción del objeto dataPost
         const dataPost = {
             callback: "EliminarRedSocial",
             nombreRed: nombreRed,
@@ -3445,22 +3487,22 @@ const operativaSolicitudCreacionComunidad = {
 };
 
 /**
- * Clase jquery para poder gestionar la solicitud de cambio de contrase�a de un usuario
+ * Clase jquery para poder gestionar la solicitud de cambio de contraseña de un usuario
  * 
  * */
 const operativaSolicitarCambiarContrasenia = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista con el formulario modal
+     * Opciones de configuración de la vista con el formulario modal
      * */
     config: function (pParams) {
-        // Inicializaci�n de IDS de las vistas        
+        // Inicialización de IDS de las vistas
         this.idTxtOldPassword = "#txtOldPassword";
         this.idTxtNewPassword = "#txtNewPassword";
         this.idTxtConfirmedPassword = "#txtConfirmedPassword";
@@ -3477,7 +3519,7 @@ const operativaSolicitarCambiarContrasenia = {
         this.okClass = "alert-success";
         this.errorClass = "alert-danger";
 
-        // Inicializaci�n de las vistas        
+        // Inicialización de las vistas
         this.txtOldPassword = $(this.idTxtOldPassword);
         this.txtConfirmedPassword = $(this.idTxtConfirmedPassword);
         this.txtNewPassword = $(this.idTxtNewPassword);
@@ -3490,8 +3532,8 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-    * Comprobar que los campos (password old, password new y password confirmado ) no est�n vac�os
-    * Comprobar que los password new y confirmado son iguales. En caso contrario, mostrar� un error
+    * Comprobar que los campos (password old, password new y password confirmado ) no están vacíos
+    * Comprobar que los password new y confirmado son iguales. En caso contrario, mostrará un error
     * @returns {bool}    
     */
     validarCampos: function () {
@@ -3507,7 +3549,7 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-    * Configuraci�n de los eventos 
+    * Configuración de los eventos 
     */
     configEvents: function () {
         // Referencia al objeto
@@ -3515,18 +3557,18 @@ const operativaSolicitarCambiarContrasenia = {
 
         // Input Password Confirmado ENTER
         this.txtConfirmedPassword.keypress(function (event) {
-            // Avisar con un mensaje si est�n activadas las may�sculas del teclado
+            // Avisar con un mensaje si están activadas las mayúsculas del teclado
             isCapsLock(event) ? that.warningPanel.fadeIn("slow") : that.warningPanel.fadeOut("slow");
             event.keyCode === 13 ? that.btnCambiarPassword.click() : null
         });
 
-        // Bot�n de Aceptar - Solicitar cambio de contrase�a         
+        // Botón de Aceptar - Solicitar cambio de contraseña         
         this.btnCambiarPassword.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideErrorPanels();
             // Hacer login solo si los datos han sido introducidos
             if (that.validarCampos() == true) {
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 that.cambiarPassword();
             } else {
                 that.passwordEmptyPanel.fadeIn("slow");
@@ -3549,20 +3591,20 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-     * Funci�n para realizar la petici�n del cambio de contrase�a solicitado por el usuario
+     * Función para realizar la petición del cambio de contraseña solicitado por el usuario
      * */
     cambiarPassword: function () {
         // Referencia al objeto
         const that = this;
         this.btnCambiarPassword.hide();
         MostrarUpdateProgress();
-        // Construcci�n del objeto con los passwords
+        // Contrucción del objeto con los passwords
         const params = {
             OldPassword: that.txtOldPassword.val(),
             NewPassword: that.txtNewPassword.val(),
             ConfirmedPassword: that.txtConfirmedPassword.val(),
         };
-        // Realizar la petici�n de cambio de password
+        // Realizar la petición de cambio de password
         GnossPeticionAjax(that.urlPasswordRequest, params, false)
             .done(function () {
                 // Ocultar posibles paneles de error
@@ -3586,7 +3628,7 @@ const operativaSolicitarCambiarContrasenia = {
                 that.passwordRequestInfoPanel.html(html);
                 // Mostrar el mensaje de error o de success
                 that.passwordRequestInfoPanel.fadeIn("slow");
-                // Mostrar de nuevo el bot�n para solicitar cambio de contrase�a
+                // Mostrar de nuevo el botón para solicitar cambio de contraseña
                 that.btnCambiarPassword.fadeIn("slow");
                 // Vaciar los inputs
                 that.emptyInputs();
@@ -3596,23 +3638,23 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-     * Funci�n ejecutada desde cambiarPassword 
+     * Función ejecutada desde cambiarPassword 
      * @param {any} param
      * @param {any} url
      */
     getParam: function (param, url) {
-        /* Buscar a partir del signo de interrogaci�n ? */
+        /* Buscar a partir del signo de interrogación ? */
         url = String(url.match(/\?+.+/));
-        /* limpiar la cadena quit�ndole el signo ? */
+        /* limpiar la cadena quitándole el signo ? */
         url = url.replace("?", "");
         /* Crear un array con parametro=valor */
         url = url.split("&");
         /*
         Recorrer el array url
-        obtener el valor y dividirlo en dos partes a trav�s del signo =
+        obtener el valor y dividirlo en dos partes a través del signo =
         0 = parametro
         1 = valor
-        Si el par�metro existe devolver su valor
+        Si el parámetro existe devolver su valor
         */
         x = 0;
         while (x < url.length) {
@@ -3738,7 +3780,12 @@ Plugin de CKEditor simplificado. Se activará sobre cualquier input que tenga la
                 let toolbarHeight = 31;
 
                 // Si hay texto o imagenes no hacer nada
-                const spanItems = settings.$ckEditor.document.getBody().find("span").$.length != undefined ? settings.$ckEditor.document.getBody().find("span").$.length : 0;
+                let spanItems = '';
+                // Evitar posibles errores en la creación de instancias del ckEditor
+                if (settings.$ckEditor.document == undefined) {
+                    return;
+                }
+                spanItems = settings.$ckEditor.document.getBody().find("span").$.length != undefined ? settings.$ckEditor.document.getBody().find("span").$.length : 0;                
                 const textItems = settings.$ckEditor.document.getBody().getText().length;
                 const editItems = spanItems + textItems;
 
@@ -3950,25 +3997,25 @@ var operativaFechasFacetas = {
 
 
 /**
- * Clase jquery para poder gestionar la "peticion" de solicitud de cambio de contrase�a de un usuario
- * Este tipo de petici�n es ejecutada cuando el usuario ha solicitado cambio de contrase�a (por olvido), ha recibido un email y ha accedido a esa url para 
- * proceder a cambiar su contrase�a
+ * Clase jquery para poder gestionar la "peticion" de solicitud de cambio de contraseña de un usuario
+ * Este tipo de petición es ejecutada cuando el usuario ha solicitado cambio de contraseña (por olvido), ha recibido un email y ha accedido a esa url para 
+ * proceder a cambiar su contraseña
  * 
  * */
 const operativaPeticionCambiarContrasenia = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista con el formulario modal
+     * Opciones de configuración de la vista con el formulario modal
      * */
     config: function (pParams) {
 
-        // Inicializaci�n de las vistas    
+        // Inicialización de las vistas
         this.txtLogin = $(`#${pParams.idTxtLogin}`);
         this.txtPasswordNueva = $(`#${pParams.idTxtPasswordNueva}`);
         this.txtPasswordConfirmar = $(`#${pParams.idTxtPasswordConfirmar}`);
@@ -3993,9 +4040,9 @@ const operativaPeticionCambiarContrasenia = {
         this.urlPasswordRequest = pParams.urlPasswordRequest;
         this.urlRejectPasswordRequest = pParams.urlRejectPasswordRequest;
 
-        // Comprobaci�n que los inputs han sido rellenados
+        // Comprobación que los inputs han sido rellenados
         this.areInputsFilled = false;
-        // Comprobaci�n que las contrase�as coinciden
+        // Comprobación que las contraseñas coinciden
         this.arePasswordsTheSame = false;
 
 
@@ -4005,15 +4052,15 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-    * Comprobar que los campos (password old, password new y password confirmado ) no est�n vac�os
-    * y que las contrase�as introducidas coinciden
+    * Comprobar que los campos (password old, password new y password confirmado ) no están vacíos
+    * y que las contraseñas introducidas coinciden
     * @returns {bool}    
     */
     validarCampos: function () {
 
         if (this.txtLogin.val() != '' && this.txtPasswordNueva.val() != '' && this.txtPasswordConfirmar.val() != '') {
             this.areInputsFilled = true;
-            // Comprobar que las contrase�as introducidas son iguales
+            // Comprobar que las contraseñas introducidas son iguales
             if (this.txtPasswordNueva.val() === this.txtPasswordConfirmar.val()) {
                 this.arePasswordsTheSame = true;
             } else {
@@ -4023,33 +4070,33 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-    * Configuraci�n de los eventos 
+    * Configuración de los eventos 
     */
     configEvents: function () {
         // Referencia al objeto
         const that = this;
 
-        // Input Password - Control de may�sculas
+        // Input Password - Control de mayúsculas
         this.txtPasswordNueva.keypress(function (event) {
-            // Avisar con un mensaje si est�n activadas las may�sculas del teclado
+            // Avisar con un mensaje si están activadas las mayúsculas del teclado
             isCapsLock(event) ? that.bloqMayInfoPanel.fadeIn() : that.bloqMayInfoPanel.fadeOut();
         });
 
-        // Input Password Confirmar - Control de may�sculas + Enter
+        // Input Password Confirmar - Control de mayúsculas + Enter
         this.txtPasswordConfirmar.keypress(function (event) {
-            // Avisar con un mensaje si est�n activadas las may�sculas del teclado
+            // Avisar con un mensaje si están activadas las mayúsculas del teclado
             isCapsLock(event) ? that.bloqMayInfoPanel.fadeIn() : that.bloqMayInfoPanel.fadeOut();
             event.keyCode === 13 ? that.btnCambiarPassword.click() : null
         });
 
-        // Bot�n de Aceptar - Solicitar cambio de contrase�a         
+        // Botón de Aceptar - Solicitar cambio de contraseña         
         this.btnCambiarPassword.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideErrorPanels();
             // Hacer login solo si los datos han sido introducidos
             that.validarCampos();
             if (that.arePasswordsTheSame == true && that.areInputsFilled == true) {
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 //that.cambiarPassword();
                 that.cambiarPassword();
             } else {
@@ -4068,7 +4115,7 @@ const operativaPeticionCambiarContrasenia = {
         });
 
 
-        // Link/ Bot�n de cancelar solicitud de cambio de contrase�a
+        // Link/ Botón de cancelar solicitud de cambio de contraseña
         this.btnRechazarPeticionCambiarPassword.click(function () {
             that.rechazarPeticion();
         });
@@ -4092,24 +4139,24 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-     * B�scar los par�metros mandados por URL.
-     * Este m�todo es llamado desde la funci�n que realiza la petici�n de cambio de password
+     * Buscar los parámetros mandados por URL.
+     * Este método es llamado desde la función que realiza la petición de cambio de password
      * @param {any} param: 
-     * @param {any} url: Url a la que se realiza la petici�n para cambio de contrase�a
+     * @param {any} url: Url a la que se realiza la petición para cambio de contraseña
      */
     getParam: function (param, url) {
-        /* Buscar a partir del signo de interrogaci�n ? */
+        /* Buscar a partir del signo de interrogación ? */
         url = String(url.match(/\?+.+/));
-        /* limpiar la cadena quit�ndole el signo ? */
+        /* limpiar la cadena quitándole el signo ? */
         url = url.replace("?", "");
         /* Crear un array con parametro=valor */
         url = url.split("&");
         /*
         Recorrer el array url
-        obtener el valor y dividirlo en dos partes a trav�s del signo =
+        obtener el valor y dividirlo en dos partes a través del signo =
         0 = parametro
         1 = valor
-        Si el par�metro existe devolver su valor
+        Si el parámetro existe devolver su valor
         */
         x = 0;
         while (x < url.length) {
@@ -4122,21 +4169,21 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-     * Funci�n para realizar la petici�n del cambio de contrase�a solicitado por el usuario
+     * Función para realizar la petición del cambio de contraseña solicitado por el usuario
      * */
     cambiarPassword: function () {
         // Referencia al objeto
         const that = this;
         this.btnCambiarPassword.hide();
         MostrarUpdateProgress();
-        // Construcci�n del objeto con los passwords
+        // Contrucción del objeto con los passwords
         const dataPost = {
             User: that.txtLogin.val(),
             Password: that.txtPasswordNueva.val(),
             PasswordConfirmed: that.txtPasswordConfirmar.val(),
         }
 
-        // Realizar la petici�n de cambio de password
+        // Realizar la petición de cambio de password
         GnossPeticionAjax(that.urlPasswordRequest, dataPost, true)
             .done(function () {
                 // Ocultar posibles paneles de error
@@ -4150,7 +4197,7 @@ const operativaPeticionCambiarContrasenia = {
                 if (transfer != undefined) {
                     location.href = transfer;
                 }
-                // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contrase�a
+                // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contraseña
                 that.panelCambioPassword.remove()
             })
             .fail(function (html) {
@@ -4171,7 +4218,7 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-     * Funci�n para cancelar o rechazar la solicitud de cambio de contrase�a.
+     * Función para cancelar o rechazar la solicitud de cambio de contraseña.
      * */
     rechazarPeticion: function () {
         const that = this;
@@ -4180,7 +4227,7 @@ const operativaPeticionCambiarContrasenia = {
         this.hideErrorPanels();
 
         GnossPeticionAjax(this.urlRejectPasswordRequest, null, true).done(function () {
-            // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contrase�a
+            // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contraseña
             that.panelCambioPassword.remove()
             that.btnCambiarPassword.remove()
             // Mostrar mensaje de cancelar la solicitud de cambio de password
@@ -4194,14 +4241,14 @@ const operativaPeticionCambiarContrasenia = {
 };
 
 /**
- * Clase jquery para poder realizar env�os de invitaciones a una comunidad y de links de recursos (desde la ficha de recurso) a correos o contactos de una comunidad.
- * Para acceder a esta vista se acceder� 
+ * Clase jquery para poder realizar envíos de invitaciones a una comunidad y de links de recursos (desde la ficha de recurso) a correos o contactos de una comunidad.
+ * Para acceder a esta vista se accederá 
  *  - Desde la propia ficha de recurso (Enviar Link)
  *  - Panel lateral del usuario si dispone de permisos en la comunidad para enviar invitaciones 
  * */
 const operativaEnviarResource_Link_Community_Invitation = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
@@ -4212,10 +4259,10 @@ const operativaEnviarResource_Link_Community_Invitation = {
         }
     },
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas  
+        // Inicialización de las vistas
         this.txtFiltro = $(`#${pParams.idTxtFiltro}`);
         this.txtFiltroGrupos = $(`#${pParams.idTxtFiltroGrupos}`);
         this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);
@@ -4235,14 +4282,14 @@ const operativaEnviarResource_Link_Community_Invitation = {
         this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);
         this.panelInfoInvitationSent = $(`#${pParams.idPanelInfoInvitationSent}`);
 
-        // Campos especiales para env�o de link (idioma & notas/mensaje)                
+        // Campos especiales para envío de link (idioma & notas/mensaje)                
         this.txtNotas = $(`#${pParams.idTxtNotas}`);
         this.dllIdioma = $(`#${pParams.idDlIdioma}`);
 
         // Paneles de error/info
         this.panelesInfo = [this.panelInfoInvitationSent];
 
-        // Url necesarias para realizar petici�n        
+        // Url necesarias para realizar petición        
         this.urlSend = pParams.urlSend;
     },
 
@@ -4254,23 +4301,23 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
 
-        // Bot�n de Aceptar - Solicitar link para cambio de contrase�a
+        // Botón de Aceptar - Solicitar link para cambio de contraseña
         this.btnEnviarInvitaciones.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideInfoPanels();
             // Comprobar que el input de invitados (el oculto que almacena los ids al menos tiene emails o contactos)
             if (that.validarCampos()) {
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 that.enviarInvitacion_EnlaceSubmit();
             }
         });
 
-        // Bot�n de A�adir correo 
+        // Botón de Añadir correo 
         this.buttonLitAniadirCorreo.click(function () {
             let listaCorreos = that.txtCorreoAInvitar.val().trim().replace(/^\s*|\s*$/g, "").split(",");
             for (var i = 0; i < listaCorreos.length; i++) {
@@ -4306,15 +4353,15 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Acci�n que se ejecuta cuando se realice una b�squeda escribiendo el nombre de un usuario y al pulsar en uno de los resultados devueltos por autocomplete.
-     * Con los datos devueltos, construir� el item y lo  meter� en "panContenedorInvitados". *@
+     * Acción que se ejecuta cuando se realice una búsqueda escribiendo el nombre de un usuario y al pulsar en uno de los resultados devueltos por autocomplete.
+     * Con los datos devueltos, construirá el item y lo  meterá en "panContenedorInvitados". *@
      * @param {any} ficha
      * @param {any} nombre: El nombre del usuario seleccionado
      * @param {any} identidad: La identidad del item seleccionado
-     * @param {boolean} isAnEmail: Valor que indicar� si lo que se est� intentando a�adir es un contacto (normal) o un email de un usuario
+     * @param {boolean} isAnEmail: Valor que indicará si lo que se está intentando añadir es un contacto (normal) o un email de un usuario
      */
     crearInvitado: function (ficha, nombre, identidad, isAnEmail) {
-        // Item que se a�adir� como elemento seleccionado
+        // Item que se añadirá como elemento seleccionado
         let itemHtml = "";
 
         if (!isAnEmail) {
@@ -4324,16 +4371,16 @@ const operativaEnviarResource_Link_Community_Invitation = {
             itemHtml += `<span class="tag-remove material-icons">close</span>`;
             itemHtml += `</div>`;
             itemHtml += `</div>`;
-            // A�adir la identidad al input de invitados
+            // Añadir la identidad al input de invitados
             this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${identidad}`);
         } else {
             // Construyo correos separados por comas
             const correos = this.txtCorreoAInvitar.val().split(',');
-            // Validar si son correos v�lidos     
+            // Validar si son correos válidos     
             for (let i = 0; i < correos.length; i++) {
                 if (correos[i] != '') {
                     if (!validarEmail(correos[i].replace(/^\s*|\s*$/g, ""))) {
-                        // No es email v�lido, muestra mensaje de error
+                        // No es email válido, muestra mensaje de error
                         this.lblInfoCorreo.html(form.emailValido);
                         this.lblInfoCorreo.parent().parent().fadeIn();
                         return;
@@ -4342,7 +4389,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
                     }
                 }
             }
-            // Recorrer array de correos para ser a�adidos a la vista
+            // Recorrer array de correos para ser añadidos a la vista
             for (let i = 0; i < correos.length; i++) {
                 if (correos[i] != '') {
                     let data_item = correos[i].replace(/\@/g, '_');
@@ -4353,21 +4400,21 @@ const operativaEnviarResource_Link_Community_Invitation = {
                     itemHtml += `<span class="tag-remove material-icons">close</span>`;
                     itemHtml += `</div>`;
                     itemHtml += `</div>`;
-                    // A�adir el correo al input de invitados
+                    // Añadir el correo al input de invitados
                     this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${correos[i].replace(/^\s*|\s*$/g, "")}`);
                 }
             }
         }
 
-        // A�adir el item en el contenedor de destinatarios
+        // Añadir el item en el contenedor de destinatarios
         this.listaDestinatarios.append(itemHtml);
 
-        // Ocultar el panel de "No destinatarios" ya que hay a�adidos
+        // Ocultar el panel de "No destinatarios" ya que hay añadidos
         this.noDestinatarios.fadeOut();
 
         // Vaciamos el input donde se ha introducido al usuario
         isAnEmail ? this.txtCorreoAInvitar.val('') : this.txtFiltro.val('');
-        // Quitamos posible mensaje de error de correo a�adido
+        // Quitamos posible mensaje de error de correo añadido
         this.lblInfoCorreo.val('');
         this.lblInfoCorreo.hide();
 
@@ -4377,8 +4424,8 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Acción que se ejecuta cuando se realice una b�squeda escribiendo el nombre de un grupo de la comunidad y se seleccione un item de resultados devueltos por autocomplete.
-     * Con los datos devueltos, construir� el item y lo  meter� en "panContenedorInvitados". *@     
+     * Acción que se ejecuta cuando se realice una búsqueda escribiendo el nombre de un grupo de la comunidad y se seleccione un item de resultados devueltos por autocomplete.
+     * Con los datos devueltos, construirá el item y lo  meterá en "panContenedorInvitados". *@
      * @param {any} nombre: El nombre del usuario seleccionado
      * @param {any} identidad: La identidad del item seleccionado     
      */
@@ -4393,10 +4440,10 @@ const operativaEnviarResource_Link_Community_Invitation = {
         itemHtml += `</div>`;
         itemHtml += `</div>`;
 
-        // A�adir la identidad al input de grupos    
+        // Añadir la identidad al input de grupos    
         this.txtHackGrupos.val(`${this.txtHackGrupos.val()}&${identidad}`);
 
-        // A�adir el item en el contenedor de grupos
+        // Añadir el item en el contenedor de grupos
         this.listaGrupos.append(itemHtml);
 
         // Vaciamos el input donde se ha introducido el grupo a buscar
@@ -4404,30 +4451,30 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Acci�n que eliminar� a un elemento al pulsar sobre su (x). Desaparecer� del contenedor y del input oculto que contiene
-     * los items seleccionados para el env�o de la solicitud
+     * Acción que eliminará a un elemento al pulsar sobre su (x). Desaparecerá del contenedor y del input oculto que contiene
+     * los items seleccionados para el envío de la solicitud
      * @param {any} fichaId             
      */
     eliminarUsuario: function (fichaId, identidad) {
 
-        // Eliminar la identidad al input construyendo el nuevo valor que tomar�
+        // Eliminar la identidad al input construyendo el nuevo valor que tomará
         let newTxtHackInvitados = this.txtHackInvitados.val().replace('&' + identidad, '');
         this.txtHackInvitados.val(newTxtHackInvitados);
 
-        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electr�nicos)
+        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electrónicos)
         let data_item = identidad.replace(/\@/g, '_');
         data_item = data_item.replace(".", '_');
         const itemToDelete = $(`*[data-item="${data_item}"]`);
         itemToDelete.remove();
 
-        // Comprobar si hay items para mostrar u ocultar mensaje de "Ning�n destinatario..."
+        // Comprobar si hay items para mostrar u ocultar mensaje de "Ningún destinatario..."
         const numItems = this.listaDestinatarios.children().length;
         numItems >= 1 ? this.noDestinatarios.hide() : this.noDestinatarios.show();
     },
 
     /**
-         * Acci�n que eliminar� a un elemento al pulsar sobre su (x). Desaparecer� del contenedor y del input oculto que contiene
-         * los items seleccionados para el env�o de la solicitud
+         * Acción que eliminará a un elemento al pulsar sobre su (x). Desaparecerá del contenedor y del input oculto que contiene
+         * los items seleccionados para el envío de la solicitud
          * @param {any} fichaId             
          */
     eliminarGrupo: function (fichaId, identidad) {
@@ -4436,7 +4483,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
         let newTxtHackInvitados = this.txtHackGrupos.val().replace('&' + identidad, '');
         this.txtHackGrupos.val(newTxtHackInvitados);
 
-        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electr�nicos)
+        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electrónicos)
         let data_item = identidad.replace(/\@/g, '_');
         data_item = data_item.replace(".", '_');
         const itemToDelete = $(`*[data-item="${data_item}"]`);
@@ -4444,17 +4491,17 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Configuraci�n del servicio autocomplete para el input buscador de nombres
-     * Se pasaran los par�metros necesarios los cuales se han obtenido de la vista
+     * Configuración del servicio autocomplete para el input buscador de nombres
+     * Se pasaran los parámetros necesarios los cuales se han obtenido de la vista
      * @param {any} autoCompleteParams
      */
     configAutocompleteService(autoCompleteParams) {
         const that = this;
 
-        // Objeto que albergar� los extraParams para el servicio autocomplete
+        // Objeto que albergará los extraParams para el servicio autocomplete
         let extraParams = {};
 
-        // Configuraci�n de extraParams dependiendo isEcosistemasinMetaProyecto
+        // Configuración de extraParams dependiendo isEcosistemasinMetaProyecto
         if (autoCompleteParams.isEcosistemasinMetaProyecto) {
             extraParams = {
                 identidad: autoCompleteParams.identidad,
@@ -4469,7 +4516,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
                 proyecto: autoCompleteParams.proyecto,
             }
         }
-        // Configuraci�n del autocomplete para el input de b�squeda de nombres
+        // Configuración del autocomplete para el input de búsqueda de nombres
         this.txtFiltro.autocomplete(
             null,
             {
@@ -4490,15 +4537,15 @@ const operativaEnviarResource_Link_Community_Invitation = {
             }
         );
 
-        // Configuraci�n la acci�n select (cuando se seleccione un item de autocomplete)
+        // Configuración la acción select (cuando se seleccione un item de autocomplete)
         this.txtFiltro.result(function (event, data, formatted) {
             that.crearInvitado(null, data[0], data[1], false);
         });
     },
 
     /**
-         * Configuraci�n del servicio autocomplete para el input buscador de nombres de grupos de la comunidad
-         * Se pasaran los par�metros necesarios los cuales se han obtenido de la vista
+         * Configuración del servicio autocomplete para el input buscador de nombres de grupos de la comunidad
+         * Se pasaran los parámetros necesarios los cuales se han obtenido de la vista
          * @param {any} autoCompleteParams
          */
     configAutocompleteServiceForCommunityGroups(autoCompleteParams) {
@@ -4530,7 +4577,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
                 }
             });
 
-        // Configuraci�n la acci�n select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
+        // Configuración la acción select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
         this.txtFiltroGrupos.result(function (event, data, formatted) {
             that.crearGrupoInvitado(data[0], data[1]);
         });
@@ -4538,18 +4585,18 @@ const operativaEnviarResource_Link_Community_Invitation = {
 
     /**
     * Acción de envío de la invitación de la comunidad o del enlace
-    * Se disparará al pulsar el bot�n de "Enviar"
+    * Se disparará al pulsar el botón de "Enviar"
     */
     enviarInvitacion_EnlaceSubmit: function () {
         const that = this;
 
         MostrarUpdateProgress();
 
-        // Construcci�n del objeto dataPost
+        // Contrucción del objeto dataPost
         let dataPost = {};
-        // Construir la URL teniendo en cuenta el tipo de env�o
+        // Construir la URL teniendo en cuenta el tipo de envío
         let newUrlRequest = "";
-        //Tener en cuenta de si no existe el idioma -> Invitaci�n de comunidad
+        //Tener en cuenta de si no existe el idioma -> Invitación de comunidad
         if (this.dllIdioma.length == 0) {
             if (that.txtNotas.val() == undefined) {
                 dataPost = {
@@ -4599,15 +4646,15 @@ const operativaEnviarResource_Link_Community_Invitation = {
 };
 
 /**
- * Clase jquery para poder gestionar la suscripci�n de un usuario a las categor�as de una comunidad
+ * Clase jquery para poder gestionar la suscripción de un usuario a las categorías de una comunidad
  * Se puede acceder desde el panel lateral del usuario, pulsando en "Suscribirse".
- * Podr� elegir (mediante checkbox disponibles) las categor�as a las que suscribirse y si 
+ * Podrá elegir (mediante checkbox disponibles) las categorías a las que suscribirse y si 
  * desea recibir newsletters de forma diaria o semanal
  * */
 
 const operativaGestionarSuscripcionComunidad = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
@@ -4615,10 +4662,10 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas             
+        // Inicialización de las vistas
         this.chkRecibirBoletin = $(`#${pParams.idChkRecibirBoletin}`);
         this.panelFrecuenciaRecibirBoletin = $(`#${pParams.idPanelFrecuenciaRecibirBoletin}`);
         this.radioNameSuscription = $(`#${pParams.nameSuscripcion}`);
@@ -4633,7 +4680,7 @@ const operativaGestionarSuscripcionComunidad = {
         this.isFrequencyDaily = false;
         this.isFrequencyWeekly = false;
 
-        // Url necesaria a la que habr� que hacer la petici�n
+        // Url necesaria a la que habrá que hacer la petición
         this.urlRequestCommunitySubscription = pParams.urlRequestCommunitySubscription;
         // Paneles de info/error                                     
         this.panelesInfo = [this.panelInfoSuscripcionCategorias];
@@ -4651,7 +4698,7 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
@@ -4661,9 +4708,9 @@ const operativaGestionarSuscripcionComunidad = {
             this.chkRecibirBoletin.on("click", function () {
                 if ($(this).is(':checked')) {
                     that.panelFrecuenciaRecibirBoletin.fadeIn();
-                    // Dejar checked por defecto una opci�n del radioButton (si antes no se ha seleccionado nada)
+                    // Dejar checked por defecto una opción del radioButton (si antes no se ha seleccionado nada)
                     if (!that.rbtnSuscripcionDiaria.is(':checked') && !that.rbtnSuscripcionSemanal.is(':checked')) {
-                        // Dejar por defecto la opci�n diaria checkeada
+                        // Dejar por defecto la opción diaria checkeada
                         that.rbtnSuscripcionDiaria.prop("checked", true);
                     }
                 } else {
@@ -4671,9 +4718,9 @@ const operativaGestionarSuscripcionComunidad = {
                 }
             });
         }
-        // Bot�n de guardar cambios/enviar al servidor
+        // Botón de guardar cambios/enviar al servidor
         this.btnSaveSubscriptionPreferences.on("click", function () {            
-            // Comprobar los valores para el env�o
+            // Comprobar los valores para el envío
             that.checkRadioButtonsAndCheckValues();
             // Enviar los datos
             that.gestionSuscripcionComunidadSubmit();
@@ -4681,15 +4728,15 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /**
-     * M�todo para comprobar los checks y radioButtons para crear los valores booleanos
-     * para el env�o de datos al servidor
+     * Método para comprobar los checks y radioButtons para crear los valores booleanos
+     * para el envío de datos al servidor
      * Comprueba primero si existen los inputs y una vez comprobado, analiza los datos
      * */
     checkRadioButtonsAndCheckValues: function () {
         if (this.chkRecibirBoletin != undefined) {
             if (this.chkRecibirBoletin.is(':checked')) {
                 this.isReceivingNewsletters = true;
-                // Comprobaci�n diaria o semanal
+                // Comprobación diaria o semanal
                 this.rbtnSuscripcionDiaria.is(':checked') ? this.isFrequencyDaily = true : this.isFrequencyDaily = false;
                 this.rbtnSuscripcionSemanal.is(':checked') ? this.isFrequencyWeekly = true : this.isFrequencyWeekly = false;
             }
@@ -4699,8 +4746,8 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /**
-    * Acci�n de env�o de ajustes en suscripci�n de la comunidad
-    * Se disparar� al pulsar el bot�n de "Enviar"
+    * Acción de envío de ajustes en suscripción de la comunidad
+    * Se disipará al pulsar el botón de "Enviar"
      * */
     gestionSuscripcionComunidadSubmit: function () {
         const that = this;
@@ -4709,7 +4756,7 @@ const operativaGestionarSuscripcionComunidad = {
         MostrarUpdateProgress();
         // Ocultar posibles mensajes de info/error
         this.hideInfoPanels();
-        // Construcci�n del objeto para enviar datos
+        // Contrucción del objeto para enviar datos
         const dataPost = {
             SelectedCategories: that.txtHackCatTesSel.val(),
             ReceiveSubscription: that.isReceivingNewsletters,
@@ -4744,17 +4791,17 @@ const operativaGestionarSuscripcionComunidad = {
  * */
 const operativaSolicitarRecibirNewsletter = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de IDS de las vistas  
+        // Inicialización de IDS de las vistas  
         this.idChkRecibirNewsletter = pParams.chkRecibirNewsletter;
         this.idChkNoRecibirNewsletter = pParams.chkNoRecibirNewsletter;
         this.btnSubmitReceiveNewsletters = $(`#${pParams.btnSubmitReceiveNewsletters}`);
@@ -4762,7 +4809,7 @@ const operativaSolicitarRecibirNewsletter = {
         // Nombre de los inputs
         this.nameChkReceiveNewsletter = pParams.nameChkReceiveNewsletter;
 
-        // Inicializaci�n de las vistas 
+        // Inicialización de las vistas
         // Panel de posibles mensajes
         this.chkRecibirNewsletterNameInfoPanel = $(`#${pParams.chkRecibirNewsletterNameInfoPanel}`);
 
@@ -4770,10 +4817,10 @@ const operativaSolicitarRecibirNewsletter = {
         this.okClass = "alert-success";
         this.errorClass = "alert-danger";
 
-        // Url necesaria a la que habr� que hacer la petici�n
+        // Url necesaria a la que habrá que hacer la petición
         this.urlRequestReceiveNewsletters = pParams.urlRequestReceiveNewsletters;
 
-        // Inicializaci�n de las vistas        
+        // Inicialización de las vistas
         this.panelesInfo = [this.chkRecibirNewsletterNameInfoPanel]; 
     },
 
@@ -4785,38 +4832,38 @@ const operativaSolicitarRecibirNewsletter = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
 
-        // Bot�n de Aceptar - Solicitar env�o o no de newsletters
+        // Botón de Aceptar - Solicitar envío o no de newsletters
         this.btnSubmitReceiveNewsletters.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideInfoPanels();
 
-            // Conocer el inputRadio activo. Ser� el que comparemos con idChkRecibirNewsletter o idChkNoRecibirNewsletter (Desea o no desea newsletters)
+            // Conocer el inputRadio activo. Será el que comparemos con idChkRecibirNewsletter o idChkNoRecibirNewsletter (Desea o no desea newsletters)
             that.checkRecibirNewsLetterValue = $(`input[name=${that.nameChkReceiveNewsletter}]:checked`).val();
-            // Realizar la petici�n de cambio de contrase�a
+            // Realizar la petición de cambio de contraseña
             const isReceivingNewsletters = that.checkRecibirNewsLetterValue === that.idChkRecibirNewsletter ? true : false;
             that.recibirNewsletterSubmit(isReceivingNewsletters);
         });
     },
 
     /**
-     * Acci�n de petici�n de recibir (o no) de newsletters. Se dispara cuando se pulsa en el bot�n submit del modal     
-     * @param {Bool} option: Dependiendo del input pulsado, el usuario querr� o no recibir newsletters.
+     * Acción de petición de recibir (o no) de newsletters. Se dispara cuando se pulsa en el botón submit del modal     
+     * @param {Bool} option: Dependiendo del input pulsado, el usuario querrá o no recibir newsletters.
      */
     recibirNewsletterSubmit: function (option) {
         const that = this;
         MostrarUpdateProgress();
         that.hideInfoPanels();
-        // Construcci�n del DataPost para enviar la petici�n
+        // Contrucción del DataPost para enviar la petición
         const dataPost = {            
             recibirNewsletter: option,
         };
 
-        // Realizar la petici�n 
+        // Realizar la petición 
         GnossPeticionAjax(
             this.urlRequestReceiveNewsletters,
             dataPost,
@@ -4849,23 +4896,23 @@ const operativaSolicitarRecibirNewsletter = {
 };
 
 /**
- * Clase jquery para poder la solicitud de restablecimiento de la contrase�a por parte del usuario.
- * Para acceder a esta vista, se acceder� desde un link en "Login" de "Olvido de contrase�a"
+ * Clase jquery para poder la solicitud de restablecimiento de la contraseña por parte del usuario.
+ * Para acceder a esta vista, se accederá desde un link en "Login" de "Olvido de contraseña"
  *
  * */
 const operativaOlvidoPassword = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas  
+        // Inicialización de las vistas
         this.txtUserLogin = $(`#${pParams.idTxtuserLogin}`);
         this.forgetPasswordInfoPanel = $(`#${pParams.idForgetPasswordInfoPanel}`);
         this.btnEnviar = $(`#${pParams.idBtnEnviar}`);
@@ -4873,7 +4920,7 @@ const operativaOlvidoPassword = {
         // Paneles de error/info
         this.panelesInfo = [this.forgetPasswordInfoPanel];
 
-        // Url necesarias para realizar petici�n
+        // Url necesarias para realizar petición
         this.urlForgetPasswordRequest = pParams.urlForgetPasswordRequest;
 
         // Mensajes preconfigurados de error
@@ -4889,18 +4936,18 @@ const operativaOlvidoPassword = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
 
-        // Bot�n de Aceptar - Solicitar link para cambio de contrase�a
+        // Botón de Aceptar - Solicitar link para cambio de contraseña
         this.btnEnviar.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideInfoPanels();
-            // Comprobar que el input no es vac�o
+            // Comprobar que el input no es vacío
             if (that.validarCampos()) {                
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 that.cambiarPasswordSubmit();
             } else {                
                 that.forgetPasswordInfoPanel.html(that.msgInfoEmptyField);
@@ -4910,7 +4957,7 @@ const operativaOlvidoPassword = {
     },
 
     /**
-    * Comprobar que los campos indicados no est�n vac�os (email indicado por el usuario)
+    * Comprobar que los campos indicados no están vacíos (email indicado por el usuario)
     * @returns {bool}    
     */
     validarCampos: function () {
@@ -4918,19 +4965,19 @@ const operativaOlvidoPassword = {
     },
 
     /**
-    * Acci�n de petici�n de solicitar cambio de contrase�a por olvido
-    * Se disparar� al pulsar el bot�n y al validar que el campo del email no est� vac�o
+    * Acción de petición de solicitar cambio de contraseña por olvido
+    * Se disipará al pulsar el botón y al validar que el campo del email no está vacío
     */
     cambiarPasswordSubmit: function () {
         const that = this;
-        // Construcci�n del objeto dataPost
+        // Contrucción del objeto dataPost
         var dataPost = {
             User: this.txtUserLogin.val()
         }
 
         MostrarUpdateProgress();
         GnossPeticionAjax(this.urlForgetPasswordRequest, dataPost, true).fail(function () {
-            // Mostrar mensaje de error con la informaci�n traida del backend
+            // Mostrar mensaje de error con la información traida del backend
             that.forgetPasswordInfoPanel.html(that.msgErrorForgetPasswordRequest);
             that.forgetPasswordInfoPanel.fadeIn("slow");            
             OcultarUpdateProgress();

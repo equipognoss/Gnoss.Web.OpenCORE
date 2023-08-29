@@ -1,1228 +1,336 @@
 ﻿@model AdministrarFacetasViewModel
 
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar/visualizar las páginas existentes en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	// Carga de idiomas de la plataforma
+	string idiomas = "";
+	// Contador del nº de pestañas listadas
+	int contNumPestañasVisibles = 0;
+	// Nº de pestañas de idiomas a visualizar en la sección Tab
+	int numMaxPestañasIdiomasVisibles = 2;
+	// Referencia al AdministrarFacetasViewModel para el botón de tipo de pintado de tipo de páginas desde la cabecera
+	ViewBag.AdministrarFacetasViewModel = Model;	
 }
-<div class="content">
-    <h1>@Html.GetText("COMADMINFACETAS", "TITULO")</h1>
-    <div>
-        <form autocomplete="off">
-            @{
-                string idiomas = "";
 
-                foreach (string idiomaKey in Model.ListaIdiomas.Keys)
-                {
-                    idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
-                }
-            }
-            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
-            <input type="hidden" id="idiomaDefecto" value="@Model.IdiomaPorDefecto" />
-            <p>
-                @Html.GetText("COMADMINFACETAS", "INFOTITULO")
-            </p>
-            <div class="contenedorFiltros">
-                <div class="panFiltrar">
-                    <p>
-                        <span>Filtrar facetas </span>
-                    </p>
-                    <p>
-                        <span>por nombre</span>
-                        <input type="text" id="txtFiltro">
-                        <span> y por tipo </span>
-                        <select id="cmbFiltro">
-                            <option value="">Todas</option>
-                            @if (Model.ListaFacetas.Count(p => p.Type == TipoFaceta.Texto) > 0)
-                            {
-                                <option value="@(TipoFaceta.Texto)">Texto</option>
-                            }
-                            @if (Model.ListaFacetas.Count(p => p.Type == TipoFaceta.Numero) > 0)
-                            {
-                                <option value="@(TipoFaceta.Numero)">Número</option>
-                            }
-                            @if (Model.ListaFacetas.Count(p => p.Type == TipoFaceta.Fecha) > 0)
-                            {
-                                <option value="@(TipoFaceta.Fecha)">Fecha</option>
-                            }
-                            @if (Model.ListaFacetas.Count(p => p.Type == TipoFaceta.Tesauro) > 0)
-                            {
-                                <option value="@(TipoFaceta.Tesauro)">Tesauro</option>
-                            }
-                            @if (Model.ListaFacetas.Count(p => p.Type == TipoFaceta.TextoInvariable) > 0)
-                            {
-                                <option value="@(TipoFaceta.TextoInvariable)">Texto invariable</option>
-                            }
-                            @if (Model.ListaFacetas.Count(p => p.Type == TipoFaceta.Siglo) > 0)
-                            {
-                                <option value="@TipoFaceta.Siglo">Siglo</option>
-                            }
-                        </select>
-                    </p>
-                </div>
-            </div>
-            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-            {
-                <input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" />
-                <input type="hidden" id="auxIC" value="NO" />
-            }
-            else
-            {
-                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
-                <input type="hidden" id="auxIC" value="SI" />
-            }
-            <div class="panAniadir">
-                @Html.GetText("COMADMINFACETAS", "INFOADDFACETA")
-                <select class="cmbAddFaceta">
-                    <option value="-1">Tipo de faceta</option>
-                    <option value="@((short)TipoFaceta.Texto)">Texto</option>
-                    <option value="@((short)TipoFaceta.Numero)">Número</option>
-                    <option value="@((short)TipoFaceta.Fecha)">Fecha</option>
-                    <option value="@((short)TipoFaceta.Tesauro)">Tesauro</option>
-                    <option value="@((short)TipoFaceta.TextoInvariable)">Texto invariable</option>
-                    <option value="@((short)TipoFaceta.Siglo)">Siglo</option>
-                </select>
-                <input type="button" class="addFaceta" value="@Html.GetText("COMADMINFACETAS", "ADDFACETA")" />
+@{
+    @* Carga de idiomas *@
+    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+    {
+        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+    }     
+}
 
-            </div>
-            <ol class="table" id="sortable">
-                @foreach (FacetaModel faceta in Model.ListaFacetas.OrderBy(p2 => p2.Orden))
-                {
-                    @Html.PartialView("_EdicionFaceta", faceta);
-                }
-            </ol>
-        </form>
-    </div>
-    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-    {
-        <input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" />
-    }
-    else
-    {
-        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINFACETAS", "GUARDARTODO")" disabled style="background-color: gray; cursor: default;" />
-    }
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar la información general de la comunidad --------------------
+*@
+
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
+
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/descubrimiento-analisis">@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")</a>
+        </li>
+        <li>
+            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOM")
+        </li>
+    </ul>
 </div>
 
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
-<script>
-    var OperativaOrdenacion = {
-        init: function () {
-            this.config();
-            this.engancharComportamiento();
-            //this.recalcularOrden();
-        },
-        config: function () {
-            this.lista = $('#sortable');
-            this.filtros = $('.filtroSortable');
-
-            return;
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            that.lista.sortable({
-                handle: 'span.handle.facetas',
-                items: 'li.facetas',
-                cancel: ".ui-state-disabled",
-                stop: function (event, ui) {
-                    that.recalcularOrden();
-                }
-            });
-
-            that.filtros.each(function () {
-                $(this).sortable({
-                    handle: 'span.handle.filtros',
-                    items: 'li.row.filtros',
-                    cancel: ".ui-state-disabled",
-                    maxLevels: 1
-
-                });
-            });
-            $('.header', that.lista).disableSelection();
-            $('.header', that.filtros).disableSelection();
-            return;
-        },
-        recalcularOrden: function () {
-            return;
-            var that = this;
-
-            var arrayOrden = that.lista.nestedSortable('toArray');
-
-            for (var i = 0, len = arrayOrden.length; i < len; i++) {
-                var item_id = arrayOrden[i]['item_id'];
-                var orden = arrayOrden[i]['orden'];
-
-                var fila = $('#' + item_id);
-                var panelEdicion = fila.children('.panEdicion');
-                panelEdicion.find('[name="TabOrden"]').val(orden);
-            }
-            $('.row facetas').each(function () {
-                var id = $(this).attr('id');
-                var padre = arrayOrden
-
-            });
-        }
-    }
-
-    var OperativaAcciones = {
-        init: function (panelID) {
-            this.config(panelID);
-            if (this.id == '') {
-                this.engancharComportamiento();
-            }
-            this.engancharComportamientoFacetas();
-            this.engancharMultiIdioma();
-        },
-        config: function (panelID) {
-            this.urlPagina = document.location.href;
-            this.cargarIdiomas();
-            this.id = '';
-
-            if (typeof panelID != 'undefined' && panelID != '') {
-                this.id = '#' + panelID + ' ';
-            }
-            return;
-        },
-        engancharMultiIdioma: function () {
-            var that = this;
-            if (that.ListaIdiomas.length > 1) {
-                $(that.id + 'input[name="TabName"]:not(:disabled)').each(function () {
-                    var inputName = $(this);
-                    that.montarMultidioma(inputName);
-
-                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('keyup');
-                    }).blur(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('blur');
-                    });
-                });
-                $(that.id + 'input[name="TabUrl"]:not(:disabled)').each(function () {
-                    var inputUrl = $(this);
-                    that.montarMultidioma(inputUrl);
-
-                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
-                        inputUrl.trigger('blur');
-                    });
-                });
-                componenteTabulado.init();
-            }
-        },
-        obtenerTextoYClaveDeIdioma: function (texto) {
-            var that = this;
-            var idioma = that.IdiomaPorDefecto;
-            var textoIdioma = texto;
-            if (textoIdioma.length > 3) {
-                var indice = 3;
-                var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
-                if (auxIdioma[0] == '-' && textoIdioma.length > 6) {
-                    indice = 6;
-                    auxIdioma = textoIdioma.substr(textoIdioma.length - 6);
-                }
-                if (auxIdioma[0] == '@('@')') {
-                    idioma = auxIdioma.substr(1);
-                    textoIdioma = textoIdioma.substr(0, textoIdioma.length - indice);
-                }
-            }
-            return { "key": idioma, "value": textoIdioma };
-        },
-        montarMultidioma: function (input) {
-            var that = this;
-
-            input.attr("type", "hidden");
-            var textoMultiIdioma = input.val().split('|||')
-            var listaTextos = [];
-            $.each(textoMultiIdioma, function () {
-                if (this != "") {
-                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
-                    listaTextos.push(objetoIdioma);
-                }
-            });
-
-            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma" ><div class=" acciones tabspresentation "><ul>';
-
-            $.each(that.ListaIdiomas, function (id, idioma) {
-                var key = idioma.key;
-                var value = idioma.value;
-                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
-                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
-            });
-
-            htmlMultIdioma += '</ul></div>';
-
-            $.each(that.ListaIdiomas, function (id, idioma) {
-                var key = idioma.key;
-                var value = idioma.value;
-                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
-                var textoIdioma = listaTextos.findValueByKey(key);
-                if (textoIdioma == null || textoIdioma == '') {
-                    if (key.indexOf('-') > 0) {
-                        var keyAux = key.substr(0, key.indexOf('-'));
-                        textoIdioma = listaTextos.findValueByKey(keyAux);
-                    }
-                    if (textoIdioma == null || textoIdioma == '') {
-                        if (esIdiomaPorDefecto) {
-                            textoIdioma = listaTextos[0].value;
-                        }
-                        else {
-                            textoIdioma = '';
-                        }
-                    }
-                }
-                htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p><input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma + '"></p></div>';
-            });
-
-            htmlMultIdioma += '</div>';
-
-            input.before(htmlMultIdioma);
-        },
-        engancharComportamientoFacetas: function () {
-            var that = this;
-            $(that.id + 'span.eliminar').click(function () {
-                that.eliminarFaceta($(this));
-                if ($("#auxIC").val() == 'SI') {
-                    $('.guardarTodo').removeAttr('disabled');
-                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
-                }
-            });
-            $(that.id + 'span.editar').click(function () {
-                that.editarFaceta($(this));
-                if ($("#auxIC").val() == 'SI') {
-                    $('.guardarTodo').removeAttr('disabled');
-                    $(".guardarTodo").css({ "background-color": "#8186bd", "cursor": "pointer" });
-                }
-            });
-            $(that.id + 'input[name="TabName"]').keyup(function () {
-                that.cambiarNombreFaceta($(this));
-            }).blur(function () {
-                that.cambiarAuxNombreFaceta($(this));
-            });
-            $(that.id + '[name="selectObjetosConocimiento"] option').click(function () {
-                var opcionSeleccionada = $(this);
-                var id = opcionSeleccionada.val();
-                var nombre = opcionSeleccionada.text();
-
-                var panObjetosConocimiento = $(opcionSeleccionada).closest('.panObjetosConocimiento');
-
-                var txtValores = $('input.valores', panObjetosConocimiento);
-                txtValores.val(txtValores.val() + id + ',');
-
-                $('ul.resultado', panObjetosConocimiento).append('<li>' + nombre + '<a class="remove" aux=' + id + ' >' + borr.eliminar + '</a></li>');
-                opcionSeleccionada.hide();
-
-                $('ul.resultado li a', panObjetosConocimiento).unbind().click(function () {
-                    that.eliminarObjetoConocimiento($(this));
-                });
-            });
-            $(that.id + '.panObjetosConocimiento ul.resultado li a').click(function () {
-                that.eliminarObjetoConocimiento($(this));
-            });
-            $(that.id + 'input[name="TabPrivacidadGrupos"]').autocomplete(
-                null,
-                {
-                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
-                    delay: 0,
-                    scroll: false,
-                    selectFirst: false,
-                    minChars: 1,
-                    width: 300,
-                    cacheLength: 0,
-                    NoPintarSeleccionado: true,
-                    multiple: true,
-                    //classTxtValoresSelecc: 'privacidadGrupos',
-
-                    extraParams: {
-                        grupo: '',
-                        identidad: $('#inpt_identidadID').val(),
-                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                        proyecto: $('#inpt_proyID').val(),
-                        bool_edicion: 'true',
-                        bool_traergrupos: 'true',
-                        bool_traerperfiles: 'false'
-                    }
-                }
-            );
-            $(that.id + 'input[name="TabPrivacidadGrupos"]').result(function (event, data, formatted) {
-                that.aceptarEditorSelectorUsuRec(this, data[0], data[1]);
-            });
-            $(that.id + '.panPrivacidad ul.resultado li a').click(function () {
-                that.eliminarUsuarioSelecUsu($(this));
-            });
-            $(that.id + 'input[name="ClaveFaceta"]').autocomplete(
-                null,
-                {
-                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarOntologia",
-                    delay: 0,
-                    scroll: false,
-                    selectFirst: false,
-                    minChars: 1,
-                    width: 300,
-                    cacheLength: 0,
-                    NoPintarSeleccionado: true,
-                    multiple: true,
-                    extraParams: {
-                        grupo: '',
-                        identidad: $('#inpt_identidadID').val(),
-                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                        proyecto: $('#inpt_proyID').val()
-                    }
-                }
-            );
-            $(that.id + 'input[name="ClaveFaceta"]').result(function (event, data, formatted) {
-                that.aceptarNombreOntologia(this, data[0]);
-            });
-            $(that.id + '.panOntologias ul.resultado li a').click(function () {
-                that.eliminarNombreOntologia($(this));
-            });
-            $(that.id + '.chkReciproca').click(function () {
-                that.mostrarPanelReciproca($(this));
-            });
-            $(that.id + '.chkInmutable').click(function () {
-                that.cambiarInmutable($(this));
-            });
-            $(that.id + '.ComportamientoOR').click(function () {
-                that.cambiarComportamientoOR($(this));
-            });
-            $(that.id + 'span.tipo').each(function () {
-                if ($(this).attr("title") != null && $(this).attr("title") != '') {
-                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
-                    $(this).removeAttr("title");
-                }
-            });
-            $(that.id + 'input.addFiltro').click(function () {
-                that.anyadirFiltro($(this));
-            });
-            $(that.id + '.linkEditarFiltros').click(function () {
-                that.editarFiltros($(this));
-            });
-            $(that.id + 'input[name="TabNombre"]').keyup(function () {
-                that.cambiarNombreFiltros($(this));
-            });
-            $(that.id + '.conToolTip').tooltip();
-            return;
-        },
-        mostrarPanelReciproca: function (chkReciproca) {
-            var that = this;
-
-            var fila = chkReciproca.closest('.row');
-
-            var panEditar = fila.children('.panEdicion');
-            var panReciproca = panEditar.find('.panReciproca');
-
-            if (chkReciproca.is(":checked")) {
-                panReciproca.show();
-                $(that.id + 'input[name="Reciprocidad"]').autocomplete(
-                  null,
-                    {
-                        url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarOntologia",
-                        delay: 0,
-                        scroll: false,
-                        selectFirst: false,
-                        minChars: 1,
-                        width: 300,
-                        cacheLength: 0,
-                        NoPintarSeleccionado: true,
-                        multiple: true,
-                        extraParams: {
-                            grupo: '',
-                            identidad: $('#inpt_identidadID').val(),
-                            organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                            proyecto: $('#inpt_proyID').val()
-                        }
-                    }
-                );
-                $(that.id + 'input[name="Reciprocidad"]').result(function (event, data, formatted) {
-                    that.aceptarNombreOntologiaRe(this, data[0]);
-                });
-            }
-            else {
-                panReciproca.hide();
-            }
-        },
-        cambiarComportamientoOR: function (ComportamientoOR) {
-            var fila = ComportamientoOR.closest('.row');
-
-            var panEditar = fila.children('.panEdicion');
-            var checkInmutable = panEditar.find('.chkInmutable');
-
-            if (!ComportamientoOR.is(":checked")) {
-                checkInmutable["0"].checked = false;
-            }
-        },
-        cambiarInmutable: function (chkInmutable) {
-            var fila = chkInmutable.closest('.row');
-
-            var panEditar = fila.children('.panEdicion');
-            var checkComportamientoOR = panEditar.find('.ComportamientoOR');
-
-            if (chkInmutable.is(":checked")) {
-                checkComportamientoOR["0"].checked = true;
-            }
-
-        },
-        eliminarObjetoConocimiento: function (enlaceEliminar) {
-            var id = enlaceEliminar.attr('aux');
-
-            var panObjetosConocimiento = $(enlaceEliminar).closest('.panObjetosConocimiento');
-            var txtValores = $('input.valores', panObjetosConocimiento);
-
-            $('[name="selectObjetosConocimiento"] option[value="' + id + '"]', panObjetosConocimiento).show();
-            $('[name="selectObjetosConocimiento"] option').removeAttr('selected')
-            txtValores.val(txtValores.val().replace(id + ',', ''));
-            enlaceEliminar.parent().remove();
-        },
-        cargarIdiomas: function (bototnEditar) {
-            var that = this;
-
-            that.IdiomaPorDefecto = $('#idiomaDefecto').val();
-
-            var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
-            that.ListaIdiomas = []
-
-            $.each(idiomasComunidad, function () {
-                if (this != "") {
-                    that.ListaIdiomas.push({ "key": this.split('|')[0], "value": this.split('|')[1] });
-                }
-            });
-        },
-        aceptarEditorSelectorUsuRec: function (txtautocomp, nombre, id) {
-            var that = this;
-
-            var padreTxt = $(txtautocomp).closest('.panPrivacidad');
-            var txtValores = $('input.valores', padreTxt);
-            txtValores.val(txtValores.val() + id + ',');
-
-            $('ul.resultado', padreTxt).append('<li>' + nombre + '<a class="remove" aux=' + id + ' >' + borr.eliminar + '</a></li>');
-            $(txtautocomp).val('');
-
-            $('ul.resultado li a', padreTxt).unbind().click(function () {
-                that.eliminarUsuarioSelecUsu($(this));
-            });
-        },
-        eliminarUsuarioSelecUsu: function (enlaceEliminar) {
-            var id = enlaceEliminar.attr('aux');
-
-            var padreTxt = enlaceEliminar.closest('.panPrivacidad');
-            var txtValores = $('input.valores', padreTxt);
-
-            txtValores.val(txtValores.val().replace(id + ',', ''));
-            enlaceEliminar.parent().remove();
-        },
-        aceptarNombreOntologia: function (txtautocomp, nombre) {
-            var that = this;
-
-            var padreTxt = $(txtautocomp).closest('.panOntologias');
-            var txtValores = $('input.valores', padreTxt);
-            txtValores.val(txtValores.val() + nombre + ',');
-
-            var nombreCompleto = txtautocomp.value;
-
-            if (nombreCompleto.includes('@Html.Raw("@@@")')) {
-                var nombreTroceado = nombreCompleto.split('@Html.Raw("@@@")');
-                var nombreCompletoFinal = nombreTroceado[0];
-
-                for (let i = 1; i < nombreTroceado.length - 1; i++) {
-                    nombreCompletoFinal += '@Html.Raw("@@@")' + nombreTroceado[i];
-                }
-                nombreCompletoFinal += '@Html.Raw("@@@")' + nombre;
-                txtautocomp.value = nombreCompletoFinal;
-            } else {
-                txtautocomp.value = nombre;
-            }
-
-        },
-        eliminarNombreOntologia: function (enlaceEliminar) {
-            var id = enlaceEliminar.attr('aux');
-
-            var padreTxt = enlaceEliminar.closest('.panOntologias');
-            var txtValores = $('input.valores', padreTxt);
-
-            txtValores.val(txtValores.val().replace(id + ',', ''));
-            enlaceEliminar.parent().remove();
-        },
-        aceptarNombreOntologiaRe: function (txtautocomp, nombre) {
-            var that = this;
-
-            var padreTxt = $(txtautocomp).closest('.panOntologiasRe');
-            var txtValores = $('input.valores', padreTxt);
-            txtValores.val(txtValores.val() + nombre + ',');
-
-            var nombreCompleto = txtautocomp.value;
-
-            if (nombreCompleto.includes('@Html.Raw("@@@")')) {
-                var nombreTroceado = nombreCompleto.split('@Html.Raw("@@@")');
-                var nombreCompletoFinal = nombreTroceado[0];
-
-                for (let i = 1; i < nombreTroceado.length - 1; i++) {
-                    nombreCompletoFinal += '@Html.Raw("@@@")' + nombreTroceado[i];
-                }
-                nombreCompletoFinal += '@Html.Raw("@@@")' + nombre;
-                txtautocomp.value = nombreCompletoFinal;
-            } else {
-                txtautocomp.value = nombre;
-            }
-        },
-        eliminarNombreOntologiaRe: function (enlaceEliminar) {
-            var id = enlaceEliminar.attr('aux');
-
-            var padreTxt = enlaceEliminar.closest('.panOntologiasRe');
-            var txtValores = $('input.valores', padreTxt);
-
-            txtValores.val(txtValores.val().replace(id + ',', ''));
-            enlaceEliminar.parent().remove();
-        },
-        comprobarFacetasVacias: function () {
-            var that = this;
-            var error = false;
-            var inputsFacetas = $('.row:not(".ui-state-disabled") input[name = "ClaveFaceta"]:not(":disabled")');
-            inputsFacetas.each(function () {
-                if ($(this).val().trim() == '') {
-                    var filaFaceta = $(this).closest('.row');
-                    if (!$('.chkReciproca', filaFaceta).is(':checked') || $('[name="Reciprocidad"]', filaFaceta).val().trim() == '') {
-                        that.mostrarErrorFacetaVacia($(this).closest('.row'))
-                        error = true;
-                    }
-                }
-            });
-            return error;
-        },
-        mostrarErrorFacetaVacia: function (fila) {
-            var that = this;
-            var inputUrl = $('input[name = "ClaveFaceta"]', fila).first();
-            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORFACETAVACIA")</span>");
-            $('.panEdicion', fila).addClass('edit');
-        },
-        comprobarObjetosConocimientoVacios: function () {
-            var that = this;
-            var error = false;
-            var inputsObjetosConocimiento = $('.row:not(".ui-state-disabled") input[name = "ObjetosConocimiento"]:not(":disabled")');
-            inputsObjetosConocimiento.each(function () {
-                if ($(this).val().trim() == '') {
-                    that.mostrarErrorObjetoConocimientoVacio($(this).closest('.row'))
-                    error = true;
-                }
-            });
-            return error;
-        },
-        mostrarErrorObjetoConocimientoVacio: function (fila) {
-            var that = this;
-            var input = $('select[name = "selectObjetosConocimiento"]', fila).first();
-            input.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERROROBJETOCONOCIMIENTOVACIO")</span>");
-            $('.panEdicion', fila).addClass('edit');
-        },
-        comprobarFiltrosVacios: function () {
-            var that = this;
-            var error = false;
-            var inputsNombre = $('.row.facetas:not(".ui-state-disabled") ol.filtroSortable li.row.filtro:not(".ui-state-disabled")');
-            inputsNombre.each(function () {
-                if (that.comprobarFiltroVacio($(this))) {
-                    error = true;
-                }
-            });
-            return error;
-        },
-        comprobarFiltroVacio: function (fila) {
-            var that = this
-            $('.error', fila.parent()).remove();
-
-            var error = false;
-
-            var panelEdicion = fila.find('.panEdicion');
-            if (panelEdicion.find('[name="TabNombre"]').val() == "") {
-                that.mostrarErrorFiltroVacio(fila, panelEdicion.find('[name="TabNombre"]'));
-                error = true;
-                return true;
-            }
-            return error;
-        },
-        mostrarErrorFiltroVacio: function (fila) {
-            var that = this;
-            var panelEdicion = fila.find('panEdicion');
-            panelEdicion.addClass('edit');
-            panelEdicion.addClass('modified');
-
-            var listadoFiltro = fila.closest('.filtroSortable ')
-            listadoFiltro.before("<span class=\"error\">@Html.GetText("COMADMINFACETAS", "ERRORFILTROS")</span>");
-        },
-
-        comprobarNombresVacios: function () {
-            var that = this;
-            var error = false;
-            var inputsNombre = $('.row:not(".ui-state-disabled") input[name = "TabName"]:not(":disabled")');
-            inputsNombre.each(function () {
-                if (that.comprobarNombreVacio($(this))) {
-                    error = true;
-                }
-            });
-            return error;
-        },
-        comprobarNombreVacio: function (inputName) {
-            var that = this
-            $('.error', inputName.parent()).remove();
-
-            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
-            var listaTextos = [];
-            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
-                var textoMultiIdioma = "";
-
-                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
-                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
-                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
-                    return true;
-                }
-
-                $.each(that.ListaIdiomas, function () {
-                    var idioma = this.key;
-                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
-                    if (textoIdioma == null || textoIdioma == "") {
-                        textoIdioma = textoIdiomaDefecto;
-                    }
-                    else {
-                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
-                    }
-                    listaTextos.push({ "key": idioma, "value": textoIdioma });
-                });
-                inputName.val(textoMultiIdioma);
-            }
-
-            return false;
-        },
-        mostrarErrorNombreVacio: function (fila) {
-            var that = this;
-            var inputUrl = $('input[name = "TabName"]', fila).first();
-            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORNOMBREVACIO", Model.ListaIdiomas[Model.IdiomaPorDefecto])</span>");
-            $('.panEdicion', fila).addClass('edit');
-        },
-        cambiarNombreFaceta: function (inputName) {
-            var nombreFaceta = inputName.val();
-            var fila = inputName.closest('.row');
-            var nombreFila = fila.find('.header .nombreFaceta');
-
-            if (nombreFaceta == '') {
-                nombreFila.text(nombreFila.attr('aux'));
-            }
-            else {
-                nombreFila.text(nombreFaceta);
-            }
-        },
-        cambiarAuxNombreFaceta: function (inputName) {
-            var that = this;
-
-            $('.error', inputName.parent()).remove()
-
-            var nombreFaceta = inputName.val();
-            var fila = inputName.closest('.row');
-            var nombreFila = fila.find('.header .nombreFaceta');
-
-            if (nombreFaceta == '') {
-                nombreFila.text(nombreFila.attr('aux'));
-                //inputName.val(nombreFila.attr('aux'));
-                that.mostrarErrorNombreVacio(fila);
-            }
-            else {
-                nombreFila.text(nombreFaceta);
-                nombreFila.attr('aux', nombreFaceta);
-                //inputName.val(nombreFaceta);
-            }
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            $('input.addFaceta').click(function () {
-                that.anyadirFaceta();
-            });
-            $('input.guardarTodo').click(function () {
-                that.guardarTodasFacetas();
-            });
-            $('input#txtFiltro').keyup(function (event) {
-                if (event.which || event.keyCode) {
-                    if ((event.which == 13) || (event.keyCode == 13)) {
-                        return false;
-                    }
-                }
-                that.Filtrar();
-            });
-            $('#cmbFiltro').change(function (event) {
-                that.Filtrar();
-            });
-            return;
-        },
-        Filtrar: function () {
-
-            var filtro = $('input#txtFiltro').val();
-            var filtroTipo = $('#cmbFiltro').val();
-
-            var listadoFacetas = $('.row');
-
-
-            if (filtro == '' && filtroTipo == '') {
-                $('.table').removeClass("filtrado");
-            }
-            else {
-                $('.table').addClass("filtrado");
-            }
-
-
-            listadoFacetas.each(function () {
-                var item = $(this);
-                var itemText = item.children('.header').find('span.nombreFaceta').text();
-                var itemTipo = item.children('.panEdicion').find('[name="Type"]').val();
-
-                item.removeClass('oculto');
-                item.addClass('visible');
-
-                if ((filtro != '' && itemText.toLowerCase().indexOf(filtro.toLowerCase()) < 0) || (filtroTipo != '' && filtroTipo != itemTipo)) {
-                    item.addClass('oculto');
-                    item.removeClass('visible');
-                }
-            });
-
-            return;
-        },
-        deshacerEliminarFaceta: function (botonDeshacer) {
-            var fila = botonDeshacer.closest('.row');
-
-            fila.removeClass('ui-state-disabled');
-
-            var panEditar = fila.children('.panEdicion');
-            panEditar.find('[name="TabEliminada"]').val('false');
-
-            var panCabecera = fila.children('.header');
-            panCabecera.removeClass('deleted');
-
-            var deshacer = panCabecera.children('.deshacer');
-            var eliminada = panCabecera.children('.eliminada');
-            deshacer.remove();
-            eliminada.remove();
-        },
-        eliminarFaceta: function (botonEliminar) {
-            var that = this;
-            var fila = botonEliminar.closest('.row');
-            var filas = fila.find('.row');
-
-            fila.addClass('ui-state-disabled');
-            filas.addClass('ui-state-disabled');
-
-            var panelesEditar = fila.find('.panEdicion');
-            panelesEditar.removeClass('edit');
-            panelesEditar.find('[name="TabEliminada"]').val('true');
-
-            var panelesCabecera = fila.find('.header:not(.deleted)');
-            panelesCabecera.addClass('deleted');
-            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
-            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
-
-            panelesCabecera.find('span.deshacer').click(function () {
-                that.deshacerEliminarFaceta($(this));
-            });
-        },
-        editarFaceta: function (botonEditar) {
-            var fila = botonEditar.closest('.row');
-            var panEditar = fila.children('.panEdicion');
-
-            if (panEditar.hasClass('edit')) {
-                panEditar.removeClass('edit');
-            }
-            else {
-                panEditar.addClass('edit');
-                panEditar.addClass('modified');
-            }
-        },
-        anyadirFaceta: function () {
-            $('.error.general').remove();
-            var faceta = parseInt($('.cmbAddFaceta').val());
-            if (faceta < 0) {
-                $('input.guardarTodo').before('<div class="error general">Debes seleccionar un tipo de faceta</div>');
-                return;
-            }
-
-            MostrarUpdateProgress();
-
-            var dataPost = {
-                TipoFaceta: faceta
-            }
-            GnossPeticionAjax(
-                this.urlPagina + '/new-facet',
-                dataPost,
-                true
-            ).done(function (data) {
-                var ultimaFaceta = $('#sortable').children().last();
-                var panelEdicionUltimaFaceta = ultimaFaceta.children('.panEdicion');
-                var orden = panelEdicionUltimaFaceta.find('[name="TabOrden"]').val();
-
-                $('#sortable').append(data);
-                var FacetaNueva = $('#sortable').children().last();
-                var panelEdicion = FacetaNueva.children('.panEdicion');
-                panelEdicion.find('[name="TabOrden"]').val(parseInt(orden) + 1);
-
-                var idPanel = FacetaNueva.attr('id');
-                OperativaAcciones.init(idPanel);
-
-                FacetaNueva.find('span.editar').trigger('click');
-            }).fail(function (data) {
-                console.log("ERROR =>" + data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        anyadirFiltro: function (botonAddExportacion) {
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-               this.urlPagina + '/new-filtro',
-               null,
-               true
-           ).done(function (data) {
-               var listaExportaciones = botonAddExportacion.parent().find('ol.filtroSortable');
-
-               listaExportaciones.append(data);
-               var exportacionNueva = listaExportaciones.children().last();
-
-               var idPanel = exportacionNueva.attr('id');
-               OperativaAcciones.init(idPanel);
-
-               exportacionNueva.find('span.editar').trigger('click');
-           }).fail(function (data) {
-               console.log("ERROR =>" + data);
-           }).always(function () {
-               OcultarUpdateProgress();
-           });
-        },
-        editarFiltros: function (botonEditar) {
-            var fila = botonEditar.closest('.row');
-            var panEditar = fila.children('.panEdicion');
-            panEditar.find('.editarFiltro').show();
-            botonEditar.parent().remove();
-        },
-        cambiarNombreFiltros: function (inputName) {
-            var nombreServicio = inputName.val();
-            var fila = inputName.closest('.row');
-            var cabecera = fila.children('.header')
-            var longitud = nombreServicio.length;
-            if (longitud > 50) {
-                nombreServicio = nombreServicio.substr(0, 50) + "...";
-            }
-
-            var nombreFila = cabecera.find('.nombreFiltro');
-
-            if (nombreServicio == '') {
-                nombreFila.text(nombreFila.attr('aux'));
-            }
-            else {
-                nombreFila.text(nombreServicio);
-            }
-        },
-        guardarTodasFacetas: function () {
-            var that = this;
-            $('.ok.general').remove();
-            $('.error').remove();
-            if (!that.comprobarErroresGuardado()) {
-                that.ListaFacetas = {};
-                var cont = 0;
-                $('.row.facetas').each(function () {
-                    that.obtenerDatosFaceta($(this), cont++);
-                });
-                that.guardar();
-            }
-            else {
-                that.mostrarErrorGuardado();
-            }
-        },
-        mostrarErrorGuardado: function () {
-            //$('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div>');
-            var esPre = "@Html.GetComunidad().EntornoEsPre";
-            var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
-
-            if (esPre == "True") {
-                $('input.guardarTodo').before('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
-            }
-            else if (entornoBloqueado == "True") {
-                $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
-            }
-            else {
-                $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div > ');
-            }
-        },
-        mostrarErrorGuardadoFallo: function (data) {
-            $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
-        },
-        guardarFaceta: function (botonGuardar) {
-            var that = this;
-            var fila = botonGuardar.closest('.row');
-
-            that.ListaFacetas = {};
-            that.obtenerDatosFaceta(fila, 0);
-            that.guardar();
-        },
-        comprobarErroresGuardado: function () {
-            var that = this;
-            var error = false;
-            if (that.comprobarNombresVacios()) {
-                error = true;
-            }
-            if (!error && that.comprobarFacetasVacias()) {
-                error = true;
-            }
-            if (!error && that.comprobarObjetosConocimientoVacios()) {
-                error = true;
-            }
-            if (that.comprobarFiltrosVacios()) {
-                error = true;
-            }
-            return error;
-        },
-        guardar: function () {
-            var that = this;
-
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-                that.urlPagina + '/save',
-                that.ListaFacetas,
-                true
-            ).done(function (data) {
-                that.mostrarGuardadoOK();
-            }).fail(function (data) {
-                var error = data.split('|||');
-                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-                    if (data == "") {
-                        that.mostrarErrorGuardado();
-                    }
-
-                    if (error[0] == "RUTA REPETIDA") {
-                        that.mostrarErrorUrlRepetida($('#' + error[1]));
-                    }
-                    else if (error[0] == "NOMBRE VACIO") {
-                        that.mostrarErrorNombreVacio($('#' + error[1]));
-                    } else {
-                        that.mostrarErrorGuardadoFallo(data);
-                    }
-                }
-                else {
-                    that.mostrarErrorGuardadoFallo(data);
-                }
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        mostrarGuardadoOK: function () {
-            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
-        },
-        obtenerDatosFaceta: function (fila, num) {
-            var that = this;
-
-            var panelEdicion = fila.children('.panEdicion');
-
-            var objetosConocimientoValor = panelEdicion.find('[name="ObjetosConocimiento"]').val()
-            var prefijoClave = 'ListaFacetas[' + num + ']';
-            that.ListaFacetas[prefijoClave + '.Name'] = panelEdicion.find('[name="TabName"]').val();
-            that.ListaFacetas[prefijoClave + '.AgrupacionID'] = fila.attr("id");
-
-
-            if (objetosConocimientoValor != undefined) {
-
-                var objetosConocimiento = objetosConocimientoValor.split(',');
-
-
-                that.ListaFacetas[prefijoClave + '.Type'] = panelEdicion.find('[name="Type"]').val();
-                that.ListaFacetas[prefijoClave + '.ClaveFaceta'] = panelEdicion.find('[name="ClaveFaceta"]').val();
-                var reciprocidad = "";
-                if (panelEdicion.find('.chkReciproca').is(':checked')) {
-                    reciprocidad = panelEdicion.find('[name="Reciprocidad"]').val();
-                }
-                that.ListaFacetas[prefijoClave + '.Reciprocidad'] = reciprocidad
-                that.ListaFacetas[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
-                that.ListaFacetas[prefijoClave + '.Orden'] = num;
-
-                var numOC = 0;
-                $.each(objetosConocimiento, function () {
-                    var oc = this.trim();
-                    if (oc != "") {
-                        that.ListaFacetas[prefijoClave + '.ObjetosConocimiento[' + numOC + ']'] = oc;
-                        numOC++;
-                    }
-                });
-
-                that.ListaFacetas[prefijoClave + '.Presentacion'] = panelEdicion.find('[name="Presentacion"]').val();
-                that.ListaFacetas[prefijoClave + '.Disenyo'] = panelEdicion.find('[name="Disenyo"]').val();
-                that.ListaFacetas[prefijoClave + '.AlgoritmoTransformacion'] = panelEdicion.find('[name="AlgoritmoTransformacion"]').val();
-                that.ListaFacetas[prefijoClave + '.Filtros'] = panelEdicion.find('[name="Filtros"]').val();
-
-                var panelEditarFiltros = panelEdicion.find('.editarFiltro');
-
-                if (panelEditarFiltros.length > 0) {
-                    //
-                    that.ListaFacetas[prefijoClave + '.Filtros'] = '';
-                    var numExport = 0;
-                    $('.row.filtro', panelEditarFiltros).each(function () {
-                        var panFiltro = $(this).children('.panEdicion');
-
-                        var prefijoFiltrosClave = prefijoClave + '.ListaFiltrosFacetas[' + numExport + ']';
-
-                        that.ListaFacetas[prefijoFiltrosClave + '.Orden'] = numExport;
-                        that.ListaFacetas[prefijoFiltrosClave + '.Deleted'] = panFiltro.find('[name="TabEliminada"]').val();
-                        that.ListaFacetas[prefijoFiltrosClave + '.Nombre'] = panFiltro.find('[name="TabNombre"]').val();
-                        that.ListaFacetas[prefijoFiltrosClave + '.Condicion'] = panFiltro.find('[name="TabCondicion"]').val();
-                        //
-                        that.ListaFacetas[prefijoClave + '.Filtros'] += that.ListaFacetas[prefijoFiltrosClave + '.Nombre'] + ',';
-                        numExport++;
-                    });
-
-                }
-
-
-
-                that.ListaFacetas[prefijoClave + '.NumElementosVisibles'] = panelEdicion.find('[name="NumElementosVisibles"]').val();
-
-                that.ListaFacetas[prefijoClave + '.Autocompletar'] = panelEdicion.find('[name="Autocompletar"]').is(':checked');
-                that.ListaFacetas[prefijoClave + '.Comportamiento'] = panelEdicion.find('[name="Comportamiento"]').val();
-                //that.ListaFacetas[prefijoClave + '.Excluyente'] = panelEdicion.find('[name="Excluyente"]').is(':checked');
-                that.ListaFacetas[prefijoClave + '.OcultaEnFacetas'] = panelEdicion.find('[name="OcultaEnFacetas"]').is(':checked');
-                that.ListaFacetas[prefijoClave + '.OcultaEnFiltros'] = panelEdicion.find('[name="OcultaEnFiltros"]').is(':checked');
-                that.ListaFacetas[prefijoClave + '.ComportamientoOR'] = panelEdicion.find('[name="ComportamientoOR"]').is(':checked');
-                that.ListaFacetas[prefijoClave + '.Inmutable'] = panelEdicion.find('[name="chkInmutable"]').is(':checked');
-                that.ListaFacetas[prefijoClave + '.PriorizarOrdenResultados'] = panelEdicion.find('[name="PriorizarOrdenResultados"]').is(':checked');
-
-                var modified = panelEdicion.hasClass("modified");
-                that.ListaFacetas[prefijoClave + '.Modified'] = modified;
-
-                var privacidadGrupos = panelEdicion.find('[name="TabValoresPrivacidadGrupos"]').val().split(',');
-                for (var i = 0; i < privacidadGrupos.length; i++) {
-                    if (privacidadGrupos[i].trim() != "") {
-                        var prefijoPrivacidadGrupos = prefijoClave + '.PrivacidadGrupos[' + i + ']';
-                        that.ListaFacetas[prefijoPrivacidadGrupos + '.Key'] = privacidadGrupos[i].substr(2);
-                        that.ListaFacetas[prefijoPrivacidadGrupos + '.Value'] = "";
-                    }
-                }
-
-                that.ListaFacetas[prefijoClave + '.Condicion'] = panelEdicion.find('[name="Condicion"]').val();
-            }
-
-        }
-    }
-    $(document).ready(function () {
-        Array.prototype.findValueByKey = function (key) {
-            var resultado = $.grep(this, function (array) {
-                return array.key == key;
-            });
-
-            if (resultado[0] != null) {
-                return resultado[0].value;
-            }
-
-            return null;
-        };
-        OperativaOrdenacion.init();
-        OperativaAcciones.init();
-    });
-</script>
-
-<style>
-    ol.table li.row .panEdicion .panObjetosConocimiento select {
-        height: 90px;
-    }
-
-    .row .header .nombreFaceta {
-        font-weight: bold;
-    }
-
-    .row .header .tipoFaceta {
-        padding-left: 10px;
-    }
-
-
-
-
-    ol.table li.row section.panEdicion ol.filtroSortable,
-    ol#sortable li.row section.panEdicion ol.propiedadesSortable {
-        border: 0;
-        padding: 0;
-    }
-
-        ol#sortable li.row section.panEdicion ol.filtroSortable li.row,
-        ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row {
-            padding-top: 0;
-            margin-bottom: 0;
-            margin-left: 20px;
-            border-bottom: 0;
-        }
-
-            ol#sortable li.row section.panEdicion ol.filtroSortable li.row:last-of-type,
-            ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row:last-of-type {
-                border-bottom: 1px solid;
-            }
-
-    ol.filtroSortable li.row.filtro section.panEdicion {
-        width: 760px;
-    }
-
-        ol.filtroSortable li.row.filtro section.panEdicion p {
-            width: 730px;
-        }
-
-        ol.filtroSortable li.row.filtro section.panEdicion .bloque {
-            margin-bottom: 0;
-            border-bottom: 0;
-        }
-
-            ol.filtroSortable li.row.filtro section.panEdicion .bloque:last-of-type {
-                border-bottom: 1px solid;
-            }
-
-            ol.filtroSortable li.row.filtro section.panEdicion .bloque p {
-                width: 710px;
-            }
-
-    ol.filtroSortable li.row.exportacion .bloque input[type="text"],
-    ol.filtroSortable li.row.exportacion .bloque textarea {
-        width: 490px;
-    }
-
-    ol.filtroSortable ol.propiedadesSortable li.row.propiedad section.panEdicion {
-        width: 697px;
-    }
-
-        ol.filtroSortable ol.propiedadesSortable li.row.propiedad section.panEdicion p {
-            width: 667px;
-        }
-
-        ol.filtroSortable ol.propiedadesSortable li.row.propiedad section.panEdicion .tipo {
-            width: 170px;
-        }
-
-    .editarFiltroOrden {
-        margin-bottom: 20px;
-        margin-right: 20px;
-    }
-
-        .editarFiltroOrden .error {
-            margin-left: 20px;
-        }
-
-    .row .header .nombrePestanya {
-        font-weight: bold;
-    }
-
-    .row .header .tipoPestanya {
-        padding-left: 10px;
-    }
-
-    .table.filtrado .oculto {
-        display: block;
-    }
-
-    .table.filtrado li.row.visible > .header {
-        border-bottom: 1px solid #000;
-    }
-
-    .table.filtrado li.pestanya ol.subPestanyas,
-    .table.filtrado li.pestanya.row {
-        border: 0 !important;
-    }
-
-    .table.filtrado {
-        border-bottom: 0 !important;
-        border: 1px solid #000;
-    }
-</style>
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">       
+	@* Panel de idiomas *@	
+	<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+		@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
+			@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
+				if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
+					<li class="nav-item">
+						<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
+							id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
+							data-language = "@idioma.Key"
+							role="tab" aria-controls="@("litVer" + idioma.Key)"
+							aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+					</li>
+					contNumPestañasVisibles += 1;
+				}				
+			}
+			@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+			@if (contNumPestañasVisibles < cabecera.Languajes.Count){
+				@* Dropdown para resto de categorías *@
+				<li class="nav-item">
+					<div class="dropdown">
+						@* Desplegable del dropdown *@
+						<a
+							class="nav-link dropdown-toggle"
+							data-toggle="dropdown"
+							href="#"
+							role="button"
+							aria-haspopup="true"
+							aria-expanded="false"
+							>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+						@* Sección para mostrar items del dropdown*@
+						<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+							<ul class="no-list-style">
+								@* Pintado del resto de pestañas en Dropdown *@									
+								@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
+									var item = cabecera.Languajes.ElementAt(i);
+									var itemKey = item.Key;
+									var itemValue = item.Value;
+
+									@* Cada item del dropdown *@
+									<li>
+										<a id="@("ver_paginas_" + itemKey)" 
+										   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+										   data-toggle="tab"
+										   href="#@("litVer" + itemKey)"
+										   data-language = "@itemKey">
+										   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+									</li>
+								}
+							</ul>
+						</div>
+					</div>
+				</li>
+			}
+	</ul>
+
+	@* Contenedor global de páginas *@
+	<div class="tab-content">	
+		@* Contenido de las diferentes páginas *@
+		<div id="panelListadoFacetas" 
+			class="tab-pane fade show active" 
+			role="tabpanel" 
+			aria-labelledby="panelListadoFacetas">
+
+			@* Contenedor del Título de la Sección + Buscador *@
+			<div class="row">
+				@* Título de la sección de páginas + Nº de items *@
+				<div class="col col-12 header-listado">
+					<div class="h1-container">
+						<h1>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOM")
+							<span id="numFacetas" class="numResultados"></span>
+						</h1>
+					</div>
+					@* Botón para crear item *@						
+					<div class="acciones d-flex align-items-center">
+						@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-faceta", Model)							
+					</div>
+				</div>
+
+				@* Buscador *@
+				<div class="col col-12 header-buscador">
+					<div class="wrapCol">
+						<div class="col-buscador" style="width: 100%">					
+						@* Formulario para búsquedas de páginas *@
+							<form id="formBuscadorFacetas" onsubmit="return false;">								
+								<div class="finderUtils" id="divCajaBusqueda">
+									<div class="group finderSection">
+										@* Input para realizar la búsqueda *@
+										<input
+											type="text"
+											id="txtBuscarFaceta"
+											class="not-outline finderSectionText"
+											autocomplete="off"
+											placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+										/>
+										@* Botón para realizar la búsqueda *@
+										<input
+											title="Buscar"
+											type="button"
+											class="findAction"
+											id="inputLupa"
+										/>
+										@* Botón para Facetas de la búsqueda *@
+										<a href="javascript: void(0);" class="btn-filtrar-movil">
+											<span class="material-icons">filter_list</span>
+											<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+										</a>
+									</div>
+								</div>								
+							</form>
+						</div>
+					</div>
+				</div>
+				@* Contenido o tabla con las facetas de la comunidad *@
+				<div class="col col-12 col-contenido">
+					<div class="wrapCol">
+						@* Cabecera del listado de facetas *@
+						<ul id="id-header-facetas-list" class="header-component-list component-list no-list-style">
+							<li class="component-wrap">
+								@* Cabecera de facetas *@
+								<div class="component ">
+									<div class="component-header-wrap">
+										<div class="component-header">
+											<div class="component-sortable js-component-sortable-faceta">
+												<span class="material-icons-outlined sortable-icon">drag_handle</span>
+											</div>
+											@* Sección títulos de listado de facetas *@
+											<div class="component-header-content">
+												<div class="component-header-left">
+													<div class="component-name-wrap">
+														<span class="component-name">@Html.GetText("ADMINISTRACIONBASICA","NOMBRE")</span>
+													</div>
+													<div class="component-tipo-wrap">
+														<span class="component-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</span>
+													</div>
+													<div class="component-faceta-wrap">
+														<span class="component-faceta">@Html.GetText("ADMINISTRACIONSEMANTICA","FACETA")</span>
+													</div>																											
+												</div>
+												<div class="component-header-right">
+													<div class="component-actions-wrap">
+														<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+
+						@* Contenido de facetas *@
+						<ul id="id-added-faceta-list" 
+							class="js-community-faceta-list component-list no-list-style">
+			
+							@* Pintado de cada faceta *@
+							@foreach (FacetaModel faceta in Model.ListaFacetas.OrderBy(p2 => p2.Orden))
+							{
+								@Html.PartialView("_EdicionFaceta", faceta);
+							}
+						</ul>
+					</div>
+				</div>
+
+				<div class="p-1">
+					<hr class="hr hr-blurry">
+				</div>
+				<div class="col col-12 header-listado">
+					<div class="h1-container">
+						<h1>
+							<span class="material-icons">star</span> @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOMPROP")
+						</h1>
+					</div>
+				</div>
+				<div class="col col-12 header-buscador">
+					<div class="wrapCol">
+						<div class="col-buscador" style="width: 100%">
+							@* Formulario para búsquedas de páginas *@
+							<form id="formBuscadorFacetasPropuestas" onsubmit="return false;">
+								<div class="finderUtils" id="divCajaBusqueda">
+									<div class="group finderSection">
+										@* Input para realizar la búsqueda *@
+										<input type="text"
+											   id="txtBuscarFacetaPropuesta"
+											   class="not-outline finderSectionText"
+											   autocomplete="off"
+											   placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")" />
+										@* Botón para realizar la búsqueda *@
+										<input title="Buscar"
+											   type="button"
+											   class="findAction"
+											   id="inputLupa" />
+										@* Botón para Facetas de la búsqueda *@
+										<a href="javascript: void(0);" class="btn-filtrar-movil">
+											<span class="material-icons">filter_list</span>
+											<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>
+										</a>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+				@* Contenido o tabla con las facetas propuestas de la comunidad *@
+				<div class="col col-12 col-contenido">
+					<div class="wrapCol">
+						@* Cabecera del listado de facetas *@
+						<ul id="id-header-facetas-list" class="header-component-list component-list no-list-style">
+							<li class="component-wrap">
+								@* Cabecera de facetas *@
+								<div class="component ">
+									<div class="component-header-wrap">
+										<div class="component-header">
+											<div class="component-sortable js-component-sortable-faceta">
+												<span class="material-icons-outlined sortable-icon">drag_handle</span>
+											</div>
+											@* Sección títulos de listado de facetas *@
+											<div class="component-header-content">
+												<div class="component-header-left">
+													<div class="component-name-wrap">
+														<span class="component-name">@Html.GetText("ADMINISTRACIONBASICA","NOMBRE")</span>
+													</div>
+													<div class="component-tipo-wrap">
+														<span class="component-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</span>
+													</div>
+													<div class="component-faceta-wrap">
+														<span class="component-faceta">@Html.GetText("ADMINISTRACIONSEMANTICA","FACETA")</span>
+													</div>
+												</div>
+												<div class="component-header-right">
+													<div class="component-actions-wrap">
+														<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+
+						@* Contenido de facetas *@
+						<ul id="id-added-faceta-list"
+							class="js-community-faceta-list component-list no-list-style">
+
+							@* Pintado de cada faceta *@
+							@if (Model.ListaFacetasPropuestas != null)
+							{
+								foreach (FacetaModel faceta in Model.ListaFacetasPropuestas.OrderBy(p2 => p2.Orden))
+								{
+									@Html.PartialView("_EdicionFacetaPropuesta", faceta)
+									;
+								}
+							}
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>	
+	</div>        
+</div>
+
+@* Modal para eliminación de una faceta *@
+@Html.PartialView("_modal-views/_delete-faceta")
+
+
+
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/descubrimiento_analisis.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento
+            operativaGestionFacetas.init();
+        })();
+    </script>
+}

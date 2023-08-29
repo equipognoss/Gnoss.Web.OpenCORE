@@ -1,0 +1,177 @@
+@model PintarCategoriaEditorTesauro
+
+@*Descripción
+-----------------------------------------------
+Vista para pintar cada uno de los items correspondientes a un tesauro semántico junto con sus respectivos hijos.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	bool isNewCreation = false;
+	// Id aleatorio para el collapse y el panel
+	string randomId = Guid.NewGuid().ToString().Substring(0, 5);
+	string panelId = randomId;
+
+	@* ComAdminSemanticElemModel para pintado de items para borrado *@
+	ComAdminSemanticElemModel comAdminSemanticElemModel = ViewBag.ComAdminSemanticElemModel;
+	
+}
+
+@{
+    bool esCategoriaCompartida = false;
+    if (Model.thesaurusEditor.SharedCategories != null && Model.thesaurusEditor.SharedCategories.Contains(Model.categoryModel.Key))
+    {
+        esCategoriaCompartida = true;
+    }
+
+    @* Comprobar si dispone de hijos la categoría actual *@
+    bool tieneHijos = !esCategoriaCompartida && ((List<CategoryModel>)Model.thesaurusEditor.ThesaurusCategories).Count(cat => cat.ParentCategoryKey == Model.categoryModel.Key) > 0;
+
+    @* Mostrar o pintar la categoría*@
+	<li id="@Model.categoryModel.Key" class="component-wrap tesauro-item-row containerConfirmDeleteItemInModal"
+	@(isNewCreation ? "data-new-element=true" : "")
+		data-parent-categories-move-categories="@Model.categoryModel.StringKey"
+		data-parent-id="@Model.categoryModel.ParentCategoryKey">
+		<div class="component">
+			<div class="component-header-wrap">
+				<div class="sortable-helper-info">
+					<span class="sortable-helper-info--message">
+						@Html.GetText("DEVTOOLS","PULSAR")
+						<span>
+							<svg id="esc-button-icon" xmlns="http://www.w3.org/2000/svg" width="20.998" height="18.616" viewBox="0 0 20.998 18.616">
+								<path d="M3.932,0H17.066A3.944,3.944,0,0,1,21,3.932V14.684a3.944,3.944,0,0,1-3.932,3.932H3.932A3.944,3.944,0,0,1,0,14.684V3.932A3.944,3.944,0,0,1,3.932,0ZM4.3,5.775h3.87V6.833H5.753v.788H7.995V8.63H5.753V9.6H8.244v1.119H4.3V5.775ZM8.707,9.729,10,9.6a.666.666,0,0,0,.224.345.647.647,0,0,0,.383.1.622.622,0,0,0,.4-.118.267.267,0,0,0,.113-.219.255.255,0,0,0-.147-.231,2.6,2.6,0,0,0-.557-.142,5.5,5.5,0,0,1-.94-.232.994.994,0,0,1-.443-.359,1.043,1.043,0,0,1,.014-1.189,1.164,1.164,0,0,1,.537-.384,2.718,2.718,0,0,1,.916-.126,3.007,3.007,0,0,1,.894.1,1.152,1.152,0,0,1,.482.3,1.6,1.6,0,0,1,.32.559l-1.229.125a.457.457,0,0,0-.159-.253.62.62,0,0,0-.369-.108.493.493,0,0,0-.32.084.251.251,0,0,0-.1.2.217.217,0,0,0,.126.2,1.849,1.849,0,0,0,.554.121,3.589,3.589,0,0,1,.964.217,1.068,1.068,0,0,1,.482.395,1,1,0,0,1,.167.564,1.147,1.147,0,0,1-.178.6,1.214,1.214,0,0,1-.557.468,2.542,2.542,0,0,1-1.039.174,2.345,2.345,0,0,1-1.322-.282,1.251,1.251,0,0,1-.507-.795Zm6.753-.407,1.235.145a1.88,1.88,0,0,1-.335.709,1.548,1.548,0,0,1-.6.465,2.209,2.209,0,0,1-.921.166,3.268,3.268,0,0,1-.9-.106,1.572,1.572,0,0,1-.619-.345,1.707,1.707,0,0,1-.4-.559,2.074,2.074,0,0,1-.147-.851,2.091,2.091,0,0,1,.179-.921,1.761,1.761,0,0,1,.825-.8,2.451,2.451,0,0,1,.974-.166,2.163,2.163,0,0,1,1.268.313,1.661,1.661,0,0,1,.612.918l-1.222.173a.6.6,0,0,0-.208-.347.659.659,0,0,0-.408-.116.645.645,0,0,0-.523.244,1.157,1.157,0,0,0-.2.742,1,1,0,0,0,.2.672.632.632,0,0,0,.5.229.675.675,0,0,0,.429-.137.84.84,0,0,0,.26-.422ZM.846,13.227a3.218,3.218,0,0,0,.83,1.437A3.176,3.176,0,0,0,3.93,15.6H17.064c.036,0,.07,0,.106,0l.22-.015a3.181,3.181,0,0,0,1.912-.9l.015-.017a3.2,3.2,0,0,0,.83-1.437v-9.3A3.1,3.1,0,0,0,17.063.846H3.932A3.092,3.092,0,0,0,.847,3.93v9.3Z" fill="#006eff" fill-rule="evenodd"></path>
+							</svg>
+						</span> @Html.GetText("DEVTOOLS","PARACANCELAR")
+					</span>
+				</div>
+				<div class="component-header">
+					<div class="component-sortable">
+						<span class="material-icons-outlined sortable-icon">drag_handle</span>
+						@* <span class="material-icons-outlined showHide-icon">add_circle_outline</span> *@
+					</div>
+					<div class="component-header-content">
+						<div class="component-header-left">
+							<div class="component-name-wrap justify-content-between">
+								<div style="align-items: center; display: flex">
+									<span class="material-icons labelElementExtraInfo d-none text-primary"
+										  style="font-size: 1rem; color: grey; cursor: pointer;"
+										  title="@Html.GetText("DEVTOOLS","CAMBIOSPENDIENTESDEGUARDAR")"
+										  alt="@Html.GetText("DEVTOOLS","CAMBIOSPENDIENTESDEGUARDAR")">emergency</span>
+
+									@if (tieneHijos)
+									{
+										<span class="material-icons-outlined showHide-icon collapsed">add_circle_outline</span>
+									}
+									<span class="component-elementName labelElementName">@Html.ObtenerTextoIdiomaUsuario(@Model.categoryModel.Name)</span>
+								</div>
+							</div>
+						</div>
+						<div class="component-header-right">
+							<div class="component-actions-wrap">
+								@* Botón dropdown de acciones *@
+								<ul class="no-list-style component-actions">
+									@* Acción Editar el Nombre *@
+									<li>
+										<a class="action-edit round-icon-button js-action-edit-component btnEditTesauroItemDetail"
+										   data-toggle="collapse"
+										   data-target="#panel_collapse_@(panelId)"
+										   aria-expanded="true"
+										   aria-controls="panel_collapse_@(panelId)">
+											<span class="material-icons">edit</span>											
+										</a>
+									</li>
+									@* Acción Borrar - Pendiente de definir comportamiento en CORE *@
+									<li>
+										<a class="action-delete round-icon-button js-action-delete btnDeleteTesauroItemDetail">
+											<span class="material-icons">delete</span>											
+										</a>									
+									</li>
+								</ul>								
+							</div>							
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="panelElementDetail collapse @(isNewCreation ? "show" :"") " id="panel_collapse_@(panelId)">
+			@* Detalles del elemento *@
+			@* Si se desea crear nuevo, es necesario esta vista *@
+			@if (isNewCreation)
+			{
+				//@Html.PartialView("_partial-views/_ontology-secondary-list-detail-item", Model)				
+			}
+
+			@* Panel para seleccionar categoría destino si se procede al borrado de la misma 
+			<select id="cmbMoverATrasEliminar">
+				@foreach (string categoriaID in comAdminSemanticElemModel.SemanticThesaurus.ParentCategoriesForDeleteCategories.Keys)
+				{					
+					<option value="@categoriaID">@comAdminSemanticElemModel.SemanticThesaurus.ParentCategoriesForDeleteCategories[categoriaID]</option>
+				}
+			</select>
+
+			<span id="btMoverTrasEliminar">
+				<input id="lbMoverTodoTrasEliminarCategoria" class="submit" type="button" value="@Html.GetText("COMADMINCATEGORIAS", "MOVER")" />
+			</span>
+			*@
+			@* Panel para la creación de un nuevo item*@
+			<div class="panelRenameTesauroItem">
+				@* Nuevo nombre a editar *@
+				<div class="form-group mb-3">				
+					@* Input del nombre para un único idioma *@
+					@if (comAdminSemanticElemModel.SemanticThesaurus.SemThesaurusLanguajes == null || comAdminSemanticElemModel.SemanticThesaurus.SemThesaurusLanguajes.Count == 0)
+					{
+						<label class="control-label d-block">Nombre</label>
+						<input id="txtNuevoNombre"
+							   type="text"
+ 						       class="form-control txtNuevoNombre"/>
+								
+					}
+					else
+					{						
+						@* Inputs en los idiomas disponibles *@
+						foreach (string idioma in comAdminSemanticElemModel.SemanticThesaurus.SemThesaurusLanguajes.Keys)
+						{
+							<label class="control-label d-block">Nombre en @comAdminSemanticElemModel.SemanticThesaurus.SemThesaurusLanguajes[idioma]</label>							
+							<input 
+								   type="text"
+								   data-language="@idioma"
+								   class="form-control txtNuevoNombre @idioma"/>
+						}
+					}
+					<small class="form-text text-muted">Establece el nuevo nombre para la categoría del tesauro.</small>
+				</div>
+				<a href="javascript: void(0);" class="btn btn-primary uppercase btnRenameTesauroCategoryItem">@Html.GetText("COMADMINCATEGORIAS", "RENOMBRAR")</a>
+			</div>
+		</div>
+
+		@* Sección si no hay hay más páginas dentro de ella (Permitir arrastrar en Vista-Edición *@			
+		@if (!tieneHijos)
+		{
+			<div class="component-content tesauroChildrenPanel">
+
+			</div>
+		}else		
+		{
+			@* Sección de los hijos por defecto oculta *@
+			<div class="component-content tesauroChildrenPanel d-none">
+				@* Listado de los posibles hijos del Tesauro Semántico *@
+				<ul class="id-added-tesauro-element-list component-list element-list no-list-style">
+					@* Pintado de los hijos de la categoría del Tesauro semántico *@
+					@if (tieneHijos)
+					{
+						@* Mostrar o no el panel de los hijos (subcategorías) si esta categoría dispone de subcategorías*@
+						@foreach (CategoryModel categoria in ((List<CategoryModel>)Model.thesaurusEditor.ThesaurusCategories).Where(cat => cat.ParentCategoryKey == Model.categoryModel.Key).OrderBy(cat => cat.Order))
+						{
+							PintarCategoriaEditorTesauro pintar = new PintarCategoriaEditorTesauro();
+							pintar.categoryModel = categoria;
+							pintar.thesaurusEditor = Model.thesaurusEditor;
+							@Html.PartialView("_partial-views/_tesauro-list-item-detail", pintar)
+						}
+					}
+				</ul>
+			</div>
+		}
+	</li>
+}

@@ -1,28 +1,76 @@
 ﻿@model PintarComboAdministrarCategorias
 
+@*
+Descripción
+-----------------------------------------------
+Minivista para pintar los input type text de multidioma de una categoría.
+
+Variables
+----------------------------------------------------------------
+*@
 @{
     Dictionary<string, string> nombreCategoria = Model.Categoria.Value;
-
     HeaderModel cabecera = Html.GetCabecera();
+}
+@*
+ ----------------------------------------------------------------
+ -------------------- Minivista para pintar inputs de multiIdioma de una categoría --------------------
+*@
+
+
+@{
+    @* Comprobar si se permite multiIdioma *@
     if (Model.MultiLanguaje)
     {
-        foreach (KeyValuePair<string, string>
-            idioma in cabecera.Languajes)
-        {
-            string textoCaja = "";
-            if (nombreCategoria != null && nombreCategoria.ContainsKey(idioma.Key))
-            {
-                textoCaja = nombreCategoria[idioma.Key];
-            }
 
-            <div>
-                <span style="display:block">Nombre (@idioma.Value) *</span>
-                <input type="text" rel="@idioma.Key" class="inputIdioma" id="@("txtNombreCat" + idioma.Key)" @Html.Raw(!string.IsNullOrEmpty(textoCaja) ? "value=\"" + textoCaja + "\"" : "") />
-            </div>
-        }
+        @* Pinta los tabs *@
+        <ul class="nav nav-tabs" id="tabIdiomasCajasMultiIdioma" role="tablist">
+		@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
+			@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){				
+			    <li class="nav-item">
+			    	<a  class="tabIdiomaCajaMultiIdiomaItem nav-link @( Model.IdiomaTesauro == idioma.Key ? "active" : null)"                                                         
+			    	    id="@("cajaMultiIdioma_" + idioma.Key)" 
+                        data-toggle="tab" 
+                        href="#@("ver_cajaMultiIdioma_" + idioma.Key)" 							
+			    		role="tab" 
+                        aria-controls="@("ver_cajaMultiIdioma_" + idioma.Key)"
+			    		aria-selected="true">@idioma.Value</a>
+			    </li>
+								
+			}
+	    </ul>
+
+        @* Contenido de los Tabs*@
+        <div class="tab-content pb-0" id="nav-tabContentIdiomasCajasMultiIdioma">
+            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+            {
+                string textoCaja = "";
+                if (nombreCategoria != null && nombreCategoria.ContainsKey(idioma.Key))
+                {
+                    textoCaja = nombreCategoria[idioma.Key];
+                }
+                @* Cada panel con el idioma correspondiente *@ 
+                <div id="@("ver_cajaMultiIdioma_" + idioma.Key)" 
+                      class="tab-pane fade @( Model.IdiomaTesauro == idioma.Key ? "active show" : null)"
+                      role="tabpanel"
+                      aria-labelledby="@("ver_cajaMultiIdioma_" + idioma.Key)">     
+
+                      @* Input para el nombre de la categoría *@ 
+                        <div class="form-group mb-4">
+			                <label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","NOMBRE")</label>
+			                <input type="text"                     
+                                   id="@("txtNombreCat" + idioma.Key)"
+                                   rel="@idioma.Key" 
+                                   placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELTITULODELACATEGORIA")"
+                                   class="form-control inputIdioma"
+                                   @Html.Raw(!string.IsNullOrEmpty(textoCaja) ? "value=\"" + textoCaja + "\"" : "")>
+		                </div>                    
+                </div>
+            }
+        </div>
     }
     else
-    {
+    {             
         KeyValuePair<string, string>
             idiomaUnico = new KeyValuePair<string, string>
                 ("es", "español");
@@ -31,11 +79,17 @@
         {
             textoCaja = nombreCategoria[idiomaUnico.Key];
         }
-        <div>
-            <span style="display:block">Nombre *</span>
-            <input type="text" rel="@idiomaUnico.Key" class="inputIdioma" id="@("txtNombreCat" + idiomaUnico.Key)" @Html.Raw(!string.IsNullOrEmpty(textoCaja) ? "value=\"" + textoCaja + "\"" : "") />
-        </div>
+
+        @* Input para el nombre de la categoría *@
+        <div class="form-group mb-4">
+		    <label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","NOMBRE")</label>
+		    <input type="text"                     
+                   id="@("txtNombreCat" + idiomaUnico.Key)"
+                   rel="@idiomaUnico.Key"
+                   placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELTITULODELACATEGORIA")"
+                   class="form-control inputIdioma"
+                   @Html.Raw(!string.IsNullOrEmpty(textoCaja) ? "value=\"" + textoCaja + "\"" : "")>
+		</div>
+
     }
-
-
 }

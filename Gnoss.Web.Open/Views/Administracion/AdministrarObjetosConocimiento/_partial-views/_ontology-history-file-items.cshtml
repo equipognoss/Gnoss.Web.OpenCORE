@@ -1,0 +1,108 @@
+﻿@model OntologicalTemplatesAdministrationViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra el listado de plantillas o ficheros a modo de histórico para poder descargarlos.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	
+}
+
+
+@if (Model != null && Model.VersionList != null && Model.VersionList.Count > 0)
+{
+	@* Cabecera de la tabla
+	<ul
+		class="header-component-list history-list no-list-style">
+		<li class="component-wrap">
+			<div class="component">
+				<div class="component-header-wrap">
+					<div class="component-header">
+						<div class="component-header-content">
+							<div class="component-header-left">
+								<div class="component-name-wrap">
+									<span class="component-name">@Html.GetText("DEVTOOLS","FICHEROSDELAONTOLOGIA")</span>
+								</div>
+							</div>
+							<div class="component-header-right">
+								<div class="component-actions-wrap">
+									<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</li>
+	</ul> 
+	*@
+
+	@* Listado de ficheros / Historial *@
+	<ul class="js-community-historial-list component-list no-list-style">
+		@* Item *@ 
+		@foreach (string archivo in Model.VersionList)
+		{
+			@* <li>@archivo.Replace("_" + Model.OntologyID, "") (<a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")/download-version?copyName=@(System.Net.WebUtility.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + System.Net.WebUtility.UrlEncode(Model.OntologyName))">descargar</a>)</li>     *@
+			<li class="component-wrap historial-row">
+				<div class="component">
+					<div class="component-header-wrap">
+						<div class="component-header">
+							<div class="component-no-sortable">
+								<span class="material-icons-outlined sortable-icon">description</span>
+							</div>
+							<div class="component-header-content">
+								<div class="component-header-left">
+									@* Nombre de la plantilla *@
+									<div class="component-name-wrap">
+										<span
+											class="labelHistoryName">
+											@archivo.Replace("_" + Model.OntologyID, "") 
+										</span>								
+									</div>
+								</div>
+								<div class="component-header-right">
+									@* Listado de acciones *@
+									<div class="component-actions-wrap">
+										<div class="component-actions-wrap">
+											<ul class="no-list-style component-actions">
+												<li>
+													<a title="@Html.GetText("HISTORIALVERSIONES","DESCARGAR")" alt="@Html.GetText("HISTORIALVERSIONES","DESCARGAR")"
+													   href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")/download-version?copyName=@(System.Net.WebUtility.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + System.Net.WebUtility.UrlEncode(Model.OntologyName))"
+													   class="action-download round-icon-button js-action-download-history-item btnDownloadHistoryItem">
+														<span class="material-icons">download</span>
+													</a>
+												</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</li>
+
+		}
+	</ul>
+}else{
+	@* No se han encontrado ficheros *@
+	<ul class="js-community-historial-list component-list no-list-style">
+		<li class="component-wrap element-row-no-elements">
+			<div class="component">
+				<div class="component-header-wrap">
+					<div class="component-header-content">
+						<div class="component-header-left">						
+							<div class="component-name-wrap">																												
+								<span class="component-facetName">@Html.GetText("DEVTOOLS","NOHAYFICHEROSASOCIADOSAESTEOBJETODECONOCIMIENTO")</span>
+							</div>					
+						</div>
+					</div>
+				</div>
+			</div>
+		</li>
+	</ul>
+}

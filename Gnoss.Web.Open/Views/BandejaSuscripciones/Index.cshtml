@@ -34,6 +34,7 @@ UserProfileModel Perfil = Html.GetPerfil();
         <div class="h1-container">
             <h1>@Html.GetText("MENU", "SUSCRIPCIONES")</h1>
         </div>
+        @* Ocultar Administrar suscripciones ya que gestiona las del MetaEspacio -> Sin sentido *@
         <div class="acciones-listado">
             <div class="wrap">
                 <a class="btn btn-outline-grey" href="@Perfil.Url@Html.GetText("URLSEM", "ADMINISTRARSUSCRIPCIONES")">
@@ -42,6 +43,7 @@ UserProfileModel Perfil = Html.GetPerfil();
                 </a>
             </div>
         </div>
+        
     </div>
     <div class="col col-12">
         <div class="resource-list listView resource-list-personas">

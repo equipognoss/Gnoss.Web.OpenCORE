@@ -1,0 +1,136 @@
+@model StringProperty
+@{
+    string modalId = Model.Uri.Replace("/", "").Replace(":", "").Replace("#", "").Replace(".", "");
+    string idLista = modalId + "miniatura";
+    int numMiniatura = 1;
+}
+
+<div class="modal fade" tabindex="-1" role="dialog" id="@modalId">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                @* Título del Modal *@
+                <p class="modal-title">
+                    <span class="material-icons">wallpaper</span>Configuración de miniaturas 
+                </p>
+                @* Cierre del Modal *@
+                <span class="material-icons cerrar"
+                      data-dismiss="modal"
+                      aria-label="Close">close</span>
+            </div>
+            <div class="modal-body modal-miniatura">
+                <div class="explicacion">
+                    <span class="material-icons icono-explicacion-miniatura pointer">info</span>
+                    <p>Especifique el ancho y alto (en píxeles) de cada miniatura</p>
+                </div>
+                <div class="configurar-miniatura">
+                    <div class="form-group">
+                        <label for="@Model.Domain@@@Model.Uri@@tipoMiniatura">Tipo de miniatura</label>
+                        <select name="@Model.Domain@@@Model.Uri@@tipoMiniatura" class="js-select2" data-select-search="true">
+                            <option value="RecorteCuadrado">Recorte cuadrado</option>
+                            <option value="Redimension" >Redimensión</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="@Model.Domain@@@Model.Uri@@anchoMiniatura">Ancho</label>
+                        <input type="text" class="form-control" name="@Model.Domain@@@Model.Uri@@anchoMiniatura" />
+                    </div>
+                    <div class="form-group">
+                        <label for="@Model.Domain@@@Model.Uri@@altoMiniatura">Alto</label>
+                        <input type="text" class="form-control" name="@Model.Domain@@@Model.Uri@@altoMiniatura" />
+                    </div>
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="btn btn-primary btnMiniatura col text-center pointer" onclick="operativaConfiguracionOC.addMini('@Model.Domain@@@Model.Uri')">Añadir miniatura</div>
+                        <div class="col"></div>
+                    </div>
+                    <hr />
+                </div>
+                <div class="formulario-edicion">
+                    <ul class="header-component-list component-list no-list-style">
+                        <li class="component-wrap">
+                            <div class="component">
+                                <div class="component-header-wrap">
+                                    <div class="component-header">
+                                        <div class="component-sortable js-component-sortable-faceta">
+                                            <span class="material-icons-outlined sortable-icon">drag_handle</span>
+                                        </div>
+                                        <div class="component-header-content">
+                                            <div class="component-header-left">
+                                                
+                                                <div class="component-tipo-wrap">
+                                                    <span class="component-tipo">Tipo</span>
+                                                </div>
+                                                <div class="component-alto-wrap">
+                                                    <span class="component-alto">Alto</span>
+                                                </div>
+                                                <div class="component-ancho-wrap">
+                                                    <span class="component-ancho">Ancho</span>
+                                                </div>
+                                                <div class="component-tipo-wrap">
+                                                    <span class="component-eliminar">
+                                                        Eliminar miniatura
+                                                        </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <ul data-description="@Model.Domain@@@Model.Uri@@configImagen" class="lista-miniaturas component-list no-list-style" id="@idLista">
+                        @if (Model.Miniaturas != null)
+                        {
+                            foreach (List<KeyValuePair<string, string>> miniatura in Model.Miniaturas)
+                            {
+                                string i = numMiniatura.ToString();
+                                string tipo = miniatura.Where(x => x.Key.Equals("tipo")).Select(x => x.Value).ToList().First();
+                                string ancho = miniatura.Where(x => x.Key.Equals("ancho")).Select(x => x.Value).ToList().First();
+                                string alto = miniatura.Where(x => x.Key.Equals("alto")).Select(x => x.Value).ToList().First();
+                                <li class="component-wrap miniatura-row">
+                                    <div class="component">
+                                        <div class="component-header-wrap">
+                                            <div class="component-header">
+                                                <div class="component-sortable js-component-sortable-faceta">
+                                                    <span class="material-icons-outlined sortable-icon">drag_handle</span>
+                                                </div>
+                                                <div class="component-header-content">
+                                                    <div class="component-header-left">
+                                                        <div class="component-tipo-wrap">
+                                                            <span class="component-tipo">@tipo</span>
+                                                            <input type="hidden" name="@Model.Domain@@@Model.Uri@@miniatura@@minTipo@@@i" value="@tipo">
+                                                        </div>
+                                                        <div class="component-alto-wrap">
+                                                            <span class="component-alto">@alto</span>
+                                                            <input type="hidden" name="@Model.Domain@@@Model.Uri@@miniatura@@minAlto@@@i" value="@alto">
+                                                        </div>
+                                                        <div class="component-ancho-wrap">
+                                                            <span class="component-ancho">@ancho</span>
+                                                            <input type="hidden" name="@Model.Domain@@@Model.Uri@@miniatura@@minAncho@@@i" value="@ancho">
+                                                        </div>
+                                                        <div class="component-tipo-wrap">
+                                                            <span class="component-eliminar">
+                                                                <button type="button" class="btn btn-outline-danger eliminarMiniatura">
+                                                                    <span class="material-icons-outlined">
+                                                                        delete
+                                                                    </span>
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        }
+                    </ul>
+                    
+                </div>
+                
+            </div>
+       </div>
+    </div>
+</div>

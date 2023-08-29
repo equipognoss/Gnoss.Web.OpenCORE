@@ -3,807 +3,207 @@
 @using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
 @using System.Linq;
 
+@*
+Descripción
+-----------------------------------------------
+Vista index donde se muestra el listado con de las categorías y cookies de un determinado proyecto.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	// Carga de idiomas de la plataforma
+	string idiomas = "";
+	// Contador del nº de pestañas listadas
+	int contNumPestañasVisibles = 0;
+	// Nº de pestañas de idiomas a visualizar en la sección Tab
+	int numMaxPestañasIdiomasVisibles = 2;		
+	// Referencia al AdministrarCookiesViewModel para el botón de tipo de pintado de tipo cookies
+	ViewBag.AdministrarCookiesViewModel = Model;
 }
 
-<div class="content">
-    <div>
-        <form autocomplete="off">
-            @{
-                ViewBag.ListaIdiomas = Model.ListaIdiomas;
-                ViewBag.ContenidoMultiIdioma = Model.ContenidoMultiIdioma;
 
-                string idiomas = "";
+@{
+    @* Carga de idiomas *@
+    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+    {
+        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+    }     
+}
 
-                foreach (string idiomaKey in Model.ListaIdiomas.Keys)
-                {
-                    idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
-                }
-            }
-            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
-            <input type="hidden" id="idiomaDefecto" value="@Model.IdiomaPorDefecto" />
-        </form>
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
 
-        @if (Model.ListaCategoriaProyectoCookie.Count == 0)
-        {
-            <div id="categoriasCookies">
-                <p>
-                    <h1>Administrar cookies</h1>
-                    <span title="@Html.GetText("COMADMINCOOKIES", "UTILIZARCOOKIESMETAPROYECTO")">@Html.GetText("COMADMINCOOKIES", "UTILIZARCOOKIESMETAPROYECTO")</span>
-                    <input type="checkbox" name="chckBoxMetaproyecto" checked onchange="CrearCookiesProyecto('@Html.GetComunidad().Url/crear-cookies-tecnicas-proyecto')" />
-                </p>
-            </div>
-            <div id="cookiesProyecto">
-            </div>
-        }
-        else
-        {
-            <div id="categoriasCookies">
-                @Html.PartialView("_CategoriasCookies", Model.ListaCategoriaProyectoCookie)
-            </div>
-            <div id="cookiesProyecto">
-                @Html.PartialView("_CookiesProyecto", Model.ListaProyectoCookie)
-            </div>
-        }
+
+
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+            </li>
+            <li>
+                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOOKIESCOM")
+            </li>
+        </ul>
     </div>
-</div>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
-<script>
-    var UrlPagina = document.location.href;
 
-    function CrearCookiesProyecto(url) {
-        CargarCookiesMetaproyecto();
-    }
-
-    function CargarCookiesMetaproyecto() {
-        GnossPeticionAjax(UrlPagina + "/pintar-cookies-metaproyecto", null, true).done(function (data) {
-            $("#cookiesProyecto").html(data);
-        }).always(function () { CargarCategoriasCookies(); });
-    }
-
-    function CargarCategoriasCookies() {
-        GnossPeticionAjax(UrlPagina + "/pintar-categorias-metaproyecto", null, true).done(function (data) {
-            $("#categoriasCookies").html(data);
-        }).always(function ()
-        {
-            EngancharComportamientoAnyadirCookie();
-            EngancharComportamientoAnyadirCategoria();
-            EngancharComportamientoGuardarTodo();
-
-            EngancharComportamientoEliminarCookie();
-        });
-    }
-
-    function EngancharComportamientoAnyadirCookie() {
-        $('input.addCookie').click(function () {
-            anyadirCookie();
-        });
-        $('input.addCookieAnalytics').click(function () {
-            anyadirCookiesAnalytics();
-        });
-        $('input.addCookieYoutube').click(function () {
-            anyadirCookiesYoutube();
-        });
-    }
-
-    function EngancharComportamientoAnyadirCategoria() {
-        $('input.addCategoria').click(function () {
-            anyadirCategoria();
-        });
-    }
-
-    function anyadirCategoria() {
-        $('.error.general').remove();
-
-        MostrarUpdateProgress();
-        GnossPeticionAjax(
-            UrlPagina + "/add-category",
-            null,
-            true
-        ).done(function (data) {
-            $('#sortableCategory').append(data);
-            $("#sortableCategory").children().last().find(".panEdicion").toggleClass("edit modified");
-            const panelId = $("#sortableCategory").children().last().find(".panEdicion").attr('name');
-            OperativaAcciones.init(panelId)
-        }).fail(function (data) {
-            console.log("ERROR =>" + data);
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    function anyadirCookie() {
-        $('.error.general').remove();
-        var categoria = $('.cmbAddCookie').val();
-        if (categoria.includes("11111111-1111-1111-1111-111111111111")) {
-            $('input.guardarTodo').before('<div class="error general">Debes seleccionar una categoría para la cookie</div>');
-            return;
-        }
-
-        MostrarUpdateProgress();
-        var dataPost = {
-            Categoria: categoria
-        }
-        GnossPeticionAjax(
-           UrlPagina + "/add-cookie",
-            dataPost,
-            true
-        ).done(function (data) {
-            $('#sortableCookie').append(data);
-            $("#sortableCookie").children().last().find(".panEdicion").toggleClass("edit modified");
-            const panelId = $("#sortableCookie").children().last().find(".panEdicion").attr('name');
-            OperativaAcciones.init(panelId)
-
-        }).fail(function (data) {
-            console.log("ERROR =>" + data);
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    function anyadirCookiesAnalytics() {
-        $('.error.general').remove();
-        MostrarUpdateProgress();
-        GnossPeticionAjax(
-           UrlPagina + "/pintar-cookies-analiticas",
-            null,
-            true
-        ).done(function (data) {
-            $("#cookiesProyecto ol").append(data);
-            $('span.editar').unbind();
-            OperativaAcciones.init()
-        }).fail(function (data) {
-            console.log("ERROR =>" + data);
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    function anyadirCookiesYoutube() {
-        $('.error.general').remove();
-
-        MostrarUpdateProgress();
-        GnossPeticionAjax(
-            UrlPagina + "/pintar-cookies-youtube",
-            null,
-            true
-        ).done(function (data) {
-            $("#cookiesProyecto ol").append(data);
-            $('span.editar').unbind();
-            OperativaAcciones.init();
-        }).fail(function (data) {
-            console.log("ERROR =>" + data);
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    function EngancharComportamientoGuardarTodo() {
-        $('input.guardarTodo').click(function () {
-            guardarTodo();
-        });
-    }
-
-    function guardarTodo() {
-        var that = this;
-        MostrarUpdateProgressTime(0);
-        $('.ok.general').remove();
-        $('.error').remove();
-
-        that.ListaCategorias = {};
-        var cont = 0;
-
-        var inputsNombre = $('.row.categoriaCookie:not(".ui-state-disabled") .modified input[name = "CategoryName"]:not(":disabled")');
-        inputsNombre.each(function () {
-            if (OperativaAcciones.comprobarNombreVacio($(this))) {
-                error = true;
-            }
-        });
-        var inputsDescripcion = $('.row.categoriaCookie:not(".ui-state-disabled") .modified textarea[name = "CategoryDescription"]:not(":disabled")');
-        inputsDescripcion.each(function () {
-            if (OperativaAcciones.comprobarTextareas($(this))) {
-                error = true;
-            }
-        });
-
-        $('.row.categoriaCookie').each(function () {
-            that.obtenerDatosCategorias($(this), cont++);
-        });
-        that.guardarCategorias();
-    }
-
-    function guardarTodasCategorias() {
-        var that = this;
-        MostrarUpdateProgressTime(0);
-        that.ListaCategorias = {};
-        var cont = 0;
-        $('.row.categoriaCookie').each(function () {
-            that.obtenerDatosCategorias($(this), cont++);
-        });
-        that.guardarCategorias();
-    }
-
-    function obtenerDatosCookies (fila, num) {
-        var that = this;
-        var id = fila.attr('id');
-
-        var panelEdicion = fila.children('.panEdicion');
-        var prefijoClave = 'ListaCookies[' + num + ']';
-
-        that.ListaCookies[prefijoClave + '.CookieID'] = id;
-        that.ListaCookies[prefijoClave + '.Nombre'] = panelEdicion.find('[name="CookieName"]').val();
-        that.ListaCookies[prefijoClave + '.Categoria'] = panelEdicion.find('[name="TabCategoria"]').val();
-        that.ListaCookies[prefijoClave + '.Descripcion'] = panelEdicion.find('[name="CookieDescription"]').val();
-        that.ListaCookies[prefijoClave + '.Tipo'] = panelEdicion.find('[name="TabTipoDuracion"]').val();
-        that.ListaCookies[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
-        that.ListaCookies[prefijoClave + '.EsModificada'] = panelEdicion.find('[name="CookieModificada"]').val();
-    }
-
-    function obtenerDatosCategorias(fila, num) {
-        var that = this;
-        var id = fila.attr('id');
-
-        var panelEdicion = fila.children('.panEdicion');
-        var prefijoClave = 'ListaCategorias[' + num + ']';
-
-        that.ListaCategorias[prefijoClave + '.CategoriaID'] = id;
-        that.ListaCategorias[prefijoClave + '.Nombre'] = panelEdicion.find('[name="CategoryName"]').val();
-        that.ListaCategorias[prefijoClave + '.NombreCorto'] = panelEdicion.find('[name="CategoryShortName"]').val();
-        that.ListaCategorias[prefijoClave + '.Descripcion'] = panelEdicion.find('[name="CategoryDescription"]').val();
-        that.ListaCategorias[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
-        that.ListaCategorias[prefijoClave + '.EsModificada'] = panelEdicion.find('[name="CategoriaModificada"]').val();
-    }
-
-    function guardarCookies() {
-        var that = this;
-        GnossPeticionAjax(
-            UrlPagina + "/save-cookie",
-            that.ListaCookies,
-            true
-        ).done(function (data) {
-            mostrarGuardadoOK();
-        }).fail(function (data) {
-            var error = data.split('|||');
-            if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-                mostrarErrorGuardado();
-                if (error[0] == "RUTA REPETIDA") {
-                    that.mostrarErrorUrlRepetida($('#' + error[1]));
-                }
-                else if (error[0] == "NOMBRE VACIO") {
-                    that.mostrarErrorNombreVacio($('#' + error[1]));
-                }
-                else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
-                    that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
-                }
-            }
-            else {
-                mostrarErrorGuardadoFallo(data);
-            }
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    function guardarCategorias() {
-        var that = this;
-        GnossPeticionAjax(
-            UrlPagina + "/save-category",
-            that.ListaCategorias,
-            true
-        ).done(function (data) {
-            that.ListaCookies = {};
-            var cont = 0;
-            var inputsNombre = $('.row.cookieProyecto:not(".ui-state-disabled") .modified input[name = "CookieName"]:not(":disabled")');
-            inputsNombre.each(function () {
-                if (OperativaAcciones.comprobarNombreVacio($(this))) {
-                    error = true;
-                }
-            });
-            var inputsDescripcion = $('.row.cookieProyecto:not(".ui-state-disabled") .modified textarea[name = "CookieDescription"]:not(":disabled")');
-            inputsDescripcion.each(function () {
-                if (OperativaAcciones.comprobarTextareas($(this))) {
-                    error = true;
-                }
-            });
-            $('.row.cookieProyecto').each(function () {
-                that.obtenerDatosCookies($(this), cont++);
-            });
-            that.guardarCookies();
-        }).fail(function (data) {
-            var error = data.split('|||');
-            if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-                mostrarErrorGuardado();
-                if (error[0] == "RUTA REPETIDA") {
-                    that.mostrarErrorUrlRepetida($('#' + error[1]));
-                }
-                else if (error[0] == "NOMBRE VACIO") {
-                    that.mostrarErrorNombreVacio($('#' + error[1]));
-                }
-                else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
-                    that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
-                }
-            }
-            else {
-                mostrarErrorGuardadoFallo(data);
-            }
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    function eliminarCookies(botonEliminar) {
-        const panelID = $(botonEliminar).parent().parent().attr("id");
-        const inputCookieEliminada = $(`#${panelID}`).find('[name="TabEliminada"]');
-        if (inputCookieEliminada.length > 0) {
-            // Modificar Valor a TRUE en CookieEliminada
-            inputCookieEliminada.val("true");
-        }
-
-        $(botonEliminar).parent().addClass('deleted');
-        $(botonEliminar).parent().append('<span class="deshacer">@Html.GetComunidad()</span>');
-        $(botonEliminar).parent().prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>');
-
-        $(botonEliminar).parent().find('span.deshacer').click(function () {
-            deshacerEliminarCookie($(this));
-        });
-    }
-
-    function deshacerEliminarCookie(botonDeshacer) {
-        var fila = botonDeshacer.closest('.row');
-        fila.removeClass('ui-state-disabled');
-
-        var panEditar = fila.children('.panEdicion');
-        panEditar.find('[name="TabEliminada"]').val('false');
-
-        var panCabecera = fila.children('.header');
-        panCabecera.removeClass('deleted');
-
-        var deshacer = panCabecera.children('.deshacer');
-        var eliminada = panCabecera.children('.eliminada');
-        deshacer.remove();
-        eliminada.remove();
-    }
-
-    function EngancharComportamientoEliminarCookie() {
-        $('span.eliminar').click(function () {
-            eliminarCookies($(this));
-        });
-    }
-
-    function mostrarGuardadoOK() {
-        $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
-    }
-
-    function mostrarErrorGuardadoFallo(data) {
-        $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
-    }
-
-    function mostrarErrorGuardado() {
-        var esPre = "@Html.GetComunidad().EntornoEsPre";
-        var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
-        if (esPre == "True") {
-            $('input.guardarTodo').before('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
-        }
-        else if (entornoBloqueado == "True") {
-            $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
-        }
-        else {
-            $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div > ');
-        }
-    }
-
-    var OperativaAcciones = {
-        init: function (panelID) {
-            this.config(panelID);
-            this.engancharComportamientoCookies();
-            this.engancharMultiIdioma();
-
-            $('.row.pestanya').each(function () {
-                $('#' + this.id + ' .tipoPestanya').html('(' + $('#' + this.id + ' .nombreTipoPestanya').val() + ')');
-            });
-        },
-        config: function (panelID) {
-            this.urlPagina = document.location.href;
-            this.cargarIdiomas();
-            this.id = '';
-
-            if (typeof panelID != 'undefined' && panelID != '') {
-                this.id = '#' + panelID + ' ';
-            }
-            return;
-        },
-        engancharMultiIdioma: function () {
-            var that = this;
-            if (that.ListaIdiomas.length > 1) {
-                $(that.id + 'input[name="CookieName"]:not(:disabled)').each(function () {
-                    var inputName = $(this);
-                    that.montarMultidioma(inputName);
-
-                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('keyup');
-                    }).blur(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('blur');
-                    });
-                });
-                $(that.id + 'input[name="CookieDescription"]:not(:disabled)').each(function () {
-                    var inputUrl = $(this);
-                    that.montarMultidioma(inputUrl);
-                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
-                        inputUrl.trigger('blur');
-                    });
-                });
-                 $(that.id + 'input[name="CategoryName"]:not(:disabled)').each(function () {
-                    var inputName = $(this);
-                    that.montarMultidioma(inputName);
-                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('keyup');
-                    }).blur(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('blur');
-                    });
-                });
-                $(that.id + 'textarea[name="CategoryDescription"]:not(:disabled)').each(function () {
-                    var inputUrl = $(this);
-                    that.montarMultidioma(inputUrl);
-                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
-                        inputUrl.trigger('blur');
-                    });
-                });
-                componenteTabulado.init();
-            }
-        },
-        montarMultidioma: function (input) {
-            var that = this;
-            if (input.attr('name') == "CookieDescription" || input.attr('name') == "CategoryDescription") {
-                input.attr("hidden", "true");
-            } else {
-                input.attr("type", "hidden");
-            }
-
-            var textoMultiIdioma = input.val().split('|||')
-            var listaTextos = [];
-            $.each(textoMultiIdioma, function () {
-                if (this != "") {
-                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
-                    listaTextos.push(objetoIdioma);
-                }
-            });
-
-            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma" ><div class=" acciones tabspresentation "><ul>';
-
-            $.each(that.ListaIdiomas, function (id, idioma) {
-                var key = idioma.key;
-                var value = idioma.value;
-                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
-                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
-            });
-
-            htmlMultIdioma += '</ul></div>';
-
-            $.each(that.ListaIdiomas, function (id, idioma) {
-                var key = idioma.key;
-                var value = idioma.value;
-                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
-                var textoIdioma = listaTextos.findValueByKey(key);
-                if (textoIdioma == null || textoIdioma == '') {
-                    if (key.indexOf('-') > 0) {
-                        var keyAux = key.substr(0, key.indexOf('-'));
-                        textoIdioma = listaTextos.findValueByKey(keyAux);
-                    }
-                    if (textoIdioma == null || textoIdioma == '') {
-                        if (esIdiomaPorDefecto && listaTextos.length > 0) {
-                            textoIdioma = listaTextos[0].value;
-                        }
-                        else {
-                            textoIdioma = '';
-                        }
-                    }
-                }
-                if (input.attr('name') == "CookieDescription" || input.attr('name') == "CategoryDescription") {
-                    htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p><textarea id="texto_' + key + '" class="text big">' + textoIdioma +'</textarea></p></div>';
-                } else {
-                    htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p><input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma + '"></p></div>';
-                }
-
-            });
-
-            htmlMultIdioma += '</div>';
-
-            input.before(htmlMultIdioma);
-        },
-        obtenerTextoYClaveDeIdioma: function (texto) {
-            var that = this;
-            var idioma = that.IdiomaPorDefecto;
-            var textoIdioma = texto;
-            if (textoIdioma.length > 3) {
-                var indice = 3;
-                var auxIdioma = textoIdioma.substr(textoIdioma.length - indice);
-                if (that.ListaIdiomas.findValueByKey(auxIdioma.substr(1)) != null) {
-                    idioma = auxIdioma.substr(1);
-                    textoIdioma = textoIdioma.substr(0, textoIdioma.length - indice);
-                }
-            }
-            return { "key": idioma, "value": textoIdioma };
-        },
-        engancharComportamientoCookies: function () {
-            var that = this;
-            $(that.id + 'span.editar').click(function () {
-                that.editarCookie($(this));
-                // Al hacer click en ".action editar" (Desplegar el panel), establecer en el panel que se abrirá CookieModificada | CategoríaModificada a "TRUE"
-                const panelID = $(this).parent().parent().attr("id");
-                const inputCookieModificada = $(`#${panelID}`).find('[name="CookieModificada"]');
-                const inputCategoriaModificada = $(`#${panelID}`).find('[name="CategoriaModificada"]');
-                if (inputCookieModificada.length > 0) {
-                    // Modificar Valor a TRUE en CookieModificda
-                    inputCookieModificada.val("TRUE");
-                } else {
-                    // Modificar Valor a TRUE en CategoríaModificada
-                    inputCategoriaModificada.val("TRUE");
-                }
-            });
-            return;
-        },
-        cargarIdiomas: function (bototnEditar) {
-            var that = this;
-
-            that.IdiomaPorDefecto = $('#idiomaDefecto').val();
-
-            var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
-            that.ListaIdiomas = []
-
-            $.each(idiomasComunidad, function () {
-                if (this != "") {
-                    that.ListaIdiomas.push({ "key": this.split('|')[0], "value": this.split('|')[1] });
-                }
-            });
-        },
-        editarCookie: function (botonEditar) {
-            var fila = botonEditar.closest('.row');
-            var panEditar = fila.children('.panEdicion');
-
-            if (panEditar.hasClass('edit')) {
-                panEditar.removeClass('edit');
-            }
-            else {
-                panEditar.addClass('edit');
-                panEditar.addClass('modified');
-            }
-        },
-        anyadirCookie: function () {
-            $('.error.general').remove();
-            var categoria = $('.cmbAddCookie').val();
-            if (categoria == "11111111-1111-1111-1111-111111111111") {
-                $('input.guardarTodo').before('<div class="error general">Debes seleccionar un tipo de página</div>');
-                return;
-            }
-
-            MostrarUpdateProgress();
-            var dataPost = {
-                CategoriaID: categoria
-            }
-            GnossPeticionAjax(
-                this.urlPagina + '/add-cookie',
-                dataPost,
-                true
-            ).done(function (data) {
-            }).fail(function (data) {
-                console.log("ERROR =>" + data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        comprobarNombreVacio: function (inputName) {
-            var that = this
-            $('.error', inputName.parent()).remove();
-
-            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
-            var listaTextos = [];
-            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
-                var textoMultiIdioma = "";
-
-                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
-                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
-                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
-                    return true;
-                }
-
-                $.each(that.ListaIdiomas, function () {
-                    var idioma = this.key;
-                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
-                    if (textoIdioma == null || textoIdioma == "") {
-                        textoIdioma = textoIdiomaDefecto;
-                    }
-                    else {
-                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
-                    }
-                    listaTextos.push({ "key": idioma, "value": textoIdioma });
-                });
-                inputName.val(textoMultiIdioma);
-            }
-
-            return false;
-        },
-        comprobarTextareas: function(inputName) {
-            var that = this
-            $('.error', inputName.parent()).remove();
-
-            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
-            var listaTextos = [];
-            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
-                var textoMultiIdioma = "";
-
-                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' textarea').val();
-                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
-                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
-                    return true;
-                }
-
-                $.each(that.ListaIdiomas, function () {
-                    var idioma = this.key;
-                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' textarea').val();
-                    if (textoIdioma == null || textoIdioma == "") {
-                        textoIdioma = textoIdiomaDefecto;
-                    }
-                    else {
-                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
-                    }
-                    listaTextos.push({ "key": idioma, "value": textoIdioma });
-                });
-                inputName.val(textoMultiIdioma);
-            }
-            return false;
-        }
-    }
-
-    $(document).ready(function () {
-        Array.prototype.findValueByKey = function (key) {
-            var resultado = $.grep(this, function (array) {
-                return array.key == key;
-            });
-
-            if (resultado[0] != null) {
-                return resultado[0].value;
-            }
-
-            return null;
-        };
-
-        OperativaAcciones.init();
-        EngancharComportamientoAnyadirCookie();
-        EngancharComportamientoAnyadirCategoria();
-        EngancharComportamientoGuardarTodo();
-        EngancharComportamientoEliminarCookie();
-    });
-</script>
-
-<style>
-    ol.table li.row section.panEdicion ol.exportacionesSortable,
-    ol#sortable li.row section.panEdicion ol.propiedadesSortable,
-    ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable,
-    ol.table li.row section.panEdicion ol.facetasSortable {
-        border: 0;
-        padding: 0;
-    }
-
-        ol#sortable li.row section.panEdicion ol.exportacionesSortable li.row,
-        ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row,
-        ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable li.row,
-        ol#sortable li.row section.panEdicion ol.facetasSortable li.row {
-            padding-top: 0;
-            margin-bottom: 0;
-            margin-left: 20px;
-            border-bottom: 0;
-        }
-
-            ol#sortable li.row section.panEdicion ol.exportacionesSortable li.row:last-of-type,
-            ol#sortable li.row section.panEdicion ol.propiedadesSortable li.row:last-of-type,
-            ol#sortable li.row section.panEdicion ol.filtrosOrdenSortable li.row:last-of-type,
-            ol#sortable li.row section.panEdicion ol.facetasSortable li.row.row:last-of-type {
-                border-bottom: 1px solid;
-            }
-
-    ol.exportacionesSortable li.row.exportacion section.panEdicion,
-    ol.facetasSortable li.row.facetasSortable section.panEdicion {
-        width: 760px;
-    }
-
-        ol.exportacionesSortable li.row.exportacion section.panEdicion p {
-            width: 730px;
-        }
-
-        ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque {
-            margin-bottom: 0;
-            border-bottom: 0;
-        }
-
-            ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque:last-of-type {
-                border-bottom: 1px solid;
-            }
-
-            ol.exportacionesSortable li.row.exportacion section.panEdicion .bloque p {
-                width: 710px;
-            }
-
-    ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion {
-        width: 717px;
-    }
-
-        ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion p {
-            width: 700px;
-        }
-
-        ol.filtrosOrdenSortable li.row.filtroOrden section.panEdicion .tipo {
-            width: 100px;
-        }
-
-    ol.exportacionesSortable li.row.exportacion input[type="text"],
-    ol.exportacionesSortable li.row.exportacion textarea {
-        width: 520px;
-    }
-
-    ol.filtrosOrdenSortable li.row input[type="text"],
-    ol.filtrosOrdenSortable li.row textarea {
-        width: 590px;
-    }
-
-    ol.exportacionesSortable li.row.exportacion .bloque input[type="text"],
-    ol.exportacionesSortable li.row.exportacion .bloque textarea {
-        width: 490px;
-    }
-
-    ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion {
-        width: 697px;
-    }
-
-        ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion p {
-            width: 667px;
-        }
-
-        ol.exportacionesSortable ol.propiedadesSortable li.row.propiedad section.panEdicion .tipo {
-            width: 170px;
-        }
-
-    .editarFiltroOrden {
-        margin-bottom: 20px;
-        margin-right: 20px;
-    }
-
-        .editarFiltroOrden .error {
-            margin-left: 20px;
-        }
-
-    .row .header .nombrePestanya {
-        font-weight: bold;
-    }
-
-    .row .header .tipoPestanya {
-        padding-left: 10px;
-    }
-
-    .table.filtrado .oculto {
-        display: block;
-    }
-
-    .table.filtrado li.row.visible > .header {
-        border-bottom: 1px solid #000;
-    }
-
-    .table.filtrado li.pestanya ol.subPestanyas,
-    .table.filtrado li.pestanya.row {
-        border: 0 !important;
-    }
-
-    .table.filtrado {
-        border-bottom: 0 !important;
-        border: 1px solid #000;
-    }
-</style>
+    @* Contenido Central *@
+    <div class="formulario-edicion background-blanco">       
+		@* Panel de idiomas *@	
+		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+			@* Títulos de Tabs con los diferentes idiomas a visualizar. *@
+				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
+					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
+						<li class="nav-item">
+							<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
+								id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
+								data-language = "@idioma.Key"
+								role="tab" aria-controls="@("litVer" + idioma.Key)"
+								aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+						</li>
+						contNumPestañasVisibles += 1;
+					}				
+				}
+				@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+				@if (contNumPestañasVisibles < cabecera.Languajes.Count){
+					@* Dropdown para resto de categorías *@
+					<li class="nav-item">
+						<div class="dropdown">
+							@* Desplegable del dropdown *@
+							<a
+								class="nav-link dropdown-toggle"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false"
+								>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+							@* Sección para mostrar items del dropdown*@
+							<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+								<ul class="no-list-style">
+									@* Pintado del resto de pestañas en Dropdown *@									
+									@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
+										var item = cabecera.Languajes.ElementAt(i);
+										var itemKey = item.Key;
+										var itemValue = item.Value;
+
+										@* Cada item del dropdown *@
+										<li>
+											<a id="@("ver_paginas_" + itemKey)" 
+											   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+											   data-toggle="tab"
+											   href="#@("litVer" + itemKey)"
+											   data-language = "@itemKey">
+											   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+										</li>
+									}
+								</ul>
+							</div>
+						</div>
+					</li>
+				}
+		</ul>
+
+		@* Contenedor global de cookies *@
+		<div class="tab-content">	
+			@* Contenido de las diferentes cookies *@
+			<div id="panelListadoCookies" 
+				class="tab-pane fade show active" 
+				role="tabpanel" 
+				aria-labelledby="panelListadoCookies">
+
+				@* Contenedor del Título de la Sección + Buscador *@
+				<div class="row">
+					@* Título de la sección de cláusulas + Nº de páginas *@
+					<div class="col col-12 header-listado">
+						<div class="h1-container">
+							<h1>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOOKIESCOM")
+								<span id="numCookies" class="numResultados"></span>
+							</h1>
+						</div>
+
+						@* Botón para "Ver Categorías" y "Crear cookie" *@						
+						<div class="acciones d-flex align-items-center">
+							@* Botón para ver categorías *@
+							<a id="btnVerCategorias" href="javascript: void(0);" class="btn btn-outline-primary mr-2">
+								<span class="material-icons">account_tree</span>
+								<span class="texto">@Html.GetText("DEVTOOLS","VERCATEGORIAS")</span>
+							</a>
+							@* Botón para crear Cookie *@
+							@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-cookie", Model)							
+						</div>
+					</div>
+
+					@* Buscador de cookies *@
+					<div class="col col-12 header-buscador">
+						<div class="wrapCol">
+							<div class="col-buscador" style="width: 100%">					
+							@* Formulario para búsquedas de cookies *@
+								<form id="formBuscadorCookies" onsubmit="return false;">								
+									<div class="finderUtils" id="divCajaBusqueda">
+										<div class="group finderSection">
+											@* Input para realizar la búsqueda de páginas *@
+											<input
+												type="text"
+												id="txtBuscarCookie"
+												class="not-outline finderSectionText"
+												autocomplete="off"
+												placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+											/>
+											@* Botón para realizar la búsqueda *@
+											<input
+												title="Buscar"
+												type="button"
+												class="findAction"
+												id="inputLupa"
+											/>
+											@* Botón para Facetas de la búsqueda *@
+											<a href="javascript: void(0);" class="btn-filtrar-movil">
+												<span class="material-icons">filter_list</span>
+												<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+											</a>
+										</div>
+									</div>								
+								</form>
+							</div>
+						</div>
+					</div>
+
+					@* Contenedor de Categorías de Cookies de la comunidad *@	
+					<div id="cookiesCategoryContainer" class="col col-12 cookiesCategoryContainer d-none">
+					@Html.PartialView("_CategoriasCookies", Model.ListaCategoriaProyectoCookie)
+					</div>
+					
+					@* Cookies de la comunidad *@					
+					@Html.PartialView("_CookiesProyecto", Model.ListaProyectoCookie)
+					
+				</div>
+			</div>		
+		</div> 
+		@* Botón para guardado de cookies Youtube / Google *@
+		<a href="javascript: void(0);" class="btn btn-primary uppercase btnGuardarCookiesYoutubeGoogle d-none">
+            @Html.GetText("DEVTOOLS","GUARDARCOOKIESYOUTUBE/GOOGLE")
+        </a>		
+    </div>
+
+
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento de Cookies
+            operativaGestionCookies.init();
+        })();
+    </script>
+}

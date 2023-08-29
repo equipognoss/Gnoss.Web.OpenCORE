@@ -1,0 +1,227 @@
+﻿@model CookieModel
+@using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán los detalles de la cookie vía modal. Aquí también se incluye el modal para confirmar el borrado de la cookie.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	// Cookie a revisar
+	ProyectoCookie cookie = Model.ProyectoCookie;
+	string idModalCookie = "modal-configuracion-cookie_" + cookie.CookieID;	
+	string idModalCookieDelete = "modal-configuracion-cookie_delete" + cookie.CookieID;
+	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);
+	string categoriaCookieModalHeader = Html.ObtenerTextoIdiomaUsuario(Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(Model.ProyectoCookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault(), true);
+	string headerModalTitle = $"{Html.ObtenerTextoIdiomaUsuario(Model.ProyectoCookie.Nombre, true)} - {categoriaCookieModalHeader}"; 
+}
+
+
+@* Controlar el tipo de Cookie *@
+@{
+    string NombrePorTipo(int pTipo)
+    {
+        switch (pTipo)
+        {
+            case 0:
+                return "Persistent";
+            case 1:
+                return "Session";
+            case 2:
+                return "Third party";
+            default:
+                return "Persistent";
+        }
+    }
+
+    short TipoPorNombre(string pNombre)
+    {
+        switch (pNombre)
+        {
+            case "Persistent":
+                return 0;
+            case "Session":
+                return 1;
+            case "Third party":
+                return 2;
+            default:
+                return 0;
+        }
+    }
+}
+
+@* Modal con la información de la cookie *@
+<div
+	id="@idModalCookie"
+	class="modal modal-top fade modal-edicion modal-con-tabs modal-cookie"           
+	role="dialog"	
+	aria-modal="true">
+
+	@* Información oculta de la cookie *@	        
+    <input type="hidden" name="cookieShortName" value="@cookie.NombreCorto" />
+    <input type="hidden" name="CookieModificada" value="@Model.Modificada.ToString()" />
+    <input type="hidden" name="TabEliminada" value="false" />	
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>					
+					<span class="community-name">@headerModalTitle</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span
+				>
+			</div>
+			<div class="modal-body">
+				<div class="formulario-edicion">									                             
+					@* Tabs de los idiomas en multiIdioma *@
+					<div class="panContenidoMultiIdioma basicInfo">
+
+					</div>
+
+                    @* Contenido de los tabs de los idiomas *@
+					<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">											
+						@* Nombre Cookie  *@
+						<div class="form-group mb-4">								
+							<input
+								type="text"
+								name="CookieName"
+								data-labeltext = "@Html.GetText("COMADMINCOOKIES", "NOMBRE")"									
+								placeholder="@Html.GetText("COMADMINCOOKIES", "NOMBRE")"
+								class="form-control multiIdioma"								
+								value="@cookie.Nombre"									
+								/>
+						</div>	
+						
+						@* Descripción de la Cookie  *@
+						<div class="form-group mb-4">								
+							<textarea
+								name="CookieDescription"
+								rows="3"
+								data-labeltext = "@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")"																	
+								class="form-control multiIdioma">
+								@cookie.Descripcion
+							</textarea>							
+						</div>	
+					</div>
+					
+					@* Contenedor de Inputs sin multiidioma*@
+					<div class="tab-content mt-n5">							
+						@* Categoría de la Cookie  *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("COMADMINCOOKIES", "CATEGORIA")</label>
+
+							@* Select de la categoría de la cookie *@
+							<select name="TabCategoria"
+									class="cmbEditarCategoria js-select2"
+									tabindex="0"
+									aria-hidden="false">							
+								
+
+								@{
+									// Pintado correcto de la categoría
+									var categoriaSelected = Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault();
+									var categoriaSelectedWithouLanguages = "";
+									if (categoriaSelected.Split("|||")[0].Contains("@"))
+									{
+										categoriaSelectedWithouLanguages = categoriaSelected.Split("|||")[0].Substring(0, categoriaSelected.Split("|||")[0].Length - 3);                            
+									}
+									else
+									{
+										categoriaSelectedWithouLanguages = categoriaSelected;
+									}
+								}
+
+								<option selected value="@cookie.CategoriaID">@categoriaSelectedWithouLanguages</option>
+								@foreach (CategoriaProyectoCookie categoriaCookie in Model.ListaCategoriaProyectoCookie.Where(item => !item.CategoriaID.Equals(cookie.CategoriaID)))
+								{																											                                                  
+									string nombreCategoriaCookie = "";
+
+									if (categoriaCookie.Nombre.Split("|||")[0].Contains("@"))
+									{
+										nombreCategoriaCookie = categoriaCookie.Nombre.Split("|||")[0].Substring(0, categoriaCookie.Nombre.Split("|||")[0].Length - 3);                            
+									}
+									else
+									{
+										nombreCategoriaCookie = categoriaCookie.Nombre;
+									}																		
+									<option value="@categoriaCookie.CategoriaID">@nombreCategoriaCookie</option>
+								}
+							</select>
+						</div>
+
+						@* Duración de la cookie *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("COMADMINCOOKIES", "TIPODURACION")</label>
+							@* Select de la duración de la cookie *@
+							<select name="TabTipoDuracion"
+									class="cmbTipoDuracion js-select2"
+									tabindex="0"
+									aria-hidden="false">							
+								
+								<option selected value="@NombrePorTipo(cookie.Tipo)">@NombrePorTipo(cookie.Tipo)</option>
+								@foreach (int tipo in Enum.GetValues(typeof(TipoCookies)))
+								{
+									if (!NombrePorTipo(tipo).Equals(NombrePorTipo(cookie.Tipo)))
+									{
+										<option value="@NombrePorTipo(tipo)">@NombrePorTipo(tipo)</option>
+									}
+								}
+							</select>
+						</div>
+
+						@* Botón para guardar la cookie *@
+						<div class="panelBotonera">
+							<a 
+								href="javascript: void(0)"
+								class="btn btn-primary uppercase btnGuardarCookie">@Html.GetText("COMMON","GUARDAR")</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@* Modal de eliminación de cookie *@
+<div
+	id="@idModalCookieDelete"
+	class="modal modal-top fade modal-confirmDelete"           
+	role="dialog"	
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar el borrado de la cookie *@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">delete</span>
+					@Html.GetText("COMMON","ELIMINAR")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">				
+				<div class="form-group">
+					<label class="control-label">@Html.GetText("DEVTOOLS","DESEAELIMINARLACOOKIESELECCIONADA")</label>
+				</div>
+				<div class="form-actions">
+					<button data-dismiss="modal" class="btn btn-outline-primary btnNotConfirmDeleteCookie">@Html.GetText("COMMON","NO")</button>
+					<button class="btn btn-primary btnConfirmDeleteCookie">@Html.GetText("COMMON","SI")</button>
+				</div>				
+			</div>
+		</div>
+	</div>
+</div>

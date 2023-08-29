@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Recursos;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
@@ -60,6 +61,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Lista de categorias de las cookies del proyecto
         /// </summary>
         public List<CategoriaCookieModel> ListaCategoriaProyectoCookie { get; set; }
+
+        /// <summary>
+        /// Indica si la página actual es del ecosistema o de una comunidad
+        /// </summary>
+        public bool EsAdministracionEcosistema { get; set; }
     }
 
     /// <summary>
@@ -181,6 +187,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion edicionCookies edicion no-max-width-container ";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cookies;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONDESARROLLADORES", "COOKIES");
+
+            // Establecer en el ViewBag el idioma por defecto
+            ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
             return View(PaginaModel);
@@ -426,7 +444,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             mEntityContext.SaveChanges();
 
-            /*Incluir cookies en integración continua*/
             bool iniciado = false;
             try
             {
@@ -690,6 +707,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarCookiesViewModel();
+
+                    mPaginaModel.EsAdministracionEcosistema = EsAdministracionEcosistema;
 
                     if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma))
                     {

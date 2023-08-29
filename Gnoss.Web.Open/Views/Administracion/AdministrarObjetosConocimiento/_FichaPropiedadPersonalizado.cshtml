@@ -1,24 +1,96 @@
 ﻿@model ObjetoConocimientoModel.PresentacionPersonalizadoModel.PropiedadPersonalizadoModel
 
-<li class="row propiedadpersonalizada" id="@Guid.NewGuid()">
-    <span class="handle propiedad">:::</span>
-    <section class="header">
-        <span class="identificador" aux="@Model.Select">@Model.Identificador</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    <section class="panEdicion">
-        <p>
-            <span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")</span>
-            <input type="text" name="Identificador" value="@Model.Identificador" />
-        </p>
-        <p>
-            <span class="tipo">Select</span>
-            <input type="text" name="Select" value="@Model.Select" />
-        </p>
-        <p>
-            <span class="tipo">Where</span>
-            <textarea name="Where">@Model.Where</textarea>
-        </p>
-    </section>
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial para mostrar los diferentes propiedades en los diferentes listados de recursos. Esta vista se pinta a su vez en la vista "FichaPresentaciónPersonalizado" de cada objeto de conocimiento.
+
+Variables
+----------------------------------------------------------------
+*@
+
+
+@{
+@* Id propiedad *@
+Guid idRandom= @Guid.NewGuid();
+string collapseId = "panel_collapse_" + idRandom.ToString().Substring(0,5);
+}
+
+<li class="component-wrap property-row" id="@idRandom" data-collapseid="@collapseId">
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				<div class="component-header-content">
+					<div class="component-header-left">
+						@* Nombre *@
+						<div class="component-name-wrap">																												
+							<span class="component-subtipoName" aux="@Model.Select">@Model.Identificador</span>
+						</div>					
+					</div>
+					@* Sección de acciones *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de editar la propiedad *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditProperty"
+									   data-toggle="collapse" 
+									   data-target="#@collapseId"									   
+									   role="button" 
+									   aria-expanded="false" 
+									   aria-controls="@collapseId">									   
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de borrar la propiedad *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteProperty"
+										href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada de la propiedad - Collapse *@
+	<div class="collapse fichaPropiedad-info" id="@collapseId">		
+		<div class="card card-body">
+
+			@* Nombre *@
+			<div class="form-group mb-3">
+				<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")</label>
+				<input
+					type="text"
+					name="Identificador"
+					placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")"
+					class="form-control inputIdentificadorPropiedadValue"
+					value="@Model.Identificador">				
+			</div>
+
+			@* Select *@
+			<div class="form-group mb-3">
+				<label class="control-label d-block">Select</label>
+				<input
+					type="text"
+					name="Select"
+					placeholder="Select"
+					class="form-control inputSelectPropiedadValue"
+					value="@Model.Select">				
+			</div>
+
+			@* Where *@
+			<div class="form-group mb-3">
+				<label class="control-label d-block">Where</label>
+				<textarea class="form-control not-outline" 
+						  name="Where" 
+						  rows="8">@Model.Where</textarea>				
+			</div>
+		</div>
+	</div>	
 </li>

@@ -1,0 +1,27 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la sección de Comunidad desde la Home de DevTools.
+Esta vista se cargará en la sección central cuando se pulse sobre "Comunidad"
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de la sección Comunidad de la Home de la Comunidad en DevTools --------------------
+*@
+
+@* Contenedor central de secciones *@
+<div class="section-list-wrap">
+    <div class="section">
+        <h2>Sección pendiente de construcción</h2>
+        <p>@Html.GetText("DEVTOOLS","ESTASECCIONNOESTADISPONIBLETODAVIAPORFAVORCONTACTACONELADMI")</p>
+    </div>
+</div>
+

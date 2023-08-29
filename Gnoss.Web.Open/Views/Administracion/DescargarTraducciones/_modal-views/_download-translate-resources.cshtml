@@ -1,0 +1,75 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal utilizada para mostrar un rango de fechas para la descarga de traducciones de tipo Recurso
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+<div id="modalDownloadResources" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">download</span>@Html.GetText("DEVTOOLS","DESCARGARTRADUCCIONESDERECURSOS")
+                </p>
+                <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+            </div>
+            @* Contenido central del modal *@
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label class="control-label">
+                        @Html.GetText("DEVTOOLS","ELIGE,SILODESEAS,UNINTERVALODEFECHASPARADESCARGARSOLOLASTRAD")
+                    </label>
+                </div>
+
+                @* Selección de fechas*@
+                <div class="form-group mb-3">
+                    <label class="control-label d-block">
+                        @Html.GetText("DEVTOOLS","DESEASDESCARGARLASTRADUCCIONESDERECURSOSCREADOSENTREUNINTER")
+                    </label>
+                    <div class="form-check form-check-inline">
+                        <input id="downloadBetweenDate_SI" class="form-check-input downloadBetweenDate" data-value="si" type="radio" name="downloadBetweenDate">
+                        <label class="form-check-label" for="downloadBetweenDate_SI">@Html.GetText("COMMON","SI")</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input id="downloadBetweenDate_NO" class="form-check-input downloadBetweenDate" type="radio" data-value="no" name="downloadBetweenDate" checked>
+                        <label class="form-check-label" for="downloadBetweenDate_NO">@Html.GetText("COMMON","NO")</label>
+                    </div>            
+                </div>
+
+                @* Fecha Inicio *@
+                <div id="panelBetweenDates" class=" panelBetweenDates d-none">
+                    @* Fecha Inicio *@
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">
+                            @Html.GetText("DEVTOOLS","FECHADEINICIO")
+                        </label>
+                        <input type="date" class="form-control inputBetweenDates" id="startDate">
+                    </div>
+
+                    @* Fecha Fin *@
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">
+                            @Html.GetText("DEVTOOLS","FECHADEFIN")
+                        </label>
+                        <input type="date" class="form-control inputBetweenDates" id="endDate">
+                    </div>
+                </div>
+
+                @* Sección Acciones de "Descarga/Cancelar" *@
+                <div class="panelBotonera">                                                
+                    <button id="btnConfirmDownload" class="btn btn-primary btnConfirmDownload">
+                        @Html.GetText("ADMINISTRACIONVISTAS","DESCARGAR")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,43 @@
+﻿@model PintarModalCrearSubCategoria
+
+@*
+ Descripción
+ -----------------------------------------------
+ Vista modal que se usará dentro de un contenedor de bootstrap para poder crear una categoría hija dentro de una categoría padre seleccionada
+
+ Variables
+ ----------------------------------------------------------------
+*@
+@{
+    PintarComboAdministrarCategorias pintarComboAdministrarCategoriasModel = new PintarComboAdministrarCategorias();
+    pintarComboAdministrarCategoriasModel.MultiLanguaje = Model.MultiLanguaje;
+    pintarComboAdministrarCategoriasModel.IdiomaTesauro = Model.IdiomaTesauro;
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">create_new_folder</span>@Html.GetText("DEVTOOLS","CREARCATEGORIAEN") @Model.NombreCategoriaPadre
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+@* Contenido central del modal *@
+<div class="modal-body">
+    <div class="formulario-edicion">
+		@* Título de la categoría -> Pintar caja multiidioma *@
+		@Html.PartialView("_PintarCajasMultiidioma", pintarComboAdministrarCategoriasModel)        
+
+		@* Sección botón de guardado y cierre del modal *@
+		<div class="panelBotonera">
+			<a id="btnGuardarCategoryInCategory" data-category-id="@Model.CategoriaId" class="btn btn-primary uppercase">@Html.GetText("COMMON","AÑADIR")</a>
+		</div>
+	</div>    
+</div>
+
+@* Carga de operativa *@
+<script>
+        (function ($) {
+            // Operativa funcionamiento de Creación de categorías
+			operativaGestionCategorias.operativaModalAddCategory();
+        })();
+</script>
+

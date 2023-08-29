@@ -42,10 +42,10 @@
                         <span class="action mas">Mas</span>
                         <div class="editarElemento">
                             <ul class="descargarArchivosPlantilla">
-                                <li class="descargarArchivosPlantilla"><a href="/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@template.OntologyID&nombre=@(template.OntologyName).owl&ext=.owl&ID=@Html.GetIdentidadActual().KeyIdentity">Descargar plantilla</a></li>
+                                <li class="descargarArchivosPlantilla"><a href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@template.OntologyID&nombre=@(template.OntologyName).owl&ext=.owl&ID=@Html.GetIdentidadActual().KeyIdentity">Descargar plantilla</a></li>
                                 @if (template.HasXmlFile)
                                 {
-                                <li class="descargarArchivosPlantilla"><a href="/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@template.OntologyID&nombre=@(template.OntologyName).xml&ext=.xml&ID=@Html.GetIdentidadActual().KeyIdentity">Descargar archivo de configuración</a></li>
+                                    <li class="descargarArchivosPlantilla"><a href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@template.OntologyID&nombre=@(template.OntologyName).xml&ext=.xml&ID=@Html.GetIdentidadActual().KeyIdentity">Descargar archivo de configuración</a></li>
                                 }
                             </ul>
                         </div>

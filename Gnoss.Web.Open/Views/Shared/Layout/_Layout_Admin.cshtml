@@ -1,0 +1,247 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista o Layout de las páginas de DevTools de la comunidad. Esta vista estará formada por las siguientes vistas parciales:
+_Metas: Contenido "meta" para las páginas de la DevTools
+_HojasDeEstilo: Carga de librerías CSS para las páginas de DevTools
+_FicherosJS: Carga de librerías JS para las páginas de la Administración
+_Pie: Pie de las páginas de DevTools.
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+	String bodyClass = Html.GetBodyClassPestanya();		
+	// Nombre de la subsección en la que se encuentra el usuario
+	AdministracionSeccionesDevTools.SubSeccionesDevTools subSeccionDevTools = Html.GetActiveSubSeccionDevTools();
+	// Referencia al AdministrarPestanyasViewModel para el botón de tipo de pintado de tipo de páginas desde la cabecera
+	AdministrarPestanyasViewModel pAdministrarPestanyasViewModel = ViewBag.AdministrarPestanyasViewModel;
+	// Referencia al CMSComponentListViewModel para el botón de tipo de añadir un nuevo componente
+	CMSComponentListViewModel pCMSComponentListViewModel = ViewBag.CMSComponentListViewModel;
+	// Referencia al ManageRedirectionsViewModel para el botón de tipo de añadir una nueva redirección
+	ManageRedirectionsViewModel pManageRedirectionsViewModel = ViewBag.ManageRedirectionsViewModel;
+	// Referencia al AdministrarTraduccionesViewModel para el botón de añadir una nueva traducción 
+	AdministrarTraduccionesViewModel pAdministrarTraduccionesViewModel = ViewBag.AdministrarTraduccionesViewModel; 
+	// Referencia al ManageRegisterClausesViewModel para el botón de añadir una nueva Cláusula Legal/Registro
+	ManageRegisterClausesViewModel pManageRegisterClausesViewModel = ViewBag.ManageRegisterClausesViewModel; 
+	// Referencia al AdministrarCookiesViewModel para el botón de añadir una nueva Cookie
+	AdministrarCookiesViewModel pAdministrarCookiesViewModel = ViewBag.AdministrarCookiesViewModel; 
+	// Referencia al AdministrarFacetasViewModel para el botón de añadir una nueva Faceta
+	AdministrarFacetasViewModel pAdministrarFacetasViewModel = ViewBag.AdministrarFacetasViewModel; 
+	// Referencia al AdministrarContextosViewModel para el botón de añadir un nuevo Contexto
+	AdministrarContextosViewModel pAdministrarContextosViewModel = ViewBag.AdministrarContextosViewModel;
+	// Controlar si se está en Administración del Ecosistema (No visualizar otras opciones de configuración)
+	bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+	// Referencia al AdministrarServiciosExternosViewModel para el botón de añadir un nuevo Servicio
+	Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarServiciosExternosViewModel pAdministrarServiciosExternosViewModel = ViewBag.AdministrarServiciosExternosViewModel;
+	
+
+	@* Controlar clase del body según la página *@
+	if (String.IsNullOrEmpty(bodyClass))
+	{
+		bodyClass = "home";
+    }
+
+	@* Título de la página proporcionada desde el Controlador y Sección a la que pertenece *@
+	string headerTitle = Html.GetHeaderTitle();
+	string headerParentTitle = Html.GetHeaderParentTitle();
+
+	@* Comprobar si la configuración inicial existe (Ocultar datos no necesarios para configuración inicial) *@
+
+	bool? isInitialConfiguration = ViewBag.isInitialConfiguration;
+	if (isInitialConfiguration.HasValue)
+	{
+		isInitialConfiguration = isInitialConfiguration.Value;
+	}
+	else
+	{
+		isInitialConfiguration = false;
+	}	
+}
+@*
+----------------------------------------------------------------
+-------------------- Vista Layout utilizado para DevTools --------------------
+*@
+
+<!DOCTYPE html>
+<html style="scroll-behavior:smooth" lang="@Html.GetUtilIdiomas().LanguageCode" xmlns:og="http://ogp.me/ns#">
+
+	<head>
+		@* Título *@
+		<title>@Html.GetTituloPagina()</title>
+
+		@* Carga de Metas *@
+		@Html.PartialView("../Shared/Head/_Metas_Admin")
+		@* Carga de CSS *@
+		@Html.PartialView("../Shared/Head/_HojasDeEstilo_Admin") 					
+	</head>
+	
+	
+	<body class="@bodyClass usuarioConectado max-width-container">
+		
+
+		@if (isInitialConfiguration.Value == false)
+		{
+			@* Inputs ocultos para uso en diferentes páginas de adminsitración con info de la comunidad, proyecto... *@
+			@Html.PartialView("../Shared/Layout/_partial-views/_layout-hidden-forms")
+
+			@* Carga del modal container para cargar vistas dinámicas *@
+			@Html.PartialView("../Shared/Layout/_modal-views/_modal-container-administracion")
+		}
+
+		@* Header / Cabecera  *@
+		<header id="header" class="background-primario texto-blanco">
+			<div class="container-fluid">
+				<div class="row upper-row">
+					<div class="col col01">
+						<div class="menu-logo-wrapper">
+							@* Disparador para mostrar el menú lateral para móviles/tablets *@
+							<span id="panel-lateral-trigger" class="material-icons">menu</span>
+
+							<div class="logo-wrapper">
+								@if (isInitialConfiguration.Value == false)
+								{
+									if (isInEcosistemaPlatform)
+									{
+										<a href="@Comunidad.UrlMyGnoss/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")" class="texto-blanco">
+											Semantic Web Tools
+										</a>
+									} else
+									{
+										<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")" class="texto-blanco">
+											Semantic Web Tools
+										</a>
+									}									
+								}
+								else
+								{
+								<span class="configuracionInicial">
+									Semantic Web Tools							
+								</span>									
+								}
+
+							</div>
+						</div>
+					</div>
+					@* Título de la página *@
+					<div class="col col02">
+						<div class="page-name-wrapper">
+							@if(string.IsNullOrEmpty(headerParentTitle)){
+								<span class="page-name">
+									@Comunidad.Name
+								</span>
+								
+							}else{
+								<span class="page-name">
+									@headerParentTitle
+								</span>
+								@if (!string.IsNullOrEmpty(headerTitle))
+								{
+									<span class="page-children-name">@headerTitle</span>
+								}							
+							} 									
+						</div>
+					</div>
+					@* Columna de acciones dependiendo de la página - No permitir acciones si está activo CI-CD *@
+					@if (!Html.GetComunidad().IntContActivadaSinRamaEnUso || Html.GetComunidad().UsuarioDadoAltaIntCont || !Html.GetComunidad().EntornoBloqueado)
+					{
+						@* Permitir Crear *@					
+						<div class="col col03">
+							@* Página de Listado de páginas -> Estructura -> Páginas *@
+							@if (subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Paginas) {
+								@* Botón de creación de una Página de Administración 
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-page-admin", pAdministrarPestanyasViewModel)
+								*@
+							} else if (subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Multimedia)
+							{
+								@* Botón de creación de un Componente Multimedia de Administración 							
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-multimedia-admin")
+								*@
+							} else if (subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Componentes) {
+								@* Botón de creación de un Componente CMS *@							
+								@*
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-component-admin", pCMSComponentListViewModel)
+								*@
+							} else if (subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Redirecciones) {
+								@* Botón de creación de una Redirección 							
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-redirection-admin", pManageRedirectionsViewModel)
+								*@
+							} else if (subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad) {
+								@* Botón de creación de una Traducción
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-translation-admin", pAdministrarTraduccionesViewModel)
+								*@
+							}else if(subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ClausulasLegales){
+								@* Botón de creación de una Cláusula Legal/Registro *@
+								@*
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-legal-signup-clause-admin", pManageRegisterClausesViewModel)						
+								*@
+							}else if(subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cookies){
+								@* Botón de creación de una Cookie 
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-cookie", pAdministrarCookiesViewModel)
+								*@
+							}else if(subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Facetas){
+								@* Botón de creación de una Faceta *@
+								@* 
+									@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-faceta", pAdministrarFacetasViewModel) 
+								*@						
+							}else if(subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Informacion_Contextual){
+								@* Botón de creación de una Contextos en Recursos *@
+								@* 
+									@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-contexto", pAdministrarContextosViewModel)
+								*@
+							}else if(subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ServiciosExternos){
+								@* Botón de creación de una Servicios Externos 
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-external-service-admin", pAdministrarServiciosExternosViewModel)
+								*@
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</header>
+
+		@if (isInitialConfiguration.Value == false)
+		{
+			@* Panel informativo de CI/CD (Si está activado) *@
+			@Html.PartialView("../Shared/Layout/_partial-views/_layout-ci-cd-panel-info")		
+		}
+
+		@* Contenido -> Navegación lateral + Renderización de página *@
+		<main class="devtools" role="main" style=" @(Comunidad.IntegracionContinuaActivada ? "padding: 0;" : "")">
+			<div class="container-fluid">
+				<div class="row-content">
+					<div class="row">
+						@* Sección central con panel lateral *@
+						<div class="col col-12 con-panel-lateral">
+							@if (isInitialConfiguration.Value == false)
+							{
+								@* Menu de navegación lateral izquierdo *@																												
+								@Html.PartialView("../Shared/Layout/_partial-views/_layout-left-navigation-panel_Admin")							
+							}
+
+
+							@* Contenido central -> Renderización páginas de Administración *@
+							<div id="mainContent" class="wrapCol container">
+								@RenderBody()
+
+								@if (isInitialConfiguration.Value == false)
+								{
+									@* Pie de las páginas de Administración *@
+									@Html.PartialView("../Shared/_pie/_Pie")
+								}							
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+		
+		@* Carga de JS *@
+		@Html.PartialView("../Shared/Head/_FicherosJavascript_Admin") 		
+		@* Carga de JS con Render para operativas de DevTools *@
+		@RenderSection("operativaScript", required: false)
+	</body>
+</html>

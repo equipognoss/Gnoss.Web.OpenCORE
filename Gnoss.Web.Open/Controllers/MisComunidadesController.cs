@@ -23,9 +23,12 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
+using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class MisComunidadesController : ControllerBaseWeb
     {
         public MisComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
@@ -115,7 +118,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     comunidad.Name = nombreProyecto;
 
 
-                    string nombreImagenePeque = ControladorProyecto.ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID).NombreImagenPeque;
+					/*string nombreImagenePeque = ControladorProyecto.ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID).NombreImagenPeque;
                     string urlLogo = BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesProyectos + "/" + nombreImagenePeque;
 
                     // No mostrar por defecto una imagen anónima -> Se realiza directamente en la vista vía CSS
@@ -124,9 +127,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         //urlLogo = BaseURLStatic + "/img" + "/" + UtilArchivos.ContentImgIconos + "/" + UtilArchivos.ContentImagenesProyectos + "/" + "anonimo_peque.png";
                         urlLogo = "";
                     }
-                    comunidad.Logo = urlLogo;
-                    
-                    comunidad.Url = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, filaProy.NombreCorto);
+                    comunidad.Logo = urlLogo;*/
+					string nombreImagenPeque = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication).ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID).NombreImagenPeque;
+                    string urlFoto = $"{BaseURLContent}/{UtilArchivos.ContentImagenes}/{UtilArchivos.ContentImagenesProyectos}/{nombreImagenPeque}";
+					comunidad.Logo = urlFoto;
+					if (nombreImagenPeque.Equals("peque"))
+					{
+                        urlFoto = $"{BaseURLStatic}/img/{UtilArchivos.ContentImgIconos}/{UtilArchivos.ContentImagenesProyectos}/anonimo_peque.png";
+						comunidad.Logo = mControladorBase.CargarImagenSup(filaProy.ProyectoID);
+
+						if (string.IsNullOrEmpty(comunidad.Logo))
+						{
+							comunidad.Logo = urlFoto;
+						}
+					}
+					comunidad.Url = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, filaProy.NombreCorto);
 
                     comunidad.AccessType = (CommunityModel.TypeAccessProject)filaProy.TipoAcceso;
 
@@ -135,5 +150,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             return View(paginaModel);
         }
-    }
+		
+	}
 }

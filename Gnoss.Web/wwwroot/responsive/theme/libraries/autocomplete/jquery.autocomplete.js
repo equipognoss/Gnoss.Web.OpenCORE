@@ -170,7 +170,10 @@ $.Autocompleter = function(input, options) {
 					return false;
 				}
 				select.hide();
-				PintarTags($input);
+				// Evitar pintar tags si el input tiene propiedad data-avoid-autocomplete-with-enter-button
+				if (!$(this).data("avoid-autocomplete-with-enter-button")){
+					PintarTags($input);				
+				}				
 				break;
 			case KEY.LEFT:
 			case KEY.RIGHT:
@@ -529,7 +532,8 @@ $.Autocompleter = function(input, options) {
 		    q: lastWord(term),
 		    limit: options.max,
 		    cont: cont,
-		    lista: '',
+			lista: '',
+			organizacion: $("#inpt_organizacionID").val(),
 		    callback: 'autocomplete'
 		};
 		if (options.multiple) {
@@ -545,7 +549,7 @@ $.Autocompleter = function(input, options) {
 		    else if (options.txtValoresSeleccID == null) {
 		        // 01-02-2022: Se elimina el último segmento por fallo en el servicio AutoCompletarLectoresEditoresConUsuarioID. Los datos ya son pasados vía parámetro '?q'
 				//extraParams["lista"] = $('#' + input.id + '_Hack').val().trim() + $input.val().trim();				
-				extraParams["lista"] = $('#' + input.id + '_Hack').val().trim();							
+				extraParams["lista"] = $('#' + input.id + '_Hack').val().trim();//a							
 		        //extraParams["lista"] = previousValue.trim();
 		    }
 		    else {
@@ -1173,8 +1177,9 @@ $.fn.selection = function(start, end) {
 /**
  * Pintar los Tags que se desean seleccionar para (por ejemplo un recurso) para que sean mostrados en el contenedor correspondiente.
  * @param {any} textBox
+ * @param {any} allowCapitalLetters: Por defecto es falso. Es simplemente para permitir que en el input "hack" oculto, se permitan guardar letras maýusculas tal y como las ha escrito el usuario.
  */
-function PintarTags(textBox)
+function PintarTags(textBox, allowCapitalLetters = false)
 {
     if(textBox.val().trim() != "")
     {
@@ -1225,7 +1230,9 @@ function PintarTags(textBox)
 						$(contenedor).append(html);  
                     }
                     
-                    textBoxHack.val(textBoxHack.val() + tagNombre.toLowerCase() + ',')
+					allowCapitalLetters == true 
+					? textBoxHack.val(textBoxHack.val() + tagNombre + ',')
+					: textBoxHack.val(textBoxHack.val() + tagNombre.toLowerCase() + ',')                    
                 }
             }
             
@@ -1637,9 +1644,15 @@ function posicionarCursor(textbox, pos) {
 $(document).ready(function () {
 	// Pintar los Tags al cargar la página. No interesa esta función en "Enviar mensaje" ya que al perder el foco, pintaba el Tag/Destinatario. El destinatario debe ser "seleccionado"
 	// de la búsqueda de usuarios
-	if (!($(body).hasClass('nuevoMensaje'))) {
+	// De igual manera, no se desean pintar tags de inicio en DevTools, en edición de páginas. Es necesario elegir un perfil o grupo de usuarios para la privacidad de la página.
+
+
+	if ( !($('body').hasClass('nuevoMensaje')) && !($('body').hasClass('edicionPaginas'))) {
 		pintarTagsInicio();
-	}    
+	}
+
+
+
 });
 
 /**

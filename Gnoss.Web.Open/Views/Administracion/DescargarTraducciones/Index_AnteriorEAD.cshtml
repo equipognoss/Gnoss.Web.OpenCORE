@@ -1,0 +1,368 @@
+﻿@model DescargarTraduccionesViewModel
+
+@{
+    CommunityModel comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    //Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+
+    Html.GetListaJS().Add("https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js");
+
+}
+<!--VIEWS 1-->
+
+<div class="content formulario-edicion background-blanco">
+    <h2>Descargar Traducciones (Views1)</h2>
+
+    <input type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" style="position: relative;float: right;" value="XML" onclick="Ocultar($(this).val())">
+    <input type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" style="position: relative;float: right;" value="Textos" onclick="Ocultar($(this).val())">
+    <input type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" style="position: relative;float: right;" value="Recursos" onclick="Ocultar($(this).val())">
+    <div>
+
+        <div class="grupoDescarga Recursos" style="clear: both; padding: 10px; margin-top: 35px; display:block;">
+
+            <h2>Recursos</h2>
+
+            @if (Model.mListaOntologiasPrincipales.Count > 0)
+            {
+                <div class="group">
+                    <p><input type="checkbox" name="seleccionarTodosOntoPrincipales" class="seleccionarTodos" /> Seleccionar todos  </p>
+                    <div style="margin: 15px 0 15px 0">
+                        <p style="display: inline;">Elige fecha de inicio </p>
+                        <input type="date" id="fechaInicio" name="fechaInicio" />
+                        <p style="display: inline;"> Elige fecha de fin </p>
+                        <input type="date" id="fechaFin" name="fechaFin" />
+                        <span class="error" style="display:none"></span>
+                    </div>
+                    <ul style="list-style: none;">
+                        @foreach (string ontologiaPrincipal in Model.mListaOntologiasPrincipales.Keys)
+                        {
+                            <li><input type="checkbox" name="ontologiaPrincipal_@ontologiaPrincipal" /> @Model.mListaOntologiasPrincipales[ontologiaPrincipal]</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+
+        <div class="grupoDescarga Textos" style="clear: both; padding: 10px; margin-top: 35px; margin-bottom:20px; display:none;">
+            <h2>Textos personalizados</h2>
+            <br />
+            <ul style="list-style: none;">
+                <li><input type="checkbox" name="DescargarTextosPersonalizados"> Descargar Excel de <i>Textos Personalizados de las vistas</i></li>
+
+                <li><input type="checkbox" name="DescargarTextoProyectoPestanyaMenu"> Descargar Excel de <i>Textos de Pestañas</i></li>
+
+                <li><input type="checkbox" name="DescargarCmsPropiedadComponente"> Descargar Excel de <i>Textos de Componetes del CMS</i></li>
+
+                <li><input type="checkbox" name="DescargarFacetaObjetoConocimientoProyecto"> Descargar Excel de <i>Textos de Facetas</i></li>
+
+                <li><input type="checkbox" name="DescargarCategoriaTesauro"> Descargar Excel de <i>Categorías tesauro</i></li>
+
+                <li><input type="checkbox" name="DescargarClausulaRegistro"> Descargar Excel de <i>Clausulas de Registro</i></li>
+
+                <li><input type="checkbox" name="DescargarProyectoGadget"> Descargar Excel de <i>Componentes de Recursos</i></li>
+
+                <li><input type="checkbox" name="DescargarOntologiaProyectoSql"> Descargar Excel de <i>Configuracion de Ontologias</i></li>
+            </ul>
+        </div>
+
+        <div class="grupoDescarga XML" style="clear: both; padding: 10px; margin-top: 35px; margin-bottom:20px; display:none;">
+            <h2>XML</h2>
+
+            @if (Model.mListaOntologiasPrincipales.Count > 0)
+            {
+                <div class="group">
+                    <p><input type="checkbox" name="seleccionarTodosXML" class="seleccionarTodos" /> Seleccionar todos</p>
+                    <ul style="list-style: none;">
+                        @foreach (string ontologiaPrincipal in Model.mListaOntologiasPrincipales.Keys)
+                        {
+                            <li><input type="checkbox" name="ontologiaPrincipalXML_@ontologiaPrincipal" /> @Model.mListaOntologiasPrincipales[ontologiaPrincipal]</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+        @if (comunidad.Key.Equals(ProyectoAD.MetaProyecto))
+        {
+            <div class="grupoDescarga mygnoss" class="form-check" style="clear: both;border: 1px solid; padding: 10px; margin-top: 35px; margin-bottom:20px; display:block;">
+                @* MyGnoss *@
+                <br />
+                <h3>xml mygnoss</h3>
+                <!-- xml core-->
+                <input type="checkbox" class="form-check-input" name="DescargarXMLCore">
+                <label class="form-check-label">Descargar Excel de Core</label><br>
+                   
+               
+                <!-- xml mensajes-->
+                <input type="checkbox" class="form-check-input" name="DescargarXMLMensajesCore">
+                <label class="form-check-label">Descargar Excel de mensajes de Core</label><br>
+                <h2>JavaScript</h2>
+
+                <input type="checkbox" class="form-check-input" name="DescargarJS">
+                <label class="form-check-label">Descargar Excel JavaScript</label><br>
+
+                @if (Model.mListaOntologiasSecundarias.Count > 0)
+                {
+                    <div class="group">
+                        <h4>Ontologia secundaria</h4>
+                        <p><input type="checkbox" name="seleccionarTodosOntoSecundarias" class="seleccionarTodos form-check-input" /> <label class="form-check-label">Seleccionar Todos</label> </p>
+                        <ul style="list-style: none;">
+                            @foreach (string ontologiaSecundaria in Model.mListaOntologiasSecundarias.Keys)
+                            {
+                                <li><input type="checkbox" class="form-check-input" name="ontologiaSecundaria_@ontologiaSecundaria" /><label class="form-check-label">@Model.mListaOntologiasSecundarias[ontologiaSecundaria]</label></li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+
+                @if (Model.mListaOntologiasSecundariasTaxonomias.Count > 0)
+                {
+                    <div class="group">
+                        <h4>Taxonomia</h4>
+                        <p><input type="checkbox" name="seleccionarTodosTaxonomias" class="seleccionarTodos form-check-input" /> <label class="form-check-label">Seleccionar Todos</label></p>
+                        <ul style="list-style: none;">
+                            @foreach (string taxonomy in Model.mListaOntologiasSecundariasTaxonomias.Keys)
+                            {
+                                <li><input type="checkbox" class="form-check-input" name="taxonomy_@taxonomy" /><label class="form-check-label"> @Model.mListaOntologiasSecundariasTaxonomias[taxonomy]</label></li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        }
+
+
+
+        <div>
+            <input type="button" class="btn btn-outline-primary dropdown-toggle no-flecha mt-5" style="float: right; padding: 10px; cursor: pointer; margin-top: 30px;" name="descargarSeleccionado" id="submit" value="DESCARGAR" onclick="Descargar()" />
+
+            <input type="submit" id="inpt_subirArchivo" class="btn btn-primary" value="Subir archivo" onclick="SubirFichero(false)" style="margin-bottom: 10px; " />
+            <input type="submit" id="inpt_validarHtml" class="btn" value="Validar Archivo" onclick="SubirFichero(true)" style="margin-bottom: 10px; color: white; background-color: rgb(155,155,155);" />
+            <input id="inpt_subirTraducciones" name="file" type="file" style="margin-top: 60px;" />
+        </div>
+
+        <br />
+        <span class="error ExcelVacio" style="display:none; margin-top:20px;"></span>
+        <span class="validar" style="display:none; margin-top:20px; color: green;"></span>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+
+    $('.seleccionarTodos').click(function () {
+
+        var checks = $('input:checkbox:not(.seleccionarTodos)', $(this).closest('.group'));
+        var valorCheck = $(this).is(':checked');
+        checks.prop('checked', valorCheck);
+
+    });
+
+    function MostrarError(textoError) {
+        $('.error').text(textoError).show();
+    }
+
+    function OcultarError() {
+        $('.error').text('').hide();
+    }
+
+    function MostrarValidar(textoValidar) {
+        $('.validar').text(textoValidar).show();
+    }
+
+    function OcultarValidar() {
+        $('.validar').text('').hide();
+    }
+
+    function OcultarElementosPorClaseID(claseID) {
+        $(claseID).hide();
+    }
+    function MostrarElementosPorClaseID(claseID) {
+        $(claseID).show();
+    }
+
+
+    function Descargar() {
+
+        //MostrarUpdateProgressTime(0);
+
+        var url = document.location.href + '/download';
+        var dataPost = new FormData();
+
+        var OntologiasPrincipales = "";
+        var OntologiaPrincipalXML = "";
+        var OntologiasSecundarias = "";
+        var taxonomy = "";
+
+        OcultarError();
+
+        var FechaFin = $('#fechaFin').val();
+        var FechaInicio = $('#fechaInicio').val();
+
+        if (FechaFin < FechaInicio) {
+            MostrarError(descargarTraduccionesErrores.errorFecha);
+            return false;
+        }
+
+        var dateIn = new Date($('#fechaInicio').val());
+        if (!isNaN(dateIn)) {
+            dayIn = dateIn.getDate();
+            monthIn = dateIn.getMonth() + 1;
+            yearIn = dateIn.getFullYear();
+            dataPost.append("fechaInicio", dayIn + '/' + monthIn + '/' + yearIn);
+        }
+
+        var dateFin = new Date($('#fechaFin').val());
+        if (!isNaN(dateFin)) {
+            dayFin = dateFin.getDate();
+            monthFin = dateFin.getMonth() + 1;
+            yearFin = dateFin.getFullYear();
+            dataPost.append("fechaFin", dayFin + '/' + monthFin + '/' + yearFin);
+        }
+
+        $('.grupoDescarga:visible input[type="checkbox"]:checked').each(function () {
+            var checkbox = $(this);
+            var nombre = checkbox.attr("name");
+
+
+            if (nombre.indexOf("ontologiaPrincipal_") >= 0) {
+                OntologiasPrincipales += nombre.substring(nombre.indexOf("_") + 1) + ',';
+            }
+            else if (nombre.indexOf("ontologiaPrincipalXML_") >= 0) {
+                OntologiaPrincipalXML += nombre.substring(nombre.indexOf("_") + 1) + ',';
+            }
+            else if (nombre.indexOf("ontologiaSecundaria_") >= 0) {
+                OntologiasSecundarias += nombre.substring(nombre.indexOf("_") + 1) + ',';
+            }
+            else if (nombre.indexOf("taxonomy_") >= 0) {
+                taxonomy += nombre.substring(nombre.indexOf("_") + 1) + ',';
+            }
+            else {
+                dataPost.append(nombre, true);
+            }
+
+        });
+
+        var nombrePagina = $('.grupoDescarga:visible')[0].classList[1];
+        var mListaOntologiasPrincipales = OntologiasPrincipales.split(",");
+
+        for (var i = 0; i < mListaOntologiasPrincipales.length ; i++) {
+            if (!mListaOntologiasPrincipales[i] == "") {
+                dataPost.append("mListaOntologiasPrincipales[" + mListaOntologiasPrincipales[i] + "]", mListaOntologiasPrincipales[i]);
+            }
+        }
+
+        var mListaOntologiaPrincipalXML = OntologiaPrincipalXML.split(",");
+
+        for (var i = 0; i < mListaOntologiaPrincipalXML.length ; i++) {
+            if (!mListaOntologiaPrincipalXML[i] == "") {
+                dataPost.append("mListaOntologiasPrincipalesXML[" + mListaOntologiaPrincipalXML[i] + "]", mListaOntologiaPrincipalXML[i]);
+            }
+        }
+
+        var mListaOntologiaSecundaria = OntologiasSecundarias.split(",");
+
+        for (var i = 0; i < mListaOntologiaSecundaria.length ; i++) {
+            if (!mListaOntologiaSecundaria[i] == "") {
+                dataPost.append("mListaOntologiasSecundarias[" + mListaOntologiaSecundaria + "]", mListaOntologiaSecundaria[i]);
+            }
+        }
+
+        var ajax = new XMLHttpRequest();
+        ajax.open("POST", url, true);
+        ajax.responseType = "blob";
+        ajax.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    var respuesta = this.statusText;
+                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
+                        console.log(respuesta);
+                        MostrarError(descargarTraduccionesErrores.errorNoHayArchivos);
+                        OcultarUpdateProgress();
+                    }
+                    else {
+                        var blob = new Blob([this.response], { type: "application/octet-stream" });
+                        saveAs(blob, nombrePagina + ".xlsx");
+                        OcultarUpdateProgress();
+                    }
+                }
+                else {
+                    console.log(this.statusText);
+                }
+            }
+        };
+        ajax.send(dataPost);
+
+    }
+
+    function Ocultar(pagina) {
+        $('.grupoDescarga').hide();
+        $('.' + pagina).show();
+    }
+
+
+    function SubirFichero(validar) {
+
+        OcultarError();
+
+        var nombreFich = "";
+        var dataPost = new FormData();
+
+        var files = $('#inpt_subirTraducciones').get(0).files;
+        if (files.length > 0) {
+            dataPost.append("file", files[0]);
+        }
+        dataPost.append("validar", validar);
+
+        var url = document.location.href + '/upload';
+
+        MostrarUpdateProgress();
+        OcultarValidar();
+
+        var ajax = new XMLHttpRequest();
+        ajax.open("POST", url, true);
+        ajax.responseType = "blob";
+        ajax.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    var respuesta = this.statusText;
+
+                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
+                        console.log(respuesta);
+                        MostrarValidar(descargarTraduccionesErrores.validar);
+                        MostrarElementosPorClaseID('#inpt_subirArchivo');
+                        OcultarElementosPorClaseID('#inpt_subirTraducciones');
+                        OcultarElementosPorClaseID('#inpt_validarHtml');
+                        OcultarUpdateProgress();
+                    }
+                    else if (validar) {
+                        var blob = new Blob([this.response], { type: "text/plain" });
+                        MostrarValidar(descargarTraduccionesErrores.errorValidar);                        
+                        saveAs(blob, "Errores.txt");
+                        OcultarUpdateProgress();
+                    } else {
+                        var blob = new Blob([this.response], { type: "application/octet-stream" });
+                        saveAs(blob, "traducciones.zip");
+                        OcultarUpdateProgress();
+                    }
+                }
+                else {
+                    console.log(this.statusText);
+                }
+            }
+        };
+        ajax.send(dataPost);
+    }
+
+
+    var descargarTraduccionesErrores = {
+        error: '',
+        errorNoHayArchivos: 'No hay archivos que descargar',
+        errorFecha: 'La fecha final debe ser mayor que la fecha inicial',
+        validar: 'Validado',
+        errorValidar: 'Archivo no validado'
+    }
+
+</script>

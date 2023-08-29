@@ -306,7 +306,8 @@
                                 {
                                     textoLinkMiEsp = Html.GetText("PERFILBASERECURSOSFICHA", "AGREGARADEBATESPERSONAL");
                                 }
-                                textoLinkMiEsp += Es.Riam.Util.UtilCadenas.ObtenerTextoDeIdioma(Model.PersonalSpace, Html.GetUtilIdiomas().LanguageCode, null);
+                                // textoLinkMiEsp += Es.Riam.Util.UtilCadenas.ObtenerTextoDeIdioma(Model.PersonalSpace, Html.GetUtilIdiomas().LanguageCode, null);
+                                textoLinkMiEsp += Html.GetText("COMMON", "ENMIBRMIN");
                                 <li>
                                     <a id="op_AddtoMyPersonalSpace" onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionAddToPersonalSpace', this, 'modal-dinamic-content', '');"
                                class="item-dropdown" data-toggle="modal" data-target="#modal-container">
@@ -381,6 +382,21 @@
                                 string textoEnlace = "";
                                 string textoLinkBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "BLOQUEARCOMENTARIOS");
                                 string textoLinkDesBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "DESBLOQUEARCOMENTARIOS");
+                                 if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Pregunta)
+                                {
+                                    textoLinkBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "CERRARPREGUNTA");
+                                    textoLinkDesBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "ABRIRPREGUNTA");
+                                }
+                                else if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Debate)
+                                {
+                                    textoLinkBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "CERRARDEBATE");
+                                    textoLinkDesBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "ABRIRDEBATE");
+                                }
+                                else if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Encuesta)
+                                {
+                                    textoLinkBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "CERRARENCUESTA");
+                                    textoLinkDesBloqCom = Html.GetText("PERFILBASERECURSOSFICHA", "ABRIRENCUESTA");
+                                }
 
                                 if (fichaRecurso.AllowComments)
                                 {

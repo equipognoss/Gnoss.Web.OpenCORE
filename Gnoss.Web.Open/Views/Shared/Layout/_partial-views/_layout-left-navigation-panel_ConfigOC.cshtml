@@ -1,0 +1,317 @@
+﻿@*
+Descripción
+----------------------------------------------------------------
+Vista parcial donde donde se mostrará el panel lateral izquierdo para la navegación en la Administración (DevTools)
+
+Variables
+----------------------------------------------------------------
+*@
+@model ConfiguracionOCModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    //TODO: Ordenar las propiedades por orden de entidad y alfabético
+}
+@*
+----------------------------------------------------------------
+
+-------------------- Panel lateral de navegación de Administración/DevTools --------------------*@
+
+
+@* Menu de navegación lateral izquierdo *@
+
+
+<aside id="panel-lateral" class="panel-lateral" role="navigation">
+   
+    
+    <ul class="nav nav-tabs" id="editionTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="todas-tab" data-toggle="tab" href="#todas-tab-content" role="tab" aria-selected="true">TODAS LAS PROPIEDADES</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="simples-tab" data-toggle="tab" href="#simples-tab-content" role="tab" aria-selected="false">SIMPLES</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="objeto-tab" data-toggle="tab" href="#objeto-tab-content" role="tab" aria-selected="false">OBJETO</a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane fade active show" id="todas-tab-content" role="tabpanel" aria-labelledby="todas-tab">
+            <ul class="entityContainer">
+                @foreach (string entidad in Model.Properties.Select(x => x.Domain).Distinct())
+                {
+                    
+                   
+                   
+                    string prefijo = "";
+                    try
+                    {
+                        prefijo = entidad.Substring(0, entidad.LastIndexOf("/")+1);
+                    }
+                    catch (IndexOutOfRangeException io)
+                    {
+                        prefijo = entidad.Split('#')[0];
+                    }
+                    if (Model.Prefixes.ContainsKey(prefijo))
+                    {
+                        <li class="entityItem">
+                            <span class="material-icons icon">
+                                rebase_edit
+                            </span><span class="entityName">@entidad.Replace(prefijo, Model.Prefixes[prefijo] + ":")</span>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="entityItem">
+                            <span class="material-icons icon">
+                                rebase_edit
+                            </span>
+                            <span class="entityName">@entidad</span>
+                        </li>
+                    }
+
+                    <ul class="propertyContainer">
+                        @foreach (Property p in Model.Properties.Where(x => x.Domain.Equals(entidad)).ToList().OrderBy(x => x.Name))
+                        {
+                            <li class="propertyItem" data-propertyitem="@entidad@@@p.Uri">
+                                <a class="itemInfo" data-propertyitem="@entidad@@@p.Uri">
+                                    <div class="propertyIcon">
+                                        @switch (p.GetType().Name)
+                                            
+                                        {
+                                        case "StringProperty":
+                                                <span class="material-icons icon">
+                                                text_fields
+                                            </span>
+                                            break;
+                                        case "NumericalProperty":
+                                                <span class="material-icons icon">
+                                                123
+                                            </span>
+                                            break;
+                                        case "BooleanProperty":
+                                                <span class="material-icons icon">
+                                                flaky
+                                            </span>
+                                            break;
+                                        case "DateProperty":
+                                                <span class="material-icons icon">
+                                                calendar_month
+                                            </span>
+                                            break;
+                                        case "AuxiliarProperty":
+                                                <span class="material-icons icon">
+                                                view_in_ar
+                                            </span>
+                                            break;
+                                        case "ExternalProperty":
+                                                <span class="material-icons icon">
+                                                move_down
+                                            </span>
+                                            break;
+                                        default:
+                                            break;
+                                }
+                                    </div>
+                                    <div class="propertyInfo">
+                                        <span class="name">@p.Name</span>
+                                        <span class="uriName">@p.Uri</span>
+                                    </div>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+        
+        </ul>
+            </div>
+        <div class="tab-pane fade" id="simples-tab-content" role="tabpanel" aria-labelledby="simples-tab">
+            <ul class="entityContainer">
+                @foreach (string entidad in Model.Properties.Select(x => x.Domain).Distinct())
+                {
+                    
+                    if (Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("DataTypeProperty")).ToList().Count() > 0)
+                    {
+                        
+                        string prefijo = "";
+                        try
+                        {
+                            prefijo = entidad.Substring(0, entidad.LastIndexOf("/")+1);
+                        }
+                        catch (IndexOutOfRangeException io)
+                        {
+                            prefijo = entidad.Split('#')[0];
+                        }
+                        if (Model.Prefixes.ContainsKey(prefijo))
+                        {
+                            <li class="entityItem">
+                                <span class="material-icons icon">
+                                    rebase_edit
+                                </span>
+                                <span class="entityName">@entidad.Replace(prefijo, Model.Prefixes[prefijo]+ ":")</span>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="entityItem">
+                                <span class="material-icons icon">
+                                    rebase_edit
+                                </span>
+                                <span class="entityName">@entidad</span>
+                            </li>
+                        }
+                        <ul class="propertyContainer">
+                            @foreach (Property p in Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("DataTypeProperty")).ToList().OrderBy(x => x.Name))
+                            {
+                                <li class="propertyItem" data-propertyitem="@entidad@@@p.Uri">
+                                    <a class="propertyItem itemInfo" data-propertyitem="@entidad@@@p.Uri">
+                                        <div class="propertyIcon">
+
+                                        
+                                        @switch (p.GetType().Name)
+                                        {
+                                            case "StringProperty":
+                                                    <span class="material-icons icon">
+                                                    text_fields
+                                                </span>
+                                                break;
+                                            case "NumericalProperty":
+                                                    <span class="material-icons icon">
+                                                    123
+                                                </span>
+                                                break;
+                                            case "BooleanProperty":
+                                                    <span class="material-icons icon">
+                                                    flaky
+                                                </span>
+                                                break;
+                                            case "DateProperty":
+                                                    <span class="material-icons icon">
+                                                    calendar_month
+                                                </span>
+                                                break;
+                                            case "AuxiliarProperty":
+                                                    <span class="material-icons icon">
+                                                    view_in_ar
+                                                </span>
+                                                break;
+                                            case "ExternalProperty":
+                                                    <span class="material-icons icon">
+                                                    move_down
+                                                </span>
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        </div>
+                                        <div class="propertyInfo">
+                                            <span class="name">@p.Name</span>
+                                            <span class="uriName">@p.Uri</span>
+                                        </div>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                }
+                    
+
+            </ul>
+        </div>
+        <div class="tab-pane fade" id="objeto-tab-content" role="tabpanel" aria-labelledby="objeto-tab">
+            <ul class="entityContainer">
+            @foreach (string entidad in Model.Properties.Select(x => x.Domain).Distinct())
+            {
+                    
+                    if (Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("ObjectTypeProperty")).ToList().Count() > 0)
+                    {
+                        
+                        string prefijo = "";
+                        try
+                        {
+                            prefijo = entidad.Substring(0, entidad.LastIndexOf("/")+1);
+                        }
+                        catch (IndexOutOfRangeException io)
+                        {
+                            prefijo = entidad.Split('#')[0];
+                        }
+                        if (Model.Prefixes.ContainsKey(prefijo))
+                        {
+                            <li class="entityItem">
+                                <span class="material-icons icon">
+                                    rebase_edit
+                                </span>
+                                <span class="entityName">@entidad.Replace(prefijo, Model.Prefixes[prefijo]+":")</span>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="entityItem">
+                                <span class="material-icons icon">
+                                    rebase_edit
+                                </span>
+                                <span class="entityName">@entidad</span>
+                            </li>
+                        }
+                        <ul class="propertyContainer">
+                            @foreach (Property p in Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("ObjectTypeProperty")).ToList().OrderBy(x => x.Name))
+                            {
+                                <li class="propertyItem" data-propertyitem="@entidad@@@p.Uri">
+                                    <a class="propertyItem itemInfo" data-propertyitem="@entidad@@@p.Uri">
+                                        <div class="propertyIcon">
+                                    @switch (p.GetType().Name)
+                                    {
+                                            case "StringProperty":
+                                                    <span class="material-icons icon">
+                                                    text_fields
+                                                </span>
+                                                break;
+                                            case "NumericalProperty":
+                                                    <span class="material-icons icon">
+                                                    123
+                                                </span>
+                                                break;
+                                            case "BooleanProperty":
+                                                    <span class="material-icons icon">
+                                                    flaky
+                                                </span>
+                                                break;
+                                            case "DateProperty":
+                                                    <span class="material-icons icon">
+                                                    calendar_month
+                                                </span>
+                                                break;
+                                            case "AuxiliarProperty":
+                                                    <span class="material-icons icon">
+                                                    view_in_ar
+                                                </span>
+                                                break;
+                                            case "ExternalProperty":
+                                                    <span class="material-icons icon">
+                                                    move_down
+                                                </span>
+                                                break;
+                                            default:
+                                                break;
+                                    }
+                                    </div>
+                                        <div class="propertyInfo">
+                                            <span class="name">@p.Name</span>
+                                            <span class="uriName">@p.Uri</span>
+                                        </div>
+                                        </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    }
+                    
+
+        </ul>
+    </div>
+    </div>
+</aside>
+
+            
+
+@* Capa overlay que ocultará el contenido cuando se visualice el panel lateral en dispositivos móviles*@
+<div id="mobileOverlay"></div>

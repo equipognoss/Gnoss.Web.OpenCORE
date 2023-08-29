@@ -1,0 +1,49 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal utilizada para importar un fichero Excel para la subida de XML, Textos y Recursos a la comunidad
+
+Variables
+----------------------------------------------------------------
+*@
+
+<div id="modalImportTranslate" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">upload</span>@Html.GetText("DEVTOOLS","IMPORTARTRADUCCIONES")
+                </p>
+                <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+            </div>
+            @* Contenido central del modal *@
+            <div class="modal-body">
+
+                <div class="form-group mb-3">
+                    <label class="control-label">
+                        @Html.GetText("DEVTOOLS","SELECCIONAUNFICHEROEXCELPARALAIMPORTACIONMASIVADETRADUCCIONE")
+                    </label>                 
+                </div>
+
+                @* Plantilla de la ontología *@
+                <div class="form-group mb-3">
+                    @* Título de sección + Botón cancelar *@
+                    <div class="panelImportTranslate">                        
+                        <input id="inputTranslateFile" class="dragAndDrop" type="file" name="inputTranslateFile" accept="xlsx,xls" max-size="10240">
+                    </div>
+                </div>
+
+                @* Sección Acciones de "Descarga/Cancelar" *@
+                <div class="panelBotonera">                                                
+                    <button id="btnConfirmValidate" class="btn btn-outline-primary btnConfirmImport">
+                        @Html.GetText("DEVTOOLS","VALIDARFICHERO")
+                    </button>
+                    <button id="btnConfirmUpload" class="btn btn-primary btnConfirmImport">
+                        @Html.GetText("DEVTOOLS","IMPORTARTRADUCCIONES")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

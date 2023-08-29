@@ -9,6 +9,7 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.MVC.Filters;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Gnoss.Web.MVC;
 using Es.Riam.Interfaces.InterfacesOpen;
@@ -85,6 +86,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             /// 
             /// </summary>
             public RedirectionType RedirectionType { get; set; }
+
+            /// <summary>
+            /// Fecha de creación de la redirección
+            /// </summary>
+            public DateTime FechaCreacion { get; set; }
+
+            /// <summary>
+            /// Indicará si la redirección es de reciente creación o por el contrario ya existía.
+            /// </summary>
+            public bool EsRecienteCreacion { get; set; }
+
+            /// <summary>
+            /// Indicará si la redirección está siendo editada/creada de 0.
+            /// </summary>
+            public bool Edited { get; set; }
         }
 
         /// <summary>
@@ -132,6 +148,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "estructura edicionRedirecciones edicion no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Estructura;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Redirecciones;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "ESTRUCTURA");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONPAGINAS", "REDIRECCIONES");
+            
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
             return View(PaginaModel);
@@ -153,6 +179,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             redireccion.DestinationUrl = "";
             redireccion.PreserveFilters = false;
             redireccion.ParameterValues = new List<ManageRedirectionsViewModel.ParameterValue>();
+            // Se está creando una nueva redirección
+            redireccion.EsRecienteCreacion = true;
 
             return PartialView("_EdicionRedireccion", redireccion);
         }
@@ -167,7 +195,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             string errores = "";
             //controlar errores
-            if(ListaRedirecciones == null || ListaRedirecciones.Count == 0)
+            if (ListaRedirecciones == null || ListaRedirecciones.Count == 0)
             {
                 errores = "LISTA VACIA";
             }
@@ -227,32 +255,46 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (string.IsNullOrEmpty(errores))
             {
-                GuardarRedirecciones(ListaRedirecciones);
-
                 try
                 {
-                    //MvcApplication.RecalculandoRutas = true;
-                    new RouteConfig(mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD).RecalcularTablaRutas();
-
-                    mGnossCache.RecalcularRedirecciones();
-                }
-                catch(Exception ex)
+					GuardarRedirecciones(ListaRedirecciones);
+				}
+                catch (Exception ex)
                 {
                     GuardarLogError(ex);
-                    return GnossResultERROR(UtilIdiomas.GetText("COMADMINREDIRECCIONES", "ERRORRECALCULANDORUTAS"));
+                    return GnossResultERROR(UtilIdiomas.GetText("COMADMINREDIRECCIONES", "ERRORGUARDARBD"));
                 }
                 finally
                 {
-                    // TODO
-                    //MvcApplication.RecalculandoRutas = false;
+
                 }
 
                 return GnossResultOK();
             }
-            else {
+            else
+            {
                 return GnossResultERROR(errores);
             }
         }
+
+        
+        /// <summary>
+        /// Devolver la vista modal para confirmar la eliminación de un item de tipo Redirección.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult CargarEliminarRedireccionItem()
+        {
+            ActionResult partialView = View();
+
+            // Construir la vista que se devolverá
+            partialView = GnossResultHtml("_modal-views/_delete-redirection-item", null);
+
+            // Devolver la vista modal
+            return partialView;
+        }
+
+
 
         #endregion
 
@@ -262,7 +304,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-                if(mPaginaModel == null)
+                if (mPaginaModel == null)
                 {
                     mPaginaModel = new ManageRedirectionsViewModel();
                     mPaginaModel.RedirectionsList = new List<ManageRedirectionsViewModel.RedirectionModel>();
@@ -270,8 +312,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     string dominio = ProyectoSeleccionado.UrlPropia(IdiomaUsuario).Replace("http://", "").Replace("https://", "");
                     ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     List<RedireccionRegistroRuta> listaRedirecciones = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, false);
-                    
-                    if(listaRedirecciones != null && listaRedirecciones.Count > 0)
+
+                    if (listaRedirecciones != null && listaRedirecciones.Count > 0)
                     {
                         foreach (RedireccionRegistroRuta redireccion in listaRedirecciones.OrderByDescending(r => r.FechaCreacion))
                         {
@@ -279,8 +321,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             modeloRed.Key = redireccion.RedireccionID;
                             modeloRed.OriginalUrl = redireccion.UrlOrigen;
                             modeloRed.ParameterName = redireccion.NombreParametro;
-                            
-                            if (string.IsNullOrEmpty(redireccion.NombreParametro))
+                            // Indicar que el filtro ya existe
+                            modeloRed.EsRecienteCreacion = false;
+                            modeloRed.FechaCreacion = redireccion.FechaCreacion;
+
+                            if (string.IsNullOrEmpty(redireccion.NombreParametro) && redireccion.RedireccionValorParametro != null && redireccion.RedireccionValorParametro.Count > 0)
                             {
                                 RedireccionValorParametro filaValor = redireccion.RedireccionValorParametro.First();
                                 modeloRed.PreserveFilters = filaValor.MantenerFiltros;
@@ -299,7 +344,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                     modeloValor.DestinationUrl = filaValor.UrlRedireccion;
                                     modeloValor.Order = filaValor.OrdenPresentacion;
                                     modeloRed.ParameterValues.Add(modeloValor);
-                                }                                
+                                }
                             }
 
                             mPaginaModel.RedirectionsList.Add(modeloRed);
@@ -317,85 +362,60 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         #region Métodos privados
 
-        private void GuardarRedirecciones(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
-        {
-            List<Guid> listaRedireccionesBorrar = null;
-            Dictionary<RedireccionRegistroRuta, bool> dicRedireccionesEditar = null;
-            bool borrar = false;
-            bool editar = false;
+        private void GuardarRedirecciones(List<ManageRedirectionsViewModel.RedirectionModel> pListaRedireccionesVista)
+        {           
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            try {
-
+            try
+            {
                 string dominio = ProyectoSeleccionado.UrlPropia(IdiomaUsuario).Replace("http://", "").Replace("https://", "");
-                List<RedireccionValorParametro> listaValoresBorrar = null;
-                List <RedireccionRegistroRuta> filasRedirecciones = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, true);
+                List<RedireccionRegistroRuta> listaRedireccionesBD = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, true);
 
-                if (filasRedirecciones != null && filasRedirecciones.Count > 0)
+                foreach (ManageRedirectionsViewModel.RedirectionModel redireccionVista in pListaRedireccionesVista)
                 {
-                    //invierto el orden de la lista para que tras guardar se sigan mostrando en la vista en el orden en que el usuario las introdujo
-                    ListaRedirecciones.Reverse();
-
-                    //las eliminadas
-                    foreach (Guid clave in ListaRedirecciones.Where(r => r.DeleteRedirection.Equals(true)).Select(x => x.Key))
+                    RedireccionRegistroRuta redireccionRegistroRuta = listaRedireccionesBD.Where(item => item.RedireccionID.Equals(redireccionVista.Key)).FirstOrDefault();
+                    if (redireccionVista.DeleteRedirection)
                     {
-                        borrar = true;
-                        if (listaRedireccionesBorrar == null)
+                        proyCN.BorrarRedireccionRegistroRuta(redireccionVista.Key);
+                    }
+                    else
+                    {
+                        bool esNueva = false;
+                        if (redireccionRegistroRuta == null)
                         {
-                            listaRedireccionesBorrar = new List<Guid>();
+                            redireccionRegistroRuta = new RedireccionRegistroRuta();
+                            redireccionRegistroRuta.FechaCreacion = DateTime.Now;
+                            redireccionRegistroRuta.RedireccionID = Guid.NewGuid();
+                            redireccionVista.Key = redireccionRegistroRuta.RedireccionID;
+                            esNueva = true;
                         }
 
-                        if (!listaRedireccionesBorrar.Contains(clave))
+                        redireccionRegistroRuta.UrlOrigen = redireccionVista.OriginalUrl;
+                        redireccionRegistroRuta.Dominio = dominio;
+                        if(redireccionVista.ParameterValues == null || redireccionVista.ParameterValues.Count == 0)
                         {
-                            listaRedireccionesBorrar.Add(clave);
+                            redireccionRegistroRuta.NombreParametro = string.Empty;
                         }
+                        else
+                        {
+                            redireccionRegistroRuta.NombreParametro = redireccionVista.ParameterName;
+                        }
+
+                        if (redireccionVista.Edited)
+                        {
+                            redireccionRegistroRuta.FechaCreacion = DateTime.Now;
+                        }
+                        
+                        if (esNueva)
+                        {
+                            proyCN.AniadirRedireccionRegistroRuta(redireccionRegistroRuta);
+                        }
+
+                        ActualizarFilasValorParametro(redireccionVista, proyCN);
                     }
                 }
 
-                //las añadidas/editadas
-                foreach (ManageRedirectionsViewModel.RedirectionModel redireccionVista in ListaRedirecciones.Where(r => r.DeleteRedirection.Equals(false)))
-                {
-                    editar = true;
-                    if (dicRedireccionesEditar == null)
-                    {
-                        dicRedireccionesEditar = new Dictionary<RedireccionRegistroRuta, bool>();
-                    }
-
-                    bool esNueva = false;
-                    RedireccionRegistroRuta filaRedireccion = null;
-                    if (filasRedirecciones != null && filasRedirecciones.Count > 0)
-                    {
-                        filaRedireccion = filasRedirecciones.Find(r => r.RedireccionID.Equals(redireccionVista.Key));
-                    }
-                    if(filaRedireccion == null)
-                    {
-                        esNueva = true;
-                        filaRedireccion = new RedireccionRegistroRuta();
-                        filaRedireccion.FechaCreacion = DateTime.Now;
-                    }
-                    
-                    filaRedireccion.RedireccionID = redireccionVista.Key;
-                    filaRedireccion.UrlOrigen = redireccionVista.OriginalUrl;
-                    filaRedireccion.Dominio = ProyectoSeleccionado.UrlPropia(IdiomaUsuario).Replace("http://", "").Replace("https://", "");
-                    filaRedireccion.NombreParametro = string.Empty;
-
-                    listaValoresBorrar = ComprobarFilasValorParametro(filaRedireccion, redireccionVista);
-                    dicRedireccionesEditar.Add(filaRedireccion, esNueva);
-                }
-
-                if (borrar)
-                {
-                    proyCN.BorrarFilaRedireccionRegistroRuta(listaRedireccionesBorrar, editar);
-                }
-                if (editar)
-                {
-                    if (listaValoresBorrar != null && listaValoresBorrar.Count > 0)
-                    {
-                        proyCN.BorrarFilasRedireccionValorParametro(listaValoresBorrar, true);
-                    }
-
-                    proyCN.GuardarFilaRedireccionRegistroRuta(dicRedireccionesEditar, false);
-                }
+                proyCN.Actualizar();
             }
             catch (Exception ex)
             {
@@ -407,39 +427,102 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
+        private void ActualizarFilasValorParametro(ManageRedirectionsViewModel.RedirectionModel pRedireccionRegistroRuta, ProyectoCN pProyectoCN)
+        {
+            //Obtengo todas las RedireccionesValorParametro para esta RedirecciónID
+            List<RedireccionValorParametro> listaRedireccionesValorParametroBD = pProyectoCN.ObtenerRedireccionValorParametroPorRedireccionID(pRedireccionRegistroRuta.Key);
+
+            if (pRedireccionRegistroRuta.ParameterValues != null && pRedireccionRegistroRuta.ParameterValues.Count > 0)
+            {
+                //Recorro todas las redireccionesValorParametro indicadas en la vista para esta redirección
+                foreach (ManageRedirectionsViewModel.ParameterValue parametroValorVista in pRedireccionRegistroRuta.ParameterValues)
+                {
+                    bool esNueva = false;
+                    RedireccionValorParametro redireccionValorParametroBD = listaRedireccionesValorParametroBD.Where(item => item.ValorParametro.Equals(parametroValorVista.Value)).FirstOrDefault();
+
+                    if (redireccionValorParametroBD == null)
+                    {
+                        redireccionValorParametroBD = new RedireccionValorParametro();
+                        redireccionValorParametroBD.RedireccionID = pRedireccionRegistroRuta.Key;
+                        redireccionValorParametroBD.ValorParametro = parametroValorVista.Value;
+                        esNueva = true;
+                    }
+
+                    redireccionValorParametroBD.UrlRedireccion = parametroValorVista.DestinationUrl;
+                    redireccionValorParametroBD.MantenerFiltros = pRedireccionRegistroRuta.PreserveFilters;
+                    redireccionValorParametroBD.OrdenPresentacion = (short)parametroValorVista.Order;
+
+                    if (esNueva)
+                    {
+                        //Si es nueva la añado a la base de datos
+                        pProyectoCN.AniadirRedireccionValorParametro(redireccionValorParametroBD);
+                    }
+                    else
+                    {
+                        //Si no es nueva la quito de la lista de todas las existentes, pues ya la he modificado (No se esta eliminando de BD, solo de la lista)
+                        listaRedireccionesValorParametroBD.Remove(redireccionValorParametroBD);
+                    }
+                }
+            }
+            else
+            {
+                RedireccionValorParametro redireccionDirecta = listaRedireccionesValorParametroBD.Where(item => string.IsNullOrEmpty(item.ValorParametro)).FirstOrDefault();
+                if (redireccionDirecta != null)
+                {
+                    //Si existe no se marca para eliminar posteriormente
+                    redireccionDirecta.UrlRedireccion = pRedireccionRegistroRuta.DestinationUrl;
+                    listaRedireccionesValorParametroBD.Remove(redireccionDirecta);
+                }
+                else
+                {
+                    //Si no existe se crea
+                    redireccionDirecta = new RedireccionValorParametro();
+                    redireccionDirecta.ValorParametro = string.Empty;
+                    redireccionDirecta.OrdenPresentacion = 0;
+                    redireccionDirecta.MantenerFiltros = false;
+                    redireccionDirecta.RedireccionID = pRedireccionRegistroRuta.Key;
+                    redireccionDirecta.UrlRedireccion = pRedireccionRegistroRuta.DestinationUrl;
+                    pProyectoCN.AniadirRedireccionValorParametro(redireccionDirecta);
+                }
+            }
+
+            //Elimino de BD las que quedan en la lista, pues son las que ni son nuevas ni han llegado de la vista (Se han eliminado)
+            pProyectoCN.BorrarFilasRedireccionValorParametro(listaRedireccionesValorParametroBD, true);
+        }
+
         /// <summary>
         /// Añade y modifica las FilasValorParametro. Retorna una lista con las filas que hay que borrar 
         /// </summary>
-        /// <param name="pFilaRedireccion"></param>
+        /// <param name="pRedireccionBD"></param>
         /// <param name="pRedireccionVista"></param>
         /// <returns></returns>
-        private List<RedireccionValorParametro> ComprobarFilasValorParametro(RedireccionRegistroRuta pFilaRedireccion, ManageRedirectionsViewModel.RedirectionModel pRedireccionVista)
+        private List<RedireccionValorParametro> ComprobarFilasValorParametro(RedireccionRegistroRuta pRedireccionBD, ManageRedirectionsViewModel.RedirectionModel pRedireccionVista)
         {
             List<RedireccionValorParametro> listaBorrar = new List<RedireccionValorParametro>();
 
-            if (pFilaRedireccion.RedireccionValorParametro == null)
+            if (pRedireccionBD.RedireccionValorParametro == null)
             {
-                pFilaRedireccion.RedireccionValorParametro = new List<RedireccionValorParametro>();
+                pRedireccionBD.RedireccionValorParametro = new List<RedireccionValorParametro>();
             }
 
             //es redirección directa
             if (!string.IsNullOrEmpty(pRedireccionVista.DestinationUrl))
             {
                 RedireccionValorParametro filaValorParam = null;
-                if (pFilaRedireccion.RedireccionValorParametro != null && pFilaRedireccion.RedireccionValorParametro.Count > 0 && pFilaRedireccion.RedireccionValorParametro.FirstOrDefault(r => r.RedireccionID.Equals(pFilaRedireccion.RedireccionID) && r.ValorParametro.Equals(string.Empty)) != null)
+                if (pRedireccionBD.RedireccionValorParametro != null && pRedireccionBD.RedireccionValorParametro.Count > 0 && pRedireccionBD.RedireccionValorParametro.FirstOrDefault(r => r.RedireccionID.Equals(pRedireccionBD.RedireccionID) && r.ValorParametro.Equals(string.Empty)) != null)
                 {
-                    filaValorParam = pFilaRedireccion.RedireccionValorParametro.First(r => r.RedireccionID.Equals(pFilaRedireccion.RedireccionID));
+                    filaValorParam = pRedireccionBD.RedireccionValorParametro.First(r => r.RedireccionID.Equals(pRedireccionBD.RedireccionID));
                 }
                 else
                 {
-                    filaValorParam = mEntityContext.RedireccionValorParametro.FirstOrDefault(item => item.RedireccionID.Equals(pFilaRedireccion.RedireccionID));
+                    filaValorParam = mEntityContext.RedireccionValorParametro.FirstOrDefault(item => item.RedireccionID.Equals(pRedireccionBD.RedireccionID));
                     if (filaValorParam == null)
                     {
                         filaValorParam = new RedireccionValorParametro();
                     }
                 }
-                    
-                filaValorParam.RedireccionRegistroRuta = pFilaRedireccion;
+
+                filaValorParam.RedireccionRegistroRuta = pRedireccionBD;
                 filaValorParam.RedireccionID = pRedireccionVista.Key;
                 filaValorParam.ValorParametro = string.Empty;
                 filaValorParam.MantenerFiltros = pRedireccionVista.PreserveFilters;
@@ -448,14 +531,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 //pFilaRedireccion.RedireccionValorParametro.Add(filaValorParam);
 
                 //hay que borrar las hijas que han cambiado de tipo
-                foreach (RedireccionValorParametro filaValorBD in pFilaRedireccion.RedireccionValorParametro.Where(r => !r.ValorParametro.Equals(string.Empty)))
+                foreach (RedireccionValorParametro filaValorBD in pRedireccionBD.RedireccionValorParametro.Where(r => !r.ValorParametro.Equals(string.Empty)))
                 {
                     listaBorrar.Add(filaValorBD);
                 }
             }
             else //es redirección parametrizada
             {
-                pFilaRedireccion.NombreParametro = pRedireccionVista.ParameterName;
+                pRedireccionBD.NombreParametro = pRedireccionVista.ParameterName;
 
                 if (pRedireccionVista.ParameterValues != null && pRedireccionVista.ParameterValues.Count > 0)
                 {
@@ -463,36 +546,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     foreach (ManageRedirectionsViewModel.ParameterValue parametroValor in pRedireccionVista.ParameterValues)
                     {
                         RedireccionValorParametro filaValorParam = null;
-                        if (pFilaRedireccion.RedireccionValorParametro != null && pFilaRedireccion.RedireccionValorParametro.Count > 0 && pFilaRedireccion.RedireccionValorParametro.Any(r => r.RedireccionID.Equals(pFilaRedireccion.RedireccionID) && r.ValorParametro != null && r.ValorParametro.Equals(parametroValor.Value)))
+                        if (pRedireccionBD.RedireccionValorParametro != null && pRedireccionBD.RedireccionValorParametro.Count > 0 && pRedireccionBD.RedireccionValorParametro.Any(r => r.RedireccionID.Equals(pRedireccionBD.RedireccionID) && r.ValorParametro != null && r.ValorParametro.Equals(parametroValor.Value)))
                         {
-                            filaValorParam = pFilaRedireccion.RedireccionValorParametro.First(r => r.RedireccionID.Equals(pFilaRedireccion.RedireccionID) && r.ValorParametro.Equals(parametroValor.Value));
+                            filaValorParam = pRedireccionBD.RedireccionValorParametro.First(r => r.RedireccionID.Equals(pRedireccionBD.RedireccionID) && r.ValorParametro.Equals(parametroValor.Value));
                         }
 
                         if (filaValorParam == null)
                         {
                             filaValorParam = new RedireccionValorParametro();
                         }
-                        filaValorParam.RedireccionRegistroRuta = pFilaRedireccion;
+                        filaValorParam.RedireccionRegistroRuta = pRedireccionBD;
                         filaValorParam.RedireccionID = pRedireccionVista.Key;
                         filaValorParam.ValorParametro = parametroValor.Value;
                         filaValorParam.UrlRedireccion = parametroValor.DestinationUrl;
                         filaValorParam.MantenerFiltros = false;
                         filaValorParam.OrdenPresentacion = orden;
-                        pFilaRedireccion.RedireccionValorParametro.Add(filaValorParam);
+                        pRedireccionBD.RedireccionValorParametro.Add(filaValorParam);
 
                         orden++;
                     }
 
                     //hay que borrar las hijas que han cambiado de tipo
-                    foreach (RedireccionValorParametro filaValorBD in pFilaRedireccion.RedireccionValorParametro.Where(r => r.ValorParametro.Equals(string.Empty)))
+                    foreach (RedireccionValorParametro filaValorBD in pRedireccionBD.RedireccionValorParametro.Where(r => r.ValorParametro.Equals(string.Empty)))
                     {
                         listaBorrar.Add(filaValorBD);
                     }
                 }
 
-                if (pFilaRedireccion.RedireccionValorParametro != null)
+                if (pRedireccionBD.RedireccionValorParametro != null)
                 {
-                    foreach (RedireccionValorParametro filaValorBD in pFilaRedireccion.RedireccionValorParametro)
+                    foreach (RedireccionValorParametro filaValorBD in pRedireccionBD.RedireccionValorParametro)
                     {
                         if (pRedireccionVista.ParameterValues != null && pRedireccionVista.ParameterValues.Find(r => r.Value != null && r.Value.Equals(filaValorBD.ValorParametro)) == null)
                         {

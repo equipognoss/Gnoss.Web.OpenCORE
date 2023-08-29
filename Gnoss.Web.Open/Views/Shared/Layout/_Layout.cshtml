@@ -27,7 +27,7 @@
 
 <head>
     @* Carga de la vista que contiene información relativa a <head> *@
-    <link rel="manifest" href="@Html.GetBaseUrlStatic()/manifest.json" />
+    <link crossorigin="use-credentials" rel="manifest" href="@Html.GetBaseUrlStatic()/manifest.json" />
     @Html.PartialView("../Shared/Layout/_partial-views/_layout-head-section")
 </head>
 
@@ -79,12 +79,14 @@
     @* Cargar o no la vista modal Login emergente*@
     @Html.PartialView("../Registro/_modal-views/_login")
 
+    @* Cargar la vista modal de Información de acceso restringido a la comunidad. Aparecerá si el usuario realiza alguna acción y necesita formar parte de la comunidad e incluso ya está logueado(Ej: Añadir al espacio personal) *@
+    @Html.PartialView("../Registro/_modal-views/_restringed-community-access")
+
     @* Menús del usuario -> Paneles Laterales *@
     @if (!IdentidadActual.IsGuestUser)
     {
         // Mostrar paneles asociados a la cabecera con usuario logeado
-        @Html.PartialView("../Shared/_cabecera/_menu-lateral")
-        ;
+        @Html.PartialView("../Shared/_cabecera/_menu-lateral")        
         @Html.PartialView("../Shared/_cabecera/_menu-lateral-usuario")
     }
     @Html.PartialView("../Shared/_cabecera/_menu-lateral-metabuscador")
@@ -125,5 +127,8 @@
             });
         }
     </script>
+
+    @* Analytics Matomo *@
+    @Html.PartialView("../Shared/Layout/_partial-views/_AnalyticsMatomo")
 </body>
 </html>

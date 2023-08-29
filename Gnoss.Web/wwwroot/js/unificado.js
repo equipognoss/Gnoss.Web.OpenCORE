@@ -1,4 +1,4 @@
-/*global.js*/
+/*global.js*/ 
 /*
 ..........................................................................
 :: Links en ventana nueva                                               ::
@@ -28,8 +28,8 @@ const operativaCrossDomainCookies = {
  * En ciertas páginas, se podían producir errores debido a que podían sobreescribir datos previos insertados: Ej: Creación de un recurso desde ckEditor
  * Esta operativa detecta este tipo de navegación y realiza una carga de la web
  */
- const operativaDetectarNavegacionBackButton = {
-    init: function() {
+const operativaDetectarNavegacionBackButton = {
+    init: function () {
         this.iniciarComportamiento();
     },
 
@@ -37,25 +37,26 @@ const operativaCrossDomainCookies = {
      * Comprobar si se ha pulsado en "back" del navegador. Si es así, y se encuentran elementos relativos a edición de recurso, 
      * obligar a recargar la página para obtener los datos siempre actualizados y evitar posible pérdida al sobreescribirlos
      */
-    iniciarComportamiento: function(){
-        
+    iniciarComportamiento: function () {
+
         window.onpageshow = function (event) {
             if (event.persisted) {
                 // Se ha pulsado en "back" del navegador. Comprobar si es necesario recargar la página
                 // ckeditor, radioButtons, checkbox
-                 if ($(".cke, input[type='checkbox'],input[type='radio']").length > 1){
+                if ($(".cke, input[type='checkbox'],input[type='radio']").length > 1) {
                     MostrarUpdateProgress();
                     // Desactivar el plugin dirty para que no muestr el mensaje
                     // Prevenir actualización de páginas cuando haya formularios "importantes". Avisar al usuario
                     if ($("#preventLeavingFormWithoutSaving").dirty != null) {
                         $("#preventLeavingFormWithoutSaving").dirty("setAsClean");
-                    }                    
+                    }
                     window.location.reload();
-                 }                 
+                }
             }
         };
     },
 };
+
 
 /**
  * Clase jquery para poder hacer búsquedas desde un input para ocultar o mostrar una jerarquía de categorías
@@ -397,7 +398,8 @@ const operativaUsuariosOrganizacion = {
         $(document).on('click', '#NavegadorPaginas_Pag a', function () {
             var numPag = $(this).attr('aux');
             $('#numPagina').val(numPag);
-            that.filtrar();
+            const pressedButton = $(this);
+            that.filtrar(pressedButton);
         });
     },
 
@@ -437,7 +439,7 @@ const operativaUsuariosOrganizacion = {
     /**
      * Método para filtrar resultados al pulsar en paginador. Cargará nuevos resultados en la sección de "resultados".
      * */
-    filtrar: function () {
+    filtrar: function (pressedButton) {
         // Sección donde se mostrarán los resultados
         const $panelResults = $("#contentUsuariosOrganizacion");
 
@@ -451,9 +453,13 @@ const operativaUsuariosOrganizacion = {
 
         MostrarUpdateProgress();
 
+        // Construir la url para realizar la petición
+        const urlFilter = `${pressedButton.data("url-filter")}/filter`;
+
         // Realizar la petición para obtención de resultados
         GnossPeticionAjax(
-            $('#urlFilter').val() + '/filter',
+            //$('#urlFilter').val() + '/filter',
+            urlFilter,
             dataPost,
             true
         ).done(function (data) {
@@ -1681,6 +1687,17 @@ function EncogerPanel(panel,alturaMin)
 	{
 		panel.style.height = alturaMin + "px";
 	}
+}
+
+/**
+ * Método para convertir una determinada fecha a partir de UTC a la fecha actual según el navegador del usuario.
+ */
+function convertDateFromUTC(utcDate){  
+    // Convertir a UTC+2 utilizando moment-timezone
+    const fechaUTC = moment.utc(utcDate);
+    // Establecer la zona horaria deseada
+    const fechaUTC2 = fechaUTC.tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm');
+    return fechaUTC2;
 }
 
 function isDate(texbox) {
@@ -4450,11 +4467,11 @@ function ValidarCPOrg(pTxtCP, pLblCP) {
 }
 
 /**
- * Validar el campo poblaci�n introducido para el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
- * @param {any} pTxtPobla: Input de la poblaci�n
- * @param {any} pLblPobla: Label asociado al input poblaci�n
+ * Validar el campo población introducido para el proceso de registro.
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
+ * @param {any} pTxtPobla: Input de la población
+ * @param {any} pLblPobla: Label asociado al input población
  */
 function ValidarPoblacionOrg(pTxtPobla, pLblPobla) {
     var error = '';
@@ -4628,8 +4645,9 @@ function validarCif(texto) {
 function validarNombreCortoComunidad(nombre) {
     //var RegExPatternNombreCorto = /^([a-zA-Z0-9ñÑüÜáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛ'´`çÇ-]{4,30})$/;
     // No aceptar guiones cortos ni medios para el nombre corto de la comunidad
-    var RegExPatternNombreCorto = /^([a-zA-Z0-9ñÑ'´`çÇ]{4,30})$/;
-    return (nombre.match(RegExPatternNombreCorto) && nombre != '');
+    //var RegExPatternNombreCorto = /^([a-zA-Z0-9ñÑ'´`çÇ]{4,30})$/;
+    // let RegExPatternNombreCorto = /[^a-zA-Z0-9 _ -]/g; // /^([^a-zA-Z0-9]{4,30})$/;    
+    return (nombre != '' && nombre.length > 4 && nombre.length < 30);
 }
 
 //                                                                    formulario de registro
@@ -4938,9 +4956,9 @@ function ValidarNombreUsu(pTxtNombre, pLlbNombre) {
 }
 
 /**
- * Validar la contrase�a del lusuario en el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Validar la contraseña del lusuario en el proceso de registro.
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pTxtContra
  * @param {any} pTxtContra2
  * @param {any} pLblContra
@@ -4986,8 +5004,8 @@ function ValidarContrasena(pTxtContra, pTxtContra2, pLblContra, pLblContra2, pVa
 
 /**
  * Validar el campo email introducido para el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pTxtMail: El input donde se ha rellenado con datos
  * @param {any} pLblMail: El label asociado a dicho input
  */
@@ -5010,8 +5028,8 @@ function ValidarEmailIntroducido(pTxtMail, pLblMail) {
 
 /**
  * Validar el nombre de la persona en el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pNombrePersona: El inputText
  * @param {any} pLblNombrePersona: El label relacionado correspondiente con el inputText
  */
@@ -5089,8 +5107,8 @@ function ValidarFechaNacimiento(pDiaFechaNacimiento, pMesFechaNacimiento, pAnioF
 
 /**
  * Validar los apellidos de la persona en el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pTxtApellidos: El input de los apellidos
  * @param {any} pLblApellidos: El label asociado a los apellidos
  */
@@ -5190,7 +5208,7 @@ function ValidarSexo(pNombrePersona, pLblNombrePersona) {
  * Si es incorrecto (vacío) se añade una clase "is-invalid"
 * @param {any} pTxt: El inputText
  * @param {any} pLbl: El label relacionado correspondiente con el inputText
- * @param {bool} jqueryElement: Se indica si el elemento pasado est� ya en formato jquery, por lo que no hace falta analizarlo por ID
+ * @param {bool} jqueryElement: Se indica si el elemento pasado está ya en formato jquery, por lo que no hace falta analizarlo por ID
  */
 function ValidarCampoNoVacio(pTxt, pLbl, jqueryElement = false) {
     var error = '';
@@ -5636,22 +5654,22 @@ function borrarComentario(control, accion) { // ejemplo de borrado de comentario
 
 
 /**
- * Acci�n que se ejecuta cuando se pulsa sobre las acciones disponibles de un item/recurso de tipo "Perfil" encontrado por el buscador.
- * Las acciones que se podr�an realizar son (No/Enviar newsletter, No/Bloquear). Acciones tambi�n de vincular, desvincular recurso...
- * @param {string} titulo: T�tulo que tendr� el panel modal
- * @param {any} textoBotonPrimario: Texto del bot�n primario
- * @param {any} textoBotonSecundario: Texto del bot�n primario
- * @param {string} texto: El texto o mensaje a modo de t�tulo que se mostrar� para que el usuario sepa la acci�n que se va a realizar
- * @param {string} id: Identificador del recurso/persona sobre el que se aplicar� la acci�n
- * @param {any} accion: Acci�n o funci�n que se ejecutar� cuando se pulse en el bot�n de primario
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * Acción que se ejecuta cuando se pulsa sobre las acciones disponibles de un item/recurso de tipo "Perfil" encontrado por el buscador.
+ * Las acciones que se podrán realizar son (No/Enviar newsletter, No/Bloquear). Acciones también de vincular, desvincular recurso...
+ * @param {string} titulo: Título que tendrá el panel modal
+ * @param {any} textoBotonPrimario: Texto del botón primario
+ * @param {any} textoBotonSecundario: Texto del botón primario
+ * @param {string} texto: El texto o mensaje a modo de título que se mostrará para que el usuario sepa la acción que se va a realizar
+ * @param {string} id: Identificador del recurso/persona sobre el que se aplicará la acción
+ * @param {any} accion: Acción o función que se ejecutará cuando se pulse en el botón de primario
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
 function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, texto, id, accion, textoInferior=null, idModalPanel="#modal-container") {
 
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');     
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -5679,7 +5697,7 @@ function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, tex
                     plantillaPanelHtml += '<div class="ko"></div>';
                 plantillaPanelHtml += '</div>';
             plantillaPanelHtml += '</div>';
-            // Panel de botones para la acci�n
+            // Panel de botones para la acción
             plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
                 plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">'+textoBotonSecundario+'</button>'
                 plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1">'+textoBotonPrimario+'</button>'
@@ -5687,16 +5705,16 @@ function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, tex
         plantillaPanelHtml += '</div>';        
     plantillaPanelHtml += '</div>'; 
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);       
 
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
 
-    // Asignaci�n de la funci�n al bot�n "S�" o de acci�n
+    // Asignación de la función al botón "Sí" o de acción
     $(botones[1]).on("click", function () {
-      // Ocultar el panel modal de bootstrap - De momento estar� visible. Se ocultar�a si se muestra mensaje de OK pasados 1.5 segundos
+      // Ocultar el panel modal de bootstrap - De momento estará visible. Se ocultará si se muestra mensaje de OK pasados 1.5 segundos
         //$('#modal-container').modal('hide');
     }).click(accion);
 }
@@ -7323,7 +7341,7 @@ function autocompletarSeleccionEntidadGruposGnoss(control, pIdentidad, pOrganiza
     $(control).autocomplete(null, {
         //servicio: new WS($('input.inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
         //metodo: 'AutoCompletarSeleccEntPerYGruposGnoss',
-        url: $('#input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarSeleccEntPerYGruposGnoss",
+        url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarSeleccEntPerYGruposGnoss",
         type: "POST",
         delay: 0,
         scroll: false,
@@ -7376,7 +7394,7 @@ function autocompletarGrafoDependiente(control, pEntidad, pPropiedad, grafo, tip
         {
             //servicio: new WS($('input.inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
             //metodo: 'AutoCompletarGrafoDependienteDocSem',
-            url: $('#input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarGrafoDependienteDocSem",
+            url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarGrafoDependienteDocSem",
             type: "POST",
             delay: 0,
             scroll: false,
@@ -7496,7 +7514,7 @@ function EtiquetadoAutomaticoDeRecursos(titulo, descripcion, txtHack, pEsPaginaE
     if (descripcion.length < numMax) {
         var metodo = 'SeleccionarEtiquetas';
         params['titulo'] = titulo;
-        params['descripcion'] = descripcion; 
+        params['descripcion'] = descripcion;
         /*servicio.call(metodo, params, function (data) {
             procesarTags(data, txtHack, pEsPaginaEdicion);
         });*/
@@ -7588,7 +7606,7 @@ function procesarTags(data, txtHack, pEsPaginaEdicion) {
     // Cambiar por el nuevo Front
     //if (!$('#' + txtTagsID).parent().next().hasClass('propuestos')) {
     if (!$('#' + txtTagsID).parent().parent().parent().children().hasClass("propuestos")) {
-        // Cambiar el contenedor donde se establecer�n las etiquetas propuestas para el nuevo Front
+        // Cambiar el contenedor donde se establecerá las etiquetas propuestas para el nuevo Front
         // Original -> $('#' + txtTagsID).parent().after("<div class='propuestos' style='display:none'><p>" + form.tagsPropuestos + "</p><span class='contenedor'></span></div>");
         //$('#' + txtTagsID).parent().after('<div class="propuestos"><label class="control-label d-block mb-2">' + form.tagsPropuestos + '</label></p><span class="contenedor tag-list sugerencias"></span></div>');
         $('#' + txtTagsID).parent().parent().after('<div class="propuestos"><label class="control-label d-block mb-2">' + form.tagsPropuestos + '</label></p><span class="contenedor tag-list sugerencias"></span></div>');
@@ -7826,7 +7844,7 @@ $(document).ready(function () {
     $(".loginButton").click(function () {
         $("#botonLogin").toggleClass("btLogin");
     });
-        
+
     $("#txtUsuario").keydown(function (event) {
         if (event.which || event.keyCode) {
             if ((event.which == 13) || (event.keyCode == 13)) {
@@ -8068,7 +8086,7 @@ const comportamientoFacetasPopUpPlegado = {
                     var li = $("<li>");
                     li.append(that.arrayTotales[i][1]);
                     if (that.arrayTotales[i][2].length > 0) {
-                        PintarFacetasHijas(that.arrayTotales[i][2], li);
+                        that.PintarFacetasHijas(that.arrayTotales[i][2], li);
                     }
 
                     ul.append(li);
@@ -8191,6 +8209,20 @@ const comportamientoFacetasPopUpPlegado = {
             //Desplegamos las facetas que no coinciden con la búsqueda
             $(`.js-desplegar-facetas-modal`).trigger('click');
         }
+    },
+
+    /**
+     * Método para pintar las facetas hijas de de tipo Tesauro para plegar o desplegar su visualización
+     * @param facetasHijas: Cada una de las facetas hijas contenidas por parte de una faceta "padre"
+     * @param listaTodasFacetas: Faceta padre que contiene todas las subfacetas a mostrar. Debe ir en un "ul"
+     */   
+    PintarFacetasHijas: function(facetasHijas, listaTodasFacetas){
+        let conjuntoFacetasHijas = `
+        <ul>            
+            ${facetasHijas.html()}
+        </ul>
+        `;    
+        listaTodasFacetas.append(conjuntoFacetasHijas);        
     },
 };
 
@@ -8426,29 +8458,42 @@ const comportamientoFacetasPopUp = {
         params["pNumeroFacetas"] = -1;
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = FacetaActual;
-            
-        // Petición al servicio para obtención de Facetas                
+    
+        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal         
+        that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
+            .keyup(function () {
+                that.textoActual = that.eliminarAcentos($(this).val());
+                that.paginaActual = 1;
+                that.buscarFacetas();
+            })
+            .on('paste', function () {
+                const input = $(this);
+                setTimeout(function () {
+                    input.keyup();
+                },200);
+                
+            });
+    
+        // Petición al servicio para obtenciÃ³n de Facetas                
         $.post(obtenerUrl($('input.inpt_UrlServicioFacetas').val()) + "/" + metodo, params, function (data) {
             var htmlRespuesta = $("<div>").html(data);
             that.arrayTotales = new Array($(htmlRespuesta).find(".faceta").length);
-            that.facetaTesuaroSemantico = $(htmlRespuesta).find(".tesaroSemantico").length > 0;
+            that.facetaTesuaroSemantico = $(htmlRespuesta).find(".tesaroSemantico").length > 0;            
             numFacetasTotales = that.arrayTotales;
             var i = 0;
             $(htmlRespuesta)
                 .find(".faceta")
                 .each(function () {
-                    that.arrayTotales[i] = new Array(3);
+                    that.arrayTotales[i] = new Array(2);
                     that.arrayTotales[i][0] = that.eliminarAcentos(
                         $(this).text().toLowerCase()
                     );
                     that.arrayTotales[i][1] = $(this);
-                    // Obtenemos las facetas hijas
-                    that.arrayTotales[i][2] = $(this).siblings();
                     i++;
                 });
-
-            //Ordena por orden alfabético
-            if (that.facetasConPopUp[that.IndiceFacetaActual][2] != 'False') {
+    
+            //Ordena por orden alfabÃ©tico
+            if (that.facetasConPopUp[that.IndiceFacetaActual][2]) {
                 that.arrayTotales = that.arrayTotales.sort(function (a, b) {
                     if (a[0] > b[0]) return 1;
                     if (a[0] < b[0]) return -1;
@@ -8480,6 +8525,7 @@ const comportamientoFacetasPopUp = {
                 if (!that.buscando && that.paginaActual > 1) {
                     that.buscando = true;
                     that.paginaActual--;
+                    
                     var hacerPeticion = true;
                     //$(".indice-lista .js-anterior-facetas-modal").hide();
                     $(".indice-lista ul").animate(
@@ -8516,6 +8562,7 @@ const comportamientoFacetasPopUp = {
                 if (!that.buscando && !that.fin) {
                     that.buscando = true;
                     that.paginaActual++;
+                                                            
                     var hacerPeticion = true;
                     //$(".indice-lista .js-siguiente-facetas-modal").hide();
                     $(".indice-lista ul").animate(
@@ -8548,24 +8595,15 @@ const comportamientoFacetasPopUp = {
             // Buscar facetas y mostrarlas
             that.buscarFacetas();
         });
-
-        // Si hay más de 1000 facetas, en lugar de buscar entre las traidas, las pedimos al servicio autocompletar        
+        // Si hay más de 1000 facetas, en lugar de buscar entre las traidas, las pedimos al servicio autocompletar
         if (numFacetasTotales < 1000) {
-
-            that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
-                .keyup(function () {
-                        that.textoActual = that.eliminarAcentos($(this).val());
-                        that.paginaActual = 1;
-                        that.buscarFacetas();
-                })
-                .on('paste', function () {
-                    const input = $(this);
-                    setTimeout(function () {
-                        input.keyup();
-                    }, 200)
-                });                    
+            that.$modalLoaded.find(".buscador-coleccion .buscar .texto").keyup(function () {
+                that.textoActual = that.eliminarAcentos($(this).val());
+                that.paginaActual = 1;
+                that.buscarFacetas();
+            });
         }
-        else {        
+        else {
             that.$modalLoaded.find(".buscador-coleccion .buscar .texto").keyup(function (event) {
                 //Comprobamos si la tecla es válida y si continua escribiendo
                 if (that.validarKeyPulsada(event) == true) {
@@ -8640,11 +8678,9 @@ const comportamientoFacetasPopUp = {
                                 $(htmlRespuesta)
                                     .find(".faceta")
                                     .each(function () {
-                                        that.arrayTotales[i] = new Array(3);
+                                        that.arrayTotales[i] = new Array(2);
                                         that.arrayTotales[i][0] = that.eliminarAcentos($(this).text().toLowerCase());
                                         that.arrayTotales[i][1] = $(this);
-                                        //Obtenemos las facetas hijas
-                                        that.arrayTotales[i][2] = $(this).siblings();
                                         i++;
                                     });
     
@@ -8661,7 +8697,6 @@ const comportamientoFacetasPopUp = {
     
                                 //Buscamos y pintamos las facetas en el modal
                                 that.buscarFacetas();
-                                plegarSubFacetas.init();
                             });
                         }
     
@@ -8678,7 +8713,7 @@ const comportamientoFacetasPopUp = {
         const that = this;
         this.textoActual = this.textoActual.toLowerCase();
 
-        // Limpio antes de mostrar datos - No harí­a falta si elimino todo con el cierre del modal
+        // Limpio antes de mostrar datos - No harÃ­a falta si elimino todo con el cierre del modal
         that.$modalLoaded.find(".indice-lista.no-letra ul.listadoFacetas").remove();
 
         var facetaMin = (this.paginaActual - 1) * 22 + 1;
@@ -8686,76 +8721,77 @@ const comportamientoFacetasPopUp = {
 
         var facetaActual = 0;
         var facetaPintadoActual = 0;
+        that.numPaginasTotales = Math.ceil(that.arrayTotales.length / 22);
+
+
         var ul = $(`<ul class="listadoFacetas">`);
         // Petición al servicio para obtención de Facetas
         this.fin = true;
 
+        // Controlar botones de siguiente y anteriores si es necesario su mostrado según el nº de facetas
+        if (that.paginaActual == 1){
+            $(".js-anterior-facetas-modal").addClass("d-none");
+        }else{
+            $(".js-anterior-facetas-modal").removeClass("d-none");
+        }
+        if (that.paginaActual < that.numPaginasTotales){
+            $(".js-siguiente-facetas-modal").removeClass("d-none");
+        }else{
+            $(".js-siguiente-facetas-modal").addClass("d-none");
+        }  
+
+        $(".js-siguiente-facetas-modal").removeAttr("style")
+        $(".js-anterior-facetas-modal").removeAttr("style");
+
         var arrayTextoActual = this.textoActual.split(" ");
 
         for (i = 0; i < this.arrayTotales.length; i++) {
-            if (!this.arrayTotales[i][1].hasClass("isChildren")) {
-                var nombre = this.arrayTotales[i][0];
+            var nombre = this.arrayTotales[i][0];
 
-                var mostrar = true;
-                for (j = 0; j < arrayTextoActual.length; j++) {
-                    mostrar = mostrar && nombre.indexOf(arrayTextoActual[j]) >= 0;
-                }
-
-                if (facetaPintadoActual < 22 && mostrar) {
-                    facetaActual++;
-                    if (facetaActual >= facetaMin && facetaActual <= facetaMax) {
-                        facetaPintadoActual++;
-                        if (facetaPintadoActual == 1) {
-                            ul = $(`<ul class="listadoFacetas">`);
-                            that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
-                        } else if (facetaPintadoActual == 12) {
-                            ul = $(`<ul class="listadoFacetas">`);
-                            that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
-                        }
-                        var li = $("<li>");
-                        li.append(this.arrayTotales[i][1]);
-                        if (this.arrayTotales[i][2].length > 0) {
-                            PintarFacetasHijas(this.arrayTotales[i][2], li);
-                        }
-                        
-                        ul.append(li);
-                    }
-                }
-                if (this.fin && facetaPintadoActual == 22 && mostrar) {
-                    this.fin = false;
-                }
+            var mostrar = true;
+            for (j = 0; j < arrayTextoActual.length; j++) {
+                mostrar = mostrar && nombre.indexOf(arrayTextoActual[j]) >= 0;
             }
 
-            this.buscando = false;
-            // Establecer el tÃ­tulo o cabecera titular del modal
-            that.$modalLoaded.find(".loading-modal-facet-title").text(
-                that.facetasConPopUp[that.IndiceFacetaActual][1]
-            );
-            // Ocultar el Loading
-            that.$modalLoaded.find('.loading-modal-facet').addClass('d-none');
+            if (facetaPintadoActual < 22 && mostrar) {
+                facetaActual++;
+                if (facetaActual >= facetaMin && facetaActual <= facetaMax) {
+                    facetaPintadoActual++;
+                    if (facetaPintadoActual == 1) {
+                        ul = $(`<ul class="listadoFacetas">`);
+                        that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
+                    } else if (facetaPintadoActual == 12) {
+                        ul = $(`<ul class="listadoFacetas">`);
+                        that.$modalLoaded.find(".indice-lista.no-letra .resultados-wrap").append(ul);
+                    }
+                    var li = $("<li>");
+                    li.append(this.arrayTotales[i][1]);
+                    ul.append(li);
+                }
+            }
+            if (this.fin && facetaPintadoActual == 22 && mostrar) {
+                this.fin = false;
+            }
         }
 
-        // Configurar click de las faceta
-        $(".indice-lista .faceta").off().click(function (e) {
+        // Configurar click de la faceta
+        $(".indice-lista .faceta").click(function (e) {
             AgregarFaceta($(this).attr("name"));
             // Cerrar modal
             that.$modalLoaded.modal('toggle');
             e.preventDefault();
         });
 
-        //Añadir comportamiento desplegable para facetas de tipo tesauro semántico
-        plegarSubFacetas.init();
+        this.buscando = false;
+        // Establecer el tÃ­tulo o cabecera titular del modal
+        that.$modalLoaded.find(".loading-modal-facet-title").text(
+            that.facetasConPopUp[that.IndiceFacetaActual][1]
+        );
+        // Ocultar el Loading
+        that.$modalLoaded.find('.loading-modal-facet').addClass('d-none');
     },
 };
 
-function PintarFacetasHijas(facetasHijas, listaTodasFacetas) {    
-    let conjuntoFacetasHijas = `
-    <ul>
-        ${facetasHijas.html()}
-    </ul>
-    `;    
-    listaTodasFacetas.append(conjuntoFacetasHijas);
-}
 
 function VerFaceta(faceta, controlID) {
     if (document.getElementById(controlID + '_aux') == null) {
@@ -9835,11 +9871,11 @@ function CambiarTextoElemento(elementID, nombre) {
 }
 
 /**
- * Eliminar� los atributos del bot�n para que no pueda volver a ejecutar nada a menos que se vuelva a carguar la p�gina web
+ * Eliminaá los atributos del botón para que no pueda volver a ejecutar nada a menos que se vuelva a carguar la página web
  * Ej: Acciones que se hacen sobre una persona ("No enviar newsletter, Bloquear...")
  * @param {any} elementId: Elemento que se desea cambiar el nombre y eliminar atributos
- * @param {any} nombre: Nombre que tendr� el bot�n una vez se haya pulsado sobre �l y las acciones se hayan realizado
- * @param {any} listaAtributos: Lista de atributos en formato String que ser�n eliminados del bot�n (Ej: "data-target", "href", "onclick")
+ * @param {any} nombre: Nombre que tendrá el botón una vez se haya pulsado sobre él y las acciones se hayan realizado
+ * @param {any} listaAtributos: Lista de atributos en formato String que serán eliminados del botón (Ej: "data-target", "href", "onclick")
  * */
 function CambiarTextoAndEliminarAtributos(elementId, nombre, listaAtributos) {
     // Seleccionamos el elemento
@@ -9848,7 +9884,7 @@ function CambiarTextoAndEliminarAtributos(elementId, nombre, listaAtributos) {
     listaAtributos.forEach(atributo => $(element).removeAttr(atributo));
     // Cambiamos el nombre del elemento
     $(element).html(nombre)
-    // A�adimos estilo para que no parezca que es "clickable"
+    // Añadimos estilo para que no parezca que es "clickable"
     $(element).css('cursor', 'auto');
 }
 
@@ -10050,7 +10086,7 @@ function PeticionAJAX(pMetodo, pDatosPost,pFuncionOK,pFuncionKO)
 }
 
 /**
- * M�todo que es ejecutado para mostrar informaci�n traida del backend como Mensajes nuevos, invitaciones nuevas, suscripciones nuevas...
+ * Método que es ejecutado para mostrar información traida del backend como Mensajes nuevos, invitaciones nuevas, suscripciones nuevas...
  * @param {any} datosRecibidos
  */
 function RepintarContadoresNuevosElementos(datosRecibidos) {
@@ -10073,7 +10109,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
 
     var numInvOtrasIdent = arrayDatos[12];
 
-    // Identificaci�n de elementos HTML para controlar el n� de mensajes nuevos
+    // Identificación de elementos HTML para controlar el nº de mensajes nuevos
     // Mensajes nuevos    
     const mensajesMenuNavegacionItem = document.querySelectorAll('.liMensajes')//$('#navegacion').find('.liMensajes');
     const suscripcionesMenuNavegacionItem = document.querySelectorAll('.liNotificaciones'); //$('#navegacion').find('.liNotificaciones');
@@ -10102,7 +10138,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Mensajes sin leer
     DarValorALabel('infNumMensajesSinLeer', parseInt(numMensajesSinLeer) + parseInt(numMensajesSinLeerOrg));
     DarValorALabel('infNumMensajesSinLeerMobile', parseInt(numMensajesSinLeer) + parseInt(numMensajesSinLeerOrg));
-    // A�adir punto rojo de nuevos Mensajes
+    // Añadir punto rojo de nuevos Mensajes
     if (parseInt(numMensajesNuevos) + parseInt(numMensajesNuevosOrg) > 0) {
         $(mensajesMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -10111,7 +10147,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Comentarios sin leer
     DarValorALabel('infNumComentariosSinLeer', numComentariosSinLeer);
     DarValorALabel('infNumComentariosSinLeerMobile', numComentariosSinLeer); 
-    // A�adir punto rojo de 'nuevos' Comentarios
+    // Añadir punto rojo de 'nuevos' Comentarios
     if (parseInt(numComentariosNuevos) > 0) {
         $(comentariosMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -10120,7 +10156,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Invitaciones sin leer
     DarValorALabel('infNumInvitacionesSinLeer', parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg));
     DarValorALabel('infNumInvitacionesSinLeerMobile', parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg));
-    // A�adir punto rojo de 'sin leer' de Invitaciones - No se utilizan
+    // Añadir punto rojo de 'sin leer' de Invitaciones - No se utilizan
     /*if (parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg) > 0) {
         $(invitacionesMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -10132,7 +10168,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Suscripciones sin leer
     DarValorALabel('infNumSuscripcionesSinLeer', numSuscripcionesSinLeer);
     DarValorALabel('infNumSuscripcionesSinLeerMobile', numSuscripcionesSinLeer);
-    // A�adir punto rojo de nuevas Suscripciones
+    // Añadir punto rojo de nuevas Suscripciones
     if (parseInt(numSuscripcionesNuevos)) {
         $(suscripcionesMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -10206,16 +10242,16 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
 }
 
 /**
- * Pintar el n�mero de elementos (mensajes sin leer, notificaciones, suscripciones) en la label correspondiente y a�ade la coletilla de "nuevos" o sin leer.
- * De momento elimino la opci�n de mostrar "nuevos" o "sin leer". 
+ * Pintar el número de elementos (mensajes sin leer, notificaciones, suscripciones) en la label correspondiente y añade la coletilla de "nuevos" o sin leer.
+ * De momento elimino la opción de mostrar "nuevos" o "sin leer". 
  * @param {any} pLabelID
  * @param {any} pNumElementos
  */
 function DarValorALabel(pLabelID, pNumElementos) {
-    // Cambiado por nuevo Front para buscar por clase (El men� clonado tambi�n existe y no podr�a haber 2 elementos con un mismo ID)
+    // Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podrá haber 2 elementos con un mismo ID)
     //if ($('#' + pLabelID).length > 0) {
     if ($('.' + pLabelID).length > 0) {
-       // Cambiado por nuevo Front: Cambiado por nuevo Front para buscar por clase (El men� clonado tambi�n existe y no podr�a haber 2 elementos con un mismo ID). Hecho abajo
+       // Cambiado por nuevo Front: Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podrá haber 2 elementos con un mismo ID). Hecho abajo
         // document.getElementById(pLabelID).innerHTML = pNumElementos;        
 
         if (pLabelID.indexOf('SinLeer') != -1) {
@@ -10227,7 +10263,7 @@ function DarValorALabel(pLabelID, pNumElementos) {
             // document.getElementById(pLabelID).innerHTML += '<span class="indentado">' + mensajes.nuevos + '</span>'
         }
 
-        // Cambiado por nuevo Front para buscar por clase (El men� clonado tambi�n existe y no podr�a haber 2 elementos con un mismo ID)
+        // Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podrá haber 2 elementos con un mismo ID)
         //if (pNumElementos > 0) { document.getElementById(pLabelID).style.display = ''; } else { document.getElementById(pLabelID).style.display = 'none'; }
         // 
         if (pNumElementos > 0) {
@@ -11993,7 +12029,7 @@ function enlazarFiltrosBusqueda() {
         AgregarFiltro('ordenarPor', $(this).val(), true);
     });
 
-    // Configurar la selecci�n de ordenaci�n de los resultados al pulsar en "Ordenado por"
+    // Configurar la selección de ordenará de los resultados al pulsar en "Ordenado por"
     $("#panel-orderBy a.item-dropdown")
         // En ordenación, no mostraba el icono seleccionado ya que lo "desmontaba".
         //.unbind()
@@ -12243,7 +12279,11 @@ function AgregarFiltro(tipoFiltro, filtro, reiniciarPag) {
     }
 
     history.pushState('', 'New URL: ' + filtros, '?' + filtros);
-    FiltrarPorFacetas(ObtenerHash2());
+    if ($('#divCharts').length != 0) {
+        SeleccionarDashboard();
+    } else {
+        FiltrarPorFacetas(ObtenerHash2());
+    }
 }
 
 function AgregarFiltroAutocompletar(claveFaceta, filtro) {
@@ -12401,7 +12441,11 @@ function AgregarFaceta(faceta) {
     filtros = filtros.replace('|', '%7C');
 
     history.pushState('', 'New URL: ' + filtros, '?' + filtros);
-    FiltrarPorFacetas(ObtenerHash2());
+    if ($('#divCharts').length != 0) {
+        SeleccionarDashboard();
+    } else {
+        FiltrarPorFacetas(ObtenerHash2());
+    }
     EscribirUrlForm(filtros);
 }
 
@@ -12582,8 +12626,12 @@ function FiltrarPorFacetasGenerico(filtro) {
     var vistaChart = ($('.chartView').attr('class') == "chartView activeView");
     */
 
+    //var vistaMapa = $('li.mapView').hasClass('activeView');
+    //var vistaChart = $('.chartView').hasClass('activeView');
     var vistaMapa = $(".item-dropdown.aMapView").hasClass("activeView");
     var vistaChart = $(".item-dropdown.aGraphView").hasClass("activeView");
+
+    
 
     if (!primeraCargaDeFacetas && !vistaMapa) {
         MostrarUpdateProgress();
@@ -12662,12 +12710,12 @@ function FiltrarPorFacetasGenerico(filtro) {
     }
 
     var tokenAfinidad = guidGenerator();
-
+    
     if ((vistaMapa || !primeraCargaDeFacetas) && (!vistaChart || typeof (chartActivo) != "undefined")) {
         MontarResultados(filtro, primeraCarga, 1, '#' + panResultados, tokenAfinidad);
     }
 
-    if (panFacetas != "" && (cargarFacetas || document.getElementById(panFacetas).innerHTML == '')) {
+    if (panFacetas != "" && (cargarFacetas || document.getElementById(panFacetas).innerHTML == '' && noGrafico)) {
         var inicioFacetas = 1;
 
         MontarFacetas(filtro, primeraCarga, inicioFacetas, '#' + panFacetas, null, tokenAfinidad);
@@ -12690,6 +12738,8 @@ function FiltrarPorFacetasGenerico(filtro) {
     CambiarOrden(filtro);
     return false;
 }
+
+noGrafico = true;
 
 function CambiarOrden(hash) {
     if ($('.panelOrdenContenedor select.filtro').length > 0) {
@@ -12810,7 +12860,7 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
         paramAdicional = 'busquedaTipoChart=' + chartActivo + '|' + paramAdicional;
     }*/
 
-    if ($('li.mapView').hasClass('activeView')) {
+    if ($('.mapView').hasClass('activeView')) {
         paramAdicional += 'busquedaTipoMapa=true';
     }
 
@@ -12861,71 +12911,346 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
     params['tokenAfinidad'] = pTokenAfinidad;
 
     // Montar resultados obtenidos por al hacer clic Facetas
-    $.post(obtenerUrl($('input.inpt_UrlServicioResultados').val()) + "/" + metodo, params, function (response) {
-        if (params['cont'] == contResultados) {
-            var data = response
-            if (response.Value != null) {
-                data = response.Value;
-            }
-
-            var vistaMapa = (params['pParametros_adiccionales'].indexOf('busquedaTipoMapa=true') != -1);
-            var vistaChart = (params['pParametros_adiccionales'].indexOf('busquedaTipoChart=') != -1);
-
-            var descripcion = data;
-
-            var funcionJS = '';
-            if (descripcion.indexOf('###ejecutarFuncion###') != -1) {
-                var funcionJS = descripcion.substring(descripcion.indexOf('###ejecutarFuncion###') + '###ejecutarFuncion###'.length);
-                funcionJS = funcionJS.substring(0, funcionJS.indexOf('###ejecutarFuncion###'));
-
-                descripcion = descripcion.replace('###ejecutarFuncion###' + funcionJS + '###ejecutarFuncion###', '');
-            }
-
-            if (tipoBusqeda == 12) {
-                var panelListado = $(pPanelID).parent();
-                panelListado.html('<div id="' + pPanelID.replace('#', '') + '"></div><div id="' + panResultados.replace('#', '') + '"></div>')
-
-                var panel = $(pPanelID);
-                panel.css('display', 'none');
-                panel.html(descripcion);
-                panelListado.append(panel.find('.resource-list').html())
-                panel.find('.resource-list').html('');
-            } else if (!vistaMapa && !vistaChart) {
-                // Mostrar los resultados dentro de "panResultados / panelResultados -->resource-list-wrap"
-                //$(pPanelID).html(descripcion);
-                let contenedorPrincipal = $(document).find(`${pPanelID} .resource-list-wrap`).length > 0
-                    ? $(document).find(`${pPanelID} .resource-list-wrap`)
-                    : $(document).find("#panelResultados .resource-list-wrap");
-                // Mostrar los resultados
-                contenedorPrincipal.html(descripcion);
-            }
-            else {
-                var arraydatos = descripcion.split('|||');
-
-                if ($('#panAuxMapa').length == 0) {
-                    $(pPanelID).parent().html($(pPanelID).parent().html() + '<div id="panAuxMapa" style="display:none;"></div>');
+    var vistaChart = (params['pParametros_adiccionales'].indexOf('busquedaTipoChart=') != -1);
+    if (vistaChart) {
+        //datosChartActivo = arraydatos;
+        //$(pPanelID).html('<div id="divContChart"></div>');
+        //eval(jsChartActivo);
+        PintarGrafico(metodo, params, asistente, paramAdicional, '', pNumeroResultados, pPanelID);
+    } else {
+        $.post(obtenerUrl($('input.inpt_UrlServicioResultados').val()) + "/" + metodo, params, function (response) {
+            if (params['cont'] == contResultados) {
+                var data = response;
+                if (response.Value != null) {
+                    data = response.Value;
                 }
 
-                if (vistaMapa) {
-                    $('#panAuxMapa').html('<div id="numResultadosRemover">' + arraydatos[0] + '</div>');
+                var vistaMapa = (params['pParametros_adiccionales'].indexOf('busquedaTipoMapa=true') != -1);
+                var vistaChart = (params['pParametros_adiccionales'].indexOf('busquedaTipoChart=') != -1);
+
+                var descripcion = data;
+
+                var funcionJS = '';
+                if (descripcion.indexOf('###ejecutarFuncion###') != -1) {
+                    var funcionJS = descripcion.substring(descripcion.indexOf('###ejecutarFuncion###') + '###ejecutarFuncion###'.length);
+                    funcionJS = funcionJS.substring(0, funcionJS.indexOf('###ejecutarFuncion###'));
+
+                    descripcion = descripcion.replace('###ejecutarFuncion###' + funcionJS + '###ejecutarFuncion###', '');
                 }
 
-                if (vistaChart) {
-                    datosChartActivo = arraydatos;
-                    $(pPanelID).html('<div id="divContChart"></div>');
-                    eval(jsChartActivo);
+                if (tipoBusqeda == 12) {
+                    var panelListado = $(pPanelID).parent();
+                    panelListado.html('<div id="' + pPanelID.replace('#', '') + '"></div><div id="' + panResultados.replace('#', '') + '"></div>')
+
+                    var panel = $(pPanelID);
+                    panel.css('display', 'none');
+                    panel.html(descripcion);
+                    panelListado.append(panel.find('.resource-list').html())
+                    panel.find('.resource-list').html('');
+                } else if (!vistaMapa && !vistaChart) {
+                    $(pPanelID).html(descripcion);
                 }
                 else {
-                    utilMapas.MontarMapaResultados(pPanelID, arraydatos);
+                    var arraydatos = descripcion.split('|||');
+
+                    if ($('#panAuxMapa').length == 0) {
+                        $(pPanelID).parent().html($(pPanelID).parent().html() + '<div id="panAuxMapa" style="display:none;"></div>');
+                    }
+
+                    if (vistaMapa) {
+                        $('#panAuxMapa').html('<div id="numResultadosRemover">' + arraydatos[0] + '</div>');
+                    }
+
+                    if (vistaChart) {
+                        //datosChartActivo = arraydatos;
+                        //$(pPanelID).html('<div id="divContChart"></div>');
+                        //eval(jsChartActivo);
+                        //PintarGrafico(datosChartActivo);
+                    }
+                    else {
+                        utilMapas.MontarMapaResultados(pPanelID, arraydatos);
+                    }
+                }
+                FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados, pPanelID);
+            }
+            if (MontarResultadosScroll.pagActual != null) {
+                MontarResultadosScroll.pagActual = 1;
+                MontarResultadosScroll.cargarScroll();
+            }
+        }, "json");
+    }
+}
+
+function PintarGrafico(metodo, params, asistente, paramAdicional, funcionJS, pNumeroResultados, pPanelID) {
+    $.post(obtenerUrl($('input.inpt_UrlServicioResultados').val()) + "/" + metodo, params, function (response) {
+        if (response != '0resultados|||' && response != "") {
+            var asistenteTitulo = asistente.titulo;
+            var asistenteName = asistente.asistenteName;
+            var asistenteTamanyo = asistente.tamanyo;
+            var asistenteTipo = asistente.tipo;
+            var asistentePropExtra = asistente.propExtra;
+            var asistenteDatasets = asistente.listDataset['$values'];
+            var asistentesOrdenes = asistente.ordenes;
+
+            var arrayDatos = response.split('|||');
+
+            var panResultados = document.getElementById("divCharts");
+            var divNuevo = document.createElement("div");
+            divNuevo.className = "generados";
+            divNuevo.id = asistente.key;
+            divNuevo.setAttribute('data-sort', asistente.orden);
+            panResultados.appendChild(divNuevo);
+
+            var tipo = asistenteTipo;
+            var tam = tamFijo;
+            switch (asistenteTamanyo) {
+                case "1x":
+                    tam = tamFijo;
+                    break;
+                case "2x":
+                    tam = 2 * tamFijo + 4;
+                    break;
+                case "3x":
+                    tam = 3 * tamFijo + 8;
+                    break;
+            }
+            if (tipo != 3) {
+                divNuevo.style = "width:" + tam + "px; height:" + tam / 2 + "px; display:inline-block";
+            } else {
+                divNuevo.style = "width:" + tam + "px; height:" + tam + "px; display:inline-block";
+            }
+
+
+            if (tipo < 4) {
+                var data
+                var config = {
+                    data: data,
+                    options:
+                    {
+                        responsive: true,
+                        plugins:
+                        {
+                            legend: {
+                                position: 'top',
+                            }, title: {
+                                display: asistenteTitulo,
+                                text: asistenteName
+                            }
+                        }
+                    }
+                };
+                var fill = false;
+                switch (tipo) {
+                    case 1:
+                        data = DataBarrasLineas(arrayDatos, asistenteDatasets, asistentesOrdenes, fill);
+                        config.type = 'bar';
+                        var horizontal = asistentePropExtra;
+                        if (horizontal) {
+                            config.options.indexAxis = 'y';
+                        }
+                        break;
+                    case 2:
+                        fill = asistentePropExtra;
+                        data = DataBarrasLineas(arrayDatos, asistenteDatasets, asistentesOrdenes, fill);
+                        config.type = 'line';
+                        break;
+                    case 3:
+                        data = DataCirculos(arrayDatos, asistentesOrdenes);
+                        config.type = 'pie';
+                        config.options.plugins.legend.display = false;
+                        break;
+                }
+
+                config.data = data;
+                EjemploGrafico(divNuevo, config);
+            } else {
+                switch (tipo) {
+                    case 4:
+                        DibujarTabla(asistenteDatasets, arrayDatos, asistentesOrdenes, divNuevo);
+                        break;
+                    case 5:
+                        DibujarHeatMap(asistenteDatasets, arrayDatos, asistentesOrdenes, divNuevo, asistenteName, tam, asistenteTitulo);
+                        break;
                 }
             }
-            FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados, pPanelID);
+            var $wrap = $('#divCharts');
+            $wrap.find('.generados').sort(function (a, b) {
+                return + a.getAttribute('data-sort') -
+                    +b.getAttribute('data-sort');
+            }).appendTo($wrap);
         }
-        if (MontarResultadosScroll.pagActual != null) {
-            MontarResultadosScroll.pagActual = 1;
-            //MontarResultadosScroll.cargarScroll();
-        }
+
+        FinalizarMontarResultados(paramAdicional, '', pNumeroResultados, pPanelID);
+        MontarResultadosScroll.destroyScroll();
     }, "json");
+}
+
+function DibujarTabla(asistenteDatasets, arrayDatos, asistentesOrdenes, divNuevo) {
+    var data = new google.visualization.DataTable();
+    for (var i = 0; i < asistenteDatasets.length; i++) {
+        data.addColumn('string', asistenteDatasets[i].nombre);
+    }
+    var filas = [];
+    for (var i = 1; i < arrayDatos.length - 1; i++) {
+        var filaDatos = arrayDatos[i].split("@@@");
+        var fila = [];
+        for (var j = 0; j < filaDatos.length - 1; j++) {
+            fila.push(filaDatos[asistentesOrdenes[j]]);
+        }
+        filas.push(fila)
+    }
+    data.addRows(filas);
+    var table = new google.visualization.Table(divNuevo);
+    table.draw(data, { width: '100%', height: '100%' });
+}
+
+function DibujarHeatMap(asistenteDatasets, arrayDatos, asistentesOrdenes, divNuevo, asistenteName, tam, mtGrafico) {
+
+    var ejeX = [];
+    var ejeY = [];
+    for (var i = 1; i < arrayDatos.length - 1; i++) {
+        var filaDatos = arrayDatos[i].split("@@@");
+        if (ejeX.indexOf(filaDatos[asistentesOrdenes[0]]) < 0) {
+            ejeX.push(filaDatos[asistentesOrdenes[0]]);
+        }
+        if (ejeY.indexOf(filaDatos[asistentesOrdenes[1]]) < 0) {
+            ejeY.push(filaDatos[asistentesOrdenes[1]]);
+        }
+    }
+    var datosGraf = [];
+    for (var i = 1; i < arrayDatos.length - 1; i++) {
+        var filaDatos = arrayDatos[i].split("@@@");
+        var fila = [ejeX.indexOf(filaDatos[asistentesOrdenes[0]]), ejeY.indexOf(filaDatos[asistentesOrdenes[1]]), parseInt(filaDatos[asistentesOrdenes[2]])];
+        datosGraf.push(fila);
+    }
+
+    var chart = Highcharts.chart(divNuevo.id, {
+        chart: {
+            type: 'heatmap',
+            marginTop: 40,
+            marginBottom: 80,
+            plotBorderWidth: 1
+        },
+
+        title: {
+            text: null
+        },
+
+        xAxis: {
+            categories: ejeX
+        },
+
+        yAxis: {
+            categories: ejeY,
+            title: null,
+            reversed: true
+        },
+
+        colorAxis: {
+            min: 0,
+            minColor: '#FFFFFF',
+            maxColor: asistenteDatasets[2].color
+        },
+
+        legend: {
+            align: 'right',
+            layout: 'vertical',
+            margin: 0,
+            verticalAlign: 'top',
+            y: 25,
+            symbolHeight: tam / 2 - 120
+        },
+
+        tooltip: {
+            formatter: function () {
+                return this.point.series['xAxis'].categories[this.point['x']] + '<br/>' + this.series.name + '<br/>' + this.point.series['yAxis'].categories[this.point['y']] + '<br/><b>' + this.point.value + '</b>';
+            }
+        },
+
+        series: [{
+            name: asistenteName,
+            borderWidth: 1,
+            data: datosGraf,
+            dataLabels: {
+                enabled: true,
+                color: '#000000'
+            }
+        }],
+    });
+
+    if (mtGrafico) {
+        chart.update({
+            title: {
+                text: asistenteName
+            }
+        });
+    }
+}
+
+function DataBarrasLineas(arrayDatos, asistenteDatasets, asistentesOrdenes, fill) {
+    var labels = [];
+    for (var i = 1; i < arrayDatos.length - 1; i++) {
+        labels.push(arrayDatos[i].split("@@@")[asistentesOrdenes[0]]);
+    }
+    var datasets = [];
+    var transparencia = "";
+    if (fill) {
+        transparencia = "30";
+    }
+    for (var i = 0; i < asistenteDatasets.length; i++) {
+        var dat = [];
+        for (var j = 1; j < arrayDatos.length; j++) {
+            dat.push(arrayDatos[j].split("@@@")[asistentesOrdenes[i + 1]]);
+        }
+        var dataset = {
+            label: asistenteDatasets[i].nombre,
+            data: dat,
+            fill: fill,
+            borderColor: asistenteDatasets[i].color,
+            backgroundColor: asistenteDatasets[i].color + transparencia,
+        };
+        datasets.push(dataset);
+    }
+    var data = {
+        labels: labels,
+        datasets: datasets
+    };
+    return data;
+}
+function DataCirculos(arrayDatos, asistentesOrdenes) {
+    var labels = [];
+    for (var i = 1; i < arrayDatos.length - 1; i++) {
+        labels.push(arrayDatos[i].split("@@@")[asistentesOrdenes[0]]);
+    }
+
+    var colores = [];
+    var dat = [];
+    for (var j = 1; j < arrayDatos.length; j++) {
+        dat.push(arrayDatos[j].split("@@@")[asistentesOrdenes[1]]);
+        colores.push("#" + Math.floor(Math.random() * 16777215).toString(16));
+    }
+
+    var dataset = {
+        label: 'Dataset',
+        data: dat,
+        backgroundColor: colores
+    };
+
+    var conf = {
+        labels: labels,
+        datasets: [dataset]
+    };
+    return conf;
+}
+
+function EjemploGrafico(divNuevo, config) {
+    var canvas = document.createElement("canvas");
+    canvas.className = "graficoCtx";
+    divNuevo.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+
+    new Chart(ctx, config);
+
 }
 
 /**
@@ -12940,9 +13265,15 @@ const scrollingListadoRecursos = {
     },
     config: function () {
         /* Contenedor donde se encuentran los resultados (Recursos, Mensajes...) */
-        this.contenedorPrincipal = $(document).find("#panResultados .resource-list-wrap").length > 0
-            ? $(document).find("#panResultados .resource-list-wrap")
-            : $(document).find("#panelResultados .resource-list-wrap");
+        this.contenedor = $(document).find("#panResultados.resource-list").length > 0
+            ? $(document).find("#panResultados.resource-list")
+            : $(document).find("#panelResultados.resource-list");
+        
+        // Tener en cuenta la posible existencia de un div adicional de clase ".resource-list-wrap"
+        this.contenedorPrincipal = this.contenedor.find(".resource-list-wrap").length > 1 
+        ? this.contenedor.find(".resource-list-wrap")
+        : this.contenedor;
+                                
         return;
     },
     scrollingListado: function () {
@@ -12952,6 +13283,8 @@ const scrollingListadoRecursos = {
         MontarResultadosScroll.CargarResultadosScroll = function (data) {
             var htmlRespuesta = document.createElement("div");
             htmlRespuesta.innerHTML = data;
+            // Establecer la configuración del contenedor principal por si se ha destruido
+            that.config();
             $(htmlRespuesta)
                 // Buscar cada resultado item
                 .find("article")
@@ -13000,8 +13333,6 @@ var MontarResultadosScroll = {
         this.pagActual = 1;
         this.footer = $(idFooterJQuery);
         this.item = idItemJQuery;
-        // Configurar que no cargue resultados nada más cargar la web
-        //this.allowScrolling = allowFirstLoadScrolling;
         // Controlar que solo haga una petición cada vez
         this.isLoadingData = false;
         this.cargarScroll();
@@ -13011,41 +13342,79 @@ var MontarResultadosScroll = {
         var that = this;
         this.waypointMoreResults = new Waypoint({
             element: that.footer,
-            handler: function (direction) {
-                if (direction == "down" && that.isLoadingData == false) {
-                    // Indicar que se va a tramitar una petición de datos para que no haga varias
-                    that.isLoadingData = true;
-                    /* Antes de hacer petición visualizar el "Loading" */
-                    scrollingListadoRecursos.crearCargando();
-                    /* Realizar petición al servidor */
-                    that.peticionScrollResultados().done(function (data) {
-                        // Respuesta obtenida -> Ocultar loading
-                        scrollingListadoRecursos.cargandoScrolling();
-                        var htmlRespuesta = document.createElement("div");
-                        htmlRespuesta.innerHTML = data;
-                        if ($(htmlRespuesta).find(that.item).length > 0) {
-                            that.CargarResultadosScroll(data);
-                        } else {
-                            that.CargarResultadosScroll('');
-                            // No se traen más datos -> Eliminar scrolling
-                            // that.destroyScroll();
-                            // La petición ha terminado. Permitir hacer más peticiones
+            handler: function (direction) {                
+                // Esperar a realizar la petición
+                setTimeout(function() {
+                    if (direction == "down" && that.isLoadingData == false) {
+                        // Indicar que se va a tramitar una petición de datos para que no haga varias
+                        that.isLoadingData = true;
+                        /* Antes de hacer petición visualizar el "Loading" */
+                        scrollingListadoRecursos.crearCargando();
+                        /* Realizar petición al servidor */
+                        
+
+                        const peticionScrollResultadosPromise = that.peticionScrollResultados();
+
+                        peticionScrollResultadosPromise
+                        .then(function(data) {                                                        
+                            let htmlRespuesta = document.createElement("div");
+                            htmlRespuesta.innerHTML = data;
+                            if ($(htmlRespuesta).find(that.item).length > 0) {
+                                that.CargarResultadosScroll(data);
+                            } else {
+                                that.CargarResultadosScroll('');
+                                // No se traen más datos -> Eliminar scrolling
+                                // that.destroyScroll();
+                                // La petición ha terminado. Permitir hacer más peticiones
+                                that.isLoadingData = false;
+                            }
+                            if ((typeof CompletadaCargaRecursos != 'undefined')) {
+                                CompletadaCargaRecursos();
+                            }
+                            if (typeof (urlCargarAccionesRecursos) != 'undefined') {
+                                ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
+                            }                                                        
+                        })
+                        // Manejar errores
+                        .catch(function(error) {
+                            console.error("Error al traer resultados vía scroll:", error);                            
+                        })
+                        .always(function(){
                             that.isLoadingData = false;
-                        }
-                        if ((typeof CompletadaCargaRecursos != 'undefined')) {
-                            CompletadaCargaRecursos();
-                        }
-                        if (typeof (urlCargarAccionesRecursos) != 'undefined') {
-                            ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
-                        }
-                    });
-                    that.isLoadingData = false;
-                } else {
-                    that.allowScrolling = true;
-                }
+                            // Fin de petición -> Ocultar loading
+                            scrollingListadoRecursos.cargandoScrolling();
+                        });
+
+                        /*
+                        that.peticionScrollResultados().done(function (data) {
+                            // Respuesta obtenida -> Ocultar loading
+                            scrollingListadoRecursos.cargandoScrolling();
+                            var htmlRespuesta = document.createElement("div");
+                            htmlRespuesta.innerHTML = data;
+                            if ($(htmlRespuesta).find(that.item).length > 0) {
+                                that.CargarResultadosScroll(data);
+                            } else {
+                                that.CargarResultadosScroll('');
+                                // No se traen más datos -> Eliminar scrolling
+                                // that.destroyScroll();
+                                // La petición ha terminado. Permitir hacer más peticiones
+                                that.isLoadingData = false;
+                            }
+                            if ((typeof CompletadaCargaRecursos != 'undefined')) {
+                                CompletadaCargaRecursos();
+                            }
+                            if (typeof (urlCargarAccionesRecursos) != 'undefined') {
+                                ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
+                            }
+                        });
+                        */                        
+                    }              
+                }, 500); 
             },
 
-            offset: 'bottom-in-view' // Disparar petición cuando se visualice el footer
+            //offset: 'bottom-in-view' // Disparar petición cuando se visualice el footer
+            // Cambiado debido a que listado de recursos, al pulsar en "Ctrol + Fin" no detectaba ese comportamiento
+            offset: '100%', // Disparar petición cuando se visualice el footer
         })
 
         return;
@@ -13100,8 +13469,13 @@ var MontarResultadosScroll = {
                 }
                 defr.resolve(data);
             }
-        }, "json");
-        return defr;
+        }, "json")
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            // Manejar el error
+            defr.reject(errorThrown); // Rechazar la promesa con el mensaje de error
+        });
+        // Devolver la promesa para que el consumidor la maneje
+        return defr.promise(); //         
     }
 }
 
@@ -13550,6 +13924,26 @@ function SeleccionarChart(pCharID, pJsChart) {
     FiltrarPorFacetas(ObtenerHash2());
 }
 
+function SeleccionarDashboard() {
+    var json = jsonAsistente;
+
+    var data = json;
+    var asistentes = data['$values'];
+
+    $('#panResultados').html('<div id="divCharts" class="chartView activeView"></div>');
+
+    tamFijo = ($('#panResultados')[0].clientWidth - 40) / 3;
+
+    for (var i = 0; i < asistentes.length; i++) {
+        asistente = asistentes[i];
+        chartActivo = asistente.key;
+
+        FiltrarPorFacetas(ObtenerHash2());
+        noGrafico = false;
+    }
+    noGrafico = true;
+}
+
 function ExportarBusqueda(pExportacionID, pNombreExportacion, pFormatoExportacion) {
     if (pExportacionID != "" && pNombreExportacion != "" && $('#ParametrosExportacion').length > 0 && $('#FormExportarBusqueda').length > 0 && pFormatoExportacion != "") {
         $('#ParametrosExportacion').val(pExportacionID + '|' + pNombreExportacion + '|' + pFormatoExportacion);
@@ -13571,7 +13965,7 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
 
         var paramAdicional = parametros_adiccionales;
 
-        if ($('li.mapView').attr('class') == "mapView activeView") {
+        if ($('.mapView').attr('class') == "mapView activeView") {
             paramAdicional += 'busquedaTipoMapa=true';
         }
 
@@ -13951,12 +14345,11 @@ $(document).ready(function () {
         return false;
     });
 
-
     // Buscador CMS
     $('.searchGroup .encontrar_cms').click(function (event) {
         // Recoger el contenido para iniciar búsqueda
         const txt = $(this).parent().find('.text');
-        if ($(this).parent().find('#criterio').attr('origen') != undefined) {            
+        if ($(this).parent().find('#criterio').attr('origen') != undefined) {
             //Buscadores CMS
             // Hay datos relativos a un proyecto --> Realizar búsqueda disparando el submit del formulario
             const btnSubmitBuscadorCMS = txt.parent().find(".encontrar_cms_submit");
@@ -13965,8 +14358,10 @@ $(document).ready(function () {
             const actionUrl = form.attr("action");
             // Hacer submit del formulario del formulario para hacer petición POST de búsqueda
             //btnSubmitBuscadorCMS.trigger("click");                   
-            // Acceder a la página construoyendo la url más la búsqueda
-            window.location.href = `${actionUrl}?search=${encodeURIComponent(txt.val())}`;            
+            // Acceder a la página construyendo la url más la búsqueda
+            // window.location.href = `${actionUrl}?search=${encodeURIComponent(txt.val())}`;
+            const criterio = $(this).parent().find('#criterio').attr('origen');
+            window.location.href = ObtenerUrlBusqueda(criterio) + txt.val();
         }
     });
 
@@ -13977,7 +14372,6 @@ $(document).ready(function () {
         $('.searchGroup .encontrar_cms').trigger("click");
         return false;
     });
-
 
     $('.searchGroup .text').keydown(function (event) {
         if ($(this).val().indexOf('|') > -1) {
@@ -14316,7 +14710,7 @@ function ObtenerUrlBusqueda(tipo) {
     }
 
     //Devolvemos el por defecto.
-    return ($('input.inpt_tipo_busqueda')[tamagno - 1]).value.split('|')[1];
+    return ($('input.inpt_tipo_busqueda')[tamagno - 1]).value.split('@')[1];
 }
 
 function ObtenerOrigenAutoCompletarBusqueda(tipo) {
@@ -14805,14 +15199,14 @@ var opcionesDestacadasMenuLateral = {
 		    }
 		});	
 		
-		//Al entrar en el men� desplegado
+		//Al entrar en el menú desplegado
         desplegable.hover(function() {
             if(parent.hasClass(that.cssActivoOtras))
             {
                 clearTimeout(that.timeoutOcultarMenu);
             }
         },
-        //Al salir del men� desplegado
+        //Al salir del menú desplegado
         function() {
             if(parent.hasClass(that.cssActivoOtras))
             {
@@ -14827,12 +15221,12 @@ var opcionesDestacadasMenuLateral = {
 		enlace.click(function() {
 		    desplegable.children('.opcionesPanel').stop(true);
     	    
-	        //Si est� desplegado
+	        //Si está desplegado
 	        if(parent.hasClass(that.cssActivoOtras))
 	        {
 	            desplegable.children('.opcionesPanel').slideUp(800, function() {parent.removeClass(that.cssActivoOtras);desplegable.removeClass('desplegarOtrasIdentidades');});
 	        }
-	        //Si no est� desplegado
+	        //Si no está desplegado
 	        else
 	        {
 	            //Quitamos el timeout y las clases 'activo' que pueda haber
@@ -14858,7 +15252,7 @@ var opcionesDestacadasMenuLateral = {
 	},
 	engancharComportamiento: function(){
 		var that = this;
-		//Recorremos todos los enlaces del men� y les a�adimos los comportamientos
+		//Recorremos todos los enlaces del menú y les añadimos los comportamientos
 		this.id.find('.' + this.cssItemConOpciones + ' ' + this.cssOpcionPrincipal + ' a').each(function(indice){
 			var enlace = $(this);
 			var parent = enlace.parent();
@@ -14884,14 +15278,14 @@ var opcionesDestacadasMenuLateral = {
 			    }
 			});
 			
-			//Al entrar en el men� desplegado
+			//Al entrar en el menú desplegado
 	        desplegable.hover(function() {
 	            if(parent.hasClass(that.cssActivo))
 	            {
 	                clearTimeout(that.timeoutOcultarMenu);
 	            }
 	        },
-	        //Al salir del men� desplegado
+	        //Al salir del menú desplegado
 	        function() {
 	            if(parent.hasClass(that.cssActivo))
 	            {
@@ -14910,13 +15304,13 @@ var opcionesDestacadasMenuLateral = {
 			    that.enlaceOtrasIdentidades.parent().parent().removeClass(that.cssActivoOtras);
 			    desplegable.removeClass('desplegarOtrasIdentidades');
 			    
-			    //Si est� desplegado
+			    //Si está desplegado
 			    if(parent.hasClass(that.cssActivo))
 			    {
 			        parent.removeClass(that.cssActivo);
 			        desplegable.children('.opcionesPanel').slideUp(800);
 			    }
-			    //Si no est� desplegado
+			    //Si no está desplegado
 			    else
 			    {
 			        //Quitamos el timeout y las clases 'activo' que pueda haber
@@ -14993,7 +15387,7 @@ WS.prototype = {
         var url = null;
         var service = this.service;
         service = this.obtenerUrl(service);
-        if (service[service.length - 1] != "/") service += "/";
+        if (service[service.length - 1] != "/") service += "/"; 
         if (this.dataType == WSDataType.jsonp) {
             url = $.jmsajaxurl({
                 url: service,
@@ -15003,12 +15397,17 @@ WS.prototype = {
         } else {
             url = service + pMethod;
         }
+        if (pMethod == "AutoCompletarTipado") {
+            pArgs = null;
+        }
         $.ajax({
             type: this.dataType == WSDataType.json ? "POST" : "POST",
             url: url + ((this.dataType == WSDataType.jsonp) ? "&format=json" : ""),
-            data: ((this.dataType == WSDataType.json) ? JSON.stringify(pArgs) : ""),
+            //data: ((this.dataType == WSDataType.json) ? JSON.stringify(pArgs) : ""),
+            data: pArgs,
             cache: false,
-            contentType: "application/json; charset=utf-8",
+            //contentType: "application/json; charset=utf-8",
+            contentType: "application/x-www-form-urlencoded",
             dataType: this.dataType
         })
         .done(function (response) {          
@@ -16245,7 +16644,7 @@ var mostrarNumeroEtiquetas = {
 
 
 /**
- * Calcular y recortar la longitud de las facetas que aparecen en el panel izquierdo de "B�squedas". 
+ * Calcular y recortar la longitud de las facetas que aparecen en el panel izquierdo de "Búsquedas". 
  */
 var limiteLongitudFacetas = {
     init: function () {
@@ -16405,7 +16804,7 @@ var limpiarActividadRecienteHome = {
     },
 
     /**
-    * Limpiar el contenido de recursos o comentarios para que no aparezcan formatos HTML. Adem�s de acortarlos textos de comentarios (Vista preliminar)".
+    * Limpiar el contenido de recursos o comentarios para que no aparezcan formatos HTML. Además de acortarlos textos de comentarios (Vista preliminar)".
     */
     limpiar: function () {
         var that = this;
@@ -16440,7 +16839,7 @@ var limpiarActividadRecienteHome = {
                     var item = $(this);
                     var hasParrafos = false;
                     var parrafos = $('p', item);
-                    // Deprecado la funci�n size -> Usar propiedad length
+                    // Deprecado la función size -> Usar propiedad length
                     //if (parrafos.size() > 0) hasParrafos = true;                    
                     if (parrafos.length > 0) hasParrafos = true;
                     if (!hasParrafos) {
@@ -17066,7 +17465,7 @@ var desplegableGenerico = {
 }
 
 // Cambiado por antiguo front
-// Lo eliminar�
+// Lo eliminará
 /*var marcarPasosFormulario = {
 	init: function(){
 		this.config();
@@ -17255,12 +17654,12 @@ var presentacionVotosRecurso = {
     }
 }
 /**
- * Clase jquery para poder gestionar la aparici� y login de una vista modal para que el usuario haga login.
- * Aparecer� siempre y cuando el usuario realice una acci�n y no disponga de permisos para ejecutarla.
+ * Clase jquery para poder gestionar la aparición y login de una vista modal para que el usuario haga login.
+ * Aparecerá siempre y cuando el usuario realice una acción y no disponga de permisos para ejecutarla.
  * */
 var operativaLoginEmergente = {
     /**
-     * Acci�n que dispara directamente el panel modal de Login
+     * Acción que dispara directamente el panel modal de Login
      */
     init: function () {
         this.config();
@@ -17269,88 +17668,145 @@ var operativaLoginEmergente = {
         this.configEvents();
     },
     /*
-     * Acci�n de cerrar la vista modal 
+     * Acción de cerrar la vista modal 
      */
     closeModal: function () {
         $(this.idModalPanel).modal('toggle');
 		return;
     },
     /*
-     * Acci�n de mostrar la vista modal
+     * Acción de mostrar la vista modal
      * */
     showModal: function () {
-        $(this.idModalPanel).modal('show');
-        return;
+        // Cerrar el "modal container"
+        $("#modal-container").modal('hide');
+        let modalToShow = $(this.idModalPanel).length > 0 ? $(this.idModalPanel) : $(this.idModalRestrictedAccess);
+        modalToShow.modal('show');
     },
     /*
-     * Opciones de configuraci�n de la vista con el formulario modal
+     * Opciones de configuración de la vista con el formulario modal
      * */
     config: function () {
-        // Inicializar las vistas cuando est�n visibles
+        // Inicializar las vistas cuando están visibles
         // Panel Modal
-        this.idModalPanel = '#modal-login',
+        this.idModalPanel = '#modal-login';
+        this.idModalRestrictedAccess = "#modal-restringed-community-access";
         // Referencia al formulario
         this.idForm = '#formPaginaLogin';
+        this.formClassName = "formPaginaLogin"
         this.bodyClassNameRegistro = 'operativaRegistro';
 
-        // Captar el formulario Login si se est� en la p�gina Login. Si no est� en p�gina Login --> Coger el formulario del modal
+        // Captar el formulario Login si se está en la página Login. Si no está en página Login --> Coger el formulario del modal
         this.form = this.isLoginCurrentPage ? $('body').find(this.idForm) : $(this.idModalPanel).find(this.idForm);
+        this.loginForms = $(`.${this.formClassName}`);
+        
 
         // Inputs y botones
-        this.idInputEmail = '#usuario_Login',
+        this.idInputEmail = '#usuario_Login';
+        this.inputEmailClassName = "usuario_Login";
         this.inputEmail = $(this.form).find(this.idInputEmail),
-        this.idInputPassword= '#password_login',    
-        this.inputPassword= $(this.form).find(this.idInputPassword),
-        this.idButtonLogin= '#btnSubmit',
-        this.buttonLogin= $(this.form).find(this.idButtonLogin),	
+        this.idInputPassword= '#password_login';
+        this.inputPasswordClassName = "password_login";
+        this.inputPassword = $(this.form).find(this.idInputPassword);
+        this.idButtonLogin= '#btnSubmit';
+        this.buttonLoginClassName= 'btnSubmit';
+        this.buttonLogin = $(this.form).find(this.idButtonLogin);
         // Paneles de error
-        this.idLoginPanelError= '#loginError .ko',
-        this.loginPanelError= $(this.form).find(this.idLoginPanelError),
-        this.idLoginPanelErrorTwice= '#logintwice .ko',
-        this.loginPanelErrorTwice= $(this.form).find(this.idLoginPanelErrorTwice),
-        this.idLoginErrorAutenticacionExterna = '#loginErrorAutenticacionExterna .ko',
-        this.loginErrorAutenticacionExterna = $(this.form).find(this.idLoginErrorAutenticacionExterna),
+        this.idLoginPanelError = '#loginError .ko';
+        this.loginPanelError = $(this.form).find(this.idLoginPanelError);
+        this.loginPanelErrorClassName = "loginErrorKo";
+        this.idLoginPanelErrorTwice = '#logintwice .ko';
+        this.loginPanelErrortwiceKoClassName = "logintwiceKo";
+        this.loginPanelErrorTwice = $(this.form).find(this.idLoginPanelErrorTwice);
+        this.idLoginErrorAutenticacionExterna = '#loginErrorAutenticacionExterna .ko';
+        this.loginErrorAutenticacionExterna = $(this.form).find(this.idLoginErrorAutenticacionExterna);
+        this.loginErrorAutenticacionExternaClassName = "loginErrorAutenticacionExternaKo"
         this.panelesError = [this.loginPanelError, this.loginPanelErrorTwice, this.loginErrorAutenticacionExterna];
+        this.panelesErrorWithClassName = $(".ko");
+
+        // Flag Indicador de que el botón Login se ha configurado
+        this.isButtonLoginIsConfigured = false;
     },
 
     /**
-    * Configuraci�n de los eventos (clicks, focus) de los inputs del panel/formulario  
+    * Configuración de los eventos (clicks, focus) de los inputs del panel/formulario  
     */
     configEvents: function () {
         // Referencia al 'emergente panel login'
         const that = this;
 
-        // Bot�n Login
-        this.buttonLogin.click(function (event) {
+        that.isButtonLoginIsConfigured = $(`.${this.buttonLoginClassName}`).length > 0 ? true : false;
+
+        // Botón Login - Vía Clase
+        $(`.${this.buttonLoginClassName}`).click(function (event) {
             // Ocultar por defecto posibles mensajes de error
-            that.panelesError.forEach(panelError => panelError.hide());
+            $.each(that.panelesErrorWithClassName, function() {
+                $(this).hide();
+            });                            
             // Hacer login solo si los datos han sido introducidos
-            if (that.validarCampos() == true) {
+            const loginButton = $(this);
+            const currentForm = loginButton.closest(`.${that.formClassName}`);
+            if (that.validarCampos(loginButton) == true) {
                 // Mostrar loading
-                MostrarUpdateProgress();
-                that.form.submit();
+                MostrarUpdateProgress();                
+                currentForm.submit();
             } else {
-                that.loginPanelError.show();
+                const loginPanelError = currentForm.find(`.${that.loginPanelErrorClassName}`);
+                loginPanelError.show();
             }
         });
 
-        // Input Password (Hacer login si se pulsa "Enter" desde input password)
-        this.inputPassword.keypress(function (event) {
+        // Input Password (Hacer login si se pulsa "Enter" desde input password) vía ID
+        $(`.${this.inputPasswordClassName}`).keypress(function (event) {
             event.keyCode === 13 ? that.buttonLogin.click() : null
         });
 
+        // Configurar botón si no hay por clase
+        if (that.isButtonLoginIsConfigured == false){
+            // Botón Login vía ID
+            this.buttonLogin.click(function (event) {
+                // Ocultar por defecto posibles mensajes de error
+                that.panelesError.forEach(panelError => panelError.hide());
+                // Hacer login solo si los datos han sido introducidos
+                if (that.validarCamposById() == true) {
+                    // Mostrar loading
+                    MostrarUpdateProgress();
+                    that.form.submit();
+                } else {
+                    that.loginPanelError.show();
+                }
+            });
+
+            // Input Password (Hacer login si se pulsa "Enter" desde input password) vía ID
+            this.inputPassword.keypress(function (event) {
+                event.keyCode === 13 ? that.buttonLogin.click() : null
+            });
+        }
     },
  
     /**
-    * Comprobar que los campos (email y password) no est�n vac�os
+    * Comprobar que los campos (email y password) no están vacíos
     * @returns {bool}    
     */
-    validarCampos: function () {
-        return (this.inputEmail.val() != '' && this.inputPassword.val() != '');
+    validarCampos: function (loginButton) {        
+        // Encontrar el formulario desde el que se está haciendo la validación o el Login
+        const currentForm = loginButton.closest(`.${this.formClassName}`);
+        const inputEmail = currentForm.find(`.${this.inputEmailClassName}`);   
+        const inputPassWord = currentForm.find(`.${this.inputPasswordClassName}`);     
+        return (inputEmail.val() != '' && inputPassWord.val() != '');
     },
 
     /**
-    * Comprobar si la p�gina actual es la p�gina principal de Login de una comunidad
+    * Comprobar que los campos (email y password) no están vacíos
+    * @returns {bool}    
+    */
+    validarCamposById: function () {
+        return (this.inputEmail.val() != '' && this.inputPassword.val() != '');
+    },
+
+
+    /**
+    * Comprobar si la página actual es la página principal de Login de una comunidad
     * Se puede saber comprobando si se dispone de una clase en el Login concreta    
     * @returns {bool}    
     */
@@ -17359,33 +17815,54 @@ var operativaLoginEmergente = {
     },
 
     /**
-    * Gest�n de los Hash que hac�a en la p�gina Login anterior -> Gesti�n de errores
-    * Solo ha de ejecutarse cuando el usuario se encuentre en la p�gina Login
+    * Gestán de los Hash que hacía en la página Login anterior -> Gestión de errores
+    * Solo ha de ejecutarse cuando el usuario se encuentre en la página Login
     */
     doHashManagement: function () {
+        const that = this;        
+                
+        that.isButtonLoginIsConfigured = $(`.${this.buttonLoginClassName}`).length > 0 ? true : false;
+
+        let loginPanelError = undefined;
+        let loginPanelErrorTwice = undefined;
+        let loginPanelErrorAutenticacionExterna = undefined;
+
+        // Paneles de error según clase
+        if (that.isButtonLoginIsConfigured){
+            loginPanelError = $(`.${that.loginPanelErrorClassName}`);
+            loginPanelErrorTwice = $(`.${that.loginPanelErrortwiceKoClassName}`);
+            loginPanelErrorAutenticacionExterna = $(`.${that.loginErrorAutenticacionExternaClassName}`);
+        }else{
+            // Coger los paneles según ID
+            loginPanelError = this.loginPanelError;
+            loginPanelErrorTwice = this.loginPanelErrorTwice;
+            loginPanelErrorAutenticacionExterna = this.loginErrorAutenticacionExterna;
+        }
+                               
         if (this.isLoginCurrentPage()) {
             if (ObtenerHash() == '#error') {
-                this.loginPanelError.show();
+                //this.loginPanelError.show();                                
+                loginPanelError.show();
             }
             else if (ObtenerHash().indexOf('&') > 0) {
                 var mensajeError = ObtenerHash().split('&')[1];
                 if (mensajeError != '') {
-                    $('#mensajeError').text(mensajeError);
-                    this.loginPanelError.show();
+                    //$('#mensajeError').text(mensajeError);
+                    loginPanelError.show();
                 }
             }
             else if (document.location.href.endsWith('logintwice')) {
-                this.loginPanelErrorTwice.show();
+                loginPanelErrorTwice.show();
             }
             if (ObtenerHash() == '#errorAutenticacionExterna') {
-                this.loginErrorAutenticacionExterna.show();
+                loginPanelErrorAutenticacionExterna.show();
             }
         }        
     },
 };
 
 /**
- * Comprobar si el bot�n de may�sculas est� activado
+ * Comprobar si el botón de mayúsculas está activado
  *
  * @param {Object} e A keypress event
  * @returns {Boolean} isCapsLock
@@ -17420,12 +17897,12 @@ function isCapsLock(e) {
 
 /**
  * Clase jquery para poder gestionar el proceso de registro de un usuario
- * Este proceso en cuesti�n se encarga de la gesti�n del paso 1 de registro del usuario
+ * Este proceso en cuestión se encarga de la gestión del paso 1 de registro del usuario
  * Ej: Proceso de registro al acceder a la url: http://depuracion.net/comunidad/gnoss-developers-community/hazte-miembro
  * */
 const operativaRegistroUsuarioPaso1 = {    
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
@@ -17433,10 +17910,10 @@ const operativaRegistroUsuarioPaso1 = {
     },
 
     /*
-     * Opciones de configuraci�n de la vista con todas los inputs necesarios para realizar el registro del usuario
+     * Opciones de configuración de la vista con todas los inputs necesarios para realizar el registro del usuario
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas    
+        // Inicialización de las vistas
         this.txtFechaNac = $(`#${pParams.idTxtFechaNac}`);
         this.txtFechaNacDia = $(`#${pParams.idTxtFechaNacDia}`);
         this.txtFechaNacMes = $(`#${pParams.idTxtFechaNacMes}`);
@@ -17487,12 +17964,12 @@ const operativaRegistroUsuarioPaso1 = {
             ComprobarEmailUsuario(that.currentUrl);
         });   
 
-        // Input para Contrase�a (Quitar foco del input)
+        // Input para Contraseña (Quitar foco del input)
         this.txtContrasenya.blur(function () {
             ComprobarCampoRegistroMVC(that.nombreCampoTxtContrasenya);
         });
 
-        // Configuraci�n del datepicker
+        // Configuración del datepicker
         this.txtFechaNac.datepicker({
             changeMonth: true,
             changeYear: true,
@@ -17667,13 +18144,13 @@ const operativaSolicitudCreacionComunidad = {
 
 
 /**
- * Clase para poder gestionar la edici�n de perfil de un usuario en la comunidad
+ * Clase para poder gestionar la edición de perfil de un usuario en la comunidad
  * 
  * */
 const operativaEditarPerfilUsuario = {
 
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      * @param {any} pParams
      */
     init: function (pParams) {
@@ -17682,12 +18159,12 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Opciones de configuraci�n de la vista (recoger ids para poder interactuar)
+     * Opciones de configuración de la vista (recoger ids para poder interactuar)
      * @param {any} pParams
      */
     config: function (pParams) {
 
-        // Inicializaci�n de las vistas
+        // Inicialización de las vistas
         this.deleteProfileImage = $(`#${pParams.perfilPersonal.idDeleteProfileImage}`);
         this.name = $(`#${pParams.perfilPersonal.idName}`);
         this.lastName = $(`#${pParams.perfilPersonal.idLastName}`);
@@ -17714,11 +18191,11 @@ const operativaEditarPerfilUsuario = {
         this.websiteOrganization = $(`#${pParams.perfilPersonal.idWebsiteOrganization}`);
         this.addressOrganization = $(`#${pParams.perfilPersonal.idAddressOrganization}`);
               
-        // Edici�n secci�n Bio (CV)
+        // edición sección Bio (CV)
         this.description = $(`#${pParams.curriculum.idDescription}`);
         this.tags = $(`#${pParams.curriculum.idTags}`);
 
-        //Edici�n secci�n Redes Sociales
+        //edición sección Redes Sociales
         this.urlUsuario = $(`#${pParams.redesSociales.idUrlUsuario}`);
         this.tblRedesSociales = $(`#${pParams.redesSociales.idTblRedesSociales}`);
         this.btnRedSocial = $(`#${pParams.redesSociales.idBtnRedSocial}`);
@@ -17726,7 +18203,7 @@ const operativaEditarPerfilUsuario = {
         this.facebookSocial = $(`#${pParams.redesSociales.idFacebookSocial}`);
         this.linkedinSocial = $(`#${pParams.redesSociales.idLinkedinSocial}`);       
 
-        // Se utilizar� la clase ya que hay muchos elementos para borrar (bot�n papelera con clase btnBorrarURL)
+        // Se utilizará la clase ya que hay muchos elementos para borrar (botón papelera con clase btnBorrarURL)
         this.classBorrarURL = pParams.redesSociales.idBtnBorrarUrl;
         this.btnBorrarUrl = $(`.${pParams.redesSociales.idBtnBorrarUrl}`);
 
@@ -17738,7 +18215,7 @@ const operativaEditarPerfilUsuario = {
         this.urlPersonalProfileSaveSocialWebs = pParams.others.urlPersonalProfileSaveSocialWebs;
         this.urlImagenAnonima = pParams.others.urlImagenAnonima;
 
-        // Inputs que NO podr�n quedar vac�os
+        // Inputs que NO podrán quedar vacíos
         this.inputsNoEmpty = [this.name,
             this.lastName,
             this.email,
@@ -17757,9 +18234,9 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Validar que los campos aqu� mencionados no est�n vac�os
-     * @param {any} inputs: Array de inputs para ser recorridos y verificar que ninguno de los aqu� indicados est�n vac�os
-     * @returns {bool}: Devolver� true o false siempre y cuando los inputs pasados sean diferente de vac�o
+     * Validar que los campos aquí mencionados no están vacíos
+     * @param {any} inputs: Array de inputs para ser recorridos y verificar que ninguno de los aquí indicados están vacíos
+     * @returns {bool}: Devolverá true o false siempre y cuando los inputs pasados sean diferente de vacío
      */
     validarCampos: function (inputs) {
         let areInputsOK = false;
@@ -17782,10 +18259,10 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Mostrar el panel informativo con un mensaje de error o ko. Si los dos son falsos, el panel quedar� oculto
+     * Mostrar el panel informativo con un mensaje de error o ko. Si los dos son falsos, el panel quedará oculto
      * @param {boolean} showOK: Si se desea mostrar el mensaje de OK
      * @param {boolean} showError: Si se desea mostrar el mensaje KO
-     * @param {string} message: El mensaje que ir� en el panel informativo
+     * @param {string} message: El mensaje que irá en el panel informativo
      */
     showInfoPanelErrorOrOK: function (showOK, showError, message) {
         const that = this;
@@ -17810,7 +18287,7 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Configuraci�n de los eventos de los elementos html (click, focus...)
+     * Configuración de los eventos de los elementos html (click, focus...)
      * */
     configEvents: function (pParams) {
         const that = this;
@@ -17822,7 +18299,7 @@ const operativaEditarPerfilUsuario = {
             that.eliminarImagenPerfil();
         });
 
-        // Valor cambiado de inputs -> Avisar al usuario con sobreado rojo (o quitarlo) si es vac�o campo obligatorio
+        // Valor cambiado de inputs -> Avisar al usuario con sobreado rojo (o quitarlo) si es vacío campo obligatorio
         this.inputsNoEmpty.forEach(input => {
             input.on("change", function () {
                 if ($(this).val().length == 0) {                    
@@ -17833,24 +18310,24 @@ const operativaEditarPerfilUsuario = {
             });
         });
 
-        // Bot�n de guardado de los datos
+        // Botón de guardado de los datos
         this.saveButton.on("click", function () {            
             if (that.validarCampos(that.inputsNoEmpty)) {
-                // Guardar secci�n de datos personales (Nombre, Apellidos)
+                // Guardar sección de datos personales (Nombre, Apellidos)
                 that.savePersonalDataProfile();
-                // Guardar secci�n de Curriculum (Tags, Descripcion)
+                // Guardar sección de Curriculum (Tags, Descripcion)
                 that.saveBioUserProfile(false);            
             } 
         });
 
-        // Bot�n click para añadir url del input en perfil del usuario
+        // Botón click para añadir url del input en perfil del usuario
         this.btnRedSocial.on("click", function () {
             that.addSocialWebsFromInputToTable(that.urlUsuario.val());
             // Vaciar el input rellenado
             that.urlUsuario.val('');
         });
 
-        // Pulsaci�n Enter para guardado de URL en perfil de usuario
+        // Pulsación Enter para guardado de URL en perfil de usuario
         this.urlUsuario.keypress(function (event) {                        
             if (event.keyCode === 13) {
                 that.addSocialWebsFromInputToTable(that.urlUsuario.val());
@@ -17858,7 +18335,7 @@ const operativaEditarPerfilUsuario = {
             }
         });
 
-        // Bot�n/Icono de papelera para borrar una red social-web
+        // Botón/Icono de papelera para borrar una red social-web
         $(document).on("click", `.${that.classBorrarURL}`, function () {
             const urlName = $(this).data("urlname");
             // Detectar si es twitter, facebook o linkedin y eliminarlo del input correspondiente
@@ -17953,13 +18430,13 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Acci�n de guardar los datos del perfil del secci�n 'Datos Personales' (Nombre, Apellidos...)
+     * Acción de guardar los datos del perfil del sección 'Datos Personales' (Nombre, Apellidos...)
      * */
     savePersonalDataProfile: function () {
         const that = this;
         // Mostrado de Loading
         MostrarUpdateProgress();
-        // Construcci�n de objeto formData
+        // Construcción de objeto formData
         const dataPost = new FormData();
         dataPost.append('peticionAJAX', true);
 
@@ -17975,7 +18452,7 @@ const operativaEditarPerfilUsuario = {
             dataPost.append($(this).attr('name'), valor);
         });
 
-        // Realizar petici�n de guardado de datos personales del perfil del usuario        
+        // Realizar petición de guardado de datos personales del perfil del usuario        
         GnossPeticionAjax(this.urlPersonalProfileSaveProfile, dataPost, true, false)
             .done(function (data) {
                 //GuardadoCVRapido('OK'); 
@@ -17995,18 +18472,18 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Acci�n de guardar los datos del perfil del usuario, secci�n 'Curriculum' (Tags, Descripci�n)   
+     * Acción de guardar los datos del perfil del usuario, sección 'Curriculum' (Tags, Descripción)   
      * */
 
     /**     
-     * @param {boolean} isNecessaryToHaveTagsAndDescription: El API exige que haya al menos una descripci�n y un Tag para el guardado de estos datos. Tenerlo en cuenta. 
-     * La idea es quitar esta restricci�n tal y como se ha comentado a Juan (29-06-2021)
+     * @param {boolean} isNecessaryToHaveTagsAndDescription: El API exige que haya al menos una descripción y un Tag para el guardado de estos datos. Tenerlo en cuenta. 
+     * La idea es quitar esta restricción tal y como se ha comentado a Juan (29-06-2021)
      */
     saveBioUserProfile: function (isNecessaryToHaveTagsAndDescription) {
 
         const that = this;
 
-        // Controlar que los items existan en la web (Organizaci�n no los suele cargar)
+        // Controlar que los items existan en la web (Organización no los suele cargar)
         if (this.tags.length > 0 && this.description.length > 0) {
             if (isNecessaryToHaveTagsAndDescription == true) {
                 if (this.tags.val().length <= 1 && this.description.val().length == 0) {
@@ -18020,7 +18497,7 @@ const operativaEditarPerfilUsuario = {
         MostrarUpdateProgress();
 
         
-        // Construcci�n del objeto POST
+        // Construcción del objeto POST
         const dataPost = {
             Description: that.description.val(),                       
             Tags: that.tags.val()
@@ -18097,9 +18574,9 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Mostrar la url reci�n agregada en la tabla correspondiente de urls del usuario al haber sido agregada habiendo pulsado en el bot�n "A�adir"
-     * @param {any} data: Nombre de la url. No se refiere a la URL o direcci�n de la web a�adida, sino al nombre propiamente dicho
-     * @param {any} url: Url a�adida por el usuario
+     * Mostrar la url recién agregada en la tabla correspondiente de urls del usuario al haber sido agregada habiendo pulsado en el botón "Añadir"
+     * @param {any} data: Nombre de la url. No se refiere a la URL o dirección de la web añadida, sino al nombre propiamente dicho
+     * @param {any} url: Url añadida por el usuario
      */
     montarUrlRedSocial: function (data, url) {
         const htmlFila = `
@@ -18118,8 +18595,8 @@ const operativaEditarPerfilUsuario = {
     },
 
     /**
-     * Acci�n de eliminar una URL del servidor y tambi�n de la tabla de url del usuario     
-     * @param {any} btnDeleteUrl: Bot�n de borrado pulsado
+     * Acción de eliminar una URL del servidor y también de la tabla de url del usuario     
+     * @param {any} btnDeleteUrl: Botón de borrado pulsado
      */
     eliminarUrlRedSocial: function (btnDeleteUrl) {
         const that = this;
@@ -18129,7 +18606,7 @@ const operativaEditarPerfilUsuario = {
 
         // Mostrar Loading
         MostrarUpdateProgress();
-        // Construcci�n del objeto dataPost
+        // Construcción del objeto dataPost
         const dataPost = {
             callback: "EliminarRedSocial",
             nombreRed: nombreRed,
@@ -18199,22 +18676,22 @@ const operativaEditarPerfilUsuario = {
 };
 
 /**
- * Clase jquery para poder gestionar la solicitud de cambio de contrase�a de un usuario
+ * Clase jquery para poder gestionar la solicitud de cambio de contraseña de un usuario
  * 
  * */
 const operativaSolicitarCambiarContrasenia = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista con el formulario modal
+     * Opciones de configuración de la vista con el formulario modal
      * */
     config: function (pParams) {
-        // Inicializaci�n de IDS de las vistas        
+        // Inicialización de IDS de las vistas
         this.idTxtOldPassword = "#txtOldPassword";
         this.idTxtNewPassword = "#txtNewPassword";
         this.idTxtConfirmedPassword = "#txtConfirmedPassword";
@@ -18231,7 +18708,7 @@ const operativaSolicitarCambiarContrasenia = {
         this.okClass = "alert-success";
         this.errorClass = "alert-danger";
 
-        // Inicializaci�n de las vistas        
+        // Inicialización de las vistas
         this.txtOldPassword = $(this.idTxtOldPassword);
         this.txtConfirmedPassword = $(this.idTxtConfirmedPassword);
         this.txtNewPassword = $(this.idTxtNewPassword);
@@ -18244,8 +18721,8 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-    * Comprobar que los campos (password old, password new y password confirmado ) no est�n vac�os
-    * Comprobar que los password new y confirmado son iguales. En caso contrario, mostrar� un error
+    * Comprobar que los campos (password old, password new y password confirmado ) no están vacíos
+    * Comprobar que los password new y confirmado son iguales. En caso contrario, mostrará un error
     * @returns {bool}    
     */
     validarCampos: function () {
@@ -18261,7 +18738,7 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-    * Configuraci�n de los eventos 
+    * Configuración de los eventos 
     */
     configEvents: function () {
         // Referencia al objeto
@@ -18269,18 +18746,18 @@ const operativaSolicitarCambiarContrasenia = {
 
         // Input Password Confirmado ENTER
         this.txtConfirmedPassword.keypress(function (event) {
-            // Avisar con un mensaje si est�n activadas las may�sculas del teclado
+            // Avisar con un mensaje si están activadas las mayúsculas del teclado
             isCapsLock(event) ? that.warningPanel.fadeIn("slow") : that.warningPanel.fadeOut("slow");
             event.keyCode === 13 ? that.btnCambiarPassword.click() : null
         });
 
-        // Bot�n de Aceptar - Solicitar cambio de contrase�a         
+        // Botón de Aceptar - Solicitar cambio de contraseña         
         this.btnCambiarPassword.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideErrorPanels();
             // Hacer login solo si los datos han sido introducidos
             if (that.validarCampos() == true) {
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 that.cambiarPassword();
             } else {
                 that.passwordEmptyPanel.fadeIn("slow");
@@ -18303,20 +18780,20 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-     * Funci�n para realizar la petici�n del cambio de contrase�a solicitado por el usuario
+     * Función para realizar la petición del cambio de contraseña solicitado por el usuario
      * */
     cambiarPassword: function () {
         // Referencia al objeto
         const that = this;
         this.btnCambiarPassword.hide();
         MostrarUpdateProgress();
-        // Construcci�n del objeto con los passwords
+        // Construcción del objeto con los passwords
         const params = {
             OldPassword: that.txtOldPassword.val(),
             NewPassword: that.txtNewPassword.val(),
             ConfirmedPassword: that.txtConfirmedPassword.val(),
         };
-        // Realizar la petici�n de cambio de password
+        // Realizar la petición de cambio de password
         GnossPeticionAjax(that.urlPasswordRequest, params, false)
             .done(function () {
                 // Ocultar posibles paneles de error
@@ -18340,7 +18817,7 @@ const operativaSolicitarCambiarContrasenia = {
                 that.passwordRequestInfoPanel.html(html);
                 // Mostrar el mensaje de error o de success
                 that.passwordRequestInfoPanel.fadeIn("slow");
-                // Mostrar de nuevo el bot�n para solicitar cambio de contrase�a
+                // Mostrar de nuevo el botón para solicitar cambio de contraseña
                 that.btnCambiarPassword.fadeIn("slow");
                 // Vaciar los inputs
                 that.emptyInputs();
@@ -18350,23 +18827,23 @@ const operativaSolicitarCambiarContrasenia = {
     },
 
     /**
-     * Funci�n ejecutada desde cambiarPassword 
+     * Función ejecutada desde cambiarPassword 
      * @param {any} param
      * @param {any} url
      */
     getParam: function (param, url) {
-        /* Buscar a partir del signo de interrogaci�n ? */
+        /* Buscar a partir del signo de interrogación ? */
         url = String(url.match(/\?+.+/));
-        /* limpiar la cadena quit�ndole el signo ? */
+        /* limpiar la cadena quitándole el signo ? */
         url = url.replace("?", "");
         /* Crear un array con parametro=valor */
         url = url.split("&");
         /*
         Recorrer el array url
-        obtener el valor y dividirlo en dos partes a trav�s del signo =
+        obtener el valor y dividirlo en dos partes a través del signo =
         0 = parametro
         1 = valor
-        Si el par�metro existe devolver su valor
+        Si el parámetro existe devolver su valor
         */
         x = 0;
         while (x < url.length) {
@@ -18492,7 +18969,12 @@ Plugin de CKEditor simplificado. Se activará sobre cualquier input que tenga la
                 let toolbarHeight = 31;
 
                 // Si hay texto o imagenes no hacer nada
-                const spanItems = settings.$ckEditor.document.getBody().find("span").$.length != undefined ? settings.$ckEditor.document.getBody().find("span").$.length : 0;
+                let spanItems = "";             
+                // Evitar posibles errores en la creación de instancias del ckEditor
+                if (settings.$ckEditor.document == undefined) {
+                    return;
+                }
+                spanItems = settings.$ckEditor.document.getBody().find("span").$.length != undefined ? settings.$ckEditor.document.getBody().find("span").$.length : 0;
                 const textItems = settings.$ckEditor.document.getBody().getText().length;
                 const editItems = spanItems + textItems;
 
@@ -18704,25 +19186,25 @@ var operativaFechasFacetas = {
 
 
 /**
- * Clase jquery para poder gestionar la "peticion" de solicitud de cambio de contrase�a de un usuario
- * Este tipo de petici�n es ejecutada cuando el usuario ha solicitado cambio de contrase�a (por olvido), ha recibido un email y ha accedido a esa url para 
- * proceder a cambiar su contrase�a
+ * Clase jquery para poder gestionar la "peticion" de solicitud de cambio de contraseña de un usuario
+ * Este tipo de petición es ejecutada cuando el usuario ha solicitado cambio de contraseña (por olvido), ha recibido un email y ha accedido a esa url para 
+ * proceder a cambiar su contraseña
  * 
  * */
 const operativaPeticionCambiarContrasenia = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista con el formulario modal
+     * Opciones de configuración de la vista con el formulario modal
      * */
     config: function (pParams) {
 
-        // Inicializaci�n de las vistas    
+        // Inicialización de las vistas
         this.txtLogin = $(`#${pParams.idTxtLogin}`);
         this.txtPasswordNueva = $(`#${pParams.idTxtPasswordNueva}`);
         this.txtPasswordConfirmar = $(`#${pParams.idTxtPasswordConfirmar}`);
@@ -18747,9 +19229,9 @@ const operativaPeticionCambiarContrasenia = {
         this.urlPasswordRequest = pParams.urlPasswordRequest;
         this.urlRejectPasswordRequest = pParams.urlRejectPasswordRequest;
 
-        // Comprobaci�n que los inputs han sido rellenados
+        // Comprobación que los inputs han sido rellenados
         this.areInputsFilled = false;
-        // Comprobaci�n que las contrase�as coinciden
+        // Comprobación que las contraseñas coinciden
         this.arePasswordsTheSame = false;
 
 
@@ -18759,15 +19241,15 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-    * Comprobar que los campos (password old, password new y password confirmado ) no est�n vac�os
-    * y que las contrase�as introducidas coinciden
+    * Comprobar que los campos (password old, password new y password confirmado ) no están vacíos
+    * y que las contraseñas introducidas coinciden
     * @returns {bool}    
     */
     validarCampos: function () {
 
         if (this.txtLogin.val() != '' && this.txtPasswordNueva.val() != '' && this.txtPasswordConfirmar.val() != '') {
             this.areInputsFilled = true;
-            // Comprobar que las contrase�as introducidas son iguales
+            // Comprobar que las contraseñas introducidas son iguales
             if (this.txtPasswordNueva.val() === this.txtPasswordConfirmar.val()) {
                 this.arePasswordsTheSame = true;
             } else {
@@ -18777,33 +19259,33 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-    * Configuraci�n de los eventos 
+    * Configuración de los eventos 
     */
     configEvents: function () {
         // Referencia al objeto
         const that = this;
 
-        // Input Password - Control de may�sculas
+        // Input Password - Control de mayúsculas
         this.txtPasswordNueva.keypress(function (event) {
-            // Avisar con un mensaje si est�n activadas las may�sculas del teclado
+            // Avisar con un mensaje si están activadas las mayúsculas del teclado
             isCapsLock(event) ? that.bloqMayInfoPanel.fadeIn() : that.bloqMayInfoPanel.fadeOut();
         });
 
-        // Input Password Confirmar - Control de may�sculas + Enter
+        // Input Password Confirmar - Control de mayúsculas + Enter
         this.txtPasswordConfirmar.keypress(function (event) {
-            // Avisar con un mensaje si est�n activadas las may�sculas del teclado
+            // Avisar con un mensaje si están activadas las mayúsculas del teclado
             isCapsLock(event) ? that.bloqMayInfoPanel.fadeIn() : that.bloqMayInfoPanel.fadeOut();
             event.keyCode === 13 ? that.btnCambiarPassword.click() : null
         });
 
-        // Bot�n de Aceptar - Solicitar cambio de contrase�a         
+        // Botón de Aceptar - Solicitar cambio de contraseña         
         this.btnCambiarPassword.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideErrorPanels();
             // Hacer login solo si los datos han sido introducidos
             that.validarCampos();
             if (that.arePasswordsTheSame == true && that.areInputsFilled == true) {
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 //that.cambiarPassword();
                 that.cambiarPassword();
             } else {
@@ -18822,7 +19304,7 @@ const operativaPeticionCambiarContrasenia = {
         });
 
 
-        // Link/ Bot�n de cancelar solicitud de cambio de contrase�a
+        // Link/ Botón de cancelar solicitud de cambio de contraseña
         this.btnRechazarPeticionCambiarPassword.click(function () {
             that.rechazarPeticion();
         });
@@ -18846,24 +19328,24 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-     * B�scar los par�metros mandados por URL.
-     * Este m�todo es llamado desde la funci�n que realiza la petici�n de cambio de password
+     * Búscar los parámetros mandados por URL.
+     * Este método es llamado desde la función que realiza la petición de cambio de password
      * @param {any} param: 
-     * @param {any} url: Url a la que se realiza la petici�n para cambio de contrase�a
+     * @param {any} url: Url a la que se realiza la petición para cambio de contraseña
      */
     getParam: function (param, url) {
-        /* Buscar a partir del signo de interrogaci�n ? */
+        /* Buscar a partir del signo de interrogación ? */
         url = String(url.match(/\?+.+/));
-        /* limpiar la cadena quit�ndole el signo ? */
+        /* limpiar la cadena quitándole el signo ? */
         url = url.replace("?", "");
         /* Crear un array con parametro=valor */
         url = url.split("&");
         /*
         Recorrer el array url
-        obtener el valor y dividirlo en dos partes a trav�s del signo =
+        obtener el valor y dividirlo en dos partes a través del signo =
         0 = parametro
         1 = valor
-        Si el par�metro existe devolver su valor
+        Si el parámetro existe devolver su valor
         */
         x = 0;
         while (x < url.length) {
@@ -18876,21 +19358,21 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-     * Funci�n para realizar la petici�n del cambio de contrase�a solicitado por el usuario
+     * Función para realizar la petición del cambio de contraseña solicitado por el usuario
      * */
     cambiarPassword: function () {
         // Referencia al objeto
         const that = this;
         this.btnCambiarPassword.hide();
         MostrarUpdateProgress();
-        // Construcci�n del objeto con los passwords
+        // Construcción del objeto con los passwords
         const dataPost = {
             User: that.txtLogin.val(),
             Password: that.txtPasswordNueva.val(),
             PasswordConfirmed: that.txtPasswordConfirmar.val(),
         }
 
-        // Realizar la petici�n de cambio de password
+        // Realizar la petición de cambio de password
         GnossPeticionAjax(that.urlPasswordRequest, dataPost, true)
             .done(function () {
                 // Ocultar posibles paneles de error
@@ -18904,7 +19386,7 @@ const operativaPeticionCambiarContrasenia = {
                 if (transfer != undefined) {
                     location.href = transfer;
                 }
-                // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contrase�a
+                // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contraseña
                 that.panelCambioPassword.remove()
             })
             .fail(function (html) {
@@ -18925,7 +19407,7 @@ const operativaPeticionCambiarContrasenia = {
     },
 
     /**
-     * Funci�n para cancelar o rechazar la solicitud de cambio de contrase�a.
+     * Función para cancelar o rechazar la solicitud de cambio de contraseña.
      * */
     rechazarPeticion: function () {
         const that = this;
@@ -18934,7 +19416,7 @@ const operativaPeticionCambiarContrasenia = {
         this.hideErrorPanels();
 
         GnossPeticionAjax(this.urlRejectPasswordRequest, null, true).done(function () {
-            // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contrase�a
+            // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contraseña
             that.panelCambioPassword.remove()
             that.btnCambiarPassword.remove()
             // Mostrar mensaje de cancelar la solicitud de cambio de password
@@ -18948,55 +19430,56 @@ const operativaPeticionCambiarContrasenia = {
 };
 
 /**
- * Clase jquery para poder realizar env�os de invitaciones a una comunidad y de links de recursos (desde la ficha de recurso) a correos o contactos de una comunidad.
- * Para acceder a esta vista se acceder� 
+ * Clase jquery para poder realizar envíos de invitaciones a una comunidad y de links de recursos (desde la ficha de recurso) a correos o contactos de una comunidad.
+ * Para acceder a esta vista se accederá 
  *  - Desde la propia ficha de recurso (Enviar Link)
  *  - Panel lateral del usuario si dispone de permisos en la comunidad para enviar invitaciones 
  * */
 const operativaEnviarResource_Link_Community_Invitation = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();        
-        if (pParams.autocompleteParams) {
+        if (pParams.autocompleteParams) { 
             this.configAutocompleteService(pParams.autocompleteParams);
             this.configAutocompleteServiceForCommunityGroups(pParams.autocompleteParams)
-        }
+        }        
     },
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas  
-        this.txtFiltro = $(`#${pParams.idTxtFiltro}`);
-        this.txtFiltroGrupos = $(`#${pParams.idTxtFiltroGrupos}`);
-        this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);        
-        this.buttonLitAniadirCorreo = $(`#${pParams.idButtonLitAniadirCorreo}`);
-        this.txtHackInvitados = $(`#${pParams.idTxtHackInvitados}`);
-        this.txtHackGrupos = $(`#${pParams.idTxtHackGrupos_invite_community}`);
-        // El autocomplete necesita solo el nombre del input oculto
-        this.txtHackInvitadosInputName = pParams.idTxtHackInvitados;
-        // El autocomplete necesita solo el nombre del input oculto
-        this.txtHackGruposInvitadosInputName = pParams.idTxtFiltroGrupos;
+        // Inicialización de las vistas
+       // Inicialización de las vistas
+       this.txtFiltro = $(`#${pParams.idTxtFiltro}`);
+       this.txtFiltroGrupos = $(`#${pParams.idTxtFiltroGrupos}`);
+       this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);        
+       this.buttonLitAniadirCorreo = $(`#${pParams.idButtonLitAniadirCorreo}`);
+       this.txtHackInvitados = $(`#${pParams.idTxtHackInvitados}`);
+       this.txtHackGrupos = $(`#${pParams.idTxtHackGrupos_invite_community}`);
+       // El autocomplete necesita solo el nombre del input oculto
+       this.txtHackInvitadosInputName = pParams.idTxtHackInvitados;
+       // El autocomplete necesita solo el nombre del input oculto
+       this.txtHackGruposInvitadosInputName = pParams.idTxtFiltroGrupos;
 
-        this.panContenedorInvitados = $(`#${pParams.idPanContenedorInvitados}`);
-        this.listaDestinatarios = $(`#${pParams.idListaDestinatarios}`);
-        this.listaGrupos = $(`#${pParams.idPanContenedorGrupos}`);
-        this.noDestinatarios = $(`#${pParams.idNoDestinatarios}`);
-        this.btnEnviarInvitaciones = $(`#${pParams.idBtnEnviarInvitaciones}`);        
-        this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);        
-        this.panelInfoInvitationSent = $(`#${pParams.idPanelInfoInvitationSent}`);
+       this.panContenedorInvitados = $(`#${pParams.idPanContenedorInvitados}`);
+       this.listaDestinatarios = $(`#${pParams.idListaDestinatarios}`);
+       this.listaGrupos = $(`#${pParams.idPanContenedorGrupos}`);
+       this.noDestinatarios = $(`#${pParams.idNoDestinatarios}`);
+       this.btnEnviarInvitaciones = $(`#${pParams.idBtnEnviarInvitaciones}`);        
+       this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);        
+       this.panelInfoInvitationSent = $(`#${pParams.idPanelInfoInvitationSent}`);
 
-        // Campos especiales para env�o de link (idioma & notas/mensaje)                
+        // Campos especiales para envío de link (idioma & notas/mensaje)                
         this.txtNotas = $(`#${pParams.idTxtNotas}`);
         this.dllIdioma = $(`#${pParams.idDlIdioma}`);
        
         // Paneles de error/info
         this.panelesInfo = [this.panelInfoInvitationSent];
 
-        // Url necesarias para realizar petici�n        
+        // Url necesarias para realizar petición        
         this.urlSend = pParams.urlSend;
     },
 
@@ -19008,23 +19491,23 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
 
-        // Bot�n de Aceptar - Solicitar link para cambio de contrase�a
+        // Botón de Aceptar - Solicitar link para cambio de contraseña
         this.btnEnviarInvitaciones.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideInfoPanels();
             // Comprobar que el input de invitados (el oculto que almacena los ids al menos tiene emails o contactos)
             if (that.validarCampos()) {
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 that.enviarInvitacion_EnlaceSubmit();                           
             }
         });
 
-        // Bot�n de A�adir correo 
+        // Botón de Añadir correo 
         this.buttonLitAniadirCorreo.click(function () {
             let listaCorreos = that.txtCorreoAInvitar.val().trim().replace(/^\s*|\s*$/g, "").split(",");
             for (var i = 0; i < listaCorreos.length; i++) {
@@ -19048,7 +19531,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
         this.listaGrupos.on('click', '.tag-remove', function (event) {
             const identidad = $(event.target).parent().parent().attr("id");
             that.eliminarGrupo(null, identidad);
-        });
+        });  
     },
 
     /**
@@ -19060,15 +19543,15 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Acci�n que se ejecuta cuando se realice una b�squeda escribiendo el nombre de un usuario y al pulsar en uno de los resultados devueltos por autocomplete.
-     * Con los datos devueltos, construir� el item y lo  meter� en "panContenedorInvitados". *@
+     * Acción que se ejecuta cuando se realice una búsqueda escribiendo el nombre de un usuario y al pulsar en uno de los resultados devueltos por autocomplete.
+     * Con los datos devueltos, construirá el item y lo  meterá en "panContenedorInvitados". *@
      * @param {any} ficha
      * @param {any} nombre: El nombre del usuario seleccionado
      * @param {any} identidad: La identidad del item seleccionado
-     * @param {boolean} isAnEmail: Valor que indicar� si lo que se est� intentando a�adir es un contacto (normal) o un email de un usuario
+     * @param {boolean} isAnEmail: Valor que indicará si lo que se está intentando añadir es un contacto (normal) o un email de un usuario
      */
     crearInvitado: function (ficha, nombre, identidad, isAnEmail) {     
-        // Item que se a�adir� como elemento seleccionado
+        // Item que se añadirá como elemento seleccionado
         let itemHtml = "";
 
         if (!isAnEmail) {
@@ -19078,16 +19561,16 @@ const operativaEnviarResource_Link_Community_Invitation = {
             itemHtml += `<span class="tag-remove material-icons">close</span>`;
             itemHtml += `</div>`;
             itemHtml += `</div>`;
-            // A�adir la identidad al input de invitados
+            // Añadir la identidad al input de invitados
             this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${identidad}`);        
         } else {            
             // Construyo correos separados por comas
             const correos = this.txtCorreoAInvitar.val().split(',');                        
-            // Validar si son correos v�lidos     
+            // Validar si son correos válidos     
             for (let i = 0; i < correos.length; i++) {
                 if (correos[i] != '') {
                     if (!validarEmail(correos[i].replace(/^\s*|\s*$/g, ""))) {
-                        // No es email v�lido, muestra mensaje de error
+                        // No es email válido, muestra mensaje de error
                         this.lblInfoCorreo.html(form.emailValido);
                         this.lblInfoCorreo.parent().parent().fadeIn();
                         return;
@@ -19096,7 +19579,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
                     }
                 }
             }
-            // Recorrer array de correos para ser a�adidos a la vista
+            // Recorrer array de correos para ser añadidos a la vista
             for (let i = 0; i < correos.length; i++) {
                 if (correos[i] != '') {                    
                     let data_item = correos[i].replace(/\@/g, '_');
@@ -19107,21 +19590,21 @@ const operativaEnviarResource_Link_Community_Invitation = {
                     itemHtml += `<span class="tag-remove material-icons">close</span>`;
                     itemHtml += `</div>`;
                     itemHtml += `</div>`;                                        
-                    // A�adir el correo al input de invitados
+                    // Añadir el correo al input de invitados
                     this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${correos[i].replace(/^\s*|\s*$/g, "")}`);  
                 }
             }
         }
         
-        // A�adir el item en el contenedor de destinatarios
+        // Añadir el item en el contenedor de destinatarios
         this.listaDestinatarios.append(itemHtml);
 
-        // Ocultar el panel de "No destinatarios" ya que hay a�adidos
+        // Ocultar el panel de "No destinatarios" ya que hay añadidos
         this.noDestinatarios.fadeOut();
 
         // Vaciamos el input donde se ha introducido al usuario
         isAnEmail ? this.txtCorreoAInvitar.val('') : this.txtFiltro.val('');
-        // Quitamos posible mensaje de error de correo a�adido
+        // Quitamos posible mensaje de error de correo añadido
         this.lblInfoCorreo.val('');
         this.lblInfoCorreo.hide();
 
@@ -19131,12 +19614,12 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Acción que se ejecuta cuando se realice una b�squeda escribiendo el nombre de un grupo de la comunidad y se seleccione un item de resultados devueltos por autocomplete.
-     * Con los datos devueltos, construir� el item y lo  meter� en "panContenedorInvitados". *@     
+     * Acción que se ejecuta cuando se realice una búsqueda escribiendo el nombre de un grupo de la comunidad y se seleccione un item de resultados devueltos por autocomplete.
+     * Con los datos devueltos, construirá el item y lo  meterá en "panContenedorInvitados". *@     
      * @param {any} nombre: El nombre del usuario seleccionado
      * @param {any} identidad: La identidad del item seleccionado     
      */
-    crearGrupoInvitado: function (nombre, identidad) {
+     crearGrupoInvitado: function (nombre, identidad) {
         // Item que se añadirá como elemento seleccionado
         let itemHtml = "";
 
@@ -19147,10 +19630,10 @@ const operativaEnviarResource_Link_Community_Invitation = {
             itemHtml += `</div>`;
         itemHtml += `</div>`;
 
-        // A�adir la identidad al input de grupos    
+        // Añadir la identidad al input de grupos    
         this.txtHackGrupos.val(`${this.txtHackGrupos.val()}&${identidad}`);        
 
-        // A�adir el item en el contenedor de grupos
+        // Añadir el item en el contenedor de grupos
         this.listaGrupos.append(itemHtml);
         
         // Vaciamos el input donde se ha introducido el grupo a buscar
@@ -19158,39 +19641,39 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Acci�n que eliminar� a un elemento al pulsar sobre su (x). Desaparecer� del contenedor y del input oculto que contiene
-     * los items seleccionados para el env�o de la solicitud
+     * Acción que eliminará a un elemento al pulsar sobre su (x). Desaparecerá del contenedor y del input oculto que contiene
+     * los items seleccionados para el envío de la solicitud
      * @param {any} fichaId             
      */
     eliminarUsuario: function (fichaId, identidad) {
                
-        // Eliminar la identidad al input construyendo el nuevo valor que tomar�
+        // Eliminar la identidad al input construyendo el nuevo valor que tomará
         let newTxtHackInvitados = this.txtHackInvitados.val().replace('&' + identidad, '');
         this.txtHackInvitados.val(newTxtHackInvitados);                   
 
-        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electr�nicos)
+        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electrónicos)
         let data_item = identidad.replace(/\@/g, '_');
         data_item = data_item.replace(".", '_');
         const itemToDelete = $(`*[data-item="${data_item}"]`);
         itemToDelete.remove();
 
-        // Comprobar si hay items para mostrar u ocultar mensaje de "Ning�n destinatario..."
+        // Comprobar si hay items para mostrar u ocultar mensaje de "Ningún destinatario..."
         const numItems = this.listaDestinatarios.children().length;
         numItems >= 1 ? this.noDestinatarios.hide() : this.noDestinatarios.show();
     },
 
     /**
-         * Acci�n que eliminar� a un elemento al pulsar sobre su (x). Desaparecer� del contenedor y del input oculto que contiene
-         * los items seleccionados para el env�o de la solicitud
+         * Acción que eliminará a un elemento al pulsar sobre su (x). Desaparecerá del contenedor y del input oculto que contiene
+         * los items seleccionados para el envío de la solicitud
          * @param {any} fichaId             
          */
-    eliminarGrupo: function (fichaId, identidad) {
+     eliminarGrupo: function (fichaId, identidad) {
 
         // Eliminar la identidad al input construyendo el nuevo valor que tomará
         let newTxtHackInvitados = this.txtHackGrupos.val().replace('&' + identidad, '');
         this.txtHackGrupos.val(newTxtHackInvitados);
 
-        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electr�nicos)
+        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electrónicos)
         let data_item = identidad.replace(/\@/g, '_');
         data_item = data_item.replace(".", '_');
         const itemToDelete = $(`*[data-item="${data_item}"]`);
@@ -19198,17 +19681,17 @@ const operativaEnviarResource_Link_Community_Invitation = {
     },
 
     /**
-     * Configuraci�n del servicio autocomplete para el input buscador de nombres
-     * Se pasaran los par�metros necesarios los cuales se han obtenido de la vista
+     * Configuración del servicio autocomplete para el input buscador de nombres
+     * Se pasaran los parámetros necesarios los cuales se han obtenido de la vista
      * @param {any} autoCompleteParams
      */
     configAutocompleteService(autoCompleteParams) {
         const that = this;
 
-        // Objeto que albergar� los extraParams para el servicio autocomplete
+        // Objeto que albergará los extraParams para el servicio autocomplete
         let extraParams = {};
 
-        // Configuraci�n de extraParams dependiendo isEcosistemasinMetaProyecto
+        // Configuración de extraParams dependiendo isEcosistemasinMetaProyecto
         if (autoCompleteParams.isEcosistemasinMetaProyecto) {
             extraParams = {
                 identidad: autoCompleteParams.identidad,
@@ -19223,7 +19706,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
                 proyecto: autoCompleteParams.proyecto,
             }
         }
-        // Configuraci�n del autocomplete para el input de b�squeda de nombres
+        // Configuración del autocomplete para el input de búsqueda de nombres
         this.txtFiltro.autocomplete(
             null,
             {
@@ -19244,21 +19727,21 @@ const operativaEnviarResource_Link_Community_Invitation = {
             }
         );
 
-        // Configuraci�n la acci�n select (cuando se seleccione un item de autocomplete)
+        // Configuración la acción select (cuando se seleccione un item de autocomplete)
         this.txtFiltro.result(function (event, data, formatted) {
             that.crearInvitado(null, data[0], data[1], false);
         });
     },
 
     /**
-         * Configuraci�n del servicio autocomplete para el input buscador de nombres de grupos de la comunidad
-         * Se pasaran los par�metros necesarios los cuales se han obtenido de la vista
-         * @param {any} autoCompleteParams
-         */
-    configAutocompleteServiceForCommunityGroups(autoCompleteParams) {
+     * Configuración del servicio autocomplete para el input buscador de nombres de grupos de la comunidad
+     * Se pasaran los parámetros necesarios los cuales se han obtenido de la vista
+     * @param {any} autoCompleteParams
+     */
+     configAutocompleteServiceForCommunityGroups(autoCompleteParams) {
         const that = this;
 
-        // Configurar input de autocomplete para grupos de la comunidad
+            // Configurar input de autocomplete para grupos de la comunidad
         this.txtFiltroGrupos.keydown(function (event) {
             if (event.which || event.keyCode) { if ((event.which == 13) || (event.keyCode == 13)) { return false; } }
         }).autocomplete(
@@ -19276,7 +19759,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
                 NoPintarSeleccionado: true,
                 txtValoresSeleccID: that.txtHackGruposInvitadosInputName,
 
-                extraParams: {
+                    extraParams: {
                     identidad: autoCompleteParams.identidad,
                     identidadMyGnoss: autoCompleteParams.identidadMyGnoss,
                     identidadOrg: autoCompleteParams.identidadOrg,
@@ -19284,26 +19767,26 @@ const operativaEnviarResource_Link_Community_Invitation = {
                 }
             });
 
-        // Configuraci�n la acci�n select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
+            // Configuración la acción select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
         this.txtFiltroGrupos.result(function (event, data, formatted) {
             that.crearGrupoInvitado(data[0], data[1]);
         });
-    },
+    },    
 
     /**
     * Acción de envío de la invitación de la comunidad o del enlace
-    * Se disparará al pulsar el bot�n de "Enviar"
+    * Se disparará al pulsar el botón de "Enviar"
     */
     enviarInvitacion_EnlaceSubmit: function () {
         const that = this;
 
         MostrarUpdateProgress();
 
-        // Construcci�n del objeto dataPost
+        // Construcción del objeto dataPost
         let dataPost = {};
-        // Construir la URL teniendo en cuenta el tipo de env�o
+        // Construir la URL teniendo en cuenta el tipo de envío
         let newUrlRequest = "";
-        //Tener en cuenta de si no existe el idioma -> Invitaci�n de comunidad
+        //Tener en cuenta de si no existe el idioma -> Invitación de comunidad
         if (this.dllIdioma.length == 0) {
             if (that.txtNotas.val() == undefined) {
                 dataPost = {
@@ -19353,15 +19836,15 @@ const operativaEnviarResource_Link_Community_Invitation = {
 };
 
 /**
- * Clase jquery para poder gestionar la suscripci�n de un usuario a las categor�as de una comunidad
+ * Clase jquery para poder gestionar la suscripción de un usuario a las categorías de una comunidad
  * Se puede acceder desde el panel lateral del usuario, pulsando en "Suscribirse".
- * Podr� elegir (mediante checkbox disponibles) las categor�as a las que suscribirse y si 
+ * Podrá elegir (mediante checkbox disponibles) las categorías a las que suscribirse y si 
  * desea recibir newsletters de forma diaria o semanal
  * */
 
 const operativaGestionarSuscripcionComunidad = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
@@ -19369,10 +19852,10 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas             
+        // Inicialización de las vistas
         this.chkRecibirBoletin = $(`#${pParams.idChkRecibirBoletin}`);
         this.panelFrecuenciaRecibirBoletin = $(`#${pParams.idPanelFrecuenciaRecibirBoletin}`);
         this.radioNameSuscription = $(`#${pParams.nameSuscripcion}`);
@@ -19387,7 +19870,7 @@ const operativaGestionarSuscripcionComunidad = {
         this.isFrequencyDaily = false;
         this.isFrequencyWeekly = false;
 
-        // Url necesaria a la que habr� que hacer la petici�n
+        // Url necesaria a la que habrá que hacer la petición
         this.urlRequestCommunitySubscription = pParams.urlRequestCommunitySubscription;
         // Paneles de info/error                                     
         this.panelesInfo = [this.panelInfoSuscripcionCategorias];
@@ -19405,7 +19888,7 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
@@ -19415,9 +19898,9 @@ const operativaGestionarSuscripcionComunidad = {
             this.chkRecibirBoletin.on("click", function () {
                 if ($(this).is(':checked')) {
                     that.panelFrecuenciaRecibirBoletin.fadeIn();
-                    // Dejar checked por defecto una opci�n del radioButton (si antes no se ha seleccionado nada)
+                    // Dejar checked por defecto una opción del radioButton (si antes no se ha seleccionado nada)
                     if (!that.rbtnSuscripcionDiaria.is(':checked') && !that.rbtnSuscripcionSemanal.is(':checked')) {
-                        // Dejar por defecto la opci�n diaria checkeada
+                        // Dejar por defecto la opción diaria checkeada
                         that.rbtnSuscripcionDiaria.prop("checked", true);
                     }
                 } else {
@@ -19425,9 +19908,9 @@ const operativaGestionarSuscripcionComunidad = {
                 }
             });
         }
-        // Bot�n de guardar cambios/enviar al servidor
+        // Botón de guardar cambios/enviar al servidor
         this.btnSaveSubscriptionPreferences.on("click", function () {            
-            // Comprobar los valores para el env�o
+            // Comprobar los valores para el envío
             that.checkRadioButtonsAndCheckValues();
             // Enviar los datos
             that.gestionSuscripcionComunidadSubmit();
@@ -19435,15 +19918,15 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /**
-     * M�todo para comprobar los checks y radioButtons para crear los valores booleanos
-     * para el env�o de datos al servidor
+     * Método para comprobar los checks y radioButtons para crear los valores booleanos
+     * para el envío de datos al servidor
      * Comprueba primero si existen los inputs y una vez comprobado, analiza los datos
      * */
     checkRadioButtonsAndCheckValues: function () {
         if (this.chkRecibirBoletin != undefined) {
             if (this.chkRecibirBoletin.is(':checked')) {
                 this.isReceivingNewsletters = true;
-                // Comprobaci�n diaria o semanal
+                // Comprobación diaria o semanal
                 this.rbtnSuscripcionDiaria.is(':checked') ? this.isFrequencyDaily = true : this.isFrequencyDaily = false;
                 this.rbtnSuscripcionSemanal.is(':checked') ? this.isFrequencyWeekly = true : this.isFrequencyWeekly = false;
             }
@@ -19453,8 +19936,8 @@ const operativaGestionarSuscripcionComunidad = {
     },
 
     /**
-    * Acci�n de env�o de ajustes en suscripci�n de la comunidad
-    * Se disparar� al pulsar el bot�n de "Enviar"
+    * Acción de envío de ajustes en suscripción de la comunidad
+    * Se disparará al pulsar el botón de "Enviar"
      * */
     gestionSuscripcionComunidadSubmit: function () {
         const that = this;
@@ -19463,7 +19946,7 @@ const operativaGestionarSuscripcionComunidad = {
         MostrarUpdateProgress();
         // Ocultar posibles mensajes de info/error
         this.hideInfoPanels();
-        // Construcci�n del objeto para enviar datos
+        // Construcción del objeto para enviar datos
         const dataPost = {
             SelectedCategories: that.txtHackCatTesSel.val(),
             ReceiveSubscription: that.isReceivingNewsletters,
@@ -19498,17 +19981,17 @@ const operativaGestionarSuscripcionComunidad = {
  * */
 const operativaSolicitarRecibirNewsletter = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de IDS de las vistas  
+        // Inicialización de IDS de las vistas  
         this.idChkRecibirNewsletter = pParams.chkRecibirNewsletter;
         this.idChkNoRecibirNewsletter = pParams.chkNoRecibirNewsletter;
         this.btnSubmitReceiveNewsletters = $(`#${pParams.btnSubmitReceiveNewsletters}`);
@@ -19516,7 +19999,7 @@ const operativaSolicitarRecibirNewsletter = {
         // Nombre de los inputs
         this.nameChkReceiveNewsletter = pParams.nameChkReceiveNewsletter;
 
-        // Inicializaci�n de las vistas 
+        // Inicialización de las vistas
         // Panel de posibles mensajes
         this.chkRecibirNewsletterNameInfoPanel = $(`#${pParams.chkRecibirNewsletterNameInfoPanel}`);
 
@@ -19524,10 +20007,10 @@ const operativaSolicitarRecibirNewsletter = {
         this.okClass = "alert-success";
         this.errorClass = "alert-danger";
 
-        // Url necesaria a la que habr� que hacer la petici�n
+        // Url necesaria a la que habrá que hacer la petición
         this.urlRequestReceiveNewsletters = pParams.urlRequestReceiveNewsletters;
 
-        // Inicializaci�n de las vistas        
+        // Inicialización de las vistas
         this.panelesInfo = [this.chkRecibirNewsletterNameInfoPanel]; 
     },
 
@@ -19539,38 +20022,38 @@ const operativaSolicitarRecibirNewsletter = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
 
-        // Bot�n de Aceptar - Solicitar env�o o no de newsletters
+        // Botón de Aceptar - Solicitar envío o no de newsletters
         this.btnSubmitReceiveNewsletters.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideInfoPanels();
 
-            // Conocer el inputRadio activo. Ser� el que comparemos con idChkRecibirNewsletter o idChkNoRecibirNewsletter (Desea o no desea newsletters)
+            // Conocer el inputRadio activo. Será el que comparemos con idChkRecibirNewsletter o idChkNoRecibirNewsletter (Desea o no desea newsletters)
             that.checkRecibirNewsLetterValue = $(`input[name=${that.nameChkReceiveNewsletter}]:checked`).val();
-            // Realizar la petici�n de cambio de contrase�a
+            // Realizar la petición de cambio de contraseña
             const isReceivingNewsletters = that.checkRecibirNewsLetterValue === that.idChkRecibirNewsletter ? true : false;
             that.recibirNewsletterSubmit(isReceivingNewsletters);
         });
     },
 
     /**
-     * Acci�n de petici�n de recibir (o no) de newsletters. Se dispara cuando se pulsa en el bot�n submit del modal     
-     * @param {Bool} option: Dependiendo del input pulsado, el usuario querr� o no recibir newsletters.
+     * Acción de petición de recibir (o no) de newsletters. Se dispara cuando se pulsa en el botón submit del modal     
+     * @param {Bool} option: Dependiendo del input pulsado, el usuario querrá o no recibir newsletters.
      */
     recibirNewsletterSubmit: function (option) {
         const that = this;
         MostrarUpdateProgress();
         that.hideInfoPanels();
-        // Construcci�n del DataPost para enviar la petici�n
+        // Construcción del DataPost para enviar la petición
         const dataPost = {            
             recibirNewsletter: option,
         };
 
-        // Realizar la petici�n 
+        // Realizar la petición 
         GnossPeticionAjax(
             this.urlRequestReceiveNewsletters,
             dataPost,
@@ -19603,23 +20086,23 @@ const operativaSolicitarRecibirNewsletter = {
 };
 
 /**
- * Clase jquery para poder la solicitud de restablecimiento de la contrase�a por parte del usuario.
- * Para acceder a esta vista, se acceder� desde un link en "Login" de "Olvido de contrase�a"
+ * Clase jquery para poder la solicitud de restablecimiento de la contraseña por parte del usuario.
+ * Para acceder a esta vista, se accederá desde un link en "Login" de "Olvido de contraseña"
  *
  * */
 const operativaOlvidoPassword = {
     /**
-     * Acci�n para inicializar elementos y eventos
+     * Acción para inicializar elementos y eventos
      */
     init: function (pParams) {
         this.config(pParams);
         this.configEvents();
     },
     /*
-     * Opciones de configuraci�n de la vista
+     * Opciones de configuración de la vista
      * */
     config: function (pParams) {
-        // Inicializaci�n de las vistas  
+        // Inicialización de las vistas
         this.txtUserLogin = $(`#${pParams.idTxtuserLogin}`);
         this.forgetPasswordInfoPanel = $(`#${pParams.idForgetPasswordInfoPanel}`);
         this.btnEnviar = $(`#${pParams.idBtnEnviar}`);
@@ -19627,7 +20110,7 @@ const operativaOlvidoPassword = {
         // Paneles de error/info
         this.panelesInfo = [this.forgetPasswordInfoPanel];
 
-        // Url necesarias para realizar petici�n
+        // Url necesarias para realizar petición
         this.urlForgetPasswordRequest = pParams.urlForgetPasswordRequest;
 
         // Mensajes preconfigurados de error
@@ -19643,18 +20126,18 @@ const operativaOlvidoPassword = {
     },
 
     /**
-    * Configuraci�n de los eventos
+    * Configuración de los eventos
     */
     configEvents: function () {
         const that = this;
 
-        // Bot�n de Aceptar - Solicitar link para cambio de contrase�a
+        // Botón de Aceptar - Solicitar link para cambio de contraseña
         this.btnEnviar.click(function (event) {
             // Ocultar por defecto posibles mensajes de error
             that.hideInfoPanels();
-            // Comprobar que el input no es vac�o
+            // Comprobar que el input no es vacío
             if (that.validarCampos()) {                
-                // Realizar la petici�n de cambio de contrase�a
+                // Realizar la petición de cambio de contraseña
                 that.cambiarPasswordSubmit();
             } else {                
                 that.forgetPasswordInfoPanel.html(that.msgInfoEmptyField);
@@ -19664,7 +20147,7 @@ const operativaOlvidoPassword = {
     },
 
     /**
-    * Comprobar que los campos indicados no est�n vac�os (email indicado por el usuario)
+    * Comprobar que los campos indicados no están vacíos (email indicado por el usuario)
     * @returns {bool}    
     */
     validarCampos: function () {
@@ -19672,19 +20155,19 @@ const operativaOlvidoPassword = {
     },
 
     /**
-    * Acci�n de petici�n de solicitar cambio de contrase�a por olvido
-    * Se disparar� al pulsar el bot�n y al validar que el campo del email no est� vac�o
+    * Acción de petición de solicitar cambio de contraseña por olvido
+    * Se disparará al pulsar el botón y al validar que el campo del email no está vacío
     */
     cambiarPasswordSubmit: function () {
         const that = this;
-        // Construcci�n del objeto dataPost
+        // Construcción del objeto dataPost
         var dataPost = {
             User: this.txtUserLogin.val()
         }
 
         MostrarUpdateProgress();
         GnossPeticionAjax(this.urlForgetPasswordRequest, dataPost, true).fail(function () {
-            // Mostrar mensaje de error con la informaci�n traida del backend
+            // Mostrar mensaje de error con la información traida del backend
             that.forgetPasswordInfoPanel.html(that.msgErrorForgetPasswordRequest);
             that.forgetPasswordInfoPanel.fadeIn("slow");            
             OcultarUpdateProgress();
@@ -20741,7 +21224,8 @@ $.Autocompleter = function(input, options) {
 		    q: lastWord(term),
 		    limit: options.max,
 		    cont: cont,
-		    lista: '',
+            lista: '',
+            organizacion: $("#inpt_organizacionID").val(),
 		    callback: 'autocomplete'
 		};
 		if (options.multiple) {
@@ -21629,11 +22113,18 @@ $(document).ready(function() {
         }               
     });
 
-    // Permitir carga de imagenes / zoom en pantalla completa al hacer click sobre ellas
-    $('img.fullScreen').fullscreenimage({
-        scale: 2 // magnify by 2 times when mouse moves over full screen image (set to 1 to disable)
-    });
-  
+    // Permitir carga de imagenes / zoom en pantalla completa al hacer click sobre ellas. Activarlo sólo si existe el plugin instalado
+    if (typeof $().fullscreenimage != "undefined"){
+        $('img.fullScreen').fullscreenimage({
+            scale: 2 // magnify by 2 times when mouse moves over full screen image (set to 1 to disable)
+        });
+    }
+    
+
+
+    // Comportamiento de navegación back button del navegador
+    operativaDetectarNavegacionBackButton.init();
+      
 });
 
 /* Evitar ocultamiento de faceta cuando se utiliza el datepicker para seleccionar meses */
@@ -22194,16 +22685,16 @@ var buscadorCabecera = {
         this.config();
         this.wrapBuscador.show();
         this.anchoSearchGroup = this.searchGroup.width();
-        // Nuevo Front. Cargaba recursos, y m�s opciones cuando el usuario no estaba registrado (Lo montaba despu�s del buscador). No tiene sentido
+        // Nuevo Front. Cargaba recursos, y más opciones cuando el usuario no estaba registrado (Lo montaba después del buscador). No tiene sentido
         //this.montarSelector();
-        // A simple vista, no monta ninguna opci�n. Parece ser un submen�. Ahora con nuevo Front no har�a falta.
+        // A simple vista, no monta ninguna opción. Parece ser un submenú. Ahora con nuevo Front no haría falta.
         //this.montarOpciones();
         this.marcarDefaultInput();
         // Asocia clase cuando hay "focus". Lo elimino de momento
         //this.engancharInput();
         // Comportamiento para paneles y subpaneles (Desplegado, no desplegado). Para el nuevo Front, lo elimino de momento
         //this.engancharSelector();
-        // C�lculo din�mico de paneles del viejo front. De momento lo oculto
+        // Cálculo dinámico de paneles del viejo front. De momento lo oculto
         //this.engancharOpciones();
         // Comportamiento de establecer "selected" a opciones. Para el nuevo Front, lo elimino de momento
         //this.defaultSeleccionado();
@@ -22402,15 +22893,15 @@ function DesplegarAccionConPanelIDMVC(pPanelCopiar, pBoton, pPanelID) {
 // Desplegar y mostrar la vista o contenido devuelto de una petición vía urlAccion para ser mostrado en el panel pPanelID
 /**
  * 
- * @param urlAccion: URL de la petición que será pasada al controller para que este devuelva datos (Puede ser una vista y datos que se controlar�n en el modelo de la p�gina)
+ * @param urlAccion: URL de la petición que será pasada al controller para que este devuelva datos (Puede ser una vista y datos que se controlarán en el modelo de la página)
  * @param {any} pBoton: Botón que ha desplegado la acción.
  * @param {any} pPanelID: ID del panel donde se devolverá ese código HTML devuelto por la petición mandada en el parámetro urlAccion
  * @param {any} pArg: Argumentos adicionales
  */
 function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {    
-    // Panel principal (padre) donde se mostrar�n todos los paneles
+    // Panel principal (padre) donde se mostrarán todos los paneles
     var panel = $('#' + pPanelID);    
-    // Panel donde se mostrar� el contenido
+    // Panel donde se mostrará el contenido
     var panelContent = panel.children('#content');
     // Panel de mensajes de OK/KO del contenedor padre (Posible error en la carga del servidor)
     var panelMessagesResult = panel.children().children('#resource-message-results');    
@@ -22424,18 +22915,18 @@ function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
         params = null;
     }
 
-    // Realizar la petici�n AJAX
+    // Realizar la petición AJAX
     GnossPeticionAjax(urlAccion, params, true).done(function (data) {        
         panelContent.html(data);        
         // Ocultar panel de mensajes mensajes
         panelMessagesResult.css("display", "none");       
         panelContent.css("display", "block");
-        // Llamar a inicializar las DataTable dentro del modal para acci�n "Historico" en Recurso
+        // Llamar a inicializar las DataTable dentro del modal para acción "Historico" en Recurso
         accionHistorial.montarTabla();
-        // Llamar a inicializar los despliegues para acci�n "Categorizar" en Recurso        
+        // Llamar a inicializar los despliegues para acción "Categorizar" en Recurso        
         accionDesplegarCategorias.init();
 
-        // Recargar CKEditor si hubiera alg�n Input con clase de CKEditor
+        // Recargar CKEditor si hubiera algún Input con clase de CKEditor
         if ($(panelContent).find('.cke').length > 0) RecargarTodosCKEditor(); 
 
     }).fail(function (data) {
@@ -22524,11 +23015,11 @@ function DesvincularSharepoint() {
 
 
 
-// Resetear el contenido del contenedor Modal para que la informaci�n no est� visible y tenga que volver a cargarse de nuevo.
+// Resetear el contenido del contenedor Modal para que la información no está visible y tenga que volver a cargarse de nuevo.
 // El contenedor #modal-container es utilizado para albergar modales de un Recurso de tal manera que pueda reutilizarse cada vez que este se cierra.
-// Ej: En ficha de recurso, el modal "Historico" se carga de forma din�mica. Cuando se cierre el contenedor padre, habr�a que quitar el contenido para volver a ser reutilizado
+// Ej: En ficha de recurso, el modal "Historico" se carga de forma dinámica. Cuando se cierre el contenedor padre, habrá que quitar el contenido para volver a ser reutilizado
 var resetModalContainer = {
-    // Inicializar el comportamiento cuando la p�gina web est� cargada
+    // Inicializar el comportamiento cuando la página web está cargada
     init: function () {        
         $("#modal-container").on("hidden.bs.modal", function () {
             // Añadir la clase por defecto para que se muestre en el top de la página
@@ -22549,19 +23040,19 @@ var resetModalContainer = {
             initialContainerContent += '<div class="ok"></div>';
             initialContainerContent += '<div class="ko"></div>';
             initialContainerContent += '</div>';
-            // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abri� antes el modal)
+            // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abrió antes el modal)
             panelToReset.html(initialContainerContent).fadeIn();
         });
         return;
     },
 
        
-    // Vaciar el contenedor de un modal y dejarlo como "loading" hasta que este vuelva a llenarse con datos v�a API REST (Ficha Recurso: Eliminar - Eliminar Selectivo)
+    // Vaciar el contenedor de un modal y dejarlo como "loading" hasta que este vuelva a llenarse con datos vía API REST (Ficha Recurso: Eliminar - Eliminar Selectivo)
     // Sirve para volver a llenar un modal sin que este sea cerrado.
     resetModalContent: function () {
         // Contenedor padre de los modales
         var $modalContainer = $("#modal-container");
-        // Panel donde se vaciar� el contenido actual para emular la carga (Loading)
+        // Panel donde se vaciará el contenido actual para emular la carga (Loading)
         var panelToReset = $modalContainer.find("#content");
         // HTML que cargaremos de nuevo una vez se cierre el formulario (resetearlo de inicio)
         var initialContainerContent = '';
@@ -22577,7 +23068,7 @@ var resetModalContainer = {
         initialContainerContent += '<div class="ok"></div>';
         initialContainerContent += '<div class="ko"></div>';
         initialContainerContent += '</div>';
-        // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abri� antes el modal)
+        // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abrió antes el modal)
         panelToReset.html(initialContainerContent);       
     },
 };
@@ -22719,11 +23210,11 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
     $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
     $(that).addClass("eleccionUsuario");
 
-    // Par�metros
+    // Parámetros
     var funcionVotarInvertido = "AccionRecurso_VotarEliminar(this, '" + urlVotarRecursoInvertido + "', '" + urlVotarRecurso + "')";
     var iconoVoto = "thumb_up_alt";
     //var iconoVotoInvertido = "thumb_down_alt";
-    // Ser� el mismo icono pero cambiado el color
+    // Será el mismo icono pero cambiado el color
     var iconoVotoInvertido = iconoVoto;
     var nombreClaseVotoOK = "activo"
     var claseMaterialIcons = "material-icons";
@@ -22737,7 +23228,7 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
     $(that).html("");    
     // Elimino la clase de material icons para poder cambiar el color
     $(that).removeClass(claseMaterialIcons);    
-    // Muestrar loading hasta que se complete la petici�n de "Votar"
+    // Muestrar loading hasta que se complete la petición de "Votar"
     $(that).addClass(loadingClass);
 
     if (urlVotarRecurso != "") {
@@ -22749,18 +23240,18 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
             }
             // Cambiar icono a Voto negativo        
             $(that).html(iconoVotoInvertido);
-            // Cambiar la funci�n a realizar a Voto negativo
+            // Cambiar la función a realizar a Voto negativo
             $(that).attr("onclick", funcionVotarInvertido);
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
-            // A�ado la clase de megusta directamente al padre
+            // Añado la clase de megusta directamente al padre
             $(that).parent().toggleClass(nombreClaseVotoOK);
             $(that).removeClass(loadingClass);
-            // Cambiar el n�mero del voto realizado a +1
+            // Cambiar el número del voto realizado a +1
             numVotosActual += 1;
             $numVotos.html(numVotosActual);
         }).fail(function (data) {
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
             // Cambiar el loading y volver a como estaba antes (original) del error        
             $(that).html(iconoVoto);
@@ -22768,7 +23259,7 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
             if (data == "invitado") { operativaLoginEmergente.init(); }
         });
     } else {
-        // A�ado de nuevo la clase de material icons
+        // Añado de nuevo la clase de material icons
         $(that).addClass(claseMaterialIcons);
         // Cambiar el loading y volver a como estaba antes (original) del error        
         $(that).html(iconoVoto);
@@ -22840,11 +23331,11 @@ function AccionRecurso_VotarNegativoListado(that, urlVotarRecurso) {
 }
 
 /**
- * Acci�n de realizar voto negativo de un recurso. Realizaci�n de una forma m�s visual.
- * - Aparecer� un peque�o "Loading" durante la acci�n del voto
- * - Actualizar� el num de votos cuando finalice la acci�n
- * - Estar� disponible la acci�n inversa cuando finalice el voto realizado.
- * @param {any} that: El bot�n pulsado (Span) con el icono de thumbs_up_alt
+ * Acción de realizar voto negativo de un recurso. Realizarán de una forma más visual.
+ * - Aparecerá un pequño "Loading" durante la acción del voto
+ * - Actualizará el num de votos cuando finalice la acción
+ * - Estará disponible la acción inversa cuando finalice el voto realizado.
+ * @param {any} that: El botón pulsado (Span) con el icono de thumbs_up_alt
  * @param {any} urlVotarRecurso: La URL para realizar el voto
  * @param {any} urlVotarRecursoInvertido: La URL para realizar el voto contrario/invertido
  */
@@ -22852,11 +23343,11 @@ function AccionRecurso_VotarNegativoListado(that, urlVotarRecurso) {
 function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInvertido) {
     $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
 
-    // Par�metros
+    // Parámetros
     var funcionVotarInvertido = "AccionRecurso_VotarPositivo(this, '" + urlVotarRecursoInvertido + "', '" + urlVotarRecurso + "')";
     var iconoVoto = "thumb_up_alt";
     //var iconoVotoInvertido = "thumb_up_alt";
-    // Ser� el mismo icono pero cambiado el color
+    // Será el mismo icono pero cambiado el color
     var iconoVotoInvertido = iconoVoto;
     var nombreClaseVotoOK = "activo"
     var claseMaterialIcons = "material-icons";
@@ -22870,7 +23361,7 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
     $(that).html("");
     // Elimino la clase de material icons para poder cambiar el color
     $(that).removeClass(claseMaterialIcons);
-    // Muestrar loading hasta que se complete la petici�n de "Votar"
+    // Muestrar loading hasta que se complete la petición de "Votar"
     $(that).addClass(loadingClass);
 
 
@@ -22882,18 +23373,18 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
             }
             // Cambiar icono a Voto negativo        
             $(that).html(iconoVotoInvertido);
-            // Cambiar la funci�n a realizar a Voto negativo
+            // Cambiar la función a realizar a Voto negativo
             $(that).attr("onclick", funcionVotarInvertido);
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
             $(that).removeClass(loadingClass);
-            // A�adimos la clase para el color a voto realizado (Like)
+            // Añadimos la clase para el color a voto realizado (Like)
             $(that).parent().toggleClass(nombreClaseVotoOK);
-            // Cambiar el n�mero del voto realizado a +1
+            // Cambiar el número del voto realizado a +1
             numVotosActual -= 1;
             $numVotos.html(numVotosActual);
         }).fail(function (data) {
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
             // Cambiar el loading y volver a como estaba antes (original) del error        
             $(that).html(iconoVoto);
@@ -22902,7 +23393,7 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
             if (error == 'Invitado') { operativaLoginEmergente.init(); }
         });
     } else {
-        // A�ado de nuevo la clase de material icons
+        // Añado de nuevo la clase de material icons
         $(that).addClass(claseMaterialIcons);
         // Cambiar el loading y volver a como estaba antes (original) del error        
         $(that).html(iconoVoto);
@@ -23034,7 +23525,7 @@ function AccionRecurso_VincularSharepoint(prueba, documentoID) {
 
 /**
  * Mostrar el mensaje correcto de recurso desvinculado. 
- * Seguidamente, realiza la petici�n para cargar los nuevos recursos vinculados.
+ * Seguidamente, realiza la petición para cargar los nuevos recursos vinculados.
  * @param {any} urlDesvincularRecurso
  * @param {any} urlCargarVinculados
  * @param {any} documentoID
@@ -23073,10 +23564,10 @@ function Vinculados_CargarVinculados(urlCargarVinculados) {
 }
 
 /**
- * Actualizar la acci�n para poder certificar un recurso. Debido al cambio del Front, ahora no se hace mediante "Select" sino con Radio
- * @param {any} urlPaginaCertificar: Url para realizar la acci�n de certificar un recurso.
+ * Actualizar la acción para poder certificar un recurso. Debido al cambio del Front, ahora no se hace mediante "Select" sino con Radio
+ * @param {any} urlPaginaCertificar: Url para realizar la acción de certificar un recurso.
  * @param {any} documentoID: Documento ID o identificador del recurso.
- * @param {any} textoCertificado: Parece ser simplemente el texto de "certificaci�n".
+ * @param {any} textoCertificado: Parece ser simplemente el texto de "certificación".
  */
 function AccionRecurso_Certificar_Aceptar(urlPaginaCertificar, documentoID, textoCertificado) {
     MostrarUpdateProgress();
@@ -23084,9 +23575,9 @@ function AccionRecurso_Certificar_Aceptar(urlPaginaCertificar, documentoID, text
     // var comboCertificado = $("#comboCertificado_" + documentoID);
     // var valorSeleccionado = comboCertificado.find("option:selected").text();   
 
-    // Cogemos el atributo "data-value" que ser� el valor de la label elegida
+    // Cogemos el atributo "data-value" que será el valor de la label elegida
     var valorSeleccionado = $('input[name=certificar-recurso]:checked').attr("data-value");
-    // Cogemos id o value (no el texto en bruto) de la opci�n seleccionada en el radio button.
+    // Cogemos id o value (no el texto en bruto) de la opción seleccionada en el radio button.
     var opcionSeleccionada = $('input[name=certificar-recurso]:checked').attr("data-option");
     
     var dataPost = {
@@ -23440,7 +23931,7 @@ function AccionRecurso_AgregarCategorias_Aceptar(urlAgregarCategorias, documento
         // panelDespl.find('#divSelCatTesauro').html(html);
         //panelDespl.find('.divCategorias').html(html);        
         panelDespl.find('#panCategoriasTesauroArbol').html(html);
-        // Llamar a inicializar los despliegues para acci�n "Compartir" en Recurso        
+        // Llamar a inicializar los despliegues para acción "Compartir" en Recurso        
         accionDesplegarCategorias.init()
 
         panelDespl.find('#txtSeleccionados').val('');
@@ -24020,7 +24511,7 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
     const panTextoComentario = $(panComentario).find('.comentario-contenido');
     const mensajeAntiguo = panTextoComentario.html();
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     let plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -24044,7 +24535,7 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
     plantillaPanelHtml += '<div class="ko"></div>';
     plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
-    // Panel de botones para la acci�n
+    // Panel de botones para la acción
     plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
     plantillaPanelHtml += '<button class="btn btn-primary">Editar comentario</button>'
     plantillaPanelHtml += '</div>';
@@ -24052,7 +24543,7 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
     plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones
@@ -24266,7 +24757,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     // Panel dinamico del modal padre donde se insertara la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     let plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -24290,7 +24781,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     plantillaPanelHtml += '<div class="ko"></div>';
     plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
-    // Panel de botones para la acci�n
+    // Panel de botones para la acción
     plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
     plantillaPanelHtml += '<button class="btn btn-primary">' + mensajes.enviar + '</button>'
     plantillaPanelHtml += '</div>';
@@ -24298,7 +24789,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones
@@ -24670,18 +25161,18 @@ function AccionFichaRecSemCms(boton) {
 }/**/ 
 /*MVC.FichaPerfil.js*/ 
 ﻿/**
- * Acci�n de seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el bot�n "Seguir"
- * @param {any} that: El bot�n que ha disparado la acci�n
+ * Acción de seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el botón "Seguir"
+ * @param {any} that: El botón que ha disparado la acción
  * @param {any} urlSeguirPerfil: URL a la que hay que llamar para realizar la llamda de "No seguir"
  */
 function AccionPerfil_Seguir(that, urlSeguirPerfil) {
 
-    // Icono del bot�n clickeado
+    // Icono del botón clickeado
     const buttonIcon = $(that).find("span.material-icons");
     const oldIconButton = buttonIcon.text();
     const oldTextButton = $(that).find(".texto").text();
                
-    // Textos e iconos una vez pulsado el bot�n
+    // Textos e iconos una vez pulsado el botón
     let newTextButton = "";
     let newIconButton = "";
     const loadingClass = "spinner-border spinner-border-sm mr-2 pr-0";
@@ -24731,19 +25222,19 @@ function AccionPerfil_Seguir(that, urlSeguirPerfil) {
 }
 
 /**
- * Acci�n de no seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el bot�n "No seguir"
- * Cambiar� el nombre al bot�n indicando "Siguiendo"
- * Eliminar� el atributo onClick para que no se vuelva a ejecutar la acci�n del bot�n
- * @param {any} that: El bot�n que ha disparado la acci�n
+ * Acción de no seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el botón "No seguir"
+ * Cambiará el nombre al botón indicando "Siguiendo"
+ * Eliminará el atributo onClick para que no se vuelva a ejecutar la acción del botón
+ * @param {any} that: El botón que ha disparado la acción
  * @param {any} urlNoSeguirPerfil: URL a la que hay que llamar para realizar la llamda de "No seguir"
  */
 function AccionPerfil_NoSeguir(that, urlNoSeguirPerfil) {
 
-    // Icono del bot�n
+    // Icono del botón
     var buttonIcon = $(that).find("span.material-icons");
-    // Texto del bot�n
+    // Texto del botón
     var textButton = $(buttonIcon).siblings();
-    // Textos e iconos una vez pulsado el bot�n
+    // Textos e iconos una vez pulsado el botón
     var newTextButton = "Sin seguimiento";
     var newIconButton = "person_outline";
     
@@ -24754,7 +25245,7 @@ function AccionPerfil_NoSeguir(that, urlNoSeguirPerfil) {
     });
     // Nuevo Front
     //$(that).parent().remove();
-    // Cambiar el nombre e icono del bot�n
+    // Cambiar el nombre e icono del botón
     ChangeButtonAndText(that, newTextButton, newIconButton, "btn-primary");
 }
 
@@ -24839,15 +25330,15 @@ function AccionPerfil_Seguir_Listado(that, urlSeguir, followUser) {
 }
 
 /**
- * Cambiar el texto, el icono (material-icons) y eliminar el evento click de un bot�n
- * @param {any} button: El bot�n que se desea modificar
- * @param {any} newTextButton: El nuevo texto que tendr� el bot�n
- * @param {any} newIconButton: El nuevo icono (material-icons) que tendr� el bot�n
- * @param {any} classToBeDeleted: La clase que se eliminar� del bot�n 
+ * Cambiar el texto, el icono (material-icons) y eliminar el evento click de un botón
+ * @param {any} button: El botón que se desea modificar
+ * @param {any} newTextButton: El nuevo texto que tendrá el botón
+ * @param {any} newIconButton: El nuevo icono (material-icons) que tendrá el botón
+ * @param {any} classToBeDeleted: La clase que se eliminará del botón 
  */
 function ChangeButtonAndText(button, newTextButton, newIconButton, classToBeDeleted) {
 
-    // Icono del bot�n
+    // Icono del botón
     var buttonIcon = $(button).find("span.material-icons");
     var textButton = "";
     var icon = "";
@@ -24861,35 +25352,35 @@ function ChangeButtonAndText(button, newTextButton, newIconButton, classToBeDele
         textButton = $(buttonIcon).siblings();
     }
 
-    // Cambiar nombre al bot�n 
+    // Cambiar nombre al botón 
     textButton.text(newTextButton);
-    // Cambiar el icono al bot�n
+    // Cambiar el icono al botón
     buttonIcon.text(newIconButton);
-    // A�adir cursor: normal
+    // Añadir cursor: normal
     if (classToBeDeleted != undefined) {
         $(button).css("cursor", "auto");
-        // Quitar el estilo de bot�n (no clickeable)
+        // Quitar el estilo de botón (no clickeable)
         $(button).removeClass(classToBeDeleted);
     }    
 }
 
 
 /**
- * Acci�n que se ejecuta cuando se pulsa sobre las acciones disponibles de un perfil para mandar un "Email". 
- * @param {string} titulo: T�tulo que tendr� el panel modal 
- * @param {string} texto: El texto o mensaje a modo de t�tulo que se mostrar� para que el usuario sepa la acci�n que se va a realizar
- * @param {string} id: Identificador de la persona sobre el que se aplicar� la acci�n 
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * Acción que se ejecuta cuando se pulsa sobre las acciones disponibles de un perfil para mandar un "Email". 
+ * @param {string} titulo: Título que tendrá el panel modal 
+ * @param {string} texto: El texto o mensaje a modo de título que se mostrará para que el usuario sepa la acción que se va a realizar
+ * @param {string} id: Identificador de la persona sobre el que se aplicará la acción 
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  * */
 function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-container") {
     
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Declaraci�n de la acci�n que se realizar� al hacer click en Enviar mensaje
+    // Declaración de la acción que se realizará al hacer click en Enviar mensaje
     var accion = "EnviarMensaje('" + urlPagina + "', '" + id + "');";
     
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -24920,15 +25411,15 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
                     plantillaPanelHtml += '<div class="ko"></div>';
                 plantillaPanelHtml += '</div>';
             plantillaPanelHtml += '</div>';
-        // Panel de botones para la acci�n
+        // Panel de botones para la acción
             plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
                 plantillaPanelHtml += '<button class="btn btn-primary">' + mensajes.enviar + '</button>'                
             plantillaPanelHtml += '</div>';
         plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones
@@ -24936,7 +25427,7 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
 
     RecargarTodosCKEditor();
 
-    // Asignaci�n de la funci�n al bot�n "S�" o de acci�n
+    // Asignación de la función al botón "Sí" o de acción
     $(botones[0]).on("click", function () {
         EnviarMensaje(urlPagina, id);
     });   
@@ -24944,8 +25435,8 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
 }
 
 /**
- * Acci�n que se ejecuta para mandar un email a un contacto. Ej: Desde el perfil de un usuario, se puede pulsar en el bot�n "Escribir mensaje".
- * Esta acci�n es ejecutada desde AccionEnviarMensajeMVC
+ * Acción que se ejecuta para mandar un email a un contacto. Ej: Desde el perfil de un usuario, se puede pulsar en el botón "Escribir mensaje".
+ * Esta acción es ejecutada desde AccionEnviarMensajeMVC
  * @param {any} urlPagina
  * @param {any} id
  */
@@ -24971,7 +25462,7 @@ function EnviarMensaje(urlPagina, id) {
             }, 1500)
         }).fail(function (data) {
             //DesplegarResultadoAccionMVC("desplegable_" + id, false, "");
-            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Se ha producido un error al enviar el mensaje. Por favor int�ntalo de nuevo m�s tarde.");
+            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Se ha producido un error al enviar el mensaje. Por favor insertándolo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
         });
@@ -25056,8 +25547,8 @@ function AgregarContacto(urlPagina) {
 }
 
 /**
- * Acción de mandar a API endPoint la acci�n de Eliminar un contacto
- * @param {any} urlPagina: Url a para ejecutar la acci�n
+ * Acción de mandar a API endPoint la acción de Eliminar un contacto
+ * @param {any} urlPagina: Url a para ejecutar la acción
  */
 function EliminarContacto(urlPagina) {
     var dataPost = {
@@ -25114,26 +25605,26 @@ function EliminarPersona(urlPagina) {
 }
 
 /**
- * Acci�n para expulsar a una persona de una comunidad. Se ejecuta cuando (por ejemplo) se selecciona desde listado de personas, la opci�n de "Expulsar"
- * Se cargar� un nuevo modal para hacer la gesti�n de la explusi�n
- * @param {any} urlPagina: Url a la que se realizar� la petici�n para expulsar a la persona
- * @param {any} id: Identificador de la persona a la que se expulsar�
+ * Acción para expulsar a una persona de una comunidad. Se ejecuta cuando (por ejemplo) se selecciona desde listado de personas, la opción de "Expulsar"
+ * Se cargará un nuevo modal para hacer la gestión de la explusión
+ * @param {any} urlPagina: Url a la que se realizará la petición para expulsar a la persona
+ * @param {any} id: Identificador de la persona a la que se expulsará
  * @param {any} titulo: Titulo de la ventana modal
- * @param {any} textoBotonPrimario: Titulo del bot�n primario
- * @param {any} textoBotonSecundario: Titulo del bot�n secundario (No/Cancelar)
- * @param {any} texto: Explicaci�n de la acci�n de expulsar usuario
-  * @param {any} accionCambiarNombreHtml: Accion JS que servir� para cambiar el nombre del elemento una vez se proceda a expulsar a una persona.
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * @param {any} textoBotonPrimario: Titulo del botón primario
+ * @param {any} textoBotonSecundario: Titulo del botón secundario (No/Cancelar)
+ * @param {any} texto: Explicación de la acción de expulsar usuario
+  * @param {any} accionCambiarNombreHtml: Accion JS que servirá para cambiar el nombre del elemento una vez se proceda a expulsar a una persona.
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
 function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundario, texto, accionCambiarNombreHtml, idModalPanel = "#modal-container") {
     
-    // Acci�n que se ejecutar� al pulsar sobre el bot�n primario (Realizar la acci�n de Expulsar)
+    // Acción que se ejecutará al pulsar sobre el botón primario (Realizar la acción de Expulsar)
     var accion = "EnviarAccionExpulsar('" + urlPagina + "', '" + id + "');";
 
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -25147,7 +25638,7 @@ function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundari
                 plantillaPanelHtml += '<label class="control-label">' + texto + '</label>';
             plantillaPanelHtml += '</div>';
 
-        // Cuerpo del panel -> TextArea para enviar un email explicando la raz�n de la expulsi�n
+        // Cuerpo del panel -> TextArea para enviar un email explicando la razón de la expulsión
             plantillaPanelHtml += '<div class="form-group">';
                 plantillaPanelHtml += '<label for="txtMotivoExpulsion_'+ id +'">'+ accionesUsuarioAdminComunidad.motivoExpulsion +'</label>';
                 plantillaPanelHtml += '<textarea class="form-control" id="txtMotivoExpulsion_'+id+'" rows="3"></textarea>';
@@ -25161,7 +25652,7 @@ function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundari
                         plantillaPanelHtml += '<div class="ko"></div>';
                     plantillaPanelHtml += '</div>';
                 plantillaPanelHtml += '</div>';
-            // Panel de botones para la acci�n
+            // Panel de botones para la acción
                 plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
                     plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">' + textoBotonSecundario + '</button>'
                     plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1" onclick="' + accion + '">'+ textoBotonPrimario + ", " + accionesUsuarioAdminComunidad.expulsarUsuario + '</button>'
@@ -25169,23 +25660,23 @@ function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundari
             plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
-    // Asignar acciones adicionales al bot�n primario (Cambiar nombre del html)
+    // Asignar acciones adicionales al botón primario (Cambiar nombre del html)
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
 
-    // Asignaci�n de la funci�n al bot�n "S�" o de acci�n
+    // Asignación de la función al botón "Sí" o de acción
     $(botones[1]).on("click", function () {
         // Ocultar el panel modal de bootstrap si hiciera falta        
     }).click(accionCambiarNombreHtml);
 }
 
 /**
- * Enviar la nueva petici�n del cambio de expulsi�n de una comunidad a un perfil sobre el que se ha pulsado el bot�n de "S�, Expulsar" del modal.
- * @param {any} urlPagina: Url donde se lanzar� la petici�n para cambiar el rol
+ * Enviar la nueva petición del cambio de expulsión de una comunidad a un perfil sobre el que se ha pulsado el botón de "Sí, Expulsar" del modal.
+ * @param {any} urlPagina: Url donde se lanzará la petición para cambiar el rol
  * @param {any} id: Identificador de la persona 
  */
 function EnviarAccionExpulsar(urlPagina, id) {
@@ -25211,7 +25702,7 @@ function EnviarAccionExpulsar(urlPagina, id) {
         }).fail(function (data) {
             // Cambiado por nuevo front
             //DesplegarResultadoAccionMVC("desplegable_" + id, false, "");
-            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de expulsar al perfil de la comunidad. Por favor, int�ntalo de nuevo m�s tarde.");
+            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de expulsar al perfil de la comunidad. Por favor, insertándolo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
         });
@@ -25224,15 +25715,15 @@ function EnviarAccionExpulsar(urlPagina, id) {
 }
 
 /**
- * Acci�n que se ejecuta cuando se pulsa sobre la acci�n de "Cambiar rol" disponible en un item/recurso de tipo "Perfil" encontrado por el buscador.  
- * @param {string} id: Identificador del recurso (en este caso de la persona) sobre el que se aplicar� la acci�n 
+ * Acción que se ejecuta cuando se pulsa sobre la acción de "Cambiar rol" disponible en un item/recurso de tipo "Perfil" encontrado por el buscador.  
+ * @param {string} id: Identificador del recurso (en este caso de la persona) sobre el que se aplicará la acción 
  * @param {any} rol: El rol actual del recurso (Perfil) clickeado
- * @param {any} urlPagina: Pagina sobre la que se lanzar� la llamada para realizar la acci�n de cambiar rol
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * @param {any} urlPagina: Pagina sobre la que se lanzará la llamada para realizar la acción de cambiar rol
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
 function CambiarRol(id, rol, urlPagina, idModalPanel = "#modal-container") {
 
-    // Acci�n que se ejecutar� al pulsar sobre el bot�n primario (Realizar la acci�n de cambiar rol)
+    // Acción que se ejecutará al pulsar sobre el botón primario (Realizar la acción de cambiar rol)
     var accion = "EnviarAccionCambiarRol('" + urlPagina + "', '" + id + "', '" + rol + "');";
     // Permisos para pintar los checkbox a mostrar al usuario
     var checkedAdmin = '';
@@ -25249,10 +25740,10 @@ function CambiarRol(id, rol, urlPagina, idModalPanel = "#modal-container") {
         checkedUsuario = ' checked';
     }
 
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -25289,24 +25780,24 @@ function CambiarRol(id, rol, urlPagina, idModalPanel = "#modal-container") {
                 plantillaPanelHtml += '<div class="ko"></div>';
             plantillaPanelHtml += '</div>';
         plantillaPanelHtml += '</div>';
-    // Panel de botones para la acci�n
+    // Panel de botones para la acción
         plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
             plantillaPanelHtml += '<button class="btn btn-primary" onclick="'+ accion +'">' + accionesUsuarioAdminComunidad.cambiarRol + '</button>'            
         plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 plantillaPanelHtml += '</div>';
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
 }
 
 /**
- * Enviar la nueva petici�n del cambio de rol una vez se ha pulsado sobre el bot�n de "Cambiar rol"
- * @param {any} urlPagina: Url donde se lanzar� la petici�n para cambiar el rol
+ * Enviar la nueva petición del cambio de rol una vez se ha pulsado sobre el botón de "Cambiar rol"
+ * @param {any} urlPagina: Url donde se lanzará la petición para cambiar el rol
  * @param {any} id: Identificador de la persona
- * @param {any} rol: Rol actual de la persona. Si es el mismo, no har�a nada
+ * @param {any} rol: Rol actual de la persona. Si es el mismo, no hará nada
  */
 function EnviarAccionCambiarRol(urlPagina, id, rol) {
     var rolNuevo = $('input[name="cambiarRol_' + id + '"]:checked').val();
@@ -25329,7 +25820,7 @@ function EnviarAccionCambiarRol(urlPagina, id, rol) {
                 $('#modal-container').modal('hide');
             }, 1500)
         }).fail(function (data) {
-            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de cambiar el rol. Por favor, int�ntalo de nuevo m�s tarde.");
+            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de cambiar el rol. Por favor, insertándolo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
         });        
@@ -26484,7 +26975,7 @@ function MVCDesplegarPanel(pPanel) {
 }
 
 /**
- * Método para filtrar elementos. En este caso, en la lista de Categor�as, modo "Lista" de la ficha Recurso.
+ * Método para filtrar elementos. En este caso, en la lista de Categorías, modo "Lista" de la ficha Recurso.
  * Al teclear en el input, filtrará (ocultará) los elementos que no correspondan con el texto de la búsqueda
  * @param {any} txt
  * @param {any} panDesplID
@@ -26622,10 +27113,10 @@ function MVCMarcarTodosElementosCat(pCheck, panDesplID, hackedInputId = undefine
 }
 
 /**
- * Acci�n que se ejecuta cuando se selecciona un item de categor�a para ser seleccionado e introducido en un input vac�o para as� tener control sobre el elemento que se ha seleccionado.
- * @param {any} pCheck: Ser� el input check que se ha seleccionado.
- * @param {any} panDesplID: El id del panel donde se encontrar� el input vac�o.
- * @param {any} hackedInputId: El id del inputId que estar� oculto que se utilizar� para establecer opciones que puedan servir para mandar al servidor. Si no se pasa nada, se har� caso al panDesplID. En caso contrario, se acceder� al panDesplIDSecundario para buscar ese input
+ * Acción que se ejecuta cuando se selecciona un item de categoría para ser seleccionado e introducido en un input vacío para así tener control sobre el elemento que se ha seleccionado.
+ * @param {any} pCheck: Será el input check que se ha seleccionado.
+ * @param {any} panDesplID: El id del panel donde se encontrará el input vacío.
+ * @param {any} hackedInputId: El id del inputId que estará oculto que se utilizará para establecer opciones que puedan servir para mandar al servidor. Si no se pasa nada, se hará caso al panDesplID. En caso contrario, se accederá al panDesplIDSecundario para buscar ese input
  */
 function MVCMarcarElementoSelCat(pCheck, panDesplID, hackedInputId = undefined) {
     // Debido al nuevo Front - No se accede al padre sino al ID del propio Input
@@ -26792,7 +27283,7 @@ function mostrarPanSubirRecurso(nombre) {
 
 /**
  * /**
- * Acci�n que se ejecuta para comprobar que el Link adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Enlace externo" 
+ * Acción que se ejecuta para comprobar que el Link adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Enlace externo" 
  * @param {any} urlPaginaSubir: Url o enlace escrito por el usuario
  * @param {any} omitirCompRep
  */
@@ -26802,12 +27293,12 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
         var lblUrl = document.getElementById("lblIntroducirURL");
         var url = document.getElementById("txtURLDoc");
 
-        // Panel donde se mostrar�n posibles errores en la subida del un recurso de tipo Enlace Externo (Nuevo Front)
+        // Panel donde se mostrará posibles errores en la subida del un recurso de tipo Enlace Externo (Nuevo Front)
         const panelResourceFileErrorMessage = $('#modal-add-resource-link-messages-wrapper .ko');
         // Vaciar el panel de posibles errores anteriores y ocultarlo
         panelResourceFileErrorMessage.empty().hide(); 
 
-        var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
+        var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%()\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
         if (url.value.length > 0 && url.value.match(regexURL)) {          
             let enlaceASubir = url.value;
             if (enlaceASubir.includes("riamlab.sharepoint.com") || enlaceASubir.includes("riamlab-my.sharepoint.com")) {
@@ -26835,7 +27326,7 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
                     //$('#divURL').hide();
                     // Cambio por nuevo Front
                     //$('#liURL').append(data);                
-                    // A�adir el mensaje y mostrarlo
+                    // Añadir el mensaje y mostrarlo
                     panelResourceFileErrorMessage.append(data).show();
 
                 }).fail(function (data) {
@@ -26894,8 +27385,8 @@ $(document).on('change', '.custom-file-input', function (event) {
 });
 
 /**
- * Acci�n que se ejecuta para comprobar que el fichero adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Adjunto"
- * @param {any} urlPaginaSubir: P�gina a la que se redireccionar� para completar la creaci�n del recurso de tipo "Adjunto"
+ * Acción que se ejecuta para comprobar que el fichero adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Adjunto"
+ * @param {any} urlPaginaSubir: Página a la que se redireccionará para completar la creación del recurso de tipo "Adjunto"
  * @param {Boolean} omitirCompRep
  * @param {Boolean} extraArchivo
  */
@@ -26904,7 +27395,7 @@ function validarDocAdjuntarExt(urlPaginaSubir, omitirCompRep, extraArchivo) {
     {
         var lblDoc = document.getElementById("lblSelecionaUnDoc");
         var doc = document.getElementById("fuExaminar");
-        // Panel donde se mostrar�n posibles errores en la subida del archivo (Nuevo Front)
+        // Panel donde se mostrará posibles errores en la subida del archivo (Nuevo Front)
         const panelResourceFileErrorMessage = $('#modal-add-resource-file-messages-wrapper .ko');
         // Vaciar el panel de posibles errores anteriores y ocultarlo
         panelResourceFileErrorMessage.empty().hide(); 
@@ -26939,13 +27430,13 @@ function validarDocAdjuntarExt(urlPaginaSubir, omitirCompRep, extraArchivo) {
                 data.append("FileName", files[0].name);
 
                 GnossPeticionAjax(urlPaginaSubir + '/selectresource', data, true).done(function (data) {
-                    // No ocultar nada para reitentar el env�o o subida de un fichero
+                    // No ocultar nada para reitentar el envío o subida de un fichero
                     //$('#divArchivo').hide();
                     // Cambio por nuevo Front
                     // $('#liArchivo').append(data);
-                    // A�ado el error y muestro el div
+                    // Añado el error y muestro el div
                     panelResourceFileErrorMessage.append(data).show();
-                    // Mostrar de nuevo bot�n de "Siguiente" para reintentar env�o de fichero
+                    // Mostrar de nuevo botón de "Siguiente" para reintentar envío de fichero
                     $('#lbSiguienteArchivo').show();
                     
                 }).fail(function (data) {

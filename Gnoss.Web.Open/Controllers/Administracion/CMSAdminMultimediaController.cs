@@ -5,11 +5,13 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos.CMS;
+using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
+using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
@@ -54,6 +56,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "edicionPaginas no-max-width-container listado";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Estructura;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Multimedia;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "ESTRUCTURA");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "MULTIMEDIA");
+
             if (!ParametrosGeneralesRow.CMSDisponible)
             {
                 return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADGENERAL"));
@@ -97,6 +107,40 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return View();
         }
 
+
+        /// <summary>
+        /// Devolver la vista modal para crear un nuevo item de tipo Multimedia.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult CargarNuevoItem()
+        {
+            ActionResult partialView = View();
+
+            // Construir el modelo y comprobar
+            partialView = GnossResultHtml("_modal-views/_new-multimedia-item", null);
+
+            // Devolver la vista modal
+            return partialView;
+        }
+
+        /// <summary>
+        /// Devolver la vista modal para confirmar la eliminación de un item de tipo Multimedia.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult CargarEliminarMultimediaItem()
+        {
+            ActionResult partialView = View();
+
+            // Construir el modelo y comprobar
+            partialView = GnossResultHtml("_modal-views/_delete-multimedia-item", null);
+
+            // Devolver la vista modal
+            return partialView;
+        }
+
+
         public void CargarFichero()
         {
             bool error = false;
@@ -116,7 +160,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         string nombre = Path.GetFileNameWithoutExtension(file.Name).ToLower();
                         BinaryReader reader = new BinaryReader(fichero.OpenReadStream());
                         buffer1 = reader.ReadBytes((int)fichero.Length);
-                        string ruta = UtilArchivos.ContentImagenesProyectos + "/personalizacion/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "/cms/";
+                        string ruta = $"{UtilArchivos.ContentImagenesProyectos}/personalizacion/{ProyectoSeleccionado.Clave.ToString().ToLower()}/cms/";
 
                         if (ExtensionesImagenesPermitidas.Contains(extensionArchivo))
                         {
@@ -170,118 +214,137 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
             servicioImagenes.Url = UrlIntragnossServicios;
-            string ruta = UtilArchivos.ContentImagenesProyectos + "/personalizacion/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "/cms/";
-            string[] nombres = servicioImagenes.ObtenerIDsImagenesPorNombreImagen(ruta, pSearch);
+            string ruta = $"{UtilArchivos.ContentImagenesProyectos}/personalizacion/{ProyectoSeleccionado.Clave.ToString().ToLower()}/cms/";
+            List<FileInfoModel> datosFicheros = servicioImagenes.ObtenerDatosFicherosDeCarpeta(ruta);
 
-            SortedDictionary<string, string> listaResultados = new SortedDictionary<string, string>();
-            if (nombres != null)
-            {
-                foreach (string nombre in nombres)
-                {
-                    if (string.IsNullOrEmpty(pExtension) || nombre.EndsWith(pExtension))
-                    {
-                        listaResultados.Add(nombre, BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + ruta + nombre);
-                    }
-                }
-            }
-
+            List<MultimediaFileInfoModel> listaResultados = new List<MultimediaFileInfoModel>();
             SortedDictionary<string, List<CMSComponente>> listaComponentesItem = new SortedDictionary<string, List<CMSComponente>>();
             var listaPropiedadesImagen = gestorCMS.CMSDW.ListaCMSPropiedadComponente.Where(item => item.TipoPropiedadComponente.Equals((short)TipoPropiedadCMS.Imagen));
             var listaPropiedadesHtml = gestorCMS.CMSDW.ListaCMSPropiedadComponente.Where(item => item.TipoPropiedadComponente.Equals((short)TipoPropiedadCMS.HTML));
-            foreach (string nombre in listaResultados.Keys)
+            SortedDictionary<string, List<short>> listaPaginasItem = new SortedDictionary<string, List<short>>();
+            if (datosFicheros != null)
             {
-                listaComponentesItem.Add(nombre, new List<CMSComponente>());
-                var propiedadesDeImagen = listaPropiedadesImagen.Where(item => item.ValorPropiedad.Contains(listaResultados[nombre]));
-                foreach (var propiedad in propiedadesDeImagen)
+                foreach (FileInfoModel datos in datosFicheros)
                 {
-                    var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
-                    if (!listaComponentesItem[nombre].Contains(componente))
+                    if (string.IsNullOrEmpty(pExtension) || datos.file_name.EndsWith(pExtension))
                     {
-                        listaComponentesItem[nombre].Add(componente);
-                    }
-                }
+                        MultimediaFileInfoModel multimediaFileInfoModel = new MultimediaFileInfoModel();
+                        multimediaFileInfoModel.Path = $"{BaseURLContent}/{UtilArchivos.ContentImagenes}/{ruta}{datos.file_name}";
+                        multimediaFileInfoModel.FileInfo = datos;
+                        if (pSearch == null || (pSearch != null && datos.file_name.Contains(pSearch,StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            listaResultados.Add(multimediaFileInfoModel);
+                            /*
+                            listaComponentesItem.Add(multimediaFileInfoModel.FileInfo.file_name, new List<CMSComponente>());
+                            var propiedadesDeImagen = listaPropiedadesImagen.Where(item => item.ValorPropiedad.Contains(multimediaFileInfoModel.Path));
+                            foreach (var propiedad in propiedadesDeImagen)
+                            {
+                                var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
+                                if (!listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Contains(componente))
+                                {
+                                    listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Add(componente);
+                                }
+                            }
 
-                var propiedadesHtml = listaPropiedadesHtml.Where(item => item.ValorPropiedad.Contains(listaResultados[nombre]));
-                foreach (var propiedad in propiedadesHtml)
-                {
-                    var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
-                    if (!listaComponentesItem[nombre].Contains(componente))
-                    {
-                        listaComponentesItem[nombre].Add(componente);
+                            var propiedadesHtml = listaPropiedadesHtml.Where(item => item.ValorPropiedad.Contains(multimediaFileInfoModel.Path));
+                            foreach (var propiedad in propiedadesHtml)
+                            {
+                                var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
+                                if (!listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Contains(componente))
+                                {
+                                    listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Add(componente);
+                                }
+                            }
+
+                            listaPaginasItem.Add(multimediaFileInfoModel.FileInfo.file_name, new List<short>());
+
+                            foreach (CMSBloque bloque in gestorCMS.ListaBloques.Values)
+                            {
+                                foreach (string atributo in bloque.Atributos.Keys)
+                                {
+                                    if (bloque.Atributos[atributo].ToLower() == multimediaFileInfoModel.Path.ToLower())
+                                    {
+                                        if (!listaPaginasItem[multimediaFileInfoModel.FileInfo.file_name].Contains(bloque.TipoUbicacion))
+                                        {
+                                            listaPaginasItem[multimediaFileInfoModel.FileInfo.file_name].Add(bloque.TipoUbicacion);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            */
+                        }
                     }
                 }
             }
 
-
-            //SortedDictionary<string, List<CMSComponente>> listaComponentesItem = new SortedDictionary<string, List<CMSComponente>>();
-            //Dictionary<string, string> dicIdiomas = Conexion.ObtenerListaIdiomas();
-            //foreach (string nombre in listaResultados.Keys)
-            //{
-            //    listaComponentesItem.Add(nombre, new List<CMSComponente>());
-            //    foreach (CMSComponente componente in gestorCMS.ListaComponentes.Values)
-            //    {
-            //        if (componente.PropiedadesComponente.ContainsKey(TipoPropiedadCMS.Imagen))
-            //        {
-            //            foreach (string idioma in dicIdiomas.Keys)
-            //            {
-            //                if (listaResultados[nombre].ToLower() == UtilCadenas.ObtenerTextoDeIdioma(componente.PropiedadesComponente[TipoPropiedadCMS.Imagen], idioma, null).ToLower())
-            //                {
-            //                    if (!listaComponentesItem[nombre].Contains(componente))
-            //                    {
-            //                        listaComponentesItem[nombre].Add(componente);
-            //                    }
-            //                }
-            //            }
-            //        }
-            //        if (componente.PropiedadesComponente.ContainsKey(TipoPropiedadCMS.HTML))
-            //        {
-            //            if (componente.PropiedadesComponente[TipoPropiedadCMS.HTML].ToLower().Contains(listaResultados[nombre].ToLower()))
-            //            {
-            //                if (!listaComponentesItem[nombre].Contains(componente))
-            //                {
-            //                    listaComponentesItem[nombre].Add(componente);
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-            SortedDictionary<string, List<short>> listaPaginasItem = new SortedDictionary<string, List<short>>();
-            foreach (string nombre in listaResultados.Keys)
+            
+            /*
+            foreach (MultimediaFileInfoModel multimediaFileInfo in listaResultados)
             {
-                listaPaginasItem.Add(nombre, new List<short>());
+                listaComponentesItem.Add(multimediaFileInfo.FileInfo.file_name, new List<CMSComponente>());
+                var propiedadesDeImagen = listaPropiedadesImagen.Where(item => item.ValorPropiedad.Contains(multimediaFileInfo.Path));
+                foreach (var propiedad in propiedadesDeImagen)
+                {
+                    var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
+                    if (!listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Contains(componente))
+                    {
+                        listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Add(componente);
+                    }
+                }
+
+                var propiedadesHtml = listaPropiedadesHtml.Where(item => item.ValorPropiedad.Contains(multimediaFileInfo.Path));
+                foreach (var propiedad in propiedadesHtml)
+                {
+                    var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
+                    if (!listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Contains(componente))
+                    {
+                        listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Add(componente);
+                    }
+                }
+            }
+            */
+
+            /*
+            foreach (MultimediaFileInfoModel multimediaFileInfo in listaResultados)
+            {
+                listaPaginasItem.Add(multimediaFileInfo.FileInfo.file_name, new List<short>());
 
                 foreach (CMSBloque bloque in gestorCMS.ListaBloques.Values)
                 {
                     foreach (string atributo in bloque.Atributos.Keys)
                     {
-                        if (bloque.Atributos[atributo].ToLower() == listaResultados[nombre].ToLower())
+                        if (bloque.Atributos[atributo].ToLower() == multimediaFileInfo.Path.ToLower())
                         {
-                            if (!listaPaginasItem[nombre].Contains(bloque.TipoUbicacion))
+                            if (!listaPaginasItem[multimediaFileInfo.FileInfo.file_name].Contains(bloque.TipoUbicacion))
                             {
-                                listaPaginasItem[nombre].Add(bloque.TipoUbicacion);
+                                listaPaginasItem[multimediaFileInfo.FileInfo.file_name].Add(bloque.TipoUbicacion);
                             }
                             break;
                         }
                     }
                 }
             }
+            
 
-            foreach (string item in listaComponentesItem.Keys)
+            foreach (string fileName in listaComponentesItem.Keys)
             {
                 if (!string.IsNullOrEmpty(pNumusos))
                 {
-                    if ((listaComponentesItem[item].Count + listaPaginasItem[item].Count).ToString() != pNumusos)
+                    if ((listaComponentesItem[fileName].Count + listaPaginasItem[fileName].Count).ToString() != pNumusos)
                     {
-                        listaResultados.Remove(item);
+                        MultimediaFileInfoModel multimediaFileInfo = listaResultados.Where(item => item.FileInfo.file_name.Equals(fileName)).FirstOrDefault();
+                        listaResultados.Remove(multimediaFileInfo);
                     }
                 }
             }
+            */
 
 
             ResultadoModel resultado = CargarResultado(listaResultados, pPagina);
             List<FacetModel> facetas = CargarFacetas(listaResultados, pExtension, pNumusos, listaComponentesItem, listaPaginasItem);
-            List<FacetItemModel> filtros = CargarFiltros(listaResultados, pSearch, pExtension, pNumusos);
+            List<FacetItemModel> filtros = CargarFiltros(pSearch, pExtension, pNumusos);
 
             ViewBag.Resultado = resultado;
             ViewBag.Facetas = facetas;
@@ -291,19 +354,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.ExtensionesImagenes = ExtensionesImagenesPermitidas;
         }
 
-        private ResultadoModel CargarResultado(SortedDictionary<string, string> pListaResultados, int pPaginaFiltro)
+        private ResultadoModel CargarResultado(List<MultimediaFileInfoModel> pListaResultados, int pPaginaFiltro)
         {
             ResultadoModel resultado = new ResultadoModel();
             resultado.ListaResultados = new List<ObjetoBuscadorModel>();
 
             int i = 1;
-            foreach (string multimedia in pListaResultados.Keys)
+            foreach (MultimediaFileInfoModel multimedia in pListaResultados)
             {
                 if (i > (pPaginaFiltro - 1) * 10 && i <= (pPaginaFiltro) * 10)
                 {
                     CMSMultimediaModel ficha = new CMSMultimediaModel();
-                    ficha.Title = multimedia;
-                    ficha.Link = pListaResultados[multimedia];
+                    ficha.Title = multimedia.FileInfo.file_name;
+                    ficha.Link = multimedia.Path;
+                    ficha.CreationDate = multimedia.FileInfo.create_date;
+                    ficha.Size = multimedia.FileInfo.size;
+                    ficha.Width = multimedia.FileInfo.width;
+                    ficha.Height = multimedia.FileInfo.height;
                     resultado.ListaResultados.Add(ficha);
                 }
                 i++;
@@ -315,7 +382,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return resultado;
         }
 
-        private List<FacetModel> CargarFacetas(SortedDictionary<string, string> pListaResultados, string pExt, string pUsos, SortedDictionary<string, List<CMSComponente>> pListaComponentesItem, SortedDictionary<string, List<short>> pListaPaginasItem)
+        private List<FacetModel> CargarFacetas(List<MultimediaFileInfoModel> pListaResultados, string pExt, string pUsos, SortedDictionary<string, List<CMSComponente>> pListaComponentesItem, SortedDictionary<string, List<short>> pListaPaginasItem)
         {
             List<FacetModel> facetas = new List<FacetModel>();
             #region Extension
@@ -324,9 +391,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             facetaExtension.Name = "Extension";
             facetaExtension.FacetItemList = new List<FacetItemModel>();
             Dictionary<string, int> extensiones = new Dictionary<string, int>();
-            foreach (string nombre in pListaResultados.Keys)
+            foreach (MultimediaFileInfoModel multimediaFile in pListaResultados)
             {
-                string extension = nombre.Substring(nombre.LastIndexOf("."));
+                string extension = multimediaFile.FileInfo.file_name.Substring(multimediaFile.FileInfo.file_name.LastIndexOf("."));
                 if (extensiones.ContainsKey(extension))
                 {
                     extensiones[extension]++;
@@ -344,7 +411,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 FacetItemModel facetaItem = new FacetItemModel();
                 facetaItem.Name = extension;
                 facetaItem.Number = numComponentes;
-                facetaItem.Filter = "extension=" + extension + "";
+                facetaItem.Filter = $"extension={extension}";
 
                 if (pExt == extension)
                 {
@@ -355,7 +422,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             #endregion
 
             #region usos
-
+            /*
             FacetModel facetaUsos = new FacetModel();
             facetas.Add(facetaUsos);
             facetaUsos.Name = "Número de usos";
@@ -380,7 +447,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     FacetItemModel facetaItem = new FacetItemModel();
                     facetaItem.Name = usos.ToString();
                     facetaItem.Number = numComponentes;
-                    facetaItem.Filter = "numusos=" + usos + "";
+                    facetaItem.Filter = $"numusos={usos}";
                     if (pUsos == usos.ToString())
                     {
                         facetaItem.Selected = true;
@@ -388,13 +455,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     facetaUsos.FacetItemList.Add(facetaItem);
                 }
             }
+            */
 
             #endregion
 
             return facetas;
         }
 
-        private List<FacetItemModel> CargarFiltros(SortedDictionary<string, string> pListaResultados, string pSearch, string pExt, string pNumUsos)
+        private List<FacetItemModel> CargarFiltros(string pSearch, string pExt, string pNumUsos)
         {
             List<FacetItemModel> filtros = new List<FacetItemModel>();
 
@@ -402,7 +470,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 FacetItemModel facetaItem = new FacetItemModel();
                 facetaItem.Name = pSearch;
-                facetaItem.Filter = "search=" + pSearch;
+                facetaItem.Filter = $"search={pSearch}";
                 filtros.Add(facetaItem);
             }
             //Extension
@@ -410,7 +478,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 FacetItemModel facetaItem = new FacetItemModel();
                 facetaItem.Name = pExt;
-                facetaItem.Filter = "extension=" + pExt;
+                facetaItem.Filter = $"extension={pExt}";
                 filtros.Add(facetaItem);
             }
             //NumUsos
@@ -418,7 +486,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 FacetItemModel facetaItem = new FacetItemModel();
                 facetaItem.Name = pNumUsos;
-                facetaItem.Filter = "numusos=" + pNumUsos;
+                facetaItem.Filter = $"numusos={pNumUsos}";
                 filtros.Add(facetaItem);
             }
 

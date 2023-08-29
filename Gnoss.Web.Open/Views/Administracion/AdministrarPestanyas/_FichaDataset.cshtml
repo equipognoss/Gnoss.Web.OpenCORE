@@ -1,0 +1,163 @@
+﻿@model TabModel.DashboardTabModel.DatasetTabModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para mostrar los datasets de un gráfico en el asistente para gráficos de páginas semánticas.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    TabModel.DashboardTabModel.DatasetTabModel dataset = Model;
+    // Id para usar en elementos únicos
+    Guid newGuidId = @Guid.NewGuid();
+    string idFichaDatasetAsistente = newGuidId.ToString().Substring(0, 5);
+}
+
+<li class="bloque dataset row-dataset" id="@dataset.DatasetID">
+    
+    @*     
+    <section class="header">
+        <span class="nombrePestanya" aux="@Html.ObtenerTextoIdiomaUsuario(dataset.Nombre)">@Html.ObtenerTextoIdiomaUsuario(dataset.Nombre)</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    *@
+
+    @* Header *@    
+    <div class="component-header-wrap">
+
+        <div class="component-header">
+            <div class="component-no-sortable">
+                <span class="material-icons-outlined sortable-icon ui-sortable-handle">description</span>
+            </div>
+            <div class="component-header-content">
+                <div class="component-header-left">
+                    <div class="component-name-wrap">
+                        <span class="component-assistantName" aux="@Html.ObtenerTextoIdiomaUsuario(dataset.Nombre)">@Html.ObtenerTextoIdiomaUsuario(dataset.Nombre)</span>
+                    </div>
+                </div>
+                @* Acciones *@
+                <div class="component-header-right">
+                    <div class="component-actions-wrap">
+                        <ul class="no-list-style component-actions">
+                            <li>
+                                <a class="action-edit round-icon-button js-action-edit-component btnEditDataSetGraphAssistant" data-toggle="collapse" data-target="#panel_collapse_@(idFichaDatasetAsistente)" role="button" aria-expanded="true" aria-controls="panel_collapse_@(idFichaDatasetAsistente)">
+                                    <span class="material-icons editar">edit</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Panel de datos de Dataset*@
+    <div class="panEdicion collapse assistant-dataset-info" id="panel_collapse_@(idFichaDatasetAsistente)">  
+
+        <div class="graph-dataset card card-body">        
+            @*
+            <p>
+                <span class="tipo">Nombre<span class="conToolTip" title="Nombre del dataset">?</span></span>
+                <input type="text" name="nombreDataset" value="@dataset.Nombre">
+            </p>
+            *@
+
+            @*Nombre del dataset *@
+            <div class="form-group mb-3">
+                <label class="control-label d-block">Nombre</label>
+                <input type="text"
+                       class="form-control"
+                       name="nombreDataset"
+                       value="@dataset.Nombre" />
+                <small class="form-text text-muted">Nombre del dataset</small>
+            </div>
+
+            @*
+            <p @Html.Raw(dataset.Color == "Aleatorio" ? "style=\"display:none\"" : "")>
+                <span class="tipo">Color<span class="conToolTip" title="Color del dataset">?</span></span>
+                <input type="color" name="colorDataset" class="colores" value="@dataset.Color">
+            </p>
+            *@
+            @* Tipo Color *@
+            <div class="form-group mb-3" @Html.Raw(dataset.Color == "Aleatorio" ? "style=\"display:none\"" : "")>
+                <label class="control-label d-block">Color</label>                
+                <input type="color"
+                       name="colorDataset"
+                       class="form-control colores"
+                       value="@dataset.Color" />
+                <small class="form-text text-muted">Color del dataset</small>
+            </div>
+
+            @* Agrupación *@
+            <div class="opcionesAgrupacion">
+                @*
+                <p>
+                    <span class="tipo">Tipo de agrupacion<span class="conToolTip" title="Seleccionar el tipo de agrupación">?</span></span>
+                    <select name="agrupacionDataset">
+                        <option value='count'>Contador</option>
+                        <option value='sum'>Suma</option>
+                        <option value='avg'>Media</option>
+                    </select>
+                </p>
+                *@
+                @* Tipo de agrupación *@
+                <div class="form-group mb-3">
+                    <label class="control-label d-block">Tipo de agrupación</label>
+                    @* Select *@
+                    <select name="agrupacionDataset"
+                            class="cmbSelectAgrupacionDataset js-select2"
+                            tabindex="0"
+                            aria-hidden="false">
+                        <option value='count'>Contador</option>
+                        <option value='sum'>Suma</option>
+                        <option value='avg'>Media</option>                    
+                    </select>
+                    <small class="form-text text-muted">Seleccionar el tipo de agrupación</small>
+                </div>
+
+                @*
+                <p>
+                    <span class="tipo">Agrupación sobre<span class="conToolTip" title="Seleccionar sobre que atributo se hará la agrupación">?</span></span>
+                    <input type="text" name="agrupacionsobreDataset" value="Sujeto">
+                </p>
+                *@
+
+                @* Agrupación sobre *@
+                <div class="form-group mb-3">
+                    <label class="control-label d-block">Agrupación sobre</label>
+                    <input type="text"
+                           name="agrupacionsobreDataset"
+                           class="form-control"
+                           value="Sujeto" />
+                    <small class="form-text text-muted">Seleccionar sobre que atributo se hará la agrupación</small>
+                </div>
+
+            </div>
+            <div class="opcionesDataset" style="display:none">
+                @*
+                <p>
+                    <span class="tipo">Datos<span class="conToolTip" title="Resultado de la consulta correspondiente con este dataset">?</span></span>
+                    <input type="text" name="datosDataset" value="@dataset.Datos">
+                </p>
+                *@
+                @* Opciones Dataset *@
+                <div class="form-group mb-3">
+                <label class="control-label d-block">Datos</label>
+                    <input type="text"
+                           class="form-control"
+                           name="datosDataset"
+                           value="@dataset.Datos"/>
+                    <small class="form-text text-muted">Resultado de la consulta correspondiente con este dataset</small>
+                </div>
+            </div>
+            <div class="panelButtonActions mb-3">
+                <input type="button" class="btn btn-outline-primary" value="Seleccionar etiqueta" name="btnOpcionesDataset" />
+                <input type="button" class="btn btn-outline-primary" value="Seleccionar agrupacion" name="btnOpcionesAgrupacion" style="display:none"/>
+                <input type="button" class="btn btn-outline-primary" value="Añadir agrupación a consulta" name="btnAgregarAgrupacion" />
+            </div>
+        </div>
+    </div>
+
+</li>

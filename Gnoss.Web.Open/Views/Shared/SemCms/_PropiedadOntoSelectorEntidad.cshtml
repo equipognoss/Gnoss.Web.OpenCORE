@@ -100,8 +100,10 @@
         {
             <label class="lb">@Model.OntologyPropInfo.EntitySelector.ExtraTitleAutoComplete</label>
         }
-        <div class="position-relative">
-            <input placeholder="@Model.OntologyPropInfo.DefaultUnselectableValue" id="@idTxtHack" type="text" class="form-control edit text big autocompletarSelecEnt @classPlaceHolder" onfocus="@onfocus" value="@valueControlAuto" @disabled onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;} " onchange="if (this.value == ''){$('#@idControl').val('');}" />
+        @* Contenedor de input de Autocomplete + icono distinguible *@
+        <div class="position-relative input-with-icon">
+            <i class="material-icons">search</i>
+            <input placeholder="@Model.OntologyPropInfo.DefaultUnselectableValue" id="@idTxtHack" type="text" class=" mb-2 form-control edit text big autocompletarSelecEnt @classPlaceHolder" onfocus="@onfocus" value="@valueControlAuto" @disabled onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;} " onchange="if (this.value == ''){$('#@idControl').val('');}" />
         </div>
         if (Model.OntologyPropInfo.EntitySelector.AdditionalExtraTitleWhereAutoCompletes != null)
         {

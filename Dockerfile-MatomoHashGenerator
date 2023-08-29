@@ -1,0 +1,14 @@
+#Utilizamos la imagen PHP como base
+FROM php:latest
+
+#Establecemos el directorio de trabajo del contenedor
+WORKDIR /var/www/html/
+
+#Copiamos los archivos PHP del API al contenedor
+COPY Gnoss.Matomo.PhpHashGenerator/ .
+
+#Exponemos el puerto 80 para que pueda ser accesible desde fuera del contenedor
+EXPOSE 80
+
+#Inicia un servidor PHP dentro del contenedor para poder acceder al api a través del puerto 80
+#CMD ["php", "-S", "0.0.0.0:80", "HashGenerator.php"]

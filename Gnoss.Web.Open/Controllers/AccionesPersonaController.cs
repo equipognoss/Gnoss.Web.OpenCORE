@@ -48,7 +48,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     MultiViewResult result = new MultiViewResult(this, mViewEngine);
 
                     //Cargamos el modelo
-                    ObtenerModelo(result, listaIdentidades);
+                    ObtenerModelo(result, listaIdentidades, false);
+
+                    return result;
+                }
+            }
+
+            return new EmptyResult();
+        }
+
+        public ActionResult CargaAdministracion()
+        {
+            if (mControladorBase.ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+            {
+                // Es administrador del proyecto, le mostramos las acciones de las personas
+                List<Guid> listaIdentidades = ObtenerPersonasDeRequest();
+
+                if (listaIdentidades.Count > 0)
+                {
+                    MultiViewResult result = new MultiViewResult(this, mViewEngine);
+
+                    //Cargamos el modelo
+                    ObtenerModelo(result, listaIdentidades, true);
 
                     return result;
                 }
@@ -85,7 +106,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return listaIdentidades;
         }
 
-        private void ObtenerModelo(MultiViewResult pResult, List<Guid> pListaIdentidades)
+        private void ObtenerModelo(MultiViewResult pResult, List<Guid> pListaIdentidades, bool pEsAdministracion)
         {
             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -111,8 +132,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             foreach (Guid identidadID in gestorIdentidades.ListaIdentidades.Keys)
             {
                 ProfileModel perfil = fichaPerfilController.ObtenerFichaIdentidadModelDeIdentidad(gestorIdentidades.ListaIdentidades[identidadID]);
-
-                pResult.AddView("ControlesMVC/_AccionesPerfil", "AccionesRecursoListado_" + identidadID + "_" + ProyectoSeleccionado.Clave, perfil);
+                if (pEsAdministracion)
+                {
+                    pResult.AddView("../Shared/ControlesMVC/_AccionesPerfilAdmin", "AccionesRecursoListado_" + identidadID + "_" + ProyectoSeleccionado.Clave, perfil);
+                }
+                else
+                {
+                    pResult.AddView("../Shared/ControlesMVC/_AccionesPerfil", "AccionesRecursoListado_" + identidadID + "_" + ProyectoSeleccionado.Clave, perfil);
+                }
             }
         }
     }

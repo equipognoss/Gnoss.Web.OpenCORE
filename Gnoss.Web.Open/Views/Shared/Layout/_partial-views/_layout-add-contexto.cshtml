@@ -1,0 +1,139 @@
+﻿@model AdministrarContextosViewModel
+
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón para poder crear un contexto.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Información contextual".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+string urlAddContexto = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCONTEXTOSCOM") + "/new-gadget";
+}
+
+@*    
+<ul>
+	<li class="nuevo nuevo-contexto">
+*@
+		@* Botón para añadir una nueva faceta *@
+		<a
+			href="javascript: void(0);"
+			class="btn btn-outline-primary dropdown-toggle no-flecha"
+			id="menuNuevaFaceta"
+			data-toggle="dropdown"
+			aria-haspopup="true"
+			aria-expanded="true">
+			<span class="material-icons">add</span>
+			<span>@Html.GetText("DEVTOOLS","AÑADIRCONTEXTO")</span>
+		</a>
+		@* Dropdown con el tipo de facetas a crear *@
+		<div
+			class="dropdown-menu dropdown-menu-right basic-dropdown"
+			aria-labelledby="menuNuevoContexto">
+			<div>
+				<ul class="no-list-style menuCreacion">   			
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewContexto"
+							data-url="@urlAddContexto"
+                            data-type="@((short)TipoGadget.HtmlIncrustado)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADHTML")
+                        </a>									                 
+                    </li> 
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltPreguntas) == 0)
+                    {
+                        <li>
+                            <a
+                                class="item-dropdown linkAddNewContexto"
+							    data-url="@urlAddContexto"
+                                data-type="@((short)TipoGadget.UltPreguntas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTPREGUNTAS")
+                            </a>									                 
+                        </li>                         
+                    }
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltDebates) == 0)
+                    {
+                        <li>
+                            <a
+                                class="item-dropdown linkAddNewContexto"
+							    data-url="@urlAddContexto"
+                                data-type="@((short)TipoGadget.UltDebates)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTDEBATES")
+                            </a>									                 
+                        </li>                          
+                    }
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.UltEncuestas) == 0)
+                    {
+                        <li>
+                            <a
+                                class="item-dropdown linkAddNewContexto"
+							    data-url="@urlAddContexto"
+                                data-type="@((short)TipoGadget.UltEncuestas)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTENCUESTAS")
+                            </a>									                 
+                        </li>                          
+                    }                                            
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewContexto"
+						    data-url="@urlAddContexto"
+                            data-type="@((short)TipoGadget.Consulta)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONSULTA")
+                        </a>									                 
+                    </li>
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.ProyRelacionados) == 0)
+                    {
+                        <li>
+                            <a
+                                class="item-dropdown linkAddNewContexto"
+						        data-url="@urlAddContexto"
+                                data-type="@((short)TipoGadget.ProyRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADPROYRELACIONADOS")
+                            </a>									                 
+                        </li>                        
+                    }
+
+                    @if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.QueEstaPasando) == 0)
+                    {
+                        <li>
+                            <a
+                                class="item-dropdown linkAddNewContexto"
+						        data-url="@urlAddContexto"
+                                data-type="@((short)TipoGadget.QueEstaPasando)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADQUEESTAPASANDO")
+                            </a>									                 
+                        </li>                        
+                    }
+
+                    @if (Model.AdministracionSemanticaPermitido)
+                    {
+                        <li>
+                            <a
+                                class="item-dropdown linkAddNewContexto"
+						        data-url="@urlAddContexto"
+                                data-type="@((short)TipoGadget.RecursosContextos)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONTEXTO")
+                            </a>									                 
+                        </li> 
+                        if (Model.ListaGadgets.Count(p => p.TipoGadget == TipoGadget.RecursosRelacionados) == 0)
+                        {
+                            <li>
+                                <a
+                                    class="item-dropdown linkAddNewContexto"
+						            data-url="@urlAddContexto"
+                                    data-type="@((short)TipoGadget.RecursosRelacionados)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADRECURSOSRELACIONADOS")
+                                </a>									                 
+                            </li>                            
+                        }                        
+                    }                  
+                    @if (Model.CMSDisponible)
+                    {
+                        <li>
+                            <a
+                                class="item-dropdown linkAddNewContexto"
+					            data-url="@urlAddContexto"
+                                data-type="@((short)TipoGadget.CMS)">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADCMS")
+                            </a>									                 
+                        </li>                            
+                    }                   
+				</ul>
+			</div>
+		</div>
+@*
+	</li>
+</ul>
+*@

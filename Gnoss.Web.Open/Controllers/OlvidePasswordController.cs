@@ -39,7 +39,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (!mControladorBase.UsuarioActual.EsUsuarioInvitado)
             {
-                return new RedirectResult(BaseURLIdioma + UrlPerfil + "home");
+                if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
+                {
+                    return new RedirectResult(BaseURLIdioma + UrlPerfil + "home");
+                }
+                else
+                {
+                    return new RedirectResult(ProyectoSeleccionado.UrlPropia(UtilIdiomas.LanguageCode));
+                }
             }
 
             if (!string.IsNullOrEmpty(RequestParams("confirmado")) && RequestParams("confirmado") == "true")
@@ -85,11 +92,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     DataWrapperUsuario dataWrapperUsuario = usuarioCN.ObtenerUsuarioPorLoginOEmail(login, false);
 
-                    string urlBase = BaseURLIdioma + "/";
+                    string urlBase = $"{BaseURLIdioma}/";
 
                     if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto || EsEcosistemaSinMetaProyecto)
                     {
-                        urlBase = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto) + "/";
+                        urlBase = $"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto)}/";
                     }
 
                     if (dataWrapperUsuario.ListaUsuario.Count > 0)
@@ -128,14 +135,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(new DataWrapperNotificacion(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
 
 
-                                string urlCambioPassword = urlBase + UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD") + "/" + UtilIdiomas.GetText("URLSEM", "PETICION") + "/" + filaPeticion.PeticionID.ToString() + "/" + UtilIdiomas.GetText("URLSEM", "USUARIO") + "/" + filaUsuario.UsuarioID;
+                                string urlCambioPassword = $"{urlBase}{UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD")}/{UtilIdiomas.GetText("URLSEM", "PETICION")}/{filaPeticion.PeticionID}/{UtilIdiomas.GetText("URLSEM", "USUARIO")}/{filaUsuario.UsuarioID}";
 
                                 gestorNotificaciones.AgregarNotificacionPeticionCambioPassword(gestorPersonas.ListaPersonas[filaPersona.PersonaID], urlCambioPassword, ProyectoSeleccionado, UtilIdiomas.LanguageCode);
 
                                 //mEntityContext.SaveChanges();
                                 notificacionCN.ActualizarNotificacion();
 
-                                return GnossResultUrl(urlBase + UtilIdiomas.GetText("URLSEM", "OLVIDEPASSWORD") + "/" + UtilIdiomas.GetText("URLSEM", "CONFIRMADO"));
+                                return GnossResultUrl($"{urlBase}{UtilIdiomas.GetText("URLSEM", "OLVIDEPASSWORD")}/{UtilIdiomas.GetText("URLSEM", "CONFIRMADO")}");
                             }
                             else
                             {
@@ -145,7 +152,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else //No hay que revelar que el usaurio no existe
                     {
-                        return GnossResultUrl(urlBase + "/" + UtilIdiomas.GetText("URLSEM", "OLVIDEPASSWORD") + "/" + UtilIdiomas.GetText("URLSEM", "CONFIRMADO"));
+                        return GnossResultUrl($"{urlBase}{UtilIdiomas.GetText("URLSEM", "OLVIDEPASSWORD")}/{UtilIdiomas.GetText("URLSEM", "CONFIRMADO")}");
                     }
                 }
                 catch (Exception ex)

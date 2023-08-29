@@ -1,8 +1,8 @@
 var componentePaginado = {
 	init: function(){
-		this.content = content;
+		this.content = $(content);
 		this.componentes = this.content.find('.componentePaginado');
-		if(this.componentes.size() <= 0) return;
+		if(this.componentes.length <= 0) return;
 		this.ocultar();
 		this.engancharPaginador();
 	},
@@ -88,9 +88,9 @@ var componentePaginado = {
 }
 var componenteTabulado = {
 	init: function(){
-		this.content = content;
+		this.content = $(content);
 		this.componentes = this.content.find('.tabsGroup');
-		if(this.componentes.size() <= 0) return;
+		if(this.componentes.length <= 0) return;
 		this.comportamiento();
 		return;
 	},

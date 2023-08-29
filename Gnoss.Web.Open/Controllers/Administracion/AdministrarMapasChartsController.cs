@@ -32,6 +32,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult AdministrarMapa()
         {
             AdministrarMapaViewModel modelo = ControladorMapasCharts.LoadMapFromBBDD();
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion descubrimiento-analisis-mapa max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Mapa;
+            // Establecer el título para el header de DevTools                       
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "DESCUBRIMIENTOYANALISIS");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONPAGINAS", "MAPA");
+           
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
             return View("_EditarMapa", modelo);

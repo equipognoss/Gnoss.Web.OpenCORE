@@ -56,8 +56,22 @@ namespace Gnoss.Web.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "administrar-sharepoint";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_IntegracionSharePoint;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");            
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "ADMINISTRARSHAREPOINT");
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
+
+            // Activar la visualización del icono de la documentación de la sección
+            ViewBag.showDocumentationByDefault = "true";
+            // Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+            ViewBag.showDocumentationSection = "true";
 
             return View(PaginaModel);
         }

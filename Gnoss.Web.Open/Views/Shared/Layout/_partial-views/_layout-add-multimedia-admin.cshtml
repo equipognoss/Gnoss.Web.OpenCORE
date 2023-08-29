@@ -1,0 +1,53 @@
+﻿@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón con un panel dropdown para poder crear un tipo de componente multimedia desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Edición Multimedia CMS".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+}
+@*
+----------------------------------------------------------------
+
+-------------------- Vista parcial para crear un tipo de componente multimedia desde Edición Multimedia CMS --------------------*@
+
+@*Botón para la creación de un componente multimedia 
+<ul>
+	@* Botón para crear nuevo componente multimedia 
+	<li class="nuevo nuevo-componente">*@
+		<a
+			href="javascript: void(0);"
+			class="btn btn-outline-primary dropdown-toggle no-flecha mr-0"
+			id="menuNuevoComponente"
+			data-toggle="dropdown"
+			aria-haspopup="true"
+			aria-expanded="false">
+			<span class="material-icons">add</span>
+			<span>@Html.GetText("DEVTOOLS","MULTIMEDIA")</span>
+		</a>
+		<div
+			class="dropdown-menu dropdown-menu-right basic-dropdown"
+			aria-labelledby="menuNuevoComponente"
+			style="will-change: transform">
+			<div>
+				<ul class="no-list-style menuCreacion">
+					<li>
+						<a
+							id="btnAddMultimediaItem"
+							data-target="#modal-container" 
+							style="cursor: pointer"
+							class="item-dropdown"							
+							data-toggle="modal">
+							<span class="texto">@Html.GetText("DEVTOOLS","AÑADIRRECURSOMULTIMEDIA")</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		@*
+	</li>
+</ul>
+*@

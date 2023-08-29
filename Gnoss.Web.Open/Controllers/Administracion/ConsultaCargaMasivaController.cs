@@ -54,6 +54,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "edicion no-max-width-container grafo-de-conocimiento edicionObjetos";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_CargaMasiva;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "CONSULTACARGASMASIVAS");
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 

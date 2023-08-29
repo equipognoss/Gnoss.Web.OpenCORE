@@ -1,7 +1,16 @@
 ﻿@using Es.Riam.Gnoss.AD.CMS
 @model CMSAdminComponenteEditarViewModel.PropiedadComponente
 
-@{    
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato TextArea (Input)
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
     string idiomaPanel = (string)ViewData["idiomaPanel"];
     string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
     string valorPropiedad = Model.Value;
@@ -12,16 +21,30 @@
     }
 
     string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
-
     string classTextArea = "";
-    if (Model.TipoPropiedadCMS.Equals(TipoPropiedadCMS.HTML) && Model.TypeComponent.Equals(TipoComponenteCMS.Destacado))
+
+    @* Controlar si hace falta el ckEditor *@
+    if ( Model.TipoPropiedadCMS.Equals(TipoPropiedadCMS.HTML) && Model.TypeComponent.Equals(TipoComponenteCMS.Destacado)
+        || Model.TipoPropiedadCMS.Equals(TipoPropiedadCMS.HTML) && Model.TypeComponent.Equals(TipoComponenteCMS.HTML)
+    )
     {
-        classTextArea = "cke mensajes";
+        classTextArea = "cke editorHtml";
     }
 }
-<div id="contenedorPrincipal_@idPanel">
-    <p id="parrafo_@idPanel" class="textarea">
-        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
-        <textarea id="@idPanel" class="@classTextArea">@valorPropiedad</textarea>
-    </p>
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo TextArea (Input) --------------------
+*@
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="form-group mb-4">
+    @* Label del elemento Html*@
+    <label class="control-label d-block">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+    @* Elemento Html *@
+    <textarea data-propertyid="@idPanel" class="@classTextArea form-control" cols="20">@valorPropiedad</textarea>
+
 </div>
+
+
+

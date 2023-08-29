@@ -1,110 +1,90 @@
 ﻿@model AdministrarMapaViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar/visualizar las páginas existentes en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	// Referencia al AdministrarMapaViewModel para ser usado en la cabecera
+	ViewBag.AdministrarMapaViewModel = Model;
 }
-<div class="content">
-    <h1>Configurar Mapas</h1>
-
-    <label for="pPropiedadLatitud">Introduce la pripiedad de la ontología correspondiente a la latitud</label>
-    <input type="text" id="pPropiedadLatitud" value="@Model.Latidud"><br>
-    <p class="example">
-        <b>Ejemplo:</b> http://www.w3.org/2003/01/geo/wgs84_pos#location&#64;&#64;&#64;http://www.w3.org/2003/01/geo/wgs84_pos#lat
-    </p>
-    <br />
-    <label for="pPropiedadLongitud">Introduce la pripiedad de la ontología correspondiente a la longitud</label>
-    <input type="text" id="pPropiedadLongitud" value="@Model.Longitud">
-    <p class="example">
-        <b>Ejemplo:</b> http://www.w3.org/2003/01/geo/wgs84_pos#location&#64;&#64;&#64;http://www.w3.org/2003/01/geo/wgs84_pos#long
-    </p>
-    <br />
-    <label for="pPropiedadRuta">Introduce la pripiedad de la ontología correspondiente a la ruta</label>
-    <input type="text" id="pPropiedadRuta" value="@Model.Ruta"><br>
-    <br />
-    <label for="pPropiedadColorRuta">Introduce la pripiedad de la ontología correspondiente al color de la ruta</label>
-    <input type="text" id="pPropiedadColorRuta"  value="@Model.ColorRuta">
-    <br />
-    <div>
-        <input type="button" class="guardarTodo" value="Submit" />
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/descubrimiento-analisis">@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")</a>
+            </li>
+            <li>
+                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARMAPA")
+            </li>
+        </ul>
     </div>
-</div>
 
-<script>
-    var OperativaAcciones = {
-        init: function () {
-            this.urlPagina = document.location.href;
-            this.engancharComportamiento();
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            $('input.guardarTodo').click(function () {
-                that.guardarTodo();
-            });
-            return;
-        },
-        guardarTodo: function () {
-            var that = this;
-            $('.ok.general').remove();
-            $('.error').remove();
-            if (!that.comprobarErroresGuardado()) {
-                that.pMapa = {};
-                that.pMapa.Latidud = $('#pPropiedadLatitud').val()
-                that.pMapa.Longitud = $('#pPropiedadLongitud').val()
-                that.pMapa.Ruta = $('#pPropiedadRuta').val()
-                that.pMapa.ColorRuta = $('#pPropiedadColorRuta').val()
-                that.guardar();
-            }
-            else {
-                that.mostrarError();
-            }
-        },
-        mostrarError: function () {
-            $('input.guardarTodo').before('<div class="error general">No puedes dejar los valores de latitud y longitud vacios</div>');
-        },
-        mostrarErrorGuardado: function () {
-            $('input.guardarTodo').before('<div class="error general">Ha habido un error en el guardado</div>');
-        },
-        comprobarErroresGuardado: function () {
-            var that = this;
-            if ($('#pPropiedadLatitud').val().length == 0) {
-                return true;
-            }
-            if ($('#pPropiedadLongitud').val().length == 0) {
-                return true;
-            }
-            return false;
-        },
+    @* Contenido Central *@    
+    <div class="formulario-edicion background-blanco">        		
+		<h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARMAPA")</h2>			
+        
+        @* Latitud *@
+        <div class="form-group mb-3">
+		    <label class="control-label d-block">@Html.GetText("DEVTOOLS","INTRODUCELAPROPIEDADDELAONTOLOGIACORRESPONDIENTEALALATITUD")</label>
+		    <input placeholder="@Html.GetText("DEVTOOLS","INTRODUCELAPROPIEDADDELAONTOLOGIACORRESPONDIENTEALALATITUD")" 
+                   type="text" value="@Model.Latidud" 
+                   id="pPropiedadLatitud" class="form-control not-outline"/>
+            <small class="form-text text-muted"><b>Ejemplo:</b> http://www.w3.org/2003/01/geo/wgs84_pos#location&#64;&#64;&#64;http://www.w3.org/2003/01/geo/wgs84_pos#lat</small>
+        </div>
 
-        guardar: function () {
-            var that = this;
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-                that.urlPagina + '/save-map',
-                that.pMapa,
-                true
-            ).done(function (data) {
-                that.mostrarGuardadoOK();
-            }).fail(function (data) {
-                that.mostrarErrorGuardado();
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        mostrarGuardadoOK: function () {
-            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
-        },
-    }
-    $(document).ready(function () {
-        OperativaAcciones.init();
-    });
-</script>
+        @* Longitud *@
+        <div class="form-group mb-3">
+		    <label class="control-label d-block">@Html.GetText("DEVTOOLS","INTRODUCELAPROPIEDADDELAONTOLOGIACORRESPONDIENTEALALONGITUD")</label>
+		    <input placeholder="@Html.GetText("DEVTOOLS","PROPIEDADDELAONTOLOGIACORRESPONDIENTEALALONGITUD")" 
+                   type="text" value="@Model.Longitud" 
+                   id="pPropiedadLongitud" class="form-control not-outline"/>
+            <small class="form-text text-muted"><b>Ejemplo:</b> http://www.w3.org/2003/01/geo/wgs84_pos#location&#64;&#64;&#64;http://www.w3.org/2003/01/geo/wgs84_pos#long</small>
+            
+        </div>
 
-<style>
-    input[type="text"], textarea {
-        width: 90%;
-    }
+        @* Ruta *@
+        <div class="form-group mb-3">
+		    <label class="control-label d-block">@Html.GetText("DEVTOOLS","INTRODUCELAPROPIEDADDELAONTOLOGIACORRESPONDIENTEALARUTA")</label>
+		    <input placeholder="@Html.GetText("DEVTOOLS","PROPIEDADDELAONTOLOGIACORRESPONDIENTEALARUTA")" 
+                   type="text" value="@Model.Ruta" 
+                   id="pPropiedadRuta" class="form-control not-outline"/>            
+        </div>
 
-    .example {
-        color: gray;
-    }
-</style>
+        @* Color ruta *@
+        <div class="form-group mb-3">
+		    <label class="control-label d-block">@Html.GetText("DEVTOOLS","INTRODUCELAPROPIEDADDELAONTOLOGIACORRESPONDIENTEALCOLORDELAR")</label>
+		    <input placeholder="@Html.GetText("DEVTOOLS","PROPIEDADDELAONTOLOGIACORRESPONDIENTEALCOLORDELARUTA")" 
+                   type="text" value="@Model.ColorRuta" 
+                   id="pPropiedadColorRuta" class="form-control not-outline"/>
+        </div>
+				
+		@* Sección botón de guardado y cierre del modal *@
+		<div class="panelBotonera mt-5">
+			<a id="btnGuardarMapa" class="btn btn-primary uppercase">@Html.GetText("COMMON","GUARDAR")</a>
+		</div>
+							
+    </div>
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/descubrimiento_analisis.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento
+            operativaGestionMapa.init();
+        })();
+    </script>
+}

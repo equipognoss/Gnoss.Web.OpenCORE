@@ -1,366 +1,236 @@
 ﻿@model DescargarTraduccionesViewModel
 
+@*
+Descripción
+-----------------------------------------------
+Vista index donde se muestran las opciones para poder descargar ficheros excel para realizar las traducciones de Recursos, Textos y XML en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    CommunityModel comunidad = Html.GetComunidad();
-
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
-
-    Html.GetListaJS().Add("https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js");
-
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
 }
-<!--VIEWS 1-->
+@*
 
-<div class="content">
-    <h1>Descargar Traducciones Views1</h1>
+*@
 
-    <input type="button" style="position: relative;float: right;" value="XML" onclick="Ocultar($(this).val())">
-    <input type="button" style="position: relative;float: right;" value="Textos" onclick="Ocultar($(this).val())">
-    <input type="button" style="position: relative;float: right;" value="Recursos" onclick="Ocultar($(this).val())">
-    <div>
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+	<ul>
 
-        <div class="grupoDescarga Recursos" style="clear: both; padding: 10px; margin-top: 35px; display:block;">
-
-            <h2>Recursos</h2>
-
-            @if (Model.mListaOntologiasPrincipales.Count > 0)
-            {
-                <div class="group">
-                    <p><input type="checkbox" name="seleccionarTodosOntoPrincipales" class="seleccionarTodos" /> Seleccionar todos  </p>
-                    <div style="margin: 15px 0 15px 0">
-                        <p style="display: inline;">Elige fecha de inicio </p>
-                        <input type="date" id="fechaInicio" name="fechaInicio" />
-                        <p style="display: inline;"> Elige fecha de fin </p>
-                        <input type="date" id="fechaFin" name="fechaFin" />
-                        <span class="error" style="display:none"></span>
-                    </div>
-                    <ul style="list-style: none;">
-                        @foreach (string ontologiaPrincipal in Model.mListaOntologiasPrincipales.Keys)
-                        {
-                            <li><input type="checkbox" name="ontologiaPrincipal_@ontologiaPrincipal" />@Model.mListaOntologiasPrincipales[ontologiaPrincipal]</li>
-                        }
-                    </ul>
-                </div>
-            }
-        </div>
-
-        <div class="grupoDescarga Textos" style="clear: both; padding: 10px; margin-top: 35px; margin-bottom:20px; display:none;">
-            <h2>Textos personalizados</h2>
-            <br />
-            <ul style="list-style: none;">
-                <li><input type="checkbox" name="DescargarTextosPersonalizados">Descargar Excel de<i>Textos Personalizados de las vistas</i></li>
-
-                <li><input type="checkbox" name="DescargarTextoProyectoPestanyaMenu">Descargar Excel de<i>Textos de Pestañas</i></li>
-
-                <li><input type="checkbox" name="DescargarCmsPropiedadComponente">Descargar Excel de<i>Textos de Componetes del CMS</i></li>
-
-                <li><input type="checkbox" name="DescargarFacetaObjetoConocimientoProyecto">Descargar Excel<i>Textos de Facetas</i></li>
-
-                <li><input type="checkbox" name="DescargarCategoriaTesauro">Descargar Excel de<i>Categorías tesauro</i></li>
-
-                <li><input type="checkbox" name="DescargarClausulaRegistro">Descargar Excel de<i>Clausulas de Registro</i></li>
-
-                <li><input type="checkbox" name="DescargarProyectoGadget">Descargar Excel de<i>Componentes de Recursos</i></li>
-
-                <li><input type="checkbox" name="DescargarOntologiaProyectoSql">Descargar Excel de<i>Configuracion de Ontologias</i></li>
-            </ul>
-        </div>
-
-        <div class="grupoDescarga XML" style="clear: both; padding: 10px; margin-top: 35px; margin-bottom:20px; display:none;">
-            <h2>XML</h2>
-
-            @if (Model.mListaOntologiasPrincipales.Count > 0)
-            {
-                <div class="group">
-                    <p><input type="checkbox" name="seleccionarTodosXML" class="seleccionarTodos" /> Seleccionar todos</p>
-                    <ul style="list-style: none;">
-                        @foreach (string ontologiaPrincipal in Model.mListaOntologiasPrincipales.Keys)
-                        {
-                            <li><input type="checkbox" name="ontologiaPrincipalXML_@ontologiaPrincipal" />@Model.mListaOntologiasPrincipales[ontologiaPrincipal]</li>
-                        }
-                    </ul>
-                </div>
-            }
-        </div>
-        @if (comunidad.Key.Equals(ProyectoAD.MetaProyecto))
-        {
-            <div class="grupoDescarga mygnoss" style="clear: both;border: 1px solid; padding: 10px; margin-top: 35px; margin-bottom:20px; display:block;">
-                @* MyGnoss *@
-                <br />
-                <h3>xml mygnoss</h3>
-                <!-- xml core-->
-                <input type="checkbox" name="DescargarXMLCore">Descargar Excel de Core<br>
-
-                <!-- xml mensajes-->
-                <input type="checkbox" name="DescargarXMLMensajesCore">Descargar Excel de mensajes de Core<br>
-
-                <h2>JavaScript</h2>
-
-                <input type="checkbox" name="DescargarJS">Descargar Excel JavaScript<br>
-
-
-                @if (Model.mListaOntologiasSecundarias.Count > 0)
-                {
-                    <div class="group">
-                        <h4>Ontologia secundaria</h4>
-                        <p><input type="checkbox" name="seleccionarTodosOntoSecundarias" class="seleccionarTodos" /> Seleccionar todos  </p>
-                        <ul style="list-style: none;">
-                            @foreach (string ontologiaSecundaria in Model.mListaOntologiasSecundarias.Keys)
-                            {
-                                <li><input type="checkbox" name="ontologiaSecundaria_@ontologiaSecundaria" />@Model.mListaOntologiasSecundarias[ontologiaSecundaria]</li>
-                            }
-                        </ul>
-                    </div>
-                }
-
-
-                @if (Model.mListaOntologiasSecundariasTaxonomias.Count > 0)
-                {
-                    <div class="group">
-                        <h4>Taxonomia</h4>
-                        <p><input type="checkbox" name="seleccionarTodosTaxonomias" class="seleccionarTodos" /> Seleccionar todos</p>
-                        <ul style="list-style: none;">
-                            @foreach (string taxonomy in Model.mListaOntologiasSecundariasTaxonomias.Keys)
-                            {
-                                <li><input type="checkbox" name="taxonomy_@taxonomy" />@Model.mListaOntologiasSecundariasTaxonomias[taxonomy]</li>
-                            }
-                        </ul>
-                    </div>
-                }
-            </div>
-        }
-
-
-
-        <div>
-            <input type="button" name="descargarSeleccionado" id="submit" value="DESCARGAR" onclick="Descargar()" style="background: #8186bd none repeat scroll 0 0; border: medium none; border-radius: 5px; color: white; float: right; padding: 10px; cursor: pointer; margin-top: 20px;" />
-
-            <input type="submit" id="inpt_subirArchivo" value="Subir archivo" onclick="SubirFichero(false)" style="background: #0c6305 none repeat scroll 0 0; border: medium none; border-radius: 5px; color: white; padding: 5px; cursor: pointer; margin-top: 20px; " />
-            <input type="submit" id="inpt_validarHtml" value="Validar Archivo" onclick="SubirFichero(true)" style="background: #8186bd none repeat scroll 0 0; border: medium none; border-radius: 5px; color: white; padding: 5px; cursor: pointer; margin-top: 20px;" />
-            <input id="inpt_subirTraducciones" name="file" type="file" style="margin-top: 40px;" />
-        </div>
-
-        <br />
-        <span class="error ExcelVacio" style="display:none; margin-top:20px;"></span>
-        <span class="validar" style="display:none; margin-top:20px; color: green;"></span>
-    </div>
+		@if (!isInEcosistemaPlatform)
+		{
+			<li>
+			<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+			<li>
+				<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+			</li>
+			<li>
+				<a href="@Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")</a>
+			</li>
+		}
+		else
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+		}
+		<li>
+			@Html.GetText("DEVTOOLS","DESCARGARTRADUCCIONES")
+		</li>
+	</ul>
 </div>
 
-<script type="text/javascript">
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+
+	@* Contenido de las diferentes traducciones *@
+	<div id="panelListadoGestionTraducciones"
+		 class="tab-pane fade show active"
+		 role="tabpanel"
+		 aria-labelledby="panelListadoGestionTraducciones">
+
+		@* Tabs para seleccionar el el tipo de listado *@
+		<ul class="nav nav-tabs mb-3" id="tabTranslateType" role="tablist">
+			<li class="nav-item">
+				<a class="tabTranslateTypeItem nav-link active"
+				   data-toggle="tab"
+				   role="tab"
+				   href="javascript: void(0);"
+				   aria-controls="tabTranslateTextItem"
+				   data-value="text"
+				   aria-selected="true">
+					@Html.GetText("DEVTOOLS","TEXTOS")
+				</a>
+			</li>
+			@if (!isInEcosistemaPlatform)
+			{
+				<li class="nav-item">
+					<a class="tabTranslateTypeItem nav-link"
+					   data-toggle="tab"
+					   href="javascript: void(0);"
+					   role="tab"
+					   aria-controls="tabTranslateXmlItem"
+					   data-value="xml"
+					   aria-selected="false">
+						@Html.GetText("ADMINISTRACIONDESARROLLADORES","ONTOLOGIAS")
+					</a>
+				</li>
+				<li class="nav-item">
+					<a class="tabTranslateTypeItem nav-link"
+					   data-toggle="tab"
+					   href="javascript: void(0);"
+					   role="tab"
+					   aria-controls="tabTranslateResourceItem"
+					   data-value="resource"
+					   aria-selected="false">
+						@Html.GetText("ADMINISTRACIONBASICA","RECURSOS")
+					</a>
+				</li>
+			}
+		</ul>
+
+		@* Contenedor del Título de la Sección + Buscador *@
+		<div class="row">
+			@* Título de la sección *@
+			<div class="col col-12 header-listado">
+				<div class="h1-container">
+					<h1>
+						@Html.GetText("DEVTOOLS","DESCARGARTRADUCCIONES")
+					</h1>					
+				</div>
+				@* Acciones *@
+				<div class="acciones d-flex align-items-center">
+					@* Importar traducciones *@
+					<button class="btn btn-outline-primary mr-2" id="btnImportTranslate" data-toggle="modal" data-target="#modalImportTranslate" aria-haspopup="true" aria-expanded="false">
+						<span class="material-icons">upload</span>
+						<span>
+							@Html.GetText("DEVTOOLS","IMPORTAR")
+						</span>
+					</button>
+					@* Descargar la selección *@
+					<button class="btn btn-primary" id="btnDownloadTranslateSelected" disabled>
+						<span class="material-icons">download</span>
+						<span>
+							@Html.GetText("DEVTOOLS","DESCARGARSELECCION")
+						</span>
+					</button>
+				</div>			
+			</div>
+
+			@* Buscador *@
+			<div class="col col-12 header-buscador">
+				<p>
+					@Html.GetText("DEVTOOLS","IMPORTACIONMASIVAYDESCARGADELASTRADUCCIONESMEDIANTEFICHEROSE")
+				</p>
+				<div class="wrapCol">
+					<div class="col-buscador" style="width: 100%">
+						@* Formulario para búsquedas *@
+						<form id="formBuscadorPaginas" onsubmit="return false;">
+							<div class="finderUtils" id="divCajaBusqueda">
+								<div class="group finderSection">
+									@* Input para realizar la búsqueda *@
+									<input type="text"
+										   id="txtBuscarDescargaTraduccion"
+										   class="not-outline finderSectionText"
+										   autocomplete="off"
+										   placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")" />
+									@* Botón para realizar la búsqueda *@
+									<input title="Buscar"
+										   type="button"
+										   class="findAction"
+										   id="inputLupa" />
+									@* Botón para Facetas de la búsqueda *@
+									<a href="javascript: void(0);" class="btn-filtrar-movil">
+										<span class="material-icons">filter_list</span>
+										<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>
+									</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+			@* Contenido o tabla *@
+			<div class="col col-12 col-contenido">
+				<div class="wrapCol">
+					@* Cabecera del listado *@
+					<ul id="id-header-descarga-item-list" class="header-component-list component-list no-list-style">
+						<li class="component-wrap">
+							@* Cabecera *@
+							<div class="component ">
+								<div class="component-header-wrap">
+									<div class="component-header">
+										@* Sección títulos de listado *@
+										<div class="component-header-content">
+											<div class="component-header-left">
+												@* Seleccionar / Deseleccionar todos *@
+												<div class="component-checkbox-wrap component-w-20">
+													<div class="custom-control custom-checkbox">
+														<input type="checkbox" class="custom-control-input" id="checkAllTexts">
+														<label class="custom-control-label component-checkbox-name" for="checkAllTexts">Todos</label>
+													</div>
+												</div>
+												@* Nombre del item *@
+												<div class="component-item-wrap">
+													<span class="component-name">
+														@Html.GetText("ADMINISTRACIONBASICA","NOMBRE")
+													</span>
+												</div>
+											</div>
+											@* Acción de "Descargar fichero" *@
+											<div class="component-header-right mr-5">
+												<div class="component-actions-wrap">
+													<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
+                    @* Contenedor de las filas de Modelos (Recursos, Textos, XML) *@
+					@Html.PartialView("_partial-views/_translate-text-list", Model)
+					@Html.PartialView("_partial-views/_translate-xml-list", Model)
+					@Html.PartialView("_partial-views/_translate-resource-list", Model)
+				</div>
+			</div>
+		</div>
+	</div>
+	@* Modal descarga de recursos *@
+	@Html.PartialView("_modal-views/_download-translate-resources")
+	@Html.PartialView("_modal-views/_import-translate-items")
+</div>
 
 
-    $('.seleccionarTodos').click(function () {
+@* Carga de operativa *@
+@section operativaScript{
+	<script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+	<script type="text/javascript">
 
-        var checks = $('input:checkbox:not(.seleccionarTodos)', $(this).closest('.group'));
-        var valorCheck = $(this).is(':checked');
-        checks.prop('checked', valorCheck);
-
-    });
-
-    function MostrarError(textoError) {
-        $('.error').text(textoError).show();
-    }
-
-    function OcultarError() {
-        $('.error').text('').hide();
-    }
-
-    function MostrarValidar(textoValidar) {
-        $('.validar').text(textoValidar).show();
-    }
-
-    function OcultarValidar() {
-        $('.validar').text('').hide();
-    }
-
-    function OcultarElementosPorClaseID(claseID) {
-        $(claseID).hide();
-    }
-    function MostrarElementosPorClaseID(claseID) {
-        $(claseID).show();
-    }
-
-
-    function Descargar() {
-
-        MostrarUpdateProgressTime(0);
-
-        var url = document.location.href + '/download';
-        var dataPost = new FormData();
-
-        var OntologiasPrincipales = "";
-        var OntologiaPrincipalXML = "";
-        var OntologiasSecundarias = "";
-        var taxonomy = "";
-
-        OcultarError();
-
-        var FechaFin = $('#fechaFin').val();
-        var FechaInicio = $('#fechaInicio').val();
-
-        if (FechaFin < FechaInicio) {
-            MostrarError(descargarTraduccionesErrores.errorFecha);
-            return false;
-        }
-
-        var dateIn = new Date($('#fechaInicio').val());
-        if (!isNaN(dateIn)) {
-            dayIn = dateIn.getDate();
-            monthIn = dateIn.getMonth() + 1;
-            yearIn = dateIn.getFullYear();
-            dataPost.append("fechaInicio", dayIn + '/' + monthIn + '/' + yearIn);
-        }
-
-        var dateFin = new Date($('#fechaFin').val());
-        if (!isNaN(dateFin)) {
-            dayFin = dateFin.getDate();
-            monthFin = dateFin.getMonth() + 1;
-            yearFin = dateFin.getFullYear();
-            dataPost.append("fechaFin", dayFin + '/' + monthFin + '/' + yearFin);
-        }
-
-        $('.grupoDescarga:visible input[type="checkbox"]:checked').each(function () {
-            var checkbox = $(this);
-            var nombre = checkbox.attr("name");
-
-
-            if (nombre.indexOf("ontologiaPrincipal_") >= 0) {
-                OntologiasPrincipales += nombre.substring(nombre.indexOf("_") + 1) + ',';
-            }
-            else if (nombre.indexOf("ontologiaPrincipalXML_") >= 0) {
-                OntologiaPrincipalXML += nombre.substring(nombre.indexOf("_") + 1) + ',';
-            }
-            else if (nombre.indexOf("ontologiaSecundaria_") >= 0) {
-                OntologiasSecundarias += nombre.substring(nombre.indexOf("_") + 1) + ',';
-            }
-            else if (nombre.indexOf("taxonomy_") >= 0) {
-                taxonomy += nombre.substring(nombre.indexOf("_") + 1) + ',';
-            }
-            else {
-                dataPost.append(nombre, true);
-            }
-
-        });
-
-        var nombrePagina = $('.grupoDescarga:visible')[0].classList[1];
-        var mListaOntologiasPrincipales = OntologiasPrincipales.split(",");
-
-        for (var i = 0; i < mListaOntologiasPrincipales.length ; i++) {
-            if (!mListaOntologiasPrincipales[i] == "") {
-                dataPost.append("mListaOntologiasPrincipales[" + mListaOntologiasPrincipales[i] + "]", mListaOntologiasPrincipales[i]);
-            }
-        }
-
-        var mListaOntologiaPrincipalXML = OntologiaPrincipalXML.split(",");
-
-        for (var i = 0; i < mListaOntologiaPrincipalXML.length ; i++) {
-            if (!mListaOntologiaPrincipalXML[i] == "") {
-                dataPost.append("mListaOntologiasPrincipalesXML[" + mListaOntologiaPrincipalXML[i] + "]", mListaOntologiaPrincipalXML[i]);
-            }
-        }
-
-        var mListaOntologiaSecundaria = OntologiasSecundarias.split(",");
-
-        for (var i = 0; i < mListaOntologiaSecundaria.length ; i++) {
-            if (!mListaOntologiaSecundaria[i] == "") {
-                dataPost.append("mListaOntologiasSecundarias[" + mListaOntologiaSecundaria + "]", mListaOntologiaSecundaria[i]);
-            }
-        }
-
-        var ajax = new XMLHttpRequest();
-        ajax.open("POST", url, true);
-        ajax.responseType = "blob";
-        ajax.onreadystatechange = function () {
-            if (this.readyState == 4) {
-                if (this.status == 200) {
-                    var respuesta = this.statusText;
-                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
-                        console.log(respuesta);
-                        MostrarError(descargarTraduccionesErrores.errorNoHayArchivos);
-                        OcultarUpdateProgress();
-                    }
-                    else {
-                        var blob = new Blob([this.response], { type: "application/octet-stream" });
-                        saveAs(blob, nombrePagina + ".xlsx");
-                        OcultarUpdateProgress();
-                    }
-                }
-                else {
-                    console.log(this.statusText);
-                }
-            }
-        };
-        ajax.send(dataPost);
-
-    }
-
-    function Ocultar(pagina) {
-        $('.grupoDescarga').hide();
-        $('.' + pagina).show();
-    }
-
-
-    function SubirFichero(validar) {
-
-        OcultarError();
-
-        var nombreFich = "";
-        var dataPost = new FormData();
-
-        var files = $('#inpt_subirTraducciones').get(0).files;
-        if (files.length > 0) {
-            dataPost.append("file", files[0]);
-        }
-        dataPost.append("validar", validar);
-
-        var url = document.location.href + '/upload';
-
-        MostrarUpdateProgress();
-        OcultarValidar();
-
-        var ajax = new XMLHttpRequest();
-        ajax.open("POST", url, true);
-        ajax.responseType = "blob";
-        ajax.onreadystatechange = function () {
-            if (this.readyState == 4) {
-                if (this.status == 200) {
-                    var respuesta = this.statusText;
-
-                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
-                        console.log(respuesta);
-                        MostrarValidar(descargarTraduccionesErrores.validar);
-                        MostrarElementosPorClaseID('#inpt_subirArchivo');
-                        OcultarElementosPorClaseID('#inpt_subirTraducciones');
-                        OcultarElementosPorClaseID('#inpt_validarHtml');
-                        OcultarUpdateProgress();
-                    }
-                    else if (validar) {
-                        var blob = new Blob([this.response], { type: "text/plain" });
-                        MostrarValidar(descargarTraduccionesErrores.errorValidar);                        
-                        saveAs(blob, "Errores.txt");
-                        OcultarUpdateProgress();
-                    } else {
-                        var blob = new Blob([this.response], { type: "application/octet-stream" });
-                        saveAs(blob, "traducciones.zip");
-                        OcultarUpdateProgress();
-                    }
-                }
-                else {
-                    console.log(this.statusText);
-                }
-            }
-        };
-        ajax.send(dataPost);
-    }
-
-
-    var descargarTraduccionesErrores = {
-        error: '',
-        errorNoHayArchivos: 'No hay archivos que descargar',
-        errorFecha: 'La fecha final debe ser mayor que la fecha inicial',
-        validar: 'Validado',
-        errorValidar: 'Archivo no validado'
-    }
-
-</script>
+		(function ($) {
+			// Operativa funcionamiento
+			const pParams = {
+				messages: {
+					error: '',
+					errorNoHayArchivos: '@Html.GetText("DEVTOOLS","NOSEHANENCONTRADOELEMENTOSPARADESCARGARYGENERARELFICHERODETR")',
+					errorNoHayArchivoImportar: '@Html.GetText("DEVTOOLS","SELECCIONAANTESUNFICHEROPARAREALIZARLAIMPORTACIONDETRADUCCIO")',
+					errorNoHayArchivoValidar: '@Html.GetText("DEVTOOLS","SELECCIONAANTESUNFICHEROPARASUVALIDACION")',
+					errorFecha: '@Html.GetText("DEVTOOLS","LAFECHAFINALDEBESERMAYORQUELAFECHAINICIALPARALADESCARGADETRA")',
+					validar: '@Html.GetText("DEVTOOLS","ELARCHIVODETRADUCCIONESSEHAVALIDADOCORRECTAMENTE")',
+					errorValidar: '@Html.GetText("DEVTOOLS","COMPRUEBALOSERRORESQUESEHANENCONTRADOALVALIDARELFICHERODETRA")',
+					errorInternoValidar: "@Html.GetText("DEVTOOLS","SEHAPRODUCIDOUNERRORALTRATARDEVALIDARELFICHEROPORFAVOR,INTE")",
+					errorInternoImportar: "@Html.GetText("DEVTOOLS","SEHAPRODUCIDOUNERRORALTRATARDEIMPORTARELFICHEROCONLASTRADUCC")",
+				},
+			}
+			operativaGestionDescargaTraducciones.init(pParams);
+		})();
+	</script>
+}

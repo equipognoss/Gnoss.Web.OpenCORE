@@ -1,0 +1,72 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Contenidos y permisos
+
+Variables
+----------------------------------------------------------------
+*@
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad(); 
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false; 	
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Tipos de contenido y permisos *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "data-target=#tipo-contenido-permisos" : null)								
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)			
+
+				aria-controls="tipo-contenido-permisos">
+				@Html.GetText("DEVTOOLS","TIPOSDECONTENIDOSYPERMISOS")
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Tipos de contenido y permisos *@
+	<div
+		id="tipo-contenido-permisos"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>Existen diferentes roles de los miembros que forman parte de una comunidad. Los niveles de permisos ordenados de mayor a menor, pueden ser: administrador, supervisor y usuario.</p>
+			<ul>
+				<li>
+					<span><strong>Contenidos y permisos:</strong> Cada rol incorpora los privilegios del inmediatamente inferior, de esta forma, un recurso disponible para un supervisor también lo estará para un administrador, pero no para un usuario. Desde esta sección por tanto pueden editarse permisos sobre recursos de la comunidad.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/tipos-contenido-permisos.png"/>					
+							<figcaption class="figure-caption">Los recursos de una comunidad pública pueden ser compartidos por sus miembros en las diferentes comunidades en las que participa, siempre y cuando estos tengan permiso para hacerlo. Esta disponibilidad depende del tipo de recurso y del rol.</figcaption>
+						</figure> 
+					</div>
+					<p>Adicionalmente se pueden añadir usuarios o grupos para que estos dispongan de permisos especiales en los recursos especiales de la comunidad. Para ello habrá con pulsar sobre Añadir grupos/Editar grupos. Una vez se cargue la vista modal, se podrán seleccionar los grupos o usuarios que tendrán permisos para un determinado tipo de recurso tal y como se puede comprobar en la siguiente ilustración.</p>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/aniadir-grupos.png"/>					
+							<figcaption class="figure-caption">Añadir grupos de la comunidad para establecer los permisos deseados.</figcaption>
+						</figure> 
+					</div>
+				</li>	
+				
+				<li>
+					<span><strong>Descarga de ficheros:</strong> Esta opción de configuración permitirá (o no) la descarga de ficheros de la comunidad a usuarios no conectados o no logueados en la comunidad.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/descarga-ficheros.png"/>					
+							<figcaption class="figure-caption">Permitir la descarga de ficheros en recursos a usuarios no logueados en la comunidad.</figcaption>
+						</figure> 
+					</div>							
+					<p>Para el correcto guardado de las opciones editadas, será necesario con pulsar sobre el botón de Guardar Todo.</p>
+				</li>	
+			</ul>					
+		</div>		
+	</div>
+</div>

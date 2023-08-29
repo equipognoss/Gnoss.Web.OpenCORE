@@ -29,6 +29,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,9 +42,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class AdministrarOpcionesMetaAdministradorController : ControllerBaseWeb
     {
-        public AdministrarOpcionesMetaAdministradorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
+        public AdministrarOpcionesMetaAdministradorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
         {
+            _appLifetime = appLifetime;
         }
 
         #region Miembros
@@ -54,6 +56,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private List<ParametroAplicacion> mParametroAplicacion;
         private ParametroGeneral mFilaParametrosGenerales = null;
         private List<CMSComponentePrivadoProyecto> mFilaPermisosCMS = null;
+
+        private bool mProyectoSinNombreCortoEnUrlActivado = false;
+        private IHostApplicationLifetime _appLifetime;
+
         #endregion
 
         #region Metodos de eventos
@@ -66,6 +72,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
         public ActionResult Index()
         {
+            // Añadir clases para el body del Layout
+            ViewBag.BodyClassPestanya = "meta-administrador";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OpcionesMetaAdministrador;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "OPCIONESDELMETAADMINISTRADOR");
+            
+
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
@@ -88,14 +104,41 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 InvalidarCaches(eliminarTerceraPeticionFacetas);
 
+                /*
+                if (mProyectoSinNombreCortoEnUrlActivado)
+                {
+                    Guid token = Guid.NewGuid();
+                    Session.SetString("tokenShutdown", token.ToString());
+                    Shutdown(token.ToString());
+                    return GnossResultOK("Este proceso puede tardar varios minutos");
+                    //return GnossResultUrl($"{ProyectoSeleccionado.UrlPropia}/administrar-opciones-metaadministrador/shutdown?token={token}");
+                }
+                */
                 return GnossResultOK();
+            }
+            catch (ExcepcionGeneral ex)
+            {
+                return GnossResultERROR(ex.Message);
             }
             catch (Exception ex)
             {
                 GuardarLogError(ex);
             }
+            
 
             return GnossResultERROR();
+        
+        }
+
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
+        public void Shutdown(string token)
+        {
+            string? tokenSession = Session.GetString("tokenShutdown");
+            if(!string.IsNullOrEmpty(tokenSession) && tokenSession.Equals(token))
+            {
+                _appLifetime.StopApplication();
+            }
         }
 
         #endregion
@@ -442,8 +485,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
         }
+
         private DataWrapperVistaVirtual PasarDatosDeModeloADataSet(AdministrarOpcionesMetaadministradorViewModel pOptions)
         {
+           
+            if (pOptions.ProyectoSinNombreCortoEnURL)
+            {
+                mProyectoSinNombreCortoEnUrlActivado = !ParametrosGeneralesDS.ListaParametroProyecto.Exists(parametro => parametro.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && parametro.ProyectoID.Equals(ProyectoSeleccionado.Clave) && parametro.Parametro.Equals("ProyectoSinNombreCortoEnURL"));
+
+                if (mProyectoSinNombreCortoEnUrlActivado)
+                {
+                    // TODO Comprobar que no está activado para otro proyecto en el mismo dominio
+                    string proyectoPorDefecto = mEntityContext.Proyecto.Join(mEntityContext.ParametroProyecto, proyecto => new { proyecto.ProyectoID, proyecto.OrganizacionID }, paramProyecto => new { paramProyecto.ProyectoID, paramProyecto.OrganizacionID }, (proyecto, paramProyecto) => new
+                    {
+                        Proyecto = proyecto,
+                        ParametroProyecto = paramProyecto
+                    }).Where(item => item.Proyecto.URLPropia.Equals(ProyectoSeleccionado.FilaProyecto.URLPropia) && item.ParametroProyecto.Parametro.Equals("ProyectoSinNombreCortoEnURL") && item.ParametroProyecto.Valor.Equals("1")).Select(item => item.Proyecto.Nombre).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(proyectoPorDefecto))
+                    {
+                        throw new ExcepcionGeneral($"La comunidad {proyectoPorDefecto} ya está definida como comunidad sin nombre corto en la URL. Sólo puede haber una comunidad configurada sin nombre corto en la URL por dominio.");
+                    }
+                }
+            }
+
             // Parámetros booleanos
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "AdministracionSemanticaPermitido", pOptions.AdministracionSemanticaPermitido);
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "AdministracionPaginasPermitido", pOptions.AdministracionPaginasPermitido);
@@ -462,7 +526,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "RegistroAbiertoEnComunidad", pOptions.RegistroAbiertoEnComunidad);
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "PermitirMayusculas", pOptions.PermitirMayusculas);
             ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "PropiedadCMSMultiIdioma", pOptions.PropiedadCMSMultiIdioma);
-            if (pOptions.ProyectoSinNombreCortoEnURL)
+            if (mProyectoSinNombreCortoEnUrlActivado)
             {
                 Gnoss.Logica.ServiciosGenerales.ProyectoCN proyCN = new Gnoss.Logica.ServiciosGenerales.ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 List<string> listaUrls = proyCN.ObtenerUrlsComunidadCajaBusqueda(ProyectoSeleccionado.Clave);
@@ -474,6 +538,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         proyCN.QuitarUrlComunidadCajaBusqueda(ProyectoSeleccionado.Clave, url);
                     }
                 }
+
+                
             }
             bool resultado = pOptions.Replicacion;
             string resultadoNumerico = "0";
@@ -590,6 +656,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
             parametroAplicacionCL.InvalidarCacheParametrosAplicacion();
 
+            mGnossCache.VersionarCacheLocal(ProyectoSeleccionado.Clave);
+
             if (pEliminarTerceraPeticionFacetas)
             {
                 FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
@@ -639,23 +707,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void AgregarExcepcionProyectoPersonalizacionEcosistemaParametroAplicacion()
         {
-            //ParametroAplicacionDS.ParametroAplicacionRow filaExcepcion = ParamAplicacionDS.ParametroAplicacion.FindByParametro("PersonalizacionEcosistemaExcepciones");
-            AD.EntityModel.ParametroAplicacion filaExcepcion = ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro.Equals("PersonalizacionEcosistemaExcepciones"));
+            AD.EntityModel.ParametroAplicacion filaExcepcion = mEntityContext.ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro.Equals("PersonalizacionEcosistemaExcepciones"));
             if (filaExcepcion != null)
             {
-                if (!string.IsNullOrEmpty(filaExcepcion.Valor))
+                if (!filaExcepcion.Valor.Contains(ProyectoSeleccionado.Clave.ToString()))
                 {
-                    filaExcepcion.Valor = filaExcepcion.Valor + ',';
+                    if (!string.IsNullOrEmpty(filaExcepcion.Valor))
+                    {
+                        filaExcepcion.Valor = filaExcepcion.Valor + ',';
+                    }
+                    filaExcepcion.Valor = filaExcepcion.Valor + ProyectoSeleccionado.Clave.ToString();
                 }
-                filaExcepcion.Valor = filaExcepcion.Valor + ProyectoSeleccionado.Clave.ToString();
             }
             else
             {
-                /* filaExcepcion = ParamAplicacionDS.ParametroAplicacion.NewParametroAplicacionRow();
-                 filaExcepcion.Parametro = "PersonalizacionEcosistemaExcepciones";
-                 filaExcepcion.Valor = ProyectoSeleccionado.Clave.ToString();*/
                 filaExcepcion = new AD.EntityModel.ParametroAplicacion("PersonalizacionEcosistemaExcepciones", ProyectoSeleccionado.Clave.ToString());
-                //ParamAplicacionDS.ParametroAplicacion.AddParametroAplicacionRow(filaExcepcion);
                 mEntityContext.ParametroAplicacion.Add(filaExcepcion);
                 //context.SaveChanges();
             }
@@ -665,7 +731,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private void EliminarExcepcionProyectoPersonalizacionEcosistemaParametroAplicacion()
         {
             //ParametroAplicacionDS.ParametroAplicacionRow filaExcepcion = ParamAplicacionDS.ParametroAplicacion.FindByParametro("PersonalizacionEcosistemaExcepciones");
-            AD.EntityModel.ParametroAplicacion filaExcepcion = ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro.Equals("PersonalizacionEcosistemaExcepciones"));
+            AD.EntityModel.ParametroAplicacion filaExcepcion = mEntityContext.ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro.Equals("PersonalizacionEcosistemaExcepciones"));
             if (filaExcepcion != null && !string.IsNullOrEmpty(filaExcepcion.Valor))
             {
                 filaExcepcion.Valor = filaExcepcion.Valor.Replace(ProyectoSeleccionado.Clave.ToString(), "");
@@ -748,6 +814,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mPaginaModel.OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple = ControladorProyecto.ObtenerParametroBooleano(ParametroProyecto, "OcultarFacetasDeOntologiasEnRecursosCuandoEsMultiple");
             mPaginaModel.TerceraPeticionFacetasPlegadas = ControladorProyecto.ObtenerParametroBooleano(ParametroProyecto, "TerceraPeticionFacetasPlegadas");
             mPaginaModel.TieneGrafoDbPedia = ControladorProyecto.ObtenerParametroBooleano(ParametroProyecto, "TieneGrafoDbPedia");
+            mPaginaModel.PermitirDescargaIdentidadInvitada = ControladorProyecto.ObtenerParametroBooleano(ParametroProyecto, "PermitirDescargaIdentidadInvitada");
             mPaginaModel.ProyectoSinNombreCortoEnURL = ControladorProyecto.ObtenerParametroBooleano(ParametroProyecto, "ProyectoSinNombreCortoEnURL");
             mPaginaModel.RegistroAbierto = ControladorProyecto.ObtenerParametroBooleano(ParametroProyecto, "RegistroAbierto");
             mPaginaModel.CargarEditoresLectoresEnBusqueda = ControladorProyecto.ObtenerParametroBooleano(ParametroProyecto, "CargarEditoresLectoresEnBusqueda");

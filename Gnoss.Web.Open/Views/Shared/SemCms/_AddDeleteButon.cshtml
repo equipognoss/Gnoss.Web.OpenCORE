@@ -23,8 +23,7 @@
     */
     string metodoOnclick = "MostrarPanelConfirmacionEvento(event, '" + Html.GetText("CONTROLESCVSEM", "CONFIRMARELIMINAR", Model.pValor).Replace("'", "\\'") + "', '" + metodoEliminar + "')";
 
-    <button type="button"
-            class="btn removeButton"
+    <a      class="removeButton"
             data-showmodalcentered="1"
             onclick="
                         $('#modal-container').modal('show', this);
@@ -40,7 +39,7 @@
                         );
         ">
         <span class="material-icons pr-0">delete</span>
-    </button>
+    </a>
 
 
 }

@@ -1,0 +1,43 @@
+@*
+Descripción
+-----------------------------------------------
+Vista modal para confirmar la eliminación de una página en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+<div
+	id="modal-delete-page"
+	class="modal modal-top fade modal-confirmDelete"           
+	role="dialog"	
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar el borrado de la página *@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">delete</span>
+					@Html.GetText("COMMON","ELIMINAR")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">				
+				<div class="form-group">
+					<label class="control-label">
+						@Html.GetText("DEVTOOLS","DESEAELIMINARLAPAGINASELECCIONADA")
+					</label>
+				</div>
+				<div class="form-actions">
+					<button data-dismiss="modal" class="btn btn-outline-primary btnNotConfirmDeletePage">@Html.GetText("COMMON", "NO")</button>
+					<button class="btn btn-primary btnConfirmDeletePage">@Html.GetText("COMMON", "SI")</button>
+				</div>				
+			</div>
+		</div>
+	</div>
+</div>

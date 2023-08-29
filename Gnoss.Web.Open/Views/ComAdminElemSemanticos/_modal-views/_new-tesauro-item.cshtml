@@ -1,0 +1,127 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal que muestra los inputs necesarios para crear un Tesauro semántico.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);	
+}
+
+@* Modal con la información de la categoría cookie *@
+<div
+	id="modal-new-tesauro"
+	class="modal modal-top fade modal-edicion show modal-con-tabs"
+	role="dialog"
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				@* Título del modal *@
+				<p class="modal-title">
+					<span class="material-icons">edit</span>
+					Añadir tesauro semántico
+				</p>
+				<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				<div class="formulario-edicion">
+
+					@* Tabs de los idiomas en multiIdioma *@
+					<div class="panContenidoMultiIdioma basicInfo">
+
+					</div>
+
+					@* Contenido de los tabs de los idiomas *@
+					<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+
+						@* Título/Nombre de la página *@
+						<div class="form-group mb-4">							
+							<input type="text"
+								   name="txtNombre"
+								   data-labeltext="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+								   data-helptext="@Html.GetText(" DEVTOOLS","NOMBREQUESEPRESENTARAENELLISTADODEEDICIONPARAREPRESENTARELTE")"								   								   
+								   placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"								   
+								   class="form-control not-outline multiIdioma"
+								   value=""/>
+						</div>
+					
+						@* Nombre sin multiIdioma
+						<div class="form-group mb-3">                
+							<label class="control-label d-block">Nombre</label>
+							<input
+								placeholder="Introduce el nombre"
+								type="text"							
+								id="txtNombre"
+								class="form-control not-outline"/>
+								<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBREQUESEPRESENTARAENELLISTADODEEDICIONPARAREPRESENTARELTE")
+									<br>@Html.GetText("DEVTOOLS","ELTEXTOPUEDESERMULTIIDIOMACONELSIGUIENTEFORMATO:TESAURO1@ES")
+								</small>                                        
+						</div>
+						*@
+					</div>
+
+					@* Idiomas
+					<div class="form-group mb-3">
+						<label class="control-label d-block">Idiomas</label>
+						<input
+							placeholder="Introduce los idiomas"
+							type="text"							
+							id="txtIdiomas"
+							class="form-control not-outline"/>
+						<small class="form-text text-muted">@Html.GetText("DEVTOOLS","CONTIENELOSCODIGOSDELOSIDIOMASQUEUSAELTESAUROSEMANTICOSEPARA")
+							<br>@Html.GetText("DEVTOOLS","LOSNOMBRESDELASCATEGORIASPODRANEDITARSEENLOSIDIOMASCONFIGURA")</small>
+                    </div>
+					*@
+					@* Ontología *@
+					<div class="tesauroContainer tab-content pt-2">
+						<div class="form-group mb-4 ontology">
+							<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "ONTOLOGIA")</label>
+							@* Select de la ontología *@
+							<select name="TabSelectOntology"
+									id="selectOntology"
+									class="selectOntology js-select2"
+									tabindex="0"
+									aria-hidden="false">
+								@foreach (string ontologia in Model.SemanticThesaurus.ListaOntologias.Keys)
+								{
+									<option value="@ontologia">@Model.SemanticThesaurus.ListaOntologias[ontologia]</option>
+								}
+							</select>
+							<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBREDELOCDELTESAUROSEMANTICO")</small>
+						</div>
+
+						@* Prefijo *@
+						<div class="form-group mb-3">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","PREFIJO")</label>
+							<input placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELPREFIJO")"
+								   type="text"
+								   id="txtPrefijo"
+								   class="form-control not-outline" />
+							<small class="form-text text-muted">@Html.GetText("DEVTOOLS","PREFIJOQUETIENENLOSSUJETOSDELASCATEGORIASDELOSTESAUROSSEMANT")</small>
+						</div>
+
+						@* Fuente *@
+						<div class="form-group mb-3">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","FUENTE")</label>
+							<input placeholder="Introduce la fuente"
+								   type="text"
+								   id="txtFuente"
+								   class="form-control not-outline" />
+							<small class="form-text text-muted">Ej: foaf:http://xmlns.com/foaf/0.1/|dc:http://purl.org/dc/elements/1.1/</small>
+						</div>
+						@* Botón para añadir/guardar *@
+						<div class="panelBotonera">
+							<a href="javascript: void(0)" id="btnSaveTesauro" class="btn btn-primary uppercase">@Html.GetText("COMMON","GUARDAR")</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

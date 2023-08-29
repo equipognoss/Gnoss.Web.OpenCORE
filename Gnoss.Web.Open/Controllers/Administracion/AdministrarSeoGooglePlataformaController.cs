@@ -55,6 +55,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_SEO;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "POSICIONAMIENTOYANALITICA");
+
             return View(PaginaModel);
         }
 
@@ -66,7 +74,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarSeoGooglePlataformaViewModel pParametros)
         {
-            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle();
+            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
 
             pParametros.CodigoGoogleAnalytics = HttpUtility.UrlDecode(pParametros.CodigoGoogleAnalytics);
             pParametros.ScriptGoogleAnalytics = HttpUtility.UrlDecode(pParametros.ScriptGoogleAnalytics);
@@ -95,7 +103,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 return GnossResultERROR(ex.Message);
             }
-
+            contrSeoGoogle.InvalidarCaches();
             return GnossResultOK();
         }
 

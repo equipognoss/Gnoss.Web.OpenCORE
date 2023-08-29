@@ -42,7 +42,7 @@
                 }
             }
             <input type="hidden" id="idiomasComunidad" value="@idiomas" />
-
+            
             <div class="box">
                 <div class="bloquePrivacidad" id="panPrivacidad">
                     <fieldset>
@@ -80,7 +80,7 @@
                                                                 foreach (Guid perfilID in Model.PerfilesPrivacidad.Keys)
                                                                 {
                                                                     listaPrivacidad += perfilID + ",";
-                                                                    <li>@Model.GruposPrivacidad[perfilID]<a onclick="EliminarUsuarioSelecUsu(this, '@perfilID');" class="remove">eliminar</a></li>
+                                                                    <li>@Model.PerfilesPrivacidad[perfilID]<a onclick="EliminarUsuarioSelecUsu(this, '@perfilID');" class="remove">eliminar</a></li>
                                                                 }
                                                             }
                                                         }
@@ -323,20 +323,24 @@
 
         if ($('#chkEditarPrivacidad').is(':checked')) {
             var privacidad = $('#txtHackInvitadosPagina').val().split(',');
+            var contGrupos = 0;
+            var contPerfiles = 0;
             for (var i = 0; i < privacidad.length; i++) {
                 var idPrivacidad = privacidad[i].trim();
                 if (idPrivacidad != "") {
                     if (idPrivacidad.substr(0, 2) == 'g_')
                     {
-                        var prefijoPrivacidadGrupos = prefijoClave + '.GruposPrivacidad[' + i + ']';
+                        var prefijoPrivacidadGrupos = prefijoClave + '.GruposPrivacidad[' + contGrupos + ']';
                         datosComponente[prefijoPrivacidadGrupos + '.Key'] = privacidad[i].substr(2);
                         datosComponente[prefijoPrivacidadGrupos + '.Value'] = "";
+                        contGrupos++;
                     }
                     else
                     {
-                        var prefijoPrivacidadPerfiles = prefijoClave + '.PerfilesPrivacidad[' + i + ']';
+                        var prefijoPrivacidadPerfiles = prefijoClave + '.PerfilesPrivacidad[' + contPerfiles + ']';
                         datosComponente[prefijoPrivacidadPerfiles + '.Key'] = privacidad[i];
                         datosComponente[prefijoPrivacidadPerfiles + '.Value'] = "";
+                        contPerfiles++;
                     }
                 }
             }
@@ -598,7 +602,7 @@
                 extraParams: {
                     grupo: '',
                     identidad: $('#inpt_identidadID').val(),
-                    organizacion: '',
+                    organizacion: $("#inpt_organizacionID").val(),
                     proyecto: $('#inpt_proyID').val(),
                     bool_edicion: 'false',
                     bool_traergrupos: 'true',

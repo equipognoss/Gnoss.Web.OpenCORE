@@ -1,0 +1,128 @@
+﻿@model CMSMultimediaModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene la visualización de un item multimedia para ser mostrado en la tabla de edición de elementos multimedia de una Comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	string extension = Model.Title.Substring(Model.Title.LastIndexOf(".")).ToLower().Replace(".","");
+	bool esImagen = ViewBag.ExtensionesImagenes.Contains("." + extension);
+	string fechaCreacion = Model.CreationDate.ToString("dd/MM/yyyy");	
+	double sizeValue = 0.0;
+	string sizeString = "";
+
+	@* Calcular qué mostrar (KB o MB) *@
+	if (Model.Size > 1000000)
+	{
+		// Mostrar tamaño en MB
+		sizeValue = Math.Round(0.000001 * Model.Size, 1);
+		sizeString = sizeValue + " MB";
+	}
+	else
+	{
+		// Mostrar tamaño en KB
+		sizeValue = Math.Round(0.001 * Model.Size, 1);
+		sizeString = sizeValue + " KB";
+	}
+
+	string tamanio = "";
+	if (esImagen)
+	{
+			tamanio = $"{Model.Width}×{Model.Height}px";			
+	}
+	else
+	{
+		// Tamaño exclusivo para ficheros
+		tamanio = sizeString.Replace(",",".");
+
+	}
+
+	// Url para realizar la petición para mostrar la vista modal de "Eliminar" item multimedia
+	string urlLoadDeleteMultimediaItem = $"{@Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")}/load-delete-multimedia-item";
+
+}
+
+@*
+	----------------------------------------------------------------
+	-------------------- Vista parcial de un item Multimedia --------------------
+*@
+
+<tr>
+	<td class="td-titulo">
+
+		@* Imagen (Si el recurso es una imagen) *@
+		@if (esImagen)
+		{
+			<img src="@Model.Link" alt="@Model.Title" title="@Model.Title"/>
+		}
+		else
+		{
+		<span class="material-icons-outlined cms-file" alt="@Model.Title">description</span>			
+		}
+
+		@* Nombre del componente multimedia *@
+		<div class="info-component">
+			<span class="texto-alternativo-imagen">
+				<a href="@Model.Link">@Model.Title</a>
+			</span>
+			@* Dimensiones del fichero *@
+			<span class="nombre-imagen">
+				@if(esImagen){
+					@sizeString.Replace(",",".");
+				}else{
+					@tamanio
+				}				
+			</span>
+		</div>
+	</td>
+	@* Tipo *@
+	<td class="td-tipo">@extension</td>
+	@* Dimensiones *@
+	@*
+	<td class="td-dimensiones">
+		<span>@tamanio</span>		
+	</td>
+	*@
+	@* Fecha de creación *@
+	<td class="td-creacion">@fechaCreacion</td>
+	@* Acciones a realizar en el componente *@
+	<td class="td-acciones">
+		<div class="dropdown dropdown-select">
+			@* Acción Copiar *@
+			<a class="dropdown-toggle" data-url="@Model.Link" data-toggle="dropdown">
+				<span class="material-icons">content_copy</span>
+				<span class="texto">@Html.GetText("DEVTOOLS","COPIAR")</span>
+			</a>
+			@* Dropdown de Acciones *@
+			<div
+				class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
+				@* Acción Copiar *@
+				<a class="item-dropdown btnCopyMultimediaItem" data-url="@Model.Link">
+					<span class="material-icons">content_copy</span>
+					<span class="texto">@Html.GetText("DEVTOOLS","COPIAR")</span>
+				</a>
+				@* Acción Editar 
+				<a class="item-dropdown">
+					<span class="material-icons">edit</span>
+					<span class="texto">Editar</span>
+				</a>*@
+				@* Acción Borrar *@
+				<a class="item-dropdown btnDeleteMultimediaItem" data-name="@Model.Title"
+				   data-target="#modal-container"
+				   data-toggle="modal"
+				   onclick="getVistaFromUrl('@urlLoadDeleteMultimediaItem','modal-dinamic-content', '')">
+					<span class="material-icons">delete</span>
+					<span class="texto">@Html.GetText("DEVTOOLS","BORRAR")</span>
+				</a>
+			</div>
+		</div>
+	</td>
+</tr>
+
+

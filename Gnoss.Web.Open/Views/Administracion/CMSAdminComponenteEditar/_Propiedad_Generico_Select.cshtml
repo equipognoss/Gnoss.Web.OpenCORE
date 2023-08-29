@@ -1,5 +1,14 @@
 ﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
 
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato Select o ComboBox (Select ComboBox)
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
     string idiomaPanel = (string)ViewData["idiomaPanel"];
     string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
@@ -13,15 +22,21 @@
     string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
 }
 
-<div id="contenedorPrincipal_@idPanel">
-    <p id="parrafo_propiedad_@idPanel">
-        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
-        <select id="@idPanel">
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="form-group mb-4">
+    @* Label del elemento Html*@
+    <label class="control-label d-block">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+    @* Elemento Html *@	
+	<select id="@idPanel"
+            name=""
+			class="js-select2"
+			tabindex="0"
+            @(Model.Required ? " required" : "")
+			aria-hidden="false">
             @foreach (string idOpcion in Model.Options.Keys)
             {
                 bool selected = !string.IsNullOrEmpty(Model.Value) && Model.Value.Equals(idOpcion);
                 <option @(selected ? "selected=\"selected\"" : "") value="@idOpcion">@Model.Options[idOpcion]</option>
             }
-        </select>
-    </p>
+	</select>                
 </div>

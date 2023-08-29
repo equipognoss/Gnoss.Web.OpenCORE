@@ -1,0 +1,170 @@
+﻿@model String
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene los detalles de una vista de tipo "Formulario semántico" editado.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	string nombreFormateado = Model.Replace("/ViewsAdministracion/", "").Replace("/Views/", "");
+	// Tipo de vista (original/personalizadas) y de servicio (web, resultados, facetas)
+	string viewServiceType = ViewBag.ViewServiceType;
+	string viewType = ViewBag.ViewType;
+
+	// Tipo de vista a mostrar (Original / Personalizada)
+	string viewTypeValue = viewType == "original" ? "Original" : "Personalizada";
+
+	// Tipo de servicio al que corresponde la vista (Web, Resultados, Facetas)
+	string viewServiceTypeValue = Html.GetText("ADMINISTRACIONSEMANTICA", "OBJETOSDECONOCIMIENTO");
+	// Id para editar el modal de la vista "editada"
+	string idModalUploadVista = "modal-upload-view" + Model.Replace("/", "_").Replace(".", "_") + "_edited";
+
+	if (viewServiceType == "facetas")
+	{
+		viewServiceTypeValue = "Facetas";
+	} else if (viewServiceType == "resultados")
+	{
+		viewServiceTypeValue = "Resultados";
+	}
+
+	// Encontrar la última posición de "/" para quedarnos solo con el nombre
+	int lastPositionCharacter = nombreFormateado.LastIndexOf("/");
+	// Hacer más corto el nombreFormateado (Eliminar ruta de la vista)
+	if (lastPositionCharacter != -1 && !string.IsNullOrEmpty(nombreFormateado))
+	{
+		nombreFormateado = nombreFormateado.Substring(lastPositionCharacter + 1);
+	}
+}
+
+@if (!string.IsNullOrEmpty(Model))
+{
+	<li class="component-wrap row-vista"
+		id="@nombreFormateado" 
+		data-viewservicetype="@viewServiceType"
+		data-viewtype="@viewType"	
+		data-semanticform="true">
+
+		<div class="component">
+			<div class="component-header-wrap">
+				<div class="component-header">
+					<div class="component-header-content">
+						<div class="component-header-left">						
+							@* Nombre de la página *@
+							<div class="component-name-wrap d-flex flex-column align-items-start component-bigger">																				
+								<span class="component-name" alt="@nombreFormateado" title="@nombreFormateado">
+									@nombreFormateado
+								</span>
+								<span class="component-name-subtitle">
+									@Model
+								</span>									
+							</div>
+							@* Estado de la página *@
+							<div class="component-estado-wrap component-smaller">							
+								<span class="component-estado">								
+									@viewTypeValue
+								</span>																		
+							</div>
+							@* Tipo de la página *@
+							<div class="component-tipo-wrap component-smaller">							
+								<span class="component-tipo" alt="@viewServiceTypeValue" title="@viewServiceTypeValue">								
+									@viewServiceTypeValue
+								</span>																		
+							</div>
+
+							@* Fecha*@
+							<div class="component-fecha-wrap component-smaller">
+								<span class="component-fecha">
+									@Html.GetText("DEVTOOLS","NOAPLICA")
+								</span>
+							</div>
+						</div>
+						@*Sección de acciones de la página *@
+						<div class="component-header-right">
+							<div class="component-actions-wrap">
+								@* Botón dropdown de acciones *@
+								<div class="dropdown">
+									<a
+										class="nav-link dropdown-toggle btn btn-outline-grey"
+										data-toggle="dropdown"
+										href="#"
+										role="button"
+										aria-haspopup="true"
+										aria-expanded="false">
+										<span class="material-icons">edit</span>
+										<span class="texto">@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+									</a>
+
+									@* Panel dropdown con las acciones disponibles Controlar CI-CD *@
+									<div class="dropdown-menu dropdown-menu-left basic-dropdown">
+										<ul class="no-list-style">
+											@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+											{
+												@* Deshabilitado *@
+												@* Descargar *@
+												<li>
+													<a class="item-dropdown js-action-edit-component btnDownloadEditedVista"
+													   data-action="@((short)ManageViewsViewModel.Action.Download)"												
+													   data-url="@ViewBag.UrlActionWeb"
+													   data-personalizables="PaginasPersonalizables"
+													   data-formulariossemanticos="FormulariosSemanticos">
+														<span class="material-icons">download</span>
+														<span class="texto">@Html.GetText("COMMON","DESCARGAR")</span>
+													</a>
+												</li>											
+											}
+											else
+											{													
+												@* Descargar *@
+												<li>
+													<a class="item-dropdown js-action-edit-component btnDownloadEditedVista"
+													   data-action="@((short)ManageViewsViewModel.Action.Download)"												
+													   data-url="@ViewBag.UrlActionWeb"
+													   data-personalizables="PaginasPersonalizables"
+													   data-formulariossemanticos="FormulariosSemanticos">
+														<span class="material-icons">download</span>
+														<span class="texto">@Html.GetText("COMMON","DESCARGAR")</span>
+													</a>
+												</li>													
+
+												@* Editar *@
+												<li>
+													<a class="item-dropdown js-action-edit-component btnUploadEditedVista"
+													   data-toggle="modal" 
+													   data-target="#@(idModalUploadVista)">
+														<span class="material-icons">upload</span>
+														<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+													</a>
+												</li>
+
+												@* Eliminar *@
+												<li>
+													<a class="item-dropdown js-action-edit-component btnDeleteEditedVista"
+													   data-toggle="modal" 
+													   data-action="@((short)ManageViewsViewModel.Action.Delete)"
+													   data-componentecms="PaginasPersonalizables"
+													   data-formulariossemanticos="FormulariosSemanticos"
+													   data-nombre="@Model"												   
+													   data-url="@(ViewBag.UrlActionWeb)"
+													   data-target="#modal-delete-view">
+														<span class="material-icons">delete</span>
+														<span class="texto">@Html.GetText("DEVTOOLS","ELIMINARLAPERSONALIZACION")</span>
+													</a>												
+												</li>	
+											}
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		@* Información detallada de la pestaña -> Modal *@
+		@Html.PartialView("_modal-views/_uploadWebView", Model)
+	</li>
+}

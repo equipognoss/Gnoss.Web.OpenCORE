@@ -64,12 +64,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     //Si el usuario está logueado le saco la página 404                    
                     if (mControladorBase.UsuarioActual != null && mControladorBase.UsuarioActual.EsUsuarioInvitado)
                     {
-                        string urlActual = pFilterContext.HttpContext.Request.Path.ToString();
+                        string scheme = "http";
+                        if (mConfigService.PeticionHttps())
+                        {
+							scheme = "https";
+						}
+                        string urlActual = $"{scheme}://{pFilterContext.HttpContext.Request.Host}{pFilterContext.HttpContext.Request.Path}";
                         string urlComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(mControladorBase.UtilIdiomas, mControladorBase.BaseURLIdioma, mControladorBase.ProyectoSeleccionado.NombreCorto);
                         string urlRedirect = urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "LOGIN") + "/redirect";
-                        urlRedirect = urlActual.Replace(urlComunidad, urlRedirect);
-                        //Redirijo a login
-                        pFilterContext.Result = new RedirectResult(urlRedirect);
+						urlRedirect = urlActual.Replace(urlComunidad, urlRedirect);
+						//Redirijo a login
+						pFilterContext.Result = new RedirectResult(urlRedirect);
                     }
                     else
                     {

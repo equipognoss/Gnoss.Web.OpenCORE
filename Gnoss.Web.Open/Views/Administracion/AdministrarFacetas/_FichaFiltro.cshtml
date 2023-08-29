@@ -1,70 +1,108 @@
 ﻿@model FacetaModel.FiltrosFacetas
 
-@{
-    FacetaModel.FiltrosFacetas filtro = Model;
-    long longitudTexto = filtro.Nombre.LongCount();
+@*
+Descripción
+-----------------------------------------------
+Vista parcial donde se muestra el filtro en detalle de una faceta.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{	
+// Id para los checkbox de tipo de visualización
+Guid filterId = @Guid.NewGuid();
+string collapseId = "panel_collapse_" + filterId.ToString().Substring(0,5);
+FacetaModel.FiltrosFacetas filtro = Model;
+long longitudTexto = !string.IsNullOrEmpty(filtro.Nombre) ? filtro.Nombre.LongCount() : 0;
+string nombreFiltroPreview = "";
 }
 
-<li class="bloque row filtro" id="@filtro.Nombre">
-    <span class="handle filtro">:::</span>
-    <section class="header">
-        @{
-            if (filtro.Deleted)
-            {
-                <span class="nombreFiltro" aux="Nuevo Filtro">Nuevo Filtro</span>
-            }
-            else
-            {
-                if (longitudTexto > 50)
-                {
-                    <span class="nombreFiltro" aux="@filtro.Nombre.Substring(0,50)...">@filtro.Nombre.Substring(0,50)...</span>
-                }
-                else
-                {
-                    <span class="nombreFiltro" aux="@filtro.Nombre">@filtro.Nombre</span>
-                }
+@* Controlar la previsualización del filtro *@
+@if (longitudTexto > 50)
+{
+	nombreFiltroPreview = filtro.Nombre.Substring(0,50) + "...";
+}
+else
+{
+	nombreFiltroPreview = filtro.Nombre;
+}
 
-            }
-        }
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    <section class="panEdicion">
-        <input type="hidden" name="TabEliminada" value="false" />
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINFACETAS", "NOMBREFILTRO")">@Html.GetText("AYUDACOMADMINFACETAS", "FILTRO")</span>
-            @{
-                if (filtro.Deleted)
-                {
-                    <input type="text" name="TabNombre" value="" />
-                }
-                else
-                {
-                    <input type="text" name="TabNombre" value="@filtro.Nombre" />
-                }
-            }
-            
-            
 
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINFACETAS", "CONDICIONFILTRO")">@Html.GetText("AYUDACOMADMINFACETAS", "FILTROCONDICION")</span>
-            <input type="text" name="TabCondicion" value="@filtro.Condicion" />
-        </p>
-    </section>
+<li class="component-wrap filter-row" id="@filterId" data-filterkey="@filterId" data-collapseid="@collapseId">
+
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				@* Icono para arrastrar filtro *@
+				<div class="component-no-sortable">
+					<span class="material-icons-outlined sortable-icon">filter_alt</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						@* Nombre del filtro *@
+						<div class="component-name-wrap">																												
+							<span class="component-filterName">@nombreFiltroPreview</span>
+						</div>					
+					</div>
+					@*Sección de acciones del filtro *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de editar el filtro *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditFilter"
+									   data-toggle="collapse" 
+									   data-target="#@collapseId"									   
+									   role="button" 
+									   aria-expanded="false" 
+									   aria-controls="@collapseId">									   
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de borrar el filtro *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteFilter"
+										href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada del filtro - Collapse *@
+	<div class="collapse faceta-filter-info" id="@collapseId">
+		@* Indicación de que el filtro se ha eliminado *@
+		<input type="hidden" name="TabEliminada" value="false" />
+		<div class="card card-body">           			
+			@* Nombre del Filtro *@
+			<div class="form-group mb-4">
+				<label class="control-label d-block">@Html.GetText("AYUDACOMADMINFACETAS", "FILTRO")</label>
+				<input
+					type="text"	
+					name="TabNombre"
+					placeholder="@Html.GetText("AYUDACOMADMINFACETAS", "FILTRO")"
+					class="form-control txtNombreFiltro"
+					value="@filtro.Nombre">
+				<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "NOMBREFILTRO")</small>
+			</div>		
+			
+			@* Condición *@
+			<div class="form-group mb-4">
+				<label class="control-label d-block">@Html.GetText("AYUDACOMADMINFACETAS", "FILTROCONDICION")</label>
+				<input
+					type="text"										
+					placeholder="@Html.GetText("AYUDACOMADMINFACETAS", "FILTROCONDICION")"
+					name="TabCondicion"
+					class="form-control txtCondicionFiltro"
+					value="@filtro.Condicion">
+				<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "CONDICIONFILTRO")</small>
+			</div>						
+		</div>
+	</div>	
 </li>
-
-
-@*<li class="bloque row exportacion" id="@exportacion.Key">
-    <span class="handle exportacion">:::</span>
-    <section class="header">
-        <span>@exportacion.Nombre</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    <section class="panEdicion">
-        <input type="hidden" name="TabEliminada" value="false" />
-        <p>
-            <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")</span>
-            <input type="text" name="Nombre" value="@exportacion.Nombre" />
-        </p>
-    </section>
-</li>*@

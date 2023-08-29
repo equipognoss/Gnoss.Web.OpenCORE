@@ -1,94 +1,96 @@
 ﻿@model ManageRedirectionsViewModel.RedirectionModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para mostrar la información detallada de una redirección.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    bool esRedirecDirecta = !string.IsNullOrEmpty(Model.OriginalUrl) && Model.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Direct);
-    bool esRedirecParametrizada = !string.IsNullOrEmpty(Model.OriginalUrl) && Model.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Parameterised);
+	// Id para la llamada al modal para edición de la página
+	string idModalRedirection = "modal-configuracion-redirection_" + Model.Key;
+	string idModalRedirectionDelete = "modal-configuracion-redirection_delete" + Model.Key;
+	// Propiedades para mostrar en la vista
+	string urlOrigen = Model.OriginalUrl.Equals(string.Empty) ? @Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONNUEVA") : Model.OriginalUrl;
+	string tipoDireccion = Model.RedirectionType == ManageRedirectionsViewModel.RedirectionType.Direct ? @Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONDIRECTA") : @Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONPARAMETRIZADA");
+	string fechaCreacion = "";
+	if (Model.FechaCreacion.Equals(DateTime.MinValue))
+	{
+		fechaCreacion = DateTime.Now.ToString("dd/MM/yyyy");
+	}
+	else
+	{
+		fechaCreacion = Model.FechaCreacion.ToString("dd/MM/yyyy");	
+	}
 }
 
-<li class="row" id="@Model.Key">
-    <section class="header">
-        @{
-            string urlOrigen = Model.OriginalUrl.Equals(string.Empty) ? @Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONNUEVA") : Model.OriginalUrl;
-        }
-        <span class="urlOrigen" aux="@urlOrigen">@urlOrigen</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    <section class="panEdicion">
-        <div>
-            <input type="hidden" name="TabEliminada" value="false" />
-            <p>
-                <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "URLORIGEN")">@Html.GetText("COMADMINREDIRECCIONES", "URLORIGEN")</span>
-                <input type="text" name="txtUrlOrigen" id="txtUrlOrigen_@Model.Key" value="@Model.OriginalUrl" />
-            </p>
-            <span class="tipo noFloat tipoRedireccion">@Html.GetText("COMADMINREDIRECCIONES", "ELIGETIPOREDIRECCION")</span>
-            <div>
-                <input type="radio" id="rbDirecta_@Model.Key" name="tipoRedireccion_@Model.Key" value="Direct" @(esRedirecDirecta ? "checked":"") />
-                <label for="rbDirecta_@Model.Key">@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONDIRECTA")</label>
-                <div class="redireccionDirecta" @Html.Raw(esRedirecParametrizada ? "style=\"display:none\"":"")>
-                    <p>
-                        <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")">@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")</span>
-                        <input type="text" id="txtUrlDestino_@Model.Key" value="@Model.DestinationUrl" />
-                    </p>
-                    <p>
-                        <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "MANTENERFILTROSORIGEN")">@Html.GetText("COMADMINREDIRECCIONES", "MANTENERFILTROSORIGEN")</span>
-                        <input type="checkbox" name="mantenerFiltros" @(Model.PreserveFilters ? "checked":"") />
-                    </p>
-                </div>
-            </div>
-            <div>
-                <input type="radio" id="rbParametrizada_@Model.Key" name="tipoRedireccion_@Model.Key" value="Parameterised" @(esRedirecParametrizada ? "checked":"") />
-                <label for="rbParametrizada_@Model.Key">@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONPARAMETRIZADA")</label>
-                <div class="redireccionParametrizada" @Html.Raw(esRedirecDirecta ? "style=\"display:none\"":"")>
-                    @{
-                        bool tieneParametros = Model.ParameterValues != null && Model.ParameterValues.Count > 0;
-                        string nombreParametro = string.Empty;
-                        if (tieneParametros)
-                        {
-                            nombreParametro = Model.ParameterName;
-                        }
-                        <p>
-                            <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "NOMBREPARAMETRO")">@Html.GetText("COMADMINREDIRECCIONES", "NOMBREPARAMETRO")</span>
-                            <input type="text" id="txtNombreParametro_@Model.Key" value="@nombreParametro" />
-                        </p>
-                        <div>
-                            <div class="cabeceraParametro">
-                                <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "VALORPARAMETRO")">@Html.GetText("COMADMINREDIRECCIONES", "VALORPARAMETRO")</span>
-                                <span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")">@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")</span>
-                                @*<span class="tipo" title="@Html.GetText("COMADMINREDIRECCIONES", "ORDENPARAMETRO")">@Html.GetText("COMADMINREDIRECCIONES", "ORDENPARAMETRO")</span>*@
-                            </div>
-                            <ol id="listaParametros_@Model.Key">
-                            @{
-                                if (tieneParametros)
-                                {
-                                    int indiceParam = 0;
-                                    foreach (ManageRedirectionsViewModel.ParameterValue parametro in Model.ParameterValues)
-                                    {
-                                        string redireccion = parametro.DestinationUrl;
-                                        <li class="itemParametro">
-                                            <input type="text" class="InputParametro" id="txtValorParametro_@(Model.Key + "_" + indiceParam)" @indiceParam value="@parametro.Value" />
-                                            <input type="text" class="InputParametro" id="txtUrlRedireccionParametrizada_@(Model.Key + "_" + indiceParam)" @indiceParam value="@redireccion" />
-                                            @*<input type="text" class="InputParametro" id="txtOrdenParametro_@(Model.Key + "_" + indiceParam)" @indiceParam value="@parametro.Order" />*@
-                                        </li>
-                                        indiceParam++;
-                                    }
-                                }
-                                else
-                                {
-                                    int indiceParam = 0;
-                                    <li class="itemParametro">
-                                        <input type="text" class="InputParametro" id="txtValorParametro_@(Model.Key + "_" + indiceParam)" value="" />
-                                        <input type="text" class="InputParametro" id="txtUrlRedireccionParametrizada_@(Model.Key + "_" + indiceParam)" value="" />
-                                        @*<input type="text" class="InputParametro" id="txtOrdenParametro_@(Model.Key + "_" + indiceParam)" value="" />*@
-                                    </li>
-                                }
-                            }
-                            </ol>
-                        </div>
-                    }
-                    <input type="button" class="addParametro" value="@Html.GetText("COMADMINREDIRECCIONES", "ADDPARAMETRO")" />
-                </div>
-            </div>
-            @*<input type="button" class="aceptarRedireccion" value="@Html.GetText("COMMON", "ACEPTAR")" />*@
-        </div>
-    </section>
+@*
+----------------------------------------------------------------
+-------------------- Vista detallada de una redirección --------------------
+*@
+
+<li class="component-wrap redirection-row  @((Model.EsRecienteCreacion) ? "newRedirection modified" : null) " data-redirectionkey="@Model.Key" id="@Model.Key">
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				@* No hace falta en Redirecciones 
+					<div class="component-sortable js-component-sortable-redirection">
+						<span class="material-icons-outlined sortable-icon">drag_handle</span>
+					</div>
+				*@
+				@* Cabecera de información de redirecciones *@
+				<div class="component-header-content">
+					<div class="component-header-left">
+						@* Tipo de redirección *@
+						<div class="component-name-wrap">
+							<span class="material-icons">public</span>
+							<span class="component-name componentUrlOrigen">@urlOrigen</span>
+						</div>
+						@* Url *@
+						<div class="component-url-wrap">
+							<span class="component-url">@Model.DestinationUrl</span>
+						</div>
+						@* Redirección Directa / Indirecta *@
+						<div class="component-tipo-wrap">
+							<span class="component-tipo">@tipoDireccion</span>
+						</div>
+						@* Fecha de creación/actualización de la redirección *@
+						<div class="component-fecha-wrap">
+							<span class="component-fecha">@fechaCreacion</span>
+						</div>
+					</div>
+					@* Sección de acciones *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									<a
+										class="action-edit round-icon-button js-action-edit-component btnEditRedirection"
+										data-toggle="modal"
+										data-target="#@idModalRedirection">
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									<a
+										class="action-delete round-icon-button js-action-delete btnDeleteRedirection"
+										data-toggle="modal"
+										data-target="#modal-container">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada de la redirección -> Modal *@
+	@Html.PartialView("_modal-views/_redirection-details-item", Model)
+
 </li>

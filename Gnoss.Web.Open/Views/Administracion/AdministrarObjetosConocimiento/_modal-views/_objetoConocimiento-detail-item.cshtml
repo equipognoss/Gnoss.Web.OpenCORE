@@ -1,0 +1,464 @@
+﻿@model ObjetoConocimientoModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán los detalles del objeto de conocimiento vía modal. Aquí también se incluye el modal para confirmar el borrado del objeto de conocimiento.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);	
+
+	// Objeto de conocimiento a revisar
+	ObjetoConocimientoModel objetoConocimiento = Model;
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();	
+	string idModalObjetoConocimiento = "modal-objeto_conocimiento_" + objetoConocimiento.Ontologia.Trim().Replace(" ", "_").Replace("(", "_").Replace(")", "_");
+	string ontolgyWithoutStrangeCharacters = objetoConocimiento.Ontologia.Trim().Replace(" ", "_").Replace("(", "_").Replace(")", "_");
+	string idModalObjetoConocimientoDelete = "modal-objeto_conocimiento_delete_" + objetoConocimiento.Ontologia.Trim().Replace(" ", "_").Replace("(", "_").Replace(")", "_");
+}
+
+@* Modal con la información del objeto de conocimiento *@
+<div
+	id="@idModalObjetoConocimiento"
+	class="modal modal-top fade modal-edicion modal-con-tabs modal-objetoConocimiento background-azul"           
+	role="dialog"	
+	aria-modal="true">
+
+	@* Información oculta del objeto de conocimiento *@	        
+	<input type="hidden" name="TabEliminada" value="false" />	
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>					
+					<span class="community-name">@Html.GetText("ADMINISTRACIONSEMANTICA","EDITAR") @Html.ObtenerTextoIdiomaUsuario(@Model.Name)</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span
+				>
+			</div>
+			<div class="modal-body">			
+				<div class="formulario-edicion no-min-height">									                             
+					@* Tabs para Ficheros Ontología | Configuración Objeto *@
+					<ul class="nav nav-tabs" id="myTab" role="tablist">
+						@* Ficheros de la ontología *@
+						<li class="nav-item">
+							<a
+								class="nav-link nav-objetoConocimiento active tabFicherosOntologia"								
+								data-toggle="tab"
+							   href="#ficheros-ontologia_@(ontolgyWithoutStrangeCharacters)"
+								role="tab"
+							   aria-controls="ficheros-ontologia_@(ontolgyWithoutStrangeCharacters)"
+								aria-selected="true">@Html.GetText("DEVTOOLS","ARCHIVOS")</a>
+						</li>
+						@* Configuración del objeto de conocimiento - Primario *@
+						@if (objetoConocimiento.EsObjetoPrimario)
+						{												
+							<li class="nav-item">
+								<a
+									class="nav-link nav-objetoConocimiento tabConfiguracionObjetoConocimiento"								
+									data-toggle="tab"
+									href="#configuracion-objeto_@(ontolgyWithoutStrangeCharacters)"
+									role="tab"
+									aria-controls="configuracion-objeto_@(ontolgyWithoutStrangeCharacters)"
+									aria-selected="false">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+							</li>						
+
+							@* Configuración de Presentación de recursos (Listado, Mosaico, Mapa...) *@
+							<li class="nav-item">
+								<a
+									class="nav-link nav-objetoConocimiento tabConfiguracionPresentacionRecursos"								
+									data-toggle="tab"
+									href="#configuracion-objeto_presentacion_@(ontolgyWithoutStrangeCharacters)"
+									role="tab"
+									aria-controls="configuracion-objeto_presentacion_@(ontolgyWithoutStrangeCharacters)"
+									aria-selected="false">@Html.GetText("DEVTOOLS","PRESENTACIONDERECURSOS")</a>
+							</li>
+						
+							@* Opciones avanzadas *@
+							<li class="nav-item">
+								<a
+									class="nav-link nav-objetoConocimiento tabConfiguracionAvanzadaObjetoConocimiento"								
+									data-toggle="tab"
+									href="#configuracion-objeto_avanzadas_@(ontolgyWithoutStrangeCharacters)"
+									role="tab"
+									aria-controls="configuracion-objeto_avanzadas_@(ontolgyWithoutStrangeCharacters)"
+									aria-selected="false">@Html.GetText("ADMINISTRACIONBASICA","OPCIONESAVANZADAS")</a>
+							</li>
+						}
+						else
+						{
+							@* Configuración del objeto de conocimiento secundario (Nombre) *@
+							<li class="nav-item">
+								<a
+									class="nav-link nav-objetoConocimiento tabConfiguracionObjetoConocimiento"								
+									data-toggle="tab"
+									href="#configuracion-objeto_@(ontolgyWithoutStrangeCharacters)"
+									role="tab"
+									aria-controls="configuracion-objeto_@(ontolgyWithoutStrangeCharacters)"
+									aria-selected="false">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+							</li>
+
+							@* Elmentos del objeto de conocimiento: Tipo secundario *@
+							@* Opciones Elementos *@
+							<li class="nav-item">
+								<a
+									class="nav-link nav-objetoConocimiento tabConfiguracionElementosObjetoConocimiento"								
+									data-toggle="tab"
+									data-hide-general-save = "true"
+									href="#configuracion-objeto_elementos_@(ontolgyWithoutStrangeCharacters)"
+									role="tab"
+							   aria-controls="configuracion-objeto_elementos_@(ontolgyWithoutStrangeCharacters)"
+									aria-selected="false">Elementos</a>
+							</li>
+
+						}
+
+						@* Historial de versiones de plantillas *@
+							<li class="nav-item">
+								<a
+									class="nav-link nav-objetoConocimiento tabConfiguracionHistoricoFicherosObjetoConocimiento"								
+									data-toggle="tab"									
+									href="#configuracion-objeto_historial_@(ontolgyWithoutStrangeCharacters)"
+									role="tab"
+									aria-controls="configuracion-objeto_historial_@(ontolgyWithoutStrangeCharacters)"									
+									aria-selected="false">Historial</a>
+							</li>
+
+					</ul>
+					@* Contenidos Tabs (Plantillas Ontología | Configuración Objeto conocimiento) *@
+					<div class="tab-content">		
+						@* Tab Ficheros de la ontología *@
+						<div class="tab-pane fade active show" id="ficheros-ontologia_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="ficheros-ontologia-tab_@(ontolgyWithoutStrangeCharacters)">
+							@Html.PartialView("_partial-views/_ontology-template-files", Model)							
+						</div>
+
+						
+						@if (objetoConocimiento.EsObjetoPrimario)
+						{			
+							@* Tab Configuración del Objeto de conocimiento *@
+							<div class="tab-pane fade" id="configuracion-objeto_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_@(ontolgyWithoutStrangeCharacters)">
+								@* Tabs de los idiomas en multiIdioma *@
+								<div class="panContenidoMultiIdioma basicInfo">
+
+								</div>
+
+								@* Contenido de los tabs de los idiomas *@
+								<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">											
+												
+									@* Nombre *@
+									<div class="form-group mb-3">								
+										<input
+											type="text"								
+											name="Name"
+											value="@Model.Name"
+											data-labeltext = "@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBREONTOLOGIA")"
+											data-helptext = "@Html.GetText("DEVTOOLS","NOMBREINDETIFICATIVODELAONTOLOGIA")"
+											placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBREONTOLOGIA")"
+											class="form-control multiIdioma not-outline"																
+											/>
+									</div>	
+
+									@* Nombre corto / Url referente del objeto de conocimiento *@
+									<div class="form-group mb-3">								
+										<input
+											type="text"								
+											name="ShortNameOntology"
+											value="@Model.ShortNameOntology"
+											data-labeltext = "@Html.GetText("DEVTOOLS","RUTARELATIVA/URLREFERENTEDELOBJETODECONOCIMIENTO")"			
+											data-helptext = "@Html.GetText("DEVTOOLS","URLASOCIADAALOBJETODECONOCIMIENTO")"
+											placeholder="Ej: https://www.dominio.es/UrlRelativaObjetoConocimiento/"
+											class="form-control multiIdioma not-outline"																
+											/>
+									</div>	
+								</div>
+					
+								@* Contenedor de Inputs sin multiidioma*@
+								<div class="content-no-multiIdioma">							
+
+									@* Grafo *@
+									<div class="form-group mb-3">
+										<label class="control-label d-block">@Html.GetText("DEVTOOLS","GRAFO")</label>
+										<input
+											type="text"								
+											name="Grafo"										
+											value="@Model.GrafoActual"										
+											placeholder="@Html.GetText("DEVTOOLS","GRAFO")"
+											class="form-control not-outline inputGrafoObjetoConocimiento"
+											@(Model.RecursosVinculados ? "disabled" : "")
+											/>
+										@* Aviso Informativo de Cambio de nombre de Grafo *@
+										@if (!Model.RecursosVinculados)
+										{
+											<small class="form-text text-muted">@Html.GetText("DEVTOOLS","ELNOMBREDELGRAFODEBEESTARCOMPUESTOPORLETRASENMINUSCULAY/ONUM")</small>
+										}
+										else
+										{
+											<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOPUEDECAMBIARSEELNOMBREDELGRAFOPORQUETIENERECURSOSVINCULADO")</small>
+										}
+									</div>
+
+									@* Namespaces *@
+									<div class="form-group mb-3">
+										<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NAMESPACES")</label>
+										<input
+											type="text"								
+											name="Namespace"
+											value="@Model.Namespace"
+											data-labeltext = "@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NAMESPACES")"									
+											placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NAMESPACES")"
+											class="form-control not-outline"																
+											/>
+									</div>
+
+									@* Namespace extra *@
+									<div class="form-group mb-3">
+										<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NAMESPACESEXTRA")</label>
+										<textarea 
+											rows="8"
+											name="NamespaceExtra"
+											data-labeltext = "@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NAMESPACESEXTRA")"
+											class="form-control not-outline">@Model.NamespaceExtra</textarea>
+									</div>								
+
+									@* Panel Configurar Subtipos *@						
+									@* <div class="form-group mb-4 panelConfigurarSubtipos @(Model.Subtipos.Count == 0 ? "d-none" : "") ">*@
+									<div class="form-group mb-4 mt-4 panelConfigurarSubtipos">
+										<div class="configurarSubtipos-header" style="display: flex;justify-content: space-between;">
+										<label class="control-label d-block font-weight-bold" style="font-size:14px;">Listado subtipos</label>
+											@* Botón para añadir nuevos SubTipos *@
+											<a href="javascript: void(0);" class="btn btn-outline-primary new linkAddSubtipo" style="">@Html.GetText("DEVTOOLS","NUEVOSUBTIPO")</a>
+
+										</div>
+
+										@* Listado del subtipo *@
+										<ul class="id-added-subtipo-list component-list no-list-style">								
+											@foreach (string tipo in Model.Subtipos.Keys)
+											{
+												KeyValuePair<string, string> subTipo = new KeyValuePair<string, string>(tipo, Model.Subtipos[tipo]);
+												@Html.PartialView("_FichaSubTipo", subTipo);
+											}
+										</ul>
+									</div>										
+								</div>
+							</div>
+						
+
+							@* Panel de presentación de Recursos*@
+							<div class="tab-pane fade" id="configuracion-objeto_presentacion_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_presentacion_@(ontolgyWithoutStrangeCharacters)">
+								@* Presentación recursos "Listado, Mosaico, Mapa, Personalizado *@	
+								<h3>Presentación de recursos</h3>
+								@* Tabs de visualización *@
+								<ul class="nav nav-tabs max-width" id="presentacionRecursosTab_@(Model.Ontologia)" role="tablist">
+									<li class="nav-item">
+										<a
+											class="nav-link active"									
+											data-toggle="tab"
+											href="#listado_@(Model.Ontologia)"
+											role="tab"
+											aria-controls="listado_@(Model.Ontologia)"
+											aria-selected="true">@Html.GetText("ADMINISTRACIONPAGINAS","LISTADO")</a>
+									</li>
+									<li class="nav-item">
+										<a
+											class="nav-link"									
+											data-toggle="tab"
+											href="#mosaico_@(Model.Ontologia)"
+											role="tab"
+											aria-controls="mosaico_@(Model.Ontologia)"
+											aria-selected="false">@Html.GetText("ADMINISTRACIONPAGINAS","MOSAICO")</a>
+									</li>
+									<li class="nav-item">
+										<a
+											class="nav-link"									
+											data-toggle="tab"
+											href="#mapa_@(Model.Ontologia)"
+											role="tab"
+											aria-controls="mapa_@(Model.Ontologia)"
+											aria-selected="false">@Html.GetText("ADMINISTRACIONPAGINAS","MAPA")</a>
+									</li>
+									<li class="nav-item">
+										<a
+											class="nav-link"									
+											data-toggle="tab"
+											href="#personalizado_@(Model.Ontologia)"
+											role="tab"
+											aria-controls="personalizado_@(Model.Ontologia)"
+											aria-selected="false">@Html.GetText("DEVTOOLS","PERSONALIZADO")</a>
+									</li>
+
+									<li class="nav-item">
+										<a
+											class="nav-link"									
+											data-toggle="tab"
+											href="#relacionados_@(Model.Ontologia)"
+											role="tab"
+											aria-controls="relacionados_@(Model.Ontologia)"
+											aria-selected="false">@Html.GetText("DEVTOOLS","RELACIONADOS")</a>
+									</li>
+								</ul>
+
+								@* Contenidos de Tabs *@
+								<div class="tab-content pl-0 pt-0 pr-0 pb-0">													
+									@* Ficha Presentación Listado*@
+									<div class="tab-pane fade show active PresentacionListado" id="listado_@(Model.Ontologia)" role="tabpanel" aria-labelledby="listado_@(Model.Ontologia)">							
+										@Html.PartialView("_FichaPresentacion", Model.PresentacionListado)
+									</div>
+
+									@* Ficha Presentación Mosaico *@
+									<div class="tab-pane fade PresentacionMosaico" id="mosaico_@(Model.Ontologia)" role="tabpanel" aria-labelledby="mosaico_@(Model.Ontologia)">
+										@Html.PartialView("_FichaPresentacion", Model.PresentacionMosaico)
+									</div>
+
+									@* Ficha Presentación Mapa *@
+									<div class="tab-pane fade PresentacionMapa" id="mapa_@(Model.Ontologia)" role="tabpanel" aria-labelledby="mapa_@(Model.Ontologia)">
+										@Html.PartialView("_FichaPresentacion", Model.PresentacionMapa)
+									</div>
+
+									@* Ficha Presentación Personalizada *@
+									<div class="tab-pane fade PresentacionPersonalizado" id="personalizado_@(Model.Ontologia)" role="tabpanel" aria-labelledby="personalizado_@(Model.Ontologia)">
+										@Html.PartialView("_FichaPresentacionPersonalizado", Model.PresentacionPersonalizado)							
+									</div>	
+
+									@* Ficha Presentación Relacionados *@
+									<div class="tab-pane fade PresentacionRelacionados" id="relacionados_@(Model.Ontologia)" role="tabpanel" aria-labelledby="relacionados_@(Model.Ontologia)">
+										@Html.PartialView("_FichaPresentacion", Model.PresentacionRelacionados)
+									</div>
+								</div>
+							</div>
+						
+							@* Panel de opciones avanzadas *@
+							<div class="tab-pane fade" id="configuracion-objeto_avanzadas_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_avanzadas@(ontolgyWithoutStrangeCharacters)">
+								@* NombreTesauroExclusivo --> Ocultarlo por el momento
+								<div class="form-group mb-3">
+									<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRECATTESEXCLUSIVO")</label>
+									<input
+										type="text"								
+										name="NombreTesauroExclusivo"
+										value="@Model.NombreTesauroExclusivo"
+										data-labeltext = "@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRECATTESEXCLUSIVO")"									
+										placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRECATTESEXCLUSIVO")"
+										class="form-control not-outline"																
+										/>
+								</div>
+								*@
+								@* Cachear datos semánticos *@
+								<div class="form-group mb-3">
+									<div class="custom-control custom-checkbox">
+										<input 
+											   id="CachearDatosSemanticos_@(Model.Ontologia)"
+											   type="checkbox" 
+											   class="custom-control-input" 
+											   @(Model.CachearDatosSemanticos ? "checked" : "")
+											   name="CachearDatosSemanticos"/>
+										<label class="custom-control-label" for="CachearDatosSemanticos_@(Model.Ontologia)">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "CACHEARDATOSSEMANTICOS")</label>
+									</div>
+								</div>
+
+								@* Buscable *@
+								<div class="form-group mb-3">
+									<div class="custom-control custom-checkbox">
+										<input 
+											   id="EsBuscable_@(Model.Ontologia)"
+											   type="checkbox" 
+											   class="custom-control-input" 
+												@(Model.EsBuscable ? "checked" : "")
+											   name="EsBuscable"/>
+										<label class="custom-control-label" for="EsBuscable_@(Model.Ontologia)">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "ESBUSCABLE")</label>
+									</div>
+								</div>
+							</div>
+						}
+						else
+						{
+							<div class="tab-pane fade" id="configuracion-objeto_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_@(ontolgyWithoutStrangeCharacters)">
+								@* Tabs de los idiomas en multiIdioma *@
+								<div class="panContenidoMultiIdioma basicInfo">
+
+								</div>
+
+								@* Contenido de los tabs de los idiomas *@
+								<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">											
+												
+									@* Nombre *@
+									<div class="form-group mb-3">								
+										<input
+											type="text"								
+											name="Name"
+											value="@Model.Name"
+											data-labeltext = "@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBREONTOLOGIA")"
+											data-helptext = "@Html.GetText("DEVTOOLS","NOMBREINDETIFICATIVODELAONTOLOGIA")"
+											placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBREONTOLOGIA")"
+											class="form-control multiIdioma not-outline"																
+											/>
+									</div>	
+								</div>				
+							</div>
+
+
+							@* Panel de Elementos del Objeto de Conocimiento Secundario *@
+							<div class="tab-pane fade" id="configuracion-objeto_elementos_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_elementos_@(ontolgyWithoutStrangeCharacters)">
+								@Html.PartialView("_partial-views/_ontology-secondary-items", Model)																							
+							</div>
+						}
+
+						<div class="tab-pane fade" id="configuracion-objeto_historial_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_historial_@(ontolgyWithoutStrangeCharacters)">
+							@* Historial de las plantillas *@	
+							 @Html.PartialView("_partial-views/_ontology-history", Model)					
+						</div>
+
+
+						@* Botón para guardar *@
+						<div class="panelBotonera">
+                            <a href="javascript: void(0);" class="btn btn-primary uppercase btnSave">@Html.GetText("COMMON", "GUARDAR")</a>
+                        </div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@* Modal de eliminación del objeto de conocimiento *@
+<div
+	id="@idModalObjetoConocimientoDelete"
+	class="modal modal-top fade modal-confirmDelete"           
+	role="dialog"	
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar el borrado *@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">delete</span>
+					@Html.GetText("COMMON","ELIMINAR")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">				
+				<div class="form-group">
+					<label class="control-label">@Html.GetText("DEVTOOLS","DESEAELIMINARELOBJETODECONOCIMIENTOSELECCIONADO")</label>
+				</div>
+				<div class="form-actions">
+					<button data-dismiss="modal" class="btn btn-outline-primary btnNotConfirmDeleteObjetoConocimiento">@Html.GetText("COMMON", "NO")</button>
+					<button class="btn btn-primary btnConfirmDeleteObjetoConocimiento">@Html.GetText("COMMON", "SI")</button>
+				</div>				
+			</div>
+		</div>
+	</div>
+</div>

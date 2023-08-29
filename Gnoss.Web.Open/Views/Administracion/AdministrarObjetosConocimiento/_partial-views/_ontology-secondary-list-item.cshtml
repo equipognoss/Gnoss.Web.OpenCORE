@@ -1,0 +1,106 @@
+﻿@model ComAdminSemanticElemModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra una lista con los elementos correspondiente al objeto de conocimiento secundario. (Nombre y acciones a realizar sobre el elemento)
+Adicionalmente, en esta vista se muestra un contenedor donde se cargará la información detallada de la entity cuando se pulse sobre "Editar".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+// Sujeto de la entidad
+string sujetoEntidad = string.IsNullOrEmpty(ViewBag.SujetoEnt) ? "" : ViewBag.SujetoEnt;
+// SemanticResource para obtener los idiomas y ser usados en JS
+SemanticResourceModel semanticResource = Model.SecondaryEntities.SemanticResourceModel;
+
+// Id aleatorio para el collapse y el panel
+string randomId = Guid.NewGuid().ToString().Substring(0,5);
+string panelId = randomId;
+// Nombre de la entidad
+string nombreEntidad = string.IsNullOrEmpty(ViewBag.SujetoEnt) ? "" : Model.SecondaryEntities.SecondaryInstancesEditables[sujetoEntidad];
+// Flag que indica si el elemento existe, o por el contrario se desea crear uno nuevo.
+bool isNewCreation = string.IsNullOrEmpty(ViewBag.SujetoEnt) ? true : false;
+
+@* Cargar los idiomas en JS para su uso en guardado *@
+	@*
+	if (!string.IsNullOrEmpty(semanticResource.DefaultLanguage))
+	{
+		string idiomasDis = "";
+
+		foreach (string idioma in semanticResource.AvailableLanguages.Keys)
+		{
+			idiomasDis += idioma + ",";
+		}
+
+		idiomasDis = idiomasDis.Substring(0, idiomasDis.Length - 1);
+    
+		<script type="text/javascript">
+			var IdiomaDefectoFormSem = '@semanticResource.DefaultLanguage';
+			var IdiomasConfigFormSem = '@idiomasDis';
+		</script>
+	}*@
+}
+	
+@* Elemento del OC Secundario *@	
+<li class="component-wrap element-row containerConfirmDeleteItemInModal"
+	@(isNewCreation ? "data-new-element=true" :"")
+	data-sujeto-entidad="@sujetoEntidad" 
+	data-nombre-entidad="@nombreEntidad">
+
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				<div class="component-no-sortable">
+					<span class="material-icons-outlined sortable-icon">description</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						<div class="component-name-wrap justify-content-between">															
+							<div style="align-items: center; display: flex">
+								<span class="material-icons labelElementExtraInfo d-none text-primary" 
+									  style="font-size: 1rem; color: grey; cursor: pointer;" 
+									  title="@Html.GetText("DEVTOOLS","CAMBIOSPENDIENTESDEGUARDAR")" 
+									  alt="@Html.GetText("DEVTOOLS","CAMBIOSPENDIENTESDEGUARDAR")">emergency</span>
+								<span class="component-elementName labelElementName">@nombreEntidad</span>
+							</div>							
+						</div>					
+					</div>
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Editar Entidad/Elemento *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditElement"
+									   data-toggle="collapse"
+									   data-target="#panel_collapse_@(panelId)"
+									   role="button" 
+									   aria-expanded="true"
+									   aria-controls="panel_collapse_@(panelId)">									   
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Eliminar Entidad/Elemento *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteElement"
+									   href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="panelElementDetail collapse  @(isNewCreation ? "show" :"") " id="panel_collapse_@(panelId)">
+		@* Detalles (Texto y Filtro) del elemento - Se cargarán vía petición al pulsar en "Editar" (_ontology-secondary-list-detail-item.cshtml) *@
+		@* Si se desea crear nuevo, es necesario esta vista *@
+		@if (isNewCreation)
+		{			
+			@Html.PartialView("_partial-views/_ontology-secondary-list-detail-item", Model)
+		}
+	</div>	
+</li>

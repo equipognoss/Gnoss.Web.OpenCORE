@@ -18,5 +18,7 @@ CommunityModel Comunidad = Html.GetComunidad();
 
 @if (Comunidad != null && Comunidad.VersionJS.HasValue)
 {
+    @*  Este es un posible ejemplo de como se deberían de incluir los Javascript.
     <script type="text/javascript" src="@Html.GetBaseUrlPersonalizacion()/community.js?v=@Comunidad.VersionJS"></script>    
+    *@
 }

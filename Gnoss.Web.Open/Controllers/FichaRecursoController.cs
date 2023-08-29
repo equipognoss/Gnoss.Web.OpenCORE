@@ -3187,7 +3187,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             string infoExtra = null;
-
+            if (proyectoID.Equals(Guid.Empty))
+            {
+                proyectoID = ProyectoAD.MetaProyecto;
+            }
             if (proyectoID == ProyectoAD.MetaProyecto)
             {
                 infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
@@ -3859,7 +3862,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 {
                                     sw = LoggingService.IniciarRelojTelemetria();
 
-                                    CallInterntService sV = new CallInterntService(mConfigService);
+                                    CallInterntService sV = new CallInterntService(mConfigService, mLoggingService);
                                     if (!EsIdentidadBROrg)
                                     {
                                         espacioArchivo = sV.ObtenerEspacioVideoPersonal(Documento.Clave, mControladorBase.UsuarioActual.PersonaID);
@@ -4762,14 +4765,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string tokenAfinidadPeticion = Guid.NewGuid().ToString();
 
-            if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-            {
-                conexionAfinidadVirtuoso = (string)mGnossCache.ObtenerDeCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion);
-                if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                {
-                    conexionAfinidadVirtuoso = mConfigService.ObtenerVirtuosoEscritura().Value;
-                }
-            }
+            //if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
+            //{
+            //    conexionAfinidadVirtuoso = (string)mGnossCache.ObtenerDeCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion);
+            //    if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
+            //    {
+            //        conexionAfinidadVirtuoso = mConfigService.ObtenerVirtuosoEscritura().Value;
+            //    }
+            //}
 
             Dictionary<string, string> cabeceras = null;
             if (!string.IsNullOrEmpty(conexionAfinidadVirtuoso))
@@ -5867,7 +5870,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
 
                     GadgetController gadgetController = new GadgetController(this, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
-                    listaGadgets = gadgetController.CargarListaGadgetsRecurso(false, listaGadgetsSinCargar, Documento, GenPlantillasOWL, PestanyaRecurso.Value);
+                    listaGadgets = gadgetController.CargarListaGadgetsRecurso(false, listaGadgetsSinCargar, Documento, GenPlantillasOWL, PestanyaRecurso.Value, false);
                 }
                 catch
                 { }
@@ -8498,7 +8501,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (Documento != null && Documento.TipoDocumentacion == TiposDocumentacion.Semantico && mGenPlantillasOWL == null)
                 {
-                    CargarSemCmsController();
+                    CargarSemCmsController(true);
                 }
                 return mGenPlantillasOWL;
             }
@@ -8507,11 +8510,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <summary>
         /// Carga el controlador de SEM CMS.
         /// </summary>
-        public void CargarSemCmsController()
+        public void CargarSemCmsController(bool pUsarAfinidad = false)
         {
             try
             {
-                mGenPlantillasOWL = ObtenerSemCmsController(Documento).ObtenerControladorSemCMS(Documento, ProyectoSeleccionado, IdentidadActual, BaseURLFormulariosSem, UtilIdiomas, BaseURL, BaseURLIdioma, BaseURLContent, BaseURLStatic, UrlIntragnoss, VistaPersonalizada, ParametroProyecto, Request.Query["paramsemcms"]);
+                mGenPlantillasOWL = ObtenerSemCmsController(Documento).ObtenerControladorSemCMS(Documento, ProyectoSeleccionado, IdentidadActual, BaseURLFormulariosSem, UtilIdiomas, BaseURL, BaseURLIdioma, BaseURLContent, BaseURLStatic, UrlIntragnoss, VistaPersonalizada, ParametroProyecto, Request.Query["paramsemcms"], pUsarAfinidad);
                 paginaModel.SemanticFrom = mGenPlantillasOWL.SemanticResourceModel;
             }
             catch (Exception ex)

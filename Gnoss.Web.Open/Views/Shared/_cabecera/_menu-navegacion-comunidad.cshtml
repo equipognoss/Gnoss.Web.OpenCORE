@@ -35,12 +35,6 @@ string communityDescription = Html.ExtractValueInStringFromStartAndEnd(Comunidad
 *@
 
 
-@* Mostrar "Menú Administración" si se disponen de permisos. ¿Dónde colorcarlo? De momento lo coloco aquí. *@
-if (ViewBag.PermisosPaginas != null)
-{
-    @Html.PartialView("../Shared/_MenuAdministracion")
-}
-
 @* Controlar mensaje de acceso a comunidad privada/restringida *@
 if (IdentidadActual.IsGuestIdentity) {
 
@@ -53,7 +47,7 @@ if (IdentidadActual.IsGuestIdentity) {
             accessRestrictedCommunityMessage = @Html.GetText("COMINICIOLOGIN", "TIENESQUEHACERTEMIEMBRO");
             if (IdentidadActual.IsGuestUser)
             {
-                buttonText = @Html.GetText("COMINICIOLOGIN", "REGISTRATEPARTICIPA");
+                buttonText = @Html.GetText("COMINICIOLOGIN", "HAZTEMIEMBROPARTICIPA");
             }
             else
             {

@@ -1,0 +1,213 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarOpcionesAvanzadasViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista index donde se muestra la configuración de buzón de correo de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	@* Uso de ssl *@
+	bool useSSL = false;
+	// Controlar si se está en Administración del Ecosistema
+	bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+}
+	@* Controlar el uso de SSL *@
+@{
+	if (Model.ConfiguracionCorreo?.SSL == true){
+		useSSL = true;
+	}
+}
+@if (Comunidad.IntegracionContinuaActivada)
+{
+    <div class="alert alert-warning alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <span class="material-icons" alt="warning" title="warning" aria-label="warning">
+        warning
+    </span>
+        <strong>@Html.GetText("DEVTOOLS", "NOGUARDAINTEGRACIONCONTINUA")</strong>
+    </div>
+}
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+	<ul>
+		@if (!isInEcosistemaPlatform)
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+			<li>
+				<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+			</li>
+		}
+		else
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+		}
+        <li>
+            @Html.GetText("DEVTOOLS","BUZONDECORREO")
+        </li>
+    </ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">       
+	<h2>@Html.GetText("DEVTOOLS","BUZONDECORREO")</h2>
+	<p>
+		@Html.GetText("DEVTOOLS","CONFIGURACIONDELBUZONDECORREODELACOMUNIDADESTEBUZONRECIBIRA")
+	</p>
+
+
+	@* Correo electrónico de la comunidad *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">Correo electrónico</label>
+		<input
+			placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCORREOELECTRONICO")"
+			type="text"				
+			value="@(Model.ConfiguracionCorreo?.Email)" 
+			id="Email"				
+			class="form-control not-outline"
+		/>
+	</div>
+
+	@* SMTP *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">SMTP</label>
+		<input
+			placeholder="Introduce el SMTP"
+			type="text"				
+			value="@(Model.ConfiguracionCorreo?.SMTP)"
+			id="SMTP"
+			class="form-control not-outline"
+		/>
+	</div>
+
+	@* Puerto *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","PUERTO")</label>
+		<input
+			placeholder="Introduce el puerto"
+			type="number"
+			value="@(Model.ConfiguracionCorreo?.Port)"
+			id="Port"
+			data-bind="value:replyNumber"
+			class="form-control not-outline"
+		/>		
+	</div>
+
+	@* Usuario *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">Usuario</label>
+		<input
+			placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELUSUARIO")"
+			type="text"
+			value="@(Model.ConfiguracionCorreo?.User)" 
+			id="User"
+			class="form-control not-outline"
+		/>
+	</div>
+
+	@* Contraseña *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","CONTRASEÑA")</label>
+		<input
+			placeholder="@Html.GetText("DEVTOOLS","INTRODUCELACONTRASEÑA")"
+			type="password"
+			id="Password"
+			class="form-control not-outline"
+		/>
+	</div>
+
+	@* Tipo de servidor de envío *@
+	<div class="form-group mb-3 tipoServidorEnvio">
+		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","TIPODESERVIDORDEENVIO")</label>
+		@* Select de Tipo de privacidad de página *@
+		<select 
+				id="Type"
+				name="Type"
+				class="cmbEditarPrivacidad js-select2"
+				tabindex="0"
+				aria-hidden="false">
+                 
+				<option @(Model.ConfiguracionCorreo?.Type == "smtp" ? "selected" : "") value="smtp">smtp</option>
+				<option @(Model.ConfiguracionCorreo?.Type == "EWS" ? "selected" : "") value="EWS">Exchange Web Service</option>                    				
+		</select>
+	</div>
+
+	@* Email de sugerencias *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","EMAILDESUGERENCIAS")</label>
+		<input
+			placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELEMAILPARASUGERENCIAS")"
+			type="text"
+			value="@(Model.ConfiguracionCorreo?.SuggestEmail)"
+			id="SuggestEmail"
+			class="form-control not-outline"
+		/>
+	</div>
+
+	@* Usar servidor seguro *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","USARSERVIDORSEGURO")</label>
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input SSL"
+				type="radio"
+				name="SSL"
+				data-value="si"
+				id="SSL_SI"
+				@(useSSL == true ? "checked" : "")					
+			/>
+			<label class="form-check-label" for="TabUsarServidorSeguro_SI">@Html.GetText("COMMON","SI")</label>
+		</div>
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input SSL"
+				type="radio"
+				name="SSL"
+				data-value="no"
+				id="SSL_NO"
+				@(!useSSL == true ? "checked" : "")
+			/>
+			<label class="form-check-label" for="TabUsarServidorSeguro_NO">@Html.GetText("COMMON","NO")</label>
+		</div>
+	</div>
+
+	<p class="form-text alert alert-warning pb-3"><span class="material-icons">info</span>Si estas usando el servidor SMTP de Google, consulta <a href="https://support.google.com/mail/thread/146949535/the-server-response-was-5-7-0-authentication-required?hl=en">estas recomendaciones</a></p>
+	
+	@* Botón guardado (Si lo permite CI/CD) *@	
+	@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+	{
+		@* No permitir guardar *@
+		<input type="button" disabled class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/>								
+	}
+	else
+	{		
+		@* Permitir guardar *@
+		@* <input id="btnSave" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/> *@
+		<a class="btn btn-primary uppercase" data-toggle="modal" data-target="#validar-correo">@Html.GetText("PERSONAS","VALIDAR")</a>
+	}
+
+</div>
+
+@Html.PartialView("_modal-views/_validar-email.cshtml")
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento de Configuración buzón de correo
+            operativaGestionConfiguracionBuzonCorreo.init();
+        })();
+    </script>
+}

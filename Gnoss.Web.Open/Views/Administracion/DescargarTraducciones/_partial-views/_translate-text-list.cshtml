@@ -1,0 +1,91 @@
+﻿@model DescargarTraduccionesViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista contenedora de los items de tipo "Texto" para mostrar la posibilidad de descargarlos o realizar acciones sobre ellos
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+
+    Dictionary<string, string>[] textListEcosistema = new Dictionary<string, string>[]
+    {
+        new Dictionary<string, string>()
+        {
+            { "name", "Personalizados para vistas" },
+            { "nameForCheckbox", "DescargarTextosPersonalizados" },
+        }
+    };
+
+    Dictionary<string, string>[] textList = new Dictionary<string, string>[]
+    {
+        new Dictionary<string, string>()
+        {
+            { "name", "Personalizados para vistas" },
+            { "nameForCheckbox", "DescargarTextosPersonalizados" },
+        },
+        new Dictionary<string, string>()
+        {
+            { "name", "Páginas" },
+            { "nameForCheckbox", "DescargarTextoProyectoPestanyaMenu" },
+        },
+        new Dictionary<string, string>()
+        {
+            { "name", "Componentes del CMS" },
+            { "nameForCheckbox", "DescargarCmsPropiedadComponente" },
+        },
+        new Dictionary<string, string>()
+        {
+           { "name", "Facetas" },
+           { "nameForCheckbox", "DescargarFacetaObjetoConocimientoProyecto" },
+        },
+        new Dictionary<string, string>()
+        {
+           { "name", "Categorías tesauro" },
+           { "nameForCheckbox", "DescargarCategoriaTesauro" },
+        },
+        new Dictionary<string, string>()
+        {
+           { "name", "Cláusulas de registro" },
+           { "nameForCheckbox", "DescargarClausulaRegistro" },
+        },
+        new Dictionary<string, string>()
+        {
+           { "name", "Componentes de recursos" },
+           { "nameForCheckbox", "DescargarProyectoGadget" },
+        },
+        new Dictionary<string, string>()
+        {
+           { "name", "Configuracion de ontologias" },
+           { "nameForCheckbox", "DescargarOntologiaProyectoSql" },
+        },
+    };
+}
+
+
+
+<ul id="id-added-descarga-text-list"
+    data-value="text"
+    class="js-community-descarga-text-list component-list component-translate-list no-list-style">
+
+	@* Contenedor de las descargas de tipo Texto *@
+    @if (!isInEcosistemaPlatform)
+	{
+        @foreach (Dictionary<string, string> textItem in textList)
+        {
+            @Html.PartialView("_partial-views/_translate-text-list-item", textItem)
+        }
+    }
+    else
+    {
+        @foreach (Dictionary<string, string> textItem in textListEcosistema)
+        {
+            @Html.PartialView("_partial-views/_translate-text-list-item", textItem)
+        }
+
+    }
+
+</ul>

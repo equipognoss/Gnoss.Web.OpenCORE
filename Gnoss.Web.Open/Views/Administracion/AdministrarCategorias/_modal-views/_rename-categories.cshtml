@@ -1,0 +1,51 @@
+﻿@model PintarComboAdministrarCategorias
+
+@*
+ Descripción
+ -----------------------------------------------
+ Vista modal que se usará dentro de un contenedor de bootstrap para poder cambiar el nombre de una categoría seleccionada. 
+ Simplemente constará de un input con el nombre de la categoría a editar.
+
+ Variables
+ ----------------------------------------------------------------
+*@
+@{
+
+}
+@*
+ ----------------------------------------------------------------
+ -------------------- Vista Modal para cambiar el nombre de una categoría --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">edit</span>Renombar categoría
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+@* Contenido central del modal *@
+<div class="modal-body">
+
+    <div class="formulario-edicion">
+        <div class="form-group mb-1">        
+            <label class="control-label">@Html.GetText("DEVTOOLS","INTRODUCEELNUEVONOMBREDELACATEGORIA")</label>                                                               
+        </div>
+
+		@* Título de la categoría -> Pintar caja multiidioma *@
+		@Html.PartialView("_PintarCajasMultiidioma", Model)        
+
+		@* Sección botón de guardado y cierre del modal *@
+		<div class="panelBotonera">
+			<a id="btnGuardarNombreCategory" class="btn btn-primary uppercase">@Html.GetText("COMADMINCATEGORIAS", "RENOMBRAR")</a>
+		</div>
+	</div>    
+</div>
+
+@* Carga de operativa *@
+<script>
+        (function ($) {
+            // Operativa funcionamiento de Creación de categorías
+			operativaGestionCategorias.operativaModalRenameCategory();
+        })();
+</script>
+

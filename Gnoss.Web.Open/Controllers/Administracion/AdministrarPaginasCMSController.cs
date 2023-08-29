@@ -1,5 +1,4 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
@@ -56,8 +55,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// 
         /// </summary>
         private Guid? mPestanyaID;
-
+        /// <summary>
+        /// 
+        /// </summary>
+        private static AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu mPestanya;
         #endregion
+
+        private static int NUM_COMPONENTES_LAYOUT_CARGAR = 10;
 
         #region Metodos de eventos
 
@@ -69,6 +73,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult Index()
         {
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "edicion page-builder comunidad no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Estructura;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Paginas_CMSBuilder;
+
+            // Establecer el título para el header de DevTools                        
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "ESTRUCTURA");
+            ViewBag.HeaderTitle = "Page Builder";
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
@@ -145,9 +158,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult GuardarBorrador(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo)
+        public ActionResult GuardarBorrador(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {
-            Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+			ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            if (mPestanya != null)
+            {
+				string error = contrPaginasCMS.ComprobarErrorConcurrencia(FechaModificacion, mPestanya.FechaModificacion);
+				if (!string.IsNullOrEmpty(error))
+				{
+					return GnossResultERROR(error);
+				}
+			}
+			
+
+			Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
 
             return GnossResultOK();
         }
@@ -159,7 +183,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult Publicar(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo)
+        public ActionResult Publicar(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {
             bool iniciado = false;
             try
@@ -175,14 +199,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             bool transaccionIniciada = false;
             try
             {
-                mEntityContext.NoConfirmarTransacciones = true;
+				ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+
+                if (mPestanya != null)
+                {
+					string error = contrPaginasCMS.ComprobarErrorConcurrencia(FechaModificacion, mPestanya.FechaModificacion);
+					if (!string.IsNullOrEmpty(error))
+					{
+						return GnossResultERROR(error);
+					}
+				}
+
+				mEntityContext.NoConfirmarTransacciones = true;
                 transaccionIniciada = proyAD.IniciarTransaccion(true);
-
-                ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-
-                contrPaginasCMS.GuardarWeb(TipoUbicacionCMSPaginaActual, Estructura, OpcionesPropiedades, MostrarSoloCuerpo, false);
-
-                //Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo, false);
+               
+                contrPaginasCMS.GuardarWeb(TipoUbicacionCMSPaginaActual, Estructura, OpcionesPropiedades, MostrarSoloCuerpo, false, mPestanya);
 
                 if (iniciado)
                 {
@@ -221,9 +252,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult VistaPrevia(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo)
+        public ActionResult VistaPrevia(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {
-            Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+			ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            if (mPestanya != null)
+            {
+				string error = contrPaginasCMS.ComprobarErrorConcurrencia(FechaModificacion, mPestanya.FechaModificacion);
+				if (!string.IsNullOrEmpty(error))
+				{
+					return GnossResultERROR(error);
+				}
+			}
+			
+
+			Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
 
             string enlaceVistaPrevia = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/CMSPagina?PaginaCMS=" + TipoUbicacionCMSPaginaActual.ToString() + "&preView=true";
             return GnossResultUrl(enlaceVistaPrevia);
@@ -253,15 +295,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
 
-            string enlaceEdicion = mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES") + "/" + TipoComponente + "/" + IDContenedor;
+            string enlaceEdicion = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")}/{TipoComponente}/{IDContenedor}";
             return GnossResultUrl(enlaceEdicion);
+        }
+
+        [HttpPost]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
+        public ActionResult BuscarComponente(string search)
+        {
+            ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            List<AdministrarPaginasCMSViewModel.CMSComponentModel> listaComponentesBuscados = contrPaginasCMS.CargarComponentesComunidad(UtilIdiomas, NUM_COMPONENTES_LAYOUT_CARGAR, search);
+
+            return PartialView("../Shared/Layout/_partial-views/_layout-left-cms-dinamic-components-admin", listaComponentesBuscados);
         }
 
         private void Guardar(string estructura, string propiedadComponente, bool MostrarSoloCuerpo, bool borrador = true)
         {
             ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
 
-            contrPaginasCMS.GuardarWeb(TipoUbicacionCMSPaginaActual, estructura, propiedadComponente, MostrarSoloCuerpo, borrador);
+            contrPaginasCMS.GuardarWeb(TipoUbicacionCMSPaginaActual, estructura, propiedadComponente, MostrarSoloCuerpo, borrador, mPestanya);
 
             contrPaginasCMS.InvalidarCache(TipoUbicacionCMSPaginaActual, borrador);
 
@@ -280,16 +332,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
                     mPaginaModel = contrPaginasCMS.CargarPagina(TipoUbicacionCMSPaginaActual, GestorCMSPaginaActual);
+                    mPaginaModel.ListaComponenteComunidad = contrPaginasCMS.CargarComponentesComunidad(UtilIdiomas, NUM_COMPONENTES_LAYOUT_CARGAR);
+                    mPaginaModel.ContieneMultiplesComponentes = contrPaginasCMS.BuscarScomponentesConPeticionAjax(UtilIdiomas, NUM_COMPONENTES_LAYOUT_CARGAR);
+                    
                     if (PestanyaID.HasValue)
                     {
                         mPaginaModel.Key = PestanyaID.Value;
-                    }
+                        mPestanya = ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoPestanyaMenu.FirstOrDefault(pest => pest.PestanyaID.Equals(mPaginaModel.Key));
+						mPaginaModel.FechaModificacion = mPestanya.FechaModificacion;
+					}
+
                     CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     GestionCMS gestorCMSSinFiltros = new GestionCMS(CMSCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
 
                     mPaginaModel.ListaComponentesPrivados = gestorCMSSinFiltros.ListaComponentesPrivadosProyecto;
-
                 }
+
                 return mPaginaModel;
             }
         }
@@ -369,6 +427,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 mPestanyaID = filaPestanya.PestanyaID;
                                 break;
                             }
+                        }
+                        if (!mPestanyaID.HasValue)
+                        {
+                            mPestanyaID = ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoPestanyaMenu.Where(pest => pest.TipoPestanya == (short)TipoPestanyaMenu.Home).FirstOrDefault().PestanyaID;
                         }
                     }
                 }

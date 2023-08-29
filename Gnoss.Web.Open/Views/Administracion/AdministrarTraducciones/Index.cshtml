@@ -1,104 +1,259 @@
 ﻿@model Es.Riam.Gnoss.Web.MVC.Models.ViewModels.AdministrarTraduccionesViewModel
 
-@{
-    Html.SetTitle("Index");
-    //string urlBase = this.Request.Url.ToString().ToLower();
-    //if (urlBase.EndsWith("/"))
-    //{
-    //    urlBase = urlBase.Substring(0, urlBase.Length - 1);
-    //}
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato TextArea (Input)
 
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+CommunityModel Comunidad = Html.GetComunidad();
+HeaderModel cabecera = Html.GetCabecera();
+// Layout DevTools
+Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+
+// Carga de idiomas de la plataforma
+string idiomas = "";
+// Contador del nº de pestañas listadas
+int contNumPestañasVisibles = 0;
+// Nº de pestañas de idiomas a visualizar en la sección Tab
+int numMaxPestañasIdiomasVisibles = 2;
+// Establecer en el ViewBag el idioma por defecto
+string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;   
+// Referencia al AdministrarTraduccionesViewModel para el botón de crear traducciones
+ViewBag.AdministrarTraduccionesViewModel = Model;
+// Controlar si se está en Administración del Ecosistema
+bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
 }
 
-<div class="content">
-    <h1>Administrar traducciones</h1><br />
-    @if (!string.IsNullOrEmpty(Model.URLActionCrearEntradas))
-    {
-        <form class="frmTraducciones" action="@Model.URLActionCrearEntradas" method="post">
-            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-            {
-                <input type="submit" style="background-color:gray;" disabled value="Crear entradas vacías" />
-            }
-            else
-            {
-                <input type="submit" value="Crear entradas vacías" />
-            }
-        </form>
-    }
-    @if (!string.IsNullOrEmpty(Model.URLActionEliminarEntradas))
-    {
-        <form class="frmTraducciones" action="@Model.URLActionEliminarEntradas" method="post">
-            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-            {
-                <input type="submit" style="background-color:gray;" disabled value="Eliminar entradas vacías" />
-            }
-            else
-            {
-                <input type="submit" value="Eliminar entradas vacías" />
-            }
-        </form>
-    }
 
-    @*<input type="button" onclick="location.href='@Model.URLActionCrearTexto'" value="Nueva traducción" />*@
-    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-    {
-        <input type="button" style="background-color:gray;" disabled onclick="location.href='@Model.URLActionCrearTexto'" value="Nueva traducción" />
-    }
-    else
-    {
-        <input type="button" onclick="location.href='@Model.URLActionCrearTexto'" value="Nueva traducción" />
-    }
-    <br /><br />
-    @if (Model.Textos.Count > 0)
-    {
-        <table id="tblTraducciones">
-            @*<tr>
-                    <th>TextoID</th>
-                    @foreach (string language in Model.Textos.First().Idiomas.Keys)
-                    {
-                        <th>@language</th>
-                    }
-                </tr>*@
-            @foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel texto in Model.Textos)
-            {
-                <tr>
-                    <td class="textoID" colspan="3"><a href="@string.Concat(Model.URLActionEditarTexto,"/",Convert.ToBase64String(Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel.GetBytes(texto.TextoID)))">@texto.TextoID</a></td>
-                </tr>
-                foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TraduccionModel traduccion in texto.Traducciones)
-                {
-                    <tr>
-                        <td class="spaceIdioma"> </td>
-                        <td class="idioma">@traduccion.Idioma</td>
-                        <td class="textoIdioma">@traduccion.Texto</td>
-                    </tr>
-                }
-            }
-        </table>
-    }
-</div>
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo TextArea (Input) --------------------
+*@
 
-<style>
-    #tblTraducciones .spaceIdioma {
-        padding-left: 20px;
-        border: none;
-    }
 
-    #tblTraducciones .idioma {
-        font-weight: bold;
-    }
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+		@if (!isInEcosistemaPlatform)
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+			<li>
+				<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+			</li>
+		}
+		else
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+		}
+            <li>
+                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")
+            </li>
+        </ul>
+    </div>
 
-    .frmTraducciones {
-        display: inline;
-        float: right;
-    }
+    @* Contenido Central *@    
+    <div class="formulario-edicion background-blanco">
+		@* Panel de idiomas *@	
+		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+			@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
+				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
+					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
+						<li class="nav-item">
+							<a class="tabIdiomaItem nav-link @( idiomaPorDefecto == idioma.Key ? "active" : null)" 
+								id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
+								data-language = "@idioma.Key"
+								role="tab" aria-controls="@("litVer" + idioma.Key)"
+								aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+						</li>
+						contNumPestañasVisibles += 1;
+					}				
+				}
+				@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+				@if (contNumPestañasVisibles < cabecera.Languajes.Count){
+					@* Dropdown para resto de categorías *@
+					<li class="nav-item">
+						<div class="dropdown">
+							@* Desplegable del dropdown *@
+							<a
+								class="nav-link dropdown-toggle"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false"
+								>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+							@* Sección para mostrar items del dropdown*@
+							<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+								<ul class="no-list-style">
+									@* Pintado del resto de pestañas en Dropdown *@									
+									@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
+										var item = cabecera.Languajes.ElementAt(i);
+										var itemKey = item.Key;
+										var itemValue = item.Value;
 
-    input[type="button"] {
-        margin-left: 0;
-    }
+										@* Cada item del dropdown *@
+										<li>
+											<a id="@("ver_paginas_" + itemKey)" 
+											   class="item-dropdown tabIdiomaItem @( idiomaPorDefecto == itemKey ? "active" : null)"
+											   data-toggle="tab"
+											   href="#@("litVer" + itemKey)"
+											   data-language = "@itemKey">
+											   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+										</li>
+									}
+								</ul>
+							</div>
+						</div>
+					</li>
+				}
+		</ul>   
+		
+		@* Contenedor global de Traducciones *@
+		<div class="tab-content">	
+			@* Contenido de las diferentes traducciones *@
+			<div id="panelListadoTraducciones" 
+				class="tab-pane fade show active" 
+				role="tabpanel" 
+				aria-labelledby="panelListadoTraducciones">
 
-    input[type="submit"] {
-        margin-left: 20px;
-    }
-</style>
+				@* Contenedor del Título de la Sección + Buscador *@
+				<div class="row">
+					@* Título de la sección de traducciones + Nº de traducciones *@
+					<div class="col col-12 header-listado">
+						<div class="h1-container">
+							<h1>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")
+								<span id="numTraducciones" class="numResultados"></span>
+							</h1>
+						</div>
+						@* Botón para crear item *@
+					<div class="acciones d-flex align-items-center">
+						<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESCARGARTRADUCCIONES")" class="btn btn-outline-primary dropdown-toggle no-flecha" 
+						style="margin-right: 20px;"><span class="material-icons">download</span>Descargar Traducciones</a>
+							@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-translation-admin", Model)							
+						</div>
+					</div>
+
+					@* Buscador de Traducciones *@
+					<div class="col col-12 header-buscador">
+						<div class="wrapCol">
+							<div class="col-buscador" style="width: 100%">					
+							@* Formulario para búsquedas de páginas *@
+								<form id="formBuscadorTraducciones" onsubmit="return false;">								
+									<div class="finderUtils" id="divCajaBusqueda">
+										<div class="group finderSection">
+											@* Input para realizar la búsqueda de páginas *@
+											<input
+												type="text"
+												id="txtBuscarTraduccion"
+												class="not-outline finderSectionText"
+												autocomplete="off"
+												placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+											/>
+											@* Botón para realizar la búsqueda *@
+											<input
+												title="Buscar"
+												type="button"
+												class="findAction"
+												id="inputLupa"
+											/>
+											@* Botón para Facetas de la búsqueda *@
+											<a href="javascript: void(0);" class="btn-filtrar-movil">
+												<span class="material-icons">filter_list</span>
+												<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+											</a>
+										</div>
+									</div>								
+								</form>
+							</div>
+						</div>
+					</div>
+					@* Contenido o tabla con las traducciones de la comunidad *@
+					<div class="col col-12 col-contenido">
+						<div class="wrapCol">
+							@* Cabecera del listado de traducciones *@
+							<ul id="id-header-translates-list" class="header-component-list component-list no-list-style">
+								<li class="component-wrap">
+									@* Cabecera de páginas *@
+									<div class="component ">
+										<div class="component-header-wrap">
+											<div class="component-header">
+												@* Sección títulos de listado de páginas *@
+												<div class="component-header-content">
+													<div class="component-header-left">
+														<div class="component-name-wrap">
+															<span class="component-name">Key</span>
+														</div>
+														<div class="component-literal-wrap">
+															<span class="component-literal">@Html.GetText("DEVTOOLS","LITERAL")</span>
+														</div>
+														<div class="component-fecha-wrap">
+															<span class="component-fecha">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</span>
+														</div>
+													</div>
+													<div class="component-header-right">
+														<div class="component-actions-wrap">
+															<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+
+							@* Contenido de traducciones *@
+							<ul id="id-added-translates-list" 
+								class="js-community-pages-list component-list no-list-style">
+				
+								@* Pintado de cada traduccion *@
+								@* @foreach (TabModel pestanya in Model.ListaPestanyas.Where(p => p.ParentTabKey == Guid.Empty).OrderBy(p2 => p2.Order))
+								{								
+									PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
+									pintar.pestanya = pestanya;
+									pintar.ListaPestanyas = Model.ListaPestanyas;
+									@Html.PartialView("../Administracion/AdministrarPestanyas/_PintarPestanya", pintar)																						
+								}
+								*@
+
+								@foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel texto in Model.Textos)
+								{
+									@* Url para Editar la traducción *@
+									string urlEditTranslate = string.Concat(Model.URLActionEditarTexto,"/",Convert.ToBase64String(Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel.GetBytes(texto.TextoID)));
+									ViewBag.urlEditTranslate = urlEditTranslate;
+									@* Pintado de la vista de la traducción *@									
+									@Html.PartialView("_partial-views/_translate-item", texto)									
+								}
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>		
+		</div>
+    </div>
+
+@* Modal para confirmar eliminación de una traducción *@
+@Html.PartialView("_modal-views/_delete-translate-item")
+
+
+
+@* Carga de operativa *@
+@section operativaScript{    
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>        
+    <script type="text/javascript">
+           
+        (function ($) {            
+            @* Operativa funcionamiento de Gestión de Traducciones *@
+            operativaGestionTraducciones.init();            
+        })();
+    </script>
+}

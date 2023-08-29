@@ -1,0 +1,72 @@
+﻿@model SharedSemCms
+
+@*
+Descripción
+-----------------------------------------------
+Vista que pinta cada input con su título y su propiedad siendo de un elemento de un objeto secundario cuando son propiedades "Ontologicas" 
+desde "_ontology-secondary-entity-property-ontoData".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+
+@if (!Model.semanticPropertyModel.ReadMode && Model.semanticPropertyModel.OntologyPropInfo.MultiLanguage && !Model.semanticPropertyModel.OntologyPropInfo.MultiLanguageWithTabs)
+{    
+    Model.pIdioma = null;
+    <div class="mb-3 titleandPrimaryControl">
+
+        @* @Html.PartialView("SemCms/_TituloPropiedad", Model.semanticPropertyModel) *@
+        @Html.PartialView("_partial-views/_ontology-secondary-entity-property-title",  Model.semanticPropertyModel)        
+        @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model) *@
+        @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControl", Model)
+    </div>
+
+    foreach (string idioma in Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages.Keys)
+    {
+        if (idioma != Model.semanticPropertyModel.EntityParent.SemanticResourceModel.DefaultLanguage)
+        {
+            string claseTitulo = "lb lb_" + Model.semanticPropertyModel.Element.Propiedad.NombreGeneracionClases;
+
+            if (Model.semanticPropertyModel.Element.Propiedad.EspecifPropiedad.ClaseCssPanelTitulo != null)
+            {
+                claseTitulo = Model.semanticPropertyModel.Element.Propiedad.EspecifPropiedad.ClaseCssPanelTitulo;
+            }
+
+            string textoLabel = Model.semanticPropertyModel.OntologyPropInfo.LabelTitle + " (" + Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages[idioma] + ")";
+            SemanticPropertyModel.PropertyValue propValueIdioma = null;
+
+            if (Model.propertyValue != null && Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues.ContainsKey(idioma))
+            {
+                propValueIdioma = Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues[idioma][0];
+            }
+
+            <div>
+                @{
+                    Model.pIdioma = idioma;
+                }
+                <label class="control-label d-block @claseTitulo">@textoLabel</label>                 
+                @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model) *@
+                @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControl", Model)
+            </div>
+        }
+    }
+}
+else
+{
+    @* @Html.PartialView("SemCms/_TituloPropiedad", Model.semanticPropertyModel); *@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-title",  Model.semanticPropertyModel)
+    @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", Model) *@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControl", Model)
+}
+
+@if (!Model.semanticPropertyModel.ReadMode && !Model.semanticPropertyModel.OntologyPropInfo.UniqueValue)
+{    
+    @* @Html.PartialView("../Shared/SemCMS/_AddMultivalueButtons", Model) *@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addMultivalueButtons", Model)
+    
+
+}

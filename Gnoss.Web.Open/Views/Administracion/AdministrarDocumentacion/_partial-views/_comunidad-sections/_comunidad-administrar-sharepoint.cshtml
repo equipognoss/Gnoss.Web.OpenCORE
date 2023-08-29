@@ -1,0 +1,70 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Administrar Sharepoint
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad(); 
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false; 
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Administrar Sharepoint *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "data-target=#administrar-sharepoint" : null)								
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+				aria-controls="administrar-sharepoint">
+				@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSHAREPOINT")
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Administrar Sharepoint *@
+	<div
+		id="administrar-sharepoint"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>El servicio Sharepoint en Gnoss es una funcionalidad que permite a los usuarios de una comunidad, crear recursos en Sharepoint (Microsoft Sharepoint) para estén disponibles en una determinada comunidad y que posteriormente se pueda trabajar de forma colaborativa con otros usuarios ya sea creando versiones, editando documentos de manera conjunta o guardando versiones e históricos de los documentos. De esta forma se consigue tener una referencia de los recursos en Gnoss y en Sharepoint actualizados y accesibles en cualquier momento por el usuario que lo necesite. Para poder hacer uso de este servicio es necesario configurar la siguiente información.</p>										
+			<ul>
+				<li>
+					<strong>Ids de configuración del servicio:</strong> Para obtener los datos de Cliente ID, Directorio inquilino y Secreto de cliente es necesario registrar una aplicación en Azure Active Directory. No obstante, el <a href="@Comunidad.Url/@Html.GetText("URLSEM", "MANUALSHAREPOINT")">siguiente enlace </a>explica paso a paso las instrucciones que hay que seguir para registrar y configurar la aplicación. Con esto en mente, será necesario rellenar los siguientes campos:
+					<ul>								
+						<li><strong>Id de aplicación:</strong> Id cliente de la aplicación registrada y proporcionada por Microsoft.</li>
+						<li><strong>Id de directorio inquilino:</strong> Id de directorio inquilino proporcionada por Microsoft.</li>
+						<li><strong>Secreto de cliente:</strong> ID del cliente: Este dato debe ser generado en el apartado de 'Certificados y secretos' de Microsoft.</li>
+					</ul>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/administrar-sharepoint.png"/>					
+							<figcaption class="figure-caption">Administración del servicio de Sharepoint en comunidad Gnoss.</figcaption>
+						</figure> 
+					</div>	
+				</li>
+				<li>
+					<strong>Urls de redirección:</strong> Estas URLs son necesarias para que la aplicación de Azure AD funcione correctamente y obtener los datos de los campos de arriba.
+				</li>
+				<li>
+					<strong>¿Permitir vincular los documentos con OneDrive?:</strong> Permitir o no poder compartir documentos de OneDrive no solo desde la carpeta personal sino también desde la carpeta de la organización.
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/sharepoint-urls-redireccion.png"/>					
+							<figcaption class="figure-caption">Configuración de las URLs de redirección para el servicio de Sharepoint.</figcaption>
+						</figure> 
+					</div>	
+				</li>						
+			</ul>
+			<p>Para guardar los cambios realizados bastará con hacer clic en el botón Guardar Todo.</p>
+		</div>		
+	</div>
+</div>

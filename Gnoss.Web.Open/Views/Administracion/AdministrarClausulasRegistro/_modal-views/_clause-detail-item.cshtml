@@ -1,0 +1,224 @@
+﻿@model ManageRegisterClausesViewModel.RegisterClauseModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán los detalles de la cláusula vía modal. Aquí también se incluye el modal para confirmar el borrado de la cláusula
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	string idModalClausula = "modal-configuracion-clausula_" + Model.Key;	
+	string idModalClausulaDelete = "modal-configuracion-clausula_delete" + Model.Key;
+	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);	
+}
+
+
+@* Obtener el nombre del tipo de cláusula *@
+@{
+    string nombreTipoClausula = Model.Type.ToString();
+    switch (Model.Type)
+    {
+        case ManageRegisterClausesViewModel.ClauseType.CondicionesUso:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCONDICIONESUSO");
+            break;
+        case ManageRegisterClausesViewModel.ClauseType.ClausulasTexo:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICAPRIVACIDAD");
+            break;
+        case ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICACOOKIES");
+            break;
+        case ManageRegisterClausesViewModel.ClauseType.Opcional:
+            nombreTipoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCLAUSULAOPCIONAL");
+            break;
+    }
+}
+
+
+
+
+@* Modal con la información de la cláusula *@
+<div
+	id="@idModalClausula"
+	class="modal modal-top fade modal-edicion modal-con-tabs modal-clause"           
+	role="dialog"	
+	aria-modal="true">
+
+	@* Información oculta de la cláusula *@	    
+    <input type="hidden" name="TabEliminada" value="false" />	
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>					
+					<span class="community-name">@nombreTipoClausula</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span
+				>
+			</div>
+			<div class="modal-body">
+				<div class="formulario-edicion no-min-height">									                             
+					@* Tabs de los idiomas en multiIdioma *@
+					<div class="panContenidoMultiIdioma basicInfo">
+
+					</div>
+
+                    @* Contenido de los tabs de los idiomas - TIPO CLÁUSULA COOKIE *@
+					<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">					
+						
+						@* Título si la cláusula es DIFERENTE a OPCIONAL *@
+						@if (!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional)) { 
+							@* Título/ de la cláusula *@
+							<div class="form-group mb-4">								
+								<input
+									type="text"
+									name="Title"
+									data-labeltext = "@Html.GetText("BLOGS","TITULO")"									
+									placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELTITULODELACLAUSULA")"
+									class="form-control multiIdioma"
+									value="@Model.Title"									
+									/>
+							</div>						
+						}
+
+						@* Orden -> Muestro pero oculto*@
+						<div class="form-group mb-4 d-none">								
+							<input
+								type="text"
+								name="Order"																
+								class="form-control"
+								value="@Model.Order"									
+								/>
+						</div>
+
+						 @* Texto de cabecera de la cláusula (Texto1) *@
+						@if (!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina) && !Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
+						{
+							<div class="form-group mb-4">
+								<textarea  
+										  rows="6"
+										  name="TextoClausula"
+		 			   					  class="cke multiIdioma" 
+										  data-labeltext="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")">@Model.Text1</textarea>
+							</div>
+						} else if (Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
+						{
+							<div class="form-group mb-4">
+								<textarea  
+										  rows="6"
+										  name="TextoClausula"
+		 			   					  class="multiIdioma" 
+										  data-labeltext="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")">@Model.Text1</textarea>
+							</div>
+						}
+						else // Para todas las demás cláusulas con multiIdioma					
+						{
+							@* Texto Cláusula *@
+							<div class="form-group mb-4">
+								<textarea  								
+										  rows="6"
+										  name="TextoCabeceraClausula"
+		 			   					  class="cke multiIdioma" 
+										  data-labeltext="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCABECERACLAUSULACOOKIES")">@Model.Text1</textarea>
+							</div>
+
+						 @* Texto Página de la cláusula *@
+							<div class="form-group mb-4">								
+								<textarea  
+										  rows="6"
+										  name="TextoPaginaClausula"
+		 			   					  class="cke multiIdioma" 
+										  data-labeltext="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOPAGINACLAUSULACOOKIES")">@Model.Text2</textarea>
+							</div>						
+						}
+					</div>
+
+					@* Input sin multiidioma*@
+					<div class="pageContainer tab-content pt-2">
+						@* Tipo de cláusula *@
+						<div class="form-group mb-4">	
+							<label class="control-label d-block">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCLAUSULA")</label>
+							<input
+								type="text"															
+								placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREDELACLAUSULA")"
+								class="form-control"
+								disabled
+								value="@nombreTipoClausula"					
+								/>
+								<input type="hidden" name="TipoClausula" value="@Model.Type" />
+						</div>
+
+						@if( !(Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional)) && !((!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina) && !Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))) ){						
+							@* Nombre de la cookie/Clausula *@
+							<div class="form-group mb-4">	
+								<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","NOMBREDELACOOKIE")</label>
+								<input
+									type="text"								
+									name="TextoNombreCookie" 
+									placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREDELACOOKIE")"
+									class="form-control"
+									value="@Model.CookieName"					
+									/>
+							</div>	
+						}
+
+						@* Botón para guardar la página *@
+						<div class="panelBotonera">
+							@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+							{
+								@* No permitir guardar *@
+								<input type="button" disabled class="btn btn-primary uppercase btnNoGuardarClausula" value="@Html.GetText("COMMON","GUARDAR")"/>								
+							}
+							else
+							{		
+								@* Permitir guardar *@
+								<input type="button" class="btn btn-primary uppercase btnGuardarClausula" value="@Html.GetText("COMMON","GUARDAR")"/>								
+							}
+						</div>
+					</div>				
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div
+	id="@idModalClausulaDelete"
+	class="modal modal-top fade modal-confirmDelete"           
+	role="dialog"	
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar el borrado de la cláusula *@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">delete</span>
+					@Html.GetText("COMMON","ELIMINAR")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">				
+				<div class="form-group">
+					<label class="control-label">@Html.GetText("DEVTOOLS","DESEAELIMINARLACLAUSULASELECCIONADA")</label>
+				</div>
+				<div class="form-actions">
+					<button data-dismiss="modal" class="btn btn-outline-primary btnNotConfirmDeleteClausula">@Html.GetText("COMMON","NO")</button>
+					<button class="btn btn-primary btnConfirmDeleteClausula">@Html.GetText("COMMON","SI")</button>
+				</div>				
+			</div>
+		</div>
+	</div>
+</div>

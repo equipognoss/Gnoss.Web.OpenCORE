@@ -1,0 +1,49 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal para confirmar la eliminación de un componente desde el editor del CMS Builder.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+                      
+}
+
+<div
+	id="modal-confirmar-eliminar"
+	class="modal modal-top fade modal-edicion fade"           
+	role="dialog"	
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar restaurar la página cms *@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">delete_outline</span>
+					@Html.GetText("COMMON","ELIMINAR")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">				
+				<div class="form-group">
+					<label class="control-label">
+						@Html.GetText("DEVTOOLS","DESEASELIMINARELELEMENTOSELECCIONADO")
+					</label>
+				</div>
+				<div class="form-actions">
+					<button javascript: class="btn btn-outline-primary btn-primary js-delete-no" data-dismiss="modal">@Html.GetText("COMMON","NO")</button>
+					<button class="btn btn-primary js-delete-yes" data-dismiss="modal">@Html.GetText("COMMON","SI")</button>
+				</div>				
+			</div>
+		</div>
+	</div>
+</div>
+
+

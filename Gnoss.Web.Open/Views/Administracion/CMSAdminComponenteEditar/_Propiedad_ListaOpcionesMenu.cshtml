@@ -1,23 +1,276 @@
 ﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
 
-@{
-    string idiomaPanel = (string)ViewData["idiomaPanel"];
-    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
-    if (!string.IsNullOrEmpty(idiomaPanel))
-    {
-        idPanel += "_" + idiomaPanel;
-    }
 
-    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utilizará para pintar la vista correspondiente con un componente de tipo "Menú".
+En ella se podrá ordenar o crear un menú a gusto del usuario, ya sea arrastrando items y moviéndolos para crear una jerarquía.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	string idiomaPanel = (string)ViewData["idiomaPanel"];
+	string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+
+
+	if (!string.IsNullOrEmpty(idiomaPanel))
+	{
+		idPanel += "_" + idiomaPanel;        
+	}
+
+	string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+
+	// Si es multilenguaje /// Obtener datos para su revisión
+	// Obtener los datos de los menús en un array
+	var listaNombre = new List<List<Dictionary<string, string>>>();	
+	var listaUrl = new List<List<Dictionary<string, string>>>();
+
+	// Nombre y url del menú en el idioma correspondiente
+	var nombreMenuValue = "";	
+	var urlMenuValue = "";
+
+	// Listas finales donde se guardarán los nombres y las urls habiédolas extraido previamente
+	var listaNombreEnIdioma = new List<Dictionary<string, string>>();
+	var listaUrlEnIdioma = new List<Dictionary<string, string>>();
+	// Lista del orden de los enlaces
+	var listaOrden = new List<int>();
+	
+	// Todas las propiedades o elementos del menú a editar (En todos los idiomas disponibles). Comprobar que haya algún elemento del menú (Reciente creación)	
+	string[] elementos = new string[] { };	
+
+	if (!string.IsNullOrEmpty(Model.Value))
+	{
+		elementos = Model.Value.Split("###");
+	} 
+	 
+
+
+    @foreach (string elemento in elementos)
+    {
+        // Obtener la fila con el Nombre y el enlace
+        var valor = elemento.Trim();
+
+        // Obtener datos de cada item
+        if (!String.IsNullOrEmpty(valor))
+        {
+            // Todos los datos del enlace
+            var datos = valor.Split("&&&");
+            // Nivel del enlace
+            var nivel = datos[0];
+            // Nombre del enlace
+            var valorNombre = datos[1].Split("|||");
+            // Valor del enlace (Url)
+            var valorEnlace = datos[2].Split("|||");    
+
+            // Array de diccionarios Lista de nombres a rellenar en todos los idiomas
+            var listaTextosNombre = new List<Dictionary<string, string>>();
+            // Obtener y construir los valores para los nombres del menú
+            @foreach (string nombre in valorNombre)
+            {
+                if (!String.IsNullOrEmpty(nombre))
+                {
+                    var objetoIdioma = Html.GetDictionaryValuesFromMultiLanguageItem(nombre);
+                    listaTextosNombre.Add(objetoIdioma);
+                }
+            }
+
+            // Array de diccionarios Lista de url a rellenar en todos los idiomas
+            var listaTextosEnlace = new List<Dictionary<string, string>>();
+            // Obtener y construir los valores para los urls del menú
+            @foreach (string enlace in valorEnlace)
+            {
+                if (!String.IsNullOrEmpty(enlace))
+                {
+                    var objetoIdioma = Html.GetDictionaryValuesFromMultiLanguageItem(enlace);
+                    listaTextosEnlace.Add(objetoIdioma);
+                }
+			}
+
+			// Añadir en nivel del enlace 
+			listaOrden.Add(int.Parse(nivel));
+			
+            listaNombre.Add(listaTextosNombre); 
+            listaUrl.Add(listaTextosEnlace);            
+         }
+
+    }
 }
 
-<div id="contenedorPrincipal_@idPanel">
-    <p id="parrafo_@idPanel">
-        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
-        <input type="hidden" id="@idPanel" />
-    </p>
-    <div id="contenedor_@idPanel">
-        <div id="contenedorInt_@idPanel"></div>
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo Lista de Menú --------------------
+*@
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="mb-4 form-group contenedorPrincipalMenuList">    
+    <div class="menuList-header d-flex justify-content-between align-items-center" data-idPanel="@idPanel">
+        @* Label del elemento Html*@    
+        <label class="control-label d-block font-weight-bold" style="font-size:14px;">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+			<a href="javascript: void(0);" class="linkAddOptionMenu btn btn-outline-primary" data-idPanel="@idPanel" style="display: flex; text-decoration: none;">
+				<span class="material-icons">add</span>
+				<span class="texto">@Html.GetText("DEVTOOLS","NUEVOENLACEDEMENU")</span>
+			</a>
+	</div>
+
+
+
+
+         
+    @* Contenedor donde se pintarán todos los items del menú existentes *@
+    <div id="contenedor_@idPanel" data-idPanel="@idPanel">
+        <ul class="js-community-components-menu-option-list component-list no-list-style">
+
+			@* Obtener el nombre del menú item *@
+			@foreach (List<Dictionary<string, string>> nombreMenu in listaNombre)
+			{								
+				// Obtener el valor Nombre del menú en el idioma correspondiente al "idiomaPanel"				
+				Dictionary<string, string> dict = new Dictionary<string, string>();
+				foreach (Dictionary<string, string> nombreIdioma in nombreMenu)
+				{		
+					string value;
+					if (nombreIdioma.TryGetValue(idiomaPanel, out value))
+					{						
+						nombreMenuValue = value;
+						dict.Add(idiomaPanel, nombreMenuValue);
+						listaNombreEnIdioma.Add(dict);											
+					}					
+				}				
+			}
+
+			@* Obtener la url del menú item *@
+			@foreach (List<Dictionary<string, string>> urlMenu in listaUrl)
+			{								
+				// Obtener el valor Nombre del menú en el idioma correspondiente al "idiomaPanel"												
+				Dictionary<string, string> dict = new Dictionary<string, string>();
+				foreach (Dictionary<string, string> urlIdioma in urlMenu)
+				{		
+					string value;
+					if (urlIdioma.TryGetValue(idiomaPanel, out value))
+					{
+						urlMenuValue = value;
+						dict.Add(idiomaPanel, urlMenuValue);
+						listaUrlEnIdioma.Add(dict);
+					}										
+				}
+			}
+
+			@for (var i = 0; i < listaNombreEnIdioma.Count; i++){
+				@* Nombre y Url del enlace a pintar *@
+				string nombreEnlace = listaNombreEnIdioma[i][idiomaPanel];
+				string urlEnlace = listaUrlEnIdioma[i][idiomaPanel];
+				int nivelEnlace = listaOrden[i]; 
+
+				@* Id aleatorio para el collapsePanel *@
+				Guid randomId = Guid.NewGuid();
+				string collapseId = "panel_collapse_" + randomId.ToString().Substring(0,5);
+				string labelNombreId = $"{idPanel}_{i}_label_nombre";
+				string inputNombreId = $"{idPanel}_{i}_txt_nombre";
+				string inputUrlId = $"{idPanel}_{i}_txt_enlace";
+				string labelUrlId = $"{idPanel}_{i}_label_enlace";
+				
+				@* Pintar el menú Item (nombreEnlace + Url) *@
+				<li
+					class="component-wrap menuOption-row elementos_@idPanel"
+					data-componentid=""
+					data-nivel="@nivelEnlace"
+					data-originalposition="@i"
+					draggable="false">
+					<div class="component">
+						<div class="component-header-wrap">
+							<div class="component-header">
+								<div class="component-sortable js-component-menu-item-sortable-component">
+									<span class="material-icons-outlined sortable-icon">drag_handle</span>
+								</div>
+								<div class="component-header-content">
+									<div class="component-header-left">
+										<div class="component-name-wrap">
+											@* Información de la opción del menú *@
+											<span class="component-name">
+												<span id="@labelNombreId" class="component-menu-option-name">@nombreEnlace</span>
+												<span> | </span>
+												<span id="@labelUrlId" class="component-menu-option-url">@urlEnlace</span>
+											</span>
+										</div>
+									</div>
+									<div class="component-header-right">
+										<div class="component-actions-wrap">
+											<ul class="no-list-style component-actions">
+												<li>
+													@* Acción Editar la opción del menú *@
+													<a
+														class="action-delete round-icon-button js-action-delete btnEditMenuOption"
+														href="javascript: void(0);"
+														data-componentid=""
+														data-toggle="collapse" 
+														data-target="#@collapseId"									   
+														role="button" 
+														aria-expanded="false" 
+														aria-controls="@collapseId"
+														draggable="false">
+														<span class="material-icons">edit</span>
+													</a>
+												</li>
+												<li>
+													@* Acción Eliminar la opción del menú *@
+													<a
+														class="action-delete round-icon-button js-action-delete btnDeleteMenuOption"
+														href="javascript: void(0);"
+														data-componentid=""
+														data-idpanel="@idPanel"
+														draggable="false">
+														<span class="material-icons">delete</span>
+													</a>
+												</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					@* Información detallada del Menú item - Collapse *@
+					<div class="collapse menuItem-info" id="@collapseId">					
+						<div class="card card-body">												
+							@* Título/Nombre de la página *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>
+								<input
+									type="text"
+									id="@inputNombreId"
+									data-labeltext="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"	
+									placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+									class="form-control inputNombreMenuItem"
+									value="@nombreEnlace"/>
+								<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREDELITEMDELMENU")</small>
+							</div>			
+					
+							@* Enlace del menú *@
+							<div class="form-group mb-2">
+								<label class="control-label d-block">@Html.GetText("DEVTOOLS","ENLACE")</label>
+								<input
+									type="text"									
+									id="@inputUrlId"
+									placeholder="Url del menú"
+									class="form-control inputEnlaceMenuItem"
+									value="@urlEnlace"/>
+								<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","ENLACEDELITEMDELMENU")</small>
+							</div>			
+						</div>
+					</div>	
+
+					@* Sección de si hay más páginas dentro de ella*@
+					<div class="component-content">
+						<ul class="js-community-components-menu-option-list component-list no-list-style" data-parentKey="">
+
+						</ul>
+					</div>
+				</li>					
+			}				
+        </ul>
     </div>
-    <input type="button" onclick="Propiedad30_NuevoNivel();" value="Nuevo" />
 </div>

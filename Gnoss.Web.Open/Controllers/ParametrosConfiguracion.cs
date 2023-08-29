@@ -20,11 +20,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 
 /// <summary>
 /// Descripción breve de ParametrosConfiguracion
 /// </summary>
 [System.ComponentModel.ToolboxItem(false)]
+[TypeFilter(typeof(NoTrackingEntityFilter))]
 // Para permitir que se llame a este servicio Web desde un script, usando ASP.NET AJAX, quite la marca de comentario de la línea siguiente. 
 public class ParametrosConfiguracionController : ControllerBaseWeb
 {

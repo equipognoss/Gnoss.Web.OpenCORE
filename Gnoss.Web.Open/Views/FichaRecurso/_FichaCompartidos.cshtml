@@ -27,7 +27,8 @@ int positionCommunity = 0;
                     PintarSharedCommunity pintar1 = new PintarSharedCommunity();
                     pintar1.resourceModel = Model;
                     pintar1.pintarNumerLimitado = true;
-                    pintar1.position = maxNumCommunityShared;
+                    pintar1.listaBaseRecursos = Model.Shareds;
+                    pintar1.position = positionCommunity;
                 }
                 @Html.PartialView("../FichaRecurso/_PintarSharedCommunity", pintar1)
             </ul>
@@ -42,6 +43,7 @@ int positionCommunity = 0;
                         PintarSharedCommunity pintar2 = new PintarSharedCommunity();
                         pintar2.resourceModel = Model;
                         pintar2.pintarNumerLimitado = false;
+                        pintar2.listaBaseRecursos = Model.Shareds;
                         pintar2.position = maxNumCommunityShared;
                     }
                     @Html.PartialView("../FichaRecurso/_PintarSharedCommunity", pintar2)

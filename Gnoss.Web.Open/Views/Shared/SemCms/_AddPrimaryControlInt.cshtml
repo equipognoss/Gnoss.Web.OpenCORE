@@ -368,8 +368,17 @@
                 }
                 onchange = "onchange=\"" + metodoComprValCampos + "\"";
             }
-
-            <input type="@tipoInput" id="@idControl" class="@classInput" value="@valorPropTexto" @Html.Raw(disabledControl) @Html.Raw(onblurControl) @Html.Raw(onchange) />
+            // Añadir icono si se trata de input type: Calendar
+            if (classInput.Contains("calenFormSem"))
+            {
+                <div class="input-with-icon">
+                    <i class="material-icons">calendar_today</i>
+                    <input type="@tipoInput" id="@idControl" class="@classInput" value="@valorPropTexto" @Html.Raw(disabledControl) @Html.Raw(onblurControl) @Html.Raw(onchange) />
+                </div>
+            }
+            else {
+                <input type="@tipoInput" id="@idControl" class="@classInput" value="@valorPropTexto" @Html.Raw(disabledControl) @Html.Raw(onblurControl) @Html.Raw(onchange) />
+            }                        
         }
         else if (mPropiedad.EspecifPropiedad.GrafoDependiente != null && Model.semanticPropertyModel.OntologyPropInfo.UniqueValue)
         {

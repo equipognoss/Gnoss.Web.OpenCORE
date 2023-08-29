@@ -1,0 +1,53 @@
+﻿
+@*
+ Descripción
+ -----------------------------------------------
+ Vista modal que se usará dentro de un contenedor de bootstrap 
+ Variables
+ ----------------------------------------------------------------
+*@
+@{
+    //CommunityModel Comunidad = Html.GetComunidad();
+}
+@*
+ ----------------------------------------------------------------
+ -------------------- Vista Modal para validar el email antes de guardar la configuración del buzón --------------------
+*@
+
+<div id="validar-correo"
+	 class="modal modal-top fade"
+	 role="dialog"
+	 aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">label</span> Validar Correo Electrónico
+                </p>
+                <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+
+                <form>
+
+                    
+				        <div class="form-group">
+                            @* Input para el correo *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">Correo Electrónico</label>
+                            <input type="text" class="form-control" name="txtCorreoValidar" id="txtCorreoValidar" />
+                                <small class="form-text text-mute">Correo electrónico al que se enviará el email de prueba.</small>
+                            </div>
+
+                            @* Botón de guardado y cierre del modal *@
+                            <div class="panelBotonera">
+                                <input type="button" class="btn btn-primary uppercase" id="btnValidarEmail" value="Validar y Guardar"/>                                               
+                            </div> 
+                    </div>
+
+                </form>
+			</div>
+		</div>
+	</div>
+</div>

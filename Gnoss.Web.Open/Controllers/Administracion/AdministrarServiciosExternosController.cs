@@ -52,9 +52,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion edicionServiciosExternos edicion no-max-width-container ";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ServiciosExternos;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOSEXTERNOS");
+
             mPaginaModel = CargarModelo();
             return View(mPaginaModel);           
         }
+
+
+        /// <summary>
+        /// Método para solicitar una nueva "row" para crear un nuevo servicio externo. Creará una nueva fila para que vía JS una vez se haya creado se pulse en "Editar"
+        /// para añadir las características
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult CargarNuevoItem()
+        {           
+            ServiceNameModel serviceName = new ServiceNameModel();
+            serviceName.Deleted = false;
+            serviceName.Nueva = true;
+            
+            return PartialView("_partial-views/_list-item-external-service", serviceName);
+        }
+
+
+
         /// <summary>
         /// Guardar la Url
         /// </summary>
@@ -152,6 +180,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             AdministrarServiciosExternosViewModel adServiceName = new AdministrarServiciosExternosViewModel();            
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            // Lista de servicios del proyecto
+            adServiceName.ListaServicios = new List<ServiceNameModel>();
+
             string serviceName = proyCN.ObtenerParametroAplicacion("UrlBaseService");
             if (string.IsNullOrEmpty(serviceName))
             {

@@ -19,8 +19,6 @@
     string buttonText = "";
     string buttonClass = "";
     bool showMessageRestrictedCommunityAccess = false;
-
-
 }
 
 @*
@@ -38,8 +36,8 @@
         {
             //Comunidad pública
             accessRestrictedCommunityUrl = $"{@Comunidad.Url}/{@Html.GetText("URLSEM", "HAZTEMIEMBRO")}";
-            accessRestrictedCommunityMessage = @Html.GetText("COMINICIOLOGIN", "TIENESQUEHACERTEMIEMBRO");
-            buttonText = @Html.GetText("COMINICIOLOGIN", "REGISTRATEPARTICIPA");
+            accessRestrictedCommunityMessage = @Html.GetText("COMINICIOLOGIN", "TIENESQUEHACERTEMIEMBRO");            
+            buttonText = @Html.GetText("COMINICIOLOGIN", "HAZTEMIEMBROPARTICIPA");
             showMessageRestrictedCommunityAccess = true;
         }
         else if (((CommunityModel.TypeAccessProject)Comunidad.AccessType).Equals(CommunityModel.TypeAccessProject.Restricted))

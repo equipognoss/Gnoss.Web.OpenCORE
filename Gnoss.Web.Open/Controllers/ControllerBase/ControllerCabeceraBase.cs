@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.Web.Controles.ParametroGeneralDSName;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Util;
+using Es.Riam.Web.Util;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using System;
@@ -111,7 +112,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (mControllerBase.ObtenerParametrosLoginExterno(TipoRedSocialLogin.Google, mControllerBase.ParametroProyecto, mControllerBase.ParametrosAplicacionDS).Count > 0)
             {
-                string urlServicioLoginGoogle = mControladorBase.UrlServicioLogin + "/logingoogle.aspx?token=" + System.Net.WebUtility.UrlEncode(mControllerBase.TokenLoginUsuario) + "&proyectoID=" + ProyectoSeleccionado.Clave.ToString() + "&urlOrigen=" + System.Net.WebUtility.UrlEncode(mControllerBase.BaseURL + mHttpContextAccessor.HttpContext.Request.Path);
+                string urlServicioLoginGoogle = mControladorBase.UrlServicioLogin + "/logingoogle?token=" + System.Net.WebUtility.UrlEncode(mControllerBase.TokenLoginUsuario) + "&proyectoID=" + ProyectoSeleccionado.Clave.ToString() + "&urlOrigen=" + System.Net.WebUtility.UrlEncode(mControllerBase.BaseURL + mHttpContextAccessor.HttpContext.Request.Path);
 
                 urlServicioLoginGoogle = AgregarEventoComunidad(urlServicioLoginGoogle);
 

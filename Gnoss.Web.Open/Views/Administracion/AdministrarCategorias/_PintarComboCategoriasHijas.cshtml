@@ -1,5 +1,22 @@
 ﻿@model PintarComboAdministrarCategorias
 
+@*
+Descripción
+-----------------------------------------------
+Minivista para pintar las option de un comboBox que mostrará las categorías hijas de una determinada Categoría
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista para mostrar las categorías hijas en un comboBox / select --------------------
+*@
+
 @{
     foreach (CategoryModel categoria in Model.Thesaurus.ThesaurusCategories.Where(cat => cat.ParentCategoryKey == Model.pCategoria.Key).OrderBy(cat2 => cat2.Order))
     {
@@ -12,7 +29,7 @@
         pintar.Thesaurus = Model.Thesaurus;
         pintar.pCategoria = categoria;
         pintar.pExcluirSeleccionadas = Model.pExcluirSeleccionadas;
-        @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategoriasHijas", pintar)
+        @Html.PartialView("_PintarComboCategoriasHijas", pintar)
     }
 }
 

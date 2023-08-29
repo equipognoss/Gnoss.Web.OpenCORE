@@ -1,0 +1,102 @@
+﻿@model CMSEditComponentModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene la visualización de un item de tipo Componente para ser mostrado en la tabla de edición de componentes CMS de una Comunidad
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+
+	// Enlace para obtener información de la edición del componente (Cargar los datos en el modal)
+	string urlEditComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + Model.Key + "/load-modal";
+	// Enlace para obtener información de la edición del componente (Cargar los datos en el modal)
+	string urlDeleteComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + Model.Key + "/load-delete-component";
+	// Url para ejecutar el borrado del componente cuando se confirme el borrado
+	string urlDeleteComponentItemAction = $"{Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/{Model.Key}/delete ";
+	// Url para guardar el componente editado
+	string urlSaveComponent = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + Model.Key + "/save";	
+
+	// Indicador de si está activo el componente
+	string isActiveComponentStringValue = Model.Activo == true ? @Html.GetText("COMMON", "SI") : @Html.GetText("COMMON", "NO");
+	//Fecha de modificación del componente
+	string editionDate;
+	if (Model.EditionDate.Equals(DateTime.MinValue))
+	{
+		//Si la fecha no esta definida se pinta la de hoy
+		editionDate = DateTime.Now.ToString("dd/MM/yyyy");		
+	}
+	else
+	{
+		editionDate = Model.EditionDate.ToString("dd/MM/yyyy");
+	}
+}
+
+@*
+	----------------------------------------------------------------
+	-------------------- Vista parcial de un item Multimedia --------------------
+*@
+
+<tr class="component-row">
+	@* Titulo del componente + Id *@ 
+	<td class="td-titulo">
+		@Model.Title		
+		<div class="info-component">
+			<span class="component-id">@Model.Key</span>			
+			<span alt="Copiar componente" 
+				  title="Copiar componente"
+				  data-url="@Model.Key" 
+				  class="material-icons btnCopyMultimediaItem" 
+				  style="cursor: pointer">content_copy</span>
+		</div>
+	</td>
+	@* Tipo de componente *@
+	<td class="td-tipo">
+		@Html.GetText("COMADMINCMS", "COMPONENTE_" + Model.CMSComponentType)
+	</td>
+	@* Visibilidad / Estado activo del componente *@
+	<td class="td-visible">
+		@isActiveComponentStringValue
+	</td>
+	@* Fecha de creación *@
+	<td class="td-creacion">@editionDate</td>
+	@* Acciones del componente *@
+	<td class="td-acciones">
+		<div class="dropdown dropdown-select">
+			@* Acción de editar del componente *@
+			<a class="dropdown-toggle" data-toggle="dropdown">
+				<span class="material-icons">edit</span>
+				<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+			</a>
+			<div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
+				@* Acción de editar el componete *@
+				<a
+					class="item-dropdown btnEditComponentItem"
+					data-urleditcomponent = "@urlEditComponentItem"
+					data-urlsave = "@urlSaveComponent"
+					data-target="#modal-container"					
+					data-toggle="modal">
+					<span class="material-icons">edit</span>
+					<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+				</a>
+
+				@* Acción de eliminar el componente *@
+				<a class="item-dropdown btnDeleteComponentItem" data-name="@Model.Title"
+				   data-target="#modal-container"
+				   data-toggle="modal"
+				   data-url= "@urlDeleteComponentItemAction"
+				   onclick="getVistaFromUrl('@urlDeleteComponentItem','modal-dinamic-content', '')">
+					<span class="material-icons">delete</span>
+					<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+				</a>
+			</div>
+		</div>
+	</td>
+</tr>
+
+
+

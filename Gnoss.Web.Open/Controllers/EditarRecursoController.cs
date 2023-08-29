@@ -324,7 +324,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             EsPaginaEdicion = true;
 
-            mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"], mEntityContext);
+            mCookieAnyadirGnoss = null;
+            try
+            {
+                mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"], mEntityContext);
+            }
+            catch 
+            {
+                Response.Cookies.Delete("anyadirGnoss");
+            }
             if (mCookieAnyadirGnoss == null && (RequestParams("titl") != null || RequestParams("descp") != null))
             {
                 //crea la cookie con los parámetros de la petición
@@ -348,7 +356,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad })]
         public ActionResult Index(bool pDevolverVista = true)
         {
-            mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"], mEntityContext);
+            mCookieAnyadirGnoss = null;
+            try
+            {
+                mCookieAnyadirGnoss = UtilCookies.FromLegacyCookieString(Request.Cookies["anyadirGnoss"], mEntityContext);
+            }
+            catch
+            {
+                Response.Cookies.Delete("anyadirGnoss");
+            }
 
             mLoggingService.AgregarEntrada("TiemposMVC_IndexEditarRecurso_Inicio");
 
@@ -979,7 +995,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             if (ProyectoSeleccionado.Clave == ProyectoAD.MetaProyecto || ListaPermisosDocumentos.Contains(TiposDocumentacion.Video))
                             {
-                                CallInterntService servicioVideos = new CallInterntService(mConfigService);
+                                CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
                                 if (ProyectoSeleccionado.Clave == ProyectoAD.MetaProyecto)
                                 {
                                     if (IdentidadOrganizacion == null)
@@ -4394,7 +4410,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (tipoArchivo == TipoArchivo.Audio || tipoArchivo == TipoArchivo.Video)
                     {
-                        CallInterntService servicioVideos = new CallInterntService(mConfigService);
+                        CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
 
                         if (!EsComunidad)
                         {
@@ -4416,7 +4432,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else if (tipoArchivo == TipoArchivo.Imagen)
                     {
-                        Image imagen = Image.Load(new MemoryStream(buffer1));
+                        Image imagen = Image.Load(buffer1);
 
                         int anchoMaximo = 582;
 
@@ -5158,7 +5174,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             modelModRec.DocumentType = ResourceModel.DocumentType.Semantico;
             mEditRecCont.ModifyResourceModel.DocumentEditionModel = new DocumentEditionModel();
             mEditRecCont.ModifyResourceModel.DocumentEditionModel.Key = mDocumentoID;
-
+            mEditRecCont.ModifyResourceModel.DocumentEditionModel.ActualIdentityIsCreator = true;
             if (CreandoFormSem || CargaMasivaFormSem)
             {
                 mEditRecCont.ModifyResourceModel.DocumentEditionModel.Key = Guid.Empty;
@@ -5666,7 +5682,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (mOntologia.ConfiguracionPlantilla.HayEntidadesSeleccEditables)
             {
-                ObtenerSemCmsController(Documento).FusionarOntologiasYXMLEntExtEditables(mOntologia, ProyectoSeleccionado.Clave, propiedadesOmitirPintado, ParametroProyecto);
+                ObtenerSemCmsController(mDocumentoID).FusionarOntologiasYXMLEntExtEditables(mOntologia, ProyectoSeleccionado.Clave, propiedadesOmitirPintado, ParametroProyecto);
             }
 
             SemCmsController.ApanyarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
@@ -5704,7 +5720,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (mOntologia.ConfiguracionPlantilla.HayEntidadesSeleccEditables)
             {
                 string imgRepValue = mEditRecCont.ModifyResourceModel.SemanticResourceModel.ImageRepresentativeValue;
-                ObtenerSemCmsController(Documento).FuncionarRDFsEntidadExternaEditable(mSemController.Entidades, mOntologia, ProyectoSeleccionado.Clave, mDocumentoID, BaseURLFormulariosSem, UrlIntragnoss, out mEntidadesExtEditablesDocID, IdentidadActual.Persona.FilaPersona, ProyectoSeleccionado.FilaProyecto, ref imgRepValue);
+                ObtenerSemCmsController(mDocumentoID).FuncionarRDFsEntidadExternaEditable(mSemController.Entidades, mOntologia, ProyectoSeleccionado.Clave, mDocumentoID, BaseURLFormulariosSem, UrlIntragnoss, out mEntidadesExtEditablesDocID, IdentidadActual.Persona.FilaPersona, ProyectoSeleccionado.FilaProyecto, ref imgRepValue);
                 mEditRecCont.ModifyResourceModel.SemanticResourceModel.ImageRepresentativeValue = imgRepValue;
             }
 
@@ -6115,7 +6131,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (propImagen == 0 && mOntologia.ConfiguracionPlantilla.PropiedadesOpenSeaDragon != null && mOntologia.ConfiguracionPlantilla.PropiedadesOpenSeaDragon.Contains(new KeyValuePair<string, string>(propiedadNombre, entidad)))
                     {
-                        System.Drawing.Bitmap imagen = new System.Drawing.Bitmap(new MemoryStream(buffer1));
+                        Image imagen = Image.Load(buffer1);
                         respuesta = "OpenSeaDragon|" + imagen.Width + "|" + imagen.Height;
                         imagen.Dispose();
                     }
@@ -6308,7 +6324,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 //Es posible que no esté instalada la verisón REST del servicio interno, ejecuto la acción contra el servicio web
 
-                CallInterntService servicioDocsLink = new CallInterntService(mConfigService);
+                CallInterntService servicioDocsLink = new CallInterntService(mConfigService, mLoggingService);
 
                 exito = servicioDocsLink.AgregarDocumento(pBytes, pDocumentoID, pNombre, pExtension);
             }
@@ -6421,8 +6437,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             GestionarArchivosGoogleDrive();
             AjustarVisiblidadYEditoresSegunXml();
-
-            if (mErrorDocumento != null)
+			DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            docCL.InvalidarContextoRecursoMVC(pModel.Key, ProyectoSeleccionado.Clave);
+			if (mErrorDocumento != null)
             {
                 return GnossResultERROR(mErrorDocumento);
             }
@@ -6686,9 +6703,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             rdfAntiguo = mSemController.ResourceRDF;
                         }
-
                         JsonExtServResponse respuesta = GuardarRdfEnServicioExterno(streamRDF, urlServComple, mOntologiaID, mDocumentoID, editandoForm, UtilIdiomas.LanguageCode, IdentidadActual, mModelSaveRec, ProyectoSeleccionado, rdfAntiguo);
-
                         if (respuesta.Status == 1)
                         {
                             if (respuesta.Action != null)
@@ -7428,18 +7443,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 string tokenAfinidadPeticion = Guid.NewGuid().ToString();
 
-                if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                {
-                    conexionAfinidadVirtuoso = (string)mGnossCache.ObtenerDeCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion);
-                    if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                    {
-                        conexionAfinidadVirtuoso = mConfigService.ObtenerVirtuosoEscritura().Value;
-                    }
-                }
-                if (!string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                {
-                    mGnossCache.AgregarObjetoCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion, conexionAfinidadVirtuoso, 86400);
-                }
+                //if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
+                //{
+                //    conexionAfinidadVirtuoso = (string)mGnossCache.ObtenerDeCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion);
+                //    if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
+                //    {
+                //        conexionAfinidadVirtuoso = mConfigService.ObtenerVirtuosoEscritura().Value;
+                //    }
+                //}
+                //if (!string.IsNullOrEmpty(conexionAfinidadVirtuoso))
+                //{
+                //    mGnossCache.AgregarObjetoCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion, conexionAfinidadVirtuoso, 86400);
+                //}
 
                 //lanzo la ejecución en un nuevo hilo                                
                 Task.Factory.StartNew(() => GuardarRdfEnServicioExterno(pStreamRDF, pUrlServicio, directorioInfo, mOntologiaID, mDocumentoID, editandoForm, UtilIdiomas.LanguageCode, identidadActualUsuario, mModelSaveRec, proyActual, rdfAntiguo, conexionAfinidadVirtuoso, tokenAfinidadPeticion));
@@ -7475,15 +7490,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                try
-                {
-                    string fichero = pDirectorioLog + "errorIntegServExterComple_" + DateTime.Now.ToString("yyyy-MM-dd") + ".log";
-                    ControladorBase.GuardarLogSize("Error al llamar al servicio externo '" + pUrlServicio + "': " + ex.ToString(), fichero);
-                }
-                catch (Exception ex2)
-                {
-                    mLoggingService.GuardarLogError(ex2);
-                }
+                //try
+                //{
+                //string fichero = pDirectorioLog + "errorIntegServExterComple_" + DateTime.Now.ToString("yyyy-MM-dd") + ".log";
+                //ControladorBase.GuardarLogSize("Error al llamar al servicio externo '" + pUrlServicio + "': " + ex.ToString(), fichero);
+                //}
+                //catch (Exception ex2)
+                //{
+                mLoggingService.GuardarLogError(ex,$"La url del servicio externo es: {pUrlServicio}");
+                //}
             }
 
             return null;
@@ -7531,23 +7546,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string conexionAfinidadVirtuoso = pConexionAfinidadVirtuoso;
             string tokenAfinidadPeticion = pTokenAfinidadPeticion;
-
-            if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-            {
-                conexionAfinidadVirtuoso = mServicesUtilVirtuosoAndReplication.ConexionAfinidad;
-                tokenAfinidadPeticion = Guid.NewGuid().ToString();
-
-                if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                {
-                    conexionAfinidadVirtuoso = (string)mGnossCache.ObtenerDeCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion);
-                    if (string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                    {
-
-                        //conexionAfinidadVirtuoso = baseAD.obtenerNombreConexionReplicaAleatoria(); TODOO Javi preguntar Juan
-                    }
-                }
-                mGnossCache.AgregarObjetoCache("conexionAfinidadVirtuoso_" + tokenAfinidadPeticion, conexionAfinidadVirtuoso, 86400);
-            }
 
             Dictionary<string, string> cabeceras = null;
             if (!string.IsNullOrEmpty(conexionAfinidadVirtuoso))
@@ -9593,7 +9591,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         //Subimos el fichero al servidor
 
-                        CallInterntService servicioVideos = new CallInterntService(mConfigService);
+                        CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
                         if (brProyecto)
                         {
                             resultado = servicioVideos.AgregarVideo(bufferRecurso, extensionArchivo, pDocumento.Clave);
@@ -12188,8 +12186,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecursoSemantico");
-                    respuesta = GuardarRecurso_ModificarRecursoSemantico(pPaginaModel);
-                }
+                    respuesta = GuardarRecurso_ModificarRecursoSemantico(pPaginaModel);					
+				}
                 else if (AñadiendoAGnoss)
                 {
                     traza.Append("AñadiendoAGnoss");
@@ -12358,7 +12356,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     // TODO: No se usan los vídeos, se consideran archivos de tipo servidor.
 
-                    CallInterntService servicioVideos = new CallInterntService(mConfigService);
+                    CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
                     //servicioVideos.Timeout = 600000;
                     resultado = servicioVideos.AgregarVideo(byteArray, ext, mDocumentoDuplicadoID);
 

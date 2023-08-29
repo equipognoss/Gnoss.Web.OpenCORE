@@ -1,0 +1,79 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la sección de Grafo de conocimiento desde la Home de DevTools.
+Esta vista se cargará en la sección central cuando se pulse sobre "Grafos de conocimiento"
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+
+    @* Permisos diseño en la comunidad *@
+    bool permisosGrafos = (permisosPaginas.AdministracionSemanticaPermitido && (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Semantica))));
+    bool permisosGraphqlAndDataManagement = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de la sección Estructura en la Home de la Comunidad en DevTools --------------------
+*@
+
+@* Contenedor central de secciones *@
+<div class="section-list-wrap">
+
+    @if (permisosGrafos)
+    {
+        <div class="section section-navigation" data-parent-section="grafo" data-section="objetos-conocimiento-grafo">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM") / Ontologías</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","GESTIONDELASONTOLOGIASYOBJETOSDECONOCIMIENTODELACOMUNIDAD")
+            </p>
+        </div>
+        <div class="section section-navigation" data-parent-section="grafo" data-section="tesauros-grafo">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINTESSEM")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CREACIONYCONFIGURACIONDETESAUROSSEMANTICOSDELACOMUNIDADPARAL")
+            </p>
+        </div>
+        @* Desaparecería Grafos simples 
+        <div class="section section-navigation" data-parent-section="grafo" data-section="grafos-simples">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINGRAFSIMPLE")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","ADMINISTRACIONDEGRAFOSPARALAREPRESENTACIONDELASRELACIONESDEL")
+            </p>
+        </div>
+        *@
+    }
+
+    @if (permisosGraphqlAndDataManagement)
+    {
+        <div class="section section-navigation" data-parent-section="grafo" data-section="sparql">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCONSULTASPARQL")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","REALIZACIONDECONSULTASSOBREDATOSALMACENADOSENRDFMEDIANTEELLE")
+            </p>
+        </div>
+
+        <div class="section section-navigation" data-parent-section="grafo" data-section="carga-grafo">
+            <h2>@Html.GetText("DEVTOOLS","CONSULTARCARGASMASIVAS")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONSULTADELOSDATOSCARGADOSDEFORMAMASIVAVIAAPI")
+            </p>
+        </div>
+
+        <div class="section section-navigation" data-parent-section="grafo" data-section="borrado-grafo">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRABORRADOMASIVO")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","BORRADOMASIVODEDATOSDELACOMUNIDAD")
+            </p>
+        </div>
+    }
+</div>
+
+
+

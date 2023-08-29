@@ -1,416 +1,197 @@
 ﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarSearchViewModel
+
+
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar/visualizar las páginas existentes en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	// Referencia al AdministrarSearchViewModel para ser usado en la cabecera
+	ViewBag.AdministrarSearchViewModel = Model;
 
-    CommunityModel Comunidad = Html.GetComunidad();
+	// Tags autocompletar para propiedades y textoLibre
+	string tagsAutocompletar = "";
+	string tagsAutoCompletarHtml = "";
+	string tagsTextoLibre = "";
+	string tagsAutoCompletarTextoLibreHtml = "";
+	string tagsTextoPropiedadesEnTextoLibre = "";
+
+	// Tags Propiedades
+	if (Model.TagsAutocompletar.Length > 0)
+	{
+		tagsAutocompletar += Model.TagsAutocompletar + ",";
+	}
+
+	@* Tags de propiedades *@
+	foreach (string item in Model.TagsAutocompletar.Split(","))
+	{
+		if (!string.IsNullOrEmpty(item))
+		{
+			string tagId = @Guid.NewGuid().ToString().Substring(0,5);				
+			tagsAutoCompletarHtml += "<div class='tag' id='"+ tagId + "' title='"+ item +"'>";
+			tagsAutoCompletarHtml += "<div class='tag-wrap'>";
+			tagsAutoCompletarHtml += "<span class='tag-text'>"+ item +"</span>";
+			tagsAutoCompletarHtml += "<span class='tag-remove tag-remove-property-autocomplete material-icons remove'>close</span>";
+			tagsAutoCompletarHtml += "</div>";												
+			tagsAutoCompletarHtml += "</div>"; 			
+		}		
+	}
+
+	// Tags Texto libre
+	if (Model.TagsAutocompletar.Length > 0)
+	{
+		tagsTextoLibre += Model.TagsTxtLibre + ",";
+	}
+
+	// Añadir a los tags de Texto libre, los tags de autocompletar
+	tagsTextoLibre += tagsAutocompletar;
+
+	@* Tags de textoLibre *@
+	foreach (string item in Model.TagsTxtLibre.Split(","))
+	{
+		if (!string.IsNullOrEmpty(item)){
+			string tagId = @Guid.NewGuid().ToString().Substring(0,5);				
+			tagsAutoCompletarTextoLibreHtml += "<div class='tag' id='"+ tagId + "' title='"+ item +"'>";
+				tagsAutoCompletarTextoLibreHtml += "<div class='tag-wrap'>";
+					tagsAutoCompletarTextoLibreHtml += "<span class='tag-text'>"+ item +"</span>";
+					tagsAutoCompletarTextoLibreHtml += "<span class='tag-remove tag-remove-text-autocomplete material-icons remove'>close</span>";
+				tagsAutoCompletarTextoLibreHtml += "</div>";												
+			tagsAutoCompletarTextoLibreHtml += "</div>"; 			
+		}
+	}
+
+	@* Tags de Autocompletar que deben estar en textoLibre *@
+	foreach (string item in Model.TagsAutocompletar.Split(","))
+	{
+		if (!string.IsNullOrEmpty(item))
+		{
+			string tagId = @Guid.NewGuid().ToString().Substring(0,5);				
+			tagsTextoPropiedadesEnTextoLibre += "<div class='tag' id='"+ tagId + "' title='"+ item +"'>";
+				tagsTextoPropiedadesEnTextoLibre += "<div class='tag-wrap'>";
+					tagsTextoPropiedadesEnTextoLibre += "<span class='tag-text'>"+ item +"</span>";					
+				tagsTextoPropiedadesEnTextoLibre += "</div>";												
+			tagsTextoPropiedadesEnTextoLibre += "</div>"; 			
+		}		
+	}
 }
-
-<div class="content">
-    <h1>Configuración de búsqueda del proyecto</h1>
-    <input type="button" class="guardarTodo" value="Guardar Todo" />
-    <div>
-        <p>
-            En esta página se configuran las propiedades del autocompletado y de las búsquedas por texto libre en la página
-        </p>
-        <form autocomplete="on">
-            <p>
-                Propiedades para autocompletar
-                <div class="pAutocompletar">
-                    <div class="finderUtils" id="divCajaBusqueda">
-                        <div class="group finderSection">
-                            <div class="panOntologiasProp">
-                                <p>
-                                    <input type="text" id="PropiedadesParaAutocompletar" class="autoCompOntoProp" name="AutocompletarOntologiaProp" value="@Model.PropiedadesParaAutocompletar" />
-                                    <input type="hidden" id="PropiedadesParaAutocompletar_Hack" class="valoresProp autoOntoProp" name="TabValoresAutoCompletadoOntologia" value=""/>
-                                    <ul class="resultadoProp"></ul>
-                                </p>
-                            </div>                           
-                            <input type="button" class="anyadirPropiedadAutocompletar" value="Añadir" />
-                        </div>
-                    </div>
-                    <div onclick="$('#txtTagsAutocompletar').focus();" class="autocompletar">
-                        <span class="contenedor" id="contTagsAutocompletar"></span>
-                        <span class="no-edit"></span>
-                        <input type="text" size="5" class="txtAutocomplete ac_input" id="txtTagsAutocompletar" name="txtTagsAutocompletar" style="width: 100%; top: 0px; left: 0px;" autocomplete="off" readonly>
-                        <input type="text" id="valoresAutoBD" value="@Model.TagsAutocompletar" style="display:none" />
-                    </div>
-                </div>
-            </p>
-            <p>
-                Propiedades para búsqueda por texto libre
-                <div class="pTxtLibre">
-                    
-                    <div class="finderUtils" id="divCajaBusqueda">
-                        <div class="group finderSection">
-                            <div class="panOntologiasTxtLibre">
-                                <p>
-                                    <input type="text" id="PropiedadesParaTxtLibre" class="autoCompOntoTxtLibre" name="AutocompletarOntologiaTxtLibre" value="@Model.PropiedadesParaTxtLibre" /> 
-                                    <input type="hidden" id="PropiedadesParaTxtLibre_Hack" class="valoresTxtLibre autoOntoTxtLibre" name="TabValoresAutoCompletadoTxtLibre" value="" />
-                                    <ul class="resultadoTxtLibre"></ul>
-                                </p>
-                            </div>                     
-                            <input type="button" class="anyadirPropiedadTxtLibre" value="Añadir" />
-                        </div>
-                    </div>
-                    <div onclick="$('#txtTagsTxtLibre').focus();" class="autocompletar">
-                        <span class="contenedor" id="contTagsTxtLibre"></span>
-                        <span class="no-edit"></span>
-                        <input type="text" size="5" class="txtAutocomplete ac_input" id="txtTagsTxtLibre" name="txtTagsTxtLibre" style="width: 100%; top: 0px; left: 0px;" autocomplete="off" readonly>
-                        <input type="text" id="valoresAutoBDTxtLibre" value="@Model.TagsAutocompletar" style="display:none" />
-                        <input type="text" id="valoresSearchBD" value="@Model.TagsTxtLibre" style="display:none" />
-                    </div>
-                </div>
-            </p>
-        </form>
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/descubrimiento-analisis">@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")</a>
+            </li>
+            <li>
+                 @Html.GetText("DEVTOOLS","SUGERENCIASDEBUSQUEDA")
+            </li>
+        </ul>
     </div>
-    <input type="button" class="regenerarAutocompletar" value="Regenerar Autocompletar" />
-    <input type="button" class="guardarTodo" value="Guardar Todo" />
-</div>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
-<script>
-    var OperativaAcciones = {
-        init: function () {
-            this.config();
-            this.engancharComportamiento();
-        },
-        config: function (panelID) {
-            this.urlPagina = document.location.href;
-            this.txtAutoCompletadoProp = $('.autoCompOntoProp');
-            this.txtAutoCompletadoTxtLibre = $('.autoCompOntoTxtLibre');
-            return;
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            that.pintarTagsInicial();
-            $('input.anyadirPropiedadAutocompletar').click(function () {
-                that.anyadirTagsAutocompletar();
-            });
-            $('input.anyadirPropiedadTxtLibre').click(function () {
-                that.anyadirTagsTxtLibre();
-            })
-            $('input.guardarTodo').click(function () {
-                that.guardarTodo();
-            });
-            $('input.regenerarAutocompletar').click(function () {
-                that.regenerarTodo();
-            });
-            $('input.seleccionarObjetoConocimiento').click(function () {
-                that.seleccionarOntologia();
-            });
-            that.txtAutoCompletadoProp.autocomplete(
-                null,
-                {
-                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarOntologia",
-                    delay: 0,
-                    scroll: false,
-                    selectFirst: false,
-                    minChars: 1,
-                    width: 300,
-                    cacheLenght: 0,
-                    NoPintarSeleccionado: true,
-                    multiple: true,
-                    extraParams: {
-                        grupo: '',
-                        identidad: $('#inpt_identidadID').val(),
-                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                        proyecto: $('#inpt_proyID').val()
-                    }
-                }
-            );
-            that.txtAutoCompletadoProp.result(function (event, data, formatted) {
-                that.aceptarNombreOntologiaProp(this, data[0]);
-            });
-            that.txtAutoCompletadoTxtLibre.autocomplete(
-                null,
-                {
-                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarOntologia",
-                    delay: 0,
-                    scroll: false,
-                    minChars: 1,
-                    width: 300,
-                    cacheLenght: 0,
-                    NoPintarSeleccionado: true,
-                    multiple: true,
-                    extraParams: {
-                        grupo: '',
-                        identidad: $('#inpt_identidadID').val(),
-                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                        proyecto: $('#inpt_proyID').val()
-                    }
-                }
-            );
-            that.txtAutoCompletadoTxtLibre.result(function (event, data, formatted) {
-                that.aceptarNombreOntologiaTxtLibre(this, data[0]);
-            });
-            return;
-        },
-        pintarTagsInicial: function (){
-            var txtAutoBD = document.getElementById("valoresAutoBD");
-            var txtAutoTxtBD = document.getElementById("valoresAutoBDTxtLibre");
-            var txtSearchBD = document.getElementById("valoresSearchBD");         
 
-            if (txtAutoBD.value != "") {
-                var listaOpAu = txtAutoBD.value.split(',');
-                for (let i = 0; i < listaOpAu.length; i++) {
-                    if (listaOpAu[i] != "") {
-                        txtAutoBD.value = listaOpAu[i];
-                        PintarTags($('#valoresAutoBD'));
-                    }
-                }
-                txtAutoBD.value = "";
-            }
+    @* Contenido Central *@    
+    <div class="formulario-edicion background-blanco">        
+		<div id="header-title" class="d-flex align-items-baseline justify-content-between">
+			<h2>@Html.GetText("DEVTOOLS","SUGERENCIASDEBUSQUEDA")</h2>
+			<a id="btnRegenerarAutocomplete" href="javascript: void(0);" class="btn btn-outline-primary">@Html.GetText("DEVTOOLS","REGENERARAUTOCOMPLETAR")</a>
+		</div>
+        <p>@Html.GetText("DEVTOOLS","ENESTAPAGINASECONFIGURANLASPROPIEDADESDELAUTOCOMPLETADOYDELA")</p>
+        <div class="background-gris">
+            <h3>@Html.GetText("DEVTOOLS","PROPIEDADESPARAAUTOCOMPLETAR")</h3>
+			@* Panel seleccíón de palabras para autocompletar *@
+			<div class="form-group mb-3">																	
+				<label class="control-label d-block">
+					@Html.GetText("DEVTOOLS","PALABRASPARAUTILIZARENAUTOCOMPLETAR")
+				</label>
+				@* Contenedor del input + tags *@
+				<div class="autocompletar-tags form-group">
+					<div class="form-sticky-button autocompletar input-wrap">
+						@* Input de Tags *@
+						<input type="text"
+								name="PropiedadAutocompletar"
+								placeholder="Introduce una propiedad para autocompletar ..."
+								data-avoid-autocomplete-with-enter-button="true"
+								id="txtPropiedadAutocompletar"
+								class="form-control"														
+								autocomplete="off" />																		
 
-            if (txtAutoTxtBD != "") {
-                var listaOpAuTxt = txtAutoTxtBD.value.split(',');
-                for (let i = 0; i < listaOpAuTxt.length; i++) {
-                    if (listaOpAuTxt[i] != "") {
-                        txtAutoTxtBD.value = listaOpAuTxt[i];
-                        PintarTags($('#valoresAutoBDTxtLibre'),true);
-                    }
-                }
-                txtAutoTxtBD.value = "";
-            }
+						@* Botón de Añadir *@
+						<a id="btnAddPropiedadAutocompletar" class="btn btn-grey uppercase btnAddPropiedadAutocompletar">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
 
-            if (txtSearchBD != "") {
-                var listatxtSearchBD = txtSearchBD.value.split(',');
-                for (let i = 0; i < listatxtSearchBD.length; i++) {
-                    if (listatxtSearchBD[i] != "") {
-                        txtSearchBD.value = listatxtSearchBD[i];
-                        PintarTags($('#valoresSearchBD')); 
-                    }
-                }
-                txtSearchBD.value = "";
-            }
-        },
-        guardarTodo: function () {
-            var that = this;
-            $('.ok.general').remove();
-            $('.error').remove();
-            if (!that.comprobarErroresGuardado()) {
-                that.Options = {};
-                that.obtenerDatos();
-                that.guardar();
-            }
-            else {
-                that.mostrarErrorGuardado();
-            }
-        },
-        regenerarTodo: function (){
-            var that = this;
-            $('.ok.general').remove();
-            $('.error').remove();
-            if (!that.comprobarErroresGuardado()) {
-                that.Options = {};
-                that.obtenerDatos();
-                that.regenerarAutocompletar();
-            }
-            else {
-                that.mostrarErrorGuardado();
-            }
-        },
-        regenerarAutocompletar: function () {
-            var that = this;
-            
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-            that.urlPagina + '/regenerar',
-            that.Options,
-            true
-            ).done(function (data) {
-                that.mostrarGuardadoOK();
-            }).fail(function (data) {
-                var error = data.split('|||');
-                that.mostrarErrorGuardado();
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        mostrarErrorGuardado: function () {
-            $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');
-        },
-        comprobarErroresGuardado: function () {
-            var that = this;
-            var error = false;
+						@* Campo oculto _hack *@													
+						<input type="hidden" id="txtPropiedadAutocompletar_Hack" class="valores propiedadesAutocompletar" name="PropiedadesAutocompletar" value="@tagsAutocompletar" />					
+					</div>
+					<small class="form-text text-muted mb-3">@Html.GetText("DEVTOOLS","LOSVALORESDEESTASPROPIEDADESSEUSARANPARAGENERARLASSUGERENCIA")</small>
+					@* Tags/ propiedades autocompletar añadidas por el usuario o por auto *@
+					<span id="tagsContainer_autocompletar" class="contenedor tag-list mb-4">
+						@Html.Raw(tagsAutoCompletarHtml)
+					</span>
+				</div>	
+			</div>
+        </div>
 
-            return error;
-        },
-        seleccionarOntologia: function() {
-            MostrarUpdateProgress();
+		@* Propiedades para búsquedas por texto libre*@
+        <div class="background-gris mt-4">
+            <h3>@Html.GetText("DEVTOOLS","PROPIEDADESPARABUSQUEDASPORTEXTOLIBRE")</h3>
+			@* Panel seleccíón de palabras por texto libre *@
+			<div class="form-group mb-3">																	
+				<label class="control-label d-block">
+					@Html.GetText("DEVTOOLS","PALABRASPARABUSQUEDASPORTEXTOLIBRE")
+				</label>
+				@* Contenedor del input + tags *@
+				<div class="autocompletar-tags form-group">
+				<div class="form-sticky-button autocompletar input-wrap">
+						@* Input de Tags *@
+						<input type="text"
+								name="PropiedadPalabraTextoLibre"
+								placeholder="@Html.GetText("DEVTOOLS","INTRODUCEUNAPROPIEDADPARABUSQUEDAPORTEXTOLIBRE")"
+								id="txtPropiedadPalabrasTextoLibre"
+								class="form-control"														
+								autocomplete="off" />												
 
-            var params = {
-                ontology: $("#ontology").val()
-            }
-            GnossPeticionAjax(
-                this.urlPagina + '/select-ont',
-                params,
-                true
-            ).done(function (data) {
-                location.reload();
-            }).fail(function (data) {
-                console.log("ERROR =>" + data);
-            }).always(function (data) {
-                OcultarUpdateProgress();
-            })
-        },
-        guardar: function () {
-            var that = this;
+						@* Botón de Añadir *@
+						<a id="btnAddPropiedadPalabrasTextolLibre" class="btn btn-grey uppercase btnPropiedadPalabrasTextolLibre">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
 
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-            that.urlPagina + '/save',
-            that.Options,
-            true
-            ).done(function (data) {
-                that.mostrarGuardadoOK();
-            }).fail(function (data) {
-                var error = data.split('|||');
-                that.mostrarErrorGuardado();
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        mostrarGuardadoOK: function () {
-            $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
-        },
-        obtenerDatos: function () {
-            var that = this;
-            var spanAutocompletar = document.getElementById('contTagsAutocompletar');
-            var divsAutocompletar = spanAutocompletar.getElementsByClassName('tag');
-            var stringAutocompletar = divsAutocompletar.length == 0 ? '' : divsAutocompletar[0].innerText;
-            for (let i = 1; i < divsAutocompletar.length; i++ ) {
-                stringAutocompletar = stringAutocompletar + ',' + divsAutocompletar[i].innerText;
-            }
-            var spanTxtLibre = document.getElementById('contTagsTxtLibre');
-            var divsTxtLibre = spanTxtLibre.getElementsByClassName('tag');
-            var stringTxtLibre = divsTxtLibre[0].innerText;
-            for (let i = 1; i < divsTxtLibre.length; i++) {
-                stringTxtLibre = stringTxtLibre + ',' + divsTxtLibre[i].innerText;
-            }
-            that.Options['TagsAutocompletar'] = stringAutocompletar;
-            that.Options['TagsTxtLibre'] = stringTxtLibre;
-        },
-        anyadirTagsAutocompletar: function () {
-            
-            var txtAutocompletar = $("#PropiedadesParaAutocompletar").val();
-            document.getElementById("txtTagsAutocompletar").value = document.getElementById("txtTagsAutocompletar").value + txtAutocompletar;
-            document.getElementById("txtTagsTxtLibre").value = document.getElementById("txtTagsTxtLibre").value + txtAutocompletar;
-            PintarTags($('#txtTagsAutocompletar'));
-            PintarTags($('#txtTagsTxtLibre'),true);
-            document.getElementById("PropiedadesParaAutocompletar").value = "";
+						@* Campo oculto _hack *@													
+						<input type="hidden" id="txtPropiedadPalabrasTextoLibre_Hack" class="valores propiedadPalabrasTextolLibre" name="PropiedadPalabrasTextoLibre" value="@tagsTextoLibre" />
+					
+					</div>
+					@* Tags/ propiedades autocompletar añadidas por el usuario o por auto *@
+					<span id="tagsContainer_autocompletar" class="contenedor tag-list mb-4">						
+						@Html.Raw(tagsAutoCompletarTextoLibreHtml)
+						@Html.Raw(tagsTextoPropiedadesEnTextoLibre)
+					</span>
+				</div>	
+			</div>
+        </div>
+				
+		@* Sección botón de guardado y cierre del modal *@
+		<div class="panelBotonera mt-5">
+			<a id="btnGuardarAutocompletar" class="btn btn-primary uppercase">@Html.GetText("COMMON","GUARDAR")</a>
+		</div>
+							
+    </div>
 
-        },
-        anyadirTagsTxtLibre: function () {
-            var txtTxtLibre = $("#PropiedadesParaTxtLibre").val();        
-            document.getElementById("txtTagsTxtLibre").value = document.getElementById("txtTagsTxtLibre").value + txtTxtLibre;
-            PintarTags($('#txtTagsTxtLibre'));
-            document.getElementById("PropiedadesParaTxtLibre").value = "";
-        },
-        aceptarNombreOntologiaProp: function (txtautocomp, nombre) {
-            var that = this;
 
-            var padreTxt = $(txtautocomp).closest('.panOntologiasProp');
-            var txtValores = $('input.valores', padreTxt);
-            txtValores.val(txtValores.val() + nombre + ',');
 
-            var nombreCompleto = txtautocomp.value;
 
-            if (nombreCompleto.includes('@Html.Raw("@@@")')) {
-                var nombreTroceado = nombreCompleto.split('@Html.Raw("@@@")');
-                var nombreCompletoFinal = nombreTroceado[0];
 
-                for (let i = 1; i < nombreTroceado.length - 1; i++) {
-                    nombreCompletoFinal += '@Html.Raw("@@@")' + nombreTroceado[i];
-                }
-                nombreCompletoFinal += '@Html.Raw("@@@")' + nombre;
-                txtautocomp.value = nombreCompletoFinal;
-            } else {
-                txtautocomp.value = nombre;
-            }
-        },
-        aceptarNombreOntologiaTxtLibre: function (txtautocomp, nombre) {
-            var that = this;
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/descubrimiento_analisis.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
 
-            var padreTxt = $(txtautocomp).closest('.panOntologiasTxtLibre');
-            var txtValores = $('input.valores', padreTxt);
-            txtValores.val(txtValores.val() + nombre + ',');
-
-            var nombreCompleto = txtautocomp.value;
-
-            if(nombreCompleto.includes('@Html.Raw("@@@")')){
-                var nombreTroceado = nombreCompleto.split('@Html.Raw("@@@")');
-                var nombreCompletoFinal = nombreTroceado[0];
-
-                for (let i = 1; i < nombreTroceado.length - 1; i++) {
-                    nombreCompletoFinal += '@Html.Raw("@@@")' + nombreTroceado[i];
-                }
-                nombreCompletoFinal += '@Html.Raw("@@@")' + nombre;
-                txtautocomp.value = nombreCompletoFinal;
-            } else {
-                txtautocomp.value = nombre;
-            }
-        }
-    }
-
-    $(document).ready(function () {
-        OperativaAcciones.init();
-    });
-</script>
-<style>
-    div.content {
-        margin: 50px;
-    }
-
-    div.content form {
-        margin: 30px;
-    }
-
-    div#confCorreo .bloque {
-        border: 1px solid;
-        padding: 10px;
-    }
-
-    div.error.general {
-        background-color: Red;
-        color: white;
-        padding: 10px 20px;
-        margin-left: 20px;
-        margin-bottom: 5px;
-    }
-
-    div.ok.general {
-        background-color: limegreen;
-        color: white;
-        padding: 10px 20px;
-        margin-left: 20px;
-        margin-bottom: 5px;
-    }
-    input.regenerarAutocompletar{
-        background: #ffa031 none repeat scroll 0 0;
-        float: left;
-        border: medium none;
-        border-radius: 5px;
-        color: white;
-        padding: 5px;
-        cursor: pointer;
-    }
-
-    div.content input.guardarTodo{
-        float:right;
-    }
-    
-    div.content input[type='text'],
-    div.content input[type='password'],
-    div.content select {
-        width: 100%;
-        margin-bottom:10px;
-    }
-    h4 {
-        padding-top:20px;
-        padding-bottom:20px;
-    }
-</style>
+        (function ($) {
+            // Operativa funcionamiento
+            operativaGestionSugerenciasDeBusqueda.init();
+        })();
+    </script>
+}

@@ -42,6 +42,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -166,6 +167,56 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     }
 
     /// <summary>
+    /// Modelo de la página de cambiar nombre corto de la comunidad
+    /// </summary>    
+    public class AdministarComunidadGeneralCommunityShortNameModel
+    {
+        // Nombre de corto de la comunidad
+        public string shortName { get; set; }        
+    }
+
+    /// <summary>
+    /// Model of the parameter to modify the short name of the current community
+    /// </summary>    
+    public class GuardarNuevoNombreCortoComunidadModel
+    {
+        /// <summary>
+        /// New community short name 
+        /// </summary>
+        public string NewShortName { get; set; }
+
+        /// <summary>
+        /// Old community short name
+        /// </summary>
+        public string OldShortName { get; set; }
+    }
+
+    /// <summary>
+    /// Model of the parameter to modify the access type of the current community
+    /// </summary>    
+    public class GuardarTipoAccesoComunidadModel
+    {
+        /// <summary>
+        /// Community short name 
+        /// </summary>
+        public string CommunityShortName { get; set; }
+
+        /// <summary>
+        /// Access type
+        /// </summary>
+        public short AccessType { get; set; }
+    }
+
+    public class AdministrarComunidadGeneralListadoViewModel
+    {
+        /// <summary>
+        /// Lista de comunidades privadas que administra el usuario actual
+        /// </summary>
+        public Dictionary<Guid, string> ListadoComunidadesPrivadasAdministraUsuario { get; set; }
+
+    }
+
+    /// <summary>
     /// Controller de administrar comunidad general
     /// </summary>
     public partial class AdministrarComunidadGeneralController : ControllerBaseWeb
@@ -220,7 +271,71 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "info-comunidad";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_InformacionGeneral;
+            // Establecer el título para el header de DevTools                       
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");        
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONBASICA", "INFORMACIONGENERAL");            
+
+            // Activar la visualización del icono de la documentación de la sección
+            ViewBag.showDocumentationByDefault = "true";
+            // Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+            ViewBag.showDocumentationSection = "true";
+
             return View(PaginaModel);
+        }
+
+
+        /// <summary>
+        /// Modifica el nombre corto de la comunidad por el nuevo asignado
+        /// </summary>
+        /// <param name="pModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult SaveNewCommunityShortName(GuardarNuevoNombreCortoComunidadModel pModel)
+        {
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+
+            if (!proyectoCN.ExisteNombreCortoProyecto(pModel.NewShortName))
+            {
+                AD.EntityModel.Models.ProyectoDS.Proyecto proyecto = proyectoCN.ObtenerProyectoPorNombreCorto(pModel.OldShortName);
+                proyecto.NombreCorto = pModel.NewShortName.ToLower();
+
+                proyectoCN.Actualizar();
+
+                return GnossResultOK();
+            }
+            else
+            {
+                return GnossResultERROR($"Ya existe un proyecto con este nombre corto: {pModel.NewShortName}");
+            }            
+        }
+
+        /// <summary>
+        /// Modifica el tipo de la comunidad con el nuevo asignado
+        /// </summary>
+        /// <param name="pModel">Modelo con el nuevo tipo de la comunidad (Publico => 0, Privado => 1, Restringido => 2, Reservado => 3)</param>
+        /// <returns></returns>
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult SaveNewCommunityType(GuardarTipoAccesoComunidadModel pModel)
+        {            
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            Guid proyectoID = ProyectoSeleccionado.Clave;
+            AD.EntityModel.Models.ProyectoDS.Proyecto proyecto = proyectoCN.ObtenerProyectoPorNombreCorto(pModel.CommunityShortName);
+            proyecto.TipoAcceso = pModel.AccessType;
+            
+            proyectoCN.Actualizar();
+
+            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            proyectoCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
+            proyectoCL.InvalidarFilaProyecto(proyectoID);
+
+			return GnossResultOK();            
         }
 
         /// <summary>
@@ -291,6 +406,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             servicioImagenes.Url = UrlIntragnossServicios;
 
             GuardarImagenHead(servicioImagenes, Options.ImageHead);
+            // TODO: ImageLogo viene vacio porque con las DevTools ya no se envía un Logo
             GuardarImagenLogo(servicioImagenes, Options.ImageLogo);
 
             if (!Proy.Nombre.Equals(Options.Name))
@@ -312,7 +428,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 Proy.FilaProyecto.Descripcion = Options.Desciption;
             }
 
-            Proy.Tags = Options.Tags;
+            // No funcionaba el guardado de Tags de Comunidad
+            // Proy.Tags = Options.Tags;
+            Proy.FilaProyecto.Tags = Options.Tags;
 
             GuardarCategorizacion(Proy, Options.SelectedCategories);
 
@@ -517,7 +635,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                 }
 
-                if (pEstado.State.Equals((short)EstadoProyecto.Cerrandose))
+                if (!pEstado.State.Equals((short)EstadoProyecto.Cerrandose))
                 {
                     ProyectoCerrandose filasProyCerrandose = pProyecto.FilaProyecto.ProyectoCerrandose;
                     if (filasProyCerrandose != null)
@@ -659,9 +777,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string ruta = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "_peque";
             string rutaTemp = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "_mosaico_grande_temp";
             string rutaAux = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "_mosaico_grande_temp2";
-
+            //string rutaAux = $"{UtilArchivos.ContentImagenesProyectos}/{ProyectoSeleccionado.Clave.ToString().ToLower()}_sup_grande_temp";
             string rutaCompletaAux = BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + rutaAux + ".png";
-
+           
             if (rutaCompletaAux.Equals(pImagenLogo.Ruta))
             {
                 //Guardar imagen temporal nueva si ha cambiado
@@ -1029,12 +1147,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mPaginaModel.ImageHead = CargarImagenSup();
                     mPaginaModel.ImageLogo = CargarImagenLogo();
 
-
                     mPaginaModel.EcosistemaCategories = CargarTesauro(ProyectoAD.MetaProyecto);
                     mPaginaModel.SelectedCategories = new List<Guid>();
+                    
                     foreach (ProyectoAgCatTesauro filaProyectoAgCatTesauro in ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoAgCatTesauro)
                     {
                         mPaginaModel.SelectedCategories.Add(filaProyectoAgCatTesauro.CategoriaTesauroID);
+                    }
+
+                    foreach (CategoryModel cat in mPaginaModel.EcosistemaCategories)
+                    {
+                        if (mPaginaModel.SelectedCategories.Contains(cat.Key))
+                        {
+                            cat.Selected = true;
+                        }
+
+                        foreach (CategoryModel subcat in cat.Subcategories)
+                        {
+                            if (mPaginaModel.SelectedCategories.Contains(subcat.Key))
+                            {
+                                subcat.Selected = true;
+                            }
+                        }                      
                     }
 
                     mPaginaModel.HasMultiLanguageObjects = TieneObjetosMultiIdioma();
@@ -1042,6 +1176,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mPaginaModel.MultiLanguage = ParametrosGeneralesRow.IdiomasDisponibles || mPaginaModel.HasMultiLanguageObjects;
 
                 }
+
                 return mPaginaModel;
             }
         }

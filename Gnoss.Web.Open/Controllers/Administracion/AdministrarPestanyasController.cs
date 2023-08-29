@@ -10,9 +10,12 @@ using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.Seguridad;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
+using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
+using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
@@ -25,6 +28,7 @@ using Es.Riam.Util;
 using Gnoss.Web.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -32,6 +36,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Entity.Validation;
 using System.Linq;
 using System.Net;
@@ -65,6 +70,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Lista de pestañas de la comunidad
         /// </summary>
         public List<TabModel> ListaPestanyas { get; set; }
+        public List<string> ListaPestanyasOntologia { get; set; }
     }
 
     /// <summary>
@@ -104,10 +110,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult Index()
         {
+           
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
-            return View(PaginaModel);
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "estructura edicion edicionPaginas listado no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Estructura;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Paginas;
+
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "ESTRUCTURA");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONPAGINAS", "PAGINAS");
+			ControladorFacetas conFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+			List<FacetaModel> listaFacetas = conFacetas.CargarListadoFacetas();
+            ViewBag.ListadoFacetasComunidad = listaFacetas;
+			return View(PaginaModel);
         }
 
         /// <summary>
@@ -115,7 +133,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        public ActionResult NuevaPestanya(short TipoPestanya)
+        public ActionResult NuevaPestanya(short TipoPestanya, string nameonto)
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -140,6 +158,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             pestanya.Privacidad = 0;
             pestanya.ParentTabKey = Guid.Empty;
             pestanya.ListaFacetas = new List<TabModel.FacetasTabModel>();
+            // Idioma por defecto de la comunidad para la página            
+            pestanya.IdiomaPorDefecto = IdiomaPorDefecto;
 
             pestanya.ClassCSSBody = "";
 
@@ -151,10 +171,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 pestanya.HomeCMS.HomeNoMiembros = false;
             }
 
-            if (tipoPestMenu == TipoPestanyaMenu.CMS || tipoPestMenu == TipoPestanyaMenu.BusquedaSemantica || tipoPestMenu == TipoPestanyaMenu.EnlaceInterno || tipoPestMenu == TipoPestanyaMenu.EnlaceExterno)
+            if (tipoPestMenu == TipoPestanyaMenu.CMS || tipoPestMenu == TipoPestanyaMenu.BusquedaSemantica || tipoPestMenu == TipoPestanyaMenu.EnlaceInterno || tipoPestMenu == TipoPestanyaMenu.EnlaceExterno || tipoPestMenu == TipoPestanyaMenu.Dashboard)
             {
                 //A las pestañas de cms, busqueda semantica o enlaces, debemos ponerles un nombre por defecto
-                pestanya.Name = tipoPestMenu.ToString();
+                if (string.IsNullOrEmpty(nameonto))
+                {
+                    pestanya.Name = tipoPestMenu.ToString();
+                }
+                else
+                {
+					pestanya.Name = $"{char.ToUpper(nameonto[0])}{nameonto.Substring(1)}";
+					pestanya.Url = nameonto;                  
+				}
                 pestanya.EsNombrePorDefecto = false;
                 pestanya.EsUrlPorDefecto = false;
             }
@@ -180,8 +208,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (esPestanyaBusqueda)
             {
-                pestanya.OpcionesBusqueda = contrPest.CargarOpcionesBusquedaPorDefecto((TipoPestanyaMenu)TipoPestanya);
+                pestanya.OpcionesBusqueda = contrPest.CargarOpcionesBusquedaPorDefecto((TipoPestanyaMenu)TipoPestanya, nameonto);
                 pestanya.ListaExportaciones = new List<TabModel.ExportacionSearchTabModel>();
+                pestanya.OpcionesDashboard = new List<TabModel.DashboardTabModel>();
+            }
+            //TFG Fran
+            bool esPestanyaDasboard = TipoPestanya == (short)TipoPestanyaMenu.Dashboard;
+            if (esPestanyaDasboard)
+            {
+                pestanya.OpcionesDashboard = new List<TabModel.DashboardTabModel>();
             }
 
             ViewBag.ContenidoMultiIdioma = (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma));
@@ -260,7 +295,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 lst.Add(fcTM);
             }
             model.FacetasPestanyas = lst;
-            return PartialView("_VerFacetas", model);
+			return PartialView("_VerFacetas", model);
         }
 
         /// <summary>
@@ -300,6 +335,115 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         /// <summary>
+        /// Nuevo Asistente
+        /// TFG FRAN
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [HttpPost]
+        public ActionResult NuevoAsistente()
+        {
+            EliminarPersonalizacionVistas();
+
+            TabModel.DashboardTabModel asistente = new TabModel.DashboardTabModel();
+            asistente.Nombre = "Nuevo gráfico";
+            asistente.OpcionesDatasets = new List<TabModel.DashboardTabModel.DatasetTabModel>();
+            asistente.AsisID = Guid.NewGuid();
+
+            return PartialView("_FichaAsistente", asistente);
+        }
+        /// <summary>
+        /// Nuevo Dataset
+        /// TFG FRAN
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [HttpPost]
+        public ActionResult NuevoDataset()
+        {
+            EliminarPersonalizacionVistas();
+
+            TabModel.DashboardTabModel.DatasetTabModel dataset = new TabModel.DashboardTabModel.DatasetTabModel();
+            dataset.Nombre = "Nuevo Dataset";
+            dataset.DatasetID = Guid.NewGuid();
+
+            return PartialView("_FichaDataset", dataset);
+        }
+        [HttpPost]
+        public ActionResult NuevaPropiedad()
+        {
+            EliminarPersonalizacionVistas();
+
+            TabModel.DashboardTabModel.DatasetTabModel dataset = new TabModel.DashboardTabModel.DatasetTabModel();
+            dataset.Nombre = "Nuevo Dataset";
+            dataset.DatasetID = Guid.NewGuid();
+
+            return PartialView("_FichaDatasetNoAgrupacion", dataset);
+        }
+        [HttpPost]
+        public string CargarResultados(string select, string where, string groupby, string orderby, string limit, string idChart, string tipoContexto)
+        {
+
+            CargadorResultados cargadorResultados = new CargadorResultados();
+            cargadorResultados.Url = mConfigService.ObtenerUrlServicioResultados();
+
+            Guid pProyectoID = ProyectoSeleccionado.Clave;
+            Guid pIdentidadID = mControladorBase.UsuarioActual.IdentidadID;
+            string pUrlPaginaBusqueda = this.Request.GetDisplayUrl();
+            bool pUsarMasterParaLectura = mControladorBase.UsuarioActual.UsarMasterParaLectura;
+            bool pIdentidadInvitada = !mControladorBase.UsuarioActual.EsIdentidadInvitada;
+            bool pAdminQuiereVerTodasPersonas = AdministradorQuiereVerTodasLasPersonas;
+            TipoBusqueda pTipoBusqueda = VariableTipoBusqueda;
+            string pGrafo = ProyectoSeleccionado.Clave.ToString();
+
+            string argumentos = "";
+            string pArgumentos = argumentos.Replace("\"", "%2522");
+            bool pEsPrimeraCarga = string.IsNullOrEmpty(argumentos);
+            string pLanguageCode = UtilIdiomas.LanguageCode;
+            Guid pTokenAfinidad = Guid.NewGuid();
+
+
+            //parametros
+            string pParametroAdicional = "";
+            pParametroAdicional = pParametroAdicional + "busquedaTipoChart=" + idChart + "&busquedaTipoDashboardSelect=" + select;
+            string whereCompleto = "";
+            whereCompleto = whereCompleto + where;
+            if (!string.IsNullOrEmpty(groupby))
+            {
+                whereCompleto = whereCompleto + "))) " + groupby;
+            }
+            else
+            {
+                whereCompleto = whereCompleto + ")))";
+            }
+            if (!string.IsNullOrEmpty(orderby))
+            {
+                whereCompleto = whereCompleto + ")))" + orderby;
+            }
+            else
+            {
+                whereCompleto = whereCompleto + ")))";
+            }
+            if (!string.IsNullOrEmpty(limit) && int.Parse(limit) < 20)
+            {
+                whereCompleto = whereCompleto + ")))" + limit;
+            }
+            else
+            {
+                whereCompleto = whereCompleto + ")))20";
+            }
+            pParametroAdicional = pParametroAdicional + "&busquedaTipoDashboardWhere=" + whereCompleto;
+            tipoContexto = tipoContexto.Replace("\'", "");
+            pParametroAdicional = pParametroAdicional + "&" + tipoContexto;
+            pParametroAdicional = pParametroAdicional.Replace("=", "%3D");
+            pParametroAdicional = pParametroAdicional.Replace("&", "%7C");
+            pParametroAdicional = pParametroAdicional.Replace(":", "%3A");
+            pParametroAdicional = pParametroAdicional.Replace(")", "%29");
+
+
+            string Resultados = cargadorResultados.CargarResultados(pProyectoID, pIdentidadID, pIdentidadInvitada, pUrlPaginaBusqueda, pUsarMasterParaLectura, pAdminQuiereVerTodasPersonas, pTipoBusqueda, pGrafo, pParametroAdicional, pArgumentos, pEsPrimeraCarga, pLanguageCode, -1, "", pTokenAfinidad, Request);
+            return Resultados;
+        }
+
+        /// <summary>
         /// Guardar
         /// </summary>
         /// <returns>ActionResult</returns>
@@ -322,7 +466,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string errores = contrPest.ComprobarErrores(ListaPestanyas);
             if (string.IsNullOrEmpty(errores))
             {
-                GuardarXmlCambiosAdministracion();
                 ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                 bool transaccionIniciada = false;
                 try
@@ -382,7 +525,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 contrPest.InvalidarCaches(UrlIntragnoss);
                 //RouteValueTransformer.RecalcularRutasProyecto(ProyectoSeleccionado.FilaProyecto.NombreCorto, mConfigService, mScopedFactory);
-                return GnossResultOK();
+                return GnossResultOK();                
             }
             else
             {
@@ -501,10 +644,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 pestanya.Url = nameUrl.Value;
                             }
                         }
+                        
                         mPaginaModel.ListaPestanyas.Add(pestanya);
                     }
-                }
-                return mPaginaModel;
+                    //Cargamos las paginas de búsqueda que se puedan crear
+                    List<string> listaOntologiasBusqueda = new List<string>();
+					foreach (OntologiaProyecto ontologiaProyecto in GestionProyectos.DataWrapperProyectos.ListaOntologiaProyecto.Where(item => item.EsBuscable))
+                    {
+                        string rdfType = $"rdf:type={ontologiaProyecto.NombreOnt}";
+						if(!mPaginaModel.ListaPestanyas.Any(item => item.OpcionesBusqueda != null && !string.IsNullOrWhiteSpace(item.OpcionesBusqueda.CampoFiltro) && item.OpcionesBusqueda.CampoFiltro.Equals(rdfType)))
+                        {
+                            listaOntologiasBusqueda.Add(ontologiaProyecto.NombreOnt);
+						}
+					}
+                    mPaginaModel.ListaPestanyasOntologia = listaOntologiasBusqueda;
+				}
+				return mPaginaModel;
             }
         }
 

@@ -1,90 +1,136 @@
 ﻿@model CookieModel
 @using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
 
-@{
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra en detalle la información de la cookie. Adicionalmente, aquí se pintará el modal que se utilizará para su edición/creación.
 
-    string NombrePorTipo(int pTipo)
-    {
-        switch (pTipo)
-        {
-            case 0:
-                return "Persistent";
-            case 1:
-                return "Session";
-            case 2:
-                return "Third party";
-            default:
-                return "Persistent";
-        }
-    }
 
-    short TipoPorNombre(string pNombre)
-    {
-        switch (pNombre)
-        {
-            case "Persistent":
-                return 0;
-            case "Session":
-                return 1;
-            case "Third party":
-                return 2;
-            default:
-                return 0;
-        }
-    }
-
-}
+Variables
+----------------------------------------------------------------
+*@
 
 @{
-    ProyectoCookie cookie = Model.ProyectoCookie;
+// Cookie a revisar
+ProyectoCookie cookie = Model.ProyectoCookie;
+// Cabecera para obtención de idiomas de la Comunidad
+HeaderModel cabecera = Html.GetCabecera();
+string idModalCookie = "modal-configuracion-cookie_" + cookie.CookieID;	
+string idModalCookieDelete = "modal-configuracion-cookie_delete" + cookie.CookieID;    
+// Diccionario del contenido de la cláusula (En varios idiomas)    
+Dictionary<string, string> cookieNameDictionary = new Dictionary<string, string>();    
+// Idioma por defecto de la comunidad
+string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
+// Nombre del tipo de cookie
+string tipoCookie = Html.ObtenerTextoIdiomaUsuario(Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault(), true);
 }
 
-<li class="row cookieProyecto" id="@cookie.CookieID">
-    <span class="handle cookieProyecto">:::</span>
-    <section class="header">
-        <span class="nombreCookie" aux="@Html.ObtenerTextoIdiomaUsuario(cookie.Nombre, true)">@Html.ObtenerTextoIdiomaUsuario(cookie.Nombre, true) (@Html.ObtenerTextoIdiomaUsuario(Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => item.Nombre).FirstOrDefault(), true))</span><span class="tipoCookie"></span>
-        @if (cookie.EsEditable)
-        {
-            <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-            <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-        }
-    </section>
-    <section class="panEdicion" name="@cookie.CookieID">
-        <div>
-            <input type="hidden" name="cookieShortName" value="@cookie.NombreCorto" />
-            <input type="hidden" name="CookieModificada" value="@Model.Modificada.ToString()" />
-            <input type="hidden" name="TabEliminada" value="false" />
-            <p>
-                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "NOMBRE")">@Html.GetText("COMADMINCOOKIES", "NOMBRE")</span>
-                <input type="text" name="CookieName" value="@cookie.Nombre" />
-            </p>
-            <p>
-                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "CATEGORIA")">@Html.GetText("COMADMINCOOKIES", "CATEGORIA")</span>
-                <select class="cmbEditarCategoria" name="TabCategoria">
-                    <option selected value="@cookie.CategoriaID">@Model.ListaCategoriaProyectoCookie.Where(item => item.CategoriaID.Equals(cookie.CategoriaID)).Select(item => Html.ObtenerTextoIdiomaUsuario(item.Nombre)).FirstOrDefault()</option>
-                    @foreach (CategoriaProyectoCookie categoriaCookie in Model.ListaCategoriaProyectoCookie.Where(item => !item.CategoriaID.Equals(cookie.CategoriaID)))
-                    {
-                        <option value="@categoriaCookie.CategoriaID">@Html.ObtenerTextoIdiomaUsuario(categoriaCookie.Nombre)</option>
-                    }
-                </select>
-            </p>
-            <p>
-                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")">@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")</span>
-                <textarea rows="3" cols="40" name="CookieDescription">@cookie.Descripcion</textarea>
-            </p>
-            <p>
-                <span class="tipo" title="@Html.GetText("COMADMINCOOKIES", "TIPODURACION")">@Html.GetText("COMADMINCOOKIES", "TIPODURACION")</span>
-                <select class="cmbTipoDuracion" name="TabTipoDuracion">
-                    <option selected value="@NombrePorTipo(cookie.Tipo)">@NombrePorTipo(cookie.Tipo)</option>
-                    @foreach (int tipo in Enum.GetValues(typeof(TipoCookies)))
-                    {
-                        if (!NombrePorTipo(tipo).Equals(NombrePorTipo(cookie.Tipo)))
-                        {
-                            <option value="@NombrePorTipo(tipo)">@NombrePorTipo(tipo)</option>
-                        }
-                    }
-                </select>
-            </p>
-        </div>
-    </section>
+@* Construir los diferentes items en idiomas (Nombre, Descripción de la cookie) *@
+@{
+	// Obtener descripción/contenido de la cláusula en formato diccionario con los multiIdiomas para ser mostrados en la row de la cláusula
+    cookieNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(cookie.Nombre);		
+}
+
+@* Contenedor de la cookie *@
+<li class="component-wrap cookie-row" id="@cookie.CookieID">
+	<div class="component" data-id="@cookie.CookieID">
+		<div class="component-header-wrap">
+			<div class="component-header">
+                @* Icono para arrastrar y mover la cookie *@
+				<div class="component-sortable js-component-sortable-cookie">
+					<span class="material-icons-outlined sortable-icon">drag_handle</span>
+				</div>                
+				<div class="component-header-content">
+					<div class="component-header-left">
+                        @* Nombre, tipo de cookie *@
+						<div class="component-name-wrap">
+							@if (cookieNameDictionary.Count == 0)
+							{
+								<span class="language-component component-contenido @(idiomaPorDefecto)" data-languageitem="@idiomaPorDefecto">																																																			
+									@cookie.Nombre
+								</span>
+							}
+							else
+							{							
+								foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+								{																												
+									<span class="language-component component-contenido @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
+										@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
+										@{
+											string value = "";
+											if (cookieNameDictionary.TryGetValue(idioma.Key, out value))
+											{                                           
+											   @value
+											}										
+										}
+									</span>
+								}
+							}
+						</div>
+                        @* Grupo de la cookie (Redes sociales, ...) *@
+						<div class="component-tipo-wrap">
+							<span class="component-tipo">@tipoCookie</span>
+						</div>
+                        @* Fecha creación / actualización de cookie *@
+						<div class="component-fecha-wrap">
+							<span class="component-fecha">01 / 01 / 2022</span>
+						</div>
+					</div>
+                    @* Acciones de la cookie *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<div class="dropdown">
+								@* Dropdown de acciones en la cookie *@
+								<a								
+								class="nav-link dropdown-toggle btn btn-outline-grey @( !cookie.EsEditable ? "disabled" : "")"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false">                                    
+									<span class="material-icons">create</span>
+									<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+								</a>
+								@if (cookie.EsEditable)
+								{
+									<div
+										class="dropdown-menu dropdown-menu-left basic-dropdown"
+										style="will-change: transform">
+										<ul class="no-list-style">
+											@* Botón Editar Cookie *@
+											<li>
+												<a class="item-dropdown js-action-edit-component btnEditCookie"
+												   data-target="#@(idModalCookie)"
+												   data-toggle="modal">
+													<span class="material-icons">create</span>
+													<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+												</a>											  
+											</li>
+
+											@* Botón Eliminar Cookie *@
+											<li>
+												<a class="item-dropdown js-action-delete-component btnDeleteCookie"
+												   data-target="#@(idModalCookieDelete)" 
+												   data-toggle="modal">
+													<span class="material-icons">delete</span>
+													<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+												</a>
+											</li>
+										</ul>
+									</div>
+								}
+							</div>
+						</div>
+					</div>					
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Carga del modal para edición de la cookie. Necesario que los datos se carguen para su guardado *@	
+	@Html.PartialView("_modal-views/_cookie-detail-item", Model)	
+	
 </li>
+
+

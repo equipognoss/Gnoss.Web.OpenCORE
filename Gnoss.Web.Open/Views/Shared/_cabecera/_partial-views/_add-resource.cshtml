@@ -165,7 +165,7 @@ CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
             @if (permisosComunidad.CreateDebate)
             {
                 <li class="addDebate">
-                    <a class="item-dropdown" href="@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRENCUESTA")/@Guid.NewGuid()/16">
+                    <a class="item-dropdown" href="@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRDEBATE")/@Guid.NewGuid()/16">
                         <span class="material-icons">
                             question_answer
                         </span>
@@ -179,7 +179,7 @@ CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
             @if (permisosComunidad.CreatePoll)
             {
                 <li class="addEncuesta">
-                    <a class="item-dropdown" href="@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRDEBATE")/@Guid.NewGuid()/18">
+                    <a class="item-dropdown" href="@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRENCUESTA")/@Guid.NewGuid()/18">
                         <span class="material-icons">
                             how_to_vote
                         </span>

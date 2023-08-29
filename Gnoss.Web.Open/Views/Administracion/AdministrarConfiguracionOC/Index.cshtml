@@ -1,0 +1,205 @@
+﻿@model ConfiguracionOCModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar las propiedades de un objeto de conocimiento y así poder editar el fichero XML usando una intefaz gráfica.
+
+Variables
+----------------------------------------------------------------
+*@
+
+
+@{
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	string ontologiaID = Html.ViewContext.HttpContext.Request.RouteValues["ontologiaID"] as string;
+}
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+}
+
+
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar la información general de la comunidad --------------------
+*@
+
+
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+	<ul>
+		<li>
+			<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+		</li>
+		<li>
+			<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/grafo-conocimiento">Grafo de conocimiento</a>
+		</li>
+		<li>
+			<a href="administrar-objetos-conocimiento">Objetos de conocimiento</a>
+		</li>
+		<li>
+			Configuración propiedades del OC
+		</li>
+	</ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+	<form method="post" action="save/@ontologiaID">
+	@* Contenedor global de Entidades y propiedades *@
+		<div class="tab-content pt-0">
+			@* Contenido de las diferentes páginas *@
+			<div id="panelListadoEntidadesPropiedades">
+
+				@* Contenedor del Título de la Sección + Buscador *@
+				<div class="row">
+					@* Título de la sección de Entidades *@
+					<div class="col col-12 header-listado">
+						<div class="h1-container">
+							<h1>
+								Configurar propiedades del OC
+							</h1>
+						</div>
+						@* Botón para crear página *@
+						<div class="acciones d-flex align-items-center">
+							<input type="submit" class="btn btn-outline-primary" value="GUARDAR">
+						</div>
+					</div>
+
+					@* Buscador de páginas *@
+					<div class="col col-12 header-buscador">
+						<div class="filtroRapido wrapCol">
+							<div class="input-container col-buscador">
+								<input id="input-header-searchable-propiedades" class="form-control" type="text" placeholder="Buscar propiedades por nombre o URI..." autocomplete="off">
+
+								<div id="header-searcher-loading" class="spinner-border spinner-border-sm d-none" role="status">
+									<span class="sr-only">Cargando...</span>
+								</div>
+							</div>
+							<span id="input-header-searchable-icon" class="icon material-icons">search</span>
+						</div>
+					</div>
+					
+					
+					@* Contenido o tabla con las propiedades del OC *@
+					<div class="col col-12 col-contenido">
+						<div class="text-right desplegarTodo pointer" id="desplegarTodo"><small>Desplegar todo</small></div>
+						<ul class="nav nav-tabs" id="tabClasificaciones" role="tablist">
+							<li class="nav-item">
+								<a class="tabClasificacion nav-link active" id="ver_todas" data-tipopropiedades="todas">Todas las propiedades</a>
+							</li>
+							<li class="nav-item">
+								<a class="tabClasificacion nav-link" id="ver_simples" data-tipopropiedades="simples">Simples</a>
+							</li>
+
+							<li class="nav-item">
+								<a class="tabClasificacion nav-link" id="ver_objeto" data-tipopropiedades="objeto">Objeto</a>
+							</li>
+						</ul>
+						<div class="tab-content pt-0">
+							<div class="tab-pane fade active show">
+								<div class="wrapCol">
+									<ul class="component-list no-list-style">
+										@Html.PartialView("_partial-views/_configuracion-general.cshtml", Model)
+										@foreach (string entidad in Model.Properties.Select(x => x.Domain).Distinct())
+										{
+											string prefijo = "";
+											try
+											{
+												prefijo = entidad.Substring(0, entidad.LastIndexOf("/")+1);
+											}
+											catch (IndexOutOfRangeException io)
+											{
+												prefijo = entidad.Split('#')[0];
+											}
+											<li class="component-wrap tituloEntidad" id="@entidad">
+												<div class="component-wrap">
+													<div class="component">
+														<div class="component-header-wrap">
+															<div class="component-header">
+																<div class="component-header-content">
+																	<div class="component-header-left">
+																		<div class="component-name-wrap component-w-40">
+																			<span class="material-icons">rebase_edit</span>
+																			<span class="language-component component-name searchableName">@(Model.Prefixes.ContainsKey(prefijo) ? entidad.Replace(prefijo, Model.Prefixes[prefijo] + ":") : entidad)</span>
+																		</div>
+																	</div>
+																	<div class="component-header-right">
+																		<span class="material-icons expandir pointer">navigate_next</span>
+																	</div>
+																</div>
+															</div>
+														</div>
+														<div class="component-content d-none">
+															<ul class="component-list no-list-style">
+																@foreach (Property p in Model.Properties.Where(x => x.Domain.Equals(entidad)).OrderBy(x => x.Name))
+																{
+																	@switch (p.GetType().Name)
+																	{
+																		case "StringProperty":
+																			@Html.PartialView("_partial-views/_string-property.cshtml", p)
+																			break;
+																		case "NumericalProperty":
+																			@Html.PartialView("_partial-views/_numerical-property.cshtml", p)
+																			break;
+																		case "BooleanProperty":
+																			@Html.PartialView("_partial-views/_boolean-property.cshtml", p)
+																			break;
+																		case "DateProperty":
+																			@Html.PartialView("_partial-views/_date-property.cshtml", p)
+																			break;
+																		case "AuxiliarProperty":
+																			@Html.PartialView("_partial-views/_auxiliar-property.cshtml", p)
+																			break;
+																		case "ExternalProperty":
+																			@Html.PartialView("_partial-views/_external-property.cshtml", p)
+																			break;
+																		default:
+																			@Html.PartialView("_partial-views/_property.cshtml", p)
+																			break;
+																	}
+																}
+															</ul>
+														</div>
+													</div>
+												</div>
+											</li>
+										}
+									</ul>
+								</div>
+							</div>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+<style>
+	a, .pointer {
+		cursor: pointer;
+	}
+
+	input[type=text] {
+		cursor: text;
+	}
+
+	#input-header-searchable-propiedades{
+		width: 100%;
+	}
+</style>
+
+@* Carga de operativa *@
+@section operativaScript{
+	<script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion_oc.js?v=@Html.GetVersion()"></script>
+	<script type="text/javascript">
+
+		(function ($) {
+			// Operativa funcionamiento de Configuración buzón de correo
+			operativaConfiguracionOC.init();
+		})();
+	</script>
+}

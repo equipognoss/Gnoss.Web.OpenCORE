@@ -1,20 +1,96 @@
 ﻿@model ObjetoConocimientoModel.PresentacionModel.PropiedadModel
 
-<li class="row propiedad" id="@Guid.NewGuid()">
-    <span class="handle propiedad">:::</span>
-    <section class="header">
-        <span class="nombre" aux="@Model.Propiedad">@Model.Propiedad</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-	</section>
-    <section class="panEdicion">
-		<p>
-			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")</span>
-			<input type="text" name="Nombre" value="@Model.Propiedad" />
-		</p>	
-		<p>
-			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACION")</span>
-			<input type="text" name="Presentacion" value="@Model.Presentacion" />
-		</p>										
-	</section>
+@*
+Descripción
+-----------------------------------------------
+Vista parcial para mostrar los diferentes propiedades en los diferentes listados de recursos. Esta vista se pinta a su vez en la vista "FichaPresentación" de cada objeto de conocimiento.
+
+Variables
+----------------------------------------------------------------
+*@
+
+
+@{
+@* Id propiedad *@
+Guid idRandom= @Guid.NewGuid();
+string collapseId = "panel_collapse_" + idRandom.ToString().Substring(0,5);
+}
+
+<li class="component-wrap property-row" id="@idRandom" data-collapseid="@collapseId">
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				<div class="component-header-content">
+					<div class="component-header-left">
+						@* Nombre del Subtipo *@
+						<div class="component-name-wrap">																												
+							<span class="component-subtipoName">@Model.Propiedad</span>
+						</div>					
+					</div>
+					@* Sección de acciones del subtipo *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de editar la propiedad *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditProperty"
+									   data-toggle="collapse" 
+									   data-target="#@collapseId"									   
+									   role="button" 
+									   aria-expanded="false" 
+									   aria-controls="@collapseId">									   
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de borrar la propiedad *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteProperty"
+										href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada de la propiedad - Collapse *@
+	<div class="collapse fichaPropiedad-info" id="@collapseId">		
+		<div class="card card-body">
+
+			@* Nombre *@
+			<div class="form-group mb-3">
+				<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")</label>
+				<input
+					type="text"
+					name="NombreProp"
+					placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")"
+					class="form-control inputNombrePropiedadValue"
+					value="@Model.Propiedad">
+				<small class="form-text text-muted">
+					@Html.GetText("DEVTOOLS","PROPIEDADESCOMPLEMENTARIASQUESEDESEAQUEAPAREZCANENLAVISTACA")
+				</small>
+			</div>
+			
+			@* Tipo *@
+			<div class="form-group mb-3">
+				<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACION")</label>
+				@*
+				<input
+					type="text"
+					name="PresentacionProp"
+					placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "PRESENTACION")"
+					class="form-control inputPresentacionValue"
+					value="@Model.Presentacion">				
+				*@
+				<textarea name="PresentacionProp" class="form-control inputPresentacionValue cke editorHtml form-control" cols="20">@Model.Presentacion</textarea>
+				<small class="form-text text-muted">
+					@Html.GetText("DEVTOOLS","TEXTOHTMLCONELQUESEPUEDEPERSONALIZARLAPRESENTACIONDELASPROPI")
+				</small>
+			</div>	
+		</div>
+	</div>	
 </li>

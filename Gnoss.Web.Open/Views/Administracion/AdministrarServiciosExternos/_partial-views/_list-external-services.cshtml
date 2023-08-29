@@ -1,0 +1,64 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarServiciosExternosViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra el listado de los servicios externos.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+}
+
+@* Contenido o tabla con los servicios externos *@
+<div class="col col-12 col-contenido">
+	<div class="wrapCol">
+		@* Cabecera del listado de servicios externos *@
+		<ul id="id-header-servicios-externos-list" class="header-component-list component-list no-list-style">
+			<li class="component-wrap">
+				@* Cabecera de Servicios externos *@
+				<div class="component ">
+					<div class="component-header-wrap">
+						<div class="component-header">
+							<div class="component-sortable js-component-sortable-page">
+								<span class="material-icons-outlined sortable-icon">drag_handle</span>
+							</div>
+							@* Sección títulos del listado de servicios externos *@
+							<div class="component-header-content">
+								<div class="component-header-left">
+									<div class="component-name-wrap">
+										<span class="component-name">@Html.GetText("DEVTOOLS","NOMBREDELSERVICIO")</span>
+									</div>
+									<div class="component-url-wrap">
+										<span class="component-tipo">@Html.GetText("ADMINISTRACIONBASICA","URL")</span>
+									</div>
+									<div class="component-fecha-wrap">
+										<span class="component-fecha">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</span>
+									</div>
+								</div>
+								<div class="component-header-right">
+									<div class="component-actions-wrap">
+										<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</li>
+		</ul>
+
+		@* Contenido de listado de servicios externo *@
+		<ul id="id-added-external-services-list" 
+			class="js-external-services-list component-list no-list-style">
+
+			@* Pintado de cada servicio externo *@		
+			@foreach (ServiceNameModel ser in Model.ListaServicios)
+			{
+				@Html.PartialView("_partial-views/_list-item-external-service", ser)
+			}
+		</ul>
+	</div>
+</div>

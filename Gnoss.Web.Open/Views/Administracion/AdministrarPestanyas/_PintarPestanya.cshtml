@@ -1,23 +1,328 @@
 ﻿@model PintarPestanyaAdministrar
 
-<li class="row pestanya" id="@Model.pestanya.Key">
-    <span class="handle pestanya">:::</span>
-    <section class="header">
-        <span class="nombrePestanya" aux="@Html.ObtenerTextoIdiomaUsuario(Model.pestanya.Name, true)">@Html.ObtenerTextoIdiomaUsuario(Model.pestanya.Name, true)</span><span class="tipoPestanya"></span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    @Html.PartialView("_EdicionPestanya", Model.pestanya)
-    @if (Model.ListaPestanyas.Where(p => p.ParentTabKey == Model.pestanya.Key).OrderBy(p2 => p2.Order).Count() > 0)
-    {
-        <ol class="subPestanyas">
-            @foreach (TabModel pestanyaHija in Model.ListaPestanyas.Where(p => p.ParentTabKey == Model.pestanya.Key).OrderBy(p2 => p2.Order))
-            {
-                PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
-                pintar.pestanya = pestanyaHija;
-                pintar.ListaPestanyas = Model.ListaPestanyas;
-                @Html.PartialView("_PintarPestanya", pintar)
-            }
-        </ol>
-    }
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar/visualizar cada una de las filas o rows de las páginas existentes en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+// Cabecera para obtención de idiomas de la Comunidad
+HeaderModel cabecera = Html.GetCabecera();
+// Diccionario de url para multiIdiomas
+Dictionary<string, string> pageUrlDictionary = new Dictionary<string, string>();
+// Diccionario de nombre de la página para multiIdiomas
+Dictionary<string, string> pageNameDictionary = new Dictionary<string, string>();
+
+@* Toda la información de la página / pestaña*@
+TabModel tabModel = Model.pestanya;
+// Url de la página
+string pageUrl = string.IsNullOrEmpty(@Html.ObtenerTextoIdiomaUsuario(tabModel.Url)) ? "/" : @Html.ObtenerTextoIdiomaUsuario(tabModel.Url) ;
+// Tipo de página 
+string pageType = Html.GetNombreTipoPaginaDevTools(tabModel);
+// Visible en el menú -> Activa --> Por defecto Si
+bool isVisibleInMenu = tabModel.Visible ? true : false;
+// Página publicada -> Activa --> Por defecto Sí (Ej: Si es de tipo Home siempre será activa)
+bool isPagePublishedOrActive = true;
+// Tipo de Privacidad de la página
+string privacyPageType = "";
+// Icono del tipo de privacidad de la página
+string privacyPageIcon = "";
+string textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPRIVADA");
+// Id para la llamada al modal para edición de la página
+string idModalPage = "modal-configuracion-pagina_" + tabModel.Key;
+//String idModalPageDelete = "modal-configuracion-pagina_delete" + tabModel.Key;
+string idModalPageDelete = "modal-delete-page";
+// Controlar visibilidad de edición CMS para páginas tipo Home
+bool homeCmsTodosLosUsuarios = false;
+bool homeCmsMiembros = false;
+bool homeCmsNoMiembros = false;
+
+string fechaModificacion = tabModel.FechaModificacion.ToString("dd/MM/yyyy");
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista de cada Página/Pestaña mostrada en la sección de Páginas de la comunidad --------------------
+*@
+
+@* Construir los diferentes items en idiomas (Nombre y Url) *@
+@{
+	// Obtener el nombre y Url en formato diccionario con los multiIdiomas de Nombre y Url para ser mostrados en la row de la página
+	pageNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(tabModel.Name);
+	pageUrlDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(tabModel.Url);
+}
+
+@* Controlar si la página está o no activa/publicada -> Siempre activa si es Home *@
+@if (tabModel.Type != TipoPestanyaMenu.Home)
+{
+	if (!tabModel.Active)
+	{
+		isPagePublishedOrActive = false;
+	}
+}
+
+@* Controlar la privacidad de la página *@
+@switch (tabModel.Privacidad)
+{
+	case 0:
+		privacyPageType = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADNORMAL");
+		privacyPageIcon = "public";
+		break;
+	case 1:
+		if (Html.GetComunidad().AccessType == CommunityModel.TypeAccessProject.Private || Html.GetComunidad().AccessType == CommunityModel.TypeAccessProject.Reserved)
+		{
+			textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPUBLICA");
+			privacyPageIcon = "public";
+		}
+		else
+		{
+			privacyPageIcon = "vpn_key";
+		}
+		privacyPageType = textoPrivacidadEspecial;
+
+	    break;
+	case 2:
+		privacyPageType = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADLECTORES");
+		privacyPageIcon = "people";
+		break;
+}
+
+@* Controlar la visibilidad del botón para editar CMS para páginas de tipo Home *@
+@if (tabModel.Type.Equals(TipoPestanyaMenu.Home))
+{
+	if (tabModel.HomeCMS.HomeTodosUsuarios)
+	{
+		homeCmsTodosLosUsuarios = true;
+	}
+	if (tabModel.HomeCMS.HomeMiembros)
+	{
+		homeCmsMiembros = true;
+	}
+	if (tabModel.HomeCMS.HomeNoMiembros)
+	{
+		homeCmsNoMiembros = true;
+	}
+}
+
+<li class="component-wrap page-row" data-pagekey="@tabModel.Key" id="@tabModel.Key">
+	<div class="component">
+		<div class="component-header-wrap">		
+			@* Panel informativo cancelable para el NestedSortable *@
+			<div class="sortable-helper-info">
+				<span class="sortable-helper-info--message">
+					@Html.GetText("DEVTOOLS","PULSAR")
+					<span>
+						<svg id="esc-button-icon" xmlns="http://www.w3.org/2000/svg" width="20.998" height="18.616" viewBox="0 0 20.998 18.616">
+							<path d="M3.932,0H17.066A3.944,3.944,0,0,1,21,3.932V14.684a3.944,3.944,0,0,1-3.932,3.932H3.932A3.944,3.944,0,0,1,0,14.684V3.932A3.944,3.944,0,0,1,3.932,0ZM4.3,5.775h3.87V6.833H5.753v.788H7.995V8.63H5.753V9.6H8.244v1.119H4.3V5.775ZM8.707,9.729,10,9.6a.666.666,0,0,0,.224.345.647.647,0,0,0,.383.1.622.622,0,0,0,.4-.118.267.267,0,0,0,.113-.219.255.255,0,0,0-.147-.231,2.6,2.6,0,0,0-.557-.142,5.5,5.5,0,0,1-.94-.232.994.994,0,0,1-.443-.359,1.043,1.043,0,0,1,.014-1.189,1.164,1.164,0,0,1,.537-.384,2.718,2.718,0,0,1,.916-.126,3.007,3.007,0,0,1,.894.1,1.152,1.152,0,0,1,.482.3,1.6,1.6,0,0,1,.32.559l-1.229.125a.457.457,0,0,0-.159-.253.62.62,0,0,0-.369-.108.493.493,0,0,0-.32.084.251.251,0,0,0-.1.2.217.217,0,0,0,.126.2,1.849,1.849,0,0,0,.554.121,3.589,3.589,0,0,1,.964.217,1.068,1.068,0,0,1,.482.395,1,1,0,0,1,.167.564,1.147,1.147,0,0,1-.178.6,1.214,1.214,0,0,1-.557.468,2.542,2.542,0,0,1-1.039.174,2.345,2.345,0,0,1-1.322-.282,1.251,1.251,0,0,1-.507-.795Zm6.753-.407,1.235.145a1.88,1.88,0,0,1-.335.709,1.548,1.548,0,0,1-.6.465,2.209,2.209,0,0,1-.921.166,3.268,3.268,0,0,1-.9-.106,1.572,1.572,0,0,1-.619-.345,1.707,1.707,0,0,1-.4-.559,2.074,2.074,0,0,1-.147-.851,2.091,2.091,0,0,1,.179-.921,1.761,1.761,0,0,1,.825-.8,2.451,2.451,0,0,1,.974-.166,2.163,2.163,0,0,1,1.268.313,1.661,1.661,0,0,1,.612.918l-1.222.173a.6.6,0,0,0-.208-.347.659.659,0,0,0-.408-.116.645.645,0,0,0-.523.244,1.157,1.157,0,0,0-.2.742,1,1,0,0,0,.2.672.632.632,0,0,0,.5.229.675.675,0,0,0,.429-.137.84.84,0,0,0,.26-.422ZM.846,13.227a3.218,3.218,0,0,0,.83,1.437A3.176,3.176,0,0,0,3.93,15.6H17.064c.036,0,.07,0,.106,0l.22-.015a3.181,3.181,0,0,0,1.912-.9l.015-.017a3.2,3.2,0,0,0,.83-1.437v-9.3A3.1,3.1,0,0,0,17.063.846H3.932A3.092,3.092,0,0,0,.847,3.93v9.3Z" fill="#006eff" fill-rule="evenodd"></path>
+						</svg>						
+					</span> @Html.GetText("DEVTOOLS","PARACANCELAR")
+				</span>
+			</div>
+
+			<div class="component-header">
+				@* Icono para arrastrar página *@
+				<div class="component-sortable js-component-sortable-page">
+					<span class="material-icons-outlined sortable-icon">drag_handle</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						<div class="component-name-wrap component-w-40">
+							@* Tipo de página -> Pública, privada... *@
+							<span class="material-icons" title="@privacyPageType">@privacyPageIcon</span>
+							@* Nombre de la página *@
+							@* Recorrer los idiomas existentes y crear los datos para Nombre de página siempre que haya *@
+							@if (pageNameDictionary.Count == 0)
+							{
+								<span class="language-component component-name @(ViewBag.AdministrarPestanyasViewModel.IdiomaPorDefecto)" data-languageitem="@ViewBag.AdministrarPestanyasViewModel.IdiomaPorDefecto">																																																			
+									@tabModel.Name
+								</span>
+							}
+							else
+							{														
+								@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+									{																												
+									<span class="language-component component-name @( ViewBag.AdministrarPestanyasViewModel.IdiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
+										@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
+										@{
+											string value = "";
+											if (pageNameDictionary.TryGetValue(idioma.Key, out value))
+											{
+												@value;
+											}										
+										}
+									</span>
+								}	
+							}							
+						</div>
+						@* Url de la página *@
+						<div class="component-url-wrap component-w-20">
+							@*
+							<span class="component-url">								
+								@pageUrl
+							</span>
+							*@
+
+							@if (pageUrlDictionary.Count == 0)
+							{
+								<span class="language-component component-url @(ViewBag.AdministrarPestanyasViewModel.IdiomaPorDefecto)" data-languageitem="@ViewBag.AdministrarPestanyasViewModel.IdiomaPorDefecto">																																																			
+									@if (!string.IsNullOrEmpty(tabModel.Url)){
+										@tabModel.Url;
+									}
+									else
+									{
+										<span>/</span>
+									}
+
+								</span>
+							}
+							else
+							{														
+								@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+								{																									
+									<span class="language-component component-url @( ViewBag.AdministrarPestanyasViewModel.IdiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
+										@* Asegurarnos de que haya valor en el dictionary. Si no, dar un valor por defecto*@																										
+										@{
+											string value = "/";
+											if (pageUrlDictionary.TryGetValue(idioma.Key, out value))
+											{
+												@value;											
+											}										
+										}																		
+									</span>																
+								}
+							}							
+						</div>
+						@* Tipo de Nombre de la página *@
+						<div class="component-tipo-wrap component-w-20">
+							<span class="component-tipo">@pageType</span>
+						</div>
+						@* Información: ¿Está publicada? *@
+						<div class="component-estado-wrap component-w-10">							
+							<span class="component-estado component-estado-si @( (!isPagePublishedOrActive) ? "d-none" : null)">@Html.GetText("COMMON", "SI")</span>
+							<span class="component-estado component-estado-no @( (isPagePublishedOrActive) ? "d-none" : null)">@Html.GetText("COMMON", "NO")</span>
+						</div>
+						@* Información: ¿Está visible?*@
+						<div class="component-visible-wrap component-w-10">
+							<span class="component-visible component-visible-si @( (!isVisibleInMenu) ? "d-none" : null)">@Html.GetText("COMMON", "SI")</span>
+							<span class="component-visible component-visible-no @( (isVisibleInMenu) ? "d-none" : null)">@Html.GetText("COMMON", "NO")</span>
+						</div>
+						@* Información: Fecha última actualización 
+						<div class="component-fecha-wrap">
+							<span class="component-fecha">@fechaModificacion</span>
+						</div>
+						*@
+						@* Información: Nombre y apellido del último editor 
+						<div class="component-editor-wrap">
+							<span class="component-editor">@tabModel.UltimoEditor</span>
+						</div>
+						*@
+					</div>
+					@*Sección de acciones de la página *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							@* Botón dropdown de acciones *@
+							<div class="dropdown">
+								<a
+									class="nav-link dropdown-toggle btn btn-outline-grey"
+									data-toggle="dropdown"
+									href="#"
+									role="button"
+									aria-haspopup="true"
+									aria-expanded="false">
+									<span class="material-icons">create</span>
+									<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+								</a>
+								@* Panel dropdown con las acciones disponibles *@
+								<div class="dropdown-menu dropdown-menu-left basic-dropdown">
+									<ul class="no-list-style">
+										@* Editar página *@
+										<li>
+											<a class="item-dropdown js-action-edit-component btnEditPage"
+											   data-toggle="modal" 
+											   data-target="#@idModalPage">
+												<span class="material-icons">create</span>
+												<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINA")</span>
+											</a>
+										</li>
+
+										@* Editar página CMS *@
+										@if (tabModel.Type == TipoPestanyaMenu.CMS && !tabModel.Nueva)
+										{								
+											<li>
+												<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/@tabModel.Key">
+													<span class="material-icons">view_quilt</span>
+													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINACMS")</span>
+												</a>
+											</li>
+										}
+
+										@* Edición página tipo Home (CMS) *@
+										@if (tabModel.Type.Equals(TipoPestanyaMenu.Home))
+										{
+											@* Editar página CMS Home -> Todos los usuarios -> HomeCmsTodosLosUsuarios  *@
+											<li class="btnEditCmsHome btnEditCmsHomeTodosUsuarios  @( (!homeCmsTodosLosUsuarios ) ? "d-none" : null)">
+												<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/2">
+													<span class="material-icons">view_quilt</span>
+													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOME")</span>
+												</a>
+											</li>											
+											@* Editar página CMS Home -> Miembros -> HomeCmsMiembros *@
+											<li class="btnEditCmsHome btnEditCmsHomeMiembros @( (!homeCmsMiembros) ? "d-none" : null)">
+												<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/0">
+													<span class="material-icons">view_quilt</span>
+													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOMEPARAMIEMBROS")</span>
+												</a>
+											</li>											
+											@* Editar página CMS Home -> No Miembros -> HomeCmsNoMiembros *@
+											<li class="btnEditCmsHome btnEditCmsHomeNoMiembros  @( (!homeCmsNoMiembros) ? "d-none" : null)">
+												<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/1">
+													<span class="material-icons">view_quilt</span>
+													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOMEPARANOMIEMBROS")</span>
+												</a>
+											</li>
+											
+										}
+										
+										@* Eliminar página *@
+										<li>
+											<a class="item-dropdown js-action-delete-component btnDeletePage"
+											   data-toggle="modal" 
+											   data-target="#@idModalPageDelete">
+												<span class="material-icons">delete</span>
+												<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+											</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		@* Sección de si hay más páginas dentro de ella*@
+		<div class="component-content">
+			<ul class="js-community-pages-list component-list no-list-style" data-parentKey="@tabModel.Key">
+				@* Pintado recursivo para pintado de las páginas hijas *@
+				@foreach (TabModel pestanyaHija in Model.ListaPestanyas.Where(p => p.ParentTabKey == Model.pestanya.Key).OrderBy(p2 => p2.Order))
+				{
+					PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
+					pintar.pestanya = pestanyaHija;
+					pintar.ListaPestanyas = Model.ListaPestanyas;
+					@Html.PartialView("_PintarPestanya", pintar)
+				}
+			</ul>
+		</div>
+	</div>
+
+
+	@* Información detallada de la pestaña -> Modal *@
+	@Html.PartialView("_EdicionPestanya", Model.pestanya)
+
+
 </li>

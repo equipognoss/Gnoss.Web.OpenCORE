@@ -1,0 +1,129 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la página principal o Home de DevTools. Desde aquí si tiene acceso directo a todas las opciones de configuración de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de la Home de la Comunidad en DevTools --------------------
+*@
+
+@* Contenedor central *@
+
+    <div class="col col-12 header-listado">
+        @* Título - Header del contenido central *@
+        <div class="header-contenido">
+            <div class="h1-container">
+                <h1>@Html.GetText("DEVTOOLS","SEMANTICWEBTOOLS")</h1>
+            </div>
+        </div>
+        @* Acciones disponibles - Visualización*@
+        <div class="acciones-listado acciones-seccion">
+            <div class="wrap">
+                <div class="visualizacion dropdown dropdown-select">
+                    <a class="dropdown-toggle" data-toggle="dropdown">
+                        <span class="material-icons">view_agenda</span>
+                        <span class="texto">@Html.GetText("DEVTOOLS","VISUALIZAR")</span>
+                    </a>
+                    <div class="dropdown-menu basic-dropdown .dropdown-icons dropdown-menu-right">
+                        <a class="item-dropdown aCompacView" data-class-resource-list="compacView">
+                            <span class="material-icons">reorder</span>
+                            <span class="texto">@Html.GetText("CORREO", "COMPACTADA")</span>
+                        </a>
+                        <a class="item-dropdown aListView activeView" data-class-resource-list="listView">
+                            <span class="material-icons">view_agenda</span>
+                            <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")</span>
+                        </a>
+                        <a class="item-dropdown aMosaicView" data-class-resource-list="mosaicView">
+                            <span class="material-icons">view_comfy</span>
+                            <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* Contenido central - *@
+    <div class="col col-12 col-contenido">
+        <div class="wrapCol">
+            <div id="section-home-content" class="section-list">
+                <div class="section-list-wrap">
+                    <div class="section section-navigation" data-section="comunidad" data-title="Comunidad">
+                        <h2>@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")</h2>
+                        <p>                                                        
+                            @Html.GetText("DEVTOOLS","CONFIGURACIONGENERALDELOSASPECTOSBASICOSDELACOMUNIDAD:ESTADO")
+                        </p>
+                    </div>
+                    <div class="section section-navigation" data-section="estructura" data-title="Estructura">
+                        <h2>@Html.GetText("DEVTOOLS","ESTRUCTURA")</h2>
+                        <p>
+                            @Html.GetText("DEVTOOLS","ADMINISTRACIONDELAESTRUCTURADELACOMUNIDADMEDIANTELACREACIOND")
+                        </p>
+                    </div>
+                    <div class="section section-navigation" data-section="configuracion" data-title="Configuración">
+                        <h2>@Html.GetText("DEVTOOLS","CONFIGURACIONGENERAL")</h2>
+                        <p>
+                        @Html.GetText("DEVTOOLS","CONFIGURACIONGENERALDELACOMUNIDADPARALAGESTIONDELOSPERMISOSD")
+                        </p>
+                    </div>
+                    <div class="section section-navigation" data-section="grafo-de-conocimiento" data-title="Grafo de conocimiento">
+                        <h2>@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")</h2>
+                        <p>
+                            @Html.GetText("DEVTOOLS","ADMINISTRACIONYCREACIONDEOBJETOSDECONOCIMIENTOPARALACREACION")
+                        </p>
+                    </div>
+                    <div class="section section-navigation" data-section="insights" data-title="Descubrimiento y análisis">
+                        <h2>@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")</h2>
+                        <p>
+                            @Html.GetText("DEVTOOLS","CONFIGURACIONDELOSFILTROSDEBUSQUEDAPARARESTRINGIRLOSRESULTAD")                                    
+                        </p>
+                    </div>
+                    <div class="section section-navigation" data-section="apariencia" data-title="Apariencia">
+                        <h2>@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")</h2>
+                        <p>                            
+                            @Html.GetText("DEVTOOLS","CREACION,EDICIONYPERSONALIZACIONDELASVISTASDELAPLATAFORMAPAR")
+                        </p>
+                    </div>
+                    <div class="section section-navigation" data-section="integracionContinua" data-title="Integración contínua">
+                        <h2>Integración contínua</h2>
+                        <p>                                                        
+                            @Html.GetText("DEVTOOLS","SERVICIODEINTEGRACIONCONTINUADELACOMUNIDADPARAQUELOSCAMBIOSQ")
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@* Carga de operativa *@
+@section operativaScript{    
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+        (function ($) {
+            const pParams = {
+                idSectionHomeContent: "section-home-content",
+                classNavigationSections: "section-navigation",
+                classNameNavigationChildrenSections: "section-children",
+                dataSections: {
+                    comunidad: "comunidad",
+                    estructura: "estructura",
+                    configuracion: "configuracion",
+                    grafoConocimiento: "grafo-de-conocimiento",
+                    descubrimientoAnalisis: "insights",
+                    apariencia: "apariencia"
+                },            
+            };
+            // Gestión de operativa para navegación en Home DevTools
+            operativaNavegacionHome.init(pParams);
+        })();
+    </script>
+}

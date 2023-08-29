@@ -1,0 +1,68 @@
+﻿@model CMSComponentListViewModel
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón con un panel dropdown para poder crear un tipo de componente CMS desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Listado Componentes CMS".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+
+}
+@*
+----------------------------------------------------------------
+
+-------------------- Vista parcial para crear un tipo de componente CMS --------------------*@
+
+@*Botón para la creación de componente *@
+
+@if (Model.AvailableComponentsList != null)
+{
+	@*
+	<ul>
+		@* Botón para crear nuevo componente CMS
+		<li class="nuevo nuevo-componente">
+	*@
+			<a
+				href="javascript: void(0);"
+				class="btn btn-outline-primary dropdown-toggle no-flecha mr-0"
+				id="menuNuevoComponenteCMS"
+				data-toggle="dropdown"
+				aria-haspopup="true"
+				aria-expanded="false">
+				<span class="material-icons">add</span>
+				<span>@Html.GetText("COMADMINCMS", "CREARCOMPONENTENUEVO")</span>
+			</a>
+			<div
+				class="dropdown-menu dropdown-menu-right basic-dropdown"
+				aria-labelledby="menuNuevoComponente"
+				style="will-change: transform">
+				<div>
+					<ul class="no-list-style menuCreacion">
+						@* Tipo de componente a crear *@
+						@foreach (CMSComponentType tipoComponente in Model.AvailableComponentsList.Keys)
+						{
+							<li>
+								<a									
+									data-target="#modal-container" 
+									style="cursor: pointer"
+									class="item-dropdown btnAddComponentItem"							
+									data-toggle="modal"
+									data-type="@((short)tipoComponente)"
+									data-urlsave = "@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSNUEVOCOMPONENTE")/@((short)tipoComponente)/save"
+									data-url="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSNUEVOCOMPONENTE")/@((short)tipoComponente)/load-modal">
+									<span class="texto">@Model.AvailableComponentsList[tipoComponente]</span>
+								</a>
+							</li>
+						}                 
+					</ul>
+				</div>
+			</div>
+			@*
+		</li>
+	</ul>
+	*@
+}

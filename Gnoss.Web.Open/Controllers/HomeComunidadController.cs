@@ -30,6 +30,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +45,7 @@ using System.Text;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class HomeComunidadController : ControllerPestanyaBase
     {
 

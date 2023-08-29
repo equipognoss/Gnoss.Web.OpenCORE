@@ -1,0 +1,25 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la sección de Apariencia desde la Home de DevTools.
+Esta vista se cargará en la sección central cuando se pulse sobre "Apariencia"
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;    
+}
+
+@* Contenedor central de secciones *@
+<div class="section-list-wrap">
+    <div class="section section-navigation" data-parent-section="apariencia" data-section="vistas">
+        <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")</h2>
+        <p>            
+            @Html.GetText("DEVTOOLS","CREACION,EDICIONYPERSONALIZACIONDELASVISTASDELAPLATAFORMAPAR")
+        </p>
+    </div>
+</div>
+

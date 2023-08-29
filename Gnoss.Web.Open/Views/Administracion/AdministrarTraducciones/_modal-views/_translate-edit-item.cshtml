@@ -1,0 +1,107 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel       
+@*
+Descripción
+-----------------------------------------------
+Vista modal para la edición de un item de tipo Translate.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+// Url de la traducción guardada temporalmente en ViewBag
+string urlEditTranslate = ViewBag.urlEditTranslate;
+bool isInEditMode = false;
+// Título del modal por (Creación o Edición)
+string modalTitle = "";
+bool isEditingMode = false;
+
+
+// Calcular la urlBase para el guardado
+string urlBase = this.Context.Request.Path.ToString().ToLower();
+if(urlBase.LastIndexOf("/editar") > 0)
+{
+    isEditingMode = true;
+    urlBase = urlBase.Substring(0,urlBase.LastIndexOf("/editar"));
+    urlBase = string.Concat(urlBase, "/editar");
+}
+
+}
+
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial para cada traducción --------------------
+*@
+
+<form action="@urlBase" method="post" id="formCreateEditTranslate">
+@* @Html.ValidationSummary() *@
+@* Crear Nuevo o Editar traducción *@
+@if (this.Context.Request.Path.ToString().ToLower().Contains("/crear"))
+{    
+    isEditingMode = false;
+    modalTitle = "Crear traducción";       
+    @*<div>TextoID:  @Html.EditorFor(m => m.TextoID) @Html.ValidationMessageFor(m => m.TextoID)</div>*@
+}
+else {
+    isInEditMode = true;
+    modalTitle = "Editar traducción " + @Model.TextoID;
+    <input type="hidden" name="TextoID" value="@Model.TextoID" />
+}
+    <div class="modal-header">
+        @* Título del Modal *@
+        <p class="modal-title">
+            <span class="material-icons">@( isInEditMode == true ? "edit" : "add" )</span>@modalTitle
+        </p>
+        @* Cierre del Modal *@
+        <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+    </div>
+    <div class="modal-body">
+        <div class="formulario-edicion">
+            <fieldset>
+                <p>@Html.GetText("DEVTOOLS","AÑADEACONTINUACIONLASTRADUCCIONESPERSONALIZADASPARALOSDIFERE")</p>
+                @* ID del input a crear (Si no está en modo edición) *@
+                @if (!isEditingMode)
+                {
+                    <div class="form-group mb-4">
+                        <label class="control-label d-block">TextoID</label>                    
+                        <input type="text" placeholder="@Html.GetText("DEVTOOLS","IDDELATRADUCCION")" class="form-control" 
+                               id="TextoID"
+                               name="TextoID">
+                        <small id="TextoIDAyuda" class="form-text text-muted">@Html.GetText("DEVTOOLS","INTRODUCEUNIDENTIFICADORUNICOPARALATRADUCCIONACREAR")</small>
+                    </div>
+                }
+
+                @* Input para traducción en Idiomas *@
+                @for (int i = 0; i < Model.Traducciones.Count; i++)
+                {
+                    string idioma = string.Empty;
+                    Model.Idiomas.TryGetValue((string)Model.Traducciones[i].Idioma, out idioma);
+                        
+                        <div class="form-group mb-4">
+                            <label class="control-label d-block">@idioma</label>
+                            @* TextArea para el contenido de la traducción *@
+                            @Html.TextAreaFor(m => m.Traducciones[i].Texto, new { cols = "30", rows = "5" })  @Html.ValidationMessageFor(m => m.Traducciones[i].Texto)
+                        </div>                        
+                    <input type="hidden" name="Traducciones[@i].Idioma" value="@Model.Traducciones[i].Idioma" />            
+                }
+
+                @* Botón para guardar la traduducción *@
+                <div class="panelBotonera">                        
+				    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+				    {
+				    	@* No permitir guardar *@
+				    	<input type="button" disabled class="btn btn-primary uppercase btnNoSaveTranslate" value="@Html.GetText("COMMON","GUARDAR")"/>								
+				    }
+				    else
+				    {		
+				    	@* Permitir guardar *@
+				    	<input type="button" class="btn btn-primary uppercase btnSaveTranslate" value="@Html.GetText("COMMON","GUARDAR")"/>								
+				    }                    
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</form>
+
+

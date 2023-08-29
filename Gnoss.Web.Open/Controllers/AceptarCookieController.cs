@@ -6,6 +6,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Web.Util;
@@ -32,15 +33,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public ActionResult Index()
         {
             string nombreCookie = string.Empty;
+
             if (ParametroProyecto != null && ParametroProyecto.ContainsKey(ParametroAD.NombrePoliticaCookies) && !string.IsNullOrEmpty(ParametroProyecto[ParametroAD.NombrePoliticaCookies]))
             {
                 nombreCookie = ParametroProyecto[ParametroAD.NombrePoliticaCookies] + mControladorBase.DominoAplicacion;
+            }
+            else if (ExisteNombrePoliticaCookiesMetaproyecto)
+            {
+                nombreCookie = NombrePoliticaCookiesMetaproyecto + mControladorBase.DominoAplicacion;
             }
             else
             {
                 nombreCookie = "cookieAviso" + mControladorBase.DominoAplicacion;
             }
-            Dictionary<string, string> value = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie], mEntityContext);
+
+            Dictionary<string, string> value = new Dictionary<string, string>();
+            try
+            {
+                value = UtilCookies.FromLegacyCookieString(Request.Cookies[nombreCookie], mEntityContext);
+            }
+            catch
+            {
+                Response.Cookies.Delete(nombreCookie);
+            }
+
             if (value.ContainsKey("aceptada"))
             {
                 value["aceptada"] = "true";
@@ -59,6 +75,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }            
 
             Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(value, mEntityContext), cookieOptions);
+
+            foreach(PersonalizacionCategoriaCookieModel cookie in ListaPersonalizacionCategoriaCookieModel)
+            {
+                string nombreCookieLista = UrlEncode(cookie.CategoriaCookie.NombreCorto.ToLower());
+                if (!Request.Cookies.ContainsKey(nombreCookieLista))
+                {
+                    Response.Cookies.Append(nombreCookieLista, "yes", cookieOptions);
+                }
+            }
 
             return new EmptyResult();
         }

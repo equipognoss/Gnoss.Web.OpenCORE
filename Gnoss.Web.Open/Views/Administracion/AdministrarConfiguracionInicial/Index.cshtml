@@ -1,0 +1,72 @@
+﻿@model ComunidadInicialModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra la página de configuración inicial de una comunidad. 
+En la vista se han de configurar aspectos iniciales del usuario administrador y las urls (web inicial y web de proyectos).
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+}
+
+<div class="formulario-edicion background-blanco">	
+	<h2>@Html.GetText("DEVTOOLS","CONFIGURACIONINICIAL")</h2>	
+	<p>@Html.GetText("DEVTOOLS","PARACOMPLETARLAINSTALACION,CONFIGURAACONTINUACIONLASIGUIENTE")</p>
+
+	@* Tabs de opciones de configuración de Plataforma *@
+	<ul
+		class="nav nav-tabs"
+		role="tablist">
+		@* Datos de acceso del usuario *@
+		<li class="nav-item" role="presentation">
+			<a
+				class="nav-link active"
+				id="tabDatosAcceso"
+				data-toggle="tab"
+				href="#datos-acceso"
+				role="tab"
+				aria-controls="datos-acceso"
+				aria-selected="true">@Html.GetText("DEVTOOLS","DATOSDEACCESO")</a>
+		</li>
+		@* Datos de Dominios y Url del proyecto acceso del usuario *@
+		<li class="nav-item" role="presentation">
+			<a
+				class="nav-link"
+				id="tabDatosDominio"
+				data-toggle="tab"
+				href="#datos-dominio-url"
+				role="tab"
+				aria-controls="datos-dominio-url"
+				aria-selected="false">@Html.GetText("DEVTOOLS","DOMINIOSYCOMUNIDAD")</a>
+		</li>
+	</ul>
+
+	@* Paneles de configuración *@
+	<div class="tab-content">
+		@* Panel Configuración inicial (Datos de Acceso, Dominio Url) *@		
+		@Html.PartialView("_partial-views/_config-initial-data-access")		
+
+		@* Panel Configuración del tipo de Comunidad *@		
+		@Html.PartialView("_partial-views/_config-initial-data-community", Model)		
+	</div>
+
+	@* Sección botón de guardado *@      
+	<button id="btnSaveInitialConfiguration" class="btn btn-primary uppercase">@Html.GetText("COMMON", "GUARDAR")</button>  
+</div>
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion_inicial.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento de Configuración inicial del proyecto
+            operativaGestionConfiguracionInicial.init();
+        })();
+    </script>
+}

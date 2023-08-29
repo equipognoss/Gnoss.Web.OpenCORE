@@ -1,581 +1,185 @@
 ﻿@model ManageRedirectionsViewModel
 
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar las redirecciones creadas para la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+    CommunityModel Comunidad = Html.GetComunidad();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	// Referencia al CMSAdminListadoComponentes para el botón de tipo de añadir un nuevo componente
+	ViewBag.ManageRedirectionsViewModel = Model;
 }
 
-<div class="content">
-    <h1>@Html.GetText("COMADMINREDIRECCIONES", "TITULO")</h1>
-    <div>
-        <form autocomplete="off">
-            <p>
-                @Html.GetText("COMADMINREDIRECCIONES", "INFOTITULO")
-            </p>
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar la información general de la comunidad --------------------
+*@
 
-            <div class="contenedorFiltros">
-                <div class="panFiltrar">
-                    <p>
-                        <span>@Html.GetText("COMADMINREDIRECCIONES", "FILTRAR")</span>
-                    </p>
-                    <p>
-                        <input type="text" id="txtFiltro">
-                    </p>
-                </div>
-            </div>
-
-            <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINREDIRECCIONES", "GUARDARCAMBIOS")" />
-            <div class="panAniadir">
-                @Html.GetText("COMADMINREDIRECCIONES", "INFOADDREDIRECCION")
-                <input type="button" class="addRedireccion" value="@Html.GetText("COMADMINREDIRECCIONES", "ADDREDIRECCION")" />
-            </div>
-            <ol class="table" id="listadoRedirecciones">
-                @foreach (ManageRedirectionsViewModel.RedirectionModel redireccion in Model.RedirectionsList.OrderBy(r => r.Key))
-                {
-                    @Html.PartialView("_EdicionRedireccion", redireccion);
-                }
-            </ol>
-        </form>
+@if (Comunidad.IntegracionContinuaActivada)
+{
+	<div class="alert alert-warning alert-dismissable">
+		<button type="button" class="close" data-dismiss="alert">&times;</button>
+		<span class="material-icons" alt="warning" title="warning" aria-label="warning">
+			warning
+		</span>
+		<strong>@Html.GetText("DEVTOOLS", "NOGUARDAINTEGRACIONCONTINUA")</strong>
+	</div>
+}
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/estructura">@Html.GetText("DEVTOOLS","ESTRUCTURA")</a>
+            </li>
+            <li>
+                @Html.GetText("ADMINISTRACIONPAGINAS","REDIRECCIONES")
+            </li>
+        </ul>
     </div>
-    <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINREDIRECCIONES", "GUARDARCAMBIOS")" />
-</div>
 
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-<script>
+    @* Contenido Central *@
+    <div class="formulario-edicion background-blanco">       		
+		@* Contenedor del Título de la Sección + Buscador *@
+		<div class="row">
+			@* Título de la sección de páginas + Nº de páginas *@
+			<div class="col col-12 header-listado">
+				<div class="h1-container">
+					<h1>@Html.GetText("COMADMINREDIRECCIONES", "TITULO")</h1>
+				</div>
+				@* Botón para crear item *@						
+				<div class="acciones d-flex align-items-center">
+					@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-redirection-admin", Model)							
+				</div>
+			</div>
 
-    var OperativaAcciones = {
-        init: function () {
-            this.config();
-            this.engancharComportamiento();
+			@* Buscador de redirecciones *@
+			<div class="col col-12 header-buscador">
+				<div class="wrapCol">
+					<div class="col-buscador" style="width: 100%">					
+					@* Formulario para búsquedas de páginas *@
+						<form id="formBuscadorPaginas" onsubmit="return false;">								
+							<div class="finderUtils" id="divCajaBusqueda">
+								<div class="group finderSection">
+									@* Input para realizar la búsqueda de páginas *@
+									<input
+										type="text"
+										id="txtBuscarRedireccion"
+										class="not-outline finderSectionText"
+										autocomplete="off"
+										placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+									/>
+									@* Botón para realizar la búsqueda *@
+									<input
+										title="Buscar"
+										type="button"
+										class="findAction"
+										id="inputLupa"
+									/>
+									@* Botón para Facetas de la búsqueda *@
+									<a href="javascript: void(0);" class="btn-filtrar-movil">
+										<span class="material-icons">filter_list</span>
+										<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+									</a>
+								</div>
+							</div>								
+						</form>
+					</div>
+				</div>
+			</div>
 
-            this.engancharComportamientoRedirecciones();
-        },
-        config: function () {
-            this.urlPagina = document.location.href;
+			@* Contenido o tabla con las redirecciones de la comunidad *@
+			<div class="col col-12 col-contenido">
+				<div class="wrapCol">
+					@* Cabecera del listado de redirecciones *@
+					<ul id="id-header-redirections-list" class="header-component-list component-list no-list-style">
+						<li class="component-wrap">
+							@* Cabecera de páginas *@
+							<div class="component ">
+								<div class="component-header-wrap">
+									<div class="component-header">
+										@* No hace falta en Redirecciones
+										<div class="component-sortable js-component-sortable-page">
+											<span class="material-icons-outlined sortable-icon">drag_handle</span>
+										</div>
+										*@
+										@* Sección títulos de listado de páginas *@
+										<div class="component-header-content">
+											<div class="component-header-left">
+												<div class="component-name-wrap">
+													<span class="component-name">@Html.GetText("DEVTOOLS","URLDOMINIO")</span>
+												</div>
+												<div class="component-url-wrap">
+													<span class="component-url">@Html.GetText("DEVTOOLS","URLDESTINO")</span>
+												</div>
+												<div class="component-tipo-wrap">
+													<span class="component-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</span>
+												</div>
+												<div class="component-estado-wrap">
+													<span class="component-estado">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</span>
+												</div>
+											</div>
+											<div class="component-header-right">
+												<div class="component-actions-wrap">
+													<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
 
-            return;
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            $('input.addRedireccion').click(function () {
-                that.anyadirRedireccion();
-            });
-            $('input.guardarTodo').click(function () {
-                that.guardarTodasRedirecciones();
-            });
-            $('input#txtFiltro').keyup(function (event) {
-                if (event.which || event.keyCode) {
-                    if ((event.which == 13) || (event.keyCode == 13)) {
-                        return false;
-                    }
-                }
-                that.Filtrar();
-            });
-            return;
-        },
-        engancharComportamientoRedirecciones: function () {
-            var that = this;
-            page.on('click', 'span.eliminar', function () {
-                that.eliminarRedireccion($(this));
-            });
-            page.on('click', 'span.editar', function () {
-                that.editarRedireccion($(this));
-            });
-            page.on('click', '.panEdicion input[type="radio"]', function () {
-                that.MostrarBloqueRadiobtSeleccionado($(this));
-            });
-            page.on('click', 'input.addParametro', function () {
-                that.anyadirParametroRedireccion($(this));
-            });
-            page.on('click', '.itemParametro .deleteParametro', function () {
-                that.eliminarParametro($(this));
-            });
-            page.on('keyup', 'input[name="txtUrlOrigen"]', function () {
-                that.cambiarNombreRedireccion($(this));
-            });
-            page.on('blur', 'input[name="txtUrlOrigen"]', function () {
-                that.cambiarAuxNombreRedireccion($(this));
-            });
+					@* Contenido de redirecciones *@
+					
+					<ul id="id-added-redirections-list" 
+						class="js-community-redirections-list component-list no-list-style">
+		
+						@* Pintado de cada redirección *@
+						@foreach (ManageRedirectionsViewModel.RedirectionModel redireccion in Model.RedirectionsList.OrderBy(r => r.Key))
+						{
+							@Html.PartialView("_EdicionRedireccion", redireccion);
+						}
+					</ul>
+					
 
-            that.MontarToolTip($('#listadoRedirecciones'));
-            return;
-        },
-        MontarToolTip(panel){
-            $('span.tipo', panel).each(function () {
-                if ($(this).attr("title") != null && $(this).attr("title") != '') {
-                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
-                    $(this).removeAttr("title");
-                }
-            });
-            $('.conToolTip', panel).tooltip();
-        },
-        MostrarBloqueRadiobtSeleccionado: function (radio) {
-            //var ancho = $(".tipoRedireccion input[type=radio]:checked").val() == 'auto' ? '' : this.comprobarAncho();
-            var panEdicion = radio.closest('.panEdicion');
-            if (radio.val() == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
-                $('.redireccionParametrizada', panEdicion).hide();
-                $('.redireccionDirecta', panEdicion).show();
-            }
-            else if (radio.val() == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
-                $('.redireccionDirecta', panEdicion).hide();
-                $('.redireccionParametrizada', panEdicion).show();
-            }
-        },
-        mostrarErrorUrlOrigenVacio: function (inputUrl) {
-            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLORIGENVACIA")</span>");
-            $('.panEdicion', inputUrl.closest('.row')).addClass('edit');
-        },
-        mostrarErrorUrlDestinoVacio: function (inputUrl) {
-            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLDESTINOVACIA")</span>");
-            $('.panEdicion', inputUrl.closest('.row')).addClass('edit');
-            this.mostrarErrorGuardado();
-        },
-        mostrarErrorSinTipoRedireccion: function (radioDirecta){
-            $('span.tipoRedireccion', radioDirecta.closest('.row')).after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINTIPOREDIRECCION")</span>");
-            $('.panEdicion', radioDirecta.closest('.row')).addClass('edit');
-            this.mostrarErrorGuardado();
-        },
-        mostrarErrorNomParametroVacio: function (inputUrl){
-            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORNOMPARAMETROVACIO")</span>");
-            $('.panEdicion', inputUrl.closest('.row')).addClass('edit');
-            this.mostrarErrorGuardado();
-        },
-        mostrarErrorSinParametros: function (listaParametros){
-            listaParametros.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINPARAMETROS")</span>");
-            $('.panEdicion', listaParametros.closest('.row')).addClass('edit');
-            this.mostrarErrorGuardado();
-        },
-        mostrarErrorCamposParametrosVacio: function (listaParametros){
-            listaParametros.after("<span class=\"error\">@Html.GetText("COMADMINREDIRECCIONES", "ERRORCAMPOPARAMETROSVACIO")</span>");
-            $('.panEdicion', listaParametros.closest('.row')).addClass('edit');
-            this.mostrarErrorGuardado();
-        },
-        cambiarNombreRedireccion: function (inputName) {
-            var nombreRedireccion = inputName.val();
-            var fila = inputName.closest('.row');
-            var nombreFila = fila.find('.header .urlOrigen');
-
-            if (nombreRedireccion == '') {
-                nombreFila.text(nombreFila.attr('aux'));
-            }
-            else {
-                nombreFila.text(nombreRedireccion);
-            }
-        },
-        cambiarAuxNombreRedireccion: function (inputUrlOrigen) {
-            var that = this;
-            $('.error', inputUrlOrigen.parent()).remove()
-            var nombreRedireccion = inputUrlOrigen.val();
-            var fila = inputUrlOrigen.closest('.row');
-            var nombreFila = fila.find('.header .urlOrigen');
-
-            if (nombreRedireccion == '') {
-                nombreFila.text(nombreFila.attr('aux'));
-                //inputUrlOrigen.val(nombreFila.attr('aux'));
-                that.mostrarErrorUrlOrigenVacio(inputUrlOrigen);
-            }
-            else {
-                nombreFila.text(nombreRedireccion);
-                nombreFila.attr('aux', nombreRedireccion);
-                //inputUrlOrigen.val(nombreClausula);
-            }
-        },
-        Filtrar: function () {
-            var filtro = $('input#txtFiltro').val();
-            var listadoRedireccion = $('.row');
-
-            if (filtro == '') {
-                $('.table').removeClass("filtrado");
-            }
-            else {
-                $('.table').addClass("filtrado");
-            }
-
-            listadoRedireccion.removeClass('oculto');
-            listadoRedireccion.addClass('visible');
-
-            if (filtro != '') {
-                var listaEncontradas = listadoRedireccion.find('span.urlOrigen:contains(' + filtro + ')');
-                var listaNoEncontradas = listadoRedireccion.find('span.urlOrigen:not(:contains(' + filtro + '))');
-                listaNoEncontradas.closest('.row').removeClass('visible');
-                listaNoEncontradas.closest('.row').addClass('oculto');
-
-                //listaEncontradas.each(function () {
-                //    var item = $(this);
-                //    item.closest('.row').removeClass('oculto');
-                //    item.closest('.row').addClass('visible');
-                //});
-            }
-
-            //listadoRedireccion.each(function () {
-            //    var item = $(this);
-            //    var itemText = item.children('.header').find('span.urlOrigen').text();
-
-            //    item.removeClass('oculto');
-            //    item.addClass('visible');
-
-            //    if ((filtro != '' && itemText.toLowerCase().indexOf(filtro) < 0)) {
-            //        item.addClass('oculto');
-            //        item.removeClass('visible');
-            //    }
-            //});
-
-            return;
-        },
-        deshacerEliminarRedireccion: function (botonDeshacer) {
-            var fila = botonDeshacer.closest('.row');
-
-            fila.removeClass('ui-state-disabled');
-
-            var panEditar = fila.children('.panEdicion');
-            panEditar.find('[name="TabEliminada"]').val('false');
-
-            var panCabecera = fila.children('.header');
-            panCabecera.removeClass('deleted');
-            if (panCabecera.hasClass('edited_removed')) {
-                panCabecera.removeClass('edited_removed');
-                panCabecera.addClass('edited');
-            }
-
-            var deshacer = panCabecera.children('.deshacer');
-            var eliminada = panCabecera.children('.eliminada');
-            deshacer.remove();
-            eliminada.remove();
-        },
-        eliminarRedireccion: function (botonEliminar) {
-            var that = this;
-            var fila = botonEliminar.closest('.row');
-            var filas = fila.find('.row');
-
-            fila.addClass('ui-state-disabled');
-            filas.addClass('ui-state-disabled');
-
-            var panelesEditar = fila.find('.panEdicion');
-            panelesEditar.removeClass('edit');
-            panelesEditar.find('[name="TabEliminada"]').val('true');
-
-            var panelesCabecera = fila.find('.header:not(.deleted)');
-            if (panelesCabecera.hasClass('edited')) {
-                panelesCabecera.removeClass('edited');
-                panelesCabecera.addClass('edited_removed');
-            }
-            panelesCabecera.addClass('deleted');
-            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
-            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
-
-            panelesCabecera.find('span.deshacer').click(function () {
-                that.deshacerEliminarRedireccion($(this));
-            });
-        },
-        editarRedireccion: function (botonEditar) {
-            var fila = botonEditar.closest('.row');
-            var panEditar = fila.children('.panEdicion');
-
-            if (panEditar.hasClass('edit')) {
-                panEditar.removeClass('edit');
-            }
-            else {
-                panEditar.addClass('edit');
-                var panelCabecera = fila.find('.header');
-                panelCabecera.addClass('edited');
-            }
-        },
-        anyadirRedireccion: function () {
-            var that = this;
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-                that.urlPagina + '/new-redirection',
-                null,
-                true
-            ).done(function (data) {
-                $('#listadoRedirecciones').prepend(data);
-                var RedireccionNueva = $('#listadoRedirecciones').children().first();
-                var idPanel = RedireccionNueva.attr('id');
-                that.MontarToolTip($('#' + idPanel));
-                RedireccionNueva.find('span.editar').trigger('click');
-                RedireccionNueva.find('.redireccionDirecta').hide();
-                RedireccionNueva.find('.redireccionParametrizada').hide();
-                //RedireccionNueva.find('.aceptarRedireccion').hide();
-                RedireccionNueva.find('section.header').addClass('edited');
-            }).fail(function (data) {
-                console.log("ERROR =>" + data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        anyadirParametroRedireccion: function (btnAnyadir) {
-            var id = btnAnyadir.closest('.row').attr('id')
-            var listaParametros = $('#listaParametros_' + id);
-            var indiceNuevoItem = $('.itemParametro', listaParametros).length;
-            var item = '<li class="itemParametro">';
-            item += '<input type="text" class="InputParametro" id="txtValorParametro_' + id + '_' + indiceNuevoItem + '" value="" />';
-            item += '<input type="text" class="InputParametro" id="txtUrlRedireccionParametrizada_' + id + '_' + indiceNuevoItem + '" value="" />';
-            //item += '<input type="text" class="InputParametro" id="txtOrdenParametro_' + id + '_' + indiceNuevoItem + '" value="" />';
-            item += '<input type="button" class="deleteParametro" value="@Html.GetText("COMMON", "ELIMINAR")" />';
-            item += '</li>';
-            $('#listaParametros_' + id).append(item);
-            //$('#listaParametros', btnAnyadir.parent()).append(item);
-        },
-        eliminarParametro: function (botonEliminar) {
-            var parametro = botonEliminar.closest('.itemParametro');
-            parametro.remove();
-        },
-        guardarTodasRedirecciones: function () {
-            var that = this;
-            $('.ok.general').remove();
-            $('.error').remove();
-            if (!that.comprobarErroresGuardado()) {
-                that.ListaRedirecciones = {};
-                that.obtenerDatosRedireccion();
-                that.guardar();
-            }
-            //else {
-            //    that.mostrarErrorGuardado('');
-            //}
-        },
-        mostrarErrorGuardado: function (claveMensaje) {
-            var mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "GUARDARERROR")';
-            if (claveMensaje == 'ERRORURLORIGENVACIA') {
-                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLORIGENVACIA")';
-            }
-            if (claveMensaje == 'ERRORURLDESTINOVACIA') {
-                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORURLDESTINOVACIA")';
-            }
-            if (claveMensaje == 'ERRORNOMPARAMETROVACIO') {
-                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORNOMPARAMETROVACIO")';
-            }
-            if (claveMensaje == 'ERRORSINPARAMETROS') {
-                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINPARAMETROS")';
-            }
-            if (claveMensaje == 'ERRORSINCAMBIOS') {
-                mensaje = '@Html.GetText("COMADMINREDIRECCIONES", "ERRORSINCAMBIOS")';
-            }
-            $('input.guardarTodo').before('<div class="error general">' + mensaje + '</div>');
-        },
-        //aceptarRedireccion: function (botonAceptar) {
-        //    var that = this;
-        //    var redireccion = botonAceptar.closest('.row');
-        //    var panelCabecera = redireccion.find('.header');
-        //    panelCabecera.addClass('edited');
-        //},
-        comprobarErroresGuardado: function () {
-            var that = this;
-            var error = false;
-            error = that.comprobarFilasEditadasBorradas();
-            if (!error) {
-                error = that.comprobarCamposVacios();
-            }
-            else {
-                that.mostrarErrorGuardado('ERRORSINCAMBIOS');
-            }
-            return error;
-        },
-        comprobarFilasEditadasBorradas: function () {
-            return $('.header.edited, .header.deleted').length == 0;
-        },
-        comprobarCamposVacios: function () {
-            var that = this;
-            var error = false;
-            $('.row').each(function () {
-                var fila = $(this);
-                error = that.comprobarUrlOrigen(fila);
-                if (!error) {
-                    error = that.comprobarUrlDestino(fila);
-                    if (error) {
-                        return false;
-                    }
-                }
-                else {
-                    return false;
-                }
-            });
-
-            return error;
-        },
-        comprobarUrlOrigen: function (fila) {
-            var that = this;
-            var input = $('input[name="txtUrlOrigen"]', fila);
-            var error = input.val() == '';
-            if (error) {
-                that.mostrarErrorUrlOrigenVacio(input);
-                that.mostrarErrorGuardado();
-            }
-            return error;
-        },
-        comprobarUrlDestino: function (fila) {
-            var that = this;
-            var error = false;
-            var id = fila.attr('id');
-            var TipoRedireccion = $('input:radio[name=tipoRedireccion_' + id + ']:checked', fila).val();
-
-            if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
-                var input = $('#txtUrlDestino_' + id, fila);
-                error = input.val() == '';
-                if(error){
-                    that.mostrarErrorUrlDestinoVacio(input);
-                }
-            }
-            else if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
-                var input = $('#txtNombreParametro_' + id, fila);
-                error = input.val() == '';
-                if(error){
-                    that.mostrarErrorNomParametroVacio(input);
-                }
-                else {
-                    var listaParametros = $('#listaParametros_' + id);
-                    error = $('.itemParametro', listaParametros).length <= 0;
-                    if (!error) {
-                        $('.itemParametro', listaParametros).each(function (i, item) {
-                            error = ($('#txtValorParametro_' + id + '_' + i, $(item)).val() == '' || $('#txtUrlRedireccionParametrizada_' + id + '_' + i, $(item)).val() == '' /*|| $('#txtOrdenParametro_' + id + '_' + i, $(item)).val() == ''*/);
-                            if(error){
-                                return false;
-                            }
-                        });
-
-                        if(error){
-                            that.mostrarErrorCamposParametrosVacio(listaParametros);
-                        }
-                    }
-                    else{
-                        that.mostrarErrorSinParametros(listaParametros);
-                    }
-                }
-            }
-            else {
-                that.mostrarErrorSinTipoRedireccion($('#rbDirecta_' + id), fila);
-                error = true;
-            }
-
-            return error;
-        },
-        guardar: function () {
-            var that = this;
-
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-                that.urlPagina + '/save',
-                that.ListaRedirecciones,
-                true
-            ).done(function (data) {
-                $('section.header').removeClass('edited');
-                $('section.panEdicion').removeClass('edit');
-                that.mostrarGuardadoOK();
-            }).fail(function (data) {
-                var error = data.split('|||');
-                that.mostrarErrorGuardado();
-                if (error[0] == 'LISTA VACIA') {
-                    that.mostrarErrorGuardado('ERRORSINCAMBIOS');
-                }
-                else if (error[0] == 'URLORIGEN VACIO') {
-                    that.mostrarErrorUrlOrigenVacio($('#txtUrlOrigen_' + error[1]));
-                }
-                else if (error[0] == 'TIPOREDIRECCION INCORRECTA') {
-                    that.mostrarErrorSinTipoRedireccion($('#rbDirecta_' + error[1]));
-                }
-                else if (error[0] == 'URLDESTINO VACIO') {
-                    that.mostrarErrorUrlDestinoVacio($('#txtUrlDestino_' + error[1]));
-                }
-                else if (error[0] == 'NOMPARAMETRO VACIO') {
-                    that.mostrarErrorNomParametroVacio($('#txtNombreParametro_' + error[1]));
-                }
-                else if (error[0] == 'SIN PARAMETROS') {
-                    that.mostrarErrorSinParametros($('#listaParametros_' + error[1]));
-                }
-                else if (error[0] == 'CAMPOPARAMETROS VACIO') {
-                    that.mostrarErrorCamposParametrosVacio($('#listaParametros_' + error[1]));
-                }
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        mostrarGuardadoOK: function () {
-            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINREDIRECCIONES", "GUARDAROK")</div>');
-        },
-        obtenerDatosRedireccion: function () {
-            var that = this;
-            var num = 0;
-            $('.row').each(function () {
-                var fila = $(this);
-                if (fila.children('.header').hasClass('edited') || fila.children('.header').hasClass('deleted')) {
-                    var panelEdicion = fila.children('.panEdicion');
-                    var id = fila.attr('id');
-                    var TipoRedireccion = $('input:radio[name=tipoRedireccion_' + id + ']:checked').val();
-                    var panCampos = '';
-
-                    if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
-                        panCampos = panelEdicion.find('.redireccionDirecta');
-                    }
-                    else if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
-                        panCampos = panelEdicion.find('.redireccionParametrizada');
-                    }
-
-                    var prefijoClave = 'ListaRedirecciones[' + num + ']';
-                    that.ListaRedirecciones[prefijoClave + '.Key'] = id;
-                    that.ListaRedirecciones[prefijoClave + '.OriginalUrl'] = panelEdicion.find('#txtUrlOrigen_' + id).val();
-                    that.ListaRedirecciones[prefijoClave + '.DestinationUrl'] = '';
-                    that.ListaRedirecciones[prefijoClave + '.PreserveFilters'] = false;
-                    that.ListaRedirecciones[prefijoClave + '.DeleteRedirection'] = fila.children('.header').hasClass('deleted');
-
-                    if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Direct)') {
-                        that.ListaRedirecciones[prefijoClave + '.RedirectionType'] = '@(ManageRedirectionsViewModel.RedirectionType.Direct)';
-                        that.ListaRedirecciones[prefijoClave + '.DestinationUrl'] = panCampos.find('#txtUrlDestino_' + id).val();
-                        that.ListaRedirecciones[prefijoClave + '.PreserveFilters'] = panCampos.find('[name="mantenerFiltros"]').is(':checked');
-                    }
-                    else if (TipoRedireccion == '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)') {
-                        that.ListaRedirecciones[prefijoClave + '.RedirectionType'] = '@(ManageRedirectionsViewModel.RedirectionType.Parameterised)';
-                        var listaParametros = $('#listaParametros_' + id);
-                        $('.itemParametro', listaParametros).each(function (i, item) {
-                            var prefijoClaveParametro = prefijoClave + '.ParameterValues[' + i + ']';
-                            that.ListaRedirecciones[prefijoClave + '.ParameterName'] = panCampos.find('#txtNombreParametro_' + id).val();
-                            that.ListaRedirecciones[prefijoClaveParametro + '.Value'] = $('#txtValorParametro_' + id + '_' + i, $(item)).val();
-                            that.ListaRedirecciones[prefijoClaveParametro + '.DestinationUrl'] = $('#txtUrlRedireccionParametrizada_' + id + '_' + i, $(item)).val();
-                            //that.ListaRedirecciones[prefijoClaveParametro + '.Order'] = $('#txtOrdenParametro_' + id + '_' + i, $(item)).val();
-                        });
-                    }
-                    num++;
-                }
-            });
-        }
-    }
-
-    $(document).ready(function () {
-        Array.prototype.findValueByKey = function (key) {
-            var resultado = $.grep(this, function (array) {
-                return array.key == key;
-            });
-
-            if (resultado[0] != null) {
-                return resultado[0].value;
-            }
-
-            return null;
-        };
-
-        OperativaAcciones.init();
-
-    });
-
-</script>
+					@* Botón para guardado de datos *@
+					@* Controlar la integración contínua
+					@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+					{
+						//<input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+						<input disabled id="btnGuardarPaginas" type="button" class="btn btn-outline-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" /> 
+					}
+					else
+					{
+						//<input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
+						<input disabled id="btnGuardarPaginas" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />        
+					} 
+					*@
+				</div>
+			</div>
+		</div>        
+    </div>
 
 
-<style>
-    .row .header .urlOrigen {
-        font-weight: bold;
-    }
-    ol.table li.row section.panEdicion .tipo.noFloat {
-        float:none;
-    }
-    /*input[type="text"].ValorParametro, input[type="text"].UrlRedireccionParametrizada*/
-    input[type="text"].InputParametro {
-        width: initial;
-    }
-    ol#listaParametros {
-        display: inline-block;
-    }
-    ol.table ol ol#listaParametros {
-        padding-top: 5px;
-    }
-    ol.table li.row section.header.edited {
-        background-color: #0fa;
-    }
-</style>
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/estructura.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento de Información General
+            operativaGestionRedirecciones.init();            
+        })();
+    </script>
+}

@@ -1,0 +1,104 @@
+﻿@model ManageRegisterClausesViewModel
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón para poder crear una cláusula legal desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Cláusulas".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+@* Url para crear una cláusula vía modal *@
+string urlCreateClause = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCLAUSULASREGISTRO") + "/new-clause"; 
+@* Url para confirmar el guardado de la cláusula vía modal *@
+string urlSaveClause = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCLAUSULASREGISTRO") + "/save"; 
+
+}
+
+@*
+<ul>
+	<li class="nuevo nueva-clausula">*@
+		@* Botón para añadir una nueva página *@
+		<a
+			href="javascript: void(0);"
+			class="btn btn-outline-primary dropdown-toggle no-flecha"
+			id="menuNuevaClausula"
+			data-toggle="dropdown"
+			aria-haspopup="true"
+			aria-expanded="true">
+			<span class="material-icons">add</span>
+			<span>@Html.GetText("DEVTOOLS","NUEVACLAUSULA")</span>
+		</a>
+		@* Dropdown con el tipo de cláusulas a crear *@
+		<div
+			class="dropdown-menu dropdown-menu-right basic-dropdown"
+			aria-labelledby="menuNuevaClausula">
+			<div>
+				<ul class="no-list-style menuCreacion">
+					@* Tipos de cláusulas a crear *@
+					@* Cláusula Opcional *@
+					<li>
+						<a
+							data-urlcreateclause = @urlCreateClause
+							data-urlsaveclause = @urlSaveClause
+							data-type="@((short)ManageRegisterClausesViewModel.ClauseType.Opcional)"
+							style="cursor: pointer"
+							class="item-dropdown btnAddClauseItem">							
+							@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCLAUSULAOPCIONAL")
+						</a>													
+					</li>		
+					
+					@* Cláusula: Condiciones de uso *@
+					@if (Model.ClausesList.Count(c => c.Type == ManageRegisterClausesViewModel.ClauseType.CondicionesUso) == 0)
+					{
+						<li>
+							<a
+								data-urlcreateclause = @urlCreateClause
+								data-urlsaveclause = @urlSaveClause								
+								data-type="@((short)ManageRegisterClausesViewModel.ClauseType.CondicionesUso)"
+								style="cursor: pointer"
+								class="item-dropdown btnAddClauseItem">							
+								@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCONDICIONESUSO")
+							</a>													
+						</li>						
+					}
+
+					@* Cláusula: Condiciones de uso *@
+					@if (Model.ClausesList.Count(c => c.Type == ManageRegisterClausesViewModel.ClauseType.ClausulasTexo) == 0)
+					{
+						<li>
+							<a
+								data-urlcreateclause = @urlCreateClause
+								data-urlsaveclause = @urlSaveClause								
+								data-type="@((short)ManageRegisterClausesViewModel.ClauseType.ClausulasTexo)"
+								style="cursor: pointer"
+								class="item-dropdown btnAddClauseItem">							
+								@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICAPRIVACIDAD")
+							</a>													
+						</li>
+					}
+
+					@* Cláusula: Política de cookies *@
+					@if (Model.ClausesList.Count(c => c.Type == ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina) == 0)
+					{
+						<li>
+							<a
+								data-urlcreateclause = @urlCreateClause
+								data-urlsaveclause = @urlSaveClause								
+								data-type="@((short)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina)"
+								style="cursor: pointer"
+								class="item-dropdown btnAddClauseItem">							
+								@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOPOLITICACOOKIES")
+							</a>													
+						</li>						
+					}                   
+				</ul>
+			</div>
+		</div>
+@*
+	</li>
+</ul>
+*@
+
+

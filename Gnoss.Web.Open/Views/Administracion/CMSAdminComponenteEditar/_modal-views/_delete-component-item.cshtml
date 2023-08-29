@@ -1,0 +1,42 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal para confirmar la eliminación de un determinado componente CMS
+
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista modal para confirmar la eliminación de un determinado componente --------------------
+*@
+
+<div class="modal-header">
+    @* Título del Modal *@
+    <p class="modal-title">
+        <span class="material-icons">delete</span>
+		@Html.GetText("COMMON","ELIMINAR")
+    </p>
+    @* Cierre del Modal *@
+    <span class="material-icons cerrar"
+          data-dismiss="modal"
+          aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <div class="form-group">
+            <label class="control-label">
+                @Html.GetText("DEVTOOLS","DESEAELIMINARELCOMPONENTE")
+            </label>
+        </div>
+        <div class="form-actions">
+            <button data-dismiss="modal" class="btn btn-outline-primary">@Html.GetText("COMMON","NO")</button>
+            <button class="btn btn-primary btn-delete-component-item">@Html.GetText("COMMON","SI")</button>
+        </div>
+    </div>
+</div>

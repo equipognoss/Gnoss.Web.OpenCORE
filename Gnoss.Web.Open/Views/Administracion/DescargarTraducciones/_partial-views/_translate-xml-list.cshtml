@@ -1,0 +1,38 @@
+﻿@model DescargarTraduccionesViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista contenedora de los items de tipo "XML" para mostrar la posibilidad de descargarlos
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+List<Dictionary<string, string>> xmlList = new List<Dictionary<string, string>>();
+}
+
+@foreach (string ontologiaPrincipal in Model.mListaOntologiasPrincipales.Keys)
+{
+    string nameForCheckbox = $"ontologiaPrincipalXML_{ontologiaPrincipal}";
+    string name = Model.mListaOntologiasPrincipales[ontologiaPrincipal];
+
+    // Crear un diccionario y agregar algunos elementos
+    Dictionary<string, string> ontologyItem= new Dictionary<string, string>();
+    ontologyItem.Add("name", name);
+    ontologyItem.Add("nameForCheckbox", nameForCheckbox);
+    // Añadir la ontología a la lista
+    xmlList.Add(ontologyItem);
+}
+
+
+<ul id="id-added-descarga-xml-list"
+    data-value="xml"
+    class="js-community-descarga-xml-list component-list no-list-style component-translate-list d-none">
+
+	@* Contenedor de las descargas de tipo XML *@
+    @foreach (Dictionary<string, string> xmlItem in xmlList)
+    {
+        @Html.PartialView("_partial-views/_translate-xml-list-item", xmlItem)
+    }
+</ul>

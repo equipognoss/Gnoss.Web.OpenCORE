@@ -1,0 +1,213 @@
+﻿@model ComAdminSemanticElemModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra la información/detalles de un elemento de un objeto de conocimiento de tipo secundario.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    // Propiedades o recursos de la entidad
+    SemanticResourceModel semanticResource = Model.SecondaryEntities.SemanticResourceModel;	
+
+    // Sujeto entidad secundaria. Vacío si es nuevo o el propio si se está editando
+    string sujEntSec = "";
+    // Flag para conocer si es de reciente creación el item
+    bool isNewCreation = !string.IsNullOrEmpty(ViewBag.isNewCreation) ? ( bool.Parse(ViewBag.isNewCreation)) : false; 
+    // Idiomas de la propiedad (Defecto y idiomas disponibles)
+    string idiomaPorDefecto = "";
+    string idiomasDisponibles = "";
+    // Guid sugerido en caso de ser de reciente creación    
+    string newGuidId = Guid.NewGuid().ToString();
+}
+
+<input type="hidden" name="TabEliminada" value="false">
+<div class="card card-body d-block">
+	
+	@{
+		// Id automático
+        string randomId = newGuidId.Substring(0, 5);
+		// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+		string multiIdiomaTabId = randomId;
+	}
+
+    @* Control de idiomas para poder Añadir el identificador del sujEntSec *@
+
+    @if (!string.IsNullOrEmpty(semanticResource.DefaultLanguage))
+    {
+        string idiomasDis = "";
+
+        foreach (string idioma in semanticResource.AvailableLanguages.Keys)
+        {
+            idiomasDis += idioma + ",";
+        }
+
+        idiomasDis = idiomasDis.Substring(0, idiomasDis.Length - 1);
+        idiomasDisponibles = idiomasDis;
+        idiomaPorDefecto = semanticResource.DefaultLanguage;
+
+        @* Sección más abajo. Gestión de idiomas para el identificador
+        <script type="text/javascript">
+            var IdiomaDefectoFormSem = '@semanticResource.DefaultLanguage';
+            var IdiomasConfigFormSem = '@idiomasDis';
+        </script>
+    *@
+    }
+
+    @* Si no es de lectura *@
+    @if (!semanticResource.ReadMode)
+    {
+        @foreach (SemanticEntityModel semEnti in semanticResource.RootEntities)
+        {                   
+            // Guardo el id para mostrarlo al principio
+            sujEntSec = semEnti.Key;
+        }
+    }
+
+
+    @* Añadir el identificador del sujEntSec *@
+    <div class="form-group identification-sujEntSec mb-3"
+         data-idioma-defecto-formsem="@idiomaPorDefecto"
+         data-idiomas-config-formSem="@idiomasDisponibles">
+
+        <label class="control-label d-block">@Html.GetText("COMADMIN","SUJETOENTIDAD")</label>
+        <input type="text"
+        @(!isNewCreation ? "disabled" : null)
+               class="form-control not-outline sujEntidadSec"
+               value="@(!isNewCreation ? sujEntSec : newGuidId)">
+    </div>
+
+	
+	@* Si no es de lectura *@
+	@if (!semanticResource.ReadMode)
+	{
+		@foreach (SemanticEntityModel semEnti in semanticResource.RootEntities)
+		{
+			@if (semEnti.Entity.SuperclasesUtiles.Count == 0)
+			{					
+				@* De momento no lo pinto. Solo pinta el nombre del elemento que se desea editar *@
+				@* @Html.PartialView("_partial-views/_ontology-secondary-entity-title", semEnti) *@
+			}
+			
+			@* @Html.PartialView("SemCms/_Entidad", semEnti) *@			
+			@Html.PartialView("_partial-views/_ontology-secondary-entity", semEnti)
+            // Guardo el id para mostrarlo al final
+            sujEntSec = semEnti.Key;
+		}
+	}
+    @* REVISAR ESTO DE _GeneradorSemCMS *@
+    else
+    {
+        string xmlns = "xmlns:" + semanticResource.OntologyNamespace + "=\"" + semanticResource.OntologyUrl + "\"";
+
+        foreach (string keyName in semanticResource.OntologyNamespaces.Keys)
+        {
+            if (semanticResource.OntologyNamespaces[keyName] != "rdf" && semanticResource.OntologyNamespaces[keyName] != "owl" && semanticResource.OntologyNamespaces[keyName] != "xsd" && semanticResource.OntologyNamespaces[keyName] != "rdfs")
+            {
+                xmlns += " xmlns:" + semanticResource.OntologyNamespaces[keyName] + "=\"" + keyName + "\"";
+            }
+        }
+
+        string rel = "rel=\"" + semanticResource.DocSemCmsProperty + "\"";
+        string about = "about=\"" + Html.GetUrlPagina() + "\"";
+        
+        <div @Html.Raw(xmlns) xmlns:sioc="http://rdfs.org/sioc/ns#" xmlns:gnoss="http://gnoss.com/gnoss.owl#" @Html.Raw(rel) @Html.Raw(about)>
+            @foreach (SemanticEntityModel semEnti in semanticResource.RootEntities)
+            {
+                if (semEnti.Entity.SuperclasesUtiles.Count == 0)
+                {
+                    @* @Html.PartialView("SemCms/_TituloEntidad", semEnti) *@
+                    @Html.PartialView("_partial-views/_ontology-secondary-entity-title", semEnti)
+                }
+                @* @Html.PartialView("SemCms/_Entidad", semEnti); *@                
+                @Html.PartialView("_partial-views/_ontology-secondary-entity", semEnti)
+                // Guardo el id para mostrarlo al final
+                sujEntSec = semEnti.Key;
+            }
+        </div>
+        
+            if (semanticResource.HideInfoIsNotMember)
+            {
+                string titulo = semanticResource.TitleInfoIsNotMember;
+                if (!string.IsNullOrEmpty(titulo))
+                {
+                    titulo = "<p class=\"title\">" + titulo + "</p>";
+                }
+
+                string linkRegistrarse = semanticResource.RegisterLinkInfoIsNotMember;
+                if (!string.IsNullOrEmpty(linkRegistrarse))
+                {
+                    linkRegistrarse = Html.GetText("COMMON", "LINKREGISTRARSE", linkRegistrarse);
+                }
+                
+            
+            <div class="mensajePersonalizadoSoloMiembros">
+                @Html.Raw(Html.GetText("PERFILBASERECURSOSFICHA", "VELADOSOLOMIEMBROS", titulo, linkRegistrarse))
+            </div>
+            }
+    }
+
+    @* REVISAR ESTO DE _GeneradorSemCMS USANDO semanticResourcesemanticResourcesemanticResourcesemanticResourcesemanticResource *@
+    @if (!semanticResource.ReadMode)
+    {
+        <input type="hidden" id="mTxtRegistroIDs" value="@semanticResource.AuxiliaryIDRegisterInfo" />
+        <input type="hidden" id="mTxtValorRdf" value="@semanticResource.AuxiliaryRDFInfo" />
+        <input type="hidden" id="mTxtCaracteristicasElem" value="@semanticResource.AuxiliaryElementsFeaturesInfo" />
+        <input type="hidden" id="mTxtElemEditados" />
+        <input type="hidden" id="mTxtDeplegablesIDs" />
+        <input type="hidden" id="mTxtValorRdfHerencias" value="@semanticResource.AuxiliaryInheritancesInfo" />
+        <input type="hidden" id="mTxtNombreCatTesSem" value="@semanticResource.AuxiliaryCategoryTesSemNameInfo" />
+        <input type="hidden" id="txtHackValorImgRepresentante" value="@semanticResource.ImageRepresentativeValue" />
+        <input type="hidden" id="txtValoresGrafoDependientes" value="@semanticResource.AuxiliaryDependentGraphValuesInfo" />
+        <input type="hidden" id="txtSubOntologias" value="@semanticResource.AuxiliarySubOntologiesExtInfo" />
+        <input type="hidden" id="txtHackControlRep" />
+        <input type="hidden" id="txtEntidadesOntoIDs" value="@semanticResource.AuxiliaryEntityIDRegisterInfo" />
+
+        if (!string.IsNullOrEmpty(semanticResource.DefaultLanguage))
+        {
+            string idiomasDis = "";
+
+            foreach (string idioma in semanticResource.AvailableLanguages.Keys)
+            {
+                idiomasDis += idioma + ",";
+            }
+
+            idiomasDis = idiomasDis.Substring(0, idiomasDis.Length - 1);            
+            idiomasDisponibles = idiomasDis ;
+            idiomaPorDefecto = semanticResource.DefaultLanguage;
+        
+            <script type="text/javascript">
+                var IdiomaDefectoFormSem = '@semanticResource.DefaultLanguage';
+                var IdiomasConfigFormSem = '@idiomasDis';
+            </script>
+        }
+    
+        <div id="divPreguntaConfirmacionEventos" class="confirmar" style="display:none;">
+            <div class="pregunta">
+                <span id="lblPregunta_ConfirmacionEventos"></span>
+                <input id="lbSi_ConfirmacionEventos" type="button" class="btn btn-primary mt-2" value="@Html.GetText("COMMON", "SI")" onclick="" />
+                <input type="button" class="btn btn-outline-primary mt-2" value="@Html.GetText("COMMON", "NO")" onclick="$('#divPreguntaConfirmacionEventos').css('display', 'none');" />
+            </div>
+        </div>
+    
+        <input type="hidden" id="txtHackArchivoSelecc" />
+        if (!semanticResource.MassiveResourceLoad)
+        {
+            <div id="divContArchiInicio" class="confirmar divSelecArchFormSem" style="display:none;">
+                <div id="divContArchiInicioInt" class="pregunta">
+                    <label> @Html.GetText("PERFILBASESUBIR", "NUEVOARCHIVO_T")</label>
+                    <input type="file" id="fuExaminarSemCms" />
+                </div>
+            </div>
+        }
+
+        if (semanticResource.JcropAvailable)
+        {
+            @Html.PartialView("SemCms/_JcropSemCms", Model)
+        }
+    }
+
+	@* Botón para guardar el elemento si se desea editar. Estará disabled si no hay ningún cambio por parte del usuario *@
+	<button class="btn btn-primary btnSaveInstanciaEntidad" disabled>@Html.GetText("COMMON","GUARDAR")</button>
+</div>

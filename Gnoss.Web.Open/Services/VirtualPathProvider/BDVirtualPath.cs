@@ -125,13 +125,17 @@ namespace Gnoss.Web.Services.VirtualPathProvider
                                 //    virtualPath = virtualPath.Replace("Views", DirectorioVistas);
                                 //}
                             }
-                            if (!html.Contains(ViewImports.First()))
-                            {
-                                string textoInicial = string.Join("\r\n", ViewImports) + "\r\n";
-                                html = textoInicial + html;
-                            }
+
                             try
                             {
+                                if (html != null)
+                                {
+                                    if (!html.Contains(ViewImports.First()))
+                                    {
+                                        string textoInicial = string.Join("\r\n", ViewImports) + "\r\n";
+                                        html = textoInicial + html;
+                                    }
+                                }
                                 ListaRutasVirtuales.TryAdd(virtualPath, html);
                             }
                             catch { }

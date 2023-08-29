@@ -1,16 +1,87 @@
-﻿@model Es.Riam.Gnoss.Web.MVC.Models.ViewModels.AdministrarAplicacionesViewModel
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.OAuth.OAuthModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista index donde se muestra información para la descarga del fichero oAuth de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
 
 @{
-    Html.SetTitle("Index");
-    string urlBase = this.Context.Request.Path.ToString().ToLower();
-    if (urlBase.EndsWith("/"))
-    {
-        urlBase = urlBase.Substring(0, urlBase.Length - 1);
-    }
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+CommunityModel Comunidad = Html.GetComunidad();
+HeaderModel cabecera = Html.GetCabecera();
+// Layout a cargar para el editor de páginas CMS
+Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+
+// UrlBase para descargar el fichero OAuth
+string urlBase = this.Context.Request.Path.ToString().ToLower();
 }
-<div id="col01">
-    <h2>Descargar Configuracion OAuth</h2> <br />
-    <button onclick="location.href='@string.Concat(urlBase,"/descargarXML")'">Descargar Configuracion OAuth</button> <br /> <br />
-</div>
+
+
+@*
+----------------------------------------------------------------
+-------------------- Vista descarga/configuración fichero oAuth --------------------
+*@
+
+@* Construir la url para descarga de Oauth *@
+@if (urlBase.EndsWith("/"))
+{
+    urlBase = urlBase.Substring(0, urlBase.Length - 1);
+}
+
+
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+            </li>
+            <li>
+                @Html.GetText("DEVTOOLS","OAUTH")
+            </li>
+        </ul>
+    </div>
+
+    @* Contenido Central *@
+    <div class="formulario-edicion background-blanco">
+        <h2>@Html.GetText("DEVTOOLS","CONFIGURACIONOAUTH")</h2>
+        <p>Desde aquí podrás acceder a los tokens de acceso para acceder al API de GNOSS a través de otras aplicaciones.</p>
+        <p>Puedes copiar aqui las variables de entorno para configurar las variables de entorno de tu aplicación</p>
+        <table>
+            <tr><td>useEnvironmentVariables="true"</td></tr>
+            <tr><td>apiEndpointV3="@Model.API"</td></tr>
+            <tr><td>communityShortName="@Model.ShortName"</td></tr>
+            <tr><td>ontologyName="@Model.OntologyName"</td></tr>
+            <tr><td>developerEmail="@Model.DevEmail"</td></tr>
+            <tr><td>tokenKey="@Model.TokenKey"</td></tr>
+            <tr><td>tokenSecret="@Model.TokenSecret"</td></tr>
+            <tr><td>consumerKey="@Model.ConsumerKey"</td></tr>
+            <tr><td>consumerSecret="@Model.ConsumerSecret"</td></tr>
+            <tr><td>logLevel="ERROR"</td></tr>
+            <tr><td>logPath="logs"</td></tr>
+            <tr><td>logFileName="trace.log"</td></tr>
+        </table>
+        <br />
+        <p>O puedes descargar desde aquí un archivo oauth.config para poder depurar tu aplicación.</p>
+        <a href="javascript: void(0);" onclick="location.href='@string.Concat(urlBase,"/descargarXML")'" class="btn btn-primary uppercase">@Html.GetText("HISTORIALVERSIONES","DESCARGAR")</a>
+        <br /><br />
+        <p>Para usar el API de gnoss, puedes usar uno de estos API cliente de GNOSS:</p>
+        <span class="icon" style="padding-right:10px;">
+			<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0,0,256,256" style="fill:#000000;">
+			<g fill="#999999" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(5.33333,5.33333)"><path d="M36,5l-19,16.5l-10,-7.5l-3,1.25v17.5l3,1.25l10,-7.5l19,16.5l8,-3v-32zM8,20l5,4l-5,4zM24,24l10,-7v14z"></path></g></g>
+			</svg>    
+		</span>
+        <span><a href="https://www.nuget.org/packages/GnossApiWrapper/">https://www.nuget.org/packages/GnossApiWrapper/</a></span>
+        <br />
+        <span class="icon" style="padding-right: 10px;">
+			<svg fill="#999999" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0 0 24 24">
+				<path d="M 13.445312 1 C 14.545312 3.193 9.5061094 4.5450937 9.0371094 6.3710938 C 8.6081094 8.0490938 12.02825 10 12.03125 10 C 11.51125 9.306 11.135281 8.7313906 10.613281 7.6503906 C 9.7312812 5.8223906 15.824312 3.937 13.445312 1 z M 17 4 C 17 4 13.199859 4.230875 13.005859 6.546875 C 12.919859 7.577875 14.004156 8.1279063 14.035156 8.8789062 C 14.061156 9.4909063 13.386719 10 13.386719 10 C 13.386719 10 14.500813 9.8295313 14.882812 8.8945312 C 15.305813 7.8575313 14.169875 7.1005313 14.296875 6.2695312 C 14.417875 5.4755312 17 4 17 4 z M 10.164062 10.001953 C 10.164062 10.001953 6 9.941625 6 11.140625 C 6 11.712506 7.1602183 12.030394 8.7636719 12.146484 C 8.1135167 12.17493 7.1992187 12.685807 7.1992188 13.185547 C 7.1992188 14.219547 12.102422 15.015859 15.732422 13.505859 L 14.476562 12.6875 C 12.026531 13.518779 7.5235922 13.25586 8.8085938 12.150391 C 10.71633 12.282905 13.247952 12.128366 15.349609 11.712891 C 15.349609 11.712891 16.234719 11.212359 16.511719 10.943359 C 13.958719 11.471359 8.2871094 11.318375 8.2871094 10.859375 C 8.2871094 10.436375 10.164062 10.001953 10.164062 10.001953 z M 18.59375 10.001953 C 18.135986 9.9821016 17.63475 10.134 17.203125 10.453125 C 18.104125 10.251125 18.865234 10.824328 18.865234 11.486328 C 18.865234 12.974328 16.800781 14.384766 16.800781 14.384766 C 16.800781 14.384766 20 14.003641 20 11.556641 C 20 10.546016 19.356689 10.035039 18.59375 10.001953 z M 9.7441406 14.341797 C 8.8481406 14.341797 8.2675781 14.963922 8.2675781 15.419922 C 8.2675781 16.830922 13.614375 16.880312 15.734375 15.445312 L 14.386719 14.576172 C 12.803719 15.327172 8.8291406 15.429797 9.7441406 14.341797 z M 5.8789062 16.693359 C 4.5902637 16.65192 4 17.327656 4 17.878906 C 4 20.810906 18 20.668828 18 17.673828 C 18 17.175828 17.457719 16.939172 17.261719 16.826172 C 18.404719 19.690172 5.671875 19.493734 5.671875 17.802734 C 5.671875 17.417734 6.345125 17.026078 7.203125 17.205078 C 7.203125 17.205078 6.8896094 16.831813 6.4746094 16.757812 C 6.2617344 16.720188 6.062998 16.699279 5.8789062 16.693359 z M 20 18.707031 C 17.799 20.936031 11.740813 22.289062 6.1328125 20.914062 C 11.766813 23.275062 19.973 21.442031 20 18.707031 z"></path>
+			</svg>    
+		</span>
+        <span><a href="https://mvnrepository.com/artifact/io.github.equipognoss/Gnoss-ApiWrapper-Java">https://mvnrepository.com/artifact/io.github.equipognoss/Gnoss-ApiWrapper-Java</a></span>
+    </div>	

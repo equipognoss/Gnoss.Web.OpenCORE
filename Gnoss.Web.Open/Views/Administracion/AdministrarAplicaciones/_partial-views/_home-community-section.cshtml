@@ -1,0 +1,165 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la sección de Configuración desde la Home de DevTools.
+Esta vista se cargará en la sección central cuando se pulse sobre "Configuración"
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+
+    @* Permisos diseño en la comunidad *@
+    bool administrarDiseño = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));                            
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de la sección Configuración en la Home de la Comunidad en DevTools --------------------
+*@
+
+@* Contenedor central de secciones *@
+<div class="section-list-wrap">
+    
+    @if (administrarDiseño== true){
+
+        @* Actualizar DLLS 
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="actualizar-dlls-configuracion">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ACTUALIZARDLLS")</h2>
+            <p>
+                Actualiza las librerías DLLs instaladas en tu comunidad para estar a la última en funcionamiento y seguridad.
+            </p>
+        </div>*@
+
+        @* Descargar OAuth *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="oauth-configuracion">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "DESCARGAROAUTH")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","DESCARGADELFICHEROOAUTHPARALAREALIZACIONDEACCIONESQUEREQUIER")
+            </p>
+        </div>
+
+        @* Administrar Cookies *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="cookies-configuracion">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOOKIESCOM")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","GESTIONDELASCOOKIESTECNICASYANALITICASQUESEUTILIZANENLACOMUN")
+            </p>
+        </div>
+
+       @* Configurar FTP *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="ftp-configuracion">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "CONFIGURAFTP")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","DATOSDEACCESOEINSTRUCCIONESPARAACCEDERALSERVIDORVIAFTP")
+            </p>
+        </div>                              
+    }
+
+    @* Administrar traducciones *@
+    @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+    {                            
+        bool administrarTraducciones = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
+        if (administrarTraducciones)
+        {
+            if (administrarTraducciones && !string.IsNullOrEmpty(Comunidad.ShortName))
+            {                
+                <div class="section section-navigation" data-parent-section="configuracion" data-section="traducciones-configuracion">
+                    <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")</h2>
+                    <p>
+                        @Html.GetText("DEVTOOLS","SERVICIODEPERSONALIZACIONDELOSTEXTOSENMULTIIDIOMAQUESEMOSTRA")
+                    </p>
+                </div>             
+            }
+        }
+    }
+
+        
+    @if (permisosPaginas.EsAdministradorProyecto)
+    {
+        @* Administrar Trazas *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="trazas-configuracion">
+            <h2>@Html.GetText("DEVTOOLS","TRAZAS")</h2>
+            <p>                
+                @Html.GetText("DEVTOOLS","ADMINISTRACIONDETRAZASSOBRESERVICIOSDELACOMUNIDADPARALAREALI")
+            </p>
+        </div>
+
+        @* Chequear Instalaciones (Comunidad) - Deshabilitado hasta asegurarse de qué añadir en la vista final. De momento funciona correctamente
+        @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+        {
+            bool chequearInstalaciones = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
+            if (chequearInstalaciones)
+            {
+                @if (chequearInstalaciones && !string.IsNullOrEmpty(Comunidad.ShortName))
+                {
+                    <div class="section section-navigation" data-parent-section="configuracion" data-section="estado-servicios">
+                        <h2>@Html.GetText("DEVTOOLS","ESTADODELOSSERVICIOS")</h2>
+                        <p>
+                            @Html.GetText("DEVTOOLS","COMPROBACIONDELESTADODELOSSERVICIOSINSTALADOSENLACOMUNIDAD")
+                        </p>
+                    </div>
+                }
+            }
+        }
+    *@
+
+        @* Administrar Caché *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="cache-configuracion">
+            <h2>
+                @Html.GetText("DEVTOOLS","CACHE")
+            </h2>
+            <p>
+                @Html.GetText("DEVTOOLS","ADMINISTRACIONDELBORRADODELAMEMORIACACHEDELACOMUNIDAD,RECURS")
+            </p>
+        </div>
+
+        @* Administrar SEO / Analytics *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="seo-configuracion">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","SEO,GOOGLEANALYTICSEINDEXACIONDECONTENIDODELACOMUNIDADENBUSC")
+            </p>
+        </div>
+
+        @* Cláusulas Registro / Cláusulas Legales*@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="clausulas-configuracion">
+            <h2>@Html.GetText("COMADMINCLAUSULASREGISTRO", "CLAUSULASREGISTRO")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CLAUSULASLEGALES,DEUSOYADICIONALESQUEDEBERANSERACEPTADASPORE")
+            </p>
+        </div>
+
+        @* Buzón de Correo *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="correo-configuracion">
+            <h2>@Html.GetText("DEVTOOLS","BUZONDECORREO")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONFIGURACIONDELBUZONDECORREODELACOMUNIDADELCUALSERAGESTIONA")
+            </p>
+        </div>
+
+        @* Servicios externos de Correo *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="servicioexterno-configuracion">
+            <h2>@Html.GetText("DEVTOOLS","SERVICIOSEXTERNOS")</h2>
+            <p>                
+                @Html.GetText("DEVTOOLS","CONFIGURACIONDELAURLBASEYDELOSSERVICIOSEXTERNOSQUESEUTILIZAR")
+            </p>
+        </div>
+    }
+
+    @* Opciones MetaAdministrador*@
+    @if (permisosPaginas.EsMetaAdministrador)
+    {
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="meta-configuracion">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINMETAADMINOPTIONS")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONFIGURACIONAVANZADADEPERMISOS,APARIENCIA,USUARIOS,REDESSOC")
+            </p>
+        </div>                           
+    }
+</div>
+
+

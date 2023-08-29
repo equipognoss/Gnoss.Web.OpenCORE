@@ -94,6 +94,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "estructura edicion edicionPaginas no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Informacion_Contextual;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "DESCUBRIMIENTOYANALISIS");            
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "INFORMACIONCONTEXTUAL");
+
+            // Establecer en el ViewBag el idioma por defecto
+            ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
             return View(PaginaModel);
@@ -164,17 +176,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
+
             ControladorContextos contrContex = new ControladorContextos(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            
             string errores = contrContex.ComprobarErrores(ListaGadgets);
             if (string.IsNullOrEmpty(errores))
             {
-                GuardarXmlCambiosAdministracion();
                 ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                 bool transaccionIniciada = false;
-
                 try
                 {
-
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
 

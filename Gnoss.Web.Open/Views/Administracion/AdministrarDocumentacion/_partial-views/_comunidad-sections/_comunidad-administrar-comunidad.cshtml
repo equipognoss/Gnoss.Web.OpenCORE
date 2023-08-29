@@ -1,0 +1,60 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Administrar Comunidad
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false;
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();    
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Administrar Comunidad *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && showDocumentationByDefault) ? "data-target=#administrar-comunidad" : null)								
+				@( (showDocumentationByDefault && showDocumentationByDefault) ? "aria-expanded='true'" : null)
+				aria-controls="administrar-comunidad">
+				Administrar Comunidad
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Administrar Comunidad *@
+	<div
+		id="administrar-comunidad"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>Para poder configurar las opciones básicas de una comunidad, es necesario acceder a la sección “Comunidad” tal y como se muestra en la siguiente ilustración.</p>
+			<div class="text-center">
+				<figure class="figure">						  
+				  <img src="~/img/documentacionDevtools/01comunidad/homeSeccionComunidad.png"/>					
+				  <figcaption class="figure-caption">Desde la sección "Comunidad" se accede a la gestión básica de la comunidad.</figcaption>
+				</figure>    
+			</div>	
+			<p>Una vez se acceda a esta sección, se podrán configurar las siguientes opciones de una comunidad Gnoss:</p>
+			<ul>			
+				<li><strong>Información General:</strong> Establecer la información básica de una comunidad como es el estado de la comunidad, su nombre, descripción, el tipo de comunidad, el acceso a la misma y sus imágenes así como si se desea que la comunidad sea multilenguaje.</li>
+				<li><strong>Tipos de contenido / Permisos:</strong> Configuración de los permisos de acceso a los recursos de la comunidad así como la posibilidad de descargar ficheros adjuntos para usuarios no conectados.</li>
+				<li><strong>Categorías:</strong> Edición y creación de categorías para la clasificación de los recursos de la comunidad. Desde aquí también se gestiona la solicitud de nuevas categorías realizadas por los usuarios de la comunidad.</li>
+				<li><strong>Interacción social:</strong> Configuración de los permisos de los miembros de la comunidad para poder enviar invitaciones a la comunidad, comentar, crear y compartir recursos en otras comunidades.</li>
+				<li><strong>Miembros:</strong> Gestión de los miembros, grupos y organizaciones que forman parte de la comunidad.</li>
+				<li><strong>Niveles de certificación:</strong> Administrar los diferentes niveles de certificación que estarán disponibles en la comunidad para poder calificar o valorar los recursos de la comunidad.</li>
+				<li><strong>Administrar Sharepoint:</strong> Configuración del servicio SharePoint en la comunidad. Esta funcionalidad permite crear un recurso en Sharepoint para poder ser editado de forma colaborativa, crear versiones y poder descargar el archivo desde la página del recurso.</li>
+			</ul>					
+		</div>		
+	</div>
+</div>

@@ -16,6 +16,7 @@ using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public string UrlIframe { get; set; }
         public string UrlRedirect { get; set; }
     }
-
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class LogoutController : ControllerBaseWeb
     {
 

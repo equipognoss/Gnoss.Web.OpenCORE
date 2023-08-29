@@ -1,0 +1,211 @@
+﻿@model AdministrarPestanyasViewModel
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón con un panel dropdown para poder crear un tipo de página desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Listado de páginas".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+
+}
+@*
+----------------------------------------------------------------
+
+-------------------- Vista parcial para crear un tipo de página desde Administración de páginas de la Comunidad --------------------*@
+
+@*Botón para la creación de una página en Listado de páginas
+Antes se utilizaba en el Header. Ahora se colocará en la propia página. Quitar ul > li y la clase "btn-round" del <a>
+<ul>
+	<li class="nuevo nueva-pagina">*@
+		@* Botón para añadir una nueva página *@
+		<a
+			href="javascript: void(0);"
+			class="btn btn-outline-primary dropdown-toggle no-flecha"
+			id="menuNuevaPagina"
+			data-toggle="dropdown"
+			aria-haspopup="true"
+			aria-expanded="true">
+			<span class="material-icons">add</span>
+			<span>@Html.GetText("DEVTOOLS","NUEVAPAGINA")</span>
+		</a>
+		@* Dropdown con el tipo de páginas a crear *@
+		<div
+			class="dropdown-menu dropdown-menu-right basic-dropdown"
+			aria-labelledby="menuNuevaPagina">
+			<div>
+				<ul class="no-list-style menuCreacion">
+					@* Tipos de páginas a crear *@
+					@* Página tipo Home *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Home) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.Home)">
+								@Html.GetText("COMMON", "HOME")
+							</a>													
+						</li>
+					}
+					@* Página tipo Índice *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Indice) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.Indice)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "INDICE")
+							</a>													
+						</li>
+					}
+
+					@* Página tipo Recursos *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Recursos) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.Recursos)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "RECURSOS")
+							</a>													
+						</li>
+					}
+
+					@* Página tipo Preguntas *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Preguntas) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.Preguntas)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "PREGUNTAS")
+							</a>													
+						</li>
+					}
+
+					@* Página tipo Debates *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Debates) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.Debates)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "DEBATES")
+							</a>													
+						</li>
+					}
+
+					@* Página tipo Encuestas *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.Encuestas) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.Encuestas)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "ENCUESTAS")
+							</a>													
+						</li>
+					}
+
+					@* Página tipo Personas y Organizaciones *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.PersonasYOrganizaciones) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.PersonasYOrganizaciones)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "PERSONASYORGANIZACIONES")
+							</a>													
+						</li>
+					}
+
+					@* Página tipo Acerca de *@
+					@if (Model.ListaPestanyas.Count(p => p.Type == TipoPestanyaMenu.AcercaDe) == 0){
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.AcercaDe)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "ACERCADE")
+							</a>													
+						</li>
+					}
+
+					@* Página CMS Disponible *@
+					@if (Model.CMSDisponible)
+                    {
+						<li>
+							<a
+								class="item-dropdown linkAddNewPage"
+								data-pagetype="@((short)TipoPestanyaMenu.CMS)"
+								data-target="#modal-configuracion-pagina"
+								data-toggle="modal">
+								@Html.GetText("COMMON", "CMS")
+							</a>													
+						</li>                        
+                    }
+
+					@* Página Semántica *@					                    
+					<li>
+						<a
+							class="item-dropdown linkAddNewPage"
+							data-pagetype="@((short)TipoPestanyaMenu.BusquedaSemantica)"
+							data-target="#modal-configuracion-pagina"
+							data-toggle="modal">
+							@Html.GetText("COMMON", "BUSQUEDASEMANTICA")
+						</a>													
+					</li>  				
+					@* Página Enlace interno *@					                    
+					<li>
+						<a
+							class="item-dropdown linkAddNewPage"
+							data-pagetype="@((short)TipoPestanyaMenu.EnlaceInterno)"
+							data-target="#modal-configuracion-pagina"
+							data-toggle="modal">
+							@Html.GetText("COMMON", "ENLACEINTERNO")
+						</a>													
+					</li> 
+
+					@* Página Enlace externo *@					                    
+					<li>
+						<a
+							class="item-dropdown linkAddNewPage"
+							data-pagetype="@((short)TipoPestanyaMenu.EnlaceExterno)"
+							data-target="#modal-configuracion-pagina"
+							data-toggle="modal">
+							@Html.GetText("COMMON", "ENLACEEXTERNO")
+						</a>													
+					</li>
+			@if (Model.ListaPestanyasOntologia.Count > 0)
+				{
+				<div class="dropdown-divider"></div>
+					foreach (string ontologia in Model.ListaPestanyasOntologia)
+					{						
+						<li>
+							<a class="item-dropdown linkAddNewPage"
+							data-pagetype="@((short)TipoPestanyaMenu.BusquedaSemantica)"
+							data-target="#modal-configuracion-pagina"
+							data-nameonto="@ontologia"
+							data-toggle="modal">
+								<span class="material-icons">star</span>
+							@Html.GetText("COMMON", "BUSQUEDAOC") @ontologia
+							</a>
+						</li>
+					}
+				}
+				</ul>
+			</div>
+		</div>
+@*
+	</li>
+</ul>
+*@

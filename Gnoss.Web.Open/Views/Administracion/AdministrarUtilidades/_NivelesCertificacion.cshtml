@@ -1,64 +1,68 @@
 ﻿@model AdministrarComunidadUtilidades
 
-@if (Html.GetComunidad().ProyectType == CommunityModel.TypeProyect.EducacionExpandida)
-{
-    <h4>@Html.GetText("COMADMIN", "CALIFICACION")</h4>
-    <p>@Html.GetText("COMADMIN", "DESCRIPCIONNIVELESCLASE")</p>
-    <p>
-        <input type="checkbox" @Html.Raw(Model.NivelesCertificacionDisponibles ? "checked=\"checked\"" : "") name="chkActivarNivelesCertificacion" id="chkActivarNivelesCertificacion">
-        <label for="chkActivarNivelesCertificacion">@Html.GetText("COMADMIN", "ACTIVARCERTIFICACIONCLASE")</label>
-    </p>
-    <div @Html.Raw(Model.NivelesCertificacionDisponibles ? "" : "style=\"display:none\"") id="nivelesCertificacion">
-        <p>@Html.GetText("COMADMIN", "PERSONALIZARCLASE")</p>
-        <input type="hidden" id="txtIdsTextBoxHack" name="txtIdsTextBoxHack">
-        <div id="shortableNiveles">
-            @foreach (AdministrarComunidadUtilidades.NivelCertificacion nivelCertificacion in Model.NivelesCertificacion.OrderBy(nivel => nivel.Orden))
-            {
-                <div class="panNivel" id="@nivelCertificacion.CertificacionID">
-                    <span class="handle">:::</span>
-                    <input type="text" value="@nivelCertificacion.Nombre" name="NombreNivel" />
-                    <a style="margin-right:10px;" class="eliminar@(nivelCertificacion.TieneDocsAsociados ? " docsAsociados" : "")">@Html.GetText("COMMON", "ELIMINAR")</a>
-                </div>
-            }
-            <span style="display: none" id="lblAdvertenciaInf">@Html.GetText("COMADMIN", "ADVERTENCIANIVELCERTIFICACIONVACIO");</span>
-        </div>
-        <div id="addNivel">
-            <a id="btnAddNivel">@Html.GetText("PERFILBASESUBIR", "AGREGAR")</a>
-        </div>
+@*
+Descripción
+-----------------------------------------------
+Vista que contendrá los niveles de certificación de la comunidad. Será contenido por la página index_NivelesCertificacion
 
-        <span id="lblPoliticaCertificacion">@Html.GetText("COMADMIN", "PERSONALIZARCERTIFICACIONCLASE")</span>
+Variables
+----------------------------------------------------------------
+*@
+@{
 
-        <textarea class="cke mensajes" id="txtPoliticaCertificacion" cols="20" rows="2" name="txtPoliticaCertificacion">@Model.PoliticaCertificacion</textarea>
-    </div>
 }
-else
-{
-    <h4>@Html.GetText("COMADMIN", "CERTIFICACION")</h4>
-    <p>@Html.GetText("COMADMIN", "DESCRIPCIONNIVELES")</p>
-    <p>
-        <input type="checkbox" @Html.Raw(Model.NivelesCertificacionDisponibles ? "checked=\"checked\"" : "") name="chkActivarNivelesCertificacion" id="chkActivarNivelesCertificacion">
-        <label for="chkActivarNivelesCertificacion">@Html.GetText("COMADMIN", "ACTIVARCERTIFICACION")</label>
-    </p>
-    <div @Html.Raw(Model.NivelesCertificacionDisponibles ? "" : "style=\"display:none\"") id="nivelesCertificacion">
-        <p>@Html.GetText("COMADMIN", "PERSONALIZAR")</p>
-        <input type="hidden" id="txtIdsTextBoxHack" name="txtIdsTextBoxHack">
-        <div id="shortableNiveles">
-            @foreach (AdministrarComunidadUtilidades.NivelCertificacion nivelCertificacion in Model.NivelesCertificacion.OrderBy(nivel => nivel.Orden))
-            {
-                <div class="panNivel" id="@nivelCertificacion.CertificacionID">
-                    <span class="handle">:::</span>
-                    <input type="text" value="@nivelCertificacion.Nombre" name="NombreNivel" />
-                    <a style="margin-right:10px;" class="eliminar@(nivelCertificacion.TieneDocsAsociados ? " docsAsociados" : "")">@Html.GetText("COMMON", "ELIMINAR")</a>
+@*
+----------------------------------------------------------------
+-------------------- Vista para mostrar los los niveles de certificación de la Comunidad --------------------
+*@
+
+@* Contenedor de las lista certificaciones *@
+<ul id="id-added-certifications-list" class="js-added-certifications-list component-list no-list-style">                                                               
+    @* Pintado de cada nivel de certificación *@
+    @foreach (AdministrarComunidadUtilidades.NivelCertificacion nivelCertificacion in Model.NivelesCertificacion.OrderBy(nivel => nivel.Orden))
+    {
+        @* Pintado del certificado *@
+        <li class="component-wrap certification-row @(nivelCertificacion.TieneDocsAsociados ? "docsAsociados" : "")" 
+            data-id="@nivelCertificacion.CertificacionID" 
+            data-nombre="@nivelCertificacion.Nombre"
+            data-orden="@nivelCertificacion.Orden"
+            data-docs="@nivelCertificacion.TieneDocsAsociados">
+            <div class="component type-certification" data-component-type="certification">
+                <div class="component-header-wrap">
+                    <div class="component-header">
+                        @* Icono para arrastrar certificado *@
+                        <div class="component-sortable js-component-sortable-certification">
+    	                    <span class="material-icons-outlined sortable-icon">drag_handle</span>
+                        </div>
+                        <div class="component-header-content">
+    	                    <div class="component-header-left">
+    		                    <div class="component-name-wrap">
+    			                    <span class="component-icon"></span>
+    			                    <span class="component-name">@nivelCertificacion.Nombre</span>
+    		                    </div>
+    	                    </div>
+    	                    <div class="component-header-right">
+    		                    <div class="component-actions-wrap">
+    			                    <ul class="no-list-style component-actions">
+                                        @* Editar certificado *@
+    				                    <li>
+    					                    <a class="action-edit round-icon-button js-action-edit-component" style="cursor: pointer;">
+    						                    <span class="material-icons">edit</span>
+    					                    </a>
+    				                    </li>
+                                        @* Borrar certificado *@
+    				                    <li>
+    					                    <a class="action-delete round-icon-button js-action-delete" style="cursor: pointer;">
+    						                    <span class="material-icons">delete</span>
+    					                    </a>
+    				                    </li>
+    			                    </ul>
+    		                    </div>
+    	                    </div>
+                        </div>
+                    </div>
                 </div>
-            }
-            <span style="display: none" id="lblAdvertenciaInf">@Html.GetText("COMADMIN", "ADVERTENCIANIVELCERTIFICACIONVACIO");</span>
-        </div>
-        <div id="addNivel">
-            <a id="btnAddNivel">@Html.GetText("PERFILBASESUBIR", "AGREGAR")</a>
-        </div>
-
-        <span id="lblPoliticaCertificacion">@Html.GetText("COMADMIN", "PERSONALIZARCERTIFICACION")</span>
-
-        <textarea class="cke mensajes" id="txtPoliticaCertificacion" cols="20" rows="2" name="txtPoliticaCertificacion">@Model.PoliticaCertificacion</textarea>
-    </div>
-}
+            </div>
+        </li>
+    }
+</ul>       

@@ -1,31 +1,39 @@
 ﻿@model List<FacetaModel.FiltrosFacetas>
 
-@if (Model.Count == 0)
-{
-    <p><a class="linkEditarFiltros">Crear Filtros</a></p>
+@*
+Descripción
+-----------------------------------------------
+Vista parcial donde se pueden crear filtros asociados a una faceta.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{	
+// Id para los checkbox de tipo de visualización
+string filterId = @Guid.NewGuid().ToString().Substring(0,5);
 }
 
-<section class="editarFiltro" @Html.Raw(Model.Count == 0 ? "style=\"display:none\"" : "")>
-    <p>Filtros de la Faceta</p>
-    <ol class="filtroSortable">
-        @foreach (FacetaModel.FiltrosFacetas filtro in Model)
-        {
-            @Html.PartialView("_FichaFiltro", filtro);
-        }
-    </ol>
-    <input type="button" value="Añadir Filtro" class="addFiltro" />
-</section>
 
+<div class="form-group mb-4 editarFiltroFaceta">		
 
+	<div class="filtrosFaceta-header d-flex justify-content-between align-items-center">
+	<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("DEVTOOLS","FILTROSDELAFACETA")</label>
+		@* Botón para añadir nuevos Filtros de Orden *@
+		<a href="javascript: void(0);" class="linkAddFiltroFaceta btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+			<span class="material-icons">add</span>
+			<span class="texto">@Html.GetText("DEVTOOLS","CREARFILTRO")</span>
+		</a>
+	</div>
 
-@*<section class="editarExportaciones" @Html.Raw(Model.Count == 0 ? "style=\"display:none\"" : "")>
-    <p>Exportacion de la busqueda</p>
-    <ol class="exportacionesSortable">
-        @foreach (TabModel.ExportacionSearchTabModel exportacion in Model)
-        {
-            @Html.PartialView("_FichaExportacion", exportacion);
-        }
-    </ol>
-    <input type="button" value="Añadir exportación" class="addExportation" />
-</section>*@
-
+	@* Listado de los filtros *@
+	<ul class="id-added-faceta-filter-list component-list no-list-style mt-3">
+		@if (Model != null)
+		{
+			@foreach (FacetaModel.FiltrosFacetas filtro in Model)
+			{            
+				@Html.PartialView("_FichaFiltro", filtro)        
+			}	
+		}
+	</ul>
+</div>

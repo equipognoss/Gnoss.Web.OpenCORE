@@ -1,5 +1,27 @@
 ﻿@model ManageRegisterClausesViewModel.RegisterClauseModel
 
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar los detalles de una determinada cláusula de registro/legal.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    // Cabecera para obtención de idiomas de la Comunidad
+    HeaderModel cabecera = Html.GetCabecera();
+	string idModalPage = "modal-configuracion-clausula_" + Model.Key;	
+	string idModalPageDelete = "modal-configuracion-clausula_delete" + Model.Key;    
+    // Diccionario del contenido de la cláusula (En varios idiomas)    
+    Dictionary<string, string> clausulaDescriptionDictionary = new Dictionary<string, string>();    
+    // Idioma por defecto de la comunidad
+    string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
+}
+
+@* Obtener el nombre del tipo de cláusula *@
 @{
     string nombreTipoClausula = Model.Type.ToString();
     switch (Model.Type)
@@ -19,63 +41,86 @@
     }
 }
 
-<li class="row" id="@Model.Key">
-    <span class="handle">:::</span>
-    <section class="header">
-        <span class="nombreClausula" aux="@Html.ObtenerTextoIdiomaUsuario(Model.Title, true)">@Html.ObtenerTextoIdiomaUsuario(Model.Title, true)</span><span class="tipoClausula">(@nombreTipoClausula)</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    <section class="panEdicion">
-        <div>
-            <input type="hidden" name="TabEliminada" value="false" />
-            <p>
-                <span class="tipo">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TIPOCLAUSULA")</span>
-                <input type="text" disabled value="@nombreTipoClausula" />
-                <input type="hidden" name="TipoClausula" value="@Model.Type" />
-            </p>
-            @if (!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
-            {
-                <p>
-                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TITULOCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TITULOCLAUSULA")</span>
-                    <input type="text" name="Title" value="@Model.Title" />
-                </p>
-            }
-            <p>
-                <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "ORDENCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "ORDENCLAUSULA")</span>
-                <input type="text" name="Order" value="@Model.Order" />
-            </p>
+@* Construir los diferentes items en idiomas (Nombre Cláusula y Descripción de la cláusula) *@
+@{
+	// Obtener descripción/contenido de la cláusula en formato diccionario con los multiIdiomas para ser mostrados en la row de la cláusula
+    clausulaDescriptionDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Text1);		
+}
 
-            @if (!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina) && !Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
-            {
-                <p>
-                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")</span>
-                    <textarea cols="40" rows="3" class="multiidioma cke" name="TextoClausula">@Model.Text1</textarea>
-                </p>
-            }
-            else if (Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
-            {
-                <p>
-                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")</span>
-                    <textarea cols="40" rows="3" class="multiidioma"  name="TextoClausula">@Model.Text1</textarea>
-                </p>
-            }
-            else
-            {
-                <p>
-                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "NOMBRECOOKIEPOLITICACOOKIES")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "NOMBRECOOKIEPOLITICACOOKIES")</span>
-                    <input type="text" name="TextoNombreCookie" value="@Model.CookieName" />
-                    <span class="AvisoCambioCookie" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "AVISOCAMBIONOMBRECOOKIE")" style="display:none">@Html.GetText("COMADMINCLAUSULASREGISTRO", "AVISOCAMBIONOMBRECOOKIE")</span>
-                </p>
-                <p>
-                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCABECERACLAUSULACOOKIES")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCABECERACLAUSULACOOKIES")</span>
-                    <textarea cols="40" rows="3" class="multiidioma cke" name="TextoCabeceraClausula">@Model.Text1</textarea>
-                </p>
-                <p>
-                    <span class="tipo" title="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOPAGINACLAUSULACOOKIES")">@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOPAGINACLAUSULACOOKIES")</span>
-                    <textarea cols="40" rows="3" class="multiidioma cke" name="TextoPaginaClausula">@Model.Text2</textarea>
-                </p>
-            }
+@* Contenedor de la cláusula *@
+<li id="@Model.Key" class="component-wrap clausula-row">
+    <div class="component" data-id="@Model.Key">
+        <div class="component-header-wrap">
+            <div class="component-header">
+                <div class="component-sortable js-component-sortable-clause">
+                    <span class="material-icons-outlined sortable-icon">drag_handle</span>
+                </div>
+                <div class="component-header-content">
+                    <div class="component-header-left">
+                        <div class="component-name-wrap">
+                            @* Nombre de la clausula *@                              
+                            <span class="component-name">																									    								    									
+                                @nombreTipoClausula
+						    </span>
+                        </div>
+                        <div class="component-contenido-wrap">
+                            @* Contenido / Descripción de la cláusula *@
+							@* Recorrer los idiomas existentes y crear los datos para Descripción de la cláusula *@
+							@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+								{																												
+								<span class="language-component component-contenido @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
+									@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
+									@{
+										string value = "";
+										if (clausulaDescriptionDictionary.TryGetValue(idioma.Key, out value))
+										{
+                                            @* Html.CleanHtmlParagraphsStringHtml(@value);*@
+                                            var valueFormatted = Html.CleanHtmlParagraphsStringHtml(value);
+                                            valueFormatted = Html.CleanHtmlFromMultimediaItems(valueFormatted);
+                                            valueFormatted = UtilCadenas.HtmlDecode(valueFormatted);
+                                            @valueFormatted;
+                                           @* @value *@
+										}										
+									}
+								</span>
+							}
+                        </div>                        
+                        <div class="component-fecha-wrap">
+                            @* Fecha de creación / Actualización de la cláusula *@
+                            <span class="component-fecha">01 / 01 / 2022</span>
+                        </div>
+                    </div>
+                    @* Acciones de la cláusula *@
+                    <div class="component-header-right">
+                        <div class="component-actions-wrap">
+                            <ul class="no-list-style component-actions">
+                                @* Editar la cláusula *@
+                                <li>
+                                    <a class="action-edit round-icon-button js-action-edit-component btnEditClausula"
+                                       href="javascript: void(0)"
+                                        data-target="#@(idModalPage)" 
+                                        data-toggle="modal">
+                                        <span class="material-icons">edit</span>
+                                    </a>
+                                </li>
+                                @* Eliminar la cláusula *@
+                                <li>
+                                    <a class="action-delete round-icon-button js-action-delete btnDeleteClausula" 
+                                       href="javascript: void(0)"
+                                       data-target="#@(idModalPageDelete)" 
+                                       data-toggle="modal">
+                                        <span class="material-icons">delete</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
+
+    @* Carga del modal para edición de la cláusula *@
+    @Html.PartialView("_modal-views/_clause-detail-item", Model)
+
 </li>

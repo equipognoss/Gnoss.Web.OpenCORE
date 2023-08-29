@@ -1,0 +1,97 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal para editar y mostrar los atributos de la fila de la página CMS.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+                      
+}
+
+<div
+	id="modal-editar-atributos-fila"
+	class="modal modal-top fade modal-edicion"
+	tabindex="-1"
+	aria-modal="true"
+	role="dialog"
+>
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>
+					@Html.GetText("DEVTOOLS","EDITARATRIBUTOSDELAFILA")
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span>
+			</div>
+            @* Contenido del modal *@
+			<div class="modal-body">
+				<div class="formulario-edicion">
+					<p class="font-weight-bold">@Html.GetText("DEVTOOLS","ATRIBUTOS")</p>
+					<a
+						href="javascript: void(0);"
+						class="btn btn-outline-primary new-attribute">
+						<span class="not-editing">@Html.GetText("DEVTOOLS","NUEVOATRIBUTO")</span>
+					</a>
+					<a href="javascript: void(0);" class="close-new-attribute">
+						<span class="material-icons">close</span>
+					</a>
+                    @* Formulario del nuevo atributo *@
+					<div class="formulario-new-attribute">
+                        @* Nombre del atributo *@
+						<div class="form-group mb-3">           
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","NUEVOATRIBUTO")</label>
+							<input
+								placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREDELATRIBUTO")"
+								type="text"
+								name=""
+								id="attribute-name-input"
+								class="form-control not-outline"
+							/>
+						</div>
+                        @* Valor del atributo *@
+						<div class="form-group mb-3">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","VALORDELATRIBUTO")</label>
+							<input
+								placeholder="@Html.GetText("DEVTOOLS","VALORDELATRIBUTO")"
+								type="text"
+								name=""
+								id="attribute-value-input"
+								class="form-control not-outline"
+							/>
+						</div>
+                        @* Botón para guardar el atributo *@
+						<div class="botonera">
+							<a
+								href="javascript: void(0);"
+								class="btn btn-outline-primary add-attribute">@Html.GetText("DEVTOOLS","GUARDARATRIBUTO")</a
+							>
+						</div>
+					</div>
+                    @* Tabla / Listado de atributos *@
+					<div class="row-attributes-table">
+						<table class="display nowrap table table-sm">
+							<thead>
+								<tr>
+									<th class="th-nombre">@Html.GetText("DEVTOOLS","ATRIBUTO")</th>
+									<th class="th-valor">@Html.GetText("DEVTOOLS","VALOR")</th>
+									<th class="th-acciones"></th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+

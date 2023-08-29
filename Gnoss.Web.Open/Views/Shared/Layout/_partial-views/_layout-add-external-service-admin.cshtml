@@ -1,0 +1,64 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarServiciosExternosViewModel
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón con un panel dropdown para poder crear un servicio externo.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Servicios externos".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+
+}
+@*
+----------------------------------------------------------------
+
+-------------------- Vista parcial para crear un servicio externo --------------------*@
+
+@*Botón para la creación *@
+@* @if (Model.EstaConfigurado) 
+{
+	@*
+	<ul>
+		<li class="nuevo nueva-pagina">
+	*@
+			@* Botón para añadir una nueva página *@
+			<a
+				href="javascript: void(0);"
+				class="btn btn-outline-primary dropdown-toggle no-flecha  @(!Model.EstaConfigurado ? "btn-outline-disabled" : null)"
+				id="menuNuevServicioExterno"
+				@(!Model.EstaConfigurado ? "disabled" : null)
+				data-toggle="dropdown"
+				aria-haspopup="true"
+				title="@(!Model.EstaConfigurado ? "Es necesario configurar el servicio base para poder crear servicios" : null)"
+				alt="@(!Model.EstaConfigurado ? "Es necesario configurar el servicio base para poder crear servicios" : null)"
+				aria-expanded="true">
+				<span class="material-icons">add</span>
+				<span class="texto">@Html.GetText("DEVTOOLS","NUEVOSERVICIO")</span>
+			</a>
+			@* Dropdown con el servicio externo a crear *@
+			@if (Model.EstaConfigurado)
+			{			
+				<div
+					class="dropdown-menu dropdown-menu-right basic-dropdown"
+					aria-labelledby="menuNuevaPagina">
+					<div>
+						<ul class="no-list-style menuCreacion">					
+							@* Nuevo servicio *@					
+							<li>
+								<a class="item-dropdown linkAddExternalService">
+									@Html.GetText("DEVTOOLS","SERVICIOEXTERNO")
+								</a>													
+							</li>										 					
+						</ul>
+					</div>
+				</div>
+			}
+@*
+		</li>
+	</ul>			
+
+}
+*@

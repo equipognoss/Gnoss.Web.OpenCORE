@@ -20,9 +20,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using System.Linq;
+using Gnoss.Web.Open.Filters;
+using System.Buffers;
+using System.Net.Http;
+using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class ServicioExternoController : ControllerBaseWeb
     {
         public ServicioExternoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
@@ -47,6 +53,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     foreach (string claveParametro in Request.Query.Keys)
                     {
                         parametros.Add(claveParametro, Request.Query[claveParametro]);
+                    }
+                }
+
+                if(Request != null && !Request.Method.Equals("GET") && Request.Form != null && Request.Form.Keys.Count > 0)
+                {
+                    foreach (string claveParametro in Request.Form.Keys)
+                    {
+                        parametros.Add(claveParametro, Request.Form[claveParametro]);
                     }
                 }
 
@@ -78,7 +92,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 parametros.Add("communityShortName", ProyectoSeleccionado.NombreCorto);
                 parametros.Add("UserLanguaje", UtilIdiomas.LanguageCode);
 
-                if (Request.Form.Files.Count > 0)
+                if (Request.Method != "GET" && Request.Form != null && Request.Form.Files.Count > 0)
                 {
                     foreach (IFormFile fichero in Request.Form.Files)
                     {
@@ -86,7 +100,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         fichero.OpenReadStream().CopyTo(target);
                         byte[] data = target.ToArray();
 
-                        parametros.Add(fichero.FileName, Convert.ToBase64String(data));
+                        parametros.Add(fichero.Name, Convert.ToBase64String(data));
                     }
                 }
 
@@ -109,19 +123,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     try
                     {
                         WebResponse respuesta = UtilWeb.HacerPeticionPostDevolviendoWebResponse(urlServicio, parametros);
-                        Stream stream = respuesta.GetResponseStream();
 
-                        Dictionary<string, string> cabecera = new Dictionary<string, string>();
-                        //Preparamos cabecera          
-                        for (int i = 0; i < respuesta.Headers.Count; ++i)
-                        {
-                            cabecera.Add(respuesta.Headers.Keys[i], respuesta.Headers[i]);
-                        }
-
-                        return new SimpleResult(cabecera, stream, respuesta.ContentType);
+                        return GenerarRespuesta(respuesta);
                     }
                     catch(WebException ex)
                     {
+                        GuardarLogError(ex, $"Error al enviar una petición al servicio {urlServicio} con los parámetros {string.Join(",", parametros.Select(item => $"{item.Key}:{item.Value}"))}");
                         Response.StatusCode = 502;
                         return Content($"Error in request {urlServicio}: {ex.Message}");
                     }
@@ -132,6 +139,43 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Response.StatusCode = 502;
                 return Content($"Error in request {urlServicio}: not found");
             }
+        }
+
+        public ActionResult GenerarRespuesta(WebResponse pRespuesta)
+        {
+            Stream stream = pRespuesta.GetResponseStream();
+
+            Response.ContentType = pRespuesta.ContentType;
+            string body = "";
+
+            if (!pRespuesta.ContentType.StartsWith("application") || pRespuesta.ContentType.Equals("application/json"))
+            {
+                using (StreamReader sr = new StreamReader(stream))
+                {
+                    body = sr.ReadToEnd();
+                }
+
+                return Content(body, pRespuesta.ContentType);
+            }
+            else
+            {
+                if (pRespuesta.Headers["Content-Disposition"]!= null)
+                {
+                    Response.Headers.ContentDisposition = pRespuesta.Headers["Content-Disposition"];
+				}
+				using (BinaryReader sr = new BinaryReader(stream))
+				{
+					byte[] buffer = new byte[4098];
+                    while(buffer.Length > 0 )
+                    {
+						buffer = sr.ReadBytes(4098);
+                        Response.Body.WriteAsync(buffer);
+					}
+                    Response.Body.FlushAsync();
+				}
+
+                return new EmptyResult();
+			}
         }
     }
 }

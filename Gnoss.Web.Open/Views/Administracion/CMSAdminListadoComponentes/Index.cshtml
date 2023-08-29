@@ -1,382 +1,196 @@
 ﻿@model CMSComponentListViewModel
 
-@{
-    Html.SetBodyClass(" layout02 cms listadoCms  ");
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra los diferentes componentes multimedia existentes que se podrán utilizar en la Comunidad.
+En esta sección se visualizarán componentes para editar tales como Caja Buscador, Componente básico actividad reciente, componente básico con imágen...
 
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";	
+	// Referencia al CMSAdminListadoComponentes para el botón de tipo de añadir un nuevo componente
+	ViewBag.CMSComponentListViewModel = Model;
+
+	@* Variables de resutados, facetas, filtros *@
+	int resultado = Model.Result.NumeroResultadosTotal;
+	// Filtros de resultados
+	List<FacetItemModel> filtros = Model.FilterList;
+
+	@* Nº de páginas de resultados -> Paginador *@
+    int numTotal = Model.Result.NumeroResultadosTotal;
+    int numResultadosPagina = Model.Result.NumeroResultadosPagina;
+	int PaginaActual = Model.Result.NumeroPaginaActual;		
+	int numPaginas = (int)Math.Ceiling((double)numTotal / (double)numResultadosPagina);
 }
 
-<div id="wrap">
-    <div id="page">
-        <div id="section">
-            <div id="content">
-                <div id="divPreguntaConfirmacionEventos" class="confirmar" style="display: none; z-index: 2000;">
-                    <div class="pregunta">
-                        <span id="lblPregunta_ConfirmacionEliminar"></span>
-                        <input type="button" id="lbSi_ConfirmacionEliminar" onclick="" />
-                        <input type="button" id="lbNo_ConfirmacionEliminar" onclick="$('#divPreguntaConfirmacionEventos').css('display', 'none'); $('#mascaraBlanca').css('display', 'none');" />
-                    </div>
-                </div>
-                <div id="col02">
-                    <div id="divBusqueda">
-                        <div id="divBusquedaInt" class="finderUtils">
-                            <div class="group finderSection">
-                                <label id="lblEncontrar" for="finderSection">@Html.GetText("METABUSCADOR", "ENCONTRAR")</label>
-                                <input type="text" autocomplete="off" name="finderSection" id="finderSectionCMS" class="finderSectionText ac_input">
-                                <input type="button" name="inputLupa" onclick="AgregarFiltroComponentes('search=' + $('#finderSectionCMS').val()); return false;" id="inputLupa" class="encontrar findAction">
-                            </div>
-                            <div id="panFiltrosPulgarcito" class="group filterSpace">
-                                @if (Model.FilterList.Count > 0)
-                                {
-                                    <div id="divFiltros">
-                                        <p>
-                                            <span id="lblFiltros">@Html.GetText("COMBUSQUEDAAVANZADA", "FILTROS"): </span>
-                                            <a style="margin-left: 5px;" onclick="LimpiarFiltroComponentes(true);" id="btnLimpiarFiltros">@Html.GetText("COMBUSQUEDAAVANZADA", "LIMPIARFILTROS")</a>
-                                        </p>
-                                        <ul class="tags" id="panListadoFiltrosPulgarcito">
-                                            @foreach (FacetItemModel item in Model.FilterList)
-                                            {
-                                                <li>@item.Name <a href="#" class="remove" name="@item.Filter" onclick="AgregarFiltroComponentes('@item.Filter', this);return false;">@Html.GetText("COMMON", "ELIMINAR")</a></li>
-                                            }
-                                        </ul>
-                                    </div>
-                                }
-                                <p id="divNumResultadosBusqueda">
-                                    <span class="counter">
-                                        <strong>@Model.Result.NumeroResultadosTotal</strong> @Html.GetText("LISTARECURSOS", "NUMERORESULTADOS")
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <!--Listado recursos-->
-                    <div id="panListado">
-                        <div id="ListadoGenerico_panContenedor" class="resource-list ">
-                            @if (Model.Result != null && Model.Result.ListaResultados != null)
-                            {
-                                foreach (CMSEditComponentModel ficha in Model.Result.ListaResultados)
-                                {
-                                    string enlaceEdicion = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + ficha.Key;
-                                    //@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")/@ficha.Key
-                                    <div class="resource">
-                                        <div class="box description">
-                                            <div class="wrapDescription">
-                                                <div class="group title">
-                                                    <h3><a href="@enlaceEdicion">@ficha.Title</a></h3>
-                                                </div>
-                                                <div>
-                                                    <p>@Html.GetText("COMADMINCMS", "COMPONENTE_" + ficha.CMSComponentType)</p>
-                                                </div>
-                                                <div class="group acciones">
-                                                    <ul>
-                                                        @if (!Model.IsSelectionView)
-                                                        {
-                                                            <li>
-                                                                <a href="@enlaceEdicion">@Html.GetText("COMMON", "EDITAR")</a>
-                                                            </li>
-                                                            <li>
-                                                                <a onclick="MostrarPanelConfirmacionEliminar(event, '¿Desea eliminar el componente?','EliminarComponente(\'@enlaceEdicion\');MostrarUpdateProgress()')">@Html.GetText("COMMON", "ELIMINAR")</a>
-                                                            </li>
-                                                        }
-                                                        else
-                                                        {
-                                                            <li>
-                                                                <a onclick="SeleccionarComponente('@Model.CMSContainerBlockID', '@enlaceEdicion');MostrarUpdateProgress();">@Html.GetText("COMADMINCMS", "SELECCIONAR")</a>
-                                                            </li>
-                                                        }
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            }
-                        </div>
-                    </div>
-                    <!--Paginador-->
 
-                    @{//Paginador
-                        int numTotal = Model.Result.NumeroResultadosTotal;
-                        int numResultadosPagina = Model.Result.NumeroResultadosPagina;
-                        int PaginaActual = Model.Result.NumeroPaginaActual;
-                        //string urlNavegador = Model.Result.UrlBusqueda;
-                        int numPaginas = (int)Math.Ceiling((double)numTotal / (double)numResultadosPagina);
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar la información general de la comunidad --------------------
+*@
 
-                        if (numPaginas > 1)
-                        {
-                            <div id="navegadorBusqueda">
-                                <div class="paginadorResultados">
-                                    <div class="pag">
-                                        @if (PaginaActual > 1)
-                                        {
-                                            <a onclick="AgregarFiltroComponentes('pagina=@(PaginaActual-1)');return false;" class="indiceNavegacion primeraPagina">@Html.GetText("COMMON", "PAGANTERIOR")</a>
-                                        }
-                                        else
-                                        {
-                                            <span class="deshabilitado primeraPagina">@Html.GetText("COMMON", "PAGANTERIOR")</span>
-                                        }
-                                        @for (int i = 1; i <= numPaginas; i++)
-                                        {
-                                            if (PaginaActual == i)
-                                            {
-                                                <span class="actual indiceNavegacion">@i</span>
-                                            }
-                                            else
-                                            {
-                                                <a onclick="AgregarFiltroComponentes('pagina=@i');return false;" class="indiceNavegacion">@i</a>
-                                            }
-                                        }
-                                        @if (PaginaActual < numPaginas)
-                                        {
-                                            <a onclick="AgregarFiltroComponentes('pagina=@(PaginaActual+1)');return false;" class="indiceNavegacion ultimaPagina">@Html.GetText("COMMON", "PAGSIGUIENTE")</a>
-                                        }
-                                        else
-                                        {
-                                            <span class="deshabilitado ultimaPagina">@Html.GetText("COMMON", "PAGSIGUIENTE")</span>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    }
-                </div>
-                <!--Facetas-->
-                <div id="col01">
-                    <div id="divFacetas">
-                        @foreach (FacetModel faceta in Model.FacetList)
-                        {
-                            <div class="facetedSearch">
-                                <div id="component_type" class="box noCollapse">
-                                    <h3>@faceta.Name</h3>
-                                    <ul>
-                                        @foreach (FacetItemModel facetaItem in faceta.FacetItemList)
-                                        {
-                                            string estilos = "";
-                                            if (facetaItem.Selected)
-                                            {
-                                                estilos = "applied";
-                                            }
-                                            <li><a class="@estilos" onclick="AgregarFiltroComponentes('@facetaItem.Filter');return false;" title="@facetaItem.Name">@facetaItem.Name<span>(@facetaItem.Number)</span></a></li>
-                                        }
-                                    </ul>
-                                </div>
-                            </div>
-                        }
-                        @if (Model.AvailableComponentsList != null)
-                        {
-                            <div class="facetedSearch">
-                                <div id="component_type" class="box noCollapse">
-                                    <h3>@Html.GetText("COMADMINCMS", "CREARCOMPONENTENUEVO")</h3>
-                                    <ul>
-                                        @foreach (CMSComponentType tipoComponente in Model.AvailableComponentsList.Keys)
-                                        {
-                                            <li>
-                                                <a target="_blank" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSNUEVOCOMPONENTE")/@((short)tipoComponente)">@Model.AvailableComponentsList[tipoComponente]</a>
-                                            </li>
-                                        }
-                                    </ul>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
+
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/estructura">@Html.GetText("DEVTOOLS","ESTRUCTURA")</a>
+            </li>
+            <li>
+                @Html.GetText("DEVTOOLS","COMPONENTES")
+            </li>
+        </ul>
     </div>
-</div>
 
-<script type="text/javascript">
+    @* Contenido Central *@
+    <div class="formulario-edicion background-blanco">       
 
-    filter.isAppliedTags = true;
+		@* Contenedor del Título de la Sección + Buscador *@
+		<div class="row">
+			@* Título de la sección de páginas + Nº de páginas *@
+			<div class="col col-12 col-xl-3 header-listado">
+				<div class="h1-container">
+					<h1>@Html.GetText("DEVTOOLS","COMPONENTES")
+						<span id="numPaginas" class="numResultados">@resultado</span>
+					</h1>
+				</div>
+			</div>
 
-    function AgregarFiltroComponentes(filtro) {
-        MostrarUpdateProgress();
-        var parametroNuevo = filtro.substr(0, filtro.indexOf('='));
-        var valorNuevo = filtro.substr(filtro.indexOf('=') + 1);
+			@* Buscador de componentes *@
+			<div class="col col-12 col-xl-9 header-buscador">
+				<div class="wrapCol">
+					<div class="col-buscador" style="width: 100%">					
+					@* Formulario para búsquedas de componentes *@
+						<form id="formBuscadorComponentesMultimedia" onsubmit="return false;">								
+							<div class="finderUtils d-flex justify-content-between" id="divCajaBusqueda">
+								<div class="group finderSection flex-grow-1">
+									@* Input para realizar la búsqueda de páginas *@
+									<input
+										type="text"
+										id="txtBuscarComponente"
+										class="not-outline finderSectionText"
+										autocomplete="off"
+										placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+									/>
+									@* Botón para realizar la búsqueda *@
+									<input
+										title="Buscar"
+										type="button"
+										class="findAction"
+										id="inputLupa"
+									/>
+									@* Botón para Facetas de la búsqueda *@
+									<a href="javascript: void(0);" class="btn-filtrar-movil">
+										<span class="material-icons">filter_list</span>
+										<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+									</a>
+								</div>
+								@* Botón para crear item *@						
+								<div class="acciones d-flex align-items-center ml-2">
+									@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-component-admin", Model)							
+								</div>
+							</div>								
+						</form>
+					</div>
+				</div>
 
-        var filtrosActuales = "";
-        if (document.location.href.indexOf('?') > -1) {
-            filtrosActuales = document.location.href.substr(document.location.href.indexOf('?') + 1);
-        }
+			</div>
 
-        if (filtrosActuales != "") {
-            var filtrosNuevos = "";
-            var filtrosArray = filtrosActuales.split('&');
-            var and = '?';
-            var contieneFiltro = false;
+            @* Panel izquierdo de Facetas *@
+            <div class="col col-12 col-xl-3 col-facetas col-lateral izquierda">				
+				@Html.PartialView("_partial-views/_list-content-facetes", Model)
+            </div>
 
-            for (var i = 0; i < filtrosArray.length; i++) {
-                var parametroActual = filtrosArray[i].substr(0, filtrosArray[i].indexOf('='));
-                var valorActual = filtrosArray[i].substr(filtrosArray[i].indexOf('=') + 1);
+			@* Contenido o tabla con las páginas de la comunidad *@
+			<div class="col col-12 col-xl-9 col-contenido">
+				@* Panel de filtros activos*@
+				 
+				@if (filtros.Count > 0)
+				{			
+					<div class="etiquetas add-shadow mt-n4" id="divFiltros">
+						<div class="group filterSpace">
+							@* Subpanel de filtros *@                 
+							<ul class="facetedSearch tags" id="panListadoFiltrosPulgarcito">
+								@* Filtro activo *@
+								@foreach (FacetItemModel item in filtros)
+								{									
+									<li class="@item.Name">
+										@item.Name
+										<a rel="nofollow" 
+										   class="remove faceta" 
+										   name="@item.Filter" 
+										   href="javascript: void(0)" 
+										   onclick="operativaGestionComponentsCMS.AgregarFiltroComponentes('@item.Filter', this);return false;">
+										   eliminar
+									   </a>
+									</li>
 
-                if (parametroActual == parametroNuevo) {
-                    contieneFiltro = true;
-                    if (valorActual != valorNuevo) {
-                        filtrosNuevos += and + filtro;
-                        and = '&';
-                    }
-                }
-                else if (parametroActual != 'pagina') {
-                    filtrosNuevos += and + filtrosArray[i];
-                    and = '&';
-                }
-            }
+								}
+								@* Eliminación de todos los filtros *@
+								<li class="borrarFiltros-wrap">
+									<a id="btnLimpiarFiltros" 
+									   style="cursor:pointer" 
+									   class="limpiarfiltros borrarFiltros" 
+									   onclick="operativaGestionComponentsCMS.LimpiarFiltroComponentes(true);">@Html.GetText("DEVTOOLS","LIMPIARFILTROS")</a>
+								</li>
+							</ul>                
+						</div>
+					</div>
+				}				
 
-            if (!contieneFiltro) {
-                filtrosNuevos += and + filtro;
-            }
+				@* Contenido central de items *@
+				<div class="wrapCol">
+					@* Inicio de tabla componentes Multimedia *@
+					<table class="display nowrap table table-sm tabla-componente">
+						@* Header de la tabla *@
+						<thead>
+							<tr>
+								<th class="th-titulo">@Html.GetText("DEVTOOLS","TITULO")</th>
+								<th class="th-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</th>
+								<th class="th-dimensiones">Activo</th>
+								<th class="th-creacion">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</th>
+								<th class="th-acciones">@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</th>
+							</tr>
+						</thead>
+						@* Body de la tabla *@
+						<tbody>
+							@* Listado de componentes *@
+							@if (Model.Result != null && Model.Result.ListaResultados != null)
+							{
+								foreach (CMSEditComponentModel ficha in Model.Result.ListaResultados)
+								{
+									@* Item Componente *@
+									@Html.PartialView("_partial-views/_component-item", ficha)									
+								}
+							}							
+						</tbody>
+					</table>
+					@* Paginador si es necesario según el nº de componentes existentes *@					
+					@if (numPaginas> 1){
+						@Html.PartialView("_partial-views/_component-paginator", Model)
+					}					
+				</div>
+			</div>
+		</div>
+	</div>	
 
-            filtrosActuales = filtrosNuevos;
-        }
-        else {
-            //No tenía filtros, lo añadimos
-            filtrosActuales = '?' + filtro;
-        }
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/estructura.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
 
-        nuevaPagina = "";
-        if (document.location.href.indexOf('?') == -1) {
-            nuevaPagina = document.location.href + filtrosActuales;
-        } else {
-            indice = document.location.href.indexOf('?');
-            nuevaPagina = document.location.href.substr(0, indice) + filtrosActuales;
-        }
-        
-        document.location = nuevaPagina;
-    }
-
-    function LimpiarFiltroComponentes(filtro) {
-        MostrarUpdateProgress();
-        nuevaPagina = "";
-        indice = document.location.href.indexOf("?");
-        nuevaPagina = document.location.href.substr(0, indice + 1);
-        document.location = nuevaPagina;
-    }
-
-    function MostrarPanelConfirmacionEliminar(evento, pPregunta, pFuncionEjecutar) {
-        $("#lbSi_ConfirmacionEliminar").attr('value', borr.si);
-        $("#lbNo_ConfirmacionEliminar").attr('value', borr.no);
-        $("#lbNo_ConfirmacionEliminar").show();
-
-        document.getElementById('lblPregunta_ConfirmacionEliminar').innerHTML = pPregunta;
-        $("#lbSi_ConfirmacionEliminar").unbind('click');
-
-        $("#lbSi_ConfirmacionEliminar").click(function () {
-            eval(pFuncionEjecutar);
-            eval("document.getElementById('divPreguntaConfirmacionEventos').style.display='none';document.getElementById('mascaraBlanca').style.display='none';");
-        });
-
-        CalcularTopPanelEliminarYMostrar(evento, 'divPreguntaConfirmacionEventos');
-    }
-
-    function MostrarPanelInfo(evento, pInfo) {
-        $("#lbSi_ConfirmacionEliminar").attr('value', 'Aceptar');
-        $("#lbNo_ConfirmacionEliminar").hide();
-        document.getElementById('lblPregunta_ConfirmacionEliminar').innerHTML = pInfo;
-        $("#lbSi_ConfirmacionEliminar").unbind('click');
-        $("#lbSi_ConfirmacionEliminar").click(function () {
-            eval("document.getElementById('divPreguntaConfirmacionEventos').style.display='none';document.getElementById('mascaraBlanca').style.display='none';");
-        });
-
-        CalcularTopPanelEliminarYMostrar(evento, 'divPreguntaConfirmacionEventos');
-    }
-
-    function CalcularTopPanelEliminarYMostrar(evento, panelID) {
-        document.getElementById('mascaraBlanca').style.display = 'block';
-        if (evento != null) {
-            if (!evento.target) {
-                var hijo = evento.srcElement;
-            }
-            else {
-                var hijo = evento.target;
-            }
-            if (hijo.nodeName == 'IMG') {
-                hijo = $(hijo).parent();
-            }
-            var $padre = $(hijo).parent();
-
-            $(document.getElementById(panelID)).css({
-                top: $padre.offset().top + 'px',
-                left: $padre.offset().left - 200 + 'px',
-                display: ''
-            });
-        } else {
-            if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
-                posX = document.body.scrollLeft + (document.documentElement.clientWidth / 2);
-                posY = document.body.scrollTop + (document.documentElement.clientHeight / 2);
-            } else//si no es chrome
-            {
-                posX = document.documentElement.scrollLeft + (document.documentElement.clientWidth / 2);
-                posY = document.documentElement.scrollTop + (document.documentElement.clientHeight / 2);
-            }
-            $('#' + panelID).css({
-                top: posY + 'px',
-                left: posX - ($('#' + panelID).width() / 2) + 'px',
-                display: ''
-            });
-        }
-        return false;
-    }
-
-    function EliminarComponente(urlComponente) {
-        MostrarUpdateProgress();
-        
-        GnossPeticionAjax(
-                urlComponente + "/delete",
-                null,
-                true
-            ).done(function (data) {
-                LimpiarFiltroComponentes(document.location);
-                //document.location = document.location;
-            })/*.fail(function (data) {
-                var error = data.split('|||');
-                that.mostrarErrorGuardado();
-            })*/.always(function () {
-                OcultarUpdateProgress();
-            });
-
-        //$.post(urlBorrado, null, function (data) {
-        //    var html = "";
-        //    if (data.indexOf("OK") == 0) {
-        //        document.location = document.location;
-        //    }
-        //    else {
-        //        MostrarPanelInfo(null, data);
-        //    }
-        //    OcultarUpdateProgress();
-        //});
-    }
-
-    function SeleccionarComponente(idBloqueContenedor, urlComponente) {
-        MostrarUpdateProgress();
-        var datosPost =
-        {
-            idBloqueContenedor: idBloqueContenedor
-        };
-
-        GnossPeticionAjax(
-                urlComponente + "/select",
-                datosPost,
-                true
-            ).done(function (data) {
-                document.location = data;
-            })/*.fail(function (data) {
-                var error = data.split('|||');
-                that.mostrarErrorGuardado();
-            })*/.always(function () {
-                OcultarUpdateProgress();
-            });
-
-        //$.post('@Html.GetUrlPagina()', datosPost, function (data) {
-            //var html = "";
-            //if (data.indexOf("OK") == 0) {
-            //    document.location = document.location;
-            //}
-            //else {
-            //    MostrarPanelInfo(null, data);
-            //}
-            //OcultarUpdateProgress();
-        //});
-    }
-
-</script>
+        (function ($) {
+            // Operativa funcionamiento de Componentes CMS
+            operativaGestionComponentsCMS.init();
+        })();
+    </script>
+}

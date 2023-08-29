@@ -3,11 +3,13 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Mvc;
 using System;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class UserDataController : Controller
     {
 

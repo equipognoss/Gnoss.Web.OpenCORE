@@ -342,7 +342,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CambiarModoParticipaComunidad(Guid comunidadID, Guid perfilID, TiposIdentidad modoIdentidad, GestionIdentidades gestIdentidades)
         {
-            Elementos.Identidad.Identidad identidadProyecto = gestIdentidades.ListaIdentidades.Single(ident => ident.Value.PerfilID == perfilID && ident.Value.FilaIdentidad.ProyectoID == comunidadID).Value;
+            Elementos.Identidad.Identidad identidadProyecto = gestIdentidades.ListaIdentidades.Single(ident => ident.Value.PerfilID == perfilID && ident.Value.FilaIdentidad.ProyectoID == comunidadID && !ident.Value.FilaIdentidad.FechaBaja.HasValue).Value;
 
             Elementos.Identidad.Identidad identidadMetaProyecto = gestIdentidades.ListaIdentidades.Single(ident => ident.Value.PerfilID == perfilID && ident.Value.FilaIdentidad.ProyectoID == ProyectoAD.MetaProyecto).Value;
 
@@ -1011,7 +1011,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             listausuarios.Add(usuarioPersona);
 
             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            GestionIdentidades gestIdentidades = new GestionIdentidades(identidadCN.ObtenerIdentidadesDeUsuariosEnProyectoYOrg(listausuarios, mControladorBase.ProyectoGnoss, organizacionID), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionIdentidades gestIdentidades = new GestionIdentidades(identidadCN.ObtenerIdentidadDePersonaEnOrganizacion(personaID, organizacionID), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCN.Dispose();
 
             Persona elementoPersona = gestPersonas.ListaPersonas[personaID];

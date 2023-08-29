@@ -1,19 +1,87 @@
 ﻿@model KeyValuePair<string, string>
 
-<li class="bloque row subTipo" id="@Guid.NewGuid()">
-    <section class="header">
-        <span class="nombre" aux="@Html.ObtenerTextoIdiomaUsuario(Model.Value)">@Html.ObtenerTextoIdiomaUsuario(Model.Value)</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-	</section>
-    <section class="panEdicion">
-        <p>
-			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")</span>
-			<input type="text" name="Nombre" value="@Model.Value" />
-		</p>
-		<p>
-			<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")</span>
-			<input type="text" name="Tipo" value="@Model.Key"/>
-		</p>
-	</section>
+@*
+Descripción
+-----------------------------------------------
+Vista parcial donde se muestran los detalles de cada subtipo asociado a un objeto de conocimiento.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+@* Id subtipo *@
+Guid fichaSubtipoId = @Guid.NewGuid();
+string collapseId = "panel_collapse_" + fichaSubtipoId.ToString().Substring(0,5);
+}
+
+
+<li class="component-wrap subtipo-row" id="@fichaSubtipoId" data-collapseid="@collapseId">
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				<div class="component-header-content">
+					<div class="component-header-left">
+						@* Nombre del Subtipo *@
+						<div class="component-name-wrap">																												
+							<span class="component-subtipoName">@Html.ObtenerTextoIdiomaUsuario(Model.Value)</span>
+						</div>					
+					</div>
+					@* Sección de acciones del subtipo *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de editar el subtipo *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditSubtipo"
+									   data-toggle="collapse" 
+									   data-target="#@collapseId"									   
+									   role="button" 
+									   aria-expanded="false" 
+									   aria-controls="@collapseId">									   
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de borrar el subTipo *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteSubtipo"
+										href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada del subtipo - Collapse *@
+	<div class="collapse fichaSubtipo-info" id="@collapseId">		
+		<div class="card card-body">
+
+			@* Nombre *@
+			<div class="form-group mb-3">
+				<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")</label>
+				<input
+					type="text"
+					name="Nombre"
+					placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "NOMBRE")"
+					class="form-control inputNombreValue"
+					value="@Model.Value">				
+			</div>
+			
+			@* Tipo *@
+			<div class="form-group mb-3">
+				<label class="control-label d-block">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")</label>
+				<input
+					type="text"
+					name="Tipo"
+					placeholder="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TIPO")"
+					class="form-control inputTipoValue"
+					value="@Model.Key">				
+			</div>	
+		</div>
+	</div>	
 </li>

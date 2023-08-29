@@ -1070,7 +1070,13 @@ function ObtenerFilaValorContenedorGrupoValores(pControlCont, pValor, pNumElem, 
     fila += '<td><span>' + pValor + '</span></td>';
 
     if (funcionSel != '') {
-        fila += '<td><a onclick="' + funcionSel + '(\'' + pEntidad + '\', \'' + pPropiedad + '\', \'' + pNumElem + '\', \'' + pTxtValores + '\', \'' + pTxtIDs + '\', \'' + pTxtCaract + '\', \'' + pTxtElemEditados + '\')"><img src="' + GetUrlImg(pTxtCaract) + 'icoEditar.gif"></a></td>';
+        //fila += '<td><a onclick="' + funcionSel + '(\'' + pEntidad + '\', \'' + pPropiedad + '\', \'' + pNumElem + '\', \'' + pTxtValores + '\', \'' + pTxtIDs + '\', \'' + pTxtCaract + '\', \'' + pTxtElemEditados + '\')"><img src="' + GetUrlImg(pTxtCaract) + 'icoEditar.gif"></a></td>';                                
+        fila += `<td class="tdaccion">
+                    <a href="javascript: void(0);"style="color: var(--c-primario)" 
+                        onclick="${funcionSel}('${pEntidad}', '${pPropiedad}','${pNumElem}','${pTxtValores}','${pTxtIDs}','${pTxtCaract}','${pTxtElemEditados}');">
+                        <span class="material-icons pr-0">edit</span>
+                    </a>
+                </td>`;        
     }
 
     // Cambio por nuevo Front
@@ -1084,30 +1090,28 @@ function ObtenerFilaValorContenedorGrupoValores(pControlCont, pValor, pNumElem, 
             </td>`;
     */
     fila += `<td>
-                <button
-                type="button"
-                class="btn removeButton"
+                <a href="javascript: void(0)"                
+                class="removeButton"
                 data-showmodalcentered="1"
                 onclick="
                         $('#modal-container').modal('show', this);
                         AccionFichaPerfil(
-                            'Eliminar',
-                            'SI',
-                            'NO',
+                            '${textoRecursos.Eliminar}',                                
+                            '${borr.si.charAt(0).toUpperCase()}${borr.si.slice(1)}',
+                            '${borr.no.charAt(0).toUpperCase()}${borr.no.slice(1)}',
                             '${textoFormSem.confimEliminar.replace('@1@', pValor)}',
                             'sin-definir',
                             function () {
-                              ${metodoEliminar}
+                              ${metodoEliminar};
+                              $('#modal-container').modal('hide');
                             }
                         );
                         "
                 >
                     <span class="material-icons pr-0">delete</span>
-                </button>
+                </a>
 
-            </td>`;
-    
-    
+            </td>`;    
     if (pAgregarTR)
     {
         fila += '</tr>';
@@ -2480,14 +2484,16 @@ function EstablecerBotonesEntidad(pEntidad, pPropiedad, pAgregar, pTxtIDs){
     {
         document.getElementById(idControlCampo.replace('panel_contenedor_Entidades_','lbCrear_')).style.display = '';
         document.getElementById(idControlCampo.replace('panel_contenedor_Entidades_','lbGuardar_')).style.display = 'none';
+        document.getElementById(idControlCampo.replace('panel_contenedor_Entidades_','lbCancelar_')).style.display = 'none';
     }
     else
     {
         document.getElementById(idControlCampo.replace('panel_contenedor_Entidades_','lbCrear_')).style.display = 'none';
         document.getElementById(idControlCampo.replace('panel_contenedor_Entidades_','lbGuardar_')).style.display = '';
+        document.getElementById(idControlCampo.replace('panel_contenedor_Entidades_','lbCancelar_')).style.display = '';
     }
     
-    document.getElementById(idControlCampo.replace('panel_contenedor_Entidades_','lbCancelar_')).style.display = '';
+    
 }
 
 function EstablecerBotonesGrupoValores(pEntidad, pPropiedad, pTxtIDs){
@@ -2577,7 +2583,7 @@ function LimpiarControlesPropiedadDeEntidad(pEntidad, pPropiedad, pTxtValores, p
             EstablecerBotonesGrupoValores(pEntidad, pPropiedad, pTxtIDs);
         }
 
-        if ($('#' + idControlCampo).length > 0 && $('#' + idControlCampo)[0].nodeName == 'SELECT') {
+        if (idControlCampo.length != 0 && $('#' + idControlCampo).length > 0 && $('#' + idControlCampo)[0].nodeName == 'SELECT') {
             $('option', $('#' + idControlCampo)[0]).removeAttr('disabled');
         }
     }
@@ -2789,7 +2795,7 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
                     valor = GetValorElementoGuardado(pEntidadHija, propiedad, pTxtValores, pTxtElemEditados, -1);
                     var idControl = ObtenerControlEntidadProp(pEntidadHija + ',' + propiedad, pTxtIDs);
 
-                    if (idControl.indexOf('selEnt_') != -1 && $('#' + idControl).length > 0 && $('#' + idControl)[0].tagName == 'SELECT') {
+                    if (idControl.indexOf('selEnt_') != -1 && idControl != 0 && $('#' + idControl).length > 0 && $('#' + idControl)[0].tagName == 'SELECT') {
                         var opcion = $('option[value="' + valor + '"]', $('#' + idControl)[0]);
 
                         if (opcion.length > 0) {
@@ -2830,21 +2836,70 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
 		  return "";
 		}
     }
-    fila += '<td class="tdaccion"><a onclick="SeleccionarElementoGrupoPaneles(\''+pEntidad+'\', \''+pPropiedad+'\', \''+pEntidadHija+'\', \''+pNumElem+'\', \''+pTxtValores+'\', \''+pTxtIDs+'\', \''+pTxtCaract+'\', \''+pTxtElemEditados+'\')"><img src="'+GetUrlImg(pTxtCaract)+'icoEditar.gif"></a></td>';
-    var metodoEliminar = 'EliminarObjectNoFuncionalProp(\\\''+pNumElem+'\\\',\\\''+pEntidad+'\\\', \\\''+pPropiedad+'\\\', \\\''+pEntidadHija+'\\\', \\\''+pControlCont+'\\\', \\\''+pTxtValores+'\\\', \\\''+pTxtIDs+'\\\', \\\''+pTxtCaract+'\\\', \\\''+pTxtElemEditados+'\\\');';
+    // Cambiado por nuevo Front
+    // fila += '<td class="tdaccion"><a onclick="SeleccionarElementoGrupoPaneles(\''+pEntidad+'\', \''+pPropiedad+'\', \''+pEntidadHija+'\', \''+pNumElem+'\', \''+pTxtValores+'\', \''+pTxtIDs+'\', \''+pTxtCaract+'\', \''+pTxtElemEditados+'\')"><img src="'+GetUrlImg(pTxtCaract)+'icoEditar.gif"></a></td>';
+    fila += `<td class="tdaccion">
+             <a href="javascript: void(0);"style="color: var(--c-primario)" onclick="SeleccionarElementoGrupoPaneles('${pEntidad}','${pPropiedad}', '${pEntidadHija}', '${pNumElem}', '${pTxtValores}', '${pTxtIDs}', '${pTxtCaract}','${pTxtElemEditados}')">
+                <span class="material-icons pr-0">edit</span>
+             </a>
+             </td>`;
+    // var metodoEliminar = 'EliminarObjectNoFuncionalProp(\\\''+pNumElem+'\\\',\\\''+pEntidad+'\\\', \\\''+pPropiedad+'\\\', \\\''+pEntidadHija+'\\\', \\\''+pControlCont+'\\\', \\\''+pTxtValores+'\\\', \\\''+pTxtIDs+'\\\', \\\''+pTxtCaract+'\\\', \\\''+pTxtElemEditados+'\\\');';
+    var metodoEliminar = `EliminarObjectNoFuncionalProp('${pNumElem}','${pEntidad}', '${pPropiedad}', '${pEntidadHija}', '${pControlCont}', '${pTxtValores}', '${pTxtIDs}', '${pTxtCaract}', '${pTxtElemEditados}');`;
+
     
      var textoEliminar=GetMensajeEliminar(pEntidad,pPropiedad,pTxtCaract);
     
     if(textoEliminar==null )
     {
-        fila += '<td class="tdaccion"><a class="remove" onclick="MostrarPanelConfirmacionEvento(event, \''+textoFormSem.confimEliminarEntidad+'\', \''+metodoEliminar+'\')"></a></td>';    
+        // Cambio por nuevo Front
+        //fila += '<td class="tdaccion"><a class="remove" onclick="MostrarPanelConfirmacionEvento(event, \''+textoFormSem.confimEliminarEntidad+'\', \''+metodoEliminar+'\')"></a></td>';    
+        fila += `<td class="tdaccion">                    
+                    <a href="javascript:void(0)"                                        
+                        data-showmodalcentered="1"
+                        onclick="
+                            $('#modal-container').modal('show', this);
+                            AccionFichaPerfil(
+                                '${textoRecursos.Eliminar}',                                
+                                '${borr.si.charAt(0).toUpperCase()}${borr.si.slice(1)}',
+                                '${borr.no.charAt(0).toUpperCase()}${borr.no.slice(1)}',
+                                '${textoFormSem.confimEliminarEntidad}',
+                                'sin-definir',
+                                function(){
+                                        ${metodoEliminar};
+                                        $('#modal-container').modal('hide');
+                                }
+                            );
+                        ">
+                            <span class="material-icons pr-0">delete</span>
+                    </a>                    
+
+                </td>`;    
     }else
     {
-        fila += '<td class="tdaccion"><a class="remove" onclick="MostrarPanelConfirmacionEvento(event, \''+textoEliminar+'\', \''+metodoEliminar+'\')"></a></td>';    
+        // Cambio por nuevo Front
+        // fila += '<td class="tdaccion"><a class="remove" onclick="MostrarPanelConfirmacionEvento(event, \''+textoEliminar+'\', \''+metodoEliminar+'\')"></a></td>';    
+        fila += `<td class="tdaccion">                 
+                    <a href="javascript:void(0)"                                        
+                        data-showmodalcentered="1"
+                        onclick="
+                            $('#modal-container').modal('show', this);
+                            AccionFichaPerfil(
+                                '${textoRecursos.Eliminar}',
+                                '${borr.si.charAt(0).toUpperCase()}${borr.si.slice(1)}',
+                                '${borr.no.charAt(0).toUpperCase()}${borr.no.slice(1)}',
+                                '${textoEliminar}',
+                                'sin-definir',
+                                function(){
+                                        ${metodoEliminar};
+                                        $('#modal-container').modal('hide')
+                                }
+                            );
+                        ">
+                            <span class="material-icons pr-0">delete</span>
+                    </a>                    
+                </td>`;   
     }
-    
-    
-  
+      
     if (pAgregarTR)
     {
         fila += '</tr>';
@@ -3967,8 +4022,8 @@ function AgregarArchivoComoPropiedad(pTxtHackID, pDocumentoID, pTxtHackImgPrinci
     
     $('#' + idCampoControl.replace('Campo_','divAgregarArchivo_')).css('display', 'none');
     $('#' + idCampoControl.replace('Campo_','divArchivoAgregado_')).css('display', '');
-    
-    if ($('#' + idCampoControl.replace('Campo_','imgVistaPre_')).length > 0)
+
+    if (idCampoControl.replace('Campo_', 'imgVistaPre_') != 0 && $('#' + idCampoControl.replace('Campo_', 'imgVistaPre_')).length > 0)
     {
         $('#' + idCampoControl.replace('Campo_', 'imgVistaPre_'))[0].src = valorProp;
     }
@@ -4102,12 +4157,6 @@ function EliminarImagenPrincipal(pDocID) {
 
     if (pDocID == null) {
         pDocID = 'doc';
-    }
-
-    for (var i = 0; i < vals.length; i++) {
-        if (vals[i] != '' && (vals[i].indexOf(pDocID + ',') != 0 || $('#' + TxtValorRdf).val().indexOf(vals[i].substr((pDocID + ',').length)) >= 0)) {
-            document.getElementById('txtHackValorImgRepresentante').value += vals[i] + '|';
-        }
     }
 }
 
@@ -4530,7 +4579,7 @@ function AgregarValorGrupoGnossAutocompletar(pControlID, pData) {
 }
 
 function SeleccionarIdioma(pLink, pEntidad, pPropiedad, pIdioma, pMultiple) {
-    var li = $('li.activo', $(pLink).parent().parent());
+    var li = $('li.active', $(pLink).parent().parent());
     var idiomaActual = li.attr('rel');
 
     var valorProp = ObtenerValorEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem);
@@ -4559,9 +4608,9 @@ function SeleccionarIdioma(pLink, pEntidad, pPropiedad, pIdioma, pMultiple) {
         //}
 
         //li.attr('class', '');
-        li.removeClass('activo');
+        li.removeClass('active');
         //$(pLink).parent().attr('class', 'active');
-        $(pLink).parent().addClass('activo');
+        $(pLink).parent().addClass('active');
         DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, GetValorDecode(ExtraerTextoIdioma(valorAntiguo, pIdioma)));
     }
 }

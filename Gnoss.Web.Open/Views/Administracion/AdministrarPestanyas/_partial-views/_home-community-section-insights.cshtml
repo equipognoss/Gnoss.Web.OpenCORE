@@ -1,0 +1,94 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la sección de Descubrimiento y análisis desde la Home de DevTools.
+Esta vista se cargará en la sección central cuando se pulse sobre "Descubrimiento y análisis"
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+    // Permisos para administrar aspectos relacionados con el diseño de páginas
+    bool administrarPaginas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)));
+    bool permisosParametersManagement = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
+    // Permisos para administrar aspectos relacionados con el diseño de la comunidad
+    bool administrarDiseño = false;
+}
+
+@* Contenedor central de secciones *@
+<div class="section-list-wrap">
+
+
+    @if (permisosPaginas.AdministracionSemanticaPermitido && (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Semantica))))
+    {
+        @* Facetas *@
+        <div class="section section-navigation" data-parent-section="insights" data-section="facetas">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOM")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONFIGURACIONDEFILTROSDEBUSQUEDAPARALAOBTENCIONDERESULTADOSE")
+            </p>
+        </div>          
+
+        @* Autocompletar / Sugerencias de búsqueda *@
+        <div class="section section-navigation" data-parent-section="insights" data-section="sugerencias-busqueda">
+            <h2>@Html.GetText("DEVTOOLS","SUGERENCIASDEBUSQUEDA")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONFIGURACIONDEPROPIEDADESAELEGIRDELASONTOLOGIASPORLASCUALES")
+            </p>
+        </div>
+    }
+        
+    @* Información contextual *@    
+    @if (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)))
+    {
+        
+        <div class="section section-navigation" data-parent-section="insights" data-section="informacion-contextual">
+            <h2>@Html.GetText("DEVTOOLS","INFORMACIONCONTEXTUAL")</h2>
+            <p>
+        
+            </p>
+        </div>                           
+    }
+
+    @* Opción Parámetros de búsqueda personalizados *@
+    @if (permisosPaginas.AdministracionDesarrolladoresPermitido)
+    {
+        administrarDiseño = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
+        if (administrarDiseño)
+        {                                                                                                                                                                                  
+            <div class="section section-navigation" data-parent-section="insights" data-section="personalizacion-consulta-busqueda">
+                <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAPARAMETROSBUSQUEDAPERSONALIZADOS")</h2>
+                <p>
+            
+                </p>
+            </div>   
+        }
+    }
+        
+    @if (permisosPaginas.AdministracionPaginasPermitido)
+    {
+        if (administrarPaginas || permisosPaginas.CMSActivado)
+        {
+            @* Mapas *@
+            <div class="section section-navigation" data-parent-section="insights" data-section="mapa">
+                <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARMAPA")</h2>
+                <p>
+                    @Html.GetText("DEVTOOLS","CONFIGURACIONDEVISUALIZACIONDERECURSOSENMODOMAPASPARAUTILIZA")
+                </p>
+            </div>
+
+            @* Gráficos 
+            <div class="section section-navigation" data-parent-section="insights" data-section="graficos">
+                <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCHARTS")</h2>
+                <p>
+                    Configuración de visualización de recursos en modo gráfico para utilizarse en la comunidad.
+                </p>
+            </div>*@
+        }
+    }   
+</div>
+
+

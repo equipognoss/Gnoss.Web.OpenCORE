@@ -632,11 +632,11 @@ function ValidarCPOrg(pTxtCP, pLblCP) {
 }
 
 /**
- * Validar el campo poblaci�n introducido para el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
- * @param {any} pTxtPobla: Input de la poblaci�n
- * @param {any} pLblPobla: Label asociado al input poblaci�n
+ * Validar el campo población introducido para el proceso de registro.
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
+ * @param {any} pTxtPobla: Input de la población
+ * @param {any} pLblPobla: Label asociado al input población
  */
 function ValidarPoblacionOrg(pTxtPobla, pLblPobla) {
     var error = '';
@@ -1120,9 +1120,9 @@ function ValidarNombreUsu(pTxtNombre, pLlbNombre) {
 }
 
 /**
- * Validar la contrase�a del lusuario en el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Validar la contraseña del lusuario en el proceso de registro.
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pTxtContra
  * @param {any} pTxtContra2
  * @param {any} pLblContra
@@ -1168,8 +1168,8 @@ function ValidarContrasena(pTxtContra, pTxtContra2, pLblContra, pLblContra2, pVa
 
 /**
  * Validar el campo email introducido para el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pTxtMail: El input donde se ha rellenado con datos
  * @param {any} pLblMail: El label asociado a dicho input
  */
@@ -1192,8 +1192,8 @@ function ValidarEmailIntroducido(pTxtMail, pLblMail) {
 
 /**
  * Validar el nombre de la persona en el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pNombrePersona: El inputText
  * @param {any} pLblNombrePersona: El label relacionado correspondiente con el inputText
  */
@@ -1271,8 +1271,8 @@ function ValidarFechaNacimiento(pDiaFechaNacimiento, pMesFechaNacimiento, pAnioF
 
 /**
  * Validar los apellidos de la persona en el proceso de registro.
- * Si es correcto, se a�ade una clase "is-valid"
- * Si es incorrecto (vac�o) se a�ade una clase "is-invalid"
+ * Si es correcto, se añade una clase "is-valid"
+ * Si es incorrecto (vacío) se añade una clase "is-invalid"
  * @param {any} pTxtApellidos: El input de los apellidos
  * @param {any} pLblApellidos: El label asociado a los apellidos
  */
@@ -1372,7 +1372,7 @@ function ValidarSexo(pNombrePersona, pLblNombrePersona) {
  * Si es incorrecto (vacío) se añade una clase "is-invalid"
 * @param {any} pTxt: El inputText
  * @param {any} pLbl: El label relacionado correspondiente con el inputText
- * @param {bool} jqueryElement: Se indica si el elemento pasado est� ya en formato jquery, por lo que no hace falta analizarlo por ID
+ * @param {bool} jqueryElement: Se indica si el elemento pasado está ya en formato jquery, por lo que no hace falta analizarlo por ID
  */
 function ValidarCampoNoVacio(pTxt, pLbl, jqueryElement = false) {
     var error = '';
@@ -1818,22 +1818,22 @@ function borrarComentario(control, accion) { // ejemplo de borrado de comentario
 
 
 /**
- * Acci�n que se ejecuta cuando se pulsa sobre las acciones disponibles de un item/recurso de tipo "Perfil" encontrado por el buscador.
- * Las acciones que se podr�an realizar son (No/Enviar newsletter, No/Bloquear). Acciones tambi�n de vincular, desvincular recurso...
- * @param {string} titulo: T�tulo que tendr� el panel modal
- * @param {any} textoBotonPrimario: Texto del bot�n primario
- * @param {any} textoBotonSecundario: Texto del bot�n primario
- * @param {string} texto: El texto o mensaje a modo de t�tulo que se mostrar� para que el usuario sepa la acci�n que se va a realizar
- * @param {string} id: Identificador del recurso/persona sobre el que se aplicar� la acci�n
- * @param {any} accion: Acci�n o funci�n que se ejecutar� cuando se pulse en el bot�n de primario
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * Acción que se ejecuta cuando se pulsa sobre las acciones disponibles de un item/recurso de tipo "Perfil" encontrado por el buscador.
+ * Las acciones que se podrán realizar son (No/Enviar newsletter, No/Bloquear). Acciones también de vincular, desvincular recurso...
+ * @param {string} titulo: Título que tendrá el panel modal
+ * @param {any} textoBotonPrimario: Texto del botón primario
+ * @param {any} textoBotonSecundario: Texto del botón primario
+ * @param {string} texto: El texto o mensaje a modo de título que se mostrará para que el usuario sepa la acción que se va a realizar
+ * @param {string} id: Identificador del recurso/persona sobre el que se apliacación la acción
+ * @param {any} accion: Acción o función que se ejecutará cuando se pulse en el botón de primario
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
 function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, texto, id, accion, textoInferior = null, idModalPanel = "#modal-container") {
 
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -1861,7 +1861,7 @@ function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, tex
     plantillaPanelHtml += '<div class="ko"></div>';
     plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
-    // Panel de botones para la acci�n
+    // Panel de botones para la acción
     plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
     plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">' + textoBotonSecundario + '</button>'
     plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1">' + textoBotonPrimario + '</button>'
@@ -1869,16 +1869,16 @@ function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, tex
     plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
 
-    // Asignaci�n de la funci�n al bot�n "S�" o de acci�n
+    // Asignación de la función al botón "Sí" o de acción
     $(botones[1]).on("click", function () {
-        // Ocultar el panel modal de bootstrap - De momento estar� visible. Se ocultar�a si se muestra mensaje de OK pasados 1.5 segundos
+        // Ocultar el panel modal de bootstrap - De momento estará visible. Se ocultará si se muestra mensaje de OK pasados 1.5 segundos
         //$('#modal-container').modal('hide');
     }).click(accion);
 }
@@ -3760,7 +3760,7 @@ function procesarTags(data, txtHack, pEsPaginaEdicion) {
     // Cambiar por el nuevo Front
     //if (!$('#' + txtTagsID).parent().next().hasClass('propuestos')) {
     if (!$('#' + txtTagsID).parent().parent().parent().children().hasClass("propuestos")) {
-        // Cambiar el contenedor donde se establecer�n las etiquetas propuestas para el nuevo Front
+        // Cambiar el contenedor donde se establecerá las etiquetas propuestas para el nuevo Front
         // Original -> $('#' + txtTagsID).parent().after("<div class='propuestos' style='display:none'><p>" + form.tagsPropuestos + "</p><span class='contenedor'></span></div>");
         //$('#' + txtTagsID).parent().after('<div class="propuestos"><label class="control-label d-block mb-2">' + form.tagsPropuestos + '</label></p><span class="contenedor tag-list sugerencias"></span></div>');
         $('#' + txtTagsID).parent().parent().after('<div class="propuestos"><label class="control-label d-block mb-2">' + form.tagsPropuestos + '</label></p><span class="contenedor tag-list sugerencias"></span></div>');
@@ -4513,7 +4513,7 @@ const comportamientoFacetasPopUp = {
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = FacetaActual;
 
-        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal                
+        // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal         
         that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
             .keyup(function () {
                 that.textoActual = that.eliminarAcentos($(this).val());
@@ -5901,11 +5901,11 @@ function CambiarTextoElemento(elementID, nombre) {
 }
 
 /**
- * Eliminar� los atributos del bot�n para que no pueda volver a ejecutar nada a menos que se vuelva a carguar la p�gina web
+ * Eliminará los atributos del botón para que no pueda volver a ejecutar nada a menos que se vuelva a carguar la página web
  * Ej: Acciones que se hacen sobre una persona ("No enviar newsletter, Bloquear...")
  * @param {any} elementId: Elemento que se desea cambiar el nombre y eliminar atributos
- * @param {any} nombre: Nombre que tendr� el bot�n una vez se haya pulsado sobre �l y las acciones se hayan realizado
- * @param {any} listaAtributos: Lista de atributos en formato String que ser�n eliminados del bot�n (Ej: "data-target", "href", "onclick")
+ * @param {any} nombre: Nombre que tendrá el botón una vez se haya pulsado sobre él y las acciones se hayan realizado
+ * @param {any} listaAtributos: Lista de atributos en formato String que serán eliminados del botón (Ej: "data-target", "href", "onclick")
  * */
 function CambiarTextoAndEliminarAtributos(elementId, nombre, listaAtributos) {
     // Seleccionamos el elemento
@@ -5914,7 +5914,7 @@ function CambiarTextoAndEliminarAtributos(elementId, nombre, listaAtributos) {
     listaAtributos.forEach(atributo => $(element).removeAttr(atributo));
     // Cambiamos el nombre del elemento
     $(element).html(nombre)
-    // A�adimos estilo para que no parezca que es "clickable"
+    // Añadimos estilo para que no parezca que es "clickable"
     $(element).css('cursor', 'auto');
 }
 
@@ -6115,11 +6115,11 @@ function PeticionAJAX(pMetodo, pDatosPost, pFuncionOK, pFuncionKO) {
 }
 
 /**
- * M�todo que es ejecutado para mostrar informaci�n traida del backend como Mensajes nuevos, invitaciones nuevas, suscripciones nuevas...
+ * Método que es ejecutado para mostrar información traida del backend como Mensajes nuevos, invitaciones nuevas, suscripciones nuevas...
  * @param {any} datosRecibidos
  */
 /**
- * M�todo que es ejecutado para mostrar informaci�n traida del backend como Mensajes nuevos, invitaciones nuevas, suscripciones nuevas...
+ * Método que es ejecutado para mostrar información traida del backend como Mensajes nuevos, invitaciones nuevas, suscripciones nuevas...
  * @param {any} datosRecibidos
  */
 function RepintarContadoresNuevosElementos(datosRecibidos) {
@@ -6142,7 +6142,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
 
     var numInvOtrasIdent = arrayDatos[12];
 
-    // Identificaci�n de elementos HTML para controlar el n� de mensajes nuevos
+    // Identificación de elementos HTML para controlar el nº de mensajes nuevos
     // Mensajes nuevos    
     const mensajesMenuNavegacionItem = document.querySelectorAll('.liMensajes')//$('#navegacion').find('.liMensajes');
     const suscripcionesMenuNavegacionItem = document.querySelectorAll('.liNotificaciones'); //$('#navegacion').find('.liNotificaciones');
@@ -6171,7 +6171,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Mensajes sin leer
     DarValorALabel('infNumMensajesSinLeer', parseInt(numMensajesSinLeer) + parseInt(numMensajesSinLeerOrg));
     DarValorALabel('infNumMensajesSinLeerMobile', parseInt(numMensajesSinLeer) + parseInt(numMensajesSinLeerOrg));
-    // A�adir punto rojo de nuevos Mensajes
+    // Añadir punto rojo de nuevos Mensajes
     if (parseInt(numMensajesNuevos) + parseInt(numMensajesNuevosOrg) > 0) {
         $(mensajesMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -6180,7 +6180,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Comentarios sin leer
     DarValorALabel('infNumComentariosSinLeer', numComentariosSinLeer);
     DarValorALabel('infNumComentariosSinLeerMobile', numComentariosSinLeer);
-    // A�adir punto rojo de 'nuevos' Comentarios
+    // Añadir punto rojo de 'nuevos' Comentarios
     if (parseInt(numComentariosNuevos) > 0) {
         $(comentariosMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -6189,7 +6189,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Invitaciones sin leer
     DarValorALabel('infNumInvitacionesSinLeer', parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg));
     DarValorALabel('infNumInvitacionesSinLeerMobile', parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg));
-    // A�adir punto rojo de 'sin leer' de Invitaciones - No se utilizan
+    // Añadir punto rojo de 'sin leer' de Invitaciones - No se utilizan
     /*if (parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg) > 0) {
         $(invitacionesMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -6201,7 +6201,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Suscripciones sin leer
     DarValorALabel('infNumSuscripcionesSinLeer', numSuscripcionesSinLeer);
     DarValorALabel('infNumSuscripcionesSinLeerMobile', numSuscripcionesSinLeer);
-    // A�adir punto rojo de nuevas Suscripciones
+    // Añadir punto rojo de nuevas Suscripciones
     if (parseInt(numSuscripcionesNuevos)) {
         $(suscripcionesMenuNavegacionItem).addClass('nuevos');
     } else {
@@ -6275,16 +6275,16 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
 }
 
 /**
- * Pintar el n�mero de elementos (mensajes sin leer, notificaciones, suscripciones) en la label correspondiente y a�ade la coletilla de "nuevos" o sin leer.
- * De momento elimino la opci�n de mostrar "nuevos" o "sin leer". 
+ * Pintar el número de elementos (mensajes sin leer, notificaciones, suscripciones) en la label correspondiente y añade la coletilla de "nuevos" o sin leer.
+ * De momento elimino la opción de mostrar "nuevos" o "sin leer". 
  * @param {any} pLabelID
  * @param {any} pNumElementos
  */
 function DarValorALabel(pLabelID, pNumElementos) {
-    // Cambiado por nuevo Front para buscar por clase (El men� clonado tambi�n existe y no podr�a haber 2 elementos con un mismo ID)
+    // Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podría haber 2 elementos con un mismo ID)
     //if ($('#' + pLabelID).length > 0) {
     if ($('.' + pLabelID).length > 0) {
-        // Cambiado por nuevo Front: Cambiado por nuevo Front para buscar por clase (El men� clonado tambi�n existe y no podr�a haber 2 elementos con un mismo ID). Hecho abajo
+        // Cambiado por nuevo Front: Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podría haber 2 elementos con un mismo ID). Hecho abajo
         // document.getElementById(pLabelID).innerHTML = pNumElementos;        
 
         if (pLabelID.indexOf('SinLeer') != -1) {
@@ -6296,7 +6296,7 @@ function DarValorALabel(pLabelID, pNumElementos) {
             // document.getElementById(pLabelID).innerHTML += '<span class="indentado">' + mensajes.nuevos + '</span>'
         }
 
-        // Cambiado por nuevo Front para buscar por clase (El men� clonado tambi�n existe y no podr�a haber 2 elementos con un mismo ID)
+        // Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podría haber 2 elementos con un mismo ID)
         //if (pNumElementos > 0) { document.getElementById(pLabelID).style.display = ''; } else { document.getElementById(pLabelID).style.display = 'none'; }
         // 
         if (pNumElementos > 0) {

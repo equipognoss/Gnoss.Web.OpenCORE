@@ -1,0 +1,164 @@
+@model ComAdminSemanticElemModel
+
+@*Descripción
+-----------------------------------------------
+Vista que contendrá un panel para crear un nuevo elemento en el Tesauro semántico. Se muestra dentro del modal de Edición de un Tesauro.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	@* Contador de idiomas para saber que panel mostrar si son multiIdioma. Se mostrará sólo si el contador es 0 *@
+	int contIdiomas = 0;
+}
+
+@* Panel de creación del Tesauro *@
+<div class="panelTesauroElementCreation d-none">
+	@* Identificador del Tesauro *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">
+			@Html.GetText("ADMINISTRACIONSEMANTICA","IDENTIFICADOR")
+		</label>
+		<input id="txtIdentificacionCreacion" type="text" class="form-control txtIdentificacionCreacion" />
+		<small class="form-text text-muted">
+			@Html.GetText("DEVTOOLS","IDENTIFICADORDELELEMENTODELTESAUROACREAR")
+		</small>
+	</div>
+	@* Nombre del Tesauro *@
+	@if (Model.SemanticThesaurus.SemThesaurusLanguajes == null || Model.SemanticThesaurus.SemThesaurusLanguajes.Count == 0)
+	{
+		<div class="form-group mb-3">
+			<label class="control-label d-block">@Html.GetText("COMADMINCATEGORIAS", "NOMBRE")</label>
+			<input id="txtNombreCatPadreCreacion" type="text" class="form-control txtNombreCatPadreCreacion" />
+			<small class="form-text text-muted">
+				@Html.GetText("DEVTOOLS","NOMBREDELELEMENTODELTESAUROACREAR")
+			</small>
+		</div>
+	}
+	else
+	{
+
+		@* Tabs con panel con los idiomas *@
+		if (Model.SemanticThesaurus.SemThesaurusLanguajes.Count > 1)
+		{
+			<ul class="nav nav-tabs"
+			role="tablist">
+				@* Tab con el idioma correspondiente *@
+				@foreach (string idioma in Model.SemanticThesaurus.SemThesaurusLanguajes.Keys)
+				{
+					<li class="nav-item" role="presentation">
+						<a class="nav-link active"
+						id="tab_@(idioma)"
+						data-toggle="tab"					   
+						href="#languageVer_@(idioma)"
+						role="tab"
+						aria-controls="languageVer_@(idioma)"
+						aria-selected="true">
+							<span class="texto">@Model.SemanticThesaurus.SemThesaurusLanguajes[idioma]</span>						
+						</a>
+					</li>
+				}
+			</ul>
+		}
+
+		@* Paneles con los diferentes inputs con los idiomas *@
+		foreach (string idioma in Model.SemanticThesaurus.SemThesaurusLanguajes.Keys)
+		{		
+			<div class="tab-pane fade edicion_@(idioma) @((contIdiomas == 0) ? "active show" : null)" id="languageVer_@(idioma)" role="tabpanel" aria-labelledby="languageVer_@(idioma)">
+				<div class="form-group mb-3">
+					<label class="control-label d-block">@Html.GetText("COMADMINCATEGORIAS", "NOMBRE") @Model.SemanticThesaurus.SemThesaurusLanguajes[idioma]</label>
+					<input type="text" class="form-control txtNombreCatPadreCreacion @idioma" data-language="@idioma" />
+					<small class="form-text text-muted">
+						@Html.GetText("DEVTOOLS","NOMBREDELELEMENTODELTESAUROACREAREN") @Model.SemanticThesaurus.SemThesaurusLanguajes[idioma]
+					</small>
+				</div>
+			</div>
+			contIdiomas = +1;
+		}
+	}
+
+	@if (Model.SemanticThesaurus.ThesaurusEditorModel.ExtraPropertiesCategories.Count > 0)
+	{
+		<div class="panelPropTesSemExtra">
+			@* Propiedades extra del Tesauro *@
+			@foreach (string nomPropExtra in Model.SemanticThesaurus.ThesaurusEditorModel.ExtraPropertiesCategories.Keys)
+			{
+				Es.Riam.Semantica.OWL.Propiedad propiedad = Model.SemanticThesaurus.ThesaurusEditorModel.ExtraPropertiesCategories[nomPropExtra];
+				//string idControl = "txtExtraCat_" + propiedad.NombreGeneracionIDs;
+				string posibleNombrePropiedad = propiedad.EspecifPropiedad.NombrePropiedad(false);
+
+				if (posibleNombrePropiedad == null)
+				{
+					posibleNombrePropiedad = nomPropExtra;
+				}
+				@* Contenedor de las propiedades extra *@
+			
+				@if (propiedad.Tipo == Es.Riam.Semantica.OWL.TipoPropiedad.ObjectProperty || Model.SemanticThesaurus.SemThesaurusLanguajes == null || Model.SemanticThesaurus.SemThesaurusLanguajes.Count == 0)
+				{
+					string objProp = "";
+					string id = "ck_" + Guid.NewGuid().ToString();
+
+					if (propiedad.Tipo == Es.Riam.Semantica.OWL.TipoPropiedad.ObjectProperty)
+					{
+						objProp = "objProp=\"true\"";
+					}
+
+					<div class="form-group mb-3">
+						<label class="control-label d-block">@posibleNombrePropiedad</label>
+						@if (propiedad.Tipo != Es.Riam.Semantica.OWL.TipoPropiedad.ObjectProperty && propiedad.EspecifPropiedad.TipoCampo == Es.Riam.Semantica.Plantillas.TipoCampoOntologia.Tiny)
+						{
+							<textarea id="@id" type="text" class="txtExtraCat cke recursos" prop="@propiedad.Nombre"></textarea>
+						}
+						else
+						{
+							<input type="text" class="txtExtraCat form-control" prop="@propiedad.Nombre" @Html.Raw(objProp) />
+						}
+					</div>
+				}
+				else
+				{
+					<div class="form-group mb-3">
+						<label class="control-label d-block">@posibleNombrePropiedad</label>
+						@foreach (string idioma in Model.SemanticThesaurus.SemThesaurusLanguajes.Keys)
+						{
+							string id = "ck_" + Guid.NewGuid().ToString();
+							<label class="control-label d-block">@Model.SemanticThesaurus.SemThesaurusLanguajes[idioma]</label>
+							if (propiedad.EspecifPropiedad.TipoCampo == Es.Riam.Semantica.Plantillas.TipoCampoOntologia.Tiny)
+							{
+								<textarea id="@id" type="text" class="txtExtraCat cke recursos form-control" prop="@propiedad.Nombre" lang="@idioma" data-language="@idioma"></textarea>
+							}
+							else
+							{
+								<input type="text" class="txtExtraCat form-control" prop="@propiedad.Nombre" lang="@idioma" data-language="@idioma" />
+							}
+
+						}
+					</div>
+				}
+		
+			}
+		</div>
+	}
+
+	@* Panel donde crear el elemento del Tesauro *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">
+			@Html.GetText("DEVTOOLS","SELECCIONADONDECREARELELEMENTODELTESAUROSEMANTICO")		
+		</label>
+		
+		<select id="cmbCrearCategoriaEn" name="cmbCrearCategoriaEn"
+				class="cmbCrearCategoriaEn js-select2"
+				tabindex="0"
+				aria-hidden="false">			
+			@* Categorías del Tesauro donde se desean crear *@
+			@foreach (string categoriaID in Model.SemanticThesaurus.ParentCategoriesForCreateNewsCategories.Keys)
+			{
+				<option value="@categoriaID">@Model.SemanticThesaurus.ParentCategoriesForCreateNewsCategories[categoriaID]</option>
+			}			
+		</select>
+		<small class="form-text text-muted">@Html.GetText("DEVTOOLS","SELECCIONADONDECREARELELEMENTODELTESAUROSEMANTICO")</small>
+	</div>
+
+	@* Botón para crear el elemento*@
+	<button class="btn btn-primary btnCreateTesauroElement">@Html.GetText("DEVTOOLS","CREAR")</button>
+</div>

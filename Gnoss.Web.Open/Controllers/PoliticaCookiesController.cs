@@ -3,6 +3,7 @@ using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
@@ -13,6 +14,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +26,7 @@ using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class PoliticaCookiesController : ControllerBaseWeb
     {
 
@@ -47,6 +50,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             DataWrapperUsuario usuarioDW = proyCL.ObtenerPoliticaCookiesProyecto(ProyectoSeleccionado.Clave);
+            usuarioDW.Merge(proyCL.ObtenerPoliticaCookiesProyecto(ProyectoAD.MetaProyecto));
             proyCL.Dispose();
 
             if (usuarioDW.ListaClausulaRegistro.Count == 0)
@@ -56,7 +60,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                string texto = usuarioDW.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.PoliticaCookiesUrlPagina)).Select(item => item.Texto).FirstOrDefault();
+                string texto = usuarioDW.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.PoliticaCookiesUrlPagina) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).Select(item => item.Texto).FirstOrDefault();
+
+                if (string.IsNullOrEmpty(texto))
+                {
+                    texto = usuarioDW.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.PoliticaCookiesUrlPagina) && item.ProyectoID.Equals(ProyectoAD.MetaProyecto)).Select(item => item.Texto).FirstOrDefault();
+                }
 
                 if (Uri.IsWellFormedUriString(texto, UriKind.Absolute))
                 {
@@ -99,6 +108,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             DataWrapperUsuario usuarioDW = proyCL.ObtenerPoliticaCookiesProyecto(ProyectoSeleccionado.Clave);
+            usuarioDW.Merge(proyCL.ObtenerPoliticaCookiesProyecto(ProyectoAD.MetaProyecto));
+
             proyCL.Dispose();
 
             if (usuarioDW.ListaClausulaRegistro.Count == 0)
@@ -108,7 +119,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                string texto = usuarioDW.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.PoliticaCookiesUrlPagina)).Select(item => item.Texto).FirstOrDefault();
+                string texto = usuarioDW.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.PoliticaCookiesUrlPagina) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).Select(item => item.Texto).FirstOrDefault();
+
+                if (string.IsNullOrEmpty(texto))
+                {
+                    texto = usuarioDW.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.PoliticaCookiesUrlPagina) && item.ProyectoID.Equals(ProyectoAD.MetaProyecto)).Select(item => item.Texto).FirstOrDefault();
+                }
 
                 if (Uri.IsWellFormedUriString(texto, UriKind.Absolute))
                 {

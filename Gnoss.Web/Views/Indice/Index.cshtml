@@ -17,55 +17,6 @@
     -------------------- Vista de listado de categorías de la comunidad  --------------------
 *@
 
-@functions{
-
-    string PintarOptionCategoria(CategoryModel pCategoriaTesauro)
-    {
-        bool tieneHijos = ((List<CategoryModel>)Model.Categories).Count(cat => cat.ParentCategoryKey == pCategoriaTesauro.Key) > 0;
-
-        <option value="@pCategoriaTesauro.Key">@pCategoriaTesauro.Name</option>
-
-        if (tieneHijos)
-        {
-            foreach (CategoryModel categoria in Model.Categories.Where(cat => cat.ParentCategoryKey == pCategoriaTesauro.Key).OrderBy(cat => cat.Order))
-            {
-                @PintarOptionCategoria(categoria)
-            }
-        }
-        return string.Empty;
-    }
-
-    string PintarCategoria(CategoryModel pCategoriaTesauro)
-    {
-        CommunityModel Comunidad = Html.GetComunidad();
-        bool tieneHijos = Model.Categories.Count(cat => cat.ParentCategoryKey == pCategoriaTesauro.Key) > 0;
-        string urlCategoria = Model.UrlBaseCategories + Html.EliminarCaracteresUrlSem(pCategoriaTesauro.Name) + "/" + pCategoriaTesauro.Key;
-
-        <div class="categoria-wrap">
-
-            @* <a href="@urlCategoria">@pCategoriaTesauro.Name @(Comunidad.Key != ProyectoAD.MetaProyecto?"(" + pCategoriaTesauro.NumResources + ")":"") </a> *@
-            <div class="custom-control themed little primary categoria">
-                <label> <a href="@urlCategoria">@pCategoriaTesauro.Name @(Comunidad.Key != ProyectoAD.MetaProyecto?"(" + pCategoriaTesauro.NumResources + ")":"") </a></label>
-            </div>
-
-            @if (tieneHijos)
-            {
-                @* Mostrar opción de desplegar si tiene hijos la categoría*@
-                <div class="boton-desplegar mostrar-hijos">
-                    <span class="material-icons">keyboard_arrow_down</span>
-                </div>
-                <div class="panHijos">
-                    @foreach (CategoryModel categoria in Model.Categories.Where(cat => cat.ParentCategoryKey == pCategoriaTesauro.Key).OrderBy(cat => cat.Order))
-                    {
-                        @PintarCategoria(categoria)
-                    }
-                </div>
-            }
-        </div>
-        return String.Empty;
-    }
-}
-
 @{
     Html.SetBodyClass("indice");
 }
@@ -84,7 +35,8 @@
         <div class="h1-container">
             <h1>@Html.GetText("TESAURO", "INDICE")</h1>
         </div>
-        @if (Comunidad.Key != ProyectoAD.MetaProyecto && !IdentidadActual.IsGuestIdentity) { 
+        @if (Comunidad.Key != ProyectoAD.MetaProyecto && !IdentidadActual.IsGuestIdentity)
+        {
             <div class="acciones-listado">
                 <div class="wrap">
                     <a class="btn btn-outline-grey"
@@ -96,7 +48,7 @@
                     </a>
                 </div>
             </div>
-        }        
+        }
     </div>
 
     @* Buscador de categorías *@
@@ -117,10 +69,14 @@
         <div class="divTesArbol divCategorias clearfix mt-3" style="margin-left:0;">
             @foreach (CategoryModel categoria in ((List<CategoryModel>)Model.Categories).Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat => cat.Order))
             {
-                @PintarCategoria(categoria);
+
+                PintarCategoriasIndice pintar = new PintarCategoriasIndice();
+                pintar.indexView = Model;
+                pintar.categoryModel = categoria;
+                @Html.PartialView("../Indice/_PintarCategoriaIndice", pintar)
             }
         </div>
-    </div>  
+    </div>
 </div>
 
 @* Vista modal para poder solicitar nuevas categorías *@

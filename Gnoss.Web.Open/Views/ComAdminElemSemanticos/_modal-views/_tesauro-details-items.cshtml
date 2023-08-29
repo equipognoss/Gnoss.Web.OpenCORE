@@ -1,0 +1,20 @@
+﻿@model ComAdminSemanticElemModel
+@*
+Descripción
+-----------------------------------------------
+Vista parcial utilizada en la vista modal "_tesauro-details" que unicamente pintará el contenedor donde se mostrarán los items del tesauro semántico
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Carga del Modelo para ser usada en vistas parciales (Ej: Pintado de categorías para eliminación)
+	ViewBag.ComAdminSemanticElemModel = Model;
+}
+
+@* Listado donde se cargarán los Elementos del objeto de conocimiento secundario *@
+<ul id="id-added-tesauro-element-list" class="id-added-tesauro-element-list component-list element-list no-list-style">
+	@* Elemento del OC Secundario - Se cargará vía petición (_ontology-secondary-list.cshtml) *@
+	@Html.PartialView("_partial-views/_editorTesauro", Model.SemanticThesaurus.ThesaurusEditorModel)		
+</ul>
+

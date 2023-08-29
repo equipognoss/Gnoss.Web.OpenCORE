@@ -1,0 +1,60 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Acceso Administrar Comunidad
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();    
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Acceso a Administrar Comunidad *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				data-target="#acceso-administrar-comunidad"
+				aria-expanded="true"
+				aria-controls="acceso-administrar-comunidad">
+				Acceso a Administrar Comunidad
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Acceso a Administrar Comunidad *@
+	<div
+		id="acceso-administrar-comunidad"
+		class="collapse show"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>Gnoss proporciona unas herramientas llamadas DevTools mediante las cuales los usuarios con permisos de administrador podrá configurar una comunidad Gnoss.
+				En este documento se detallan las opciones de configuración de las que dispone un usuario a través de la sección Comunidad.
+			</p>
+			<p>El servicio de configuración de una Comunidad en Gnoss se encuentra en la sección de Administrar Comunidad del panel lateral de usuario. Bastará por tanto con hacer clic sobre la opción poder acceder a él. Será necesario que el usuario disponga de permisos de administración/edición en la comunidad.</p>
+			<div class="text-center">
+				<figure class="figure">
+				  <img src="~/img/documentacionDevtools/shared/menu-administrar-comunidad.png">
+				  <figcaption class="figure-caption">Menú del usuario para acceder a la Administración de una comunidad.</figcaption>
+				</figure>    
+			</div>
+			<p>
+				Si este menú no es accesible (depende del diseño de las páginas del proyecto) también es posible acceder a la administración escribiendo en la barra de direcciones del navegador la url que permite acceder a las herramientas de administración de la comunidad
+			</p>
+			<ul>
+				<li>https://www.nombre_del_dominio.es/comunidad/nombre_comunidad/administrar-comunidad-home</li>
+			</ul>						
+			<p>Una vez se acceda, se mostrarán las diferentes opciones para poder administrar la comunidad.</p>
+			
+			<div class="text-center">
+				<figure class="figure">						  
+				  <img src="~/img/documentacionDevtools/shared/pagina-administracion-comunidad.png"/>					
+				  <figcaption class="figure-caption">Página principal de Administración de la comunidad.</figcaption>
+				</figure>    
+			</div>
+		</div>		
+	</div>
+</div>

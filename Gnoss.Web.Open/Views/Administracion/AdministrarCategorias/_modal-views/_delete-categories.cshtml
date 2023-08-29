@@ -1,0 +1,88 @@
+﻿@model PintarComboAdministrarCategorias
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal que se usará dentro de un contenedor de bootstrap para poder un select o combobox. Esta vista se pinta cuando se decide borrar una categoría y esta categoría tiene a su vez recursos en ella. Este modal sirve para que el usuario
+seleccione la nueva categoría destino de los recursos.
+
+Variables
+----------------------------------------------------------------
+*@
+@{    
+}
+@*
+----------------------------------------------------------------
+-------------------- Vista Modal para añadir/editar categorías a la Comunidad --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">delete</span>Eliminar categoría
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+@* Contenido central del modal *@
+<div class="modal-body">
+    <div class="formulario-edicion">
+		@* Información acerca del borrado de la categoría *@
+        <div class="form-group mb-1">
+            <label class="control-label">@Html.GetText("DEVTOOLS","HAYRECURSOSQUEESTANUTILIZANDOLACATEGORIAQUESEDESEAELIMINAR")</label>
+            <label class="control-label">@Html.GetText("DEVTOOLS","PARAPODERELIMINARLACORRECTAMENTE,SELECCIONAUNANUEVACATEGORIA")</label>                                                               
+        </div>
+
+        @* Tener en cuenta si los recursos quedarían huérfanos o no al borrar la categoría *@
+        @if (Model.ExistenRecursosNoHuerfanos)
+        {
+            <div class="form-group mb-1">
+                <label class="control-label">
+                    @Html.GetText("DEVTOOLS","QUEDESEASHACERCONLOSRECURSOSQUEESTANENOTRASCATEGORIAS")
+                </label>
+            </div>
+            <div class="form-group mb-4">
+                @* Select para elementos huérfanos *@
+                <select id="cmbMoverElementosTrasBorrar" name="cmbMoverElementosTrasBorrar" class="js-select2 form-control pmd-select2">                
+                    <option value="HUERFANOS">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINHUERFANOSA")</option>
+                    <option value="TODOS">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINA")</option>                
+                </select>
+            </div>
+        }
+
+		@* Sección bloque de la categoría padre a elegir *@
+		<div class="form-group mb-4">
+			@* Select + opciones de posibles categorías hijas *@
+            <select id="@Model.nombreCombo" name="@("cmb" + Model.nombreCombo)" class="js-select2 form-control pmd-select2">
+                <option value="@Guid.Empty.ToString()">@Html.GetText("PERFILBASE", "SELECCIONACAT")</option>
+                <option value="@Guid.Empty.ToString()">@Html.GetText("COMADMINCATEGORIAS", "CATEGORIARAIZ")</option>
+                @foreach (CategoryModel categoria in Model.Thesaurus.ThesaurusCategories.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
+                {
+                    if (Model.Thesaurus.SharedCategories.Contains(categoria.Key) || (Model.pExcluirSeleccionadas && Model.Thesaurus.SelectedCategories.Contains(categoria.Key)))
+                    {
+                        continue;
+                    }
+                    <option value="@categoria.Key">@categoria.Name</option>
+                    PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
+                    pintar.Thesaurus = Model.Thesaurus;
+                    pintar.pCategoria = categoria;
+                    pintar.pExcluirSeleccionadas = Model.pExcluirSeleccionadas;
+                    @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategoriasHijas", pintar)
+                }
+            </select>
+		</div>
+
+
+		@* Sección botón de guardado y cierre del modal *@
+		<div class="panelBotonera">
+			<a id="btnGuardarBorrarCategory" class="btn btn-primary uppercase">@Html.GetText("COMMON","GUARDAR")</a>
+		</div>
+	</div>    
+</div>
+
+@* Carga de operativa *@
+<script>
+        (function ($) {
+            // Operativa funcionamiento de Eliminación de categoría
+			operativaGestionCategorias.operativaModalDeleteCategory();
+        })();
+</script>
+

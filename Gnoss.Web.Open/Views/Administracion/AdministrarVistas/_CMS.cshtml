@@ -1,466 +1,54 @@
 ﻿@model ManageViewsViewModel
-@if (Model != null)
+
+@*
+Descripción
+-----------------------------------------------
+Vista que carga todas las vistas de tipo Faceta.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    string urlActionWeb = Model.UrlActionWeb;
+    string urlActionCMS = Model.UrlActionCMS;	
+    string urlActionCMSExtra = Model.UrlActionCMSExtra;
+    ViewBag.UrlActionWeb = urlActionWeb;
+    ViewBag.UrlActionCMS = urlActionCMS;
+    ViewBag.urlActionCMSExtra = urlActionCMSExtra;
+}
+
+@* Carga de vistas de tipo Componente CMS *@
+@foreach (ManageViewsViewModel.CMSComponentViewModel vistaComponente in Model.ListCMSComponents)
 {
-    <fieldset class="mediumLabels">
-        <legend id="lgndPestanya">Plantillas de los componentes del CMS</legend>
-        <div class="fieldsetContent">
-            <div id="plantillasComponentesCMS">
-                <div class="vistaEdicion">
-                    <div class="span45">
-                        <div class="tabsGroup tabsVertical ">
-                            <div class=" acciones tabspresentation">
-                                <ul>
-                                    @{
-                                        int i = 0;
-                                        foreach (ManageViewsViewModel.CMSComponentViewModel vistaComponente in Model.ListCMSComponents)
-                                        {
-                                            string active = "";
-                                            if (i == 0)
-                                            {
-                                                active = "active";
-                                            }
-                                            <li class="@active">
-                                                <a href="#" rel="0">@vistaComponente.Name</a>
-                                            </li>
-                                            i++;
-                                        }
-                                        <li><a href="#">Recursos</a></li>
-                                        <li><a href="#">Listados de Recursos</a></li>
-                                        <li><a href="#">Grupos de componentes</a></li>
-                                    }
-                                </ul>
-                            </div>
-                            @{
-                                string minHeight = ((Model.ListCMSComponents.Count + 3) * 30) + "px";
-                                foreach (ManageViewsViewModel.CMSComponentViewModel vistaComponente in Model.ListCMSComponents)
-                                {
-                                    <div class="block @vistaComponente.Name.Replace(" ", "-")" style="min-height:@minHeight">
-                                        <div>
-                                            <table>
-                                                <tbody>
-                                                    @if (vistaComponente.CustomizationName.Count > 0)
-                                                    {
-                                                        foreach (Guid idVista in vistaComponente.CustomizationName.Keys)
-                                                        {
-                                                            string idForm = Guid.NewGuid().ToString().Replace("-", "");
-                                                            <tr>
-                                                                <input type="hidden" class="@idForm nombreFich" name="ComponentePersonalizable" value="@vistaComponente.PathName" />
-                                                                <input type="hidden" class="@idForm" name="idPersonalizacion" value="@idVista" />
-                                                                <td>@vistaComponente.CustomizationName[idVista]</td>
-                                                                <td>
-                                                                    <a href="#" class="descargar actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .@vistaComponente.Name.Replace(" ", "-")" action="@((short)ManageViewsViewModel.Action.Download)" form="@idForm">
-                                                                        Descargar
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <a href="#" class="borrar actionView showConfirm" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .@vistaComponente.Name.Replace(" ", "-")" action="@((short)ManageViewsViewModel.Action.Delete)" form="@idForm">
-                                                                        Eliminar
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <a href="#" class="editar showEdit">
-                                                                        Editar
-                                                                    </a>
-                                                                    <div class="edit" style="display: none">
-                                                                        <div>
-                                                                            <span>Nombre: </span>
-                                                                            <input type="text" class="@idForm" name="Nombre" value="@vistaComponente.CustomizationName[idVista]" disabled />
-                                                                        </div>
-                                                                        <div>
-                                                                            <input type="file" name="Fichero" class="@idForm" />
-                                                                        </div>
-                                                                        <div>
-                                                                            <a href="#" class="borrar actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .@vistaComponente.Name.Replace(" ", "-")" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idForm">
-                                                                                Subir
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        }
-                                                    }
-                                                </tbody>
-                                            </table>
-                                            @{
-                                                string display = "style=\"display:none\"";
-                                                if (vistaComponente.CustomizationName.Count == 0)
-                                                {
-                                                    display = "";
-                                                }
-                                                string idFormNew = Guid.NewGuid().ToString().Replace("-", "");
-                                            }
-                                            <div class="cmsVacio" @Html.Raw(display)>
-                                                <p>No existe ninguna vista personalizada para el componente @vistaComponente.Name</p>
-                                            </div>
-                                            <input type="hidden" class="@idFormNew nombreFich" name="ComponentePersonalizable" value="@vistaComponente.PathName" />
-                                            <input type="hidden" class="@idFormNew" name="idPersonalizacion" value="@Guid.Empty" />
-                                            <div>
-                                                <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .@vistaComponente.Name.Replace(" ", "-")" action="@((short)ManageViewsViewModel.Action.DownloadOriginal)" form="@idFormNew">Descarga el original</a>
-                                            </div>
-                                            <div>
-                                                @*<a href="#" class="editar showEdit">Agregar una nueva personalización</a>*@
-                                                @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-                                                {
-                                                    <a href="#" style="pointer-events: none;" class="editar showEdit">Agregar una nueva personalización</a>
-                                                }
-                                                else
-                                                {
-                                                    <a href="#" class="editar showEdit">Agregar una nueva personalización</a>
-                                                }
-                                                <div class="edit" style="display: none">
-                                                    <div>
-                                                        <span>Nombre: </span>
-                                                        <input type="text" class="@idFormNew" name="Nombre" />
-                                                    </div>
-                                                    <div>
-                                                        <input type="file" name="Fichero" class="@idFormNew" />
-                                                    </div>
-                                                    <div>
-                                                        <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .@vistaComponente.Name.Replace(" ", "-")" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idFormNew">Subir</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+    // Url de la request para las Vistas de tipo Web
+    ViewBag.UrlActionWeb = Model.UrlActionCMS;
+	ViewBag.ViewServiceType = "componentescms";					
+	@Html.PartialView("_partial-views/_CmsView", vistaComponente)
+}
 
-                                        @if (!string.IsNullOrEmpty(Model.OKMessage))
-                                        {
-                                            <div class="ok">
-                                                <p>@Model.OKMessage</p>
-                                            </div>
-                                        }
-                                        <div class="ko">
-                                        </div>
-                                    </div>
+@* Carga de vista de tipo Componente CMS - Recurso *@
+@foreach (ManageViewsViewModel.CMSResourceViewModel vistaRecursoComponente in Model.ListCMSResources)
+{
+	ViewBag.ViewServiceType = "componentescms";
+    ViewBag.PathNameDefault = Model.PathNameResourceDefault;
+	@Html.PartialView("_partial-views/_cmsViewResource", vistaRecursoComponente)
+    // Vaciar del ViewBag para evitar posibles errores con ViewBag.CMSResourceViewModel
+    ViewBag.CMSResourceViewModel = null;
+}
 
-                                                }
+@* Carga de vista de tipo Componente CMS - Listado de recursos *@
+@foreach (ManageViewsViewModel.CMSListResourceViewModel vistaListadoRecursoComponente in Model.ListCMSListResources)
+{
+	ViewBag.ViewServiceType = "componentescms";
+    ViewBag.PathNameDefault = Model.PathNameListResourcesDefault;
+    @Html.PartialView("_partial-views/_cmsViewListResource", vistaListadoRecursoComponente)
+}
 
-                                                <div class="block resourcesView" style="min-height:@minHeight">
-                                                    <div>
-                                                        <table>
-                                                            <tbody>
-                                                                @foreach (ManageViewsViewModel.CMSResourceViewModel vistaRecursoComponente in Model.ListCMSResources)
-                                                                {
-                                                                    string idForm = Guid.NewGuid().ToString().Replace("-", "");
-                                                                    <tr>
-                                                                        <input type="hidden" class="@idForm nombreFich" name="ComponentePersonalizable" value="@vistaRecursoComponente.PathName" />
-                                                                        <input type="hidden" class="@idForm" name="idPersonalizacion" value="@vistaRecursoComponente.CustomizationID" />
-                                                                        <td>@vistaRecursoComponente.Name</td>
-                                                                        @if (vistaRecursoComponente.Generic)
-                                                                        {
-                                                                            <td>
-                                                                                <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .resourcesView" action="@((short)ManageViewsViewModel.Action.DownloadOriginal)" form="@idForm">Descarga el original</a>
-                                                                            </td>
-                                                                        }
-                                                                        @if (vistaRecursoComponente.CustomizationID != Guid.Empty)
-                                                                        {
-                                                                            <td>
-                                                                                <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .resourcesView" action="@((short)ManageViewsViewModel.Action.Download)" form="@idForm">Descargar la personalización</a>
-                                                                            </td>
-                                                                        }
-                                                                        @if (vistaRecursoComponente.CustomizationID != Guid.Empty)
-                                                                        {
-                                                                            if (vistaRecursoComponente.Generic)
-                                                                            {
-                                                                                <td>
-                                                                                    <a href="#" class="actionView showConfirm" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .resourcesView" action="@((short)ManageViewsViewModel.Action.Delete)" form="@idForm">Eliminar la personalización</a>
-                                                                                </td>
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                <td>
-                                                                                    <a href="#" class="actionView showConfirm" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .resourcesView" action="@((short)ManageViewsViewModel.Action.Delete)" form="@idForm">Eliminar</a>
-                                                                                </td>
-                                                                            }
-                                                                        }
-                                                                        <td>
-                                                                            <a href="#" class="editar showEdit">
-                                                                                Editar
-                                                                            </a>
-                                                                            <div class="edit" style="display: none">
-                                                                                <div>
-                                                                                    <span>Nombre: </span>
-                                                                                    <input type="text" class="@idForm" name="Nombre" value="@vistaRecursoComponente.Name" disabled />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <input type="file" name="Fichero" class="@idForm" />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .resourcesView" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idForm">
-                                                                                        Subir
-                                                                                    </a>
-                                                                                </div>
-                                                                                @if (vistaRecursoComponente.CustomizationID != Guid.Empty)
-                                                                                {
-                                                                                    <div>
-                                                                                        @foreach (ManageViewsViewModel.ExtraInformation datoExtra in vistaRecursoComponente.ExtraInformation.Keys)
-                                                                                        {
-                                                                                            if (vistaRecursoComponente.ExtraInformation[datoExtra])
-                                                                                            {
-                                                                                                <input type="checkbox" class="@idForm" name="@datoExtra" value="@datoExtra" checked>@datoExtra
-                                                                                            }
-                                                                                            else
-                                                                                            {
-                                                                                                <input type="checkbox" class="@idForm" name="@datoExtra" value="@datoExtra">@datoExtra
-                                                                                            }
-                                                                                        }
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <a href="#" class="actionView" urlAction="@Model.UrlActionCMSExtra" idActualizar="#plantillasComponentesCMS .resourcesView" action="@((short)ManageViewsViewModel.Action.Save)" form="@idForm">
-                                                                                            Guardar datos extra
-                                                                                        </a>
-                                                                                    </div>
-                                                                                }
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                }
-                                                            </tbody>
-                                                        </table>
-                                                        @{
-                                                            string idResourceFormNew = Guid.NewGuid().ToString().Replace("-", "");
-                                                        }
-                                                        <div>
-                                                            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-                                                            {
-                                                                <a href="#" style="pointer-events: none;" class="editar showEdit">Agregar una nueva personalización</a>
-                                                            }
-                                                            else
-                                                            {
-                                                                <a href="#" class="editar showEdit">Agregar una nueva personalización</a>
-                                                            }
-                                                            <div class="edit" style="display: none">
-                                                                <input type="hidden" class="@idResourceFormNew nombreFich" name="ComponentePersonalizable" value="@Model.PathNameResourceDefault" />
-                                                                <input type="hidden" class="@idResourceFormNew" name="idPersonalizacion" value="@Guid.Empty" />
-                                                                <div>
-                                                                    <span>Nombre: </span>
-                                                                    <input type="text" class="@idResourceFormNew" name="Nombre" />
-                                                                </div>
-                                                                <div>
-                                                                    <input type="file" name="Fichero" class="@idResourceFormNew" />
-                                                                </div>
-                                                                <div>
-                                                                    <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .resourcesView" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idResourceFormNew">Subir</a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                                                    {
-                                                        <div class="ok">
-                                                            <p>@Model.OKMessage</p>
-                                                        </div>
-                                                    }
-                                                    <div class="ko">
-                                                    </div>
-                                                </div>
-
-
-
-                                                <div class="block listResourcesView" style="min-height:@minHeight">
-                                                    <div>
-                                                        <table>
-                                                            <tbody>
-                                                                @foreach (ManageViewsViewModel.CMSListResourceViewModel vistaListadoRecursoComponente in Model.ListCMSListResources)
-                                                                {
-                                                                    string idForm = Guid.NewGuid().ToString().Replace("-", "");
-                                                                    <tr>
-                                                                        <input type="hidden" class="@idForm nombreFich" name="ComponentePersonalizable" value="@vistaListadoRecursoComponente.PathName" />
-                                                                        <input type="hidden" class="@idForm" name="idPersonalizacion" value="@vistaListadoRecursoComponente.CustomizationID" />
-                                                                        <td>@vistaListadoRecursoComponente.Name</td>
-                                                                        @if (vistaListadoRecursoComponente.Generic)
-                                                                        {
-                                                                            <td>
-                                                                                <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .listResourcesView" action="@((short)ManageViewsViewModel.Action.DownloadOriginal)" form="@idForm">Descarga el original</a>
-                                                                            </td>
-                                                                        }
-                                                                        @if (vistaListadoRecursoComponente.CustomizationID != Guid.Empty)
-                                                                        {
-                                                                            <td>
-                                                                                <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .listResourcesView" action="@((short)ManageViewsViewModel.Action.Download)" form="@idForm">Descargar la personalización</a>
-                                                                            </td>
-                                                                        }
-                                                                        @if (vistaListadoRecursoComponente.CustomizationID != Guid.Empty)
-                                                                        {
-                                                                            if (vistaListadoRecursoComponente.Generic)
-                                                                            {
-                                                                                <td>
-                                                                                    <a href="#" class="actionView showConfirm" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .listResourcesView" action="@((short)ManageViewsViewModel.Action.Delete)" form="@idForm">Eliminar la personalización</a>
-                                                                                </td>
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                <td>
-                                                                                    <a href="#" class="actionView showConfirm" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .listResourcesView" action="@((short)ManageViewsViewModel.Action.Delete)" form="@idForm">Eliminar</a>
-                                                                                </td>
-                                                                            }
-                                                                        }
-                                                                        <td>
-                                                                            <a href="#" class="editar showEdit">
-                                                                                Editar
-                                                                            </a>
-                                                                            <div class="edit" style="display: none">
-                                                                                <div>
-                                                                                    <span>Nombre: </span>
-                                                                                    <input type="text" class="@idForm" name="Nombre" value="@vistaListadoRecursoComponente.Name" disabled />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <input type="file" name="Fichero" class="@idForm" />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .listResourcesView" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idForm">
-                                                                                        Subir
-                                                                                    </a>
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                }
-                                                            </tbody>
-                                                        </table>
-                                                        @{
-                                                            string idListResourceFormNew = Guid.NewGuid().ToString().Replace("-", "");
-                                                        }
-                                                        <div>
-                                                            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-                                                            {
-                                                                <a href="#" style="pointer-events: none;" class="editar showEdit">Agregar una nueva personalización</a>
-                                                            }
-                                                            else
-                                                            {
-                                                                <a href="#" class="editar showEdit">Agregar una nueva personalización</a>
-                                                            }
-                                                            <div class="edit" style="display: none">
-                                                                <input type="hidden" class="@idListResourceFormNew nombreFich" name="ComponentePersonalizable" value="@Model.PathNameListResourcesDefault" />
-                                                                <input type="hidden" class="@idListResourceFormNew" name="idPersonalizacion" value="@Guid.Empty" />
-                                                                <div>
-                                                                    <span>Nombre: </span>
-                                                                    <input type="text" class="@idListResourceFormNew" name="Nombre" />
-                                                                </div>
-                                                                <div>
-                                                                    <input type="file" name="Fichero" class="@idListResourceFormNew" />
-                                                                </div>
-                                                                <div>
-                                                                    <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .listResourcesView" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idListResourceFormNew">Subir</a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                                                    {
-                                                        <div class="ok">
-                                                            <p>@Model.OKMessage</p>
-                                                        </div>
-                                                    }
-                                                    <div class="ko">
-                                                    </div>
-                                                </div>
-
-
-                                                <div class="block groupComponentsView" style="min-height:@minHeight">
-                                                    <div>
-                                                        <table>
-                                                            <tbody>
-                                                                @foreach (ManageViewsViewModel.CMSGroupComponentViewModel vistaGrupoComponetes in Model.ListCMSGroupComponents)
-                                                                {
-                                                                    string idForm = Guid.NewGuid().ToString().Replace("-", "");
-                                                                    <tr>
-                                                                        <input type="hidden" class="@idForm nombreFich" name="ComponentePersonalizable" value="@vistaGrupoComponetes.PathName" />
-                                                                        <input type="hidden" class="@idForm" name="idPersonalizacion" value="@vistaGrupoComponetes.CustomizationID" />
-                                                                        <td>@vistaGrupoComponetes.Name</td>
-                                                                        @if (vistaGrupoComponetes.Generic)
-                                                                        {
-                                                                            <td>
-                                                                                <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .groupComponentsView" action="@((short)ManageViewsViewModel.Action.DownloadOriginal)" form="@idForm">Descarga el original</a>
-                                                                            </td>
-                                                                        }
-                                                                        @if (vistaGrupoComponetes.CustomizationID != Guid.Empty)
-                                                                        {
-                                                                            <td>
-                                                                                <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .groupComponentsView" action="@((short)ManageViewsViewModel.Action.Download)" form="@idForm">Descargar la personalización</a>
-                                                                            </td>
-                                                                        }
-                                                                        @if (vistaGrupoComponetes.CustomizationID != Guid.Empty)
-                                                                        {
-                                                                            if (vistaGrupoComponetes.Generic)
-                                                                            {
-                                                                                <td>
-                                                                                    <a href="#" class="actionView showConfirm" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .groupComponentsView" action="@((short)ManageViewsViewModel.Action.Delete)" form="@idForm">Eliminar la personalización</a>
-                                                                                </td>
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                <td>
-                                                                                    <a href="#" class="actionView showConfirm" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .groupComponentsView" action="@((short)ManageViewsViewModel.Action.Delete)" form="@idForm">Eliminar</a>
-                                                                                </td>
-                                                                            }
-                                                                        }
-                                                                        <td>
-                                                                            <a href="#" class="editar showEdit">
-                                                                                Editar
-                                                                            </a>
-                                                                            <div class="edit" style="display: none">
-                                                                                <div>
-                                                                                    <span>Nombre: </span>
-                                                                                    <input type="text" class="@idForm" name="Nombre" value="@vistaGrupoComponetes.Name" disabled />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <input type="file" name="Fichero" class="@idForm" />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .groupComponentsView" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idForm">
-                                                                                        Subir
-                                                                                    </a>
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                }
-                                                            </tbody>
-                                                        </table>
-                                                        @{
-                                                            string idGroupComponentesFormNew = Guid.NewGuid().ToString().Replace("-", "");
-                                                        }
-                                                        <div>
-                                                            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-                                                            {
-                                                                <a href="#" style="pointer-events: none;" class="editar showEdit">Agregar una nueva personalización</a>
-                                                            }
-                                                            else
-                                                            {
-                                                                <a href="#" class="editar showEdit">Agregar una nueva personalización</a>
-                                                            }
-                                                            @*<a href="#" class="editar showEdit">Agregar una nueva personalización</a>*@
-                                                            <div class="edit" style="display: none">
-                                                                <input type="hidden" class="@idGroupComponentesFormNew nombreFich" name="ComponentePersonalizable" value="@Model.PathNameGroupComponentsDefault" />
-                                                                <input type="hidden" class="@idGroupComponentesFormNew" name="idPersonalizacion" value="@Guid.Empty" />
-                                                                <div>
-                                                                    <span>Nombre: </span>
-                                                                    <input type="text" class="@idGroupComponentesFormNew" name="Nombre" />
-                                                                </div>
-                                                                <div>
-                                                                    <input type="file" name="Fichero" class="@idGroupComponentesFormNew" />
-                                                                </div>
-                                                                <div>
-                                                                    <a href="#" class="actionView" urlAction="@Model.UrlActionCMS" idActualizar="#plantillasComponentesCMS .groupComponentsView" action="@((short)ManageViewsViewModel.Action.Upload)" form="@idGroupComponentesFormNew">Subir</a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                                                    {
-                                                        <div class="ok">
-                                                            <p>@Model.OKMessage</p>
-                                                        </div>
-                                                    }
-                                                    <div class="ko">
-                                                    </div>
-                                                </div>
-
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </fieldset>
-                                                            }
+@* Carga de vista de tipo Componente CMS - Grupo de Componentes *@
+@foreach (ManageViewsViewModel.CMSGroupComponentViewModel vistaGrupoRecursoComponente in Model.ListCMSGroupComponents)
+{
+	ViewBag.ViewServiceType = "componentescms";
+    ViewBag.PathNameDefault = Model.PathNameGroupComponentsDefault;
+    @Html.PartialView("_partial-views/_cmsViewGroupResource", vistaGrupoRecursoComponente)
+}

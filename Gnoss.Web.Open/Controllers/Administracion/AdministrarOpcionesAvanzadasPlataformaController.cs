@@ -55,6 +55,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             EliminarPersonalizacionVistas();
 
+            // Añadir clases para el body del Layout
+            ViewBag.BodyClassPestanya = "meta-administrador platformSettingsPage";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OpcionesAvanzadasPlataforma;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACIONDELAPLATAFORMA");
+            // Indicar que está administrando el ecosistema
+            ViewBag.isInEcosistemaPlatform = "true";
+
+            CargarPermisosAdministracionComunidadEnViewBag();
             return View(PaginaModel);
         }
 
@@ -151,8 +162,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mPaginaModel.PerfilPersonalDisponible = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.PerfilPersonalDisponible, true);
             mPaginaModel.GenerarGrafoContribuciones = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.GenerarGrafoContribuciones, true);
             mPaginaModel.MantenerSesionActiva = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.MantenerSesionActiva, true);
-
-            mPaginaModel.LoginUnicoPorUsuario = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.LoginUnicoPorUsuario, true);
+            mPaginaModel.NoEnviarCorreoSeguirPerfil = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.NoEnviarCorreoSeguirPerfil, false);
+			mPaginaModel.LoginUnicoPorUsuario = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.LoginUnicoPorUsuario, true);
             mPaginaModel.EnviarNotificacionesDeSuscripciones = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.EnviarNotificacionesDeSuscripciones, true);
 
 
@@ -229,7 +240,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             GuardarParametroString(TiposParametrosAplicacion.CorreoSolicitudes, pOptions.CorreoSolicitudes);
             GuardarParametroString(TiposParametrosAplicacion.CorreoSugerencias, pOptions.CorreoSugerencias);
             GuardarParametroString(TiposParametrosAplicacion.DominiosEmailLoginRedesSociales, pOptions.DominiosEmailLoginRedesSociales);
-            GuardarParametroString(TiposParametrosAplicacion.UrlsPropiasProyecto, pOptions.UrlsPropiasProyecto);
+            if (!string.IsNullOrEmpty(pOptions.UrlsPropiasProyecto))
+            {
+				GuardarParametroString(TiposParametrosAplicacion.UrlsPropiasProyecto, pOptions.UrlsPropiasProyecto);
+			}
             GuardarParametroString(TiposParametrosAplicacion.DominiosSinPalco, pOptions.DominiosSinPalco);
             GuardarParametroString(TiposParametrosAplicacion.GoogleRecaptchaSecret, pOptions.GoogleRecaptchaSecret);
             GuardarParametroString(TiposParametrosAplicacion.HashTagEntorno, pOptions.HashTagEntorno);
@@ -306,7 +320,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             GuardarParametroBooleano(TiposParametrosAplicacion.PerfilPersonalDisponible, pOptions.PerfilPersonalDisponible, true);
             GuardarParametroBooleano(TiposParametrosAplicacion.GenerarGrafoContribuciones, pOptions.GenerarGrafoContribuciones, true);
             GuardarParametroBooleano(TiposParametrosAplicacion.MantenerSesionActiva, pOptions.MantenerSesionActiva, true);
-
+            GuardarParametroBooleano(TiposParametrosAplicacion.NoEnviarCorreoSeguirPerfil, pOptions.NoEnviarCorreoSeguirPerfil, false);
             GuardarParametroBooleano(TiposParametrosAplicacion.LoginUnicoPorUsuario, pOptions.LoginUnicoPorUsuario, true);
             GuardarParametroBooleano(TiposParametrosAplicacion.EnviarNotificacionesDeSuscripciones, pOptions.EnviarNotificacionesDeSuscripciones, true);
 

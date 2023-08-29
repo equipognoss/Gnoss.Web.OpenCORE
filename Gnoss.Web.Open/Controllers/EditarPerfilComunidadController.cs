@@ -532,7 +532,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.PersonaID.Value, IdentidadActual.PerfilID);
                 identidadCL.Dispose();
 
-                ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", "");
+                ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", "", ProyectoSeleccionado.Clave);
 
                 return GnossResultOK(UtilIdiomas.GetText("COMADMINCMS", "COMPONENTEGUARDADOOK"));
             }
@@ -759,7 +759,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 //return Content(UtilArchivos.ContentImagenes + "/" + urlFicheroImagen.ToLower() + "_grande.png?" + Guid.NewGuid().ToString());
 
-                return GnossResultOK(UtilArchivos.ContentImagenes + "/" + urlFicheroImagen.ToLower() + "_grande.png?" + Guid.NewGuid().ToString());
+                return GnossResultOK(UtilArchivos.ContentImagenes + "/" + urlFicheroImagen/*.ToLower()*/ + "_grande.png?" + Guid.NewGuid().ToString());
             }
             else
             {
@@ -1020,8 +1020,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 ControladorOrganizaciones contrOrg = new ControladorOrganizaciones(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
                 ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 List<Guid> listaProyectos = proyCN.ObtenerListaProyectoIDDeOrganizacion(organizacion.Clave, false);
-
+                if (cambiadoNombre)
+                {
+                    List<Es.Riam.Gnoss.AD.EntityModel.Models.IdentidadDS.Perfil> listaPerfiles = identidadCN.ObtenerPerfilesDeUnaOrganizacion(organizacion.FilaOrganizacion.OrganizacionID);
+                    foreach(AD.EntityModel.Models.IdentidadDS.Perfil perfil in listaPerfiles)
+                    {
+                        perfil.NombreOrganizacion = organizacion.FilaOrganizacion.Nombre;
+                    }
+                    mEntityContext.SaveChanges();
+                }
                 contrOrg.ActualizarModeloBaseSimpleMultiple(IdentidadActual.Persona.Clave, listaProyectos);
 
                 EliminarCaches();
@@ -1270,7 +1279,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         mEntityContext.SaveChanges();
                     }
 
-                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", antiguoEmail);
+                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", antiguoEmail, ProyectoSeleccionado.Clave);
 
                     if (personaCN != null)
                     {
@@ -1468,7 +1477,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     AD.EntityModel.Models.IdentidadDS.Identidad filaIdentidad = IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(item => item.IdentidadID.Equals(identidadEntity.IdentidadID)).FirstOrDefault();
 
                                     identidadEntity.NombreCortoIdentidad = profesor + IdentidadActual.Persona.Nombre;
-                                    filaIdentidad.NombreCortoIdentidad = profesor + IdentidadActual.Persona.Nombre;
+                                    if(filaIdentidad != null)
+                                    {
+                                        filaIdentidad.NombreCortoIdentidad = profesor + IdentidadActual.Persona.Nombre;
+                                    }
                                 }
                             }
                         }
@@ -1543,7 +1555,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         mEntityContext.SaveChanges();
                     }
 
-                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", antiguoEmail);
+                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", antiguoEmail, ProyectoSeleccionado.Clave);
 
                     if (personaCN != null)
                     {
@@ -2833,7 +2845,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
             {
-                ListaRedesSociales = IdentidadActual.IdentidadOrganizacion.ListaRedesSociales;
+                ListaRedesSociales = IdentidadActual.IdentidadOrganizacion.ListaRedesSocialesOrganizacion;
             }
 
             foreach (AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales filaPerfilRedesSoc in ListaRedesSociales.Values)

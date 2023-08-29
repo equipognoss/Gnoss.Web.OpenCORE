@@ -1,49 +1,69 @@
 ﻿@model ComAdminSemanticElemModel
 
+
+@*
+Descripción
+-----------------------------------------------
+Vista index donde se visualizan las opciones para poder personalizar elementos semánticos: Tesauros, Entidades secundarias, Grafos simples
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Html.SetBodyClass("layout03 ");
-    string urlPagina = Html.GetUrlPagina();
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.ComAdminSemantica.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarSEMCMS.js?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    // Carga de idiomas de la plataforma
+    string idiomas = "";
 
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
-
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+    @* Carga de idiomas *@
+    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+    {
+        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+    }    
+    @* Cargar información de idiomas en ViewBag para ser usados en vistas parciales *@    
+    ViewBag.IdiomaPorDefecto= Model.IdiomaPorDefecto;
 }
 
-@if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition)
-{
-    @*@Html.PartialView("_Menu", Model.PageType)*@
-    @Html.PartialView("_EditarTesSem", Model)
-}
-else
-{
-    <div id="col02" style="width:730px">   
-        <div class="wrapeditTesSem">
-            @Html.PartialView("_Menu", Model.PageType)
-            @if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition)
-            {
-                @Html.PartialView("_EditarTesSem", Model)
-            }
-            else if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SecondaryEntitiesEdition)
-            {
-                @Html.PartialView("_EditarEntSecundarias", Model)
-            }
-            else if (Model.PageType == ComAdminSemanticElemModel.ComAdminSemanticElemPage.SimpleGraphsEdition)
-            {
-                @Html.PartialView("_EditarGrafosSimples", Model)
-            }
-        </div>
-    </div>
-}
-<script type="text/javascript">
-    urlPaginaActual = '@urlPagina';
 
-    $(function () {
-        InicializarEdicionTesSem();
-    });
-</script>
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto" />
+
+@* Carga de la página correspondiente *@
+@{
+	switch (Model.PageType)
+    {
+        case ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition:
+            // Edición de Tesauros Semánticos
+			@Html.PartialView("_EditarTesSem", Model)
+            break;
+
+        case ComAdminSemanticElemModel.ComAdminSemanticElemPage.SecondaryEntitiesEdition:
+            // Edición de entidades secundarias
+			@Html.PartialView("_EditarEntSecundarias", Model)
+            break;
+
+		case ComAdminSemanticElemModel.ComAdminSemanticElemPage.SimpleGraphsEdition:
+            // Edición de grafos simples
+			@Html.PartialView("_EditarGrafosSimples", Model)
+            break;
+
+        default:
+			// No cargar nada
+            break;
+    }
+}
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/grafo_conocimiento.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento
+            operativaGestionTesaurosSemanticos.init();
+        })();
+    </script>
+}
 

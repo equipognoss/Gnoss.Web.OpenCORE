@@ -1,0 +1,77 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel       
+@*
+Descripción
+-----------------------------------------------
+Vista parcial para el pintado de cada Traducción
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+// Url de la traducción guardada temporalmente en ViewBag
+string urlEditTranslate = ViewBag.urlEditTranslate;
+// Identificador del texto
+string textoId = Model.TextoID;
+// Establecer en el ViewBag el idioma por defecto
+string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;            
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial para cada traducción --------------------
+*@
+
+@* Componente de traducción *@
+<li class="component-header-wrap component-wrap translate-row">
+    <div class="component-header">
+        <div class="component-header-content">
+            <div class="component-header-left">                
+                @* Key de la traducción *@
+                <div class="component-name-wrap">
+                    <span class="component-name">@textoId</span>
+                    <span class="material-icons btnTranslateCopy" style="cursor: pointer" data-translateid="@textoId">content_copy</span>
+                </div>
+                
+                @* Literal o texto de la traducción *@
+                <div class="component-literal-wrap">
+                    @foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TraduccionModel traduccion in Model.Traducciones){                   
+                            <span class="component-literal language-component @(@traduccion.Idioma != idiomaPorDefecto ? "d-none" : "") " data-languageitem="@traduccion.Idioma">
+                                @traduccion.Texto
+                            </span>                    
+                    }
+                </div>
+                @* Fecha de la traducción *@
+                <div class="component-fecha-wrap">
+                    <span class="component-fecha">01/01/2022</span>
+                </div>
+            </div>
+            @* Acciones de la traducción *@
+            <div class="component-header-right">
+                <div class="component-actions-wrap">
+                    <ul class="no-list-style component-actions">
+                        <li>
+                            @* Editar traducción - Edición vía Modal *@
+                            <a class="action-edit round-icon-button js-action-edit-component btnEditTranslate"
+                                data-urledit="@urlEditTranslate"
+                                data-target="#modal-container" 
+                                data-toggle="modal">
+                                <span class="material-icons">edit</span>
+                            </a>
+                        </li>
+                        <li>
+                            @* Eliminar traducción *@
+                            <a class="action-delete round-icon-button js-action-delete btnDeleteTranslate" 
+                               data-target="#modal-delete-translate"
+                               data-translate-id="@textoId"
+                               data-toggle="modal">
+                                <span class="material-icons">delete</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>

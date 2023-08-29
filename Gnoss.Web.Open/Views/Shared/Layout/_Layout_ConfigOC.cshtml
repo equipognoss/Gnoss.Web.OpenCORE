@@ -1,0 +1,118 @@
+﻿@*
+
+Descripción
+-----------------------------------------------
+Layout de la página de configuración de objetos de conocimiento de la comunidad
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+	String bodyClass = Html.GetBodyClassPestanya();
+
+
+	@* Controlar clase del body según la página *@
+	if (String.IsNullOrEmpty(bodyClass))
+	{
+		bodyClass = "home";
+	}
+
+	@* Título de la página proporcionada desde el Controlador y Sección a la que pertenece *@
+	string headerTitle = Html.GetHeaderTitle();
+	string headerParentTitle = Html.GetHeaderParentTitle();
+}
+@*
+----------------------------------------------------------------
+-------------------- Vista Layout utilizado para DevTools --------------------
+*@
+
+<!DOCTYPE html>
+<html style="scroll-behavior:smooth" lang="@Html.GetUtilIdiomas().LanguageCode" xmlns:og="http://ogp.me/ns#">
+
+<head>
+	@* Título *@
+	<title>@Html.GetTituloPagina()</title>
+
+	@* Carga de Metas *@
+	@Html.PartialView("../Shared/Head/_Metas_Admin")
+	@* Carga de CSS *@
+	@Html.PartialView("../Shared/Head/_HojasDeEstilo_Admin")
+</head>
+
+
+<body class="@bodyClass usuarioConectado max-width-container">
+
+
+	@* Header / Cabecera  *@
+	<header id="header" class="background-primario texto-blanco">
+		<div class="container-fluid">
+			<div class="row upper-row">
+				<div class="col col01">
+					<div class="menu-logo-wrapper">
+						@* Disparador para mostrar el menú lateral para móviles/tablets *@
+						<span id="panel-lateral-trigger" class="material-icons">menu</span>
+
+						<div class="logo-wrapper">
+							<span class="configuracionInicial">
+								Semantic Web Tools
+							</span>
+						</div>
+					</div>
+				</div>
+				@* Título de la página *@
+				<div class="col col02">
+					<div class="page-name-wrapper">
+						@if (string.IsNullOrEmpty(headerParentTitle))
+						{
+							<span class="page-name">
+								@Comunidad.Name
+							</span>
+
+						}
+						else
+						{
+							<span class="page-name">
+								@headerParentTitle
+							</span>
+							@if (!string.IsNullOrEmpty(headerTitle))
+							{
+								<span class="page-children-name">@headerTitle</span>
+							}
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	
+
+	@* Contenido -> Navegación lateral + Renderización de página *@
+	<main class="devtools" role="main" style=" @(Comunidad.IntegracionContinuaActivada ? "padding: 0;" : "")">
+		<div class="container-fluid">
+			<div class="row-content">
+				<div class="row">
+					@* Sección central con panel lateral *@
+					<div class="col col-12 con-panel-lateral">
+
+						@* Contenido central -> Renderización páginas de Administración *@
+						<div id="mainContent" class="wrapCol container">
+							@RenderBody()
+							@* Pie de las páginas de Administración *@
+							@Html.PartialView("../Shared/_pie/_Pie")
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	@* Carga de JS *@
+	@Html.PartialView("../Shared/Head/_FicherosJavascript_Admin")
+	@* Carga de JS con Render para operativas de DevTools *@
+	@RenderSection("operativaScript", required: false)
+</body>
+</html>

@@ -51,6 +51,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion sugerencias-busqueda max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Sugerencias_de_busqueda;                                 
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "DESCUBRIMIENTOYANALISIS");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONPAGINAS", "SUGERENCIASDEBUSQUEDA");            
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
@@ -77,19 +85,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             string autocompletar = pOptions.TagsAutocompletar;
             List<string> listaAutocompletar = new List<string>();
-            string[] trozosAuto = autocompletar.Split(',');
-            for (int i = 0; i < trozosAuto.Length; i++)
+            if (!string.IsNullOrEmpty(autocompletar))
             {
-                listaAutocompletar.Add(trozosAuto[i]);
+                string[] trozosAuto = autocompletar.Split(',');
+                for (int i = 0; i < trozosAuto.Length; i++)
+                {
+                    listaAutocompletar.Add(trozosAuto[i]);
+                }
             }
+            
 
             string txtLibre = pOptions.TagsTxtLibre;
             List<string> listaTxtLibre = new List<string>();
-            string[] trozosTxt = txtLibre.Split(',');
-            for (int i = 0; i < trozosTxt.Length; i++)
+            if (!string.IsNullOrEmpty(txtLibre))
             {
-                listaTxtLibre.Add(trozosTxt[i]);
+                string[] trozosTxt = txtLibre.Split(',');
+                for (int i = 0; i < trozosTxt.Length; i++)
+                {
+                    listaTxtLibre.Add(trozosTxt[i]);
+                }
             }
+            
 
             try
             {

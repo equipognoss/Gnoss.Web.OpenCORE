@@ -1161,9 +1161,10 @@ else
                 }
                 }
 
-                @* Nombres que tendrán los botones para el proceso de guardado del recurso*@
+                @* Nombres e identificadores que tendrán los botones para el proceso de guardado del recurso*@
                 @{
                     string textoPublicacion = Html.GetText("PERFILBASESUBIRRECURSO", "GUARDAR");
+                    string identificadorBoton = "lbPublicar";
 
                     if (Model.DocumentType == ResourceModel.DocumentType.Semantico && Model.SemanticResourceModel.MassiveResourceLoad)
                     {
@@ -1182,6 +1183,7 @@ else
                         {
                             textoPublicacion = Html.GetText("CREARDOCUMENTO", "CREARVERSION");
                         }
+                        identificadorBoton = "lbCrearVersion";
                     }
                     else if (Model.DocumentEditionModel.Draft || Model.EditResourceModel.TypePage == EditResourceModel.TypePageEditResource.AddToGnossResource)
                     {
@@ -1201,7 +1203,7 @@ else
                                     onclickPublicar = "if (RecogerValoresRDF2(true)){$('#divContLblErrorDocumento').html('');EnviarDatosServidor('Publicar');}else{crearErrorFormSem(mensajeErrorFormSemPrinc, 'divContLblErrorDocumento');}";
                                 }
                             }
-                            <input class="submit principal btn btn-primary" id="lbPublicar" type="button" value="@textoPublicacion" onclick="@onclickPublicar" />
+                            <input class="submit principal btn btn-primary" id="@identificadorBoton" type="button" value="@textoPublicacion" onclick="@onclickPublicar" />
 
                             @if (Model.DocumentEditionModel.Draft || (Model.DocumentType == ResourceModel.DocumentType.Semantico && Model.SemanticResourceModel.MassiveResourceLoad))
                             {

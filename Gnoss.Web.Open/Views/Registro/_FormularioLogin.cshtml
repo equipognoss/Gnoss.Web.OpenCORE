@@ -8,6 +8,7 @@ Variables
 *@
 @{
 CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel Cabecera = Html.GetCabecera();
 }
 @*
 ----------------------------------------------------------------
@@ -18,6 +19,7 @@ CommunityModel Comunidad = Html.GetComunidad();
 
 <form method="post"
       id="formPaginaLogin"
+      class="formPaginaLogin"
       action="@Html.GetUrlActionLogin()">
     <div class="fieldset fieldset01">
         <fieldset>
@@ -28,7 +30,7 @@ CommunityModel Comunidad = Html.GetComunidad();
                            type="text"
                            name="usuario"
                            id="usuario_Login"
-                           class="form-control" />
+                           class="form-control usuario_Login" />
                 </div>
                 <div class="form-group">
                     <label for="password_login" class="control-label">@Html.GetText("LOGIN", "CONTRASEÑA")</label>
@@ -36,7 +38,7 @@ CommunityModel Comunidad = Html.GetComunidad();
                            type="password"
                            name="password"
                            id="password_login"
-                           class="form-control" />
+                           class="form-control password_login" />
                 </div>
                 @{
                     UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
@@ -53,18 +55,19 @@ CommunityModel Comunidad = Html.GetComunidad();
                         </p>
                     }
                 }
-                <div id="loginError" class="error-wrap">
-                    <div class="ko">
+
+                <div id="loginError" class="error-wrap loginError">
+                    <div class="ko loginErrorKo">
                         <p id="mensajeError">@Html.GetText("LOGIN", "CLAVEERRONEA")</p>
                     </div>
                 </div>
-                <div id="loginErrorAutenticacionExterna" class="error-wrap">
-                    <div class="ko">                        
+                <div id="loginErrorAutenticacionExterna" class="error-wrap loginError">
+                    <div class="ko loginErrorAutenticacionExternaKo">
                         <p>@Html.GetText("LOGIN", "AUTENTICACIONEXTERNA")</p>
                     </div>
                 </div>
-                <div id="logintwice" class="error-wrap">
-                    <div class="ko">
+                <div id="logintwice" class="error-wrap loginError">
+                    <div class="ko logintwiceKo">
                         <p id="mensajeErrorLoginTwice">@Html.GetText("LOGIN", "LOGINTWICE", @Html.GetSessionTimeout())</p>
                     </div>
                 </div>
@@ -78,7 +81,7 @@ CommunityModel Comunidad = Html.GetComunidad();
                 @* Link para recuperar contraseña olvidada *@
                 <a class="olvidaste-password" href="@Comunidad.Url/@Html.GetText("URLSEM", "OLVIDEPASSWORD")">@Html.GetText("INICIO", "OLVIDOPASSWORD")</a>
 
-                <input class="principal submit btn btn-primary"
+                <input class="principal submit btn btn-primary btnSubmit"
                        id="btnSubmit"
                        type="button"
                        title="@Html.GetText("COMMON", "INICIARSESION")"
@@ -109,8 +112,27 @@ CommunityModel Comunidad = Html.GetComunidad();
         </fieldset>
     </div>
 </form>
-
+<div class="box box02 registroRedesSociales">
+    @if (IdentidadActual.IsGuestUser && Cabecera.SocialNetworkRegister.Keys.Count > 0)
+    {
+        <fieldset id="fsPrefieresRedesSociales">
+            <legend>@Html.GetText("REGISTRO", "OSILOPREFIERES")</legend>
+            <ul class="lista-redes-sociales lista-redes-sociales--registro no-list-style">
+                @foreach (string nombre in Cabecera.SocialNetworkRegister.Keys)
+                {
+                    string classI = $"{nombre.ToLower()}-icon";
+                    <li class="@nombre.ToLower()">                        
+                        @Html.GetText("LOGIN", "CONECTATECON")
+                        <i class="@classI">
+                        <a href="@Cabecera.SocialNetworkRegister[nombre]">@nombre</a>
+                        </i>
+                    </li>
+                }
+            </ul>
+        </fieldset>
+    }
+</div>
 <script type="text/javascript">
-    // Gestión de operativa Login -> Este Login aprovecha la Lógica de la operativa Login Emergente
-    operativaLoginEmergente.init();
+    // Gestión de operativa Login -> Este Login aprovecha la Lógica de la operativa Login Emergente    
+    setTimeout(operativaLoginEmergente.init(), 500);    
 </script>

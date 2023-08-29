@@ -202,7 +202,7 @@
             </label>
             <div class="floatRight" id="divCompartirCategoria">
                 <select style="width: 200px" disabled="disabled" id="cmbCategoriaCompartir">
-                    <option value="@Guid.Empty">Selecciona una categoria</option>
+                    <option value="@Guid.Empty">@Html.GetText("DEVTOOLS","SELECCIONAUNACATEGORIA")</option>
                 </select>
             </div>
             <div class="floatRight" id="panCompartir">
@@ -235,7 +235,7 @@
             </label>
             <div class="floatRight" id="divCompartirCategoria">
                 <select style="width: 200px" id="cmbCategoriaCompartir">
-                    <option value="@Guid.Empty">Selecciona una categoria</option>
+                    <option value="@Guid.Empty">@Html.GetText("DEVTOOLS","SELECCIONAUNACATEGORIA")</option>
                     @foreach (CategoryModel categoria in Model.CategoriasCompartir.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
                     {
                         <option value="@categoria.Key">@categoria.Name</option>

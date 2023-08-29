@@ -1,0 +1,389 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista para administrar las propiedades de un objeto de conocimiento y así poder editar el fichero XML usando una intefaz gráfica.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@model ConfiguracionOCModel
+@{
+    Layout = "~/Views/Shared/Layout/_Layout_ConfigOC.cshtml";
+    string ontologiaID = Html.RequestParams("ontologiaID", Html.ViewContext.HttpContext);
+
+}
+
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="https://testing.gnoss.com/comunidad/testing3/administrar-comunidad-home">Home</a>
+        </li>
+        <li>
+            <a href="administrar-comunidad-seccion/grafo-conocimiento">Grafos de conocimiento</a>
+        </li>
+        <li>
+            <a href="administrar-objetos-conocimiento">Objetos de conocimiento</a>
+        </li>
+        <li>
+            Configuración propiedades del OC
+        </li>
+    </ul>
+</div>
+
+<div class="container background-blanco">
+    
+    <form method="post" action="@Html.GetText("URLSEM", "ADMINISTRARCONFIGURACIONOC")/save?ontologiaID=@ontologiaID">
+        <div class="tab-content">
+            <div class="col col-12 header-listado">
+                <div class="h1-container">
+                    <h1>Configurar propiedades del OC</h1>
+                </div>
+                <div class="acciones d-flex align-items-center">
+                    <input type="submit" class="enviar btn btn-primary" value="GUARDAR">
+                </div>
+            </div>
+
+            <div class="form-group mb-3 header-searcher">
+                <div class="filtroRapido">
+                    <div class="input-container">
+                        <input id="input-header-searchable" class="form-control" type="text" placeholder="Buscar propiedades por nombre o URI..." autocomplete="off">
+
+                        <div id="header-searcher-loading" class="spinner-border spinner-border-sm d-none" role="status">
+                            <span class="sr-only">Cargando...</span>
+                        </div>
+                    </div>
+                    <span id="input-header-searchable-icon" class="icon material-icons">search</span>
+                </div>
+            </div>
+            <ul class="nav nav-tabs" id="tabClasificaciones" role="tablist">
+                <li class="nav-item">
+                    <a class="tabClasificacion nav-link active" id="ver_todas" data-toggle="tab" href="#litVerTodas" role="tab" aria-controls="litVerTodas" aria-selected="true">Todas las propiedades</a>
+                </li>
+                <li class="nav-item">
+                    <a class="tabIdiomaItem nav-link" id="ver_simples" data-toggle="tab" href="#litVerSimples" role="tab" aria-controls="litVerSimples" aria-selected="true">Simples</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="tabIdiomaItem nav-link" id="ver_objeto" data-toggle="tab" href="#litVerObjeto" role="tab" aria-controls="litVerObjeto" aria-selected="true">Objeto</a>
+                </li>
+            </ul>
+            <div class="text-right desplegarTodo pointer" id="desplegarTodo"><small>Desplegar todo</small></div>
+            <div class="tab-pane fade active show" id="litVerTodas" role="tabpanel" aria-labelledby="ver_todas">
+                <div class="wrapCol">
+                    <ul class="component-list no-list-style">
+                        @Html.PartialView("_partial-views/_configuracion-general.cshtml", Model)
+                        @foreach (string entidad in Model.Properties.Select(x => x.Domain).Distinct())
+                        {
+                            string prefijo = "";
+                            try
+                            {
+                                prefijo = entidad.Substring(0, entidad.LastIndexOf("/")+1);
+                            }
+                            catch (IndexOutOfRangeException io)
+                            {
+                                prefijo = entidad.Split('#')[0];
+                            }
+                            <li class="component-wrap property-row tituloEntidad" id="@entidad">
+                                <div class="component-wrap property-row">
+                                    <div class="component">
+                                        <div class="component-header-wrap">
+                                            <div class="component-header">
+                                                <div class="component-header-content">
+                                                    <div class="component-header-left">
+                                                        <div class="component-name-wrap component-w-40">
+                                                            <span class="material-icons">rebase_edit</span>
+                                                            <span class="language-component component-name searchableName">@(Model.Prefixes.ContainsKey(prefijo) ? entidad.Replace(prefijo, Model.Prefixes[prefijo] + ":") : entidad)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="component-header-right">
+                                                        <span class="material-icons expandir pointer">navigate_next</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="component-content d-none">
+                                            <ul class="component-list no-list-style">
+                                                @foreach (Property p in Model.Properties.Where(x => x.Domain.Equals(entidad)).OrderBy(x => x.Name))
+                                                {
+                                                    @switch (p.GetType().Name)
+                                                    {
+                                                        case "StringProperty":
+                                                            @Html.PartialView("_partial-views/_string-property.cshtml", p)
+                                                            break;
+                                                        case "NumericalProperty":
+                                                            @Html.PartialView("_partial-views/_numerical-property.cshtml", p)
+                                                            break;
+                                                        case "BooleanProperty":
+                                                            @Html.PartialView("_partial-views/_boolean-property.cshtml", p)
+                                                            break;
+                                                        case "DateProperty":
+                                                            @Html.PartialView("_partial-views/_date-property.cshtml", p)
+                                                            break;
+                                                        case "AuxiliarProperty":
+                                                            @Html.PartialView("_partial-views/_auxiliar-property.cshtml", p)
+                                                            break;
+                                                        case "ExternalProperty":
+                                                            @Html.PartialView("_partial-views/_external-property.cshtml", p)
+                                                            break;
+                                                        default:
+                                                            @Html.PartialView("_partial-views/_property.cshtml", p)
+                                                            break;
+                                                    }
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="litVerSimples" role="tabpanel" aria-labelledby="ver_simples">
+                <div class="wrapCol">
+                    <ul class="component-list no-list-style">
+                         @foreach (string entidad in Model.Properties.Select(x => x.Domain).Distinct()){
+                            if (Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("DataTypeProperty")).ToList().Count() > 0)
+                            {
+                                string prefijo = "";
+                            try
+                            {
+                                prefijo = entidad.Substring(0, entidad.LastIndexOf("/")+1);
+                            }
+                            catch (IndexOutOfRangeException io)
+                            {
+                                prefijo = entidad.Split('#')[0];
+                            }
+                            <li class="component-wrap property-row tituloEntidad" id="@entidad">
+                                <div class="component-wrap property-row">
+                                    <div class="component">
+                                        <div class="component-header-wrap">
+                                            <div class="component-header">
+                                                <div class="component-header-content">
+                                                    <div class="component-header-left">
+                                                        <div class="component-name-wrap component-w-40">
+                                                            <span class="material-icons">rebase_edit</span>
+                                                            <span class="language-component component-name searchableName">@(Model.Prefixes.ContainsKey(prefijo) ? entidad.Replace(prefijo, Model.Prefixes[prefijo] + ":") : entidad)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="component-header-right">
+                                                        <span class="material-icons expandir pointer">navigate_next</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="component-content d-none">
+                                            <ul class="component-list no-list-style">
+                                                    @foreach (Property p in Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("DataTypeProperty")).ToList().OrderBy(x => x.Name))
+                                                    {
+                                                        @switch (p.GetType().Name)
+                                                        {
+                                                            case "StringProperty":
+                                                                @Html.PartialView("_partial-views/_string-property.cshtml", p)
+                                                                break;
+                                                            case "NumericalProperty":
+                                                                @Html.PartialView("_partial-views/_numerical-property.cshtml", p)
+                                                                break;
+                                                            case "BooleanProperty":
+                                                                @Html.PartialView("_partial-views/_boolean-property.cshtml", p)
+                                                                break;
+                                                            case "DateProperty":
+                                                                @Html.PartialView("_partial-views/_date-property.cshtml", p)
+                                                                break;
+                                                            case "AuxiliarProperty":
+                                                                @Html.PartialView("_partial-views/_auxiliar-property.cshtml", p)
+                                                                break;
+                                                            case "ExternalProperty":
+                                                                @Html.PartialView("_partial-views/_external-property.cshtml", p)
+                                                                break;
+                                                            default:
+                                                                @Html.PartialView("_partial-views/_property.cshtml", p)
+                                                                break;
+                                                        }
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="litVerObjeto" role="tabpanel" aria-labelledby="ver_objeto">
+                <div class="wrapCol">
+                    <ul class="component-list no-list-style">
+                        @foreach (string entidad in Model.Properties.Select(x => x.Domain).Distinct())
+                        {
+                            if (Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("ObjectTypeProperty")).ToList().Count() > 0)
+                            {
+                                string prefijo = "";
+                                try
+                                {
+                                    prefijo = entidad.Substring(0, entidad.LastIndexOf("/")+1);
+                                }
+                                catch (IndexOutOfRangeException io)
+                                {
+                                    prefijo = entidad.Split('#')[0];
+                                }
+                                <li class="component-wrap property-row tituloEntidad" id="@entidad">
+                                    <div class="component-wrap property-row">
+                                        <div class="component">
+                                            <div class="component-header-wrap">
+                                                <div class="component-header">
+                                                    <div class="component-header-content">
+                                                        <div class="component-header-left">
+                                                            <div class="component-name-wrap component-w-40">
+                                                                <span class="material-icons">rebase_edit</span>
+                                                                <span class="language-component component-name searchableName">@(Model.Prefixes.ContainsKey(prefijo) ? entidad.Replace(prefijo, Model.Prefixes[prefijo] + ":") : entidad)</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="component-header-right">
+                                                            <span class="material-icons expandir pointer">navigate_next</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="component-content d-none">
+                                                <ul class="component-list no-list-style">
+                                                    @foreach (Property p in Model.Properties.Where(x => x.Domain.Equals(entidad) && x.GetType().BaseType.Name.Equals("ObjectTypeProperty")).ToList().OrderBy(x => x.Name))
+                                                    {
+                                                        @switch (p.GetType().Name)
+                                                        {
+                                                            case "StringProperty":
+                                                                @Html.PartialView("_partial-views/_string-property.cshtml", p)
+                                                                break;
+                                                            case "NumericalProperty":
+                                                                @Html.PartialView("_partial-views/_numerical-property.cshtml", p)
+                                                                break;
+                                                            case "BooleanProperty":
+                                                                @Html.PartialView("_partial-views/_boolean-property.cshtml", p)
+                                                                break;
+                                                            case "DateProperty":
+                                                                @Html.PartialView("_partial-views/_date-property.cshtml", p)
+                                                                break;
+                                                            case "AuxiliarProperty":
+                                                                @Html.PartialView("_partial-views/_auxiliar-property.cshtml", p)
+                                                                break;
+                                                            case "ExternalProperty":
+                                                                @Html.PartialView("_partial-views/_external-property.cshtml", p)
+                                                                break;
+                                                            default:
+                                                                @Html.PartialView("_partial-views/_property.cshtml", p)
+                                                                break;
+                                                        }
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<style>
+    .edicion .filtroRapido input{
+        width: 95% !important;
+    }
+
+    .modal-miniatura{
+        padding: 25px 50px !important;
+    }
+
+    
+    .icon{
+        font-size: 30px;
+    }
+
+    .eleccionPropiedades {
+        display:flex;
+        align-items:center;
+    }
+    
+    
+    .propertyContent {
+        width:100%;
+    }
+
+
+    col-breadcrumb > a, col-breadcrumb>a:hover {
+        text-decoration: none;
+        color: black;
+    }
+
+    .icono {
+        width: 25px;
+    }
+
+    
+    #central{
+        background-color: white;
+    }
+
+    #configuracionGeneralIzquierda{
+        margin-left: 2%;
+    }
+    .tab-content{
+        padding:0%;
+    }
+    .atributos{
+        margin-left:2%;
+    }
+
+    .hidden{
+        display: none;
+    }
+
+    a, .pointer{
+        cursor: pointer;
+    }
+
+    input[type=text]{
+        cursor: text;
+    }
+
+    .btnconfigurar, .btnImagen, .enviar, .btnMiniatura {
+        color: white;
+        border-radius: 0.25rem;
+        background-color: #009EF7;
+        border: solid 1px;
+        padding: 0.375rem 0.75rem;
+        text-align: center;
+    }
+    .explicacion{
+        background-color: whitesmoke;
+    }
+    .btnconfigurar{
+        width: 27%;
+    }
+
+    .eliminarMiniatura, .eliminarOpenSD{
+        color: white;
+        border-radius: 0.25rem;
+        background-color: #dc3545;
+        border: solid 1px;
+        padding: 0.375rem 0.75rem;
+        width: 100%;
+    }
+
+</style>
+
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion_oc.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+        
+        (function ($) {
+            // Operativa funcionamiento de Configuración buzón de correo
+            operativaConfiguracionOC.init();
+        })();
+    </script>
+}

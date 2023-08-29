@@ -1,0 +1,50 @@
+﻿@model TabModel.DashboardTabModel.DatasetTabModel
+
+@{
+    TabModel.DashboardTabModel.DatasetTabModel dataset = Model;
+}
+<li class="bloque row dataset" id="@dataset.DatasetID">
+    <section class="header">
+        <span class="nombrePestanya" aux="@Html.ObtenerTextoIdiomaUsuario(dataset.Nombre)">@Html.ObtenerTextoIdiomaUsuario(dataset.Nombre)</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <div>
+            <p>
+                <span class="tipo">Nombre<span class="conToolTip" title="Nombre del dataset">?</span></span>
+                <input type="text" name="nombreDataset" value="@dataset.Nombre">
+
+            </p>
+            <p @Html.Raw(dataset.Color == "Aleatorio" ? "style=\"display:none\"" : "")>
+                <span class="tipo">Color<span class="conToolTip" title="Color del dataset">?</span></span>
+                <input type="color" name="colorDataset" class="colores" value="@dataset.Color">
+            </p>
+            <div class="opcionesAgrupacion">
+                <p>
+                    <span class="tipo">Tipo de agrupacion<span class="conToolTip" title="Seleccionar el tipo de agrupación">?</span></span>
+                    <select name="agrupacionDataset">
+                        <option value='count'>Contador</option>
+                        <option value='sum'>Suma</option>
+                        <option value='avg'>Media</option>
+                    </select>
+                </p>
+                <p>
+                    <span class="tipo">Agrupación sobre<span class="conToolTip" title="Seleccionar sobre que atributo se hará la agrupación">?</span></span>
+                    <input type="text" name="agrupacionsobreDataset" value="Sujeto">
+                </p>
+            </div>
+            <div class="opcionesDataset" style="display:none">
+                <p>
+                    <span class="tipo">Datos<span class="conToolTip" title="Resultado de la consulta correspondiente con este dataset">?</span></span>
+                    <input type="text" name="datosDataset" value="@dataset.Datos">
+                </p>
+            </div>
+            <p>
+                <input type="button" value="Seleccionar etiqueta" name="btnOpcionesDataset" />
+                <input type="button" value="Seleccionar agrupacion" name="btnOpcionesAgrupacion" style="display:none"/>
+                <input type="button" value="Añadir agrupación a consulta" name="btnAgregarAgrupacion" />
+            </p>
+        </div>
+    </section>
+
+</li>

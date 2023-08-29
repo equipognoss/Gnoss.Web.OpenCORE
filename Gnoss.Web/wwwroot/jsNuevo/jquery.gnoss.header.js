@@ -464,16 +464,16 @@ var buscadorCabecera = {
         this.config();
         this.wrapBuscador.show();
         this.anchoSearchGroup = this.searchGroup.width();
-        // Nuevo Front. Cargaba recursos, y m�s opciones cuando el usuario no estaba registrado (Lo montaba despu�s del buscador). No tiene sentido
+        // Nuevo Front. Cargaba recursos, y más opciones cuando el usuario no estaba registrado (Lo montaba después del buscador). No tiene sentido
         //this.montarSelector();
-        // A simple vista, no monta ninguna opci�n. Parece ser un submen�. Ahora con nuevo Front no har�a falta.
+        // A simple vista, no monta ninguna opción. Parece ser un submenú. Ahora con nuevo Front no hará falta.
         //this.montarOpciones();
         this.marcarDefaultInput();
         // Asocia clase cuando hay "focus". Lo elimino de momento
         //this.engancharInput();
         // Comportamiento para paneles y subpaneles (Desplegado, no desplegado). Para el nuevo Front, lo elimino de momento
         //this.engancharSelector();
-        // C�lculo din�mico de paneles del viejo front. De momento lo oculto
+        // Cálculo dinámico de paneles del viejo front. De momento lo oculto
         //this.engancharOpciones();
         // Comportamiento de establecer "selected" a opciones. Para el nuevo Front, lo elimino de momento
         //this.defaultSeleccionado();

@@ -100,7 +100,6 @@ bool containsUrlFoto = true;
                                 <span class="material-icons comunidad">@communityIconType</span>
 
                             }
-
                             @* Mostrar si hay certificaciones en la comunidad *@
                             @if (Comunidad.CertificationLevels != null && Comunidad.CertificationLevels.Count > 0)
                             {
@@ -241,12 +240,7 @@ bool containsUrlFoto = true;
                 </div>
             </div>
 
-            @* Menú Administración de Comunidad ? Lo meto pero no se como lo pintará *@
-            @if (ViewBag.PermisosPaginas != null)
-            {
-                @Html.PartialView("../Shared/_MenuAdministracion")
-            }
-            else if (Comunidad.Key != ProyectoAD.MetaProyecto && (!Html.GetOcultarMenusComunidad().HasValue || !Html.GetOcultarMenusComunidad().Value))
+            @if (Comunidad.Key != ProyectoAD.MetaProyecto && (!Html.GetOcultarMenusComunidad().HasValue || !Html.GetOcultarMenusComunidad().Value))
             {
                 @Html.PartialView("../Shared/_cabecera/_menu-navegacion-comunidad")
             }

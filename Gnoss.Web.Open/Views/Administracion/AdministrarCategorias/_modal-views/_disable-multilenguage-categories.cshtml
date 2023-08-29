@@ -1,0 +1,50 @@
+﻿@*
+ Descripción
+ -----------------------------------------------
+ Vista modal que se usará dentro de un contenedor de bootstrap para poder deshabilitar si así se desea la edición multilenguaje de Categorías. 
+ Se mostrará si se desactiva el checkbox de "Edición Multilenguaje de categorías".
+
+ Variables
+ ----------------------------------------------------------------
+*@
+@{
+
+}
+@*
+ ----------------------------------------------------------------
+ -------------------- Vista Modal para permitir deshabilitar multiidioma de categorías --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">language</span>Desactivar edición multilenguaje
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+@* Contenido central del modal *@
+<div class="modal-body">
+
+    <div class="formulario-edicion">
+        <div class="form-group">              
+            <label class="control-label">
+                @Html.GetText("DEVTOOLS","ESTASSEGURODEQUEQUIERESDESACTIVARLAEDICIONENVARIOSIDIOMASDE")
+            </label>
+            <label class="control-label">@Html.GetText("DEVTOOLS","SILOHACES,SETOMARACOMOIDIOMADELACOMUNIDADELQUEHAYASELEGIDOPO")</label>
+        </div>
+                    
+        @* Sección botón de Sí/No *@
+		<div class="panelBotonera">			        
+            <a id="btnSiDisableMultilenguageCategory" class="btn btn-outline-grey">@Html.GetText("COMMON", "SI")</a>
+            <a id="btnNoDisableMultilenguageCategory" class="btn btn-outline-grey">@Html.GetText("COMMON", "NO")</a>     
+		</div>       
+    </div>  
+</div>
+
+@* Carga de operativa *@
+<script>
+        (function ($) {
+            // Operativa funcionamiento de Deshabilitar multilenguaje
+			operativaGestionCategorias.operativaModalDisableMultilenguageCategory();
+        })();
+</script>
+

@@ -1,0 +1,90 @@
+@model StringProperty
+@{
+    string idValor = Model.Uri.Replace("/", "").Replace(":", "").Replace("#", "").Replace(".", "") + "valor";
+}
+<li class="component-wrap property-row propertyContent" data-propertycontent="@Model.Domain@@@Model.Uri" id="@Model.Domain@@@Model.Uri" data-tipopropiedad="string">
+    <div class="component">
+        <div class="component-header-wrap">
+            <div class="component-header">
+                <div class="component-header-content">
+                    <div class="component-header-left">
+                        <div class="component-name-wrap component-w-40">
+                            <span class="material-icons">text_fields</span>
+                            <span class="language-component component-name searchableName">@(!Model.Name.Equals(Model.Uri) ? Model.Name + " | " : "")@Model.Uri</span>
+                        </div>
+                    </div>
+                    <div class="component-header-right">
+                        <span class="material-icons expandir pointer">navigate_next</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="component-content d-none atributos pt-2 ml-5">
+            <input type="hidden" name="@Model.Domain@@@Model.Uri@@TipoPropiedad" value="string" />
+            <div class="form-group">
+                <label for="@Model.Domain@@@Model.Uri@@Nombre">Nombre de la propiedad</label>
+                <input type="text" class="form-control" name="@Model.Domain@@@Model.Uri@@Nombre" value="@Model.Name">
+            </div>
+            <div class="form-group">
+                <label for="@Model.Domain@@@Model.Uri@@NombreLectura">Nombre de lectura de la propiedad</label>
+                <input type="text" class="form-control" name="@Model.Domain@@@Model.Uri@@NombreLectura" value="@Model.NameLectura">
+            </div>
+            <div class="form-group multidioma @(ViewBag.Multidioma != null ? "" : "d-none")">
+                <p>Multidioma</p>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input checkMultidioma" name="@Model.Domain@@@Model.Uri@@multidioma" type="radio" @(ViewBag.Multidioma != null && !Model.MultiIdioma.Equals("false") ? "checked" : "")>
+                    <label class="form-check-label" for="@Model.Domain@@@Model.Uri@@multidioma">Sí</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input checkMultidioma" name="@Model.Domain@@@Model.Uri@@multidioma" type="radio" @(ViewBag.Multidioma !=null && Model.MultiIdioma.Equals("false") ? "checked" : "")>
+                    <label class="form-check-label" for="@Model.Domain@@@Model.Uri@@multidioma">No</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="@Model.Domain@@@Model.Uri@@tipoString">Tipo de cadena</label>
+                <select class="form-control js-select2" data-select-search="True" name="@Model.Domain@@@Model.Uri@@tipoString" onchange="operativaConfiguracionOC.showDiv('@Model.Domain@@@Model.Uri', this.selectedIndex)">
+                    <option value="String" @(Model.TypeString.Equals("String") ? "selected" : "")>Texto</option>
+                    <option value="TextEditor" @(Model.TypeString.Equals("TextEditor") ? "selected" : "")>Editor de texto</option>
+                    <option value="Link" @(Model.TypeString.Equals("Link") ? "selected" : "")>Link</option>
+                    <option value="Archivo" @(Model.TypeString.Equals("Archivo") ? "selected" : "")>Archivo</option>
+                    <option value="Video" @(Model.TypeString.Equals("Video") ? "selected" : "")>Video</option>
+                    <option value="TextArea" @(Model.TypeString.Equals("TextArea") ? "selected" : "")>Área de texto HTML</option>
+                    <option value="EmbebedLink" @(Model.TypeString.Equals("EmbebedLink") ? "selected" : "")>Vídeo de Youtube</option>
+                    <option value="ImagenExterna" @(Model.TypeString.Equals("ImagenExterna") ? "selected" : "")>URL de imagen externa</option>
+                    <option value="EmbebedObject" @(Model.TypeString.Equals("EmbebedObject") ? "selected" : "")>URL de objeto embebido</option>
+                    <option value="ArchivoLink" @(Model.TypeString.Equals("ArchivoLink") ? "selected" : "")>Hipervínculo de descarga de fichero</option>
+                    <option value="Imagen" @(Model.TypeString.Equals("Imagen") ? "selected" : "")>Imagen</option>
+                    <option value="ValueCombo" @(Model.ValoresCombo != null && Model.ValoresCombo.Count > 0 ? "selected" : "")>Combo de valores</option>
+                </select>
+            </div>
+
+            @if (Model.ValoresCombo != null && Model.ValoresCombo.Count() > 0)
+            {
+                <div id="combo" class="divCombo" data-contentcombo="@Model.Domain@@@Model.Uri@@comboValores">
+                    @Html.PartialView("_string-combo.cshtml", Model)
+                </div>
+            }
+            else
+            {
+                <div id="combo" class="divCombo d-none" data-contentcombo="@Model.Domain@@@Model.Uri@@comboValores">
+                    @Html.PartialView("_string-combo.cshtml", Model)
+                </div>
+            }
+            @if (Model.TypeString.Equals("Imagen"))
+            {
+                <div id="confimagen" class="divImagen" data-contentcombo="@Model.Domain@@@Model.Uri@@confImagen">
+                    @Html.PartialView("_string-conf-imagenes.cshtml", Model)
+                </div>
+            }
+            else
+            {
+                <div id="confimagen" class="divImagen d-none" data-contentcombo="@Model.Domain@@@Model.Uri@@confImagen">
+                    @Html.PartialView("_string-conf-imagenes.cshtml", Model)
+                </div>
+            }
+        </div>
+    </div>
+</li>
+
+
+

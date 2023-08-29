@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -54,6 +55,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionPaginasPermitido" })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion edicionClausulas edicion no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ClausulasLegales;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "CLAUSULASDEREGISTRO");
+
+            // Establecer en el ViewBag el idioma por defecto
+            ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
             return View(PaginaModel);
@@ -190,7 +203,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     if (filaClausulas != null)
                     {
-                        EliminarEntrada(filaClausulas);
+                        EliminarClausula(filaClausulas);
 
                         if (clausula.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina))
                         {
@@ -227,7 +240,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             if (actualizarParamGral)
             {
                 ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                //paramCN.ActualizarParametrosGenerales((ParametroGeneralDS)ParametrosGeneralesRow.Table.DataSet, false);
                 paramCN.ActualizarParametrosGenerales();
                 paramCN.Dispose();
             }
@@ -416,7 +428,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        private void Eliminarclausula(AD.EntityModel.Models.UsuarioDS.ClausulaRegistro pFilaClausula)
+        private void EliminarClausula(AD.EntityModel.Models.UsuarioDS.ClausulaRegistro pFilaClausula)
         {
             if (pFilaClausula.Tipo.Equals(ManageRegisterClausesViewModel.ClauseType.CondicionesUso))
             {
@@ -584,13 +596,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                     break;
                             }
 
-
                             mPaginaModel.ClausesList.Add(clause);
                         }
                     }
-
-
                 }
+
                 return mPaginaModel;
             }
         }

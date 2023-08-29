@@ -1,4 +1,19 @@
 ﻿@model AdministrarCategoriasViewModel
+@*
+ Descripción
+ -----------------------------------------------
+ Vista que gestiona el tipo de acción devuelta por el controlador para mostrar el HTML correspondiente a la acción pulsada
+
+ Variables
+ ----------------------------------------------------------------
+*@
+@{
+
+}
+@*
+ ----------------------------------------------------------------
+ -------------------- Vista de acciones a realizar en sección de Categorías --------------------
+*@
 
 @{
     void ObtenerNombresCategoriasHijas(Guid pCategoriaSupID, ref string pNombresCategorias, ref string pIdsCategorias)
@@ -18,30 +33,26 @@
 @{
     PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
     pintar.Thesaurus = Model.Thesaurus;
+    // Indicar si es multiLenguaje
+    pintar.MultiLanguaje = Model.MultiLanguaje;
+    // Pasarle datos de los idiomas
+    pintar.Categoria = Model.Categoria;
+    pintar.IdiomaTesauro = Model.IdiomaTesauro;
+    pintar.IdiomaDefecto = Model.IdiomaDefecto;
 }
 
 @switch (Model.Action)
 {
     case "create":
-        <div>
-            <label style="margin-left: 5px" class="boton btGris floatRight">
-                <a onclick="CrearCategoriaTesauro();" id="linkCrearCategoria">@Html.GetText("COMADMINCATEGORIAS", "CREAR")</a>
-            </label>
-            <div class="floatRight" id="panCrear">
-                <div id="divCrear">
-                    @{
-                        pintar.nombreCombo = "CrearCategoriaEn";
-                        pintar.pExcluirSeleccionadas = false;
-                    }
-                    @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategorias", pintar)
-                </div>
-            </div>
-            <div id="divCrearCategoria">
-                @Html.PartialView("../Administracion/AdministrarCategorias/_PintarCajasMultiidioma", pintar)
-            </div>
-        </div>
+        @* Configuración de opciones para Crear Categorías *@ 
+        pintar.nombreCombo = "CrearCategoriaEn";
+        pintar.pExcluirSeleccionadas = false;       
+        @* Mostrar el modal de _add-categories *@
+        @Html.PartialView("_modal-views/_add-categories", pintar)
+
         break;
     case "change_name":
+        @*
         <div>
             <div id="divCambiarNombreCategoria">
                 @Html.PartialView("../Administracion/AdministrarCategorias/_PintarCajasMultiidioma", pintar)
@@ -51,6 +62,11 @@
             </label>
             <input type="hidden" id="txtHackCatIDCambioNombre" value="@Model.Categoria.Key.ToString()">
         </div>
+        *@
+
+        @* Mostrar el modal de _rename-categories *@
+        @Html.PartialView("_modal-views/_rename-categories", pintar)
+
         break;
     case "move":
         <div>
@@ -143,6 +159,10 @@
         </div>
         break;
     case "delete":
+        @* Eliminar categorías que contiene recursos -> Mover recursos a categoría nueva *@
+
+
+        @*
         <div>
             <div class="floatLeft" id="panEliminar">
                 <div class="floatLeft" id="divEliminar">
@@ -197,7 +217,14 @@
                 <a onclick="EliminarCategoriaTesauro();" id="linkMoverTodoTrasEliminarCategoria">Mover</a>
             </label>
             <input type="hidden" id="txtHackCatIDEliminar" value="@idsCategoriasEliminar" />
-        </div>
+        </div>       
+        *@
+        
+        pintar.ExistenRecursosNoHuerfanos = Model.ExistenRecursosNoHuerfanos;
+        pintar.nombreCombo = "MoverATrasEliminar";
+        pintar.pExcluirSeleccionadas = true;
+        @Html.PartialView("_modal-views/_delete-categories", pintar)
+
         break;
     case "share":
         <div>
@@ -206,7 +233,7 @@
             </label>
             <div class="floatRight" id="divCompartirCategoria">
                 <select style="width: 200px" disabled="disabled" id="cmbCategoriaCompartir">
-                    <option value="@Guid.Empty">Selecciona una categoria</option>
+                    <option value="@Guid.Empty">@Html.GetText("DEVTOOLS","SELECCIONAUNACATEGORIA")</option>
                 </select>
             </div>
             <div class="floatRight" id="panCompartir">
@@ -239,7 +266,7 @@
             </label>
             <div class="floatRight" id="divCompartirCategoria">
                 <select style="width: 200px" id="cmbCategoriaCompartir">
-                    <option value="@Guid.Empty">Selecciona una categoria</option>
+                    <option value="@Guid.Empty">@Html.GetText("DEVTOOLS","SELECCIONAUNACATEGORIA")</option>
                     @foreach (CategoryModel categoria in Model.CategoriasCompartir.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
                     {
                         <option value="@categoria.Key">@categoria.Name</option>

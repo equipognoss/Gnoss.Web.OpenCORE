@@ -1,0 +1,2 @@
+- Librería para poder realizar loadings mostrando una pequeña máscara y un icono. Se pueden utilizar para mostrar loading en fullScreen o dentro de componentes html concretos.
+-> Más info: https://github.com/piccard21/busy-load

@@ -10,6 +10,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -19,7 +20,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -27,6 +27,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using ClosedXML.Excel;
+using Es.Riam.Gnoss.Web.MVC.Controles;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -38,14 +40,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         /// <summary>
-        /// Muestra la pagina de administrar categorías
+        /// Muestra la pagina de descargar traducciones
         /// </summary>
         /// <returns>ActionResult</returns>
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
         public ActionResult Index()
         {
+            // Controlar si es o no del ecosistema            
+            bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
+            if (isInEcosistemaPlatform)
+            {
+                ViewBag.isInEcosistemaPlatform = "true";
+            }
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion edicionDescargarTraducciones edicion no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "ADMINISTRARTRADUCCIONES");   
 
             DescargarTraduccionesViewModel descargarTraducciones = new DescargarTraduccionesViewModel();
 
@@ -114,17 +130,32 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             if (!validar)
             {
+
+                bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
+
                 Dictionary<string, MemoryStream> listMStream = new Dictionary<string, MemoryStream>();
                 Stream ms = new MemoryStream();
 
                 if (file != null)
-                {
-                    file.OpenReadStream().CopyTo(ms);
+                {   
+                    ActionResult resultado = validarHtml(file);
+                    ActionResult aux = GnossResultOK();
+                    if (resultado.GetType() != aux.GetType()) 
+                    {
+                        return resultado;
+					}
+
+					file.OpenReadStream().CopyTo(ms);
                 }
 
                 DataSet ds = UtilFicheros.LeerExcelDeRutaADataSet(ms);
 
                 int contadorTablas = ds.Tables.Count;
+
+                if (isInEcosistemaPlatform && contadorTablas > 1 && !ds.Tables[0].TableName.Equals("tabla_TextosPersonalizados"))
+                {
+                    return null;
+                }
 
                 for (int i = 0; i < contadorTablas; i++)
                 {
@@ -155,7 +186,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             switch (nombreTabla)
                             {
                                 case "tabla_TextosPersonalizados":
-                                    bd.ExcelToTextosPersonalizados(ProyectoSeleccionado.PersonalizacionID, tabla);
+                                    if (!isInEcosistemaPlatform)
+                                    {
+                                        bd.ExcelToTextosPersonalizados(ProyectoSeleccionado.PersonalizacionID, tabla);
+                                    }
+                                    else
+                                    {
+                                        bd.ExcelToTextosPersonalizados(mControladorBase.PersonalizacionEcosistemaID, tabla);
+                                    }
                                     break;
                                 case "tabla_TextosPestañas":
                                     bd.ExcelToProyectoPestanyaMenu(ProyectoSeleccionado.Clave, tabla);
@@ -194,6 +232,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             bd.ExcelToVirtuoso(tabla, UrlIntragnoss, listMStream, ProyectoSeleccionado.Clave);
                         }
+                        else if (nombreTabla.StartsWith("XML_"))
+                        {
+							//TraduccionXmlOntologias xml = new TraduccionXmlOntologias();
+							//xml.ExcelToXmlPublication(ms);
+							return null;
+						}
                     }
                 }
 
@@ -220,7 +264,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (bytesZip.Length > 0)
                 {
-                    return File(bytesZip, "application/octet-stream", $"Traducciones_{ProyectoSeleccionado.NombreCorto}.zip");
+                    return GnossResultOK();
+                    //return File(bytesZip, "application/octet-stream", $"Traducciones_{ProyectoSeleccionado.NombreCorto}.zip");
                 }
                 else
                 {
@@ -248,7 +293,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return obtenerErroresValidacionHtml(ds);
         }
 
-        private FileContentResult obtenerErroresValidacionHtml(DataSet ds)
+        private ActionResult obtenerErroresValidacionHtml(DataSet ds)
         {
             var stream = new MemoryStream();
             var writer = new StreamWriter(stream);
@@ -299,19 +344,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 stream.Position = 0;
                 return File(stream.ToArray(), "text/plain", $"Errores.txt");
             }
-            return null;
+            return GnossResultOK();
         }
 
         [HttpPost]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
-        public FileResult getDescargasFicheros(DescargarTraduccionesViewModel OpcionesDescarga)
+        public ActionResult getDescargasFicheros(DescargarTraduccionesViewModel OpcionesDescarga)
         {
             //comprobar errores
-
             BaseDeDatos bd = new BaseDeDatos(ProyectoSeleccionado, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mRedisCacheWrapper, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
-            ExcelPackage excel = new ExcelPackage();
+            XLWorkbook excel = new XLWorkbook();
             TraduccionXmlOntologias ontologiaXML = new TraduccionXmlOntologias();
             List<string> listaIdiomas = mConfigService.ObtenerListaIdiomas();
+
+            bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
 
             //descargar ficheros segun sean seleccionados
 
@@ -380,7 +426,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             //Base de Datos        
             if (OpcionesDescarga.DescargarTextosPersonalizados) //TextosPersonalizados 
             {
-                bd.TextosPersonalizadosToExcel(ProyectoSeleccionado.Clave, excel);
+                if (!isInEcosistemaPlatform)
+                {
+                    bd.TextosPersonalizadosToExcel(Comunidad.PersonalizacionProyectoID, excel);
+                }
+                else
+                {
+                    bd.TextosPersonalizadosToExcel(mControladorBase.PersonalizacionEcosistemaID, excel);
+                }
+                
             }
 
             if (OpcionesDescarga.DescargarTextoProyectoPestanyaMenu) //ProyectoPestanyaMenu
@@ -504,20 +558,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 js.JavascriptToExcel(excel, diccionarioJavaScript);
             }
 
-            if (excel.Workbook.Worksheets.Count > 0)
+            if (excel.Worksheets.Count > 0)
             {
-                return File(excel.GetAsByteArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Traducciones_{ProyectoSeleccionado.NombreCorto}.xlsx");
+                MemoryStream stream = new MemoryStream();
+                excel.SaveAs(stream);
+                return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Traducciones_{ProyectoSeleccionado.NombreCorto}.xlsx");
             }
             else
             {
-                return null;
+                return GnossResultERROR();
             }
 
         }
 
         private byte[] ObtenerXmlOntologia(Guid pOntologiaID)
         {
-            CallFileService fileService = new CallFileService(mConfigService);
+            CallFileService fileService = new CallFileService(mConfigService, mLoggingService);
             byte[] bytesArchivo = fileService.ObtenerXmlOntologiaBytes(pOntologiaID);
 
             return bytesArchivo;
