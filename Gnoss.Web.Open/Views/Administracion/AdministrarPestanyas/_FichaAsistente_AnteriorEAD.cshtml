@@ -1,0 +1,240 @@
+﻿@model TabModel.DashboardTabModel
+
+@{
+    TabModel.DashboardTabModel asistente = Model;    
+    // Id para usar en elementos únicos
+    Guid newGuidId = @Guid.NewGuid();    
+    //string collapseId = "panel_collapse_" + newGuidId.ToString().Substring(0, 5);
+    string idFichaAsistente = newGuidId.ToString().Substring(0, 5);
+
+}
+<li class="bloque row asistente" id="@asistente.AsisID">
+    <section class="header">
+        <span class="nombrePestanya" aux="@Html.ObtenerTextoIdiomaUsuario(asistente.Nombre)">@Html.ObtenerTextoIdiomaUsuario(asistente.Nombre)</span>
+        <span class="action eliminar elimAsis">@Html.GetText("COMMON", "ELIMINAR")</span>
+        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
+    </section>
+    <section class="panEdicion">
+        <div>
+            @*
+            <p>
+                <span class="tipo">Nombre<span class="conToolTip" title="Nombre del gráfico">?</span></span>
+                <input type="text" name="nGrafico" value="@asistente.Nombre">
+            </p>
+            *@
+            @* Nombre del gráfico *@
+            <div class="form-group mb-3">
+	            <label class="control-label d-block">Nombre del gráfico</label>
+	            <input type="text" placeholder="Nombre del gráfico" 
+		               class="form-control" 
+		               name="nGrafico" 
+                       value="@asistente.Nombre">
+	            <small class="form-text text-muted">Nombre del gráfico a crear</small>
+            </div>            
+            @*
+            <p>
+                <span class="tipo">Mostrar titulo<span class="conToolTip" title="Mostrar el nombre del gráfico encima del mismo">?</span></span>
+                <input type="checkbox" name="mtGrafico" @(asistente.Titulo ? "checked " : "") />
+            </p>
+            *@
+            @* Checkbox de Mostrar título *@
+            <div class="form-group mb-3">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox"
+                           name="mtGrafico"
+                           class="custom-control-input"
+                           @(asistente.Titulo ? "checked " : "")
+                           id="xxxxxxx" />
+                    <label class="custom-control-label" for="xxxxxxx">xxxxxxx</label>
+                </div>
+            </div>
+
+
+            <p>
+                <span class="tipo">Tamaño<span class="conToolTip" title="Seleccionar tamaño del gráfico">?</span></span>
+                <select name="tamGrafico">
+                    <option value="1x" @(asistente.Tamano == "1x" ? "selected" : "")>1:3</option>
+                    <option value="2x" @(asistente.Tamano == "2x" ? "selected" : "")>2:3</option>
+                    <option value="3x" @(asistente.Tamano == "3x" ? "selected" : "")>3:3</option>
+                </select>
+            </p>
+            <p>
+                <span class="tipo">Tipo<span class="conToolTip" title="Seleccionar el tipo de gráfico">?</span></span>
+                <select name="tGrafico">
+                    <option value='0'>Seleccione un tipo</option>
+                    <option value='1' @(asistente.Tipo == 1 ? "selected" : "")>Barras</option>
+                    <option value='2' @(asistente.Tipo == 2 ? "selected" : "")>Lineas</option>
+                    <option value='3' @(asistente.Tipo == 3 ? "selected" : "")>Circular</option>
+                    <option value='4' @(asistente.Tipo == 4 ? "selected" : "")>Tabla</option>
+                    <option value='5' @(asistente.Tipo == 5 ? "selected" : "")>Mapa de calor</option>
+                </select>
+            </p>
+
+            <div class="opciones">
+                <div class="opLabels" @Html.Raw(asistente.Tipo == 4 || asistente.Tipo == 5 ? "style=\"display:none\"" : "")>
+                    <p class="opcionesPropiedad">
+                        <span class="tipo">Propiedad para labels<span class="conToolTip" title="Propiedad que se usará como labels">?</span></span>
+                        <input type="text" name="propiedadGrafico" />
+                    </p>
+                    <p class="opcionesLabels" style="display:none">
+                        <span class="tipo">Variable labels<span class="conToolTip" title="Propiedad que se usará como labels">?</span></span>
+                        <input type="text" name="labelsGrafico" value="@asistente.Labels" />
+                    </p>
+                    <p>
+                        <input type="button" value="Seleccionar variable" name="btnOpcionesLabels" />
+                        <input type="button" value="Seleccionar propiedad" name="btnOpcionesPropiedad" style="display:none" />
+                        <input type="button" value="Añadir propiedad a consulta" name="btnAgregarPropiedad" />
+                    </p>
+                </div>
+                <div class="opcionesBarras opcionesGraf" @Html.Raw(asistente.Tipo == 1 ? "" : "style=\"display:none\"")>
+                    <p>Opciones gráfico de barras</p>
+                    <p>
+                        <span class="tipo">Horizontal<span class="conToolTip" title="Barras en horizontal">?</span></span>
+                        <input name="horizontal" type="checkbox" @(asistente.PropExtra ? "checked" : "")>
+                    </p>
+                    <p>
+                        <span class="tipo">Datasets</span>
+                    </p>
+                    <p>
+                        <input type="button" value="Agregar Dataset" name="btnAgregarDataset" />
+                    </p>
+                    <div class="datasets">
+                        <ol class="exportacionesSortable datasetsLista">
+                            @foreach (TabModel.DashboardTabModel.DatasetTabModel dataset in asistente.OpcionesDatasets)
+                            {
+                                @Html.PartialView("_FichaDataset", dataset)
+                            }
+                        </ol>
+                    </div>
+                </div>
+                <div class="opcionesLineas opcionesGraf" @Html.Raw(asistente.Tipo == 2 ? "" : "style=\"display:none\"")>
+                    <p>Opciones gráfico de lineas</p>
+                    <p>
+                        <span class="tipo">Area<span class="conToolTip" title="Rellenar area">?</span></span>
+                        <input name="area" type="checkbox" @(asistente.PropExtra ? "checked" : "")>
+                    </p>
+                    <p>
+                        <span class="tipo">Datasets</span>
+                    </p>
+                    <p>
+                        <input type="button" value="Agregar Dataset" name="btnAgregarDataset" />
+                    </p>
+                    <div class="datasets">
+                        <ol class="exportacionesSortable datasetsLista">
+                            @foreach (TabModel.DashboardTabModel.DatasetTabModel dataset in asistente.OpcionesDatasets)
+                            {
+                                @Html.PartialView("_FichaDataset", dataset)
+                            }
+                        </ol>
+                    </div>
+                </div>
+                <div class="opcionesTabla opcionesGraf" @Html.Raw(asistente.Tipo == 4 ? "" : "style=\"display:none\"")>
+                    <p>Opciones tabla</p>
+                    <p>
+                        <span class="tipo">Propiedades</span>
+                    </p>
+                    <p>
+                        <input type="button" value="Agregar Columna" name="btnAgregarColumna" />
+                    </p>
+                    <div class="datasets">
+                        <ol class="exportacionesSortable datasetsLista">
+                            @foreach (TabModel.DashboardTabModel.DatasetTabModel dataset in asistente.OpcionesDatasets)
+                            {
+                                @Html.PartialView("_FichaDatasetNoAgrupacion", dataset)
+                            }
+                        </ol>
+                    </div>
+                </div>
+                <div class="opcionesHeatMap opcionesGraf" @Html.Raw(asistente.Tipo == 5 ? "" : "style=\"display:none\"")>
+                    <p>Opciones Mapa de calor</p>
+                    <p>
+                        <span class="tipo">Propiedades y agrupación</span>
+                    </p>
+                    <div class="datasets">
+                        <ol class="exportacionesSortable datasetsLista">
+                            @if (asistente.OpcionesDatasets.Count == 3)
+                            {
+                                @Html.PartialView("_FichaDatasetNoAgrupacion", asistente.OpcionesDatasets[0])
+                                @Html.PartialView("_FichaDatasetNoAgrupacion", asistente.OpcionesDatasets[1])
+                                @Html.PartialView("_FichaDataset", asistente.OpcionesDatasets[2])
+                            }
+                            else
+                            {
+                                TabModel.DashboardTabModel.DatasetTabModel datAleatorio = new TabModel.DashboardTabModel.DatasetTabModel();
+                                datAleatorio.Color = "Aleatorio";
+                                datAleatorio.Nombre = "Eje X";
+                                datAleatorio.DatasetID = Guid.NewGuid();
+                                @Html.PartialView("_FichaDatasetNoAgrupacion", datAleatorio)
+                                TabModel.DashboardTabModel.DatasetTabModel datAleatorio2 = new TabModel.DashboardTabModel.DatasetTabModel();
+                                datAleatorio2.Nombre = "Eje Y";
+                                datAleatorio2.Color = "Aleatorio";
+                                datAleatorio2.DatasetID = Guid.NewGuid();
+                                @Html.PartialView("_FichaDatasetNoAgrupacion", datAleatorio2)
+                                TabModel.DashboardTabModel.DatasetTabModel dat = new TabModel.DashboardTabModel.DatasetTabModel();
+                                dat.Nombre = "Agrupacion";
+                                dat.DatasetID = Guid.NewGuid();
+                                @Html.PartialView("_FichaDataset", dat)
+                            }
+                        </ol>
+                    </div>
+                </div>
+                <div class="opcionesCirculos opcionesGraf" @Html.Raw(asistente.Tipo == 3 ? "" : "style=\"display:none\"")>
+                    <p>Opciones gráfico circular</p>
+                    <p>
+                        <span>Dataset</span>
+                    </p>
+                    <div>
+                        <div class="datasets">
+                            <ol class="exportacionesSortable datasetsLista">
+                                @if (asistente.OpcionesDatasets.Count == 1)
+                                {
+                                    @Html.PartialView("_FichaDataset", asistente.OpcionesDatasets[0])
+                                }
+                                else
+                                {
+                                    TabModel.DashboardTabModel.DatasetTabModel datCir = new TabModel.DashboardTabModel.DatasetTabModel();
+                                    datCir.Color = "Aleatorio";
+                                    datCir.Nombre = "Dataset";
+                                    datCir.DatasetID = Guid.NewGuid();
+                                    @Html.PartialView("_FichaDataset", datCir)
+                                }
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="consulta">
+            <p>
+                <span class="tipo">SELECT</span>
+                <input type="text" name="selectGrafico" value="@asistente.Select">
+            </p>
+            <p>
+                <span class="tipo">WHERE {</span>
+                <textarea name="whereGrafico" rows="5">@asistente.Where</textarea>
+            <p>}</p>
+            </p>
+            <p>
+                <span class="tipo">GROUP BY</span>
+                <input type="text" name="groupbyGrafico" value="@asistente.GroupBy">
+            </p>
+            <p>
+                <span class="tipo">HAVING</span>
+                <input type="text" name="havingGrafico">
+            </p>
+            <p>
+                <span class="tipo">ORDER BY</span>
+                <input type="text" name="orderbyGrafico" value="@asistente.OrderBy">
+            </p>
+            <p>
+                <span class="tipo">LIMIT</span>
+                <input type="text" name="limitGrafico" value="@asistente.Limit">
+            </p>
+        </div>
+        <p>
+            <input type="button" name="btnAnyadir" class="btnAddGraph" value="Añadir gráfico" />
+        </p>
+    </section>
+
+</li>

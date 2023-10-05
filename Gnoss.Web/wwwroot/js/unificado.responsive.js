@@ -12138,8 +12138,10 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
 
                 if (vistaChart) {
                     datosChartActivo = arraydatos;
-                    $(pPanelID).html('<div id="divContChart"></div>');
-                    eval(jsChartActivo);
+                    //$(pPanelID).html('<div id="divContChart"></div>');
+                    //eval(jsChartActivo);
+
+                    PintarGrafico(arrayDatos);
                 }
                 else {
                     utilMapas.MontarMapaResultados(pPanelID, arraydatos);
@@ -12152,6 +12154,128 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
             MontarResultadosScroll.cargarScroll();
         }
     }, "json");
+}
+
+PintarGrafico(arrayDatos){
+
+    var panResultados = document.getElementById("divCharts");
+    var divNuevo = document.createElement("div");
+    divNuevo.className = "generados";
+    panResultados.appendChild(divNuevo);
+    var data
+    var config = {
+        data: data,
+        options:
+        {
+            responsive: true,
+            plugins:
+            {
+                legend: {
+                    position: 'top',
+                }, title: {
+                    display: asistenteTitulo,
+                    text: asistenteName
+                }
+            }
+        }
+    };
+    var tam = tamFijo;
+    switch (asistenteTamanyo) {
+        case "1x":
+            tam = tamFijo;
+            break;
+        case "2x":
+            tam = 2 * tamFijo + 4;
+            break;
+        case "3x":
+            tam = 3 * tamFijo + 8;
+            break;
+    }
+    var tipo = asistenteTipo;
+    switch (tipo) {
+        case 1:
+            data = DataBarrasLineas(arrayDatos);
+            config.type = 'bar';
+            var horizontal = asistente.horizontal;
+            if (horizontal) {
+                config.options.indexAxis = 'y';
+            }
+            break;
+        case 2:
+            data = DataBarrasLineas(arrayDatos);
+            config.type = 'line';
+            break;
+        case 3:
+            data = DataCirculos(arrayDatos);
+            config.type = 'pie';
+            config.options.plugins.legend.display = false;
+            break;
+    }
+    if (tipo == "1" || tipo == "2") {
+        divNuevo.style = "width:" + tam + "px; height:" + tam / 2 + "px; display:inline-block";
+    } else {
+        divNuevo.style = "width:" + tam + "px; height:" + tam + "px; display:inline-block";
+    }
+    config.data = data;
+    EjemploGrafico(divNuevo, config);
+}
+DataBarrasLineas(arrayDatos){
+    var labels = [];
+    for (var i = 1; i < arrayDatos.length - 1; i++) {
+        labels.push(arrayDatos[i].split("@@@")[asistenteOrdenes[0]]);
+    }
+    var datasets = [];
+    for (var i = 0; i < asistenteDatasets.length; i++) {
+        var dat = [];
+        for (var j = 1; j < arrayDatos.length; j++) {
+            dat.push(arrayDatos[j].split("@@@")[asistenteOrdenes[i + 1]]);
+        }
+        var dataset = {
+            label: asistenteDatasets[i].nombre,
+            data: dat,
+            borderColor: asistenteDatasets[i].color,
+            backgroundColor: asistenteDatasets[i].color,
+        };
+        datasets.push(dataset);
+    }
+    var data = {
+        labels: labels,
+        datasets: datasets
+    };
+    return data;
+}
+DataCirculos: function (arrayDatos) {
+    var labels = [];
+    for (var i = 1; i < arrayDatos.length - 1; i++) {
+        labels.push(datos[i].split("@@@")[asistenteOrdenes[0]]);
+    }
+
+    var colores = [];
+    var dat = [];
+    for (var j = 1; j < arrayDatos.length; j++) {
+        dat.push(datos[j].split("@@@")[asistenteOrdenes[1]]);
+        colores.push("#" + Math.floor(Math.random() * 16777215).toString(16));
+    }
+
+    var dataset = {
+        label: 'Dataset',
+        data: dat,
+        backgroundColor: colores
+    };
+
+    var conf = {
+        labels: labels,
+        datasets: [dataset]
+    };
+    return conf;
+}
+EjemploGrafico: function (divNuevo, config) {
+    var canvas = document.createElement("canvas");
+    canvas.className = "graficoCtx";
+    divNuevo.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+
+    new Chart(ctx, config);
 }
 
 ///Uso:
@@ -12714,6 +12838,36 @@ function SeleccionarChart(pCharID, pJsChart) {
     jsChartActivo = pJsChart;
 
     FiltrarPorFacetas(ObtenerHash2());
+}
+
+function SeleccionarDashboard(listAsistentes) {
+    $('.listView').attr('class', 'listView');
+    $('.gridView').attr('class', 'gridView');
+    $('.mapView').attr('class', 'mapView');
+    $('.chartView').attr('class', 'chartView activeView');
+
+    var data = JSON.parse(listAsistentes);
+    var asistentes = data['$values'];
+
+    $(pPanelID).html('<div id="divCharts"></div>');
+
+    tamFijo = ($(pPanelID)[0].clientWidth - 40) / 3;
+
+    for (var i = 0; i < asistentes.length; i++) {
+        var asistente = asistentes[i];
+        asistenteTitulo = asistente.titulo;
+        asistenteName = asistente.asistenteName;
+        asistenteTamanyo = asistente.tamanyo;
+        asistenteTipo = asistente.tipo;
+        asistenteHorizontal = asistente.horizontal;
+        chartActivo = asistente.Key;
+        asistenteDatasets = asistente.listDataset['$values'];
+        asistentesOrdenes = asistente.ordenes;
+
+        FiltrarPorFacetas(ObtenerHash2());
+    }
+
+
 }
 
 function ExportarBusqueda(pExportacionID, pNombreExportacion, pFormatoExportacion) {
@@ -24846,7 +25000,7 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
         // Vaciar el panel de posibles errores anteriores y ocultarlo
         panelResourceFileErrorMessage.empty().hide(); 
 
-        var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
+        var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%()\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
         if (url.value.length > 0 && url.value.match(regexURL)) {
             MostrarUpdateProgress();
 

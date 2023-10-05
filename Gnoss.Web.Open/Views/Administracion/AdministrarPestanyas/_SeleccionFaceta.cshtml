@@ -1,41 +1,127 @@
-﻿@*@model List<FacetaModel>*@
-@model AdministrarFacetasEnPestanyasViewModel
+﻿@model AdministrarFacetasEnPestanyasViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene las facetas asociadas a una página. Esta vista se carga cuando se pulsa en "Ver facetas".
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    List<FacetaModel> listaFacetas = Model.ListadoFacetas;
-    int i = 1;
-    string id = "id_faceta_";
-    TabModel.FacetasTabModel facetasPestanya = Model.FacetasPestanya;
-
+List<FacetaModel> listaFacetas = Model.ListadoFacetas;
+TabModel.FacetasTabModel facetasPestanya = Model.FacetasPestanya;
+// Guid y id para gestionar cada una de las facetas
+Guid facetId = @Guid.NewGuid();	
+string collapseId = "panel_collapse_" + facetId.ToString().Substring(0,5);
 }
-<li class="bloque row faceta" id="@(id + i)">
-    <span class="handle faceta">:::</span>
-    <section class="header">
-        <span>Nueva faceta para la página</span>
-        <span>@facetasPestanya.ObjetoConocimiento.ToString()</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    <section class="panEdicion" style="width:760px">
-        <input type="hidden" name="TabEliminada" value="false" />
-        <select class="selectFacetas" name="listaFacetas">
 
-            @foreach (FacetaModel faceta in listaFacetas)
-            {
-                <option class="facetas" value="@(faceta.ClaveFaceta)" name="@(faceta.AgrupacionID)" @(facetasPestanya.Faceta.Equals(faceta.Name) ? "selected" : "")>@faceta.Name</option>
-            }
-        </select>
+@*
+----------------------------------------------------------------
+-------------------- Vista que contiene la información de la nueva faceta a añadir --------------------
+*@
+	
+<li class="component-wrap facet-row" data-facetkey="@facetId" data-collapseid="@collapseId">
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				@* Icono para la faceta *@
+				<div class="component-no-sortable">
+					<span class="material-icons-outlined sortable-icon">manage_search</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						@* Nombre de la exportación *@
+						<div class="component-name-wrap">																												
+							<span class="component-facetName">@Html.GetText("DEVTOOLS","NUEVAFACETA")</span>
+						</div>					
+					</div>
+					@*Sección de acciones de la faceta *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de editar la exportación *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditFacet"
+									   data-toggle="collapse" 
+									   data-target="#@collapseId"									   
+									   role="button" 
+									   aria-expanded="false" 
+									   aria-controls="@collapseId">									   
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de borrar el filtro *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteFacet"
+										href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-            <select class="selectObjetosConocimiento" name="ListaOC">
-            </select>
+	@* Información detallada de la faceta - Collapse *@
+	<div class="collapse facet-info" id="@collapseId">
+		@* Indicación de que la faceta se ha eliminado *@
+		<input type="hidden" name="TabEliminada" value="false" />
+		<div class="card card-body">
+		
+			@* Select de la lista de facetas *@
+			<div class="form-group mb-2">
+				<label class="control-label d-block">@Html.GetText("DEVTOOLS","LISTADODEFACETAS")</label>
+				<select name="listaFacetas"
+						class="cmbListaFacetas js-select2"
+						tabindex="0"
+						aria-hidden="false">					
+				
+				@foreach (FacetaModel faceta in listaFacetas)
+				{
+					<option class="facetas" 
+							value="@(faceta.ClaveFaceta)" 
+							name="@(faceta.AgrupacionID)">
+							@faceta.Name
+					</option>
+				}
+				</select>
+				<small class="form-text text-muted">@Html.GetText("DEVTOOLS","SELECCIONALAFACETADESEADAPARALAPAGINA")</small>
+			</div>
 
-        <select class="selectAux" hidden>
-            @foreach (FacetaModel faceta in listaFacetas)
-            {
-                foreach (var objeto in faceta.ObjetosConocimiento)
-                {
-                    <option class="objAux" name="@(faceta.AgrupacionID)" value="@objeto">@objeto</option>
-                }
-            }
-        </select>
-    </section>
+			@* Select de objetos de conocimiento *@
+			<div class="form-group mb-2">
+				<label class="control-label d-block">@Html.GetText("ADMINISTRACIONSEMANTICA","OBJETOSDECONOCIMIENTO")</label>
+				<select
+						name="ListaOC"
+						class="selectObjetosConocimiento cmbObjetosConocimiento js-select2"
+						tabindex="0"
+						aria-hidden="false">
+						@* Combobox que se rellenará vía JS dependiendo de la selección de listaFacetas *@
+				</select>
+				<small class="form-text text-muted">@Html.GetText("DEVTOOLS","SELECCIONAELOBJETODECONOCIMIENTOASOCIADOALAFACETAPREVIAMENTE")</small>
+			</div>
+
+
+			@* Select datos aux  para la faceta - Datos ocultos *@
+			<div class="form-group mb-2 d-none">
+				@* Título *@
+				<label class="control-label d-block">@Html.GetText("DEVTOOLS","DATOSAUXILIARESPARALAFACETA")</label>
+
+				@* Select de datos auxiliares de la faceta *@
+				<select class="selectAux cmbSelectAux js-select2">						
+					@foreach (FacetaModel faceta in listaFacetas)
+					{
+						foreach (var objeto in faceta.ObjetosConocimiento)
+						{
+							<option class="objAux" name="@(faceta.AgrupacionID)" value="@objeto">@objeto</option>
+						}
+					}
+				</select>			
+			</div>
+		</div>
+	</div>	
 </li>

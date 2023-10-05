@@ -1,0 +1,209 @@
+﻿@model ManageViewsViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene las facetas a mostrar relacionadas con las vistas de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+
+}
+
+
+<div id="col01">
+    @* Cabecera de Filtros de Facetas *@
+    <div class="header-facetas">
+        <p>@Html.GetText("COMADMINFACETAS", "FILTROS")</p>
+        <a href="javascript: void(0);" class="cerrar">
+            <span class="material-icons">close</span>
+        </a>
+    </div>
+    
+    <fieldset style="display: block">       
+		
+        <div id="panFacetas" class="facetas-wrap custom-css-scroll">                
+            
+			<div class="facetedSearch">
+
+				@* Plantillas de Vistas: Web, Facetas, Resultados *@
+				<div class="box">
+					@* Sección de filtrado de views *@					
+					<div class="faceta-name">                            
+					    <span class="faceta-title mb-2">@Html.GetText("DEVTOOLS","PLANTILLASDESERVICIOS")</span>                           
+					</div>
+					<ul class="listadoFacetas facetasItems">
+						<li class="">
+							@*
+							<a															
+								class="faceta seleccionFacetaPlantilla applied"
+								style="cursor:pointer;"								
+								data-name="todas">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","TODAS")</span>
+								<span class="num-resultados numViewTodas"></span>
+							</a>
+							*@
+						</li>
+
+						<li class="">
+							<a															
+								class="faceta seleccionFacetaPlantilla"
+								style="cursor:pointer;"																	
+								data-type=""
+								data-name="web">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","WEB")</span>
+								<span class="num-resultados numViewWeb"></span>
+							</a>
+						</li>
+						<li class="">
+							<a								
+								class="faceta seleccionFacetaPlantilla"
+								style="cursor:pointer;"
+								data-type=""
+								data-name="resultados">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","RESULTADOS")</span>
+								<span class="num-resultados numViewResultados"></span>
+							</a>
+						</li> 
+						<li class="">
+							<a								
+								class="faceta seleccionFacetaPlantilla"
+								style="cursor:pointer;"	
+								data-type=""
+								data-name="facetas">
+								<span class="textoFaceta">@Html.GetText("ADMINISTRACIONSEMANTICA","FACETAS")</span>
+								<span class="num-resultados numViewFacetas"></span>
+							</a>
+						</li> 
+						<li class="">
+							<a class="faceta seleccionFacetaPlantilla"
+							   style="cursor:pointer;"
+							   data-type=""
+							   data-name="objetoconocimiento">
+								<span class="textoFaceta">@Html.GetText("ADMINISTRACIONSEMANTICA","OBJETOSDECONOCIMIENTO")</span>
+								<span class="num-resultados numViewObjetoConocimiento"></span>
+							</a>
+						</li>
+						<li class="">
+							<a								
+								class="faceta seleccionFacetaPlantilla"
+								style="cursor:pointer;"
+								data-type=""
+								data-name="componentecms">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","COMPONENTESCMS")</span>
+								<span class="num-resultados numViewComponentesCMS"></span>
+							</a>
+						</li>						
+					</ul>
+				</div>
+
+				@* Plantillas de Vistas: Todas, Originales, Personalizadas *@
+				<div class="box mt-4">
+					@* Sección de Tipo de plantillas (Originales/Personalizadas) *@					
+					<div class="faceta-name">                            
+					    <span class="faceta-title mb-2">@Html.GetText("DEVTOOLS","TIPODEPLANTILLAS")</span>                           
+					</div>
+					<ul class="listadoFacetas">
+						<li class="">
+							@*
+							<a															
+								class="faceta seleccionFacetaTipoPlantilla applied"
+								style="cursor:pointer;"								
+								data-name="todas">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","TODAS")</span>
+								<span class="num-resultados numViewTypeTodas"></span>
+							</a>
+							*@
+						</li>
+						<li class="">
+							<a															
+								class="faceta seleccionFacetaTipoPlantilla"
+								style="cursor:pointer;"
+								data-name=""
+								data-type="original">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","ORIGINALES")</span>
+								<span class="num-resultados numViewTypeOriginal"></span>
+							</a>
+						</li>
+						<li class="">
+							<a															
+								class="faceta seleccionFacetaTipoPlantilla"
+								style="cursor:pointer;"	
+								data-name=""
+								data-type="personalizada">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","PERSONALIZADAS")</span>
+								<span class="num-resultados numViewTypePersonalizadas"></span>
+							</a>
+						</li>											
+					</ul>
+				</div>
+
+				@* Plantillas de Vistas: Componentes CMS - Filtrar por Componentes CMS *@
+				<div id="panelFacetasComponentesCMS" class="box mt-4 d-none">
+					@* Sección de filtrado de views *@					
+					<div class="faceta-name">                            
+					    <span class="faceta-title mb-2">@Html.GetText("DEVTOOLS","PLANTILLASDECOMPONENTESCMS")</span>                           
+					</div>
+					<ul class="listadoFacetas facetasItems">
+						@* Listado de componentes CMS para carga de Componentes CMS *@
+						@* Pintado de cada una de los recursos de tipo CMS*@
+						@foreach (ManageViewsViewModel.CMSComponentViewModel vistaComponente in Model.ListCMSComponents)
+						{
+							<li class="">
+								<a															
+									class="faceta seleccionFacetaPlantillaComponenteCMS"
+									style="cursor:pointer;"									
+									data-view-type="@vistaComponente.Name.Replace("/ViewsAdministracion/", "").Replace("/Views/", "").Replace(" ","_") "
+								    data-type=""
+									data-name=""> 
+									<span class="textoFaceta">@vistaComponente.Name</span>
+									<span class="num-resultados numView"></span>
+								</a>
+							</li> 
+						}
+						@* Plantillas de Recursos, Listado de recursos y Grupo de componentes *@
+						@* Recursos *@
+						<li class="">
+							<a	
+								id="seleccionFacetaPlantillaComponenteCmsRecurso"
+								class="seleccionFacetaPlantillaComponenteCMS seleccionFacetaPlantillaComponenteCMSRecursos"
+								style="cursor:pointer;"
+								data-view-type="Recurso"
+								data-name="">
+								<span class="textoFaceta">@Html.GetText("ADMINISTRACIONBASICA","RECURSOS")</span>
+								<span class="num-resultados numView"></span>
+							</a>
+						</li> 
+						@* Listado de recursos *@
+						<li class="">
+							<a
+								id="seleccionFacetaPlantillaComponenteCmsListadoDeRecursos"
+								class="seleccionFacetaPlantillaComponenteCMS seleccionFacetaPlantillaComponenteCMSRecursos"
+								style="cursor:pointer;"
+							    data-view-type="ListadoDeRecursos"
+								data-name="">
+								<span class="textoFaceta">@Html.GetText("DEVTOOLS","LISTADOSDERECURSOS")</span>
+								<span class="num-resultados numView"></span>
+							</a>
+						</li> 
+						@* Grupo de componentes *@
+						<li class="">
+							<a	
+								id="seleccionFacetaPlantillaComponenteCmsGrupoComponentes"
+								class="seleccionFacetaPlantillaComponenteCMS seleccionFacetaPlantillaComponenteCMSRecursos"
+								style="cursor:pointer;"
+							    data-view-type="GrupoDeComponentes"
+								data-name="">
+								<span class="textoFaceta">@Html.GetText("ADMINISTRACIONPAGINAS","GRUPODECOMPONENTES")</span>
+								<span class="num-resultados numView"></span>
+							</a>
+						</li> 
+					</ul>
+				</div>
+			</div>            
+        </div>            
+    </fieldset>
+</div>

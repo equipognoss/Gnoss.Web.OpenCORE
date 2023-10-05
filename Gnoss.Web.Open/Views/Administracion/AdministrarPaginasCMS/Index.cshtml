@@ -1,880 +1,327 @@
 ﻿@model AdministrarPaginasCMSViewModel
 
-@{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/semcms.css?v=" + Html.GetVersion());
 
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra la página principal para editar o administrar una página CMS.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    // Referencia al AdministrarPaginasCMSViewModel para saber los componentes a pintar
+    ViewBag.AdministrarPaginasCMSViewModel = Model;
+    // Layout a cargar para el editor de páginas CMS
+    Layout = "~/Views/Shared/Layout/_Layout_CMS_Builder_Admin.cshtml";
+    // Nº inicial de Filas del CMS
+    int contPaginas = 1;   
+
+    // Plantilla de Url para editar un componente desde CMS. Se utilizará y modificará en el fichero JS una vez se cree el componente 
+    string urlEditComponentTemplate = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/COMPONENT_KEY/load-modal";		
+    // Plantilla de Url para guardar un componente desde CMS. Se utilizará y modificará en el fichero JS una vez se cree el componente 
+    string urlSaveComponentTemplate = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/COMPONENT_KEY/save";
+    // Mostrar el wizard para selección de plantilla
+    bool showTemplateWizard = Model.Rows.Count == 0 ? true : false; 
+
 }
 
-<div class="content">
-    <h1></h1>
-    <div>
-        <form autocomplete="off">
-            <div id="panelAtributos" class="panelAtributos oculto">
-                <div class="wap">
-                    <div class="componente cp0401" id="panAtributos">
-                        <div class="titulo"><h2>Atributos del contenedor</h2></div>
-                        <div class="contenido"><input type="button" value="Nuevo" onclick="$(this).before(crearNuevaFila())"></div>
-                    </div>
-                </div>
-                <p class="cerrarPanelAmpliado"><a href="#cerrarPanelAmpliado">cerrar</a></p>
+<div class="col col-12">
+    <div id="panel-central-page-builder" class="panel-central">
+        @* Página de bienvenida -> Elección de plantilla*@                
+        @if (showTemplateWizard == true)
+        {
+            @Html.PartialView("_partial-views/_wizard-builder-cms", Model)            
+        }            
+        <input type="hidden" id="fechaModificacionPaginaCMS" value="@Model.FechaModificacion.ToString("yyyy/MM/dd HH:mm:ss")" />
+        <div class="builder-editor @(showTemplateWizard == true ? "d-none" : "") ">
+            @* Grid del  Nº de Columnas *@
+            <div class="builder-grid">
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">1</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">2</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">3</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">4</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">5</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">6</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">7</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">8</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">9</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">10</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">11</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
+                <span class="builder-grid-item">
+                    <span class="builder-grid-item-number">12</span>
+                    <span class="builder-grid-item-line"></span>
+                </span>
             </div>
-            <div id="phContenedorEdicionCMS">
-                <div id="panAcciones">
-                    <ul class="options tools" id="tools">
-                        @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || Html.GetComunidad().EntornoBloqueado)
-                        {
-                            <li>
-                                <a class="vistaPreviaCMS" style="pointer-events: none" id="hlVistaPrevia">Vista previa</a>
-                            </li>
-                            <li>
-                                <a class="guardarBorradorCMS" style="pointer-events: none" id="hlGuardarBorrador">Guardar borrador</a>
-                            </li>
-                            <li>
-                                <a class="descartarBorradorCMS" style="pointer-events: none" id="hlDescartarBorrador">Descartar borrador</a>
-                            </li>
-                            <li>
-                                <a class="publicarCMS" style="pointer-events: none" id="hlPublicar">Publicar</a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li>
-                                <a class="vistaPreviaCMS" id="hlVistaPrevia">Vista previa</a>
-                            </li>
-                            <li>
-                                <a class="guardarBorradorCMS" id="hlGuardarBorrador">Guardar borrador</a>
-                            </li>
-                            <li>
-                                <a class="descartarBorradorCMS" id="hlDescartarBorrador">Descartar borrador</a>
-                            </li>
-                            <li>
-                                <a class="publicarCMS" id="hlPublicar">Publicar</a>
-                            </li>
-                        }
-                        @*<li>
-                                <a class="vistaPreviaCMS" id="hlVistaPrevia">Vista previa</a>
-                            </li>
-                            <li>
-                                <a class="guardarBorradorCMS" id="hlGuardarBorrador">Guardar borrador</a>
-                            </li>
-                            <li>
-                                <a class="descartarBorradorCMS" id="hlDescartarBorrador">Descartar borrador</a>
-                            </li>
-                            <li>
-                                <a class="publicarCMS" id="hlPublicar">Publicar</a>
-                            </li>*@
-                    </ul>
-                </div>
-                <div class="bloquePrivacidad" id="panPrivacidad">
-                    <p>
-                        <input type="checkbox" id="chkMostrarSoloCuerpo" @Html.Raw(Model.MostrarSoloCuerpo ? "checked=\"checked\"" : "") name="chkMostrarSoloCuerpo">
-                        <span>Mostrar solo el cuerpo de la página</span>
-                    </p>
-                    <p style="float:right">
-                        @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || Html.GetComunidad().EntornoBloqueado)
-                        {
-                            <a href="#nuevaFila" class="addrow" rel="span11" style="pointer-events: none">Añadir nueva fila</a>
-                        }
-                        else
-                        {
-                            <a href="#nuevaFila" class="addrow" rel="span11">Añadir nueva fila</a>
-                        }
-                        @*<a href="#nuevaFila" class="addrow" rel="span11">Añadir nueva fila</a>*@
-                    </p>
-                </div>
-                <input type="text" id="txtHayCambios" class="oculto">
-                <div id="panAuxFila" style="display:none">
-                    <p class="helper">
-                        <span class="handleRow">:::</span>
-                        Selecciona <a rel="showCols" class="showPanels" href="#layoutools">columna/as</a> para esta fila. <a rel="showCols" class="showAttr" href="#atributos">Editar atributos</a>
-                        <span class="action eliminar deleterow">Eliminar</span>
-                        @*<span style="float: right; padding-right:10px" class="clearspan">Borrar contenido</span>*@
-                    </p>
-                </div>
-                <div id="panAuxColumna" style="display:none">
-                    <p class="helper">
-                        <span class="handleCol">:::</span>
-                        Selecciona un <a href="#layoutools" rel="showBlocks" class="showPanels">componente/as</a> para esta columna
-                        <span class="action eliminar deletecol">Eliminar</span>
-                    </p>
-                </div>
-                @if (Model.Rows.Count == 0)
-                {
-                    <div id="@Guid.NewGuid()" aux="" class="bloque row activa">
-                        <p class="helper">
-                            <span class="handleRow">:::</span>
-                            Selecciona <a rel="showCols" class="showPanels" href="#layoutools">columna/as</a> para esta fila. <a rel="showCols" class="showAttr" href="#atributos">Editar atributos</a>
-                            <span class="action eliminar deleterow">Eliminar</span>
-                            @*<span style="float: right; padding-right:10px" class="clearspan">Borrar contenido</span>*@
-                        </p>
-                    </div>
-                }
-                else
-                {
+            @* Área donde estarán cargados Filas, Columnas y Componentes *@
+            <ul id="cmsrow-list" class="js-cmsrows-list cmsrows-list no-list-style">                
+                @{                    
+                    @* Pintado de Filas *@
                     foreach (AdministrarPaginasCMSViewModel.RowCMSModel fila in Model.Rows)
                     {
-                        <div id="@fila.Key" aux="@fila.Attributes" class="bloque row @fila.Attributes">
-                            <p class="helper">
-                                <span class="handleRow">:::</span>
-                                Selecciona <a rel="showCols" class="showPanels" href="#layoutools">columna/as</a> para esta fila. <a rel="showCols" class="showAttr" href="#atributos">Editar atributos</a>
-                                <span class="action eliminar deleterow">Eliminar</span>
-                                @*<span style="float: right; padding-right:10px" class="clearspan">Borrar contenido</span>*@
-                            </p>
-                            @foreach (AdministrarPaginasCMSViewModel.RowCMSModel.ColCMSModel columna in fila.Cols)
-                            {
-                                <div id="@columna.Key" aux="@columna.Class" class="bloque col @columna.Class">
-                                    <p class="helper">
-                                        <span class="handleCol">:::</span>
-                                        Selecciona un <a href="#layoutools" rel="showBlocks" class="showPanels">componente/as</a> para esta columna
-                                        <span class="action eliminar deletecol">Eliminar</span>
-                                    </p>
-                                    @foreach (AdministrarPaginasCMSViewModel.RowCMSModel.ColCMSModel.ComponentCMSModel componente in columna.Components)
-                                    {
-                                        <div style="width:100%" class="componente block " id="@componente.Key">
-                                            <h3>@componente.Name</h3>
-                                            <p>Tipo:@Html.GetText("COMADMINCMS", "COMPONENTE_" + componente.Type)</p>
-                                            <div class="opcionesComponente">
-                                                <ul>
-                                                    <li><a href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-componente/@componente.Key">Editar</a></li>
-                                                    <li><a onclick="MostrarPanelConfirmacionEliminar(event, '¿Desea eliminar el componente?', $(this).closest('.block'))">Eliminar</a></li>
-                                                    @if (componente.Type.Equals("Menu"))
-                                                    {
-                                                        <li>
-                                                            <select idpropiedad="31" idcomponente="@componente.Key" idbloque="@columna.Key" class="propiedadComponente">
-                                                                <option value="-">Selecciona una opción</option>
+                        // Atributos string a construir a partir de fila.Attributes para su edición vía Modal
+                        string filaAtributosString = "";
+                        // Obtener los atributos de la fila
+                        string[] filaAtributosArray = fila.Attributes.Split("~~~").SkipLast(1).ToArray();
 
-                                                                @foreach (short option in componente.Options.Keys)
-                                                                {
-                                                                    string texto = Html.ObtenerTextoDeIdioma(componente.Options[option].Key);
-                                                                    <option value="@option" @Html.Raw(componente.Options[option].Value ? "selected" : "")>@texto</option>
-                                                                }
-                                                            </select>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    }
+                        foreach (var atributos in filaAtributosArray)
+                        {                            
+                            // Obtener cada uno de los atributos
+                            var attributosArray = atributos.Split("---");                                                       
+                            // Obtener el Nombre y el Valor del atributo
+                            filaAtributosString += $"{attributosArray[0]}|{attributosArray[1]},";                              
+                        }
+                        @* Fila *@
+                        <li id="@fila.Key" class="cmsrow js-cmsrow" data-aux="@fila.Attributes" data-row-attributes="@(!string.IsNullOrEmpty(filaAtributosString) ? @filaAtributosString.Remove(filaAtributosString.Length - 1): null)">
+                            <div class="cmsrow-wrap">
+                                <div class="cmsrow-header">
+                                    @* Nombre de la fila *@
+                                    <div class="name">
+                                        @Html.GetText("DEVTOOLS","FILA")
+                                        <span class="number">@contPaginas</span>
+                                        <span class="attributes-display">@(!string.IsNullOrEmpty(filaAtributosString) ? filaAtributosString.Remove(filaAtributosString.Length - 1): null)</span>
+                                    </div>
+                                    @* Acciones de la fila *@
+                                    <div class="js-cmsrow-actions cmsrow-actions">
+                                        <ul class="no-list-style">
+                                            @* Copiar *@
+                                            <li>
+                                                <a class="action-clone round-icon-button js-action-clone btnCopyRow">
+                                                    <span class="material-icons">content_copy</span>
+                                                </a>
+                                            </li>
+                                            @* Editar *@
+                                            <li>
+                                                <a class="action-edit round-icon-button js-action-edit-row btnEditRow">
+                                                    <span class="material-icons">edit</span>
+                                                </a>
+                                            </li>
+                                            @* Borrar *@ 
+                                            <li>
+                                                <a class="action-delete round-icon-button js-action-delete btnDeleteRow">
+                                                    <span class="material-icons">delete</span>
+                                                </a>
+                                            </li>
+                                            @*Arrastrar *@ 
+                                            <li>
+                                                <a class="action-handle round-icon-button js-action-handle-row btnDragRow">
+                                                    <span class="material-icons">drag_handle</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
-                            }
-                        </div>
+                                @* Pintado de Columnas *@                               
+                                @* Sección de columnas dentro de la fila *@
+                                <div class="cmsrow-content">
+                                    @* Columnas *@
+                                    <ul class="columns-list no-list-style">
+                                        @* Información de la Columna *@
+                                        @foreach (AdministrarPaginasCMSViewModel.RowCMSModel.ColCMSModel columna in fila.Cols)
+                                        {
+                                            // Tupla con el tamaño de la columna (Double) y span correspondiente                                            
+                                            Tuple<string, string> columnGridValueTuple = Html.GetValuesForGridColumnInCMSPage(@columna.Class);
+                                            
+                                            <li id="@columna.Key"
+                                                class="cmscolumn js-cmscolumn"
+                                                data-columnclass="@columna.Class"
+                                                data-percent="@columnGridValueTuple.Item1"
+                                                data-spanclass="@columnGridValueTuple.Item2"
+                                                style="width: calc(@(columnGridValueTuple.Item1)% - 16px);">
+                                                <div class="cmscolumn-wrap">
+                                                    <div class="cmscolumn-header">
+                                                        @*Acciones de la columna *@
+                                                        <div class="cmscolumn-actions js-cmscolumn-actions">
+                                                            <ul class="no-list-style">
+                                                                <li>
+                                                                    <a class="action-delete round-icon-button js-action-delete-column">
+                                                                        <span class="material-icons">delete</span>
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    @* Sección de componentes CMS dentro de la columna *@
+                                                    <div class="cmscolumn-content">
+                                                        @* Componentes *@
+                                                        <ul class="components-list no-list-style">
+                                                            @foreach (AdministrarPaginasCMSViewModel.RowCMSModel.ColCMSModel.ComponentCMSModel componente in columna.Components)
+                                                            {     
+                                                                
+	                                                            @* Enlace para cargar modal y editar el componente *@
+	                                                            string urlEditComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/"  + componente.Key + "/load-modal";		
+	                                                            @* Enlace para guardar el componente editado *@
+	                                                            string urlSaveComponent = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + componente.Key + "/save";	                                                                
+
+                                                                <li class="cmscomponent" id="@componente.Key" data-idcomponent="@componente.Key" draggable="false">
+                                                                    <div class="cmscomponent-wrap">
+                                                                        <div class="cmscomponent-header">
+                                                                            @* Nombre del componente *@
+                                                                            <div class="name">
+                                                                                <span class="component-name">@componente.Name</span>
+                                                                                <span class="type">@componente.Type</span>
+                                                                                @* Identificador del componente *@
+                                                                                <div class="cmscomponent-id-wrap">
+                                                                                    <span class="cmscomponent-id">@componente.Key</span>
+                                                                                    <span class="js-copy-component-id material-icons">content_copy</span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            @*Acciones dentro del componente *@
+                                                                            <div class="cmscomponent-actions js-cmscomponent-actions dropdown">
+                                                                                <a href="#" class="dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                                    <span class="material-icons">more_vert</span>
+                                                                                </a>
+                                                                                @* Listado de acciones de Editar componente *@
+                                                                                <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
+                                                                                    <ul class="no-list-style">
+                                                                                        @* Acción de Editar*@
+                                                                                        <li>
+                                                                                            <a class="item-dropdown js-edit-component btnEditComponentFromCMSBuilder" 
+                                                                                               data-target="#modal-container"
+                                                                                               data-urleditcomponent="@urlEditComponentItem"
+                                                                                               data-urlsave="@urlSaveComponent"
+                                                                                               data-toggle="modal">
+                                                                                                <span class="material-icons">create</span>
+                                                                                                <span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+                                                                                            </a>
+                                                                                        </li>
+                                                                                        @* Acción de Eliminar componente*@
+                                                                                        <li>
+                                                                                            <a class="item-dropdown js-delete-component">
+                                                                                                <span class="material-icons">delete</span>
+                                                                                                <span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+                                                                                            </a>
+                                                                                        </li>
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        @* Selección activa del componente tipo Menú *@
+                                                                        @if (componente.Type.Equals("Menu"))
+                                                                        {                     
+                                                                            <hr />
+								                                            @* Opción activa del menú *@
+								                                            <div class="form-group mt-4 mb-4 optionMenuActive">
+									                                            <label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONAUNAOPCIONDELMENU")</label>
+									                                            @* Select de privacidad de la página *@
+									                                            <select name="tabOptionMenuActive"
+                                                                                        data-idcomponente="@componente.Key" 
+                                                                                        data-idbloque="@columna.Key"
+                                                                                        data-idpropiedad="31"
+											                                            class="propiedadComponente cmbOptionMenuActive js-select2"
+											                                            tabindex="0"
+											                                            aria-hidden="false">
+                                                                                    @foreach (short option in componente.Options.Keys)
+                                                                                    {
+                                                                                        string texto = Html.ObtenerTextoDeIdioma(componente.Options[option].Key);
+                                                                                        <option value="@option" @Html.Raw(componente.Options[option].Value ? "selected" : "")>@texto</option>
+                                                                                    }                                                                                        
+									                                            </select>
+									                                            <small class="form-text text-muted">@Html.GetText("DEVTOOLS","SELECCIONARLAOPCIONDELMENUACTIVAPARALAPAGINA")</small>
+								                                            </div>
+                                                                             @*
+                                                                            <select idpropiedad="31" idcomponente="@componente.Key" idbloque="@columna.Key" class="propiedadComponente">
+                                                                                <option value="-">Selecciona una opción</option>
+
+                                                                                @foreach (short option in componente.Options.Keys)
+                                                                                {
+                                                                                    string texto = Html.ObtenerTextoDeIdioma(componente.Options[option].Key);
+                                                                                    <option value="@option" @Html.Raw(componente.Options[option].Value ? "selected" : "")>@texto</option>
+                                                                                }
+                                                                            </select>    
+                                                                            *@
+                                                                        }
+                                                                    </div>
+                                                                </li>
+                                                            }
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </li>                                     
+                                        }                
+                                    </ul>
+                                </div>                                
+                            </div>
+                        </li>
+                        contPaginas += 1;
                     }
-                }
-                <section id="layoutools" class="layoutools">
-                    <div class="wrap wrap00 spaceCols">
-                        <p class="title">Columnas</p>
-                        <ul class="blocks">
-                            <li><a href="#nuevoBloque" class="addcol" rel="span11">+ nuevo 1/1</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span12">+ nuevo 1/2</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span13">+ nuevo 1/3</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span14">+ nuevo 1/4</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span16">+ nuevo 1/6</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span23">+ nuevo 2/3</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span34">+ nuevo 3/4</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span38">+ nuevo 3/8</a></li>
-                            <li><a href="#nuevoBloque" class="addcol" rel="span58">+ nuevo 5/8</a></li>
-                        </ul>
-                    </div>
-                    <div class="wrap wrap01 spaceBlocks">
-                        <p class="title">Componentes</p>
-                        <ul class="blocks">
-                            <li><a tipo="0" class="addblock" href="#nuevoComponente">HTML Libre</a></li>
-                            <li><a tipo="1" class="addblock" href="#nuevoComponente">Destacado</a></li>
-                            <li><a tipo="2" class="addblock" href="#nuevoComponente">Listado dinámico</a></li>
-                            <li><a tipo="3" class="addblock" href="#nuevoComponente">Listado estático</a></li>
-                            <li><a tipo="4" class="addblock" href="#nuevoComponente">Actividad reciente</a></li>
-                            <li><a tipo="5" class="addblock" href="#nuevoComponente">Grupo de componentes</a></li>
-                            <li><a tipo="6" class="addblock" href="#nuevoComponente">Tesauro</a></li>
-                            <li><a tipo="8" class="addblock" href="#nuevoComponente">Datos de comunidad</a></li>
-                            <li><a tipo="9" class="addblock" href="#nuevoComponente">Personas recomendadas</a></li>
-                            <li><a tipo="10" class="addblock" href="#nuevoComponente">Caja buscador</a></li>
-                            <li><a tipo="13" class="addblock" href="#nuevoComponente">Faceta</a></li>
-                            <li><a tipo="14" class="addblock" href="#nuevoComponente">Listado de usuarios</a></li>
-                            <li><a tipo="15" class="addblock" href="#nuevoComponente">Listado de proyectos</a></li>
-                            <li><a tipo="16" class="addblock" href="#nuevoComponente">Resumen de perfil</a></li>
-                            <li><a tipo="17" class="addblock" href="#nuevoComponente">Mas visitados</a></li>
-                            <li><a tipo="18" class="addblock" href="#nuevoComponente">Envío Correo</a></li>
-                            <li><a tipo="20" class="addblock" href="#nuevoComponente">Menú</a></li>
-                            <li><a tipo="21" class="addblock" href="#nuevoComponente">Buscador</a></li>
-                            <li><a tipo="23" class="addblock" href="#nuevoComponente">Últimos recursos visitados</a></li>
+                }           
+            </ul>
 
-                            @foreach (TipoComponenteCMS tipo in Model.ListaComponentesPrivados)
-                            {
-                                <li><a tipo="@((short)tipo)" class="addblock" href="#nuevoComponente">@tipo</a></li>
-                            }
-
-                        </ul>
-                    </div>
-                    <div class="wrap spaceClose">
-                        <p class="closePanel"><a href="#closePanel">cerrar</a></p>
-                    </div>
-                </section>
-                <div style="display:none;z-index:2000;" class="confirmar" id="divPreguntaConfirmacionEventos"><div class="pregunta"><span id="lblPregunta_ConfirmacionEliminar"></span><input type="button" onclick="" id="lbSi_ConfirmacionEliminar" value="Sí"><input type="button" onclick="document.getElementById('divPreguntaConfirmacionEventos').style.display = 'none';document.getElementById('mascaraBlanca').style.display='none';" value="No"></div></div>
+            @* Botón para añadir una nueva Fila *@
+            <div class="botonera mt-3">
+                <a id="btnAddRow" href="javascript: void(0);" class="btn btn-primary btn-round uppercase">
+                    <span class="material-icons">add</span>
+                    Fila
+                </a>
             </div>
-
-        </form>
+        </div>
     </div>
 </div>
 
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
-@*<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>*@
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript">
 
-    function HayCambios() {
-        $('#txtHayCambios').val("true");
-    }
-
-    function NoHayCambios() {
-        $('#txtHayCambios').val("false");
-    }
-
-    function ComprobarCambios() {
-        if ($('#txtHayCambios').val() == 'true') {
-            return (form.perderdatosbio);
-        }
-    }
-
-    function CrearGUID() {
-        return guidGenerator().toLowerCase();
-    }
-
-    var OperativaOrdenacion = {
-        init: function () {
-            this.config();
-            this.engancharComportamiento();
-        },
-        config: function () {
-            this.filas = $('#phContenedorEdicionCMS');
-            this.columnas = $('.bloque.row');
-            return;
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            that.filas.sortable({
-                handle: 'span.handleRow',
-                items: '.row',
-                cancel: ".ui-state-disabled",
-                stop: function (event, ui) {
-                    HayCambios();
-                }
-            });
-            that.columnas.sortable({
-                handle: 'span.handleCol',
-                items: '.col',
-                cancel: ".ui-state-disabled",
-                stop: function (event, ui) {
-                    var columnas = $('.col', $(this));
-                    columnas.removeClass('break').last().addClass('break');
-                    columnas.each(function () {
-                        var columna = $(this);
-                        var clases = columna.attr('class')
-                        columna.attr('aux', clases.replace('bloque', '').replace('col', '').trim());
-                    });
-                    HayCambios();
-                }
-            });
-            return;
-        }
-    }
-
-    var OperativaAcciones = {
-        init: function () {
-            this.config();
-            this.engancharComportamiento();
-        },
-        config: function (panelID) {
-            this.urlPagina = document.location.href;
-            return;
-        },
-        engancharComportamiento: function () {
-            $('#tools .guardarBorradorCMS').bind('click', function () {
-                guardar('guardado');
-            });
-            $('#tools .publicarCMS').bind('click', function () {
-                guardar('publicar');
-            });
-            $('#tools .vistaPreviaCMS').bind('click', function () {
-                guardar('vistaPrevia');
-            });
-            $('#tools .descartarBorradorCMS').bind('click', function () {
-                MostrarUpdateProgress();
-                NoHayCambios();
-                DescartarBorrador();
-            });
-            $('.addrow').bind('click', function (event) {
-                event.preventDefault();
-                var htmlFilaNueva = $('#panAuxFila').html();
-                var div = $('<div>').addClass('bloque row activa').html(htmlFilaNueva);
-                div.attr('aux', '');
-                var newGuid = CrearGUID();
-                div.attr('id', newGuid);
-                desactivarPaneles();
-                HayCambios();
-                $('#phContenedorEdicionCMS').append(div);
-            });
-
-            page = $('#page');
-            tools = page.find('#layoutools');
-            row = page.find('.row').first().addClass('activa');
-
-            page.on('click', '.showPanels', function (evento) {
-                item = $(evento.target);
-                evento.preventDefault();
-                var col = item.parents('.col');
-                col.trigger('click');
-                if (col.size() <= 0) {
-                    var row = item.parents('.row');
-                    row.trigger('click');
-                }
-                var componenteActiva = item.parents('.activa').first();
-                var item = $(evento.target);
-                var href = item.attr('href');
-                var rel = item.attr('rel');
-                tools.removeClass('showCols');
-                tools.removeClass('showBlocks');
-                tools.addClass(rel);
-                componenteActiva.append(tools);
-                $('span.ko', tools).remove();
-                tools.show();
-            });
-            page.on('click', '.showAttr', function (evento) {
-                var editar = $(this);
-                var posicion = editar.position();
-                var left = posicion.left;
-                var top = posicion.top;
-                evento.preventDefault();
-                $('.panelAtributos').attr("style", "left:" + left + "px;top:" + top + "px");
-                $('.panelAtributos').show();
-
-                var html = "";
-                var valorAux = editar.parent().parent().attr("aux");
-                for (i = 0; i < valorAux.split('~~~').length; i++) {
-                    if (valorAux.split('~~~')[i].split('---').length == 2) {
-                        var clave = valorAux.split('~~~')[i].split('---')[0];
-                        var valor = valorAux.split('~~~')[i].split('---')[1];
-                        if (clave != "" && valor != "") {
-
-                            html += "<p class=\"atributo\"><label class=\"enLinea\">Atributo</label><input type=\"text\" value=\"" + clave + "\" class=\"text medium enLinea clave\">";
-                            html += "<label class=\"enLinea\">Valor</label><input type=\"text\" value=\"" + valor + "\" class=\"text medium enLinea valor\">";
-                            html += "<input type=\"button\" onclick=\"$(this).parent().remove()\" value=\"Eliminar\" class=\"enLinea\"></p>";
-                        }
-                    } else {
-                        var clave = "class";
-                        var valor = valorAux.split('~~~')[i].split('---')[0];
-
-                        if (valor != "") {
-
-                            html += "<p class=\"atributo\"><label class=\"enLinea\">Atributo</label><input type=\"text\" value=\"" + clave + "\" class=\"text medium enLinea clave\">";
-                            html += "<label class=\"enLinea\">Valor</label><input type=\"text\" value=\"" + valor + "\" class=\"text medium enLinea valor\">";
-                            html += "<input type=\"button\" onclick=\"$(this).parent().remove()\" value=\"Eliminar\" class=\"enLinea\"></p>";
-                        }
-                    }
-                }
-                $('.panelAtributos .contenido').html(html);
-
-                var boton = "<input type=\"button\" onclick=\"$(this).before(crearNuevaFila())\" value=\"Nuevo\">";
-
-                $('.panelAtributos .contenido').append(boton);
-
-                var cerrar = $('.panelAtributos .cerrarPanelAmpliado');
-
-                cerrar.unbind('click');
-                cerrar.bind('click', function (evento) {
-                    evento.preventDefault();
-
-                    var valorAtributos = "";
-                    $('.panelAtributos .contenido .atributo').each(function () {
-                        var item = $(this);
-                        var clave = item.find('.clave').val();
-                        var valor = item.find('.valor').val();
-                        if (clave != "" && valor != "") {
-                            valorAtributos += clave + "---" + valor + "~~~";
-                        }
-                    });
-
-                    editar.parent().parent().attr("aux", valorAtributos);
-                    $('.panelAtributos').hide();
-                })
-            });
-            page.on('click', '.row', function (evento) {
-                evento.stopPropagation();
-                desactivarPaneles();
-                filas.activar($(this));
-            });
-            page.on('click', '.col', function (evento) {
-                evento.stopPropagation();
-                desactivarPaneles();
-                columnas.activar($(this));
-            });
-            page.on('click', '.block', function (evento) {
-                evento.stopPropagation();
-                desactivarPaneles();
-                bloques.activar($(this));
-            });
-            page.on('click', '.closePanel a', function (evento) {
-                evento.preventDefault();
-                tools.hide();
-            });
-            page.on('click', '.deletecol', function (evento) {
-                evento.preventDefault();
-                var item = $(this);
-                var columna = item.closest('.col');
-
-                MostrarPanelConfirmacionEliminar(evento, '¿Desea eliminar la columna?', columna)
-            });
-            page.on('click', '.deleterow', function (evento) {
-                evento.preventDefault();
-                var item = $(this);
-
-                var fila = item.closest('.row');
-
-                MostrarPanelConfirmacionEliminar(evento, '¿Desea eliminar la columna?', fila)
-            });
-            page.on('click', '.layoutools .addcol', function (evento) {
-                evento.preventDefault();
-                var fila = $(this).closest('.row');
-
-                $('span.ko', $(this).parent()).remove();
-
-                var rel = $(this).attr('rel');
-                if (comprobar.init(fila, eval('control.' + rel))) {
-                    var htmlColumnaNueva = $('#panAuxColumna').html();
-                    var css = isBreak ? ' break' : '';
-                    var div = $('<div>').addClass('bloque col ' + rel + css).html(htmlColumnaNueva);
-                    div.attr('aux', rel + css);
-                    div.attr('id', CrearGUID());
-                    HayCambios();
-                    fila.append(div);
-                }
-                else {
-                    $(this).after("<span class='ko'>No hay espacio suficiente en la fila para añadir esta columna</span>");
-                }
-            });
-            page.on('click', '.layoutools .addblock', function (evento) {
-                evento.preventDefault();
-                var fila = $(this).closest('.row');
-                var columna = $(this).closest('.col');
-                var item = $(this);
-                var rel = item.attr('rel');
-                var div = $('<div>').addClass('componente block ' + rel);
-                div.attr('style', 'width:100%');
-                var tipo = item.attr('tipo');
-                div.append(listadoOpcionesComponente(tipo, columna.attr('id')))
-                HayCambios();
-                columna.append(div);
-                tools.hide();
-            })
-        }
-    }
-
-    function ObtenerDatosPost() {
-        var conenedorBloques = $('#content #phContenedorEdicionCMS');
-        var estructura = "";
-        conenedorBloques.find('.bloque.row').each(function () {
-            var item = $(this);
-            estructura += "|" + devolverElemento(item);
-        });
-
-        var dataPost = {
-            Estructura: estructura,
-            OpcionesPropiedades: opcionesPropiedadesComponente(),
-            MostrarSoloCuerpo: $('#chkMostrarSoloCuerpo').is(':checked')
-        }
-
-        return dataPost;
-    }
-
-    function guardar(accion, tipoComponente, idContenedor) {
-        MostrarUpdateProgress();
-
-        var dataPost = ObtenerDatosPost();
-        $('.ok.general').remove();
-        $('.error').remove();
-        var metodo = "save";
-        if (accion == "guardado") {
-            metodo = "save";
-        } else if (accion == "publicar") {
-            metodo = "publish";
-        } else if (accion == "vistaPrevia") {
-            metodo = "pre-view";
-        } else if (accion == "crearComponente") {
-            metodo = "create-component";
-            dataPost.TipoComponente = tipoComponente;
-            dataPost.IDContenedor = idContenedor;
-        } else if (accion == "seleccionarComponente") {
-            metodo = "select-component";
-            dataPost.TipoComponente = tipoComponente;
-            dataPost.IDContenedor = idContenedor;
-        }
-
-        NoHayCambios();
-
-        GnossPeticionAjax(
-            '@Html.GetUrlPagina()/' + metodo,
-            dataPost,
-            true
-       ).done(function (data) {
-           mostrarGuardadoOKPaginas();
-       }).fail(function (data) {
-           if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-               console.log("ERROR =>" + data);
-           }
-           else {
-               mostrarErrorGuardadoFallo(data);
-           }
-       }).always(function () {
-           OcultarUpdateProgress();
-       });
-    }
-
-    function mostrarGuardadoOKPaginas() {
-        $('div.bloquePrivacidad').before('<div class="ok general">OK</div>');
-    }
-
-    function mostrarErrorGuardadoFallo(data) {
-        var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
-
-        if (entornoBloqueado == "True") {
-            $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
-        }
-        else {
-            $('div.bloquePrivacidad').before('<div class="error general">' + data + '</div>');
-        }
-    }
-
-    function DescartarBorrador() {
-        MostrarUpdateProgress();
-
-        GnossPeticionAjax(
-            '@Html.GetUrlPagina()/discard',
-            null,
-            true
-       ).done(function (data) {
-
-       }).fail(function (data) {
-           console.log("ERROR =>" + data);
-       }).always(function () {
-           OcultarUpdateProgress();
-       });
-    }
-
-    function devolverElemento(elemento) {
-        if (elemento.attr('class').indexOf("helper") != -1 || elemento.attr('id').indexOf("layoutools") != -1) {
-            return '';
-        }
-
-        var bloque = false;
-        if (elemento.attr('class').indexOf("bloque") != -1) {
-            bloque = true;
-        }
-
-        var inicio = "componente_";
-        if (bloque) {
-            inicio = "bloque_" + replaceAll(elemento.attr('aux'), "_", "@("@")#*") + "_"
-        }
-
-        var strElemento = inicio + elemento.attr('id') + ":[";
-        var i = 0;
-        elemento.children().each(function () {
-            var item = $(this);
-            if (item.attr('class').indexOf("helper") == -1 && item.attr('class').indexOf("layoutools") == -1) {
-                if (i > 0) {
-                    strElemento += ",";
-                }
-                if (item.find('.bloque').size() > 0 || item.find('.componente').size() > 0) {
-                    strElemento += devolverElemento(item);
-                } else {
-                    var bloqueIn = false;
-                    if (item.attr('class').indexOf("bloque") != -1) {
-                        bloqueIn = true;
-                    }
-
-                    var inicio2 = "componente_";
-                    if (bloqueIn) {
-                        inicio2 = "bloque_" + item.attr('aux') + "_";
-                    }
-                    strElemento += inicio2 + item.attr('id') + ":[]";
-                }
-                i++;
-            }
-        });
-        strElemento += "]";
-        return strElemento;
-    }
-
-    function opcionesPropiedadesComponente() {
-        strOpcionComponente = "";
-        $('.propiedadComponente').each(function () {
-            var item = $(this);
-            var idBloque = item.attr('idBloque');
-            var idComponente = item.attr('idComponente');
-            var idPropiedad = item.attr('idPropiedad');
-            var opcion = item.val();
-            if (opcion != "-") {
-                strOpcionComponente += idBloque + "_" + idComponente + "_" + idPropiedad + "_" + opcion + "|";
-            }
-        });
-        return strOpcionComponente;
-    }
-
-    var listadoOpcionesComponente = function (tipo, id) {
-        var html = '<div class="opcionesComponente">';
-        html += '<ul>';
-        html += '<li><a onclick="guardar(\'crearComponente\', \'' + tipo + '\',  \'' + id + '\')" target="_blank">Nuevo</a></li>';
-        html += '<li><a onclick="guardar(\'seleccionarComponente\', \'' + tipo + '\',  \'' + id + '\')" target="_blank">Seleccionar</a></li>';
-        html += '<li><a onclick="MostrarPanelConfirmacionEliminar(event, \'¿Desea eliminar el componente?\', $(this).closest(\'.block\'))" target="_blank">Eliminar</a></li>';
-        html += '</ul>';
-        html += '</div>';
-        return html;
-    }
-
-    function eliminar(elemento) {
-        HayCambios();
-        elemento.remove();
-    }
-
-    var page, row, col, block;
-    var anchoMaximo = 910;
-    var margen = 18;
-    var anchoInicial = 0;
-    var isBreak = false;
-    var control = {
-        'span11': 910,
-        'span12': 445,
-        'span13': 291,
-        'span14': 214,
-        'span16': 136,
-        'span23': 600,
-        'span34': 678,
-        'span38': 330,
-        'span58': 562
-    }
-
-    function desactivarPaneles() {
-        filas.desactivarTodas();
-        columnas.desactivarTodas();
-        bloques.desactivarTodos();
-    }
-
-    var filas = {
-        desactivarTodas: function () {
-            var items = page.find('.row');
-            items.each(function (indice) {
-                var item = $(this);
-                item.removeClass('activa');
-            });
-        },
-        activar: function (fila) {
-            fila.addClass('activa');
-        }
-    }
-    var columnas = {
-        desactivarTodas: function () {
-            var items = page.find('.col');
-            items.each(function (indice) {
-                var item = $(this);
-                item.removeClass('activa');
-            });
-        },
-        activar: function (columna) {
-            filas.activar(columna.closest('.row'));
-            columna.addClass('activa');
-        }
-    }
-    var bloques = {
-        desactivarTodos: function () {
-            var items = page.find('.block');
-            items.each(function (indice) {
-                var item = $(this);
-                item.removeClass('activo');
-            });
-        },
-        activar: function (bloque) {
-            filas.activar(bloque.closest('.row'));
-            columnas.activar(bloque.closest('.col'));
-            bloque.addClass('activo');
-        }
-    }
-    var comprobar = {
-        init: function (fila, anchoColumna) {
-            var anchoUsado = 0;
-            $('.col', fila).each(function () {
-                var aux = $(this).attr('aux').split(' ')[0].trim();
-                var anchoCol = eval('control.' + aux);
-                anchoUsado += anchoCol;
-                anchoUsado += margen;
-            });
-
-            if (anchoMaximo - anchoUsado >= anchoColumna) {
-                if ((anchoMaximo - (anchoUsado + anchoColumna)) <= margen) {
-                    isBreak = true;
-                } else {
-                    isBreak = false;
-                }
-                return true;
-            }
-            return false;
-        }
-    }
-
-    function crearNuevaFila() {
-        html = "";
-        html += "<p class=\"atributo\"><label class=\"enLinea\">Atributo</label><input type=\"text\" value=\"\" class=\"text medium enLinea clave\">";
-        html += "<label class=\"enLinea\">Valor</label><input type=\"text\" value=\"\" class=\"text medium enLinea valor\">";
-        html += "<input type=\"button\" onclick=\"$(this).parent().remove()\" value=\"Eliminar\" class=\"enLinea\"></p>";
-        return html;
-    }
-
-    function MostrarPanelConfirmacionEliminar(evento, pPregunta, pElementoEliminar) {
-        document.getElementById('lblPregunta_ConfirmacionEliminar').innerHTML = pPregunta;
-        $("#lbSi_ConfirmacionEliminar").unbind('click');
-
-        $("#lbSi_ConfirmacionEliminar").click(function () {
-            eliminar(pElementoEliminar);
-            eval("document.getElementById('divPreguntaConfirmacionEventos').style.display='none';document.getElementById('mascaraBlanca').style.display='none';");
-        });
-
-        CalcularTopPanelEliminarYMostrar(evento, 'divPreguntaConfirmacionEventos');
-    }
-
-    function CalcularTopPanelEliminarYMostrar(evento, panelID) {
-        document.getElementById('mascaraBlanca').style.display = 'block';
-        if (!evento.target) {
-            var hijo = evento.srcElement;
-        }
-        else {
-            var hijo = evento.target;
-        }
-        if (hijo.nodeName == 'IMG') {
-            hijo = $(hijo).parent();
-        }
-        var $padre = $(hijo).parent();
-
-        $(document.getElementById(panelID)).css({
-            top: ($padre.offset().top + $padre.height() - $(document.getElementById(panelID)).height() / 2) - 200 + 'px',
-            display: ''
-        });
-        return false;
-    }
-
-    $(document).ready(function () {
-        OperativaOrdenacion.init();
-        OperativaAcciones.init();
-    });
-
-</script>
-
-<style>
-    div.componente.block h3,
-    div.componente.block p {
-        padding: 5px 10px;
-    }
-
-    div.bloque.row {
-        /*width: 100%;*/
-        width: 913px;
-        border: 1px solid #ddd;
-    }
-
-        div.bloque.row div.bloque.col.span11 {
-            /*width: 100%;*/
-            width: 910px;
-        }
-
-        div.bloque.row div.bloque.col.span12 {
-            /*width: 48%;*/
-            width: 445px;
-        }
-
-        div.bloque.row div.bloque.col.span13 {
-            /*width: 31%;*/
-            width: 291px;
-        }
-
-        div.bloque.row div.bloque.col.span14 {
-            /*width: 23%;*/
-            width: 214px;
-        }
-
-        div.bloque.row div.bloque.col.span16 {
-            /*width: 14.5%;*/
-            width: 136px;
-        }
-
-        div.bloque.row div.bloque.col.span23 {
-            /*width: 65%;*/
-            width: 600px;
-        }
-
-        div.bloque.row div.bloque.col.span34 {
-            /*width: 74%;*/
-            width: 678px;
-        }
-
-        div.bloque.row div.bloque.col.span38 {
-            /*width: 36%;*/
-            width: 330px;
-        }
-
-        div.bloque.row div.bloque.col.span58 {
-            /*width: 61%;*/
-            width: 562px;
-        }
-
-        div.bloque.row div.bloque.col .helper {
-            height: 20px;
-        }
-
-    .helper span.handleCol,
-    .helper span.handleRow {
-        cursor: move;
-    }
-
-    div.bloque.row div.bloque.col {
-        min-height: 180px;
-    }
-
-    #panAcciones .tools {
-        float: right;
-    }
-
-    .bloque.col:last-of-type,
-    .bloque.col.ui-sortable-placeholder {
-        margin-right: 0;
-    }
-
-    #layoutools .blocks .ko {
-        color: red;
-        padding-left: 10px;
-    }
-
-    .panelAtributos {
-        background: white;
-        position: absolute;
-        z-index: 9980;
-        top: 2%;
-        left: 34%;
-        width: 620px;
-        border: 1px solid #ddd;
-        border-bottom-width: 2px;
-        padding: 10px;
-        clear: both;
-    }
-
-        .panelAtributos input[type="text"] {
-            width: 150px;
-            margin: 0 5px;
-        }
-
-        .panelAtributos .cerrarPanelAmpliado {
-            float: right;
-            position: absolute;
-            right: 10px;
-            text-align: right;
-            top: 10px;
-        }
-</style>
+@* Modal de pregunta por restauruación de página CMS *@
+@Html.PartialView("_modal-views/_show-cms-backup-restore")
+
+
+@* Carga de operativa *@
+@section operativaScript{    
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/estructura.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/estructura_cms-builder.js?v=@Html.GetVersion()"></script>    
+    
+    <script type="text/javascript">
+           
+        (function ($) {
+
+            // Url para guardar y editar un componente (Nuevo componente creado a través de modal)
+            const pParams = {
+                urlEditComponentTemplate: "@urlEditComponentTemplate",
+                urlSaveComponentTemplate: "@urlSaveComponentTemplate",
+                pageId: "@Model.Key",
+            }  
+
+            @* Operativa funcionamiento de CMS Builder de creación de páginas *@
+            operativaGestionCMSBuilder.init(pParams);            
+            @* Operativa funcionamiento de Componentes CMS *@
+            operativaGestionComponentsCMS.init();
+        })();
+    </script>
+}

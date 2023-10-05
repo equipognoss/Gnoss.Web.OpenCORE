@@ -5,6 +5,7 @@ using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.RelatedVirtuoso;
 using Es.Riam.Gnoss.FirstDataLoad;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
@@ -112,6 +113,7 @@ namespace Gnoss.Web
             services.AddScoped(typeof(UtilServicios));
             services.AddScoped(typeof(RouteConfig));
             services.AddScoped(typeof(BDVirtualPath));
+            services.AddScoped(typeof(RelatedVirtuosoCL));
             services.AddScoped<IUtilServicioIntegracionContinua, UtilServicioIntegracionContinuaOpen>();
             services.AddScoped<IServicesUtilVirtuosoAndReplication, ServicesVirtuosoAndBidirectionalReplicationOpen>();
             services.AddScoped<IMassiveOntologyToClass, MassiveOntologyToClassOpen>();

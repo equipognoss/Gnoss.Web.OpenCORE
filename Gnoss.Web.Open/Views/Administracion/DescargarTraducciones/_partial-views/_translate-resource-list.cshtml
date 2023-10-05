@@ -1,0 +1,38 @@
+﻿@model DescargarTraduccionesViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista contenedora de los items de tipo "Resource" para mostrar la posibilidad de descargarlos.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+List<Dictionary<string, string>> resourceList = new List<Dictionary<string, string>>();
+}
+
+@foreach (string ontologiaPrincipal in Model.mListaOntologiasPrincipales.Keys)
+{
+    string nameForCheckbox = $"ontologiaPrincipal_{ontologiaPrincipal}";
+    string name = Model.mListaOntologiasPrincipales[ontologiaPrincipal];
+
+    // Crear un diccionario y agregar algunos elementos
+    Dictionary<string, string> ontologyItem= new Dictionary<string, string>();
+    ontologyItem.Add("name", name);
+    ontologyItem.Add("nameForCheckbox", nameForCheckbox);
+    // Añadir la ontología a la lista
+    resourceList.Add(ontologyItem);
+}
+
+
+<ul id="id-added-descarga-resource-list"
+    data-value="resource"
+    class="js-community-descarga-resource-list component-list no-list-style component-translate-list d-none">
+
+    @* Contenedor de las descargas de tipo Resource *@
+    @foreach (Dictionary<string, string> resourceItem in resourceList)
+    {
+        @Html.PartialView("_partial-views/_translate-resource-list-item", resourceItem)
+    }
+</ul>

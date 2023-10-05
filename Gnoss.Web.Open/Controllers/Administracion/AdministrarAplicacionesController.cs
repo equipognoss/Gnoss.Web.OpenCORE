@@ -28,6 +28,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -56,86 +57,92 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
-            //Obtenemos de la bd las aplicaciones registradas para este usuario
-            AdministrarAplicacionesViewModel mAplicaciones = mOAuthCN.ObtenerAplicacionesPorUsuarioIDyProyectoID(mControladorBase.UsuarioActual.UsuarioID, ProyectoSeleccionado.Clave);
-            ParametroAplicacionGBD parmetroaAppGBD = new ParametroAplicacionGBD(mLoggingService, mEntityContext, mConfigService);
-            mAplicaciones.URL = parmetroaAppGBD.ObtenerURLAPIV3();
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion oauth-configuracion max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OAuth;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "OAUTH");
 
-            return View(mAplicaciones);
+            OAuthModel mOAuthModel = ObtenerOAuth();
+
+            return View(mOAuthModel);
         }
 
-        /// <summary>
-        /// Crea y descarga un XML con los datos de config
-        /// </summary>
-        /// <returns>Descarga XML</returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
+        public OAuthModel ObtenerOAuth()
+        {
+			UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ConsumerModel pModelo;
+			ConsumerData consumerData;
+			Gnoss.Logica.Documentacion.DocumentacionCN documentoCN = new Gnoss.Logica.Documentacion.DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
+			OAuthToken tokens;
+			OAuthModel oauthModel = new OAuthModel();
+
+			AdministrarAplicacionesViewModel mAplicaciones = mOAuthCN.ObtenerAplicacionesPorUsuarioIDyProyectoID(mControladorBase.UsuarioActual.UsuarioID, ProyectoSeleccionado.Clave);
+			if (mAplicaciones.Aplicaciones == null || mAplicaciones.Aplicaciones.Count == 0)
+			{
+				//Se genera un consumer model donde guardar los datos y se almacena en BD
+				pModelo = new ConsumerModel(0, "Automatico", "", "", "", "");
+
+				try
+				{
+					oauthModel = CrearTokens(pModelo.Name);
+				}
+				catch (Exception ex)
+				{
+					GuardarLogError(mLoggingService.DevolverCadenaError(ex, ""));
+				}
+			}
+			else
+			{
+				pModelo = mAplicaciones.Aplicaciones.FirstOrDefault();
+				tokens = mOAuthCN.ConsultarTokensPorUsuarioIDyConsumerId(mControladorBase.UsuarioActual.UsuarioID, pModelo.ConsumerId);
+
+				oauthModel.ConsumerKey = pModelo.Key;
+				oauthModel.ConsumerSecret = pModelo.Secret;
+				oauthModel.TokenKey = tokens.Token;
+				oauthModel.TokenSecret = tokens.TokenSecret;
+			}
+
+			consumerData = mOAuthCN.ObtenerConsumerPorConsumerId(pModelo.ConsumerId).ConsumerData.FirstOrDefault();
+			documentoCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, dataWrapperDocumentacion, false, false, false);
+
+			oauthModel.API = mConfigService.ObtenerUrlApi();
+			oauthModel.DevEmail = usuarioCN.ObtenerEmailPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID);
+			oauthModel.OntologyName = dataWrapperDocumentacion.ListaDocumento.FirstOrDefault()?.Titulo;
+			oauthModel.ShortName = ProyectoSeleccionado.NombreCorto;
+			oauthModel.LogPath = $"{Path.DirectorySeparatorChar}log";
+			oauthModel.LogFileName = "trace.log";
+			oauthModel.LogLevel = "DEBUG";
+
+			if (oauthModel.OntologyName == null)
+			{
+				oauthModel.OntologyName = "";
+			}
+
+            return oauthModel;
+		}
+
+		/// <summary>
+		/// Crea y descarga un XML con los datos de config
+		/// </summary>
+		/// <returns>Descarga XML</returns>
+		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
         public ActionResult DescargarXML()
         {
-            UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            ConsumerModel pModelo;
-            ConsumerData consumerData;
-            Gnoss.Logica.Documentacion.DocumentacionCN documentoCN = new Gnoss.Logica.Documentacion.DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
-            OAuthToken tokens;
-            ParametroAplicacionGBD parmetroaAppGBD = new ParametroAplicacionGBD(mLoggingService, mEntityContext, mConfigService);
-            XMLModel xmlModel = new XMLModel();
-
-            AdministrarAplicacionesViewModel mAplicaciones = mOAuthCN.ObtenerAplicacionesPorUsuarioIDyProyectoID(mControladorBase.UsuarioActual.UsuarioID, ProyectoSeleccionado.Clave);
-            if (mAplicaciones.Aplicaciones == null || mAplicaciones.Aplicaciones.Count == 0)
-            {
-                //Se genera un consumer model donde guardar los datos y se almacena en BD
-                pModelo = new ConsumerModel(0, "Automatico", "", "", "", "");
-
-                try
-                {
-                    xmlModel = CrearTokens(pModelo.Name);
-                }
-                catch (Exception ex)
-                {
-                    GuardarLogError(mLoggingService.DevolverCadenaError(ex, ""));
-                }
-            }
-            else
-            {
-                pModelo = mAplicaciones.Aplicaciones.FirstOrDefault();
-                tokens = mOAuthCN.ConsultarTokensPorUsuarioIDyConsumerId(mControladorBase.UsuarioActual.UsuarioID, pModelo.ConsumerId);
-
-                xmlModel.ConsumerKey = pModelo.Key;
-                xmlModel.ConsumerSecret = pModelo.Secret;
-                xmlModel.TokenKey = tokens.Token;
-                xmlModel.TokenSecret = tokens.TokenSecret;
-            }
-
-            consumerData = mOAuthCN.ObtenerConsumerPorConsumerId(pModelo.ConsumerId).ConsumerData.FirstOrDefault();
-            documentoCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, dataWrapperDocumentacion, false, false, false);
-            
-            xmlModel.API = mConfigService.ObtenerUrlApi();
-            xmlModel.DevEmail = usuarioCN.ObtenerEmailPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID);
-            xmlModel.OntologyName = dataWrapperDocumentacion.ListaDocumento.FirstOrDefault()?.Titulo;
-            xmlModel.ShortName = ProyectoSeleccionado.NombreCorto;
-            xmlModel.LogPath = $"{Path.DirectorySeparatorChar}log";
-            xmlModel.LogFileName = "trace.log";
-            xmlModel.LogLevel = "DEBUG";
-
-            if (xmlModel.API == null)
-            {
-                xmlModel.API = "";
-            }
-            if (xmlModel.OntologyName == null)
-            {
-                xmlModel.OntologyName = "";
-            }
-
-            //Se genera el XML con los datos aportados
-            byte[] bytes = CrearXML(xmlModel);
-            Response.Headers.Add("Content-Disposition", $"attachment; filename=\"oAuth_{xmlModel.ShortName}.config\"");
+            OAuthModel model = ObtenerOAuth();
+			//Se genera el XML con los datos aportados
+			byte[] bytes = CrearXML(model);
+            Response.Headers.Add("Content-Disposition", $"attachment; filename=\"oAuth_{model.ShortName}.config\"");
             //Content-Disposition: attachment; filename="filename.jpg"
             return File(bytes, "text/xml");
         }
 
-        private XMLModel CrearTokens(string pNombre)
+        private OAuthModel CrearTokens(string pNombre)
         {
-            XMLModel xmlModel = new XMLModel(pNombre);
+            OAuthModel oAuthModel = new OAuthModel(pNombre);
 
             OAuthConsumer filaOAuthConsumer = new OAuthConsumer();
             filaOAuthConsumer.ConsumerKey = GenerarTokens();
@@ -193,12 +200,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             mOAuthCN.ActualizarBD();
 
-            xmlModel.ConsumerKey = filaOAuthConsumer.ConsumerKey;
-            xmlModel.ConsumerSecret = filaOAuthConsumer.ConsumerSecret;
-            xmlModel.TokenKey = filaToken.Token;
-            xmlModel.TokenSecret = filaToken.TokenSecret;
+            oAuthModel.ConsumerKey = filaOAuthConsumer.ConsumerKey;
+            oAuthModel.ConsumerSecret = filaOAuthConsumer.ConsumerSecret;
+            oAuthModel.TokenKey = filaToken.Token;
+            oAuthModel.TokenSecret = filaToken.TokenSecret;
 
-            return xmlModel;
+            return oAuthModel;
         }
 
         /// <summary>
@@ -213,7 +220,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="consumerKey">consumerKey</param>
         /// <param name="consumerSecret">consumerSecret</param>
         /// <returns>Devuelve el XML en forma de byte[] para poder ser enviado</returns>
-        private byte[] CrearXML(XMLModel xmlModel)
+        private byte[] CrearXML(OAuthModel xmlModel)
         {
             //Creacion del XML y su encabezado
             XDeclaration declaracionXML = new XDeclaration("1.0", "UTF-8", null);

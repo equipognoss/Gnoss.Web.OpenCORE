@@ -160,8 +160,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 string componentName = RequestParams("ComponentName");
-                if (!string.IsNullOrEmpty(componentName))
-                {
+				if (ComponenteCMSPaginaActual.HasValue)
+				{
                     idiomaPedido = UtilIdiomas.LanguageCode;
                     pintar = true;
                     mRefrescar = false;
@@ -188,7 +188,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 catch (Exception ex)
                 {
-                    GuardarLogError("Error producido en el componente con ID='" + ComponenteCMSPaginaActual + "' en la comunidad " + ProyectoSeleccionado.Nombre + " \n " + mLoggingService.DevolverCadenaError(ex, Version));
+                    GuardarLogError("Error producido en el componente con ID='" + ComponenteCMSPaginaActual + "' con nombre ='" + componentName + "'en la comunidad " + ProyectoSeleccionado.Nombre + " \n " + mLoggingService.DevolverCadenaError(ex, Version));
                     return Content("");
                 }
             }

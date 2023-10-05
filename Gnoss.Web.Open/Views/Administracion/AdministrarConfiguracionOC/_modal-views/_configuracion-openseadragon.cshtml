@@ -1,0 +1,77 @@
+@model StringProperty
+@{
+    string pAlto = "", pAncho = "";
+    if (Model.UsarOpenSeaDragon != null)
+    {
+        pAlto = Model.UsarOpenSeaDragon.Where(x => x.Key.Equals("PropiedadAltoID")).Select(x => x.Value).ToList().FirstOrDefault();
+        pAncho = Model.UsarOpenSeaDragon.Where(x => x.Key.Equals("PropiedadAnchoID")).Select(x => x.Value).ToList().FirstOrDefault();
+    }
+    string idOpenSD = Model.Uri.Replace("/", "").Replace(":", "").Replace("#", "").Replace(".", "") + "opensd";
+}
+    <div class="opensd" data-opensd="@Model.Domain@@@Model.Uri">
+    <div class="modal fade" tabindex="-1" role="dialog" id="@idOpenSD">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    @* Título del Modal *@
+                    <p class="modal-title">
+                        <span class="material-icons">burst_mode</span>Configuración de imagen escalable
+                    </p>
+                    @* Cierre del Modal *@
+                    <span class="material-icons cerrar"
+                          data-dismiss="modal"
+                          aria-label="Close">close</span>
+                </div>
+                <div class="modal-body">
+                    <div class="explicacion">
+                        <span class="material-icons icono-explicacion-opensd pointer">info</span>
+                        <p>Elija las propiedades que designan el ancho y alto de la imagen.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="@Model.Domain@@@Model.Uri@@opensdAncho">Ancho</label>
+                        <select name="@Model.Domain@@@Model.Uri@@opensdAncho" class="js-select2" data-select-search="true">
+                            @if (string.IsNullOrEmpty(pAncho))
+                            {
+                                <option value="" selected></option>
+                            }
+                            @foreach (Property p in ViewBag.ListaPropiedades)
+                            {
+                                if (p.GetType().ToString().Equals("Es.Riam.Gnoss.Web.MVC.Models.ConfiguracionOC.NumericalProperty"))
+                                {
+                                    <option value="@p.Uri" @(p.Uri.Equals(pAncho) ? "selected" : "")>@p.Uri</option>
+                                }
+                            }
+                        </select>
+                        <small class="form-text text-muted">Elige la propiedad del objeto de conocimiento que designa el ancho</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="@Model.Domain@@@Model.Uri@@opensdAlto">Alto</label>
+                        <select name="@Model.Domain@@@Model.Uri@@opensdAncho" class="js-select2" data-select-search="true">
+                            @if (string.IsNullOrEmpty(pAlto))
+                            {
+                                <option value="" selected></option>
+                            }
+                            @foreach (Property p in ViewBag.ListaPropiedades)
+                            {
+                                if (p.GetType().ToString().Equals("Es.Riam.Gnoss.Web.MVC.Models.ConfiguracionOC.NumericalProperty"))
+                                {
+                                    <option value="@p.Uri" @(p.Uri.Equals(pAlto) ? "selected" : "")>@p.Uri</option>
+                                }
+                            }
+                        </select>
+                        <small class="form-text text-muted">Elige la propiedad del objeto de conocimiento que designa el alto</small>
+                    </div>
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="btn btn-outline-danger eliminarOpenSD col text-center pointer" data-contienediv="@Model.Domain@@@Model.Uri">No usar imagen escalable</div>
+                        <div class="col"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    </div>

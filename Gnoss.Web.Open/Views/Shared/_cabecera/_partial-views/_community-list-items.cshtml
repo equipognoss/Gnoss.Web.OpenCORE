@@ -16,7 +16,7 @@ Variables
 }
 
 <div class="group-collapse comunidades">
-    <a href="#comunidades" data-toggle="collapse" aria-expanded="true">Mis comunidades</a>
+    <a href="#comunidades" data-toggle="collapse" aria-expanded="true">@Html.GetText("COMMON", "MISCOMUNIDADES")</a>
     <div id="comunidades" class="collapse show">
         <ul class="pmd-sidebar-nav">
             @if (perfil.IsClassAdministrator && perfil.TypeProfile.Equals(ProfileType.Teacher))

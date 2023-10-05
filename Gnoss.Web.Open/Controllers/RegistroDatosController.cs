@@ -884,7 +884,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 mEntityContext.SaveChanges();
                 
-                ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", "");
+                ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", "", ProyectoSeleccionado.Clave);
 
                 ControladorPersonas contrPers = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
                 //contrPers.ActualizarModeloBaseSimple(IdentidadActual, ProyectoAD.MetaProyecto, PrioridadBase.Alta);

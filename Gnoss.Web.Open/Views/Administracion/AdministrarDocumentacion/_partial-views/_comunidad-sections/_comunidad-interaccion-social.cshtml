@@ -1,0 +1,63 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Interacción social
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false; 	
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();    
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Interacción social *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "data-target=#interaccion-social" : null)								
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+				aria-controls="interaccion-social">
+				@Html.GetText("DEVTOOLS","INTERACCIONSOCIAL")
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Interacción Social *@
+	<div
+		id="interaccion-social"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">											
+			<p>Desde esta sección se podrán configurar los aspectos relativos a las acciones permitidas o no de los usuarios dentro de una comunidad. Estas son las opciones o acciones configurables:</p>				
+			<ul>
+				<li><strong>Invitaciones disponibles:</strong> Permitir o no a los usuarios invitar a otros usuarios a la comunidad para el posterior registro.</li>
+				<li><strong>Votaciones disponibles:</strong> Permitir o no votar los recursos de la comunidad. Votar un recurso en una comunidad consistiría en que un usuario pueda dar un “Me gusta” a un recurso en particular.</li>
+				<li><strong>Permitir votaciones negativas:</strong> Permitir o no realizar votaciones negativas (no me gusta) en los recursos de la comunidad.</li>
+				<li><strong>Mostrar las votaciones:</strong> Mostrar o no el número de votaciones positivas de un recurso.</li>
+				<li><strong>Comentarios disponibles</strong>: Permitir o no que usuarios de la comunidad puedan comentar en la página de un recurso.</li>
+				<li><strong>Permitir a los supervisores administrar los grupos de la comunidad:</strong> Como su propio nombre indica, permitiría a usuarios no administradores gestionar grupos de la comunidad.</li>
+				<li><strong>Los usuarios pueden compartir recursos de esta comunidad a otras comunidades:</strong> Permitir o no a los usuarios compartir recursos con otras comunidades.</li>
+				<li><strong>Los usuarios pueden crear recursos privados en la comunidad:</strong> Permitir o no a usuarios de la comunidad crear de recursos privados dentro de la comunidad.</li>
+				<li><strong>Nº de caracteres máximo de la descripción de cada recurso en el boletín de suscripciones:</strong> Como su propio nombre indica, será el número de caracteres o la longitud que tendrá la descripción de una “newsletter” enviada a los usuarios describiendo el recurso enviado.</li>
+			</ul>
+			<p>Como en la mayoría de las páginas de DevTools, para guardar los cambios realizados bastará con hacer clic en el botón Guardar Todo.</p>
+
+			<div class="text-center">
+				<figure class="figure">						  
+					<img src="~/img/documentacionDevtools/01comunidad/interaccion-social.png"/>					
+					<figcaption class="figure-caption">Opciones para configurar la interacción social de los usuarios en la comunidad.</figcaption>
+				</figure> 
+			</div>		
+		</div>	
+	</div>
+</div>

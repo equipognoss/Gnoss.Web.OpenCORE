@@ -1,0 +1,47 @@
+﻿@model List<AdministrarPaginasCMSViewModel.CMSComponentModel>
+
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial donde se muestran los diferentes componentes existentes de la comunidad. Estos son seleccionables dentro del PageBuilder.
+Adicionalmente, esta vista puede ser pintada de forma dinámica al realizar una búsqueda en el input del PageBuilder para traer más componentes vía AJAX.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    // Variables usadas para pintar la urlEdit, urlSave, y tipo del componente a añadir        
+    // Url para componentes existentes de la comunidad (Guardado y Edición vía Modal)
+    string urlSaveComponentFromCommunity = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/COMPONENT_KEY/save";
+    string urlEditComponentItemFromCommunity = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/COMPONENT_KEY/load-modal";
+}
+
+<ul id="created-components" class="js-created-components-list builder-list no-list-style">                        
+    @* Pintado de componentes *@                                                
+	@foreach (AdministrarPaginasCMSViewModel.CMSComponentModel componente in Model)
+	{
+        // Construir la url para el guardado del componente si este se desea editar a través del modal
+        urlSaveComponentFromCommunity = urlSaveComponentFromCommunity.Replace("COMPONENT_KEY", componente.Key.ToString());
+        // Construir la url para la edición del componente a través del modal
+        urlEditComponentItemFromCommunity = urlEditComponentItemFromCommunity.Replace("COMPONENT_KEY", componente.Key.ToString());
+        
+        <li
+            class="builder-item"
+            id="@componente.Key"
+            data-id="@componente.Key"
+            data-urlsave="@urlSaveComponentFromCommunity"
+            data-urleditcomponent="@urlEditComponentItemFromCommunity">
+            <div class="builder-item-wrap">
+                <div class="name">
+                    @* Nombre del componente ya existe en la comunidad y tipo*@
+                    <span class="component-name">@componente.Name</span>
+                    <span class="type">@componente.Type</span>
+                </div>
+                <div class="handler">
+                    <span class="material-icons">drag_indicator</span>
+                </div>
+            </div>
+        </li>                           
+	}                       
+</ul>

@@ -49,13 +49,14 @@
     int numMaxIdentitiesToDisplay = 5;
     // Lista con las identidades de organización. Se guardarán las que quedarán visibles pero ocultas para poder desplegarlas si fuera necesario
     List<UserProfileModel> hiddenUserIdentities = new List<UserProfileModel>();
-
+    // Conocer si el usuario es MetaAdministrador
+    bool esUsuarioMetaAdministrador = Html.GetEsMetaAdministrador();
 
     @*
         ----------------------------------------------------------------
         -------------------- Menú Lateral Usuario --------------------
     *@
-    <aside id="menuLateralUsuario" class="menuLateral usuario" role="navigation">
+    <aside id="menuLateralUsuario" class="menuLateral usuario d-none" role="navigation">
         <div class="header">
             <div class="wrap-header">
                 <div class="usuarioWrapper">
@@ -175,7 +176,7 @@
                                 <a href="@perfil.Url@Html.GetText("URLSEM", "BORRADORES")">@Html.GetText("BANDEJAENTRADA", "MISBORRADORES")</a>
                             </li>
                             <li class="liMisRecursos">
-                                <a href="@perfil.Url@Html.GetText("URLSEM", "MISRECURSOS")">@Html.GetNombreEspacioPersonal()</a>
+                                <a href="@perfil.Url@Html.GetText("URLSEM", "MISRECURSOS")">@Html.GetText("DEVTOOLS","MIESPACIOPERSONAL")</a>
                             </li>
                         </ul>
                     </div>
@@ -195,8 +196,7 @@
                             </ul>
                         </div>
                     </div>
-                }
-
+                }                
                 @* Ver sección de Configuración de la Comunidad si es usuario Admin y no es la MetaComunidad (Anteriormente en "_PanelQueHacer") *@
                 @if ((Comunidad.GNOSSCommunity || IdentidadActual.IsProyectAdmin) && !Comunidad.MetaProyect)
                 {
@@ -208,7 +208,13 @@
                                 @if (permisosComunidad.Manage)
                                 {
                                     <li class="liAdminComunidadAdministrar">
-                                        <a id="administrar_comunidad" href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL")">@Html.GetText("QUEPUEDOHACER", "ADMINISTRARCOMUNIDAD")</a>
+                                        <a id="administrar_comunidad" href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("QUEPUEDOHACER", "ADMINISTRARCOMUNIDAD")</a>
+                                    </li>
+                                }else if ( esUsuarioMetaAdministrador )
+                                {                                    
+                                    // Opciones del meta-administrador (Comunidad)
+                                    <li class="liAdminComunidadAdministrar liOpcionesMetaAdministrador">
+                                        <a id="opcionesMetaAdministrador" href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINMETAADMINOPTIONS")">@Html.GetText("COMADMINCOMUNIDAD", "ADMINMETAADMINOPTIONS")</a>
                                     </li>
                                 }
                                 @* Crear grupos en la comunidad *@
@@ -522,7 +528,13 @@
                             <a href="#metaAdministrador" data-toggle="collapse" aria-expanded="true">@Html.GetText("COMADMINCOMUNIDAD", "ADMINMETAADMINOPTIONS")</a>
                             <div id="metaAdministrador" class="collapse show">
                                 <ul class="pmd-sidebar-nav">
-                                    @*Gestión de las solicitudes*@
+
+                                    @* Administrar Ecosistema *@
+                                    <li class="liAdminEcosistema">
+                                        <a href="@Comunidad.UrlMyGnoss/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("DEVTOOLS","CONFIGURACIONDELECOSISTEMA")</a>
+                                    </li>
+
+                                    @* Gestión de las solicitudes *@
                                     @if (IdentidadActual.PermitEditAllCommunities)
                                     {
                                         urlSolicitudes = perfil.Url + Html.GetText("URLSEM", "SOLICITDESACCESOCOM");
@@ -623,7 +635,7 @@
                                 @if (cabecera.ChangePasswordVisible)
                                 {
                                     @*Cambiar la contraseña si el usuario está en Metaproject *@
-                                    if (!Comunidad.MetaProyect)
+                                    if (Comunidad.MetaProyect)
                                     {
                                         <li class="liCambiarContrasenia">
                                             <a id="cambiar_contrasenia" href="@Html.GetBaseUrlIdioma()/@Html.GetText("URLSEM", "CAMBIARPASSWORD")">@Html.GetText("MENU", "CAMBIOCONTRAS")</a>
@@ -642,8 +654,7 @@
                             </ul>
                         </div>
                     </div>
-                </div>
-                </div>
+                </div>                
             </aside>
             <div class="pmd-sidebar-overlay" data-rel="menuLateralUsuario"></div>
         }

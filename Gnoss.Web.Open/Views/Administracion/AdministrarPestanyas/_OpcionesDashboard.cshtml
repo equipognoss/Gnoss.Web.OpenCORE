@@ -1,0 +1,120 @@
+﻿@model TabModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para mostrar las opciones para poder personalizar o visualizar la previsualización de un gráfico.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    List<TabModel.DashboardTabModel> opcionesDashboard = Model.OpcionesDashboard;
+    @* Guid para generar tabs únicos *@
+    Guid newGuidId = @Guid.NewGuid();
+    string idTabs = newGuidId.ToString().Substring(0, 5);
+}
+		
+<p>
+	<a class="linkEditarOpcionesDashboard" href="javascript: void(0);">Editar opciones dashboard</a>
+</p>
+
+<section class="editarOpcionesDashboard mb-4" style="display:none">
+
+    @* Título de sección de Gráficos *@
+    <div class="form-group">
+        <div class="graphics-header d-flex justify-content-between align-items-center">
+            <label class="control-label d-block font-weight-bold" style="font-size: 14px">Configuración de gráficos</label>
+        </div>
+    </div>
+
+    <p>
+        Configura los gráficos con los datos necesarios y establece el orden que tendrán en la página desde la pestaña de Vista preliminar.
+    </p>
+
+    <div class="tab-content p-0">
+
+        @* Tabs de navegación para la Edición y Previsualización de los gráficos *@
+        <ul class="nav nav-tabs pl-0 pt-0 mb-3" id="tabGraficos_@(idTabs)" role="tablist">
+            <li class="nav-item">
+                <a class="tabIdiomaItem nav-link active" id="edicion_graficos_@(idTabs)" data-toggle="tab" href="#verEdicion_graficos_@(idTabs)" role="tab" aria-controls="verEdicion_graficos_@(idTabs)" aria-selected="true">Edición de gráficos</a>
+            </li>
+            <li class="nav-item">
+                <a class="tabIdiomaItem nav-link" id="preview_graficos_@(idTabs)" data-toggle="tab" href="#verPreview_graficos_@(idTabs)" role="tab" aria-controls="verPreview_graficos_@(idTabs)" aria-selected="true">Vista preliminar de los gráficos</a>
+            </li>
+        </ul>
+
+        <div class="tab-pane fade show active" id="verEdicion_graficos_@(idTabs)" role="tabpanel" aria-labelledby="verEdicion_graficos_@(idTabs)-tab">
+            @* Editar opciones dashboard *@
+            <div class="form-group">
+                <div class="graphics-header d-flex justify-content-between align-items-center">
+                    <label class="control-label d-block font-weight-bold" style="font-size: 14px">Asistentes para la construcción de gráficos</label>
+                    <a href="javascript: void(0);" class="linkAgregarAsistente btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+                        <span class="material-icons">add</span>
+                        <span class="texto">Agregar gráfico</span>
+                    </a>
+                </div>
+            </div>
+
+
+            <section class="bloque editarDashboard">
+                @*<div class="form-group">
+                <div class="facet-header d-flex justify-content-between align-items-center">
+                <label class="control-label d-block font-weight-bold"
+                style="font-size: 14px">Previsualización de los gráficos</label>
+                </div>
+                </div>
+
+                <section class="bloque graficos">
+                <div class="ejemplosGraficos">
+                @foreach (TabModel.DashboardTabModel asistente in opcionesDashboard.OrderBy(x => x.Orden))
+                {
+                string id = @asistente.AsisID + "Graf";
+                <div id="@id" class="generados"></div>
+                }
+                </div>
+                </section>
+                *@
+                <section class="editarAsistentes">
+                    <ul class="asistentesLista component-list no-list-style mb-4">
+                        @foreach (TabModel.DashboardTabModel asistente in opcionesDashboard.OrderBy(x => x.Orden))
+                        {
+                            @Html.PartialView("_FichaAsistente", asistente)
+                        }
+                    </ul>
+                </section>
+            </section>
+
+
+        </div>
+        <div class="tab-pane fade previewGraphsPanel" id="verPreview_graficos_@(idTabs)" role="tabpanel" aria-labelledby="verPreview_graficos_@(idTabs)-tab">
+            @* Previsualización de todos los gráficos *@
+            <div class="form-group">
+                <div class="graphics-header d-flex justify-content-between align-items-center">
+                    <label class="control-label d-block font-weight-bold" style="font-size: 14px">Previsualización de los gráficos</label>                   
+                </div>
+            </div>
+
+            <div class="bloque graficos">
+                <div class="ejemplosGraficos">
+                    <ul class="no-list-style graphPreviewAll" id="tabPreviewGraficos_@(idTabs)">
+                    @foreach (TabModel.DashboardTabModel asistente in opcionesDashboard.OrderBy(x => x.Orden))
+                    {
+                        string id = @asistente.AsisID + "GrafPreview";
+                        <li class="graphicOrderRow">
+                            <div class="component-sortable js-component-sortable-graph">
+                                <span class="material-icons-outlined sortable-icon ui-sortable-handle-graphs">drag_handle</span>
+                            </div>
+                            <div id="@id" class="generados previewGraph"></div>
+                        </li>
+                    }
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>

@@ -1,31 +1,64 @@
 ﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
 
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato RadioButton (Valor Booleano)
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
     string idiomaPanel = (string)ViewData["idiomaPanel"];
     string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+    string valorPropiedad = Model.Value;
     if (!string.IsNullOrEmpty(idiomaPanel))
     {
         idPanel += "_" + idiomaPanel;
     }
 
-    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);  
 
     bool marcarCheckSI = false;
     if (!string.IsNullOrEmpty(Model.Value) && bool.Parse(Model.Value))
     {
         marcarCheckSI = true;
-    }
+    }    
+
 }
-<div id="contenedorPrincipal_@idPanel">
-    <p id="parrafo_@idPanel"><strong>@nombrePropiedad</strong></p>
-    <ul class="radioList">
-        <li>
-            <input type="radio" name="@idPanel" class="radio" id="@idPanel" @(marcarCheckSI ? "checked=\"checked\"" : "")>
-            <label for="@idPanel">Sí</label>
-        </li>
-        <li>
-            <input type="radio" name="@idPanel" class="radio" id="@(idPanel)NO" @(!marcarCheckSI ? "checked=\"checked\"" : "")>
-            <label for="@(idPanel)NO">No</label>
-        </li>
-    </ul>
+
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo RadioButton (Booleano) --------------------
+*@
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="form-group mb-4 ">
+    @* Label del elemento Html*@
+	<label class="control-label d-block">@nombrePropiedad</label>
+	@* RadioButton Sí *@
+	<div class="form-check form-check-inline">
+		<input
+			class="form-check-input"
+			type="radio"
+			name="@idPanel"								
+			checked
+			data-value="si"
+			id="@idPanel" 
+            @(marcarCheckSI ? "checked=\"checked\"" : "") />
+		<label class="form-check-label" for="@idPanel">@Html.GetText("COMMON","SI")</label>									
+	</div>
+	<div class="form-check form-check-inline">
+		@* RadioButton No *@
+		<input
+			class="form-check-input"
+			type="radio"
+			name="@idPanel"																			
+			data-value="no"
+			id="@(idPanel)NO" 
+            @(!marcarCheckSI ? "checked=\"checked\"" : "")/>
+		<label class="form-check-label" for="@(idPanel)NO">@Html.GetText("COMMON","NO")</label>									
+	</div>
 </div>

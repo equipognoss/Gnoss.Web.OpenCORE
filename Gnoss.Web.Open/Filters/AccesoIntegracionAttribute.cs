@@ -215,7 +215,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                                 }
                             }
                             //Si el repositorio del ecosistema al que pertecene la comunidad es BitbucketCloud o GitHub
-                            else if (resultado == TipoRepositorio.BitbucketCloud || resultado == TipoRepositorio.GitHub)
+                            else if (resultado == TipoRepositorio.BitbucketCloud)
                             {
                                 PeticionLoginGithubBitbucketCloud(pFilterContext, pEntornoIntegracionContinua, pUrlApiIntegracionContinua, pProyectoSeleccionado);
                             }
@@ -286,8 +286,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             pUrlApiIntegracionContinua = mConfigService.ObtenerUrlApiIntegracionContinua();
             if (!string.IsNullOrEmpty(pUrlApiIntegracionContinua))
             {
-                // pEntornoIntegracionContinua = pmControladorBase.ParametrosAplicacionDS.ParametroAplicacion.FindByParametro("EntornoIntegracionContinua").Valor;
-                pEntornoIntegracionContinua = mControladorBase.ListaParametrosAplicacion.Find(parametro => parametro.Parametro.Equals("EntornoIntegracionContinua")).Valor;
+                //pEntornoIntegracionContinua = pmControladorBase.ParametrosAplicacionDS.ParametroAplicacion.FindByParametro("EntornoIntegracionContinua").Valor;
+                pEntornoIntegracionContinua = null;
+                ParametroAplicacion parametro = mControladorBase.ListaParametrosAplicacion.Find(parametro => parametro.Parametro.Equals("EntornoIntegracionContinua"));
+                if (parametro != null)
+                {
+                    pEntornoIntegracionContinua = parametro.Valor;
+                }    
             }
             else
             {

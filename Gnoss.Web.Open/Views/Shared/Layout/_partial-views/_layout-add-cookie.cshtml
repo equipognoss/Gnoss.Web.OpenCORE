@@ -1,0 +1,119 @@
+﻿@model AdministrarCookiesViewModel
+@using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón para poder crear una cookie desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Cookies".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    string[] listaNombreCookiesGoogle = new string[] { "_ga", "__utma", "__utmt", "__utmc", "__utmz", "__utmv" };
+    string[] listaNombreCookiesYoutube = new string[] { "NID", "VISITOR_INFO1_LIVE", "PREF", "YSC" };
+
+    string urlBasePeticion = $"{Html.GetComunidad().Url}/";
+
+    if (Model.EsAdministracionEcosistema)
+    {
+        urlBasePeticion += Html.GetText("URLSEM", "ADMINISTRARCOOKIESCOMECOSISTEMA");
+    }
+    else
+    {
+        urlBasePeticion += Html.GetText("URLSEM", "ADMINISTRARCOOKIESCOM");
+    }
+
+    // Url para añadir una cookie
+    string urlAddCookie = $"{urlBasePeticion}/add-cookie";
+    string urlAddCategoryCookie = $"{urlBasePeticion}/add-category";
+    string urlAddGoogleCookies = $"{urlBasePeticion}/pintar-cookies-analiticas";
+    string urlAddYoutubeCookies = $"{urlBasePeticion}/pintar-cookies-youtube";
+}
+
+@*
+<ul>
+	<li class="nuevo nueva-cookie">
+        *@
+@* Botón para añadir una nueva cookie *@
+<a href="javascript: void(0);"
+   class="btn btn-outline-primary dropdown-toggle no-flecha"
+   id="menuNuevaCookie"
+   data-toggle="dropdown"
+   aria-haspopup="true"
+   aria-expanded="true">
+    <span class="material-icons">add</span>
+    <span class="texto">@Html.GetText("ADMINISTRACIONDESARROLLADORES","AÑADIRCOOKIE")</span>
+</a>
+@* Dropdown con el tipo de cookies a crear *@
+<div class="dropdown-menu dropdown-menu-right basic-dropdown"
+     aria-labelledby="menuNuevaCookie">
+    <div>
+        <ul class="no-list-style menuCreacion">
+
+            @* Tipo de cookies a crear (Evitar Null) *@
+            @if (Model.ListaProyectoCookie.Count > 0)
+            {
+                @foreach (CategoriaProyectoCookie categoriaCookie in Model.ListaProyectoCookie.FirstOrDefault().ListaCategoriaProyectoCookie)
+                {
+                    string cookieCategoriaId_Nombre = $"{@categoriaCookie.CategoriaID}_{@categoriaCookie.Nombre}";
+                    string nombreCategoriaCookie = "";
+
+                    if (categoriaCookie.Nombre.Split("|||")[0].Contains("@"))
+                    {
+                        nombreCategoriaCookie = categoriaCookie.Nombre.Split("|||")[0].Substring(0, categoriaCookie.Nombre.Split("|||")[0].Length - 3);
+                    }
+                    else
+                    {
+                        nombreCategoriaCookie = categoriaCookie.Nombre;
+                    }
+                    <li>
+                        <a class="item-dropdown linkAddNewCookie"
+                   data-urladdcookie="@urlAddCookie"
+                   data-cookietype="@cookieCategoriaId_Nombre">
+                            @nombreCategoriaCookie
+                        </a>
+                    </li>
+                }
+            }
+
+            @* Añadir cookies de Google (Si no existen) *@
+            @if (!Model.ListaProyectoCookie.Any(item => listaNombreCookiesGoogle.Any(cookie => item.ProyectoCookie.Nombre.Contains(cookie))))
+            {
+                <li>
+                    <a class="item-dropdown linkAddGoogleCookieAnalytics"
+                   data-urladdcookie="@urlAddGoogleCookies"
+                   data-value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEANALYTICS")">
+                        @Html.GetText("DEVTOOLS","COOKIESPARAGOOGLE")
+                    </a>
+                </li>
+            }
+            @* Añadir cookies de Youtube (Si no existen) *@
+            @if (!Model.ListaProyectoCookie.Any(item => listaNombreCookiesYoutube.Any(cookie => item.ProyectoCookie.Nombre.Contains(cookie))))
+            {
+                <li>
+                    <a class="item-dropdown linkAddYoutubeCookie"
+                   data-urladdcookie="@urlAddYoutubeCookies"
+                   data-value="@Html.GetText("COMADMINCOOKIES", "ADDCOOKIEYOUTUBE")">
+                        @Html.GetText("DEVTOOLS","COOKIESPARAYOUTUBE")
+                    </a>
+                </li>
+            }
+
+            @* Añadir categoría cookie *@
+            <li class="dropdown-divider"></li>
+            <li>
+                <a class="item-dropdown linkAddCategory"
+                   data-urladdcookie="@urlAddCategoryCookie"
+                   data-value="@Html.GetText("COMADMINCOOKIES", "ADDCATEGORIA")">
+                    @Html.GetText("COMADMINCOOKIES", "ADDCATEGORIA")
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</div>
+@*
+	</li>
+</ul>
+*@

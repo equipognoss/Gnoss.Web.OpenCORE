@@ -6,7 +6,7 @@
     <ul>
     @foreach (string archivo in Model.VersionList)
     {
-        <li>@archivo.Replace("_" + Model.OntologyID, "") (<a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARPLANTILLASCOM")/download-version?copyName=@(System.Net.WebUtility.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + System.Net.WebUtility.UrlEncode(Model.OntologyName))">descargar</a>)</li>    
+        <li>@archivo.Replace("_" + Model.OntologyID, "") (<a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")/download-version?copyName=@(System.Net.WebUtility.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + System.Net.WebUtility.UrlEncode(Model.OntologyName))">descargar</a>)</li>    
     }
     </ul>
 }

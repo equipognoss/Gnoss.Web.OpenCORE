@@ -49,7 +49,6 @@ namespace Gnoss.Web.Middlewares
             //    httpContext.Response.Headers.Add("Referrer-Policy", "no-referrer-when-downgrade");
             //    return Task.CompletedTask;
             //}, context);
-            Application_PreRequestHandlerExecute(context, servicesUtilVirtuosoAndReplication);
             await _next(context);
             Application_PostRequestHandlerExecute(context, servicesUtilVirtuosoAndReplication, gnossCache);
             Application_EndRequest(context, loggingService, controladorBase, utilTelemetry);
@@ -173,68 +172,12 @@ namespace Gnoss.Web.Middlewares
                 }
             }
         }
-        protected void Application_PreRequestHandlerExecute(HttpContext pHttpContextAccessor, IServicesUtilVirtuosoAndReplication pServicesUtilVirtuosoAndReplication)
-        { 
-            if (pHttpContextAccessor.Session != null)
-            {
-                string conexionAfinidadVirtuoso = pHttpContextAccessor.Session.GetString("conexionAfinidadVirtuoso");
-
-                if (!string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                {
-                    string fecha = pHttpContextAccessor.Session.GetString("fechaFinAfinidadVirtuoso");
-                    DateTime? fechaFinAfinidadVirtuoso = JsonConvert.DeserializeObject<DateTime?>(fecha);
-
-                    if (!fechaFinAfinidadVirtuoso.HasValue)
-                    {
-                        fechaFinAfinidadVirtuoso = DateTime.Now;
-                    }
-
-                    if (fechaFinAfinidadVirtuoso.HasValue && fechaFinAfinidadVirtuoso.Value > DateTime.Now)
-                    {
-                        pServicesUtilVirtuosoAndReplication.ConexionAfinidad = conexionAfinidadVirtuoso;
-                        pServicesUtilVirtuosoAndReplication.FechaFinAfinidad = (DateTime)fechaFinAfinidadVirtuoso;
-                    }
-                }
-            }
-        }
 
         protected void Application_PostRequestHandlerExecute(HttpContext pHttpContextAccessor, IServicesUtilVirtuosoAndReplication pServicesUtilVirtuosoAndReplication, GnossCache pGnossCache)
         {
             try
             {
-                if (pHttpContextAccessor.Session != null)
-                {
-                    string conexionAfinidadVirtuoso = pServicesUtilVirtuosoAndReplication.ConexionAfinidad;
-                    if (!string.IsNullOrEmpty(conexionAfinidadVirtuoso))
-                    {
-                        DateTime? fechaFinAfinidadVirtuoso = pServicesUtilVirtuosoAndReplication.FechaFinAfinidad;
-
-                        if (!fechaFinAfinidadVirtuoso.HasValue)
-                        {
-                            fechaFinAfinidadVirtuoso = DateTime.Now;
-                        }
-
-                        if (fechaFinAfinidadVirtuoso.HasValue && fechaFinAfinidadVirtuoso.Value > DateTime.Now)
-                        {
-                            pHttpContextAccessor.Session.SetString("conexionAfinidadVirtuoso", conexionAfinidadVirtuoso);
-                            pHttpContextAccessor.Session.SetString("fechaFinAfinidadVirtuoso", JsonConvert.SerializeObject(fechaFinAfinidadVirtuoso));
-                        }
-                    }
-                    else
-                    {
-                        pHttpContextAccessor.Session.Remove("conexionAfinidadVirtuoso");
-                        pHttpContextAccessor.Session.Remove("fechaFinAfinidadVirtuoso");
-                    }
-                }
-            }
-            catch
-            {
-
-            }
-
-            try
-            {
-                Guid? proyInvalidarCache = null; //TODO Javier UtilPeticion.ObtenerObjetoDePeticion("invalidarCachesLocales") as Guid?;
+                Guid? proyInvalidarCache = null;
                 if (proyInvalidarCache.HasValue)
                 {
                     pGnossCache.AgregarObjetoCache(GnossCacheCL.CLAVE_REFRESCO_CACHE_LOCAL + proyInvalidarCache.Value, Guid.NewGuid());
@@ -245,10 +188,6 @@ namespace Gnoss.Web.Middlewares
 
             }
         }
-
-  
-
-      
 
         protected void Application_EndRequest(HttpContext pHttpContextAccessor,LoggingService pLoggingService, ControladorBase pControladorBase, UtilTelemetry pUtilTelemetry)
         {
@@ -284,7 +223,7 @@ namespace Gnoss.Web.Middlewares
 
         protected string ObtenerRutaTraza(HttpContext pHttpContextAccessor, ControladorBase pControladorBase)
         {
-            string ruta = Path.Combine(mEnv.ContentRootPath, "trazas");
+            string ruta = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "trazas");
 
             if (!Directory.Exists(ruta))
             {

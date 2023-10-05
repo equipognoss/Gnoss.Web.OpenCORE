@@ -1,0 +1,105 @@
+﻿@model InformacionMostrar
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial donde se carga la información de cada carga masiva realizada.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    // Texto estado de la carga masiva e icono asociado
+    string massiveLoadValue = "done";
+    string massiveLoadIcon = "";
+    string massiveDetails = "-";
+
+    // Variable control si hay error de carga
+    bool isError = false;
+    // Color asociado a la carga masiva
+    string colorMassiveLoadClassName = "";
+    int numErrorPackages = 0;
+}
+
+@* Controlar estado de la carga *@
+@switch (Model.EstadoCarga)
+{
+    case ConsultaCargaMasivaController.CARGAABIERTA:
+        @* Carga abierta *@
+        massiveLoadValue = "Carga abierta";
+        massiveLoadIcon = "lock_open";
+    break;
+    case ConsultaCargaMasivaController.CARGACERRADA:
+        @* Carga cerrada *@
+        massiveLoadValue = "Carga cerrada";
+        massiveLoadIcon = "lock_outline";
+    break;
+    case ConsultaCargaMasivaController.CARGACOMPLETADA:
+        @* Carga completada *@
+        massiveLoadValue = "Carga completada";
+        colorMassiveLoadClassName = "text-success";
+        massiveLoadIcon = "done";
+    break;
+}
+
+@* Controlar si hay error de la carga *@
+@if (!string.IsNullOrEmpty(Model.ErrorCarga))
+{
+    massiveLoadValue = Model.ErrorCarga;
+    massiveDetails = Model.ErrorCarga;
+    isError = true;
+    colorMassiveLoadClassName = "text-danger";
+    massiveLoadIcon = "error_outline";
+    numErrorPackages = Model.NumPaquetesConError;    
+}
+
+
+@* Contenedor de la carga masiva *@
+<li class="component-wrap masiveLoad-row">
+    <div class="component">
+        <div class="component-header-wrap">
+            <div class="component-header">
+
+                @* Estado de la carga / Icono de la carga *@
+                <div class="component-status-wrap">                                                          
+                    <span title="@massiveLoadValue" alt="@massiveLoadValue" class="component-estado">
+                        <span class="material-icons @colorMassiveLoadClassName" style="cursor:pointer">@massiveLoadIcon</span>                                
+					</span>
+                </div>
+
+                <div class="component-header-content">
+                    <div class="component-header-left">
+                        @* Nombre de la carga*@
+                        <div class="component-name-wrap">																											
+                            <span alt="@Model.NombreCarga" title="@Model.NombreCarga" class="component-name">@Model.NombreCarga</span>							
+                        </div>  
+                        @* Id de la carga *@
+                        <div class="component-id-wrap">																											
+                            <span title="@Model.IDCarga" alt="@Model.IDCarga" class="component-id">@Model.IDCarga</span>							
+                        </div>
+                        @* Detalles de la carga *@
+                        <div class="component-detalles-wrap">																											
+                            <span title="@massiveDetails" alt="@massiveDetails" class="component-detalles">@massiveDetails</span>							
+                        </div>                      
+                        @* Paquetes procesados *@
+                        <div class="component-procesados-wrap">																											
+                            <span class="component-procesados" alt="@Model.NumParquetesProcesados de @Model.NumPaquetes" title="@Model.NumParquetesProcesados de @Model.NumPaquetes">@Model.NumParquetesProcesados de @Model.NumPaquetes</span>							
+                        </div> 
+                        @* Paquetes con error *@
+                        <div class="component-no-procesados-wrap">																											
+                            <span class="component-no-procesados">@Model.NumPaquetesConError</span>							
+                        </div>                          
+                    </div>
+                    @* Acciones *@
+                    <div class="component-header-right">                        
+                        <div class="component-fecha-wrap">
+                            @* Fecha *@
+                            <span class="component-fecha" style="color: var(--c-texto-claro); font-size: 14px;">@Model.FechaCarga</span>
+                        </div>                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>

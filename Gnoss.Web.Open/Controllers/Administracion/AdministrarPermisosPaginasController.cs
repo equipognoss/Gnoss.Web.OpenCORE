@@ -50,33 +50,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
     }
 
-
-    //    /// <summary>
-    //    /// 
-    //    /// </summary>
-    //    public Dictionary<TipoPaginaAdministracion, List<UsuarioModel>> PermisosUsuarios { get; set; }
-
-    //    /// <summary>
-    //    /// 
-    //    /// </summary>
-    //    [Serializable]
-    //    public partial class UsuarioModel
-    //    {
-    //        /// <summary>
-    //        /// 
-    //        /// </summary>
-    //        public Guid UsuarioID { get; set; }
-    //        /// <summary>
-    //        /// 
-    //        /// </summary>
-    //        public string NombreCompleto { get; set; }
-    //        /// <summary>
-    //        /// 
-    //        /// </summary>
-    //        public Guid PerfilID { get; set; }
-    //    }
-    //}
-
     /// <summary>
     /// 
     /// </summary>
@@ -213,20 +186,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             identCN.Dispose();
 
             return dicPerfilesIDUsuariosID;
-
-            //foreach (TipoPaginaAdministracion pagina in pViewModel.PermisosUsuarios.Keys)
-            //{
-            //    List<Guid> listaPerfilesID = pViewModel.PermisosUsuarios[pagina].Select(fila => fila.PerfilID).ToList();
-            //    Dictionary<Guid, Guid> dicPerfilesIDUsuariosID = identCN.ObtenerUsuariosIDPorPerfilID(listaPerfilesID);
-
-            //    if (dicPerfilesIDUsuariosID.Keys.Count > 0)
-            //    {
-            //        foreach (AdministrarPermisosPaginasViewModel.UsuarioModel usuario in pViewModel.PermisosUsuarios[pagina])
-            //        {
-            //            usuario.UsuarioID = dicPerfilesIDUsuariosID[usuario.PerfilID];
-            //        }
-            //    }
-            //}
         }
 
         private List<PermisosPaginaViewModel> PaginaModel

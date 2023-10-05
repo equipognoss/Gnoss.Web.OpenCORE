@@ -1,0 +1,64 @@
+﻿@model SearchViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene las facetas a mostrar relacionadas con los items multimedia
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    List<FacetModel> facetas = Html.GetFacetas();
+    List<FacetItemModel> filtros = Html.GetFiltros();
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Contenedor de las facetas para los resultados del buscador --------------------
+*@
+
+
+<div id="col01">
+    @* Cabecera de Filtros de Facetas *@
+    <div class="header-facetas">
+        <p>@Html.GetText("COMADMINFACETAS", "FILTROS")</p>
+        <a href="javascript: void(0);" class="cerrar">
+            <span class="material-icons">close</span>
+        </a>
+    </div>
+    
+    <fieldset style="display: block">                
+        <div id="panFacetas" class="facetas-wrap custom-css-scroll">                
+            @foreach (FacetModel faceta in facetas)
+            {
+                <div class="facetedSearch">
+                    @* Pintado de la faceta padre*@
+	                <div class="box" id="" faceta="">
+		                <span class="faceta-title">@faceta.Name<span class="facet-arrow"></span></span>
+		                <ul class="listadoFacetas">
+                            @foreach (FacetItemModel facetaItem in faceta.FacetItemList)
+                            {
+                                string estilos = "";
+                                if (facetaItem.Selected)
+                                {
+                                    estilos = "applied";
+                                }
+			                    <li class="@estilos">
+				                    <a rel="nofollow" 
+                                       title="@facetaItem.Name"
+                                       onclick="operativaGestionMultimediaCMS.AgregarFiltroComponentes('@facetaItem.Filter');return false;"
+                                       href="javascript: void(0)" 
+                                       class="faceta @estilos">
+					                    <span class="textoFaceta">@facetaItem.Name</span>
+					                    <span class="num-resultados">(@facetaItem.Number)</span>
+				                    </a>
+			                    </li>                                   
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>            
+    </fieldset>
+</div>

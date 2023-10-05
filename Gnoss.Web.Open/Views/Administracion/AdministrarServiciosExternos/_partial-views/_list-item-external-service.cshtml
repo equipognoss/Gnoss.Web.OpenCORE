@@ -1,0 +1,169 @@
+﻿@model ServiceNameModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra cada row de cada servicio externo.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	Guid randomId = @Guid.NewGuid();
+	// RandomId para el servicio externo (Id para modal)
+	string externalServiceId = randomId.ToString().Substring(0,5);
+	// Id del modal para edición de datos
+	string externalServiceModal = $"modal-{externalServiceId}";
+	bool isServiceNew = string.IsNullOrEmpty(Model.NombreServicio) ? true : false;
+	string date = isServiceNew ? DateTime.Now.ToString("dd/MM/yyyy") : "01/01/2023";
+	bool allowSaveData = true;
+}
+
+@{
+	@* Controlar la posibilidad de guardar datos (CI/CD) *@
+	if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+	{
+		allowSaveData = false;
+	}
+}
+
+
+<li class="component-wrap external-service-row @( isServiceNew ? "newExternalService" : null)" id="@externalServiceId">
+	<div class="component" data-id="@externalServiceId">
+		<div class="component-header-wrap">
+			<div class="component-header">
+                @* Icono para arrastrar y mover el servicio externo *@
+				<div class="component-sortable js-component-sortable-external-service">
+					<span class="material-icons-outlined sortable-icon">drag_handle</span>
+				</div>                
+				<div class="component-header-content">
+					<div class="component-header-left">
+                        @* Nombre *@
+						<div class="component-name-wrap">							
+							<span class="component-nombre">@Model.NombreServicio</span>							
+						</div>
+                        @* Url del servicio externo *@
+						<div class="component-url-wrap">
+							<span class="component-url">@Model.UrlServicio</span>
+						</div>
+                        @* Fecha creación / actualización del servicio externo *@
+						<div class="component-fecha-wrap">
+							<span class="component-fecha">@date</span>
+						</div>
+					</div>
+                    @* Acciones del servicio externo *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<div class="dropdown">
+								@* Dropdown de acciones *@
+								<a								
+								class="nav-link dropdown-toggle btn btn-outline-grey"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false">                                    
+									<span class="material-icons">create</span>
+									<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+								</a>
+								
+								@* Panel de las acciones *@
+								<div
+									class="dropdown-menu dropdown-menu-left basic-dropdown"
+									style="will-change: transform">
+									<ul class="no-list-style">
+										@* Editar *@
+										<li>
+											<a class="item-dropdown js-action-edit-component btnEditExternalService"
+											   data-target="#@(externalServiceModal)"
+											   data-toggle="modal">
+												<span class="material-icons">create</span>
+												<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+											</a>											  
+										</li>
+
+										@* Eliminar *@
+										<li>
+											<a class="item-dropdown js-action-delete-component btnDeleteExternalService"
+											   data-target="#modal-delete-external-service" 
+											   data-toggle="modal">
+												<span class="material-icons">delete</span>
+												<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+											</a>
+										</li>
+									</ul>
+								</div>								
+							</div>
+						</div>
+					</div>					
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Modal con la información del servicio externo *@
+	<div
+		id="@externalServiceModal"
+		class="modal modal-top fade modal-edicion modal-external-service @( isServiceNew ? "newExternalService" : null)"           
+		role="dialog"	
+		aria-modal="true">
+
+		@* Información oculta *@	        
+		<input type="hidden" name="TabEliminada" value="false" />	
+
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				@* Título del modal *@
+				<div class="modal-header">
+					<p class="modal-title">
+						<span class="material-icons">edit</span>					
+						<span class="community-name"> @( isServiceNew ? "Nuevo servicio externo" : Model.NombreServicio)</span>
+					</p>
+					<span
+						class="material-icons cerrar"
+						data-dismiss="modal"
+						aria-label="Close">close</span
+					>
+				</div>
+				<div class="modal-body">
+					<div class="formulario-edicion no-min-height">									                             										
+						@* Nombre del servicio *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","NOMBREDELSERVICIO")</label>				                        
+							<input
+								type="text"
+								name="Nombre"
+								placeholder="@Html.GetText("DEVTOOLS","NOMBREDELSERVICIO")"
+								class="form-control inputNombreServicioExterno"
+								value="@Model.NombreServicio">
+							<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","ELNOMBRENOPUEDECONTENERESPACIOSENBLANCOYDEBEESTARENMINUSCULA")</small>
+						</div>
+
+						@* Url del servicio *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","URLDELSERVICIOEXTERNO")</label>				                        
+							<input
+								type="text"
+								disabled
+								name="Url"
+								placeholder="@Html.GetText("DEVTOOLS","URLDELSERVICIOEXTERNO")"
+								class="form-control inputUrlServicioExterno"
+								value="@Model.UrlServicio">
+							<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","URLASOCIADOALSERVICIOESTAPROPIEDADESGENERADADEFORMAAUTOMATI")</small>
+						</div>
+
+						@if (allowSaveData)
+						{
+							@* Botón para guardar *@
+							<div class="panelBotonera">
+								<a 
+									href="javascript: void(0)"
+									class="btn btn-primary uppercase btnGuardarExternalService">@Html.GetText("COMMON","GUARDAR")</a>
+							</div>				
+						}						
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</li>

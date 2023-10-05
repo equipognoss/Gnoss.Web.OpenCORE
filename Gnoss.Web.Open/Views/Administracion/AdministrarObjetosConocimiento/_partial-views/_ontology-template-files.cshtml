@@ -1,0 +1,112 @@
+﻿@model ObjetoConocimientoModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra los diferentes ficheros existentes para subir asociados a un objeto de conocimiento.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    // Id para los id radioButtons
+    string randomId = @Guid.NewGuid().ToString().Substring(0,5); 
+    // Comprobar si se está editando o creando un nuevo objeto de conocimiento
+    bool editando = !string.IsNullOrEmpty(Model.GrafoActual);
+    // string txtReemplazarPlantilla = "Reemplazar plantilla";
+    // string txtReemplazarFichero = "Reemplazar fichero";
+    string txtReemplazarArchivo = @Html.GetText("DEVTOOLS","REEMPLAZARARCHIVO");
+    bool showExtraInformation = !editando || Model.EsObjetoPrimario;
+}
+
+@* Plantilla de la ontología *@
+<div class="form-group mb-5 panelObjetoConocimientoTemplate panelObjetoConocimientoOwlTemplate">
+    @* Título de sección + Botón cancelar *@
+    <div class="d-flex justify-content-between align-items-center">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONALAONTOLOGIADELOBJETODECONOCIMIENTO,SIYALATIENESDIS")</label>
+        <label class="control-label text-primary btnCancelObjetoConocimiento btnCancelObjetoConocimientoOwlTemplate  @( (!editando) ? "d-none" : null) " style="cursor: pointer;">@( (editando) ? @txtReemplazarArchivo : @Html.GetText("COMMON", "CANCELAR"))</label>
+    </div>
+
+    <div class="panelObjetoConocimientoFiles @( (editando) ? "d-none" : null) ">        
+        <input type="checkbox" name="Ontologia.EditOwl" class="chkEditObjetoConocimiento d-none" @Html.Raw(!editando ? "checked=\"checked\"":"") />
+	    <input class="dragAndDrop dragOwl" type="file" name="Ontologia.OWL" id="dragOwl_@randomId" accept="owl"  max-size="10240">    
+    </div>	
+</div>
+
+@* Archivo de configuración para el HTML de la plantilla *@
+<div class="form-group mb-5 panelObjetoConocimientoTemplate panelObjetoConocimientoHtmlTemplate">
+    @* Título de sección + Botón cancelar *@
+    <div class="d-flex justify-content-between align-items-center">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONAELARCHIVODECONFIGURACIONPARAELXMLDELOBJETODECONOCI")</label>
+        <label class="control-label text-primary btnCancelObjetoConocimiento btnCancelObjetoConocimientoHtmlTemplate @( (!editando) ? "d-none" : null) " style="cursor: pointer;">@( (editando) ? @txtReemplazarArchivo : @Html.GetText("COMMON", "CANCELAR"))</label>                
+    </div>
+
+    <div class="panelObjetoConocimientoFiles @( (editando) ? "d-none" : null) ">        
+        <input class="dragAndDrop dragHtml" type="file" name="Ontologia.XML" id="dragHtml_@randomId" accept="xml"  max-size="10240">
+        <div class="custom-control custom-checkbox mt-3 ml-4">
+            <input type="checkbox" class="custom-control-input utilizarArchivoGenerico utilizarArchivoGenericoHtml" name="Ontologia.GenericXML" id="utilizarArchivoGenericoHtml_@randomId" @Html.Raw(!editando ? "checked=\"checked\"":"")>
+            <label class="custom-control-label" for="utilizarArchivoGenericoHtml_@randomId">@Html.GetText("DEVTOOLS","UTILIZARARCHIVODECONFIGURACIONGENERICO")</label>
+            <input type="checkbox" name="Ontologia.EditXML" class="chkEditObjetoConocimiento d-none" @Html.Raw(!editando ? "checked=\"checked\"":"") />            
+        </div>
+    </div>    
+</div>
+
+
+@* No mostrar los siguientes DragAndDrop de ficheros si es un objeto secundario *@
+@if (showExtraInformation)
+{
+    @* Archivo de configuración de los estilos de la plantilla *@
+    <div class="form-group mb-5 panelObjetoConocimientoTemplate panelObjetoConocimientoCssTemplate">
+        @* Título de sección + Botón cancelar *@
+        <div class="d-flex justify-content-between align-items-center">        
+            <label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONAELARCHIVODECONFIGURACIONDELOSESTILOSDELOBJETODECON")</label>
+            <label class="control-label text-primary btnCancelObjetoConocimiento btnCancelObjetoConocimientoCssTemplate" style="cursor: pointer;">@txtReemplazarArchivo</label>
+        </div>
+
+        <div class="panelObjetoConocimientoFiles d-none">        
+            <input class="dragAndDrop dragCss" type="file" name="Ontologia.CSS" id="dragCss_@randomId" accept="css"  max-size="10240">
+            <div class="custom-control custom-checkbox mt-3 ml-4">
+                <input type="checkbox" class="custom-control-input utilizarArchivoGenerico utilizarArchivoGenericoCss" name="Ontologia.GenericCSS" id="utilizarArchivoGenericoCss_@randomId" @Html.Raw(!editando ? "checked=\"checked\"":"")>
+                <label class="custom-control-label" for="utilizarArchivoGenericoCss_@randomId">@Html.GetText("DEVTOOLS","UTILIZARARCHIVODECONFIGURACIONGENERICO")</label>
+                <input type="checkbox" name="Ontologia.EditCSS" class="chkEditObjetoConocimiento d-none" @Html.Raw(!editando ? "checked=\"checked\"":"") />
+            </div>
+        </div>    
+    </div>
+
+    @* Imagen de la plantilla a modo de icono *@
+    <div class="form-group mb-5 panelObjetoConocimientoTemplate panelObjetoConocimientoIconoTemplate">
+        @* Título de sección + Botón cancelar *@
+        <div class="d-flex justify-content-between align-items-center">        
+            <label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONALAIMAGENQUEACTUARACOMOIMAGENDELOBJETODECONOCIMIENT")</label>                                                 
+            <label class="control-label text-primary btnCancelObjetoConocimiento btnCancelObjetoConocimientoIconoTemplate" style="cursor: pointer;">@txtReemplazarArchivo</label>
+        </div>
+
+        <div class="panelObjetoConocimientoFiles d-none">        
+            <input class="dragAndDrop dragIcono" type="file" name="Ontologia.IMG" id="dragIcono_@randomId" accept="image"  max-size="10240">
+            <div class="custom-control custom-checkbox mt-3 ml-4">
+                <input type="checkbox" class="custom-control-input utilizarArchivoGenerico utilizarArchivoGenericoIcono" name="Ontologia.GenericIMG" id="utilizarArchivoGenericoIcono_@randomId" @Html.Raw(!editando ? "checked=\"checked\"":"")>
+                <label class="custom-control-label" for="utilizarArchivoGenericoIcono_@randomId">@Html.GetText("DEVTOOLS","UTILIZARARCHIVODECONFIGURACIONGENERICO")</label>
+                <input type="checkbox" name="Ontologia.EditIMG" class="chkEditObjetoConocimiento d-none" @Html.Raw(!editando ? "checked=\"checked\"":"") />
+            </div>    
+        </div>
+    
+    </div>
+
+    @* Archivo Javascript *@
+    <div class="form-group mb-5 panelObjetoConocimientoTemplate panelObjetoConocimientoJsTemplate">
+        @* Título de sección + Botón cancelar *@
+        <div class="d-flex justify-content-between align-items-center">        
+            <label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONAELARCHIVOJAVASCRIPT")</label>
+            <label class="control-label text-primary btnCancelObjetoConocimiento btnCancelObjetoConocimientoJsTemplate" style="cursor: pointer;">@txtReemplazarArchivo</label>
+        </div>
+    
+        <div class="panelObjetoConocimientoFiles d-none">
+            <input class="dragAndDrop dragJs" type="file" name="Ontologia.JS" id="dragJs_@randomId" accept="js"  max-size="10240">
+            <div class="custom-control custom-checkbox mt-3 ml-4">
+                <input type="checkbox" class="custom-control-input utilizarArchivoGenerico utilizarArchivoGenericoJs" name="Ontologia.GenericJS" id="utilizarArchivoGenericoJs_@randomId" @Html.Raw(!editando ? "checked=\"checked\"":"")>
+                <label class="custom-control-label" for="utilizarArchivoGenericoJs_@randomId">@Html.GetText("DEVTOOLS","UTILIZARARCHIVODECONFIGURACIONGENERICO")</label>
+                <input type="checkbox" name="Ontologia.EditJS" class="chkEditObjetoConocimiento d-none" @Html.Raw(!editando ? "checked=\"checked\"":"") />
+            </div>
+        </div>    
+    </div>
+}

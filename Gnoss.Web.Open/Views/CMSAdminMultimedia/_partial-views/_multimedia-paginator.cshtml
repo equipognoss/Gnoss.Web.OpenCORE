@@ -1,0 +1,100 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que contiene el paginador para items multimedia
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+ResultadoModel resultado = Html.GetResultado();
+
+int numTotal = resultado.NumeroResultadosTotal;
+int numResultadosPagina = resultado.NumeroResultadosPagina;
+int PaginaActual = resultado.NumeroPaginaActual;
+string urlNavegador = resultado.UrlBusqueda;
+int numPaginas = (int)Math.Ceiling((double)numTotal / (double)numResultadosPagina);
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista que contiene el paginador para items multimedia --------------------
+*@
+
+<div id="panNavegador">
+	<div class="paginadorResultados">
+		<ul class="pagination arrows">
+			@* Pagina Anterior *@
+			<li>
+				@if (PaginaActual > 1)
+				{	
+					@* Pagina anterior habilitada *@
+					<a href="javascript: void(0);" 
+						onclick="operativaGestionMultimediaCMS.AgregarFiltroComponentes('pagina=@(PaginaActual-1)');return false;"
+						aria-label="Pagina anterior">
+						<span class="deshabilitado primeraPagina" aria-hidden="true">Página anterior</span>
+					</a>
+					
+				}
+				else
+				{
+					@* Pagina anterior deshabilitada *@
+					<a href="javascript: void(0);" 						
+						aria-label="Pagina anterior">
+						<span class="deshabilitado primeraPagina" aria-hidden="true">Página anterior</span>
+					</a>					
+				}
+			</li>
+
+			@* Pagina siguiente *@
+			<li>
+			@if (PaginaActual < numPaginas)
+			{
+				@* Pagina siguiente habilitada *@
+			    <a class="indiceNavegacion filtro ultimaPagina" 
+				   href="javascript: void(0)"
+				   onclick="operativaGestionMultimediaCMS.AgregarFiltroComponentes('pagina=@(PaginaActual+1)');return false;">
+				   Página siguiente
+			   </a>
+			}
+			else
+			{
+				@* Pagina siguiente deshabilitada *@			    
+				<a href="javascript: void(0);" 						
+					aria-label="Pagina siguiente">
+					<span class="deshabilitado ultimaPagina" aria-hidden="true">Página anterior</span>
+				</a>	
+			}
+			</li>
+		</ul>
+		@* Nº de páginas del paginador *@
+		<div class="pag">
+			<nav>
+				<ul class="pagination">
+					@* Pintado de cada página de resultados *@
+					@for (int i = 1; i <= numPaginas; i++)
+					{
+					    if (PaginaActual == i)
+					    {					        
+							<li>
+								<span class="actual indiceNavegacion">@i</span>
+							</li>
+					    }
+					    else
+					    {
+							<li>
+								<a href="javascript: void(0)"
+								    onclick="operativaGestionMultimediaCMS.AgregarFiltroComponentes('pagina=@i');return false;"
+									name="pagina|@i" 
+									class="indiceNavegacion filtro">@i
+								</a>
+							</li>
+					    }
+					}
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>

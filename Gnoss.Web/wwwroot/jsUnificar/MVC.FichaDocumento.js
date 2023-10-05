@@ -34,15 +34,15 @@ function DesplegarAccionConPanelIDMVC(pPanelCopiar, pBoton, pPanelID) {
 // Desplegar y mostrar la vista o contenido devuelto de una petición vía urlAccion para ser mostrado en el panel pPanelID
 /**
  * 
- * @param urlAccion: URL de la petición que será pasada al controller para que este devuelva datos (Puede ser una vista y datos que se controlar�n en el modelo de la p�gina)
+ * @param urlAccion: URL de la petición que será pasada al controller para que este devuelva datos (Puede ser una vista y datos que se controlarán en el modelo de la página)
  * @param {any} pBoton: Botón que ha desplegado la acción.
  * @param {any} pPanelID: ID del panel donde se devolverá ese código HTML devuelto por la petición mandada en el parámetro urlAccion
  * @param {any} pArg: Argumentos adicionales
  */
 function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {    
-    // Panel principal (padre) donde se mostrar�n todos los paneles
+    // Panel principal (padre) donde se mostrarán todos los paneles
     var panel = $('#' + pPanelID);    
-    // Panel donde se mostrar� el contenido
+    // Panel donde se mostrará el contenido
     var panelContent = panel.children('#content');
     // Panel de mensajes de OK/KO del contenedor padre (Posible error en la carga del servidor)
     var panelMessagesResult = panel.children().children('#resource-message-results');    
@@ -56,18 +56,18 @@ function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
         params = null;
     }
 
-    // Realizar la petici�n AJAX
+    // Realizar la petición AJAX
     GnossPeticionAjax(urlAccion, params, true).done(function (data) {
         panelContent.html(data);        
         // Ocultar panel de mensajes mensajes
         panelMessagesResult.css("display", "none");       
         panelContent.css("display", "block");
-        // Llamar a inicializar las DataTable dentro del modal para acci�n "Historico" en Recurso
+        // Llamar a inicializar las DataTable dentro del modal para acción "Historico" en Recurso
         accionHistorial.montarTabla();
-        // Llamar a inicializar los despliegues para acci�n "Categorizar" en Recurso        
+        // Llamar a inicializar los despliegues para acción "Categorizar" en Recurso        
         accionDesplegarCategorias.init();
 
-        // Recargar CKEditor si hubiera alg�n Input con clase de CKEditor
+        // Recargar CKEditor si hubiera algún Input con clase de CKEditor
         if ($(panelContent).find('.cke').length > 0) RecargarTodosCKEditor(); 
 
     }).fail(function (data) {
@@ -87,11 +87,11 @@ function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
 }
 
 
-// Resetear el contenido del contenedor Modal para que la informaci�n no est� visible y tenga que volver a cargarse de nuevo.
+// Resetear el contenido del contenedor Modal para que la información no está visible y tenga que volver a cargarse de nuevo.
 // El contenedor #modal-container es utilizado para albergar modales de un Recurso de tal manera que pueda reutilizarse cada vez que este se cierra.
-// Ej: En ficha de recurso, el modal "Historico" se carga de forma din�mica. Cuando se cierre el contenedor padre, habr�a que quitar el contenido para volver a ser reutilizado
+// Ej: En ficha de recurso, el modal "Historico" se carga de forma dinámica. Cuando se cierre el contenedor padre, habrá que quitar el contenido para volver a ser reutilizado
 var resetModalContainer = {
-    // Inicializar el comportamiento cuando la p�gina web est� cargada
+    // Inicializar el comportamiento cuando la página web está cargada
     init: function () {        
         $("#modal-container").on("hidden.bs.modal", function () {            
             // Añadir la clase por defecto para que se muestre en el top de la página
@@ -112,19 +112,19 @@ var resetModalContainer = {
             initialContainerContent += '<div class="ok"></div>';
             initialContainerContent += '<div class="ko"></div>';
             initialContainerContent += '</div>';
-            // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abri� antes el modal)
+            // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abrió antes el modal)
             panelToReset.html(initialContainerContent).fadeIn();
         });
         return;
     },
 
        
-    // Vaciar el contenedor de un modal y dejarlo como "loading" hasta que este vuelva a llenarse con datos v�a API REST (Ficha Recurso: Eliminar - Eliminar Selectivo)
+    // Vaciar el contenedor de un modal y dejarlo como "loading" hasta que este vuelva a llenarse con datos vía API REST (Ficha Recurso: Eliminar - Eliminar Selectivo)
     // Sirve para volver a llenar un modal sin que este sea cerrado.
     resetModalContent: function () {
         // Contenedor padre de los modales
         var $modalContainer = $("#modal-container");
-        // Panel donde se vaciar� el contenido actual para emular la carga (Loading)
+        // Panel donde se vaciará el contenido actual para emular la carga (Loading)
         var panelToReset = $modalContainer.find("#content");
         // HTML que cargaremos de nuevo una vez se cierre el formulario (resetearlo de inicio)
         var initialContainerContent = '';
@@ -140,7 +140,7 @@ var resetModalContainer = {
         initialContainerContent += '<div class="ok"></div>';
         initialContainerContent += '<div class="ko"></div>';
         initialContainerContent += '</div>';
-        // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abri� antes el modal)
+        // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abrió antes el modal)
         panelToReset.html(initialContainerContent);       
     },
 };
@@ -272,7 +272,7 @@ function CambiarOnClickPorOnclickAux(that) {
 /**
  * Acción de realizar voto positivo de un recurso. Realización de una forma más visual.
  * - Aparecerá un pequeño "Loading" durante la acción del voto
- * - Actualizará el num de votos cuando finalice la acción
+ * - El num de votos cuando finalice la acción
  * - Estará disponible la acción inversa cuando finalice el voto realizado.
  * @param {any} that: El botón pulsado (Span) con el icono de thumbs_up_alt
  * @param {any} urlVotarRecurso: La URL para realizar el voto
@@ -282,11 +282,11 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
     $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
     $(that).addClass("eleccionUsuario");
 
-    // Par�metros
+    // Parámetros
     var funcionVotarInvertido = "AccionRecurso_VotarEliminar(this, '" + urlVotarRecursoInvertido + "', '" + urlVotarRecurso + "')";
     var iconoVoto = "thumb_up_alt";
     //var iconoVotoInvertido = "thumb_down_alt";
-    // Ser� el mismo icono pero cambiado el color
+    // Será el mismo icono pero cambiado el color
     var iconoVotoInvertido = iconoVoto;
     var nombreClaseVotoOK = "activo"
     var claseMaterialIcons = "material-icons";
@@ -300,7 +300,7 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
     $(that).html("");    
     // Elimino la clase de material icons para poder cambiar el color
     $(that).removeClass(claseMaterialIcons);    
-    // Muestrar loading hasta que se complete la petici�n de "Votar"
+    // Muestrar loading hasta que se complete la petición de "Votar"
     $(that).addClass(loadingClass);
 
     if (urlVotarRecurso != "") {
@@ -312,18 +312,18 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
             }
             // Cambiar icono a Voto negativo        
             $(that).html(iconoVotoInvertido);
-            // Cambiar la funci�n a realizar a Voto negativo
+            // Cambiar la función a realizar a Voto negativo
             $(that).attr("onclick", funcionVotarInvertido);
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
-            // A�ado la clase de megusta directamente al padre
+            // Añado la clase de megusta directamente al padre
             $(that).parent().toggleClass(nombreClaseVotoOK);
             $(that).removeClass(loadingClass);
-            // Cambiar el n�mero del voto realizado a +1
+            // Cambiar el número del voto realizado a +1
             numVotosActual += 1;
             $numVotos.html(numVotosActual);
         }).fail(function (data) {
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
             // Cambiar el loading y volver a como estaba antes (original) del error        
             $(that).html(iconoVoto);
@@ -331,7 +331,7 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
             if (data == "invitado") { operativaLoginEmergente.init(); }
         });
     } else {
-        // A�ado de nuevo la clase de material icons
+        // Añado de nuevo la clase de material icons
         $(that).addClass(claseMaterialIcons);
         // Cambiar el loading y volver a como estaba antes (original) del error        
         $(that).html(iconoVoto);
@@ -403,11 +403,11 @@ function AccionRecurso_VotarNegativoListado(that, urlVotarRecurso) {
 }
 
 /**
- * Acci�n de realizar voto negativo de un recurso. Realizaci�n de una forma m�s visual.
- * - Aparecer� un peque�o "Loading" durante la acci�n del voto
- * - Actualizar� el num de votos cuando finalice la acci�n
- * - Estar� disponible la acci�n inversa cuando finalice el voto realizado.
- * @param {any} that: El bot�n pulsado (Span) con el icono de thumbs_up_alt
+ * Acción de realizar voto negativo de un recurso. Realización de una forma más visual.
+ * - Aparecerá un prqueño "Loading" durante la acción del voto
+ * - El num de votos cuando finalice la acción
+ * - Estará disponible la acción inversa cuando finalice el voto realizado.
+ * @param {any} that: El botón pulsado (Span) con el icono de thumbs_up_alt
  * @param {any} urlVotarRecurso: La URL para realizar el voto
  * @param {any} urlVotarRecursoInvertido: La URL para realizar el voto contrario/invertido
  */
@@ -415,11 +415,11 @@ function AccionRecurso_VotarNegativoListado(that, urlVotarRecurso) {
 function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInvertido) {
     $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
 
-    // Par�metros
+    // Parámetros
     var funcionVotarInvertido = "AccionRecurso_VotarPositivo(this, '" + urlVotarRecursoInvertido + "', '" + urlVotarRecurso + "')";
     var iconoVoto = "thumb_up_alt";
     //var iconoVotoInvertido = "thumb_up_alt";
-    // Ser� el mismo icono pero cambiado el color
+    // Será el mismo icono pero cambiado el color
     var iconoVotoInvertido = iconoVoto;
     var nombreClaseVotoOK = "activo"
     var claseMaterialIcons = "material-icons";
@@ -433,7 +433,7 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
     $(that).html("");
     // Elimino la clase de material icons para poder cambiar el color
     $(that).removeClass(claseMaterialIcons);
-    // Muestrar loading hasta que se complete la petici�n de "Votar"
+    // Muestrar loading hasta que se complete la petición de "Votar"
     $(that).addClass(loadingClass);
 
 
@@ -445,18 +445,18 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
             }
             // Cambiar icono a Voto negativo        
             $(that).html(iconoVotoInvertido);
-            // Cambiar la funci�n a realizar a Voto negativo
+            // Cambiar la función a realizar a Voto negativo
             $(that).attr("onclick", funcionVotarInvertido);
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
             $(that).removeClass(loadingClass);
-            // A�adimos la clase para el color a voto realizado (Like)
+            // Añadimos la clase para el color a voto realizado (Like)
             $(that).parent().toggleClass(nombreClaseVotoOK);
-            // Cambiar el n�mero del voto realizado a +1
+            // Cambiar el número del voto realizado a +1
             numVotosActual -= 1;
             $numVotos.html(numVotosActual);
         }).fail(function (data) {
-            // A�ado de nuevo la clase de material icons
+            // Añado de nuevo la clase de material icons
             $(that).addClass(claseMaterialIcons);
             // Cambiar el loading y volver a como estaba antes (original) del error        
             $(that).html(iconoVoto);
@@ -465,7 +465,7 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
             if (error == 'Invitado') { operativaLoginEmergente.init(); }
         });
     } else {
-        // A�ado de nuevo la clase de material icons
+        // Añado de nuevo la clase de material icons
         $(that).addClass(claseMaterialIcons);
         // Cambiar el loading y volver a como estaba antes (original) del error        
         $(that).html(iconoVoto);
@@ -604,7 +604,7 @@ function AccionRecurso_MetaDescripcion(urlMetaDescripcion, documentoID) {
 
 /**
  * Mostrar el mensaje correcto de recurso desvinculado. 
- * Seguidamente, realiza la petici�n para cargar los nuevos recursos vinculados.
+ * Seguidamente, realiza la petición para cargar los nuevos recursos vinculados.
  * @param {any} urlDesvincularRecurso
  * @param {any} urlCargarVinculados
  * @param {any} documentoID
@@ -643,10 +643,10 @@ function Vinculados_CargarVinculados(urlCargarVinculados) {
 }
 
 /**
- * Actualizar la acci�n para poder certificar un recurso. Debido al cambio del Front, ahora no se hace mediante "Select" sino con Radio
- * @param {any} urlPaginaCertificar: Url para realizar la acci�n de certificar un recurso.
+ * Actualizar la acción para poder certificar un recurso. Debido al cambio del Front, ahora no se hace mediante "Select" sino con Radio
+ * @param {any} urlPaginaCertificar: Url para realizar la acción de certificar un recurso.
  * @param {any} documentoID: Documento ID o identificador del recurso.
- * @param {any} textoCertificado: Parece ser simplemente el texto de "certificaci�n".
+ * @param {any} textoCertificado: Parece ser simplemente el texto de "certificación".
  */
 function AccionRecurso_Certificar_Aceptar(urlPaginaCertificar, documentoID, textoCertificado) {
     MostrarUpdateProgress();
@@ -654,9 +654,9 @@ function AccionRecurso_Certificar_Aceptar(urlPaginaCertificar, documentoID, text
     // var comboCertificado = $("#comboCertificado_" + documentoID);
     // var valorSeleccionado = comboCertificado.find("option:selected").text();   
 
-    // Cogemos el atributo "data-value" que ser� el valor de la label elegida
+    // Cogemos el atributo "data-value" que será el valor de la label elegida
     var valorSeleccionado = $('input[name=certificar-recurso]:checked').attr("data-value");
-    // Cogemos id o value (no el texto en bruto) de la opci�n seleccionada en el radio button.
+    // Cogemos id o value (no el texto en bruto) de la opción seleccionada en el radio button.
     var opcionSeleccionada = $('input[name=certificar-recurso]:checked').attr("data-option");
     
     var dataPost = {
@@ -1010,7 +1010,7 @@ function AccionRecurso_Compartir_Cambiar(urlAccionCambiarCompartir, documentoID,
         // panelDespl.find('#divSelCatTesauro').html(html);
         //panelDespl.find('.divCategorias').html(html);        
         panelDespl.find('#panCategoriasTesauroArbol').html(html);
-        // Llamar a inicializar los despliegues para acci�n "Compartir" en Recurso        
+        // Llamar a inicializar los despliegues para acción "Compartir" en Recurso        
         accionDesplegarCategorias.init()               
 
         panelDespl.find('#txtSeleccionados').val('');
@@ -1613,7 +1613,7 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
     const panTextoComentario = $(panComentario).find('.comentario-contenido');
     const mensajeAntiguo = panTextoComentario.html();
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     let plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -1637,7 +1637,7 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
     plantillaPanelHtml += '<div class="ko"></div>';
     plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
-    // Panel de botones para la acci�n
+    // Panel de botones para la acción
     plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
     plantillaPanelHtml += '<button class="btn btn-primary">Editar comentario</button>'
     plantillaPanelHtml += '</div>';
@@ -1645,7 +1645,7 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
     plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones
@@ -1859,7 +1859,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     // Panel dinamico del modal padre donde se insertara la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     let plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -1883,7 +1883,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     plantillaPanelHtml += '<div class="ko"></div>';
     plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
-    // Panel de botones para la acci�n
+    // Panel de botones para la acción
     plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
     plantillaPanelHtml += '<button class="btn btn-primary">' + mensajes.enviar + '</button>'
     plantillaPanelHtml += '</div>';
@@ -1891,7 +1891,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones

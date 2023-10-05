@@ -1,0 +1,87 @@
+﻿@model AdministrarUtilidadesController.AdministrarUtilidadesCertificationModel
+@*
+Descripción
+-----------------------------------------------
+Vista modal que se usará dentro de un contenedor de bootstrap para crear o editar una determinada certificación de una comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    // Título del modal -> Por defecto Crear modal
+    string tituloModal = "Crear certificación";
+    // Subtitulo del modal -> Por defecto, Creación del modal
+    string subtituloModal = "Personaliza la nueva certificación proporcioando el nombre de la misma. Una vez creada, este nuevo nivel de certificación estará disponible en la comunidad.";
+    // Icono del modal -> Por defecto icono de creación
+    string iconoModal = "create_new_folder";
+    // Detectar si se ha creado un certificado pero aun no se ha guardado y por lo tanto está siendo editado.
+    bool isRecentlyCreated = false;
+}
+
+@{
+    @* Comprobación para nombre, título e icono del modal (Crear o Editar) *@
+    if (!String.IsNullOrEmpty(Model.name))
+    {
+        tituloModal = "Editar certificación";
+        subtituloModal = "Introduce el nuevo nombre para editar la certificación";
+        iconoModal = "edit";
+
+        if (String.IsNullOrEmpty(Model.id))
+        {
+            // Editando certificado de reciente creación
+            isRecentlyCreated = true;
+        }
+    }
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista Modal crear o editar un determinado certificado --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">@iconoModal</span>@tituloModal
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+
+@* Contenido central del modal *@
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <p>@subtituloModal</p>
+
+        @* Contenedor del nombre de la certificación *@
+        <div class="form-group mb-5">
+	        <div class="autocompletar-tags form-group">
+		        <label class="control-label d-block">Nombre</label>
+		        <input
+                    id="txtNombreCertificacion"	
+                    class="form-control"			        
+			        type="text"                    
+			        placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREPARALACERTIFICACION")"
+                    value = "@Model.name"
+			        autocomplete="off"/>
+                <small id="nombreAyuda" class="form-text text-muted"></small>
+	        </div>
+
+        </div>
+
+        <div class="panelBotonera">
+            <a id="btnGuardarCertificacion" 
+               data-id="@Model.id"
+               data-orden = "@Model.position"
+               @(isRecentlyCreated ? "data-new=true" : "data-new=false")
+               class="btn btn-primary uppercase">@Html.GetText("COMMON", "GUARDAR")</a>
+        </div>
+    </div>
+</div>
+
+
+@* Carga de operativa *@
+<script>
+        (function ($) {            
+            // Inicializar operativa de crear/editar certificado            
+            operativaGestionCertificacion.operativaModalCreacionEdicionCertificados();
+        })();
+</script>

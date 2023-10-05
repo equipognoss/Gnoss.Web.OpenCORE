@@ -1,0 +1,147 @@
+﻿@model CategoriaCookieModel
+@using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán los detalles de la categoría cookie vía modal. Aquí también se incluye el modal para confirmar el borrado de la categoría cookie.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+	CategoriaProyectoCookie categoriaCookie = Model.CategoriaProyectoCookie;	
+	string idModalCategoryCookie = "modal-configuracion-category-cookie_" + categoriaCookie.CategoriaID;	
+	string idModalCategoryCookieDelete = "modal-configuracion-category-cookie_delete" + categoriaCookie.CategoriaID;
+	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);
+	string headerModalTitle = Html.ObtenerTextoIdiomaUsuario(categoriaCookie.Nombre, true);	
+	
+}
+
+@* Modal con la información de la categoría cookie *@
+<div
+	id="@idModalCategoryCookie"
+	class="modal modal-top fade modal-edicion modal-con-tabs modal-cookie"           
+	role="dialog"	
+	aria-modal="true">
+
+	@* Información oculta de la cookie *@	        		        
+	<input type="hidden" name="TabEliminada" value="false" />
+    <input type="hidden" name="CategoriaModificada" value="@Model.Modificada.ToString()" />
+    
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>					
+					<span class="community-name">@headerModalTitle</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span
+				>
+			</div>
+			<div class="modal-body">
+				<div class="formulario-edicion">									                             
+					@* Tabs de los idiomas en multiIdioma *@
+					<div class="panContenidoMultiIdioma basicInfo">
+
+					</div>
+
+                    @* Contenido de los tabs de los idiomas *@
+					<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">											
+						
+						@* Nombre Categoría Cookie  *@
+						<div class="form-group mb-4">								
+							<input
+								type="text"
+								name="CategoryName"
+								data-labeltext = "@Html.GetText("COMADMINCOOKIES", "NOMBRE")"									
+								placeholder="@Html.GetText("COMADMINCOOKIES", "NOMBRE")"
+								class="form-control multiIdioma"								
+								value="@categoriaCookie.Nombre"/>
+						</div>
+						
+						@* Nombre corto de la Categoria Cookie *@
+						<div class="form-group mb-4">								
+							<textarea 
+									name="CategoryDescription"
+									@(categoriaCookie.EsCategoriaTecnica ? "disabled" : "")
+									class="multiIdioma"
+									data-labeltext = "@Html.GetText("COMADMINCOOKIES", "DESCRIPCION")"
+									cols="40"
+									rows="3">@categoriaCookie.Descripcion</textarea>							
+						</div>
+					</div>
+					
+					@* Contenedor de Inputs sin multiidioma*@
+					<div class="tab-content mt-n5">							
+						@* Nombre Corto de la categoría Cookie  *@
+						<div class="form-group mb-4">								
+							<label class="control-label d-block">@Html.GetText("COMADMINCOOKIES", "NOMBRECORTO")</label>
+							<input
+								type="text"
+								@(categoriaCookie.EsCategoriaTecnica ? "disabled" : "")
+								name="CategoryShortName"
+								data-labeltext = "@Html.GetText("COMADMINCOOKIES", "NOMBRECORTO")"									
+								placeholder="@Html.GetText("COMADMINCOOKIES", "NOMBRECORTO")"
+								class="form-control"								
+								value="@categoriaCookie.NombreCorto"/>
+						</div>	
+
+						@* Botón para guardar la cookie *@
+						<div class="panelBotonera">
+							<a 
+								href="javascript: void(0)"
+								class="btn btn-primary uppercase btnGuardarCategoryCookie">@Html.GetText("COMMON","GUARDAR")</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@* Modal de borrado si no dispone de cookies vinculadas *@
+@if (!Model.CookiesVinculadas)
+{              
+	@* Modal de eliminación de categoría cookie *@
+	<div
+		id="@idModalCategoryCookieDelete"
+		class="modal modal-top fade modal-confirmDelete"           
+		role="dialog"	
+		aria-modal="true">
+
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				@* Modal para controlar el borrado de la cookie *@
+				<div class="modal-header">
+					@* Título del Modal *@
+					<p class="modal-title">
+						<span class="material-icons">delete</span>
+						@Html.GetText("COMMON","ELIMINAR")
+					</p>
+					@* Cierre del Modal *@
+					<span class="material-icons cerrar"
+						  data-dismiss="modal"
+						  aria-label="Close">close</span>
+				</div>
+				<div class="modal-body">				
+					<div class="form-group">
+						<label class="control-label">@Html.GetText("DEVTOOLS","DESEAELIMINARLACATEGORIADECOOKIESELECCIONADA")</label>
+					</div>
+					<div class="form-actions">
+						<button data-dismiss="modal" class="btn btn-outline-primary btnNotConfirmDeleteCategoryCookie">@Html.GetText("COMMON","NO")</button>
+						<button class="btn btn-primary btnConfirmDeleteCategoryCookie">@Html.GetText("COMMON","SI")</button>
+					</div>				
+				</div>
+			</div>
+		</div>
+	</div>
+}

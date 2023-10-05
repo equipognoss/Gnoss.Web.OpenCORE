@@ -1,40 +1,60 @@
 ﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
 
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato Imagen. Se podrá subir al servidor una imagen 
+la cual se añadirá al componente.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
     string idiomaPanel = (string)ViewData["idiomaPanel"];
-    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS) + "_";
+    string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
     string valorPropiedad = Model.Value;
     if (!string.IsNullOrEmpty(idiomaPanel))
     {
-        idPanel += idiomaPanel;
+        idPanel += "_" + idiomaPanel;
         valorPropiedad = Html.ObtenerTextoDeIdioma(Model.Value, idiomaPanel, null, true);
     }
 
     string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+
 }
 
-<div id="contenedorPrincipal_@idPanel">
-    <p id="parrafo_@idPanel">
-        <label for="@idPanel">Imagen@(Model.Required ? " *" : "")</label>
-    </p>
-    <p class="panelImg" @Html.Raw(string.IsNullOrEmpty(valorPropiedad) ? "style=\"display:none\"" : "")>
-        <img style="height:200px;" id="img_@idPanel" src="@valorPropiedad" />
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo Imagen --------------------
+*@
+
+
+<div id="contenedorPrincipal_@idPanel" class="mb-5 form-group d-flex flex-column">                     
+    @* Título del componente *@
+    <label class="control-label d-block">Imagen@(Model.Required ? " *" : "")</label>
+    @* Contenedor para el input y botón de subida de fichero adjunto *@
+    <div class="input-group mb-3">            
+        <input type="file" id="file_@idPanel" class="d-none custom-file-input @Html.Raw(string.IsNullOrEmpty(valorPropiedad) ? "" : "") inputLoadImage" 
+               data-idiomapanel="@idiomaPanel"
+               data-idpanel = "@idPanel"
+               accept="image/jpg, image/jpeg, image/png, image/gif"/>
+        <label class="custom-file-label" for="file_@idPanel" data-browse="Explorar">@Html.GetText("DEVTOOLS","SELECCIONAUNAIMAGENPARAADJUNTAR")</label>
+    </div>
+    
+    @* Panel donde se cargará la imagen *@  
+    <div class="panelImg mt-2 @Html.Raw(string.IsNullOrEmpty(valorPropiedad) ? "d-none" : "") " data-idiomapanel="@idiomaPanel">
+        <img style="height:200px; margin-top: 30px;" id="img_@idPanel" src="@valorPropiedad" />
         <input type="hidden" id="@idPanel" value="@valorPropiedad" />
-        <input type="button" onclick="Propiedad2_EliminarImagen($(this), '@idiomaPanel')" value="Eliminar">
-    </p>
-    <p class="selectorTipo" @Html.Raw(!string.IsNullOrEmpty(valorPropiedad) ? "style=\"display:none\"" : "")>
-        <select name="select_@idPanel" id="select_@idPanel" onchange="Propiedad2_CambiarSubidaImagen($(this), '@idiomaPanel')" class="ddlsubidaes">
-            <option value="0">Seleccionar opción</option>
-            <option value="1">Seleccionar imagen</option>
-            <option value="2">Indicar url imagen</option>
-        </select>
-    </p>
-    <p class="subirURL" style="display:none">
-        Url de la imagen
-        <input type="text" id="url_@idPanel" value="" />
-        <input type="button" style="display:inline" onclick="Propiedad2_SubirImagenDesdeUrl($(this), '@idiomaPanel');" value="Aceptar">
-    </p>
-    <p class="subirIMG" style="display:none">
-        <input type="file" accept="image/jpg, image/jpeg, image/png, image/gif" id="file_@idPanel" onchange="Propiedad2_SubirImagenDesdeFichero(this, '@idiomaPanel')" style="width:400px;">
-    </p>
+        @* Botón para eliminar la imagen*@
+        <div class="mt-2">
+                <button class="btn btn-outline-primary btnDeleteImage"
+                        data-idpanel = "@idPanel"
+                        data-idiomapanel="@idiomaPanel">
+                    <span class="material-icons">delete</span>
+                    <span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>    
+                </button>    
+        </div>
+    </div>        
 </div>

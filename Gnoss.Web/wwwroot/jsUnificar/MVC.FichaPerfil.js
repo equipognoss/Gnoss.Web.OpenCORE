@@ -1,16 +1,16 @@
 ﻿/**
- * Acci�n de seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el bot�n "Seguir"
- * @param {any} that: El bot�n que ha disparado la acci�n
+ * Acción de seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el botón "Seguir"
+ * @param {any} that: El botón que ha disparado la acción
  * @param {any} urlSeguirPerfil: URL a la que hay que llamar para realizar la llamda de "No seguir"
  */
 function AccionPerfil_Seguir(that, urlSeguirPerfil) {
 
-    // Icono del bot�n clickeado
+    // Icono del botón clickeado
     const buttonIcon = $(that).find("span.material-icons");
     const oldIconButton = buttonIcon.text();
     const oldTextButton = $(that).find(".texto").text();
 
-    // Textos e iconos una vez pulsado el bot�n
+    // Textos e iconos una vez pulsado el botón
     let newTextButton = "";
     let newIconButton = "";
     const loadingClass = "spinner-border spinner-border-sm mr-2 pr-0";
@@ -141,19 +141,19 @@ function AccionPerfil_Seguir_Listado(that, urlSeguir, followUser) {
 
 
 /**
- * Acci�n de no seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el bot�n "No seguir"
- * Cambiar� el nombre al bot�n indicando "Siguiendo"
- * Eliminar� el atributo onClick para que no se vuelva a ejecutar la acci�n del bot�n
- * @param {any} that: El bot�n que ha disparado la acci�n
+ * Acción de no seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el botón "No seguir"
+ * Cambiará el nombre al botón indicando "Siguiendo"
+ * Eliminará el atributo onClick para que no se vuelva a ejecutar la acción del botón
+ * @param {any} that: El botón que ha disparado la acción
  * @param {any} urlNoSeguirPerfil: URL a la que hay que llamar para realizar la llamda de "No seguir"
  */
 function AccionPerfil_NoSeguir(that, urlNoSeguirPerfil) {
 
-    // Icono del bot�n
+    // Icono del botón
     var buttonIcon = $(that).find("span.material-icons");
-    // Texto del bot�n
+    // Texto del botón
     var textButton = $(buttonIcon).siblings();
-    // Textos e iconos una vez pulsado el bot�n
+    // Textos e iconos una vez pulsado el botón
     var newTextButton = "Sin seguimiento";
     var newIconButton = "person_outline";
     
@@ -164,20 +164,19 @@ function AccionPerfil_NoSeguir(that, urlNoSeguirPerfil) {
     });
     // Nuevo Front
     //$(that).parent().remove();
-    // Cambiar el nombre e icono del bot�n
+    // Cambiar el nombre e icono del botón
     ChangeButtonAndText(that, newTextButton, newIconButton, "btn-primary");
 }
 
 /**
- * Cambiar el texto, el icono (material-icons) y eliminar el evento click de un bot�n
- * @param {any} button: El bot�n que se desea modificar
- * @param {any} newTextButton: El nuevo texto que tendr� el bot�n
- * @param {any} newIconButton: El nuevo icono (material-icons) que tendr� el bot�n
- * @param {any} classToBeDeleted: La clase que se eliminar� del bot�n 
- */
+ * Cambiar el texto, el icono (material-icons) y eliminar el evento click de un botón
+ * @param {any} button: El botón que se desea modificar
+ * @param {any} newTextButton: El nuevo texto que tendrá el botón
+ * @param {any} newIconButton: El nuevo icono (material-icons) que tendrá el botón
+ * @param {any} classToBeDeleted: La clase que se eliminará del trendrá */
 function ChangeButtonAndText(button, newTextButton, newIconButton, classToBeDeleted) {
 
-    // Icono del bot�n
+    // Icono del botón
     var buttonIcon = $(button).find("span.material-icons");
     var textButton = "";
     var icon = "";
@@ -191,35 +190,35 @@ function ChangeButtonAndText(button, newTextButton, newIconButton, classToBeDele
         textButton = $(buttonIcon).siblings();
     }
 
-    // Cambiar nombre al bot�n 
+    // Cambiar nombre al botón 
     textButton.text(newTextButton);
-    // Cambiar el icono al bot�n
+    // Cambiar el icono al botón
     buttonIcon.text(newIconButton);
-    // A�adir cursor: normal
+    // Añadir cursor: normal
     if (classToBeDeleted != undefined) {
         $(button).css("cursor", "auto");
-        // Quitar el estilo de bot�n (no clickeable)
+        // Quitar el estilo de botón (no clickeable)
         $(button).removeClass(classToBeDeleted);
     }
 }
 
 
 /**
- * Acci�n que se ejecuta cuando se pulsa sobre las acciones disponibles de un perfil para mandar un "Email". 
- * @param {string} titulo: T�tulo que tendr� el panel modal 
- * @param {string} texto: El texto o mensaje a modo de t�tulo que se mostrar� para que el usuario sepa la acci�n que se va a realizar
- * @param {string} id: Identificador de la persona sobre el que se aplicar� la acci�n 
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * Acción que se ejecuta cuando se pulsa sobre las acciones disponibles de un perfil para mandar un "Email". 
+ * @param {string} titulo: Título que tendrá el panel modal 
+ * @param {string} texto: El texto o mensaje a modo de título que se mostrará para que el usuario sepa la acción que se va a realizar
+ * @param {string} id: Identificador de la persona sobre el que se aplicó la acción 
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  * */
 function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-container") {
     
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Declaraci�n de la acci�n que se realizar� al hacer click en Enviar mensaje
+    // Declaración de la acción que se realizará al hacer click en Enviar mensaje
     var accion = "EnviarMensaje('" + urlPagina + "', '" + id + "');";
     
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -250,15 +249,15 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
                     plantillaPanelHtml += '<div class="ko"></div>';
                 plantillaPanelHtml += '</div>';
             plantillaPanelHtml += '</div>';
-        // Panel de botones para la acci�n
+        // Panel de botones para la acción
             plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
                 plantillaPanelHtml += '<button class="btn btn-primary">' + mensajes.enviar + '</button>'                
             plantillaPanelHtml += '</div>';
         plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones
@@ -266,7 +265,7 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
 
     RecargarTodosCKEditor();
 
-    // Asignaci�n de la funci�n al bot�n "S�" o de acci�n
+    // Asignación de la función al botón "Sí" o de acción
     $(botones[0]).on("click", function () {
         EnviarMensaje(urlPagina, id);
     });   
@@ -274,8 +273,8 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
 }
 
 /**
- * Acci�n que se ejecuta para mandar un email a un contacto. Ej: Desde el perfil de un usuario, se puede pulsar en el bot�n "Escribir mensaje".
- * Esta acci�n es ejecutada desde AccionEnviarMensajeMVC
+ * Acción que se ejecuta para mandar un email a un contacto. Ej: Desde el perfil de un usuario, se puede pulsar en el botón "Escribir mensaje".
+ * Esta acción es ejecutada desde AccionEnviarMensajeMVC
  * @param {any} urlPagina
  * @param {any} id
  */
@@ -301,7 +300,7 @@ function EnviarMensaje(urlPagina, id) {
             }, 1500)
         }).fail(function (data) {
             //DesplegarResultadoAccionMVC("desplegable_" + id, false, "");
-            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Se ha producido un error al enviar el mensaje. Por favor int�ntalo de nuevo m�s tarde.");
+            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Se ha producido un error al enviar el mensaje. Por favor inténtalo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
         });
@@ -386,8 +385,8 @@ function AgregarContacto(urlPagina) {
 }
 
 /**
- * Acción de mandar a API endPoint la acci�n de Eliminar un contacto
- * @param {any} urlPagina: Url a para ejecutar la acci�n
+ * Acción de mandar a API endPoint la acción de Eliminar un contacto
+ * @param {any} urlPagina: Url a para ejecutar la acción
  */
 function EliminarContacto(urlPagina) {
     var dataPost = {
@@ -444,26 +443,26 @@ function EliminarPersona(urlPagina) {
 }
 
 /**
- * Acci�n para expulsar a una persona de una comunidad. Se ejecuta cuando (por ejemplo) se selecciona desde listado de personas, la opci�n de "Expulsar"
- * Se cargar� un nuevo modal para hacer la gesti�n de la explusi�n
- * @param {any} urlPagina: Url a la que se realizar� la petici�n para expulsar a la persona
- * @param {any} id: Identificador de la persona a la que se expulsar�
+ * Acción para expulsar a una persona de una comunidad. Se ejecuta cuando (por ejemplo) se selecciona desde listado de personas, la opción de "Expulsar"
+ * Se cargará un nuevo modal para hacer la gestión de la expulsión
+ * @param {any} urlPagina: Url a la que se realizará la petición para expulsar a la persona
+ * @param {any} id: Identificador de la persona a la que se expulsará
  * @param {any} titulo: Titulo de la ventana modal
- * @param {any} textoBotonPrimario: Titulo del bot�n primario
- * @param {any} textoBotonSecundario: Titulo del bot�n secundario (No/Cancelar)
- * @param {any} texto: Explicaci�n de la acci�n de expulsar usuario
-  * @param {any} accionCambiarNombreHtml: Accion JS que servir� para cambiar el nombre del elemento una vez se proceda a expulsar a una persona.
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * @param {any} textoBotonPrimario: Titulo del botón primario
+ * @param {any} textoBotonSecundario: Titulo del botón secundario (No/Cancelar)
+ * @param {any} texto: Explicación de la acción de expulsar usuario
+  * @param {any} accionCambiarNombreHtml: Accion JS que servirá para cambiar el nombre del elemento una vez se proceda a expulsar a una persona.
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
 function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundario, texto, accionCambiarNombreHtml, idModalPanel = "#modal-container") {
     
-    // Acci�n que se ejecutar� al pulsar sobre el bot�n primario (Realizar la acci�n de Expulsar)
+    // Acción que se ejecutará al pulsar sobre el botón primario (Realizar la acción de Expulsar)
     var accion = "EnviarAccionExpulsar('" + urlPagina + "', '" + id + "');";
 
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -477,7 +476,7 @@ function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundari
                 plantillaPanelHtml += '<label class="control-label">' + texto + '</label>';
             plantillaPanelHtml += '</div>';
 
-        // Cuerpo del panel -> TextArea para enviar un email explicando la raz�n de la expulsi�n
+        // Cuerpo del panel -> TextArea para enviar un email explicando la raíz de la expulsión
             plantillaPanelHtml += '<div class="form-group">';
                 plantillaPanelHtml += '<label for="txtMotivoExpulsion_'+ id +'">'+ accionesUsuarioAdminComunidad.motivoExpulsion +'</label>';
                 plantillaPanelHtml += '<textarea class="form-control" id="txtMotivoExpulsion_'+id+'" rows="3"></textarea>';
@@ -491,7 +490,7 @@ function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundari
                         plantillaPanelHtml += '<div class="ko"></div>';
                     plantillaPanelHtml += '</div>';
                 plantillaPanelHtml += '</div>';
-            // Panel de botones para la acci�n
+            // Panel de botones para la acción
                 plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
                     plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">' + textoBotonSecundario + '</button>'
                     plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1" onclick="' + accion + '">'+ textoBotonPrimario + ", " + accionesUsuarioAdminComunidad.expulsarUsuario + '</button>'
@@ -499,23 +498,23 @@ function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundari
             plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
-    // Asignar acciones adicionales al bot�n primario (Cambiar nombre del html)
+    // Asignar acciones adicionales al botón primario (Cambiar nombre del html)
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
 
-    // Asignaci�n de la funci�n al bot�n "S�" o de acci�n
+    // Asignación de la función al botón "Sí" o de acción
     $(botones[1]).on("click", function () {
         // Ocultar el panel modal de bootstrap si hiciera falta        
     }).click(accionCambiarNombreHtml);
 }
 
 /**
- * Enviar la nueva petici�n del cambio de expulsi�n de una comunidad a un perfil sobre el que se ha pulsado el bot�n de "S�, Expulsar" del modal.
- * @param {any} urlPagina: Url donde se lanzar� la petici�n para cambiar el rol
+ * Enviar la nueva petición del cambio de expulsión de una comunidad a un perfil sobre el que se ha pulsado el botón de "Sí, Expulsar" del modal.
+ * @param {any} urlPagina: Url donde se lanzará la petición para cambiar el rol
  * @param {any} id: Identificador de la persona 
  */
 function EnviarAccionExpulsar(urlPagina, id) {
@@ -541,7 +540,7 @@ function EnviarAccionExpulsar(urlPagina, id) {
         }).fail(function (data) {
             // Cambiado por nuevo front
             //DesplegarResultadoAccionMVC("desplegable_" + id, false, "");
-            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de expulsar al perfil de la comunidad. Por favor, int�ntalo de nuevo m�s tarde.");
+            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de expulsar al perfil de la comunidad. Por favor, inténtalo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
         });
@@ -554,15 +553,15 @@ function EnviarAccionExpulsar(urlPagina, id) {
 }
 
 /**
- * Acci�n que se ejecuta cuando se pulsa sobre la acci�n de "Cambiar rol" disponible en un item/recurso de tipo "Perfil" encontrado por el buscador.  
- * @param {string} id: Identificador del recurso (en este caso de la persona) sobre el que se aplicar� la acci�n 
+ * Acción que se ejecuta cuando se pulsa sobre la acción de "Cambiar rol" disponible en un item/recurso de tipo "Perfil" encontrado por el buscador.  
+ * @param {string} id: Identificador del recurso (en este caso de la persona) sobre el que se aplicó la acción 
  * @param {any} rol: El rol actual del recurso (Perfil) clickeado
- * @param {any} urlPagina: Pagina sobre la que se lanzar� la llamada para realizar la acci�n de cambiar rol
- * @param {any} idModalPanel: Panel modal contenedor donde se insertar� este HTML (Por defecto ser� #modal-container)
+ * @param {any} urlPagina: Pagina sobre la que se lanzará la llamada para realizar la acción de cambiar rol
+ * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
 function CambiarRol(id, rol, urlPagina, idModalPanel = "#modal-container") {
 
-    // Acci�n que se ejecutar� al pulsar sobre el bot�n primario (Realizar la acci�n de cambiar rol)
+    // Acción que se ejecutará al pulsar sobre el botón primario (Realizar la acción de cambiar rol)
     var accion = "EnviarAccionCambiarRol('" + urlPagina + "', '" + id + "', '" + rol + "');";
     // Permisos para pintar los checkbox a mostrar al usuario
     var checkedAdmin = '';
@@ -579,10 +578,10 @@ function CambiarRol(id, rol, urlPagina, idModalPanel = "#modal-container") {
         checkedUsuario = ' checked';
     }
 
-    // Panel din�mico del modal padre donde se insertar� la vista "hija"
+    // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
-    // Plantilla del panel html que se cargar� en el modal contenedor al pulsar en la acci�n
+    // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
@@ -619,24 +618,24 @@ function CambiarRol(id, rol, urlPagina, idModalPanel = "#modal-container") {
                 plantillaPanelHtml += '<div class="ko"></div>';
             plantillaPanelHtml += '</div>';
         plantillaPanelHtml += '</div>';
-    // Panel de botones para la acci�n
+    // Panel de botones para la acción
         plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
             plantillaPanelHtml += '<button class="btn btn-primary" onclick="'+ accion +'">' + accionesUsuarioAdminComunidad.cambiarRol + '</button>'            
         plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 plantillaPanelHtml += '</div>';
 
-    // Meter el c�digo de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el c�digo
+    // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+    // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
     $modalDinamicContentPanel.html(plantillaPanelHtml);
 
 }
 
 /**
- * Enviar la nueva petici�n del cambio de rol una vez se ha pulsado sobre el bot�n de "Cambiar rol"
- * @param {any} urlPagina: Url donde se lanzar� la petici�n para cambiar el rol
+ * Enviar la nueva petición del cambio de rol una vez se ha pulsado sobre el botón de "Cambiar rol"
+ * @param {any} urlPagina: Url donde se lanzará la petición para cambiar el rol
  * @param {any} id: Identificador de la persona
- * @param {any} rol: Rol actual de la persona. Si es el mismo, no har�a nada
+ * @param {any} rol: Rol actual de la persona. Si es el mismo, no hará nada
  */
 function EnviarAccionCambiarRol(urlPagina, id, rol) {
     var rolNuevo = $('input[name="cambiarRol_' + id + '"]:checked').val();
@@ -659,7 +658,7 @@ function EnviarAccionCambiarRol(urlPagina, id, rol) {
                 $('#modal-container').modal('hide');
             }, 1500)
         }).fail(function (data) {
-            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de cambiar el rol. Por favor, int�ntalo de nuevo m�s tarde.");
+            DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de cambiar el rol. Por favor, inténtalo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
         });        

@@ -53,22 +53,43 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "grafo-de-conocimiento edicion edicionObjetos no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Personalizacion_Consulta_Busqueda;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "DESCUBRIMIENTOYANALISIS");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "PARAMETROSDEBUSQUEDAPERSONALIZADOS");
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
             mPaginaModel = CargarModelo();
             return View(mPaginaModel);
         }
+
+        [HttpPost]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult CrearLoadModal()
+        {
+            // Creo un parámetro "nuevo/vacío" para la construcción correcta posterioro del modal
+            ParametroBusquedaPersonalizadoModel param = new ParametroBusquedaPersonalizadoModel();
+            return GnossResultHtml("_partial-views/_edit-parametro-busqueda", param);
+        }
+
+
         /// <summary>
         /// Guardar
         /// </summary>
         /// <param name="ListaPestanyas"></param>
         /// <returns>ActionResult</returns>
         [HttpPost]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(List<ParametroBusquedaPersonalizadoModel> ListaPestanyas)
         {

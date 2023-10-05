@@ -1,0 +1,74 @@
+﻿@model AdministrarPaginasCMSViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que da la bienvenida al usuario si este no ha iniciado la creación de la página CMS. 
+Permitirá la selección de plantillas para editar la página CMS.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+                      
+}
+
+<div class="builder-start">
+    <p class="lead">@Html.GetText("DEVTOOLS","SELECCIONAUNDISEÑOPREDEFINIDOPARAEMPEZARAPERSONALIZARTUPAGIN").</p>
+    <div class="builder-template">
+        <div class="builder-template-item">
+            <span class="builder-template-title">Vacía</span>
+            <div class="builder-template-design"></div>
+            <div class="builder-template-button">
+                <a href="javascript:void(0)" 
+                   class="btn btn-primary btn-round btnSelectTemplate"
+                   data-template="template1">@Html.GetText("DEVTOOLS","APLICAR")</a>
+            </div>
+        </div>
+        <div class="builder-template-item">
+            <span class="builder-template-title">@Html.GetText("DEVTOOLS","PLANTILLA") 1</span>
+            <div class="builder-template-design">
+                <div class="template-design-row">
+                    <span class="template-design-item" data-item="1/1"></span>
+                </div>
+                <div class="template-design-row">
+                    <span class="template-design-item" data-item="2/3"></span>
+                    <span class="template-design-item" data-item="1/3"></span>
+                </div>
+                <div class="template-design-row">
+                    <span class="template-design-item" data-item="1/3"></span>
+                    <span class="template-design-item" data-item="1/3"></span>
+                    <span class="template-design-item" data-item="1/3"></span>
+                </div>
+            </div>
+            <div class="builder-template-button">
+                <a href="javascript:void(0)" 
+                   class="btn btn-primary btn-round btnSelectTemplate"
+                   data-template="template2">@Html.GetText("DEVTOOLS","APLICAR")</a>
+            </div>
+        </div>
+        <div class="builder-template-item">
+            <span class="builder-template-title">@Html.GetText("DEVTOOLS","PLANTILLA") 2</span>
+            <div class="builder-template-design">
+                <div class="template-design-row">
+                    <span class="template-design-item" data-item="1/1"></span>
+                </div>
+                <div class="template-design-row">
+                    <span class="template-design-item" data-item="1/2"></span>
+                    <span class="template-design-item" data-item="1/2"></span>
+                </div>
+                <div class="template-design-row">
+                    <span class="template-design-item" data-item="1/3"></span>
+                    <span class="template-design-item" data-item="1/3"></span>
+                    <span class="template-design-item" data-item="1/3"></span>
+                </div>
+            </div>
+            <div class="builder-template-button">                
+                <a href="javascript:void(0)" 
+                   class="btn btn-primary btn-round btnSelectTemplate"
+                   data-template="template3">@Html.GetText("DEVTOOLS","APLICAR")</a>
+            </div>
+        </div>
+    
+    </div>
+</div>

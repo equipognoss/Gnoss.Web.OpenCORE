@@ -8,23 +8,28 @@
     <!-- MATERIAL ICONS -->
     <link type="text/css"
           rel="stylesheet"
+          class="styleForCkEditorPreview"
           href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined"
           media="all" />
 
     <!-- FONT AWESOME -->
     <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css"
+          class="styleForCkEditorPreview"
           rel="stylesheet" />
 
     <!-- JQUERY UI (Datepicker) -->
     <link type="text/css"
+          class="styleForCkEditorPreview"
           rel="stylesheet"
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/jqueryUI/jquery-ui.min.css?v=@Html.GetVersion()" />        
 
     <!-- BOOTSTRAP 4 + PROPELLER -->
     <link rel="stylesheet"
+          class="styleForCkEditorPreview"
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/bootstrap/bootstrap.min.css?v=@Html.GetVersion()"
           type="text/css" />
     <link rel="stylesheet"
+          class="styleForCkEditorPreview"
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/propeller/css/propeller.min.css?v=@Html.GetVersion()"
           type="text/css" />
 
@@ -32,6 +37,14 @@
     <link type="text/css"
           rel="stylesheet"
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/lightgallery/css/lightgallery.min.css?v=@Html.GetVersion()" />
+
+
+    <!-- CUSTOM HOME CMS -->
+    <link type="text/css"
+          class="styleForCkEditorPreview"
+          rel="stylesheet"
+          href="@Html.GetBaseUrlStatic()/responsive/theme/custom.css?v=@Html.GetVersion()" />
+
 
     <!-- JQUERY CUSTOM SCROLL BAR Version: 3.1.13 -->
     <link type="text/css"
@@ -50,7 +63,7 @@
 
     <!-- SELECT2 -->
     <link type="text/css"
-          rel="stylesheet"
+          rel="stylesheet"          
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/select2/css/select2.min.css?v=@Html.GetVersion()" />
 
     <!-- Toastr -->
@@ -80,14 +93,16 @@
       
     <!-- PERSONALIZACION TEMA -->
     <link type="text/css"
+          class="styleForCkEditorPreview"
           rel="stylesheet"
           href="@Html.GetBaseUrlStatic()/responsive/theme/theme.css?v=@Html.GetVersion()" />
 
-          <!-- DatePicker -->
+    <!-- DatePicker -->
     <link type="text/css"
+          class="styleForCkEditorPreview"
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" />
-      
+
 
 @if (Html.GetListaCSS() != null)
 {

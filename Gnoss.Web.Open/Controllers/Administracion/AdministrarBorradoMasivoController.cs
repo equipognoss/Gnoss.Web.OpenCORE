@@ -54,6 +54,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "grafo-de-conocimiento borrado-grafo edicion no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_BorradoMasivo;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONDESARROLLADORES", "BORRADOMASIVO");
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
@@ -81,13 +90,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     string url = docCN.OntologiaSeleccionada(guid).Enlace.ToLower();
                     // Borro el grafo de la ontología
                     string query = $"SPARQL clear graph <{UrlIntragnoss}{url}>";
-
-                    string nombreConexionReplica = mConfigService.ObtenerVirtuosoEscritura().Value;
-
-                    if (!string.IsNullOrEmpty(nombreConexionReplica))
-                    {
-                        mVirtuosoAD.AfinidadVirtuoso = $"{nombreConexionReplica}_Master";
-                    }
 
                     facetaCN.ActualizarVirtuoso(query, url, true, 0);
 
@@ -158,10 +160,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string queryDeleteLoadList = "delete from DB.DBA.load_list";
             string querySetLoadList = $"ld_dir ('./dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
             string queryLoaderRun = "rdf_loader_run()";
+			string queryEnableCheckpoint = "checkpoint_interval(60)";
 
             facetaCN.ActualizarVirtuoso(queryCopiaGrafo, ProyectoSeleccionado.Clave.ToString(), true, 0);
+            GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryCopiaGrafo}");
             facetaCN.ActualizarVirtuoso(queryBorradoGrafo, ProyectoSeleccionado.Clave.ToString(), true, 0);
+            GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryBorradoGrafo}");
             facetaCN.ActualizarVirtuoso(queryDeleteLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+            GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryDeleteLoadList}");
 
             try
             {
@@ -171,9 +177,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 try
                 {
-                    GuardarLogError(ex, "Error al ejecutar ld_dir en la ruta /opt/virtuoso/var/lib/virtuoso/db/dumps/ Pruebo en /opt/virtuoso/database/dumps/");
+                    GuardarLogError(ex, "Error al ejecutar ld_dir en la ruta ./dumps/ Pruebo en /opt/virtuoso/var/lib/virtuoso/db/dumps/.");
                     querySetLoadList = $"ld_dir ('/opt/virtuoso/var/lib/virtuoso/db/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";                    
                     facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                    GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {querySetLoadList}");
                 }
                 catch (Exception exception)
                 {
@@ -183,6 +190,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         querySetLoadList = $"ld_dir ('/opt/virtuoso/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
                         facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                        GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {querySetLoadList}");
                     }
                     catch (Exception exception2)
                     {
@@ -190,12 +198,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         querySetLoadList = $"ld_dir ('/opt/virtuoso-opensource/database/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
                         facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                        GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {querySetLoadList}");
                     }
                 }
             }
             finally
             {
                 facetaCN.ActualizarVirtuoso(queryLoaderRun, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryLoaderRun}");
+                facetaCN.ActualizarVirtuoso(queryEnableCheckpoint, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryEnableCheckpoint}");
                 facetadoAD.UsarClienteTradicional = false;
             }
         }

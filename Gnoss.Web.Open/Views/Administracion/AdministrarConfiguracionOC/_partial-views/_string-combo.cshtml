@@ -1,0 +1,89 @@
+@model StringProperty
+@{
+    string idValor = Model.Uri.Replace("/", "").Replace(":", "").Replace("#", "").Replace(".", "") + "valor";
+}
+
+<div class="configurar-combo">
+   
+        <div class="form-group">
+            <label for="@Model.Domain@@@Model.Uri@@valorCombo">Introduce el valor</label>
+            <input type="text" class="form-control" name="@Model.Domain@@@Model.Uri@@valorCombo" data-contentvalor="@Model.Domain@@@Model.Uri@@valor" />
+        </div>
+        <div class="row">
+            <div class="col"></div>
+            <div class="btn btn-primary btnMiniatura col text-center pointer" onclick="operativaConfiguracionOC.addValue('@Model.Domain@@@Model.Uri')">Añadir valor</div>
+            <div class="col"></div>
+        </div>
+
+</div>
+<div class="formulario-edicion">
+    <ul class="header-component-list component-list no-list-style">
+        <li class="component-wrap">
+            <div class="component">
+                <div class="component-header-wrap">
+                    <div class="component-header">
+                        <div class="component-sortable js-component-sortable-faceta">
+                            <span class="material-icons-outlined sortable-icon">drag_handle</span>
+                        </div>
+                        <div class="component-header-content">
+                            <div class="component-header-left">
+                                <div class="component-defecto-wrap">
+                                    <span class="component-defecto">Valor por defecto</span>
+                                </div>
+                                <div class="component-valor-wrap">
+                                    <span class="component-valor">Valor</span>
+                                </div>
+                                <div class="component-eliminar-wrap">
+                                    <span class="component-eliminar">
+                                        Eliminar valor
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </li>
+    </ul>
+    <input type="hidden" data-hackvalores="@Model.Domain@@@Model.Uri@@hackValores" class="valores propiedadesAutocompletar" name="@Model.Domain@@@Model.Uri@@listadoValores" value="@(Model.ValoresCombo?.Count > 0 ? String.Join(",", Model.ValoresCombo) : "")" />
+    <input type="hidden" data-hackvalordefecto="@Model.Domain@@@Model.Uri@@hackValorDefecto" name="@Model.Domain@@@Model.Uri@@valorDefecto"/>
+    <ul data-contenedorvalores="@Model.Domain@@@Model.Uri@@contenedorValores" data-nombrediv="@Model.Domain@@@Model.Uri" id="@idValor" class="lista-valores component-list no-list-style configuracionValores">
+        @if (Model.ValoresCombo != null)
+        {
+            foreach (string valor in Model.ValoresCombo)
+            {
+                <li class="component-wrap valor-combo-row" data-contienevalor="@valor">
+                    <div class="component">
+                        <div class="component-header-wrap">
+                            <div class="component-header">
+                                <div class="component-sortable js-component-sortable-valor">
+                                    <span class="material-icons-outlined sortable-icon">drag_handle</span>
+                                </div>
+                                <div class="component-header-content">
+                                    <div class="component-header-left">
+                                        <div class="component-defecto-wrap">
+                                            <span class="component-defecto"><input type="checkbox" class="valorDefecto" data-contienevalor="@valor" data-div="@Model.Domain@@@Model.Uri" @(Model.ValorDefecto != null && Model.ValorDefecto.Equals(valor) ? "checked" : "")/></span>
+                                        </div>
+                                        <div class="component-valor-wrap">
+                                            <span class="component-valor">@valor</span>
+                                        </div>
+                                        <div class="component-tipo-wrap">
+                                            <span class="component-eliminar">
+                                                <div type="button" class="btn btn-outline-danger eliminarMiniatura eliminarValor" data-contienevalor="@valor" data-nombrediv="@Model.Domain@@@Model.Uri">
+                                                    <span class="material-icons-outlined">
+                                                        delete
+                                                    </span>
+                                                </div>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+</div>
+

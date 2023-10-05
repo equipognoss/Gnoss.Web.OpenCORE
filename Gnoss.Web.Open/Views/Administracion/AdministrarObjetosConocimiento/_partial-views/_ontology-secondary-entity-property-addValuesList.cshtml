@@ -1,0 +1,129 @@
+﻿@model SharedSemCms
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra un input a modo de propiedad de tipo OntoData para un elemento de un objeto de conocimiento
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+
+@{
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
+    string idControl = Model.semanticPropertyModel.OntologyPropInfo.ControlID;
+    string idControlValoresAg = idControl.Replace("Campo_", "contedor_Valores_");
+
+    if (Model.semanticPropertyModel.OntologyPropInfo.PropertyValues.Count > 0)
+    {
+        string claseFila = "par";
+        int count = 0;
+
+        <div id="@idControlValoresAg">
+            @* Listado de opciones OLD 
+            <table class="table">
+                @foreach (SemanticPropertyModel.PropertyValue propValue in Model.semanticPropertyModel.OntologyPropInfo.PropertyValues)
+                {
+                    string imgEditar = Html.GetBaseUrlStatic() + "/img/icoEditar.gif";
+                    string texto = propValue.Value;
+
+                    if (texto.Length > 143)
+                    {
+                        texto = texto.Substring(0, 143);
+                    }
+
+                    string metodoEliminar = "EliminarValorDeDataNoFuncionalProp('" + count + "', '" + mPropiedad.ElementoOntologia.TipoEntidad + "', '" + mPropiedad.Nombre + "', '" + idControlValoresAg + "',TxtValorRdf,TxtRegistroIDs,TxtCaracteristicasElem,TxtElemEditados);";
+                    metodoEliminar = metodoEliminar.Replace("'", "\\'");
+                    metodoEliminar = "MostrarPanelConfirmacionEvento(event, '" + Html.GetText("CONTROLESCVSEM", "CONFIRMARELIMINAR", propValue.Value).Replace("'", "\\'") + "', '" + metodoEliminar + "')";
+
+                    <tr class="@claseFila">
+                        <td><span>@texto</span></td>
+                        <td>
+                            <a onclick="SeleccionarElementoGrupoValores('@mPropiedad.ElementoOntologia.TipoEntidad', '@mPropiedad.Nombre', '@count',TxtValorRdf,TxtRegistroIDs,TxtCaracteristicasElem,TxtElemEditados)">
+                                <span class="material-icons">
+                                    edit
+                                </span>
+                            </a>
+                        </td>
+                        <td><a class="remove" onclick="@metodoEliminar"></a></td>
+                    </tr>
+
+                    if (claseFila == "par")
+                    {
+                        claseFila = "impar";
+                    }
+                    else
+                    {
+                        claseFila = "par";
+                    }
+
+                    count++;
+                }
+            </table>
+            *@
+            @* Listado de opciones NEW  *@
+            <ul class="no-list-style listadoPanelAgregarGroupValue mb-4 " style="background-color: #fff; border: 1px solid var(--c-gris-borde);">
+                @foreach (SemanticPropertyModel.PropertyValue propValue in Model.semanticPropertyModel.OntologyPropInfo.PropertyValues)
+                {
+                    string texto = propValue.Value;
+
+                    if (texto.Length > 143)
+                    {
+                        texto = texto.Substring(0, 143);
+                    }
+                    string metodoEliminar = "operativaGestionObjetosConocimientoOntologias.EliminarValorDeDataNoFuncionalProp('" + count + "', '" + mPropiedad.ElementoOntologia.TipoEntidad + "', '" + mPropiedad.Nombre + "', '" + idControlValoresAg + "','mTxtValorRdf','mTxtRegistroIDs','mTxtCaracteristicasElem','mTxtElemEditados');";
+                    string metodoEditar = "operativaGestionObjetosConocimientoOntologias.SeleccionarElementoGrupoValores('" + mPropiedad.ElementoOntologia.TipoEntidad + "', '" + mPropiedad.Nombre + "', '" + count + "', 'mTxtValorRdf','mTxtRegistroIDs','mTxtCaracteristicasElem','mTxtElemEditados');";
+                    @* Item con la info + Acción de Eliminar *@
+                    <li class="component-wrap containerConfirmDeleteItemInModal">
+                        <div class="component">
+                            <div class="component-header-wrap">
+                                <div class="component-header">
+                                    <div class="component-header-content">
+                                        <div class="component-header-left">
+                                            @* Mostrar el valor almacenado *@                                                                                        
+                                            <div class="component-name-wrap">
+                                                <span class="component-item-name">
+                                                    @texto
+                                                </span>
+                                            </div>                                            
+                                        </div>
+                                        @* Sección de acciones Editar: De momento deshabilitado y Eliminar *@
+                                        <div class="component-header-right">
+                                            <div class="component-actions-wrap">
+                                                <ul class="no-list-style component-actions">
+                                                    @* Acción seleccionar para editar*@
+                                                    <li>
+                                                        <a class="action-edit round-icon-button js-action-edit-component btnEditGroupValue" href="javascript: void(0);" 
+                                                           onclick="@metodoEditar">
+                                                            <span class="material-icons">edit</span>
+                                                        </a>
+                                                    </li>
+                                                    @* Acción eliminar *@
+                                                    <li>
+                                                        <a class="action-delete round-icon-button js-action-delete btnDeleteGroupValue" href="javascript: void(0);" data-handleclick="@metodoEliminar">
+                                                            <span class="material-icons">delete</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    count++;
+                }
+            </ul>
+
+        </div>
+    }
+    else
+    {
+        <div id="@idControlValoresAg"></div>
+    }
+}

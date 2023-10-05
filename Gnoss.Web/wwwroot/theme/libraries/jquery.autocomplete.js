@@ -529,7 +529,8 @@ $.Autocompleter = function(input, options) {
 		    q: lastWord(term),
 		    limit: options.max,
 		    cont: cont,
-		    lista: '',
+			lista: '',
+			organizacion: $("#inpt_organizacionID").val(),
 		    callback: 'autocomplete'
 		};
 		if (options.multiple) {

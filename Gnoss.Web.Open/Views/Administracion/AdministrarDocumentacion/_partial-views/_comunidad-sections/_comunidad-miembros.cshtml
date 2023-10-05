@@ -1,0 +1,56 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Miembros
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false;
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();    
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Miembros *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "data-target=#miembros" : null)								
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+				aria-controls="miembros">
+				Miembros
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Miembros *@
+	<div
+		id="miembros"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>Desde la sección de Miembros se puede administrar los usuarios, organizaciones y grupos de la comunidad así como las acciones disponibles que pueden realizar sus miembros en la comunidad.</p>					
+			<ul>
+				<li>Enviar Newsletters / No enviar Newsletters: Enviar un mensaje o newsletter a un determinado miembro de la comunidad</li>
+				<li>Expulsar a un miembro de la comunidad: Como su propio nombre indica, consistiría en expulsar a un miembro de la comunidad para bloquear su acceso a la misma.</li>
+				<li>Bloquear / Desbloquear: Bloquear o desbloquear a un miembro de la comunidad para que no pueda interactuar en la comunidad (Votar, escribir mensajes, añadir recursos …)</li>
+				<li>Cambiar rol de un miembro: Cambiar los permisos de los que dispondría un usuario dentro de una comunidad.</li>
+			</ul>
+			<div class="text-center">
+				<figure class="figure">						  
+					<img src="~/img/documentacionDevtools/01comunidad/administrar-miembros-grupos.png"/>					
+					<figcaption class="figure-caption">Sección para administrar usuarios y grupos de la comunidad.</figcaption>
+				</figure> 
+			</div>					
+		</div>		
+	</div>
+</div>

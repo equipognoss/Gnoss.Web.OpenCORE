@@ -1,0 +1,137 @@
+﻿@model FacetaModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar/visualizar cada una de las filas o rows de las facetas existentes en la comunidad. Contendrá también el modal para su visualización en detalle.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+	// Id temporal de la faceta por si no tiene
+	Guid idTemp = Guid.NewGuid();
+	@* Controlar el id de la Faceta *@
+    if (Model.AgrupacionID.HasValue)
+    {
+        idTemp = Model.AgrupacionID.Value;
+    }  
+
+	// Nombre del tipo de faceta
+	string nombreTipoFaceta = "";
+    // Cabecera para obtención de idiomas de la Comunidad
+    HeaderModel cabecera = Html.GetCabecera();
+    // Diccionario de nombre de la faceta para multiIdiomas
+    Dictionary<string, string> pageNameDictionary = new Dictionary<string, string>();
+    // Id para la llamada al modal para edición de la faceta
+    string idModalFaceta = "modal-configuracion-faceta_" + idTemp;	
+	// Idioma por defecto de la comunidad
+	string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
+	// Id autogenerado o correspondiente a AgrupacionID
+	ViewBag.idTemp = idTemp;
+	string urlAddFaceta = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFACETASCOM") + "/new-facet";
+
+}
+
+@{
+	@* Controlar el tipo de Faceta *@
+    switch (Model.Type)
+    {
+        case TipoFaceta.Texto:
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS","TEXTO");
+            break;
+        case TipoFaceta.Numero:
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS","NUMERO");
+            break;
+        case TipoFaceta.Fecha:
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS","FECHA");
+            break;
+        case TipoFaceta.Tesauro:
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS","TESAURO");
+            break;
+        case TipoFaceta.TextoInvariable:
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS","TEXTOINVARIABLE");
+            break;
+    }
+}
+
+@* Construir los diferentes items en idiomas (Nombre) *@
+@{
+	// Obtener el nombre formato diccionario con los multiIdiomas de Nombre para ser mostrados en la row de la faceta
+	pageNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Name);	
+}
+
+
+<li class="component-wrap faceta-row-suggest" data-facetkey="@idTemp" id="@idTemp">
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				@* Icono para arrastrar faceta *@
+				<div class="component-sortable js-component-sortable-faceta">
+					<span class="material-icons-outlined sortable-icon">drag_handle</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						<div class="component-name-wrap">							
+							@* Nombre de la página *@
+							@* Recorrer los idiomas existentes y crear los datos para Nombre de faceta *@
+							@if (pageNameDictionary.Count == 0)
+							{
+								<span class="language-component component-name @(idiomaPorDefecto)" data-languageitem="@idiomaPorDefecto">
+									@Model.Name
+								</span>
+							}
+							else
+							{														
+								@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+									{																												
+									<span class="language-component component-name @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
+										@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
+										@{
+											string value = "";
+											if (pageNameDictionary.TryGetValue(idioma.Key, out value))
+											{
+												@value;
+											}										
+										}
+									</span>
+								}	
+							}							
+						</div>
+						@* Tipo de faceta *@
+						<div class="component-tipo-wrap">							
+							<span class="component-tipo">								
+								@nombreTipoFaceta
+							</span>
+							
+						</div>
+						@* Faceta *@
+						<div class="component-faceta-wrap">
+							<span class="component-faceta">
+								@Model.ClaveFaceta
+							</span>
+						</div>
+					</div>
+					@*Sección de acciones de la faceta *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<a class="js-action-edit-component btnEditFaceta btn btn-outline-primary linkAddNewFacetaPropuesta"
+								data-url="@urlAddFaceta" 
+								data-suggest="@Model.SuggestedID">
+								<span class="material-icons">add</span>
+								<span class="texto">Añadir faceta propuesta</span>
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	@* Información detallada de la faceta -> Modal *@
+	@*@Html.PartialView("_modal-views/_faceta-item-detail", Model)*@
+
+</li>
+

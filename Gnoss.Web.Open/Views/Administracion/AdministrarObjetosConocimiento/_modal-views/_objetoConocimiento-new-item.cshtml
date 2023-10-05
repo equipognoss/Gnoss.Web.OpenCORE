@@ -1,0 +1,79 @@
+﻿@model ObjetoConocimientoModel
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán las opciones para crear un objeto de conocimiento. En esta vista, se ha de seleccionar el tipo de objeto a crear  (Primario/Secundario).
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+}
+
+
+@* Título del modal *@
+<div class="modal-header">
+	<p class="modal-title">
+		<span class="material-icons">edit</span>					
+		<span class="community-name">@Html.GetText("DEVTOOLS","CREAROBJETODECONOCIMIENTO")</span>
+	</p>
+	<span
+		class="material-icons cerrar"
+		data-dismiss="modal"
+		aria-label="Close">close</span
+	>
+</div>
+<div class="modal-body formulario-edicion">			
+	<p>
+		@Html.GetText("DEVTOOLS","PUEDESCREARUNAONTOLOGIA/OBJETODECONOCIMIENTODESDECEROUSANDOA")
+	</p>
+	<ul>
+		<li> <a href="http://protege.stanford.edu/" target="_blank">Protégé - Universidad de Stanford</a></li>
+		<li><a href="https://www.topquadrant.com/" target="_blank">TopBraid Composer - TopQuadrant</a></li>
+		<li>
+			@Html.GetText("DEVTOOLS","OELEGIRALGUNOTRODELSIGUIENTE")
+			<a href="http://en.wikipedia.org/wiki/Ontology_editor" target="_blank">@Html.GetText("DEVTOOLS","LISTADODEWIKIPEDIA")</a>
+		</li>
+	</ul>
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("DEVTOOLS","CREAROBJETODECONOCIMIENTO")</label>
+		@* Objeto de conocimiento Primario *@
+		<div class="form-check form-check-flex">
+			<input
+				class="form-check-input crearObjetoConocimiento"
+				type="radio"
+				name="crearObjetoConocimiento"
+				value="primario"
+				id="crearObjetoConocimientoPrimario"								
+			/>
+			<label class="form-check-label" for="crearObjetoConocimientoPrimario">@Html.GetText("DEVTOOLS","PRINCIPAL")</label>
+		</div>
+		@* Objeto de conocimiento Secundario *@
+		<div class="form-check form-check-flex">
+			<input
+				class="form-check-input crearObjetoConocimiento"
+				type="radio"
+				name="crearObjetoConocimiento"
+				value="secundario"
+				id="crearObjetoConocimientoSecundario"
+			/>
+			<label class="form-check-label" for="crearObjetoConocimientoSecundario">@Html.GetText("DEVTOOLS","SECUNDARIO")</label>
+		</div>
+	</div>
+
+	@* Sección de ficheros para creación de ontología *@
+	<div id="panelOntologyFiles" class="form-group mb-3 mt-3 d-none panelOntologyFiles">						
+	<p>
+		@Html.GetText("DEVTOOLS","ACONTINUACION,CARGALOSFICHEROSDELOBJETODECONOCIMIENTO")				
+	</p>						
+		@Html.PartialView("_partial-views/_ontology-template-files", Model)				
+	</div>
+
+	@* Botón para guardar *@
+	<div class="panelBotonera mt-5">
+		<button class="btn btn-primary uppercase btnSaveNewObjetoConocimiento" disabled="">@Html.GetText("COMMON","GUARDAR")</button>
+	</div>
+	
+</div>

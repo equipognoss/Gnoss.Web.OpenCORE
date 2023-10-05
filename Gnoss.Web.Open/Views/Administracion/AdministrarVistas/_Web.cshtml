@@ -1,118 +1,68 @@
-﻿@using Es.Riam.Gnoss.Web.MVC.Models;
-@model ManageViewsViewModel
-@if (Model != null)
+﻿@model ManageViewsViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que carga todas las vistas de tipo Web.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+}
+
+@* Pintado de cada Vistas Originales *@
+@foreach (string vista in Model.ListOriginalViews)
 {
-    <fieldset class="mediumLabels">
-        <legend id="lgndPestanya">Plantillas de la web</legend>
-        <div class="fieldsetContent">
-            <div id="plantillasWeb">
-                <div class="vistaEdicion">
-                    <p>Estás viendo las páginas editadas</p>
-                    <p><a href="#" class="mostrarOriginal">Mostrar las páginas originales</a></p>
-                    <p>
-                        <input type="radio" name="tipoPaginaEdicion" id="tipoPaginaEdicionPersonalizable" checked="checked" />
-                        Selecciona la página editada a personalizar
-                        <select name="PaginasPersonalizables" class="edicionWeb  nombreFich">
-                            @foreach (string vista in Model.ListEditedViews)
-                            {
-                                <option value="@vista">@vista.Replace("/ViewsAdministracion/", "").Replace("/Views/", "")</option>
-                            }
-                        </select>
-                    </p>
-                    @if (Model.ListEditedFormsViews != null && Model.ListEditedFormsViews.Count > 0)
-                    {
-                        <p>
-                            <input type="radio" name="tipoPaginaEdicion" id="tipoPaginaEdicionSemantico" />
-                            O el formulario semántico editado a personalizar
-                            <select name="FormulariosSemanticos" class="edicionWeb  nombreFich" style="display: none;">
-                                @foreach (string formulario in Model.ListEditedFormsViews)
-                    {
-                                    <option value="@formulario">@formulario</option>
-                                }
-                            </select>
-                        </p>
-                    }
+	// Tipo de servicio al que corresponde la vista
+	ViewBag.ViewServiceType = "web";
+	ViewBag.ViewType = "original";
+	// Url de la request para las Vistas de tipo Web
+	ViewBag.UrlActionWeb = Model.UrlActionWeb;
+	@Html.PartialView("_partial-views/_originalWebView", vista)								
+}
 
-                    <p>
-                        <label>Selecciona el HTML personalizado</label>
-                        <input type="file" class="edicionWeb" name="Fichero" />
-                    </p>
-                    <div class="fieldset actionButtons fieldset03 actionButtons">
-                        <fieldset>
-                            <p>
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.Download)" idActualizar="#plantillasWeb .vistaEdicion" form="edicionWeb" urlAction="@Model.UrlActionWeb" class="actionView" value="Descargalo!" />
-                                @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-                                {
-                                    <input type="submit" action="@((short)ManageViewsViewModel.Action.Upload)" style="background-color:gray;" disabled idActualizar="#plantillasWeb .vistaEdicion" form="edicionWeb" urlAction="@Model.UrlActionWeb" class="actionView" value="Súbelo!" />
-                                }
-                                else
-                                {
-                                    <input type="submit" action="@((short)ManageViewsViewModel.Action.Upload)" idActualizar="#plantillasWeb .vistaEdicion" form="edicionWeb" urlAction="@Model.UrlActionWeb" class="actionView" value="Súbelo!" />
-                                }
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.Delete)" idActualizar="#plantillasWeb .vistaEdicion" form="edicionWeb" urlAction="@Model.UrlActionWeb" class="actionView showConfirm" value="Elimina la personalización" />
-                            </p>
-                        </fieldset>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                    {
-                        <div class="ok">
-                            <p>@Model.OKMessage</p>
-                        </div>
-                    }
-                    <div class="ko">
-                    </div>
-                </div>
-                <div class="vistaOriginal" style="display: none">
-                    <p>Estás viendo las páginas originales</p>
-                    <p><a href="#" class="mostrarEdicion">Mostrar las páginas editadas</a></p>
-                    <p>
-                        <input type="radio" name="tipoPaginaOriginal" id="tipoPaginaOriginalPersonalizable" checked="checked" />
-                        Selecciona la página original a personalizar
-                        <select name="PaginasPersonalizables" class="originalWeb  nombreFich">
-                            @foreach (string vista in Model.ListOriginalViews)
-                {
-                                <option value="@vista">@vista.Replace("/ViewsAdministracion/", "").Replace("/Views/", "")</option>
-                            }
-                        </select>
-                    </p>
+@* Pintado de cada Vistas Editadas *@
+@foreach (string vista in Model.ListEditedViews)
+{		
+	// Indicar que es una vista editada para "_uploadWebView"
+	ViewBag.editedWebView = true;		
+	ViewBag.ViewServiceType = "web";
+	ViewBag.ViewType = "personalizada";
+	// Url de la request para las Vistas de tipo Web
+	ViewBag.UrlActionWeb = Model.UrlActionWeb;
+	@Html.PartialView("_partial-views/_editedWebView", vista)	
+	ViewBag.editedWebView = true;
+}
 
-                    @if (Model.ListEditedFormsViews != null && Model.ListEditedFormsViews.Count > 0)
-                    {
-                        <p>
-                            <input type="radio" name="tipoPaginaOriginal" id="tipoPaginaOriginalSemantico" />
-                            O el formulario semántico original a personalizar
-                            <select name="FormulariosSemanticos" class="originalWeb  nombreFich" style="display: none;">
-                                @foreach (string formulario in Model.ListOriginalFormsViews)
-                    {
-                                    <option value="@formulario">@formulario</option>
-                                }
-                            </select>
-                        </p>
-                    }
-                    <p>
-                        <label>Selecciona el HTML personalizado</label>
-                        <input type="file" class="originalWeb" name="Fichero" />
-                    </p>
-                    <div class="fieldset actionButtons fieldset03 actionButtons">
-                        <fieldset>
-                            <p>
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.DownloadOriginal)" idActualizar="#plantillasWeb .vistaOriginal" form="originalWeb" urlAction="@Model.UrlActionWeb" class="actionView" value="Descarga el original!" />
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.Upload)" idActualizar="#plantillasWeb .vistaOriginal" form="originalWeb" urlAction="@Model.UrlActionWeb" class="actionView" value="Sobreescribe el original!" />
-                            </p>
-                        </fieldset>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                    {
-                        <div class="ok">
-                            <p>@Model.OKMessage</p>
-                        </div>
-                    }
-                    <div class="ko">
-                    </div>
-                </div>
 
-            </div>
+@* Formulario semántico originales *@
+@if (Model.ListEditedFormsViews != null && Model.ListEditedFormsViews.Count > 0)
+{
+	@foreach (string formulario in Model.ListOriginalFormsViews)
+    {
+		ViewBag.editedWebView = false;
+		ViewBag.ViewServiceType = "objetoconocimiento";
+		ViewBag.ViewType = "original";
+		// Url de la request para las Vistas de tipo Web
+		ViewBag.UrlActionWeb = Model.UrlActionWeb;
+		@Html.PartialView("_partial-views/_originalFormView", formulario)    
+	}
+}
 
-        </div>
-    </fieldset>
+@* Formulario semántico a editar *@
+@if (Model.ListEditedFormsViews != null && Model.ListEditedFormsViews.Count > 0)
+{
+	@foreach (string formulario in Model.ListEditedFormsViews)
+	{
+		// Indicar que es una vista editada para "_uploadWebView"
+		ViewBag.editedWebView = true;		
+		ViewBag.ViewServiceType = "objetoconocimiento";
+		ViewBag.ViewType = "personalizada";
+		// Url de la request para las Vistas de tipo Web
+		ViewBag.UrlActionWeb = Model.UrlActionWeb;
+		@Html.PartialView("_partial-views/_editedFormView", formulario)
+	}													
 }

@@ -1,0 +1,217 @@
+﻿@model SemanticEntityModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista donde se pintan propiedades ontológicas correspondientes a los elementos de un objeto de conocimiento secundario.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    string idControl = "";
+    bool readMode = Model.ReadMode;
+}
+
+@{
+    @* Generar el SEM CMS para su lectura - En la ficha de recurso para su edición si es false - Quitarlo de momento para Entidades secundarias *@
+    @*if (!Model.SemanticResourceModel.ReadMode)
+    {
+        if (Model.SemanticResourceModel.RootEntities.Contains(Model))
+        {
+            idControl = "panel_" + Model.Key;
+        }
+        else
+        {
+            idControl = "pE_" + Model.Key;
+        }
+    }*@
+
+    @* Pintar oculto la entidad?: Ejm si es una subentidad no seleccionada - Quitarlo de momento *@
+    @*string display = "";
+
+    if (Model.Hidden)
+    {
+        display = "style=\"display:none;\"";
+    }
+    *@
+
+    @* Tipo de entidad para generar el nombre de las clases - Quitarlo de momento *@
+    @*
+    string claseEnt = "contEnt contEnt_" + Model.Entity.TipoEntidadGeneracionClases;
+
+    if (Model.SpecificationEntity.ClaseCssPanel != null)
+    {
+        if (readMode || Model.Entity.SuperclasesUtiles.Count == 0)
+        {
+            claseEnt = Model.Entity.EspecifEntidad.ClaseCssPanel;
+        }
+        else
+        {
+            claseEnt += " " + Model.Entity.EspecifEntidad.ClaseCssPanel;
+        }
+    }
+    *@
+
+    @* Instancia de la superclase de la entidad actual - Quitarlo de momento *@
+    @* 
+    string tipoEntidadHtml = "";
+
+    if (!readMode && Model.SuperEntity != null)
+    {
+        claseEnt += " SuperEnt_" + Model.SuperEntity.Entity.TipoEntidadGeneracionIDs;
+        tipoEntidadHtml = "typeEnt=\"" + Model.Entity.TipoEntidad + "\"";
+    }
+    *@
+
+    @* Modelo semántico del SEM CMS - Quitarlo de momento *@
+    @*
+    string typeOfRDFa = "";
+    string aboutRDFa = "";
+    string microDatos = "";
+    string microFormatos = "";
+    @*
+
+    if (Model.SemanticResourceModel.ReadMode)
+    {
+        typeOfRDFa = "typeof=\"" + Model.TypeofRDFA + "\"";
+        aboutRDFa = "about=\"" + Model.AboutRDFA + "\"";
+
+        @* Valor de microdatos - Quitarlo de momento *@
+        @*
+        if (Model.SpecificationEntity.Microdatos != null)
+        {
+            microDatos = "itemprop=\"" + Model.SpecificationEntity.Microdatos + "\"";
+        }
+        @*
+
+        @* Configuración de la plantilla para esta entidad Quitarlo de momento *@
+        @*
+        foreach (string microKey in Model.SpecificationEntity.Microformatos.Keys)
+        {
+            if (microKey != "class")
+            {
+                microFormatos += microKey + "=\"" + Model.SpecificationEntity.Microformatos[microKey] + "\" ";
+            }
+            else
+            {
+                claseEnt += " " + Model.SpecificationEntity.Microformatos[microKey];
+            }
+        }        
+    }
+    *@
+}
+
+
+@* Pintado del elemento *@
+@* <div @Html.GetParam("id", idControl) @Html.Raw(display) class="@claseEnt" @Html.Raw(typeOfRDFa) @Html.Raw(aboutRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) @Html.Raw(tipoEntidadHtml)> *@
+   
+@* Instancias de las subclases de la entidad actual *@
+@if (!readMode && Model.SubEntities != null && Model.SubEntities.Count > 0)
+{
+    string classCmb = "js-select2 select big cmbSubClass cmbSubClass_" + Model.Entity.TipoEntidadGeneracionIDs;
+    string onchangeCmb = "AjustarHerederasEntidad(this, '" + Model.Entity.TipoEntidad + "', true);";
+    
+    @* Select de la entidad *@
+    <div class="mb-3 select_entidad">
+        <select class="@classCmb" onchange="@onchangeCmb" style="width:100%">
+			    @if(Model.SelectedSubEntity == null && Model.SemanticResourceModel.RootEntities[0] == Model)
+			    {
+				    <option value="">@Html.GetText("COMMON", "SELECCIONATIPO")</option> 
+
+                }
+                    @foreach (SemanticEntityModel entMod in Model.SubEntities)
+                {
+                        string textoCombo = entMod.SpecificationEntity.NombreEntidad(false);
+
+                        if (textoCombo == null)
+                        {
+                            textoCombo = entMod.Entity.TipoEntidad;
+                        }
+
+                        string selected = "";
+
+                        if (Model.SelectedSubEntity != null && Model.SelectedSubEntity == entMod)
+                        {
+                            selected = "selected";
+                        }
+
+                    <option value="@entMod.Entity.TipoEntidad" @Html.GetParam("selected", selected)>@textoCombo</option> 
+                }
+        </select>
+    </div>
+    
+    @* Carga recursiva de la Entidad *@
+    foreach (SemanticEntityModel entMod in Model.SubEntities)
+    {
+        @* @Html.PartialView("SemCms/_Entidad", entMod); *@
+        @Html.PartialView("_partial-views/_ontology-secondary-entity", entMod);
+    }
+}
+else
+{
+    @* Configurar la plantilla para la entidad -> Tipo Mapa *@
+    if (readMode && Model.SpecificationEntity.EsMapaGoogle)
+    {
+        Html.GetListaJS().Add("//www.google.com/jsapi?key=" + Model.GoogleMapInfo.JsApiGoogleKey);
+        string idMap = "mapGoogle_" + Model.Entity.TipoEntidadGeneracionClases;
+        
+        if (!Model.SpecificationEntity.NoSustituirEntidadEnMapaGoogle)
+        {
+            <div id="@idMap" class="mapGoogle"></div>
+        }
+        @* Datos de Latitud y Longitud - ¿Quitarlo? *@
+        if (!string.IsNullOrEmpty(Model.GoogleMapInfo.Latitude) && !string.IsNullOrEmpty(Model.GoogleMapInfo.Longitude))
+        {
+            Html.GetListaJS().Add("defer/" + Html.GetBaseUrlStatic() + "/jsNuevo/markerclusterer.js");
+
+            string latitud = Model.GoogleMapInfo.Latitude.Replace(",", ".");
+            string longitud = Model.GoogleMapInfo.Longitude.Replace(",", ".");     
+            
+            <script type="text/javascript">
+                google.load("maps", "3",  {other_params:"sensor=false&key=@Model.GoogleMapInfo.JsApiGoogleKey"});
+
+                var puntoActual=[[1],",,@latitud,@longitud"];
+                $(document).ready(function () { utilMapas.fichaRecurso = true; utilMapas.MontarMapaResultados('#@idMap', puntoActual); });
+            </script>
+        }
+        @* Más datos del Mapa - Route *@
+        else if (!string.IsNullOrEmpty(Model.GoogleMapInfo.Route))
+        {
+            <script type="text/javascript">
+                google.load("maps", "3", { other_params: "sensor=false&key=@Model.GoogleMapInfo.JsApiGoogleKey" });
+                $(document).ready(function () { InitializeRouteMapGoogle('@idMap', '@Html.Raw(Model.GoogleMapInfo.Route)', '@Html.Raw(Model.GoogleMapInfo.RouteColor)'); });
+            </script>
+        }
+    }
+    else if (Model.SuperEntity != null)
+    {
+        @* Aquí no se pinta practicamente nada. Quitarlo de momento *@            
+        @* @Html.PartialView("SemCms/_TituloEntidad", Model) *@        
+    }
+
+    @* Entidad no es mapa de Google *@
+    if (!readMode || !Model.SpecificationEntity.EsMapaGoogle || Model.SpecificationEntity.NoSustituirEntidadEnMapaGoogle)
+    {      
+        @* Pintado de propiedades *@
+        if (readMode && Model.Properties.Count > 0 && Model.Properties[0].Element.EsGrupo && Model.Properties[0].Element.TipoGrupo == "dl")
+        {       
+            @* Pintado de cada una de las propiedades *@
+            @foreach (SemanticPropertyModel semPropModel in Model.Properties)
+            {
+                @* @Html.PartialView("SemCms/_Propiedad", semPropModel); *@
+                @Html.PartialView("_partial-views/_ontology-secondary-entity-property", semPropModel);
+            }                
+        }
+        else
+        {
+            @* Pintado de cada una de las propiedades *@
+            foreach (SemanticPropertyModel semPropModel in Model.Properties)
+            {
+                @* @Html.PartialView("SemCms/_Propiedad", semPropModel); *@
+                @Html.PartialView("_partial-views/_ontology-secondary-entity-property", semPropModel);
+            }
+        }
+    }
+}
+

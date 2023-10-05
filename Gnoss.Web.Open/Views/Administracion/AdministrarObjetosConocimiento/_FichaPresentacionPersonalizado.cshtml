@@ -1,15 +1,35 @@
 ﻿@model ObjetoConocimientoModel.PresentacionPersonalizadoModel
 
-<section class="bloque">
-	<p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "LISTAPROPIEDADES")</p>
-    <ol class="propiedadesSortable">
-        @if (Model.ListaPropiedades != null)
-        {
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial para mostrar las diferentes propiedades en en la vista de tipo "Personalizada".
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+@* Autonumerico para control de los checkbox (click) *@
+string idRandom = @Guid.NewGuid().ToString().Substring(0,5);
+}
+
+@* Panel de configurar propiedades personalizadas *@
+<div class="form-group mb-4 mt-4 panelConfigurarPropiedades">
+	<div class="configurarPropiedades-header" style="display: flex;justify-content: space-between;">
+	<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("DEVTOOLS","LISTAPROPIEDADES")</label>
+		@* Botón para añadir nuevas propiedades *@
+		<a href="javascript: void(0);" class="btn btn-outline-primary new linkAddCustomProperty">@Html.GetText("DEVTOOLS","NUEVAPROPIEDAD")</a>
+	</div>
+
+	@* Listado de propiedades *@
+	<ul class="id-added-property-list component-list no-list-style">										
+		@{
             foreach (ObjetoConocimientoModel.PresentacionPersonalizadoModel.PropiedadPersonalizadoModel propiedad in Model.ListaPropiedades.OrderBy(prop => prop.Orden))
             {
                 @Html.PartialView("_FichaPropiedadPersonalizado", propiedad)
             }
-        }
-    </ol>
-	<input type="button" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "ADDPROPIEDAD")" class="addPersProperty"/>
-</section>
+		}
+	</ul>
+</div>

@@ -1,0 +1,129 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista index donde se muestra las diversas opciones de configuración del Metaadministrador.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+
+}
+    @* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+        </li>
+        <li>
+            Documentación
+        </li>
+    </ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco contenido-central">
+	<h2>Documentación de sección Comunidad</h2>
+	<p>
+		Este documento aplica a todos aquellos procesos necesarios que se realizan para la administración y configuración de una comunidad desde la sección Comunidad.		
+	</p>
+	@* Panel de navegación *@
+	<ul class="no-list-style navigation">
+		<li>
+			<a href="#acceso-administrar-comunidad" 
+			   data-toggle="collapse"
+			   class=""
+			   aria-expanded="true">Acceso a Administrar Comunidad</a>
+		</li>
+		<li>
+			<a
+				href="#administrar-comunidad"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">Administrar Comunidad</a>
+		</li>
+		<li>
+			<a
+				href="#informacion-general"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">@Html.GetText("ADMINISTRACIONBASICA","INFORMACIONGENERAL")</a>
+		</li>	
+		<li>
+			<a
+				href="#tipo-contenido-permisos"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">@Html.GetText("DEVTOOLS","TIPOSDECONTENIDOSYPERMISOS")</a>
+		</li>
+		<li>
+			<a
+				href="#categorias"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">@Html.GetText("ADMINISTRACIONBASICA","CATEGORIAS")</a>
+		</li>
+		<li>
+			<a
+				href="#interaccion-social"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">@Html.GetText("DEVTOOLS","INTERACCIONSOCIAL")</a>
+		</li>			
+		<li>
+			<a
+				href="#miembros"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">@Html.GetText("COMADMIN","MIEMBROS")</a>
+		</li>
+		<li>
+			<a
+				href="#niveles-certificacion"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">@Html.GetText("DEVTOOLS","NIVELESDECERTIFICACION")</a>
+		</li>
+		<li>
+			<a
+				href="#administrar-sharepoint"
+				data-toggle="collapse"
+				aria-expanded="false"
+				class="collapsed">@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSHAREPOINT")</a>
+		</li>	
+		
+	</ul>
+	@* Panel central con opciones de configuración (Accordion) *@
+	<div id="accordion">
+		@* Acceso a Administrar Comunidad *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-acceso-administrar")
+
+		@* Administrar Comunidad *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-administrar-comunidad")
+
+		@* Información General *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-informacion-general")
+		
+		@* Tipos de contenido y permisos *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-contenidos-y-permisos")
+
+		@* Categorías *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-categorias")
+
+		@* Interacción Social *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-interaccion-social")
+
+		@* Miembros *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-miembros")
+
+		@* Niveles de certificación *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-niveles-certificacion")
+
+		@* Administrar SharePoint *@
+		@Html.PartialView("_partial-views/_comunidad-sections/_comunidad-administrar-sharepoint")
+	</div>
+</div>

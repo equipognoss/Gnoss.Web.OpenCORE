@@ -1,408 +1,159 @@
 ﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.ConsultaCargaMasivaViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista index donde se muestran los resultados de las cargas masivas realizadas.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
-
-    CommunityModel Comunidad = Html.GetComunidad();
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 }
 
-<div class="content">
-    <h1>Consulta de las cargas masivas</h1>
-    @*<input type="button" class="guardarTodo" value="Guardar Todo" />*@
-    <div>
-        <p>
-            En esta página se pueden ver las cargas masivas realizadas y sus paquetes
-        </p>
-        <form autocomplete="on">
-            <p>
-                @foreach (InformacionMostrar info in Model.ListaInformacion)
-                {
-                    <div>
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar la información general de la comunidad --------------------
+*@
 
-                        <h2>@info.NombreCarga</h2><br />
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/grafo-conocimiento">@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")</a>
+            </li>
+            <li>
+                @Html.GetText("DEVTOOLS","CONSULTACARGASMASIVAS")
+            </li>
+        </ul>
+    </div>
 
-                        @switch (@info.EstadoCarga)
-                        {
-                            case ConsultaCargaMasivaController.CARGAABIERTA:
-                        <p style="color:lime">Estado de la carga: @info.EstadoCarga</p><br />
-                        break;
-                    case ConsultaCargaMasivaController.CARGACERRADA:
-                        <p style="color:cornflowerblue">Estado de la carga: @info.EstadoCarga</p><br />
-                        break;
-                    case ConsultaCargaMasivaController.CARGACOMPLETADA:
-                        <p style="color:green">Estado de la carga: @info.EstadoCarga</p><br />
-                        break;
-                }
+    @* Contenido Central *@
+    <div class="formulario-edicion background-blanco">       	
+
+		@* Contenedor del Título de la Sección + Buscador *@
+		<div class="row">
+			@* Título de la sección de cláusulas + Nº de páginas *@
+			<div class="col col-12 header-listado">
+				<div class="h1-container">
+					<h1>@Html.GetText("DEVTOOLS","CONSULTACARGASMASIVAS")
+						<span id="numCargasMasivas" class="numResultados"></span>
+					</h1>
+					<p class="mt-3 mb-0">@Html.GetText("DEVTOOLS","CONSULTALASCARGASMASIVASREALIZADASATRAVESDELAPIDEGNOSSPARACO")</p>
+				</div>
+			</div>
+		
+			@* Buscador *@
+			<div class="col col-12 header-buscador">
+				<div class="wrapCol">
+					<div class="col-buscador" style="width: 100%">					
+					@* Formulario para búsquedas *@
+						<form id="formBuscadorCargasMasivas" onsubmit="return false;">								
+							<div class="finderUtils" id="divCajaBusqueda">
+								<div class="group finderSection">
+									@* Input para realizar la búsqueda *@
+									<input
+										type="text"
+										id="txtBuscarCargaMasiva"
+										class="not-outline finderSectionText"
+										autocomplete="off"
+										placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+									/>
+									@* Botón para realizar la búsqueda *@
+									<input
+										title="Buscar"
+										type="button"
+										class="findAction"
+										id="inputLupa"
+									/>
+									@* Botón para Facetas de la búsqueda *@
+									<a href="javascript: void(0);" class="btn-filtrar-movil">
+										<span class="material-icons">filter_list</span>
+										<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+									</a>
+								</div>
+							</div>								
+						</form>
+					</div>
+				</div>
+			</div>
+			@* Contenido o tabla con las cargas *@
+			<div class="col col-12 col-contenido">
+				<div class="wrapCol">
+					@* Cabecera del listado *@
+					<ul id="id-header-cargas-list" class="header-component-list component-list no-list-style">
+						<li class="component-wrap">
+							@* Cabecera *@
+							<div class="component ">
+								<div class="component-header-wrap">
+									<div class="component-header">
+										<div class="component-sortable js-component-sortable-page">
+											<span class="material-icons-outlined sortable-icon">drag_handle</span>
+										</div>
+										@* Sección títulos *@
+										<div class="component-header-content">
+											<div class="component-header-left">
+												<div class="component-name-wrap ml-4">
+													<span class="component-nombre">@Html.GetText("ADMINISTRACIONBASICA","NOMBRE")</span>
+												</div>
+												<div class="component-id-wrap">
+													<span class="component-id">Id</span>
+												</div>													
+												<div class="component-detalles-wrap">																											
+													<span class="component-detalles">@Html.GetText("DEVTOOLS","DETALLES")</span>							
+												</div>
+												<div class="component-procesados-wrap">
+													<span class="component-procesados">@Html.GetText("DEVTOOLS","PAQUETESPROCESADOS")</span>
+												</div>
+												<div class="component-no-procesados-wrap">
+													<span class="component-no-procesados">@Html.GetText("DEVTOOLS","PAQUETESCONERROR")</span>
+												</div>
+											</div>
+											@* Acciones *@
+											<div class="component-header-right">
+												<div class="component-actions-wrap">
+													<span>@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
+		
+					@* Contenido de las cargas *@
+					<ul id="id-added-cargas-list" 
+						class="js-community-cargas-list component-list no-list-style">
+		
+						@* Pintado de cada carga *@ 							
+						@foreach (InformacionMostrar info in Model.ListaInformacion)
+						{
+							@Html.PartialView("_partial-views/_massive-load-detail-item", info);
+						}
+					</ul>
+				</div>
+			</div>
+		</div>				    
+    </div>
 
 
-                        @if (!string.IsNullOrEmpty(info.ErrorCarga))
-                        {
-                            <p style="color:red">Error en la carga:</p>
-                            <p>@info.ErrorCarga</p>
-                            <p>Paquetes con error: @info.NumPaquetesConError</p>
-                        }
 
-                        <p>ID de la carga: @info.IDCarga</p>
-                        <p>Fecha de la carga: @info.FechaCarga</p>
-                        <p>Paquetes procesados: @info.NumParquetesProcesados de @info.NumPaquetes</p>
-                        <br />
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/grafo_conocimiento.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
 
-                </div>
-            }
-                </p>
-                </form>
-            </div>
-
-            @*<input type="button" class="regenerarAutocompletar" value="Regenerar Autocompletar" />
-                <input type="button" class="guardarTodo" value="Guardar Todo" />*@
-            </div>
-            <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
-            <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.mjs.nestedSortable.js?v=@Html.GetVersion()"></script>
-            <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
-            <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-            <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
-            <script>
-                var OperativaAcciones = {
-                    init: function () {
-                        this.config();
-                        this.engancharComportamiento();
-                    },
-                    config: function (panelID) {
-                        this.urlPagina = document.location.href;
-                        this.txtAutoCompletadoProp = $('.autoCompOntoProp');
-                        this.txtAutoCompletadoTxtLibre = $('.autoCompOntoTxtLibre');
-                        return;
-                    },
-                    engancharComportamiento: function () {
-                        var that = this;
-                        that.pintarTagsInicial();
-                        $('input.anyadirPropiedadAutocompletar').click(function () {
-                            that.anyadirTagsAutocompletar();
-                        });
-                        $('input.anyadirPropiedadTxtLibre').click(function () {
-                            that.anyadirTagsTxtLibre();
-                        })
-                        $('input.guardarTodo').click(function () {
-                            that.guardarTodo();
-                        });
-                        $('input.regenerarAutocompletar').click(function () {
-                            that.regenerarTodo();
-                        });
-                        $('input.seleccionarObjetoConocimiento').click(function () {
-                            that.seleccionarOntologia();
-                        });
-                        that.txtAutoCompletadoProp.autocomplete(
-                            null,
-                            {
-                                url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarOntologia",
-                                delay: 0,
-                                scroll: false,
-                                selectFirst: false,
-                                minChars: 1,
-                                width: 300,
-                                cacheLenght: 0,
-                                NoPintarSeleccionado: true,
-                                multiple: true,
-                                extraParams: {
-                                    grupo: '',
-                                    identidad: $('#inpt_identidadID').val(),
-                                    organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                                    proyecto: $('#inpt_proyID').val()
-                                }
-                            }
-                        );
-                        that.txtAutoCompletadoProp.result(function (event, data, formatted) {
-                            that.aceptarNombreOntologiaProp(this, data[0]);
-                        });
-                        that.txtAutoCompletadoTxtLibre.autocomplete(
-                            null,
-                            {
-                                url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarOntologia",
-                                delay: 0,
-                                scroll: false,
-                                minChars: 1,
-                                width: 300,
-                                cacheLenght: 0,
-                                NoPintarSeleccionado: true,
-                                multiple: true,
-                                extraParams: {
-                                    grupo: '',
-                                    identidad: $('#inpt_identidadID').val(),
-                                    organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                                    proyecto: $('#inpt_proyID').val()
-                                }
-                            }
-                        );
-                        that.txtAutoCompletadoTxtLibre.result(function (event, data, formatted) {
-                            that.aceptarNombreOntologiaTxtLibre(this, data[0]);
-                        });
-                        return;
-                    },
-                    pintarTagsInicial: function () {
-                        var txtAutoBD = document.getElementById("valoresAutoBD");
-                        var txtAutoTxtBD = document.getElementById("valoresAutoBDTxtLibre");
-                        var txtSearchBD = document.getElementById("valoresSearchBD");
-
-                        if (txtAutoBD.value != "") {
-                            var listaOpAu = txtAutoBD.value.split(',');
-                            for (let i = 0; i < listaOpAu.length; i++) {
-                                if (listaOpAu[i] != "") {
-                                    txtAutoBD.value = listaOpAu[i];
-                                    PintarTags($('#valoresAutoBD'));
-                                }
-                            }
-                            txtAutoBD.value = "";
-                        }
-
-                        if (txtAutoTxtBD != "") {
-                            var listaOpAuTxt = txtAutoTxtBD.value.split(',');
-                            for (let i = 0; i < listaOpAuTxt.length; i++) {
-                                if (listaOpAuTxt[i] != "") {
-                                    txtAutoTxtBD.value = listaOpAuTxt[i];
-                                    PintarTags($('#valoresAutoBDTxtLibre'), true);
-                                }
-                            }
-                            txtAutoTxtBD.value = "";
-                        }
-
-                        if (txtSearchBD != "") {
-                            var listatxtSearchBD = txtSearchBD.value.split(',');
-                            for (let i = 0; i < listatxtSearchBD.length; i++) {
-                                if (listatxtSearchBD[i] != "") {
-                                    txtSearchBD.value = listatxtSearchBD[i];
-                                    PintarTags($('#valoresSearchBD'));
-                                }
-                            }
-                            txtSearchBD.value = "";
-                        }
-                    },
-                    guardarTodo: function () {
-                        var that = this;
-                        $('.ok.general').remove();
-                        $('.error').remove();
-                        if (!that.comprobarErroresGuardado()) {
-                            that.Options = {};
-                            that.obtenerDatos();
-                            that.guardar();
-                        }
-                        else {
-                            that.mostrarErrorGuardado();
-                        }
-                    },
-                    regenerarTodo: function () {
-                        var that = this;
-                        $('.ok.general').remove();
-                        $('.error').remove();
-                        if (!that.comprobarErroresGuardado()) {
-                            that.Options = {};
-                            that.obtenerDatos();
-                            that.regenerarAutocompletar();
-                        }
-                        else {
-                            that.mostrarErrorGuardado();
-                        }
-                    },
-                    regenerarAutocompletar: function () {
-                        var that = this;
-
-                        MostrarUpdateProgress();
-                        GnossPeticionAjax(
-                        that.urlPagina + '/regenerar',
-                        that.Options,
-                        true
-                        ).done(function (data) {
-                            that.mostrarGuardadoOK();
-                        }).fail(function (data) {
-                            var error = data.split('|||');
-                            that.mostrarErrorGuardado();
-                        }).always(function () {
-                            OcultarUpdateProgress();
-                        });
-                    },
-                    mostrarErrorGuardado: function () {
-                        $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado</div>');
-                    },
-                    comprobarErroresGuardado: function () {
-                        var that = this;
-                        var error = false;
-
-                        return error;
-                    },
-                    seleccionarOntologia: function () {
-                        MostrarUpdateProgress();
-
-                        var params = {
-                            ontology: $("#ontology").val()
-                        }
-                        GnossPeticionAjax(
-                            this.urlPagina + '/select-ont',
-                            params,
-                            true
-                        ).done(function (data) {
-                            location.reload();
-                        }).fail(function (data) {
-                            console.log("ERROR =>" + data);
-                        }).always(function (data) {
-                            OcultarUpdateProgress();
-                        })
-                    },
-                    guardar: function () {
-                        var that = this;
-
-                        MostrarUpdateProgress();
-                        GnossPeticionAjax(
-                        that.urlPagina + '/save',
-                        that.Options,
-                        true
-                        ).done(function (data) {
-                            that.mostrarGuardadoOK();
-                        }).fail(function (data) {
-                            var error = data.split('|||');
-                            that.mostrarErrorGuardado();
-                        }).always(function () {
-                            OcultarUpdateProgress();
-                        });
-                    },
-                    mostrarGuardadoOK: function () {
-                        $('input.guardarTodo').before('<div class="ok general">Los cambios se han guardado correctamente</div>');
-                    },
-                    obtenerDatos: function () {
-                        var that = this;
-                        var spanAutocompletar = document.getElementById('contTagsAutocompletar');
-                        var divsAutocompletar = spanAutocompletar.getElementsByClassName('tag');
-                        var stringAutocompletar = divsAutocompletar[0].innerText;
-                        for (let i = 1; i < divsAutocompletar.length; i++) {
-                            stringAutocompletar = stringAutocompletar + ',' + divsAutocompletar[i].innerText;
-                        }
-                        var spanTxtLibre = document.getElementById('contTagsTxtLibre');
-                        var divsTxtLibre = spanTxtLibre.getElementsByClassName('tag');
-                        var stringTxtLibre = divsTxtLibre[0].innerText;
-                        for (let i = 1; i < divsTxtLibre.length; i++) {
-                            stringTxtLibre = stringTxtLibre + ',' + divsTxtLibre[i].innerText;
-                        }
-                        that.Options['TagsAutocompletar'] = stringAutocompletar;
-                        that.Options['TagsTxtLibre'] = stringTxtLibre;
-                    },
-                    anyadirTagsAutocompletar: function () {
-
-                        var txtAutocompletar = $("#PropiedadesParaAutocompletar").val();
-                        document.getElementById("txtTagsAutocompletar").value = document.getElementById("txtTagsAutocompletar").value + txtAutocompletar;
-                        document.getElementById("txtTagsTxtLibre").value = document.getElementById("txtTagsTxtLibre").value + txtAutocompletar;
-                        PintarTags($('#txtTagsAutocompletar'));
-                        PintarTags($('#txtTagsTxtLibre'), true);
-                        document.getElementById("PropiedadesParaAutocompletar").value = "";
-
-                    },
-                    anyadirTagsTxtLibre: function () {
-                        var txtTxtLibre = $("#PropiedadesParaTxtLibre").val();
-                        document.getElementById("txtTagsTxtLibre").value = document.getElementById("txtTagsTxtLibre").value + txtTxtLibre;
-                        PintarTags($('#txtTagsTxtLibre'));
-                        document.getElementById("PropiedadesParaTxtLibre").value = "";
-                    },
-                    aceptarNombreOntologiaProp: function (txtautocomp, nombre) {
-                        var that = this;
-
-                        var padreTxt = $(txtautocomp).closest('.panOntologiasProp');
-                        var txtValores = $('input.valores', padreTxt);
-                        txtValores.val(txtValores.val() + nombre + ',');
-
-                        var nombreCompleto = txtautocomp.value;
-
-                        if (nombreCompleto.includes('@Html.Raw("@@@")')) {
-                            var nombreTroceado = nombreCompleto.split('@Html.Raw("@@@")');
-                            var nombreCompletoFinal = nombreTroceado[0];
-
-                            for (let i = 1; i < nombreTroceado.length - 1; i++) {
-                                nombreCompletoFinal += '@Html.Raw("@@@")' + nombreTroceado[i];
-                            }
-                            nombreCompletoFinal += '@Html.Raw("@@@")' + nombre;
-                            txtautocomp.value = nombreCompletoFinal;
-                        } else {
-                            txtautocomp.value = nombre;
-                        }
-                    },
-                    aceptarNombreOntologiaTxtLibre: function (txtautocomp, nombre) {
-                        var that = this;
-
-                        var padreTxt = $(txtautocomp).closest('.panOntologiasTxtLibre');
-                        var txtValores = $('input.valores', padreTxt);
-                        txtValores.val(txtValores.val() + nombre + ',');
-
-                        var nombreCompleto = txtautocomp.value;
-
-                        if (nombreCompleto.includes('@Html.Raw("@@@")')) {
-                            var nombreTroceado = nombreCompleto.split('@Html.Raw("@@@")');
-                            var nombreCompletoFinal = nombreTroceado[0];
-
-                            for (let i = 1; i < nombreTroceado.length - 1; i++) {
-                                nombreCompletoFinal += '@Html.Raw("@@@")' + nombreTroceado[i];
-                            }
-                            nombreCompletoFinal += '@Html.Raw("@@@")' + nombre;
-                            txtautocomp.value = nombreCompletoFinal;
-                        } else {
-                            txtautocomp.value = nombre;
-                        }
-                    }
-                }
-
-                $(document).ready(function () {
-                    OperativaAcciones.init();
-                });
-            </script>
-            <style>
-                div.content {
-                    margin: 50px;
-                }
-
-                    div.content form {
-                        margin: 30px;
-                    }
-
-                div#confCorreo .bloque {
-                    border: 1px solid;
-                    padding: 10px;
-                }
-
-                div.error.general {
-                    background-color: Red;
-                    color: white;
-                    padding: 10px 20px;
-                    margin-left: 20px;
-                    margin-bottom: 5px;
-                }
-
-                div.ok.general {
-                    background-color: limegreen;
-                    color: white;
-                    padding: 10px 20px;
-                    margin-left: 20px;
-                    margin-bottom: 5px;
-                }
-
-                input.regenerarAutocompletar {
-                    background: #ffa031 none repeat scroll 0 0;
-                    float: left;
-                    border: medium none;
-                    border-radius: 5px;
-                    color: white;
-                    padding: 5px;
-                    cursor: pointer;
-                }
-
-                div.content input.guardarTodo {
-                    float: right;
-                }
-
-                div.content input[type='text'],
-                div.content input[type='password'],
-                div.content select {
-                    width: 100%;
-                    margin-bottom: 10px;
-                }
-
-                h4 {
-                    padding-top: 20px;
-                    padding-bottom: 20px;
-                }
-            </style>
+        (function ($) {
+            // Operativa funcionamiento
+            operativaGestionCargasMasivas.init();
+        })();
+    </script>
+}

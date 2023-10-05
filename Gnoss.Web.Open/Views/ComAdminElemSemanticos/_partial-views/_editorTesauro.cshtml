@@ -1,0 +1,18 @@
+﻿@model ThesaurusEditorModel
+
+@*Descripción
+-----------------------------------------------
+
+Variables
+----------------------------------------------------------------
+*@
+
+@foreach (CategoryModel categoria in ((List<CategoryModel>)Model.ThesaurusCategories).Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat => cat.Order))
+{
+    PintarCategoriaEditorTesauro pintar = new PintarCategoriaEditorTesauro();
+    pintar.categoryModel = categoria;
+    pintar.thesaurusEditor = Model;
+    @Html.PartialView("_partial-views/_tesauro-list-item-detail", pintar)
+}
+
+

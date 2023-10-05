@@ -1,0 +1,50 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal para confirmar la eliminación de una redirección. 
+
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista modal para confirmar la eliminación de una redirección.  --------------------
+*@
+
+<div class="modal-header">
+    @* Título del Modal *@
+    <p class="modal-title">
+        <span class="material-icons">delete</span>
+		@Html.GetText("COMMON","ELIMINAR")
+    </p>
+    @* Cierre del Modal *@
+    <span class="material-icons cerrar"
+          data-dismiss="modal"
+          aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <div class="form-group">
+            <label class="control-label">
+                @Html.GetText("DEVTOOLS","DESEAELIMINARLAREDIRECCION")
+            </label>
+        </div>
+        <div class="form-actions">
+            <button data-dismiss="modal" class="btn btn-outline-primary btnRejectDeleteRedirection">@Html.GetText("COMMON","NO")</button>
+            <button class="btn btn-primary btnConfirmDeleteRedirection">@Html.GetText("COMMON","SI")</button>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    
+    (function ($) {
+		// Gestión de operativa para funcionamiento de eliminación de un recurso multimedia
+        operativaGestionRedirecciones.operativaModalDeleteRedirectionItem();	        
+    })();
+</script>

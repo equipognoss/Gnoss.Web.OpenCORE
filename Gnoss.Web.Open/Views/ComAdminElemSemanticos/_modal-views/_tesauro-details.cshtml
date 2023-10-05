@@ -1,0 +1,74 @@
+﻿@model ComAdminSemanticElemModel
+@*
+Descripción
+-----------------------------------------------
+Vista modal que muestra los datos o detalles de un tesauro semántico. Esto se cargarán a su vez en una vista parcial.
+Esta vista de modal "parcial" se cargará dentro de un modal-container de forma dinámica.
+
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+<div class="modal-header">
+	@* Título del modal *@
+	<p class="modal-title">
+		<span class="material-icons">edit</span>
+		Editar tesauro semántico
+	</p>
+	<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+
+
+<div class="formulario-edicion">
+	<div class="header-listado mb-3">
+		<div class="h1-container">
+			<h3 class="mb-0">
+				Elementos del tesauro semántico
+				<span class="numResultados numTesaurosSemanticosItems"></span>
+			</h3>
+		</div>
+
+		<div class="acciones d-flex align-items-center">
+			@* Botón para añadir Nuevo Elemento dentro de un Tesauro semántico *@
+			<button class="btn btn-outline-primary btnAddTesauroSemanticoElement ml-2" data-toggle="modal" data-target="#modal-add-tesauro-item">@Html.GetText("DEVTOOLS","AÑADIRELEMENTO")</button>
+		</div>
+	</div>
+
+	@* Vista parcial para la creación de un elemento del tesauro *@
+	@Html.PartialView("_partial-views/_tesauro-create-element", Model)
+
+	@* Header de Elementos (Buscar + Añadir) *@
+	<div class="headerTesauroSemantico"
+		 style="display: flex; align-items: center">
+		<div class="col-buscador" style="width: 100%">
+			<form id="formBuscadorPaginas" onsubmit="return false;">
+				<div class="finderUtils" id="divCajaBusquedaTesauroSemantico">
+					<div class="group finderSection">
+						<input type="text"
+							   class="not-outline finderSectionText findTesauroSemanticoElements"
+							   autocomplete="off"
+							   placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")" />
+						<input title="Buscar"
+							   type="button"
+							   class="findAction"
+							   id="inputLupa" />
+						<a href="javascript: void(0);" class="btn-filtrar-movil">
+							<span class="material-icons">filter_list</span>
+							<span class="texto">Filtrar</span>
+						</a>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	@* Listado donde se cargarán los Elementos del objeto de conocimiento secundario *@
+	<div id="tesauroListContainer">		
+		@Html.PartialView("_modal-views/_tesauro-details-items", Model)		
+	</div>
+
+</div>

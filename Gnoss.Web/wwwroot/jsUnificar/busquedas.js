@@ -42,7 +42,7 @@ function enlazarFiltrosBusqueda() {
         AgregarFiltro('ordenarPor', $(this).val(), true);
     });
 
-    // Configurar la selecci�n de ordenaci�n de los resultados al pulsar en "Ordenado por"    
+    // Configurar la sección de ordenación de los resultados al pulsar en "Ordenado por"    
     $("#panel-orderBy a.item-dropdown")
         // En ordenación, no mostraba el icono seleccionado ya que lo "desmontaba".
         //.unbind()
@@ -860,7 +860,7 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
         paramAdicional = 'busquedaTipoChart=' + chartActivo + '|' + paramAdicional;
     }*/
 
-    if ($('li.mapView').hasClass('activeView')) {
+    if ($('.mapView').hasClass('activeView')) {
         paramAdicional += 'busquedaTipoMapa=true';
     }
 
@@ -1118,7 +1118,9 @@ var MontarResultadosScroll = {
                 }
             },
 
-            offset: 'bottom-in-view' // Disparar petición cuando se visualice el footer
+            //offset: 'bottom-in-view' // Disparar petición cuando se visualice el footer
+            // Cambiado debido a que listado de recursos, al pulsar en "Ctrol + Fin" no detectaba ese comportamiento
+            offset: '100%', // Disparar petición cuando se visualice el footer
         })
 
         return;
@@ -1392,8 +1394,21 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
 
     $('#' + panFiltrosPulgarcito).css('display', '');
 
-    EjecutarScriptsIniciales();
-    if (pNumeroResultados == 1) { OcultarUpdateProgress(); viewOptions.init(); MontarNumResultados(); }
+    // Ejecutar Scripts iniciales sólo si es necesario
+    if (typeof EjecutarScriptsIniciales === 'function') {
+        EjecutarScriptsIniciales();         
+    }
+
+    if (pNumeroResultados == 1) {
+        if (typeof OcultarUpdateProgress === 'function') {
+            OcultarUpdateProgress();
+        } else {
+            loadingOcultar();
+        }
+        // Quitar para el front de Administración.
+        // viewOptions.init();
+        MontarNumResultados();
+    }
 
     if (funcionJS != '') {
         eval(funcionJS);
@@ -1423,9 +1438,16 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
 	        );
         });
     }
-    MontarFechas();
+    
+    // Controlar existencia de función en backOffice
+    if (typeof MontarFechas === 'function'){
+        MontarFechas();
+    }
 
-    limpiarActividadRecienteHome.init();
+    // Controlar existencia de comportamiento 
+    if (typeof limpiarActividadRecienteHome != 'undefined'){        
+        limpiarActividadRecienteHome.init();
+    }    
 
     enlazarFiltrosBusqueda();
 
@@ -1444,7 +1466,11 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
     verTodasCategoriasEtiquetas.init();
 
     /* pintar iconos de los videos*/
-    pintarRecursoVideo.init();
+    if (typeof pintarRecursoVideo != 'undefined') {        
+        pintarRecursoVideo.init();
+    }
+
+    
 
     /* Es listado de mensajes */
     if (tipoBusqeda == 12) {
@@ -1466,16 +1492,23 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
         customizarListado.init();
     }
 
+    // Cargar comportamiento de listGrid y visualización de recursos. En Administración no haría falta.
     if ((typeof CompletadaCargaRecursos != 'undefined')) {
         CompletadaCargaRecursos();
     }
 
     /* enganchar vista listado-mosaico*/
     if (!vistaMapa && !vistaChart) {
-        modoVisualizacionListados.init(pPanelID);
+        // Controlar si es necesario visualización de listados. En backoffice no haría falta
+        if ((typeof modoVisualizacionListados != 'undefined')) {
+            modoVisualizacionListados.init(pPanelID);
+        }        
     }
 
-    utilMapas.AjustarBotonesVisibilidad();
+    // Controlar comportamientos de mapas. En backoffice no haría falta.
+    if (typeof utilMapas !== 'undefined'){        
+        utilMapas.AjustarBotonesVisibilidad();
+    }
 
     //Si hay resultados mostramos la caja de b?squeda
     if ((document.getElementById('ListadoGenerico_panContenedor') != null || vistaMapa || vistaChart) && document.getElementById('ctl00_ctl00_CPH1_CPHContenido_divCajaBusqueda') != null) {
@@ -1493,9 +1526,16 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
     }
 
     if (typeof (urlCargarAccionesRecursos) != 'undefined') {
-        ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
+        // Controlar commportamiento de AccionesListadoMVC.
+        if (typeof (ObtenerAccionesListadoMVC) != 'undefined') {        
+            ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
+        }            
     }
-    MontarFechaCliente();
+
+    // Controlar comportamientos de fechas. Para backoffice no haría falta
+    if (typeof (MontarFechaCliente) != 'undefined') {        
+        MontarFechaCliente();
+    }    
 }
 
 function TraerRecPuntoMapa(me, panelVerMas, claveLatLog, docIDs, docIDsExtra, panelVerMasX, panelVerMasY, tipo) {
@@ -1647,7 +1687,7 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
 
         var paramAdicional = parametros_adiccionales;
 
-        if ($('li.mapView').attr('class') == "mapView activeView") {
+        if ($('.mapView').attr('class') == "mapView activeView") {
             paramAdicional += 'busquedaTipoMapa=true';
         }
 
@@ -2431,7 +2471,7 @@ function MontarPanelFiltros() {
     }
 }
 
-function MontarNumResultados() {
+function MontarNumResultadosAnterior() {
     if ($('#' + idNavegadorBusqueda).length > 0) {
         if ($('#navegadorRemover').find('.indiceNavegacion').length > 0) {
             $('#' + idNavegadorBusqueda).html($('#navegadorRemover').html());
@@ -2449,6 +2489,97 @@ function MontarNumResultados() {
         $('#numResultadosRemover').remove();
     }
 }
+
+/**
+ * Método para mostrar el nº de resultados devueltos por el servicio resultados
+ * */
+function MontarNumResultados() {
+
+    // Input para buscar
+    const finderSection = $("#finderSection");
+    // Panel informativo de resultados no encontrados 
+    let panelInfoNoResultsFound = '';
+
+    if ($('#' + idNavegadorBusqueda).length > 0) {
+        if ($('#navegadorRemover').find('.indiceNavegacion').length > 0) {
+            $('#' + idNavegadorBusqueda).html($('#navegadorRemover').html());
+            $('#' + idNavegadorBusqueda).css('display', '')
+        }
+        $('#navegadorRemover').remove();
+    }
+
+    if ($('#numResultadosRemover').length > 0) {
+        if (mostrarCajaBusqueda) {
+            // Nº total de resultados obtenidos
+            const numResultados = parseInt($('#numResultadosRemover').text());
+            // Cadena utilizada para búsqueda
+            const queryString = findGetParameter("search");
+
+            // No se han encontrado resultados - Mostrar aviso siempre que se realice alguna búsqueda
+            if (numResultados == 0 && queryString != undefined) {
+                // Si existe el buscador, introducir la cadena que ha usado el usuario para realizar la búsqueda con resultados 0.
+                if (finderSection.length > 0) {
+                    finderSection.val(queryString);
+                }
+
+                // Panel informativo de que no se han encontrado resultados (Idioma ES y EN)
+                if (configuracion.idioma == 'en') {
+                    panelInfoNoResultsFound = `
+                        <div id="no-results" class="d-flex">
+	                        <span class="material-icons-outlined"> info </span>
+	                        <div class="no-results-content ml-2">		                        
+			                    <p>The search for <strong>${queryString}</strong> did not return any results.​</p>		                        
+		                        <p>Suggestions:​</p>
+		                        <ul>
+                                    <li>Check that all words are spelled correctly.​</li>
+			                        <li>Try using other word.​</li>
+			                        <li>Try using more general words.​</li>
+			                        <li>Try using fewer words.</li>
+		                        </ul>
+	                        </div>
+                        </div>
+                    `;
+                } else {
+                    panelInfoNoResultsFound = `
+                        <div id="no-results" class="d-flex">
+	                        <span class="material-icons-outlined"> info </span>
+	                        <div class="no-results-content ml-2">
+		                        <p>
+			                        La búsqueda de <strong>${queryString}</strong> no obtuvo ningún resultado.
+		                        </p>
+		                        <p>Sugerencias:</p>
+		                        <ul>
+			                        <li>
+				                        Comprueba que todas las palabras están escritas
+				                        correctamente.
+			                        </li>
+			                        <li>Intenta usar otras palabras.</li>
+			                        <li>Intenta usar palabras más generales.</li>
+			                        <li>Prueba a usar menos palabras.</li>
+		                        </ul>
+	                        </div>
+                        </div>
+                    `;
+                }
+
+                // Ocultar panel de filtros o div filtros ya que no es necesario
+                $('#divFiltros').length > 0 ? $('#divFiltros').css("display", "none") : $('#panFiltros').css("display", "none");
+
+                // Añadir panel de sin resultados
+                $(".resource-list-wrap").find("p").remove();
+                // Eliminar posible mensaje de "Sin resultados" devuelto por el servicio "Resultados"
+                $(".resource-list-wrap").parent().parent().find("p").remove();
+                $(".resource-list-wrap").append(panelInfoNoResultsFound);
+            }
+            $('#' + numResultadosBusq).html($('#numResultadosRemover').html());
+            $('#' + numResultadosBusq).css('display', '');
+            $('.group.filterSpace').css('display', '');
+        }
+        $('#numResultadosRemover').remove();
+    }
+}
+
+
 
 //M?todos para las acciones de los listados de las b?squedas
 function ObtenerAccionesListado(jsEjecutar) {

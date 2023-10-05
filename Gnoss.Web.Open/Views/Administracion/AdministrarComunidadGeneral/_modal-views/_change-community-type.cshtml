@@ -1,0 +1,225 @@
+﻿@model AdministrarComunidadGeneralModel
+
+@*Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    // Tipo de acceso a la comunidad (String y Value)
+    var tipoAccesoComunidadValue = (short)Comunidad.AccessType;
+    var tipoAccesoComunidadString = ((TipoAcceso)((short)Comunidad.AccessType)); 
+    // Nombre de la comunidad 
+    var communityDictionaryName = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Name);
+    var communityName = "";
+    // Url para cambiar el tipo de comunidad
+    string urlChangeCommunityType = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL") + "/change-community-type";
+}
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal poder cambiar el tipo de una comunidad.
+  
+*@
+
+@* Control de nombre de la comunidad *@
+@{
+    if (communityDictionaryName.Count == 0)
+    {
+        communityName = Model.Name;
+    }
+    else
+    {
+        communityName = communityDictionaryName[Model.IdiomaPorDefecto];
+    }
+}
+
+
+<div id="modal-change-community-type"
+     class="modal modal-top fade modal-edicion"     
+     role="dialog">
+    <div class="modal-dialog" role="document">
+        
+        <div class="modal-content">
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">edit</span>@Html.GetText("DEVTOOLS","CAMBIARTIPO")
+                </p>
+                <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+            </div>
+            @* Contenido central del modal *@
+            <div class="modal-body">
+
+                <div class="formulario-edicion no-min-height">
+                    <p>@Html.GetText("DEVTOOLS","SELECCIONAELNUEVOTIPOQUETENDRALACOMUNIDAD").</p>
+
+                    @* Tipo de comunidad *@
+                    <div class="form-group mb-3 edit-community-type">
+                        @* Opción Público *@
+                        <div class="custom-control themed little custom-radio">
+                            <input type="radio"
+                                   id="community-type-publico"
+                                   name="communityType"
+                                   data-value="0"
+                                   class="custom-control-input"
+                                   @(tipoAccesoComunidadValue == 0 ? "checked" : "")>
+                            <label class="custom-control-label" for="community-type-publico">Público</label>
+                        </div>
+                        @* Opción Privado *@
+                        <div class="custom-control themed little custom-radio">
+                            <input type="radio" 
+                                   id="community-type-privado"
+                                   name="communityType"
+                                   data-value="1"
+                                   class="custom-control-input"
+                                   @(tipoAccesoComunidadValue == 1 ? "checked" : "")>
+                            <label class="custom-control-label" 
+                                   for="community-type-privado">@Html.GetText("ADMINISTRACIONPAGINAS","PRIVADO")</label>
+                        </div>
+                        @* Opción Restringido *@
+                        <div class="custom-control themed little custom-radio">
+                            <input type="radio" 
+                                   id="community-type-restringido"
+                                   name="communityType"
+                                   data-value="2"
+                                   class="custom-control-input"
+                                   @(tipoAccesoComunidadValue == 2 ? "checked" : "")>
+                            <label class="custom-control-label" for="community-type-restringido">@Html.GetText("DEVTOOLS","RESTRINGIDO")</label>
+                        </div>        
+                        @* Opción Reservado 
+                        <div class="custom-control themed little custom-radio">
+                            <input type="radio"
+                                   id="community-type-reservado"
+                                   name="community-type"
+                                   data-value="3"
+                                   class="custom-control-input" 
+                                   checked="">
+                            <label class="custom-control-label" for="community-type-restringido">Reservado</label>
+                        </div>
+                        *@
+                    </div>
+
+                    @* Descripciones del tipo de comunidad *@
+                    <div id="communityDescriptions" class="mt-3">                
+                        @* Información Comunidad Pública *@
+                        <div id="panParrafoAcceso0" class="d-none">
+                            <p>
+                                <strong>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSERIGENPORLASSIGUIENTESNORMAS:")
+                                </strong>
+                            </p>
+                            <ul class="AdminComunidades">
+                                <li>
+                                    @Html.GetText("DEVTOOLS","CUALQUIERUSUARIODEPUEDEHACERSEMIEMBROYCONTRIBUIRENLACOMUNIDA")
+                                </li>
+                                <li>
+                                    @Html.GetText("DEVTOOLS","LOSUSUARIOSNOMIEMBROSDELACOMUNIDADEINTERNAUTASNOREGISTRADOSE")
+                                </li>
+                                <li>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSONVISIBLESENELDIRECTORIODECOMUNIDADES")                                    
+                                </li>
+                            </ul>
+                        </div>
+
+                        @* Información Comunidad Pública *@
+                        <div id="panParrafoAcceso0" class="d-none">
+                            <p>
+                                <strong>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSERIGENPORLASSIGUIENTESNORMAS:")
+                                </strong>
+                            </p>
+                            <ul class="AdminComunidades">
+                                <li>
+                                    @Html.GetText("DEVTOOLS","CUALQUIERUSUARIODEGNOSSPUEDEHACERSEMIEMBROYCONTRIBUIRENLACOM")
+                                </li>
+                                <li>
+                                    @Html.GetText("DEVTOOLS","LOSUSUARIOSDEGNOSSNOMIEMBROSDELACOMUNIDADEINTERNAUTASNOREGIS")
+                                </li>
+                                <li>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSONVISIBLESENELDIRECTORIODECOMUNIDADES")
+                                </li>
+                            </ul>
+                        </div>
+
+                        @* Información Comunidad Privada *@
+                        <div id="panParrafoAcceso1" class="d-none">
+                            <p>
+                                <strong>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPRIVADASSERIGENPORLASSIGUIENTESNORMAS:")
+                                </strong>
+                            </p>
+                            <ul class="AdminComunidades">
+                                <li>
+                                    @Html.GetText("DEVTOOLS","SOLOPODRANSERMIEMBROSDEUNACOMUNIDADPRIVADALOSUSUARIOSQUERECI")        
+                                </li>
+                                <li>                                    
+                                    @Html.GetText("DEVTOOLS","LOSUSUARIOSDEGNOSSQUENOSEANMIEMBROSNOPUEDENACCEDERAESTASCOMU")
+                                </li>
+                                <li>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPRIVADASNOSONVISIBLESENELDIRECTORIODECOMUNIDAD")                                    
+                                </li>
+                            </ul>
+                        </div>
+
+                        @* Información Comunidad Restringida *@
+                        <div id="panParrafoAcceso2" class="d-none">
+                            <p>
+                                <strong>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESRESTRINGIDASSERIGENPORLASSIGUIENTESNORMAS:")
+                                </strong>
+                            </p>
+                            <ul class="AdminComunidades">
+                                <li>
+                                    @Html.GetText("DEVTOOLS","CUALQUIERUSUARIOPUEDESOLICITARACCESOPARASERMIEMBRODELACOMUNI")
+                                </li>
+                                <li>
+                                    @Html.GetText("DEVTOOLS","LOSUSUARIOSNOMIEMBROSDELACOMUNIDADEINTERNAUTASNOREGISTRADOSP")                                    
+                                </li>
+                                <li>
+                                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASDEACCESORESTRINGIDOSONVISIBLESENELDIRE")
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    @* Cuadro de confirmación control de seguridad para cambio de la comunidad *@
+                    <div id="securityCommunityChangeType">
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">Escribe el nombre actual de la comunidad <span class="text-primary" id="currentCommunityName">@communityName</span> para confirmar el cambio.</label>
+                            <input type="text" id="txtConfirmCommunityChangeType" value="" class="form-control not-outline">
+                            <small class="form-text text-muted">@Html.GetText("DEVTOOLS","PARACONFIRMARELCAMBIODELTIPODECOMUNIDAD,ESNECESARIOLLEVARACA")</small>
+                            
+                                @* Aviso de cambio de tipo de comunidad *@
+                            <div id="alertConfirmChangeCommunityType" role="alert" class="alert alert-warning pb-3 d-none">
+                                <span class="material-icons mr-3">edit</span>
+                                <span>@Html.GetText("DEVTOOLS","PARACONFIRMARELCAMBIODETIPODECOMUNIDAD,PULSAENGUARDAR")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Sección botón de guardado y cierre del modal *@      
+                    <button id="btnGuardarTipoComunidad" data-communityshortname="@Comunidad.ShortName" data-url="@urlChangeCommunityType" class="btn btn-primary uppercase" disabled>@Html.GetText("COMMON", "GUARDAR")</button>                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,123 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Categorías
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false;
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();    
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Categorias *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "data-target=#categorias" : null)								
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)				
+				aria-expanded="true"
+				aria-controls="categorias">
+				@Html.GetText("ADMINISTRACIONBASICA","CATEGORIAS")
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Categorías *@
+	<div
+		id="categorias"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>Las categorías sirven para poder categorizar o estructurar los recursos que se publiquen en una comunidad según un criterio o jerarquía. Además, si la comunidad se ha configurado como multilingüe, las categorías también podrán configurarse en los idiomas disponibles en la comunidad.</p>
+			<div class="text-center">
+				<figure class="figure">						  
+					<img src="~/img/documentacionDevtools/01comunidad/categorias-comunidad.png"/>					
+					<figcaption class="figure-caption">Categorías existentes dentro de una comunidad.</figcaption>
+				</figure> 
+			</div>
+			<p>Desde esta sección se pueden realizar las siguientes acciones de configuración:</p>
+			<ul>
+				<li>
+					<strong>Crear nueva categoría:</strong> Acción de crear una nueva categoría para que esté disponible en la comunidad. Se puede crear una comunidad de varias formas.
+					<ul>
+						<li>Pulsando en el botón Nueva categoría creará una nueva categoría una vez se rellenen los datos necesarios que aparecen en la vista modal cargada.</li>
+						<li>También se puede crear una categoría pulsando en el botón<span class="material-icons">create_new_folder</span>de una de las filas. De esta forma se creará la categoría dentro de la categoría padre elegida.</li>
+					</ul>
+				</li>	
+				<li>
+					<span><strong>Editar nombre de la categoría:</strong> Al pulsar en el botón de editar una categoría <span class="material-icons">edit</span> se podrá editar la información de una categoría a través de la vista modal cargada.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/editar-nombre-categoria.png"/>					
+							<figcaption class="figure-caption">Edición del nombre de una categoría.</figcaption>
+						</figure> 
+					</div>
+				</li>
+				
+				<li>
+					<span><strong>Mover una categoría:</strong> Pulsando sobre el icono <span class="material-icons-outlined">drag_handle</span> y arrastrar la fila a una nueva posición conseguirá moverla o editar el sistema jerárquico de las categorías de la comunidad tal y como se puede ver en la siguiente ilustración.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/mover-categoria.png"/>					
+							<figcaption class="figure-caption">Mover una categoría dentro de otra o simplementar cambiar su posición.</figcaption>
+						</figure> 
+					</div>
+				</li>
+
+				<li>
+					<span><strong>Eliminar:</strong> Se puede proceder a la eliminación de una categoría pulsando en el icono <span class="material-icons">delete</span>. Si la categoría tiene recursos asociados a esta, el sistema solicitará una nueva categoría para que estos recursos sean asignados. Estos es debido a que los recursos de una comunidad deben tener al menos una categoría asociada.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/eliminar-categoria.png"/>					
+							<figcaption class="figure-caption">Será necesario establecer una nueva categoría si la categoría a eliminar tiene recursos asignados.</figcaption>
+						</figure> 
+					</div>
+				</li>
+
+				<li>
+					<span><strong>Gestionar nuevas propuestas de categorías:</strong> Desde esta sección también se podrá gestionar las solicitudes de nuevas categorías propuestas por los usuarios de la comunidad. Estas propuestas de nuevas categorías son realizadas desde la página Indice de la comunidad. Si hay nuevas propuestas de categorías, estas se visualizarán con un color diferente.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/gestionar-categorías-propuestas.png"/>					
+							<figcaption class="figure-caption">El administrador de la comunidad podrá aceptar o rechazar las propuestas de categorías realizadas por usuarios de la comunidad.</figcaption>
+						</figure> 
+					</div>
+				</li>
+
+				<li>
+					<span><strong>Interacción social:</strong> Desde esta sección se podrán configurar los aspectos relativos a las acciones permitidas o no de los usuarios dentro de una comunidad. Estas son las opciones o acciones configurables.</span>
+					<ul>
+						<li>Invitaciones disponibles: Permitir o no a los usuarios invitar a otros usuarios a la comunidad para el posterior registro.</li>
+						<li>Votaciones disponibles: Permitir o no votar los recursos de la comunidad. Votar un recurso en una comunidad consistiría en que un usuario pueda dar un “Me gusta” a un recurso en particular.</li>
+						<li>Permitir votaciones negativas: Permitir o no realizar votaciones negativas (no me gusta) en los recursos de la comunidad.</li>
+						<li>Mostrar las votaciones: Mostrar o no el número de votaciones positivas de un recurso.</li>
+						<li>Comentarios disponibles: Permitir o no que usuarios de la comunidad puedan comentar en la página de un recurso.</li>
+						<li>Permitir a los supervisores administrar los grupos de la comunidad: Como su propio nombre indica, permitiría a usuarios no administradores gestionar grupos de la comunidad.</li>
+						<li>Los usuarios pueden compartir recursos de esta comunidad a otras comunidades: Permitir o no a los usuarios compartir recursos con otras comunidades.</li>
+						<li>Los usuarios pueden crear recursos privados en la comunidad: Permitir o no a usuarios de la comunidad crear de recursos privados dentro de la comunidad.</li>
+						<li>Nº de caracteres máximo de la descripción de cada recurso en el boletín de suscripciones: Como su propio nombre indica, será el número de caracteres o la longitud que tendrá la descripción de una “newsletter” enviada a los usuarios describiendo el recurso enviado.</li>
+					</ul>
+					<p>Como en la mayoría de las páginas de DevTools, para guardar los cambios realizados bastará con hacer clic en el botón Guardar Todo.</p>
+
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/interaccion-social.png"/>					
+							<figcaption class="figure-caption">Opciones para configurar la interacción social de los usuarios en la comunidad.</figcaption>
+						</figure> 
+					</div>
+				</li>
+			</ul>
+		</div>		
+	</div>
+</div>

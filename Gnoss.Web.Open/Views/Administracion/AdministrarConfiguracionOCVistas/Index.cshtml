@@ -1,0 +1,284 @@
+﻿@using Es.Riam.Gnoss.Web.MVC.Models.ConfiguracionOCVistas;
+@*
+Descripción
+-----------------------------------------------
+
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    // CommunityModel Comunidad = Html.GetComunidad();
+    Layout = "~/Views/Shared/Layout/_Layout_XML_Vistas.cshtml";
+
+    VistasModel vistasModel = ViewBag.VistasModel;
+    List<EntidadModel> listaEntidades = vistasModel.Entidades.Where(entidad => entidad.PropiedadesOrdenEntidad != null).ToList();
+    string entPrincipal = vistasModel.EntidadPrincipal;
+    string icon = "";
+    string title = "";
+    string entidadPrincipalClass = "";
+}
+
+<div class="col col-12">
+    <div id="panel-central-page-builder" class="panel-central">
+        <div class="builder-editor">
+            
+            @* Área donde estarán cargados Filas, Columnas y Entidades *@
+            <ul id="xmlrow-list" class="js-cmsrows-list cmsrows-list no-list-style">
+                @foreach (EntidadModel entidad in listaEntidades)
+                {
+                    <li class="builder-item cmsrow js-cmsrow" data-columns="12">
+                        <div class="cmsrow-wrap">
+                            @if (entPrincipal == entidad.ID)
+                            {
+                                entidadPrincipalClass = "cmsrow-header entidad-principal";
+                            }
+                            else
+                            {
+                                entidadPrincipalClass = "cmsrow-header";
+                            }
+                            <div class="@entidadPrincipalClass">
+                                <div class="name">@entidad.ID</div>
+                                @if (entPrincipal == entidad.ID)
+                                {
+                                    <sup>Principal</sup>
+                                }
+                                <div class="js-cmsrow-actions cmsrow-actions">
+                                    <ul class="no-list-style">
+                                        <li>
+                                            <a class="round-icon-button js-view-row" data-toggle="collapse" data-target=".cmsrow-content[data-entityid='@entidad.ID']">
+                                                <span class="material-icons">visibility_off</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="action-edit round-icon-button js-action-edit-row">
+                                                <span class="material-icons">edit</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="action-delete round-icon-button js-action-delete">
+                                                <span class="material-icons">delete</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="action-handle round-icon-button js-action-handle-row">
+                                                <span class="material-icons">drag_handle</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="cmsrow-content collapse" data-entityid="@entidad.ID">
+                                <ul class="columns-list no-list-style">
+                                    <li class="cmscolumn js-cmscolumn" data-columnclass="span11 break" data-spanclass="span11" data-percent="100" style="width: calc(100% - 16px);">
+                                        <div class="cmscolumn-wrap">
+                                            <div class="cmscolumn-content">
+                                                <span class="xmlorden">Edición</span>
+                                                <ul class="xmlcontent" data-ficha="edicion" data-entityid="@entidad.ID">
+                                                    @foreach(PropiedadModel propiedad in @entidad.PropiedadesOrdenEntidad)
+                                                    {
+                                                        string clase = "builder-item";
+                                                        if (!entidad.Propiedades.Exists(p => p.ID == propiedad.ID) || propiedad.Tipo == "Falta configurar" || propiedad.Tipo.Contains("Propiedad inexistente"))
+                                                        {
+                                                            clase += " no-pertenece";
+                                                        }
+                                                        <li class="@clase">
+                                                            <div class="builder-item-wrap">
+                                                                @switch (propiedad.Tipo)
+                                                                {
+                                                                    case "http://www.w3.org/2001/XMLSchema#string":
+                                                                        icon = "text_fields";
+                                                                        title = "Texto";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#int":
+                                                                        icon = "123";
+                                                                        title = "Entero";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#float":
+                                                                        icon = "calculate";
+                                                                        title = "Float";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#date":
+                                                                        icon = "calendar_month";
+                                                                        title = "Fecha";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#boolean":
+                                                                        icon = "flaky";
+                                                                        title = "Booleano";
+                                                                        break;
+
+                                                                    case "Imagen":
+                                                                        icon = "image";
+                                                                        title = "Imagen";
+                                                                        break;
+
+                                                                    case "Link":
+                                                                        icon = "link";
+                                                                        title = "Enlace";
+                                                                        break;
+
+                                                                    case "Archivo":
+                                                                        icon = "description";
+                                                                        title = "Archivo";
+                                                                        break;
+
+                                                                    case "Video":
+                                                                        icon = "videocam";
+                                                                        title = "Video";
+                                                                        break;
+
+                                                                    case "Externa":
+                                                                        icon = "move_down";
+                                                                        title = "Propiedad externa";
+                                                                        break;
+
+                                                                    case "Objeto":
+                                                                        icon = "view_in_ar";
+                                                                        title = "Objeto";
+                                                                        break;
+
+                                                                    case "Falta configurar":
+                                                                        icon = "error_outline";
+                                                                        title = "No está configurada";
+                                                                        break;
+
+                                                                    case "Propiedad inexistente en el XML":
+                                                                        icon = "highlight_off";
+                                                                        title = "Esta propiedad no existe en el XML";
+                                                                        break;
+
+                                                                    case "Propiedad inexistente en el OWL":
+                                                                        icon = "blur_off";
+                                                                        title = "Esta propiedad no existe en el OWL";
+                                                                        break;
+                                                                }
+                                                                <div title="@title" class="icon">
+                                                                    <span class="material-icons">@icon</span>
+                                                                </div>
+                                                                <div class="name">@propiedad.ID</div>
+                                                                <div class="borrarpropiedad"><span class="material-icons">delete</span></div>
+                                                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                                            </div>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                                <hr>
+                                                <span class="xmlorden">Visualización</span>
+                                                <ul class="xmlcontent" data-ficha="visualizacion" data-entityid="@entidad.ID">
+                                                    @foreach (PropiedadModel propiedad in @entidad.PropiedadesOrdenEntidadLectura)
+                                                    {
+                                                        string clase = "builder-item";
+                                                        if (!entidad.Propiedades.Exists(p => p.ID == propiedad.ID) || propiedad.Tipo == "Falta configurar" || propiedad.Tipo.Contains("Propiedad inexistente"))
+                                                        {
+                                                            clase += " no-pertenece";
+                                                        }
+                                                        <li class="@clase">
+                                                            <div class="builder-item-wrap">
+                                                                @switch (propiedad.Tipo)
+                                                                {
+                                                                    case "http://www.w3.org/2001/XMLSchema#string":
+                                                                        icon = "text_fields";
+                                                                        title = "Texto";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#int":
+                                                                        icon = "123";
+                                                                        title = "Entero";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#float":
+                                                                        icon = "calculate";
+                                                                        title = "Float";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#date":
+                                                                        icon = "calendar_month";
+                                                                        title = "Fecha";
+                                                                        break;
+
+                                                                    case "http://www.w3.org/2001/XMLSchema#boolean":
+                                                                        icon = "flaky";
+                                                                        title = "Booleano";
+                                                                        break;
+
+                                                                    case "Imagen":
+                                                                        icon = "image";
+                                                                        title = "Imagen";
+                                                                        break;
+
+                                                                    case "Link":
+                                                                        icon = "link";
+                                                                        title = "Enlace";
+                                                                        break;
+
+                                                                    case "Archivo":
+                                                                        icon = "description";
+                                                                        title = "Archivo";
+                                                                        break;
+
+                                                                    case "Video":
+                                                                        icon = "videocam";
+                                                                        title = "Video";
+                                                                        break;
+
+                                                                    case "Externa":
+                                                                        icon = "move_down";
+                                                                        title = "Propiedad externa";
+                                                                        break;
+
+                                                                    case "Objeto":
+                                                                        icon = "view_in_ar";
+                                                                        title = "Objeto";
+                                                                        break;
+
+                                                                    case "Falta configurar":
+                                                                        icon = "error_outline";
+                                                                        title = "No está configurada";
+                                                                        break;
+
+                                                                    case "Propiedad inexistente en el XML":
+                                                                        icon = "highlight_off";
+                                                                        title = "Esta propiedad no existe en el XML";
+                                                                        break;
+
+                                                                    case "Propiedad inexistente en el OWL":
+                                                                        icon = "blur_off";
+                                                                        title = "Esta propiedad no existe en el OWL";
+                                                                        break;
+                                                                }
+                                                                <div title="@title" class="icon">
+                                                                    <span class="material-icons">@icon</span>
+                                                                </div>
+                                                                <div class="name">@propiedad.ID</div>
+                                                                <div class="editarpropiedad"><span class="material-icons">edit</span></div>
+                                                                <div class="borrarpropiedad"><span class="material-icons">delete</span></div>
+                                                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                                            </div>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+            
+            @* Botón para añadir una nueva Fila *@
+            <div class="botoneraXML mt-3">
+                <a id="btnAddRowXML" href="javascript: void(0);" class="btn btn-primary btn-round uppercase">
+                    <span class="material-icons">add</span>
+                    Entidad
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

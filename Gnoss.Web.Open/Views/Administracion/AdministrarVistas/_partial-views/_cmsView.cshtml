@@ -1,0 +1,303 @@
+﻿@model ManageViewsViewModel.CMSComponentViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene los detalles de una vista de un componente CMS.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+	// Tipo de vista (original/personalizadas) y de servicio (web, resultados, facetas)
+	string viewServiceType = ViewBag.ViewServiceType;	
+	
+	string nombreFormateadoPadre = Model.Name.Replace("/ViewsAdministracion/", "").Replace("/Views/", "");	
+	string nombreFormateadoPadreSinEspacios = Model.Name.Replace("/ViewsAdministracion/", "").Replace("/Views/", "").Replace(" ","_");
+	string idModalUploadVistaPersonalizacionPadre = "modal-upload-view-personalizacion" + Model.Name.Replace("/","_").Replace(".","_").Replace(" ","_");
+	string idModalNewVistaPersonalizacion = "modal-new-view-personalizacion";
+
+	string nombreFormateadoPersonalizacion = "";
+	string idModalEditarVistaPersonalizacion = "";
+
+}
+
+
+@if (!string.IsNullOrEmpty(Model.Name))
+{
+	<li class="component-wrap row-vista" id="@nombreFormateadoPadre"
+		data-viewtype="original"
+		data-parent="@nombreFormateadoPadreSinEspacios"
+		data-componentecms="true"
+		data-viewservicetype="componentecms">
+		<div class="component">
+			<div class="component-header-wrap">
+				<div class="component-header">
+					<div class="component-header-content">
+						<div class="component-header-left">						
+							@* Nombre de la página *@
+							<div class="component-name-wrap d-flex flex-column align-items-start component-bigger">																				
+								<span class="component-name" alt="@nombreFormateadoPadre" title="@nombreFormateadoPadre">
+									@nombreFormateadoPadre
+								</span>
+								<span class="component-name-subtitle">
+									@Model.PathName
+								</span>									
+							</div>
+							@* Estado de la página *@
+							<div class="component-estado-wrap component-smaller">							
+								<span class="component-estado">								
+									@Html.GetText("DEVTOOLS","ORIGINAL")
+								</span>																		
+							</div>
+							@* Tipo de la página *@
+							<div class="component-tipo-wrap component-smaller">							
+								<span class="component-tipo">								
+									@nombreFormateadoPadre
+								</span>																		
+							</div>
+
+							@* Fecha*@
+							<div class="component-fecha-wrap component-smaller">
+								<span class="component-fecha">
+									@Html.GetText("DEVTOOLS","NOAPLICA")
+								</span>
+							</div>
+						</div>
+						@*Sección de acciones de la página *@
+						<div class="component-header-right">
+							<div class="component-actions-wrap">
+								@* Botón dropdown de acciones *@
+								<div class="dropdown">
+									<a
+										class="nav-link dropdown-toggle btn btn-outline-grey"
+										data-toggle="dropdown"
+										href="#"
+										role="button"
+										aria-haspopup="true"
+										aria-expanded="false">
+										<span class="material-icons">download</span>
+										<span class="texto">@Html.GetText("ADMINISTRACIONVISTAS","DESCARGAR")</span>
+									</a>
+
+									@* Panel dropdown con las acciones disponibles *@
+									<div class="dropdown-menu dropdown-menu-left basic-dropdown">
+										<ul class="no-list-style">
+											@* Descargar *@
+											<li>
+												<a class="item-dropdown js-action-edit-component btnDownloadOriginalVista"
+												   data-action="@((short)ManageViewsViewModel.Action.DownloadOriginal)"												
+												   data-url="@(ViewBag.UrlActionCMS)"												   
+												   data-componentecms="ComponentePersonalizable"												   
+												   data-personalizacion="@Guid.Empty"
+												   data-nombre=""
+												   data-formulariossemanticos="FormulariosSemanticos">
+													<span class="material-icons">download</span>
+													<span class="texto">@Html.GetText("DEVTOOLS","DESCARGARELORIGINAL")</span>
+												</a>
+											</li>
+											@* Agregar personalización Controlar CI-CD *@
+
+                                            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+                                            {
+                                                @* Deshabilitado *@
+												<li>
+													<a class="item-dropdown js-action-edit-component btnNoUploadPersonalizacionCMS disabled">
+														<span class="material-icons">edit</span>
+														<span class="texto">@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")</span>
+													</a>
+												</li>
+                                            }
+                                            else
+                                            {
+												@* No Deshabilitado *@
+												<li>
+													<a class="item-dropdown js-action-edit-component btnUploadPersonalizacionCMS"
+													   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+													   data-url="@(ViewBag.UrlActionCMS)"												   
+													   data-componentecms="ComponentePersonalizable"
+													   data-personalizacion="@Guid.Empty"
+													   data-nombre=""
+													   data-toggle="modal"													   												   
+													   data-target="#@(idModalNewVistaPersonalizacion)">
+														<span class="material-icons">edit</span>
+														<span class="texto">@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")</span>
+													</a>
+												</li>                                                
+                                            }
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</li>
+
+	@* Pintar cada uno de las personalizaciones del componente CMS *@
+	@if (Model.CustomizationName.Count > 0)
+	{
+		foreach (Guid idVista in Model.CustomizationName.Keys)
+		{
+			string idForm = Guid.NewGuid().ToString().Replace("-", "");
+			<li class="component-wrap row-vista" data-parent="@nombreFormateadoPadreSinEspacios" data-componentecms="true"
+				data-viewservicetype="componentecms"
+				data-name=""
+				data-viewtype="personalizada">
+				@* Datos de la personalizacion *@
+				<div class="component">
+					@* Campos ocultos para datos *@
+					<input type="hidden" class="@idForm nombreFich" name="ComponentePersonalizable" value="@Model.PathName" />
+					<input type="hidden" class="@idForm" name="idPersonalizacion" value="@idVista" />
+	
+					@{
+						nombreFormateadoPersonalizacion = @Model.CustomizationName[idVista];
+						idModalEditarVistaPersonalizacion = "modal-upload-view-personalizacion" + nombreFormateadoPersonalizacion.Replace("/","_").Replace(".","_").Replace(" ","_");
+					}
+	
+					@* Datos del componente personalizado *@
+					<div class="component-header-wrap">
+						<div class="component-header">
+							<div class="component-header-content">
+								<div class="component-header-left">						
+									@* Nombre de la página *@
+									<div class="component-name-wrap d-flex flex-column align-items-start component-bigger">																				
+										<span class="component-name" alt="@nombreFormateadoPersonalizacion" title="@nombreFormateadoPersonalizacion">
+											@nombreFormateadoPersonalizacion
+										</span>
+										<span class="component-name-subtitle">
+											@Model.PathName
+										</span>									
+									</div>
+									@* Estado de la página *@
+									<div class="component-estado-wrap component-smaller">							
+										<span class="component-estado">								
+											Personalizada
+										</span>																		
+									</div>
+									@* Tipo de la página *@
+									<div class="component-tipo-wrap component-smaller">							
+										<span class="component-tipo">								
+											@Model.Name
+										</span>																		
+									</div>
+	
+									@* Fecha*@
+									<div class="component-fecha-wrap component-smaller">
+										<span class="component-fecha">
+											27/10/2022
+										</span>
+									</div>
+								</div>
+								@* Sección de acciones de la vista personalizada *@
+								<div class="component-header-right">
+									<div class="component-actions-wrap">
+										@* Botón dropdown de acciones *@
+										<div class="dropdown">
+											<a
+											class="nav-link dropdown-toggle btn btn-outline-grey"
+											data-toggle="dropdown"
+											href="#"
+											role="button"
+											aria-haspopup="true"
+											aria-expanded="false">
+												<span class="material-icons">download</span>
+												<span class="texto">@Html.GetText("COMMON","DESCARGAR")</span>
+											</a>
+	
+											@* Panel dropdown con las acciones disponibles *@
+											<div class="dropdown-menu dropdown-menu-left basic-dropdown">
+												<ul class="no-list-style">
+													@* Descargar *@
+													<li>
+														<a class="item-dropdown js-action-edit-component btnDownloadOriginalVista"
+													   data-action="@((short)ManageViewsViewModel.Action.Download)"												
+													   data-url="@(ViewBag.UrlActionCMS)"
+													   data-personalizables="PaginasPersonalizables"
+													   data-componentecms="ComponentePersonalizable"
+													   data-personalizacion="@idVista"
+													   data-nombre="@nombreFormateadoPersonalizacion"
+													   data-formulariossemanticos="FormulariosSemanticos">
+															<span class="material-icons">download</span>
+															<span class="texto">@Html.GetText("COMMON","DESCARGAR")</span>
+														</a>
+													</li>
+
+
+													@* Editar personalización Controlar CI-CD *@
+													@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+													{
+														@* Deshabilitado *@
+														<li>
+															<a class="item-dropdown js-action-edit-component btnNoUploadPersonalizacionCMS disabled">
+																<span class="material-icons">edit</span>
+																<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+															</a>
+														</li>														
+													}
+													else
+													{
+														@* No Deshabilitado *@
+														<li>
+															<a class="item-dropdown js-action-edit-component btnUploadPersonalizacionCMS"
+															   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+															   data-url="@(ViewBag.UrlActionCMS)"												   
+															   data-componentecms="ComponentePersonalizable"
+															   data-personalizacion="@idVista"
+															   data-nombre="@nombreFormateadoPersonalizacion"
+															   data-toggle="modal" 
+															   data-target="#@(idModalEditarVistaPersonalizacion)">
+																<span class="material-icons">edit</span>
+																<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+															</a>
+														</li>
+														
+													}
+
+													@* Eliminar personalización Controlar CI-CD *@
+													@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+													{
+														@* Deshabilitado *@
+														<li>
+															<a class="item-dropdown js-action-edit-component btnNoDeletePersonalizacionCMS disabled">													
+																<span class="material-icons">delete</span>
+																<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+															</a>
+														</li>
+													}
+													else
+													{
+														@* No Deshabilitado *@
+														<li>
+															<a class="item-dropdown js-action-edit-component btnDeletePersonalizacionCMS"
+															data-toggle="modal" 
+															data-action="@((short)ManageViewsViewModel.Action.Delete)"	
+															data-componentecms="ComponentePersonalizable"
+															data-url="@(ViewBag.UrlActionCMS)"																										   
+															data-personalizacion="@idVista"
+															data-nombre="@nombreFormateadoPersonalizacion"
+															data-target="#modal-delete-view">
+													
+																<span class="material-icons">delete</span>
+																<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+															</a>
+														</li>
+													}
+												</ul>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</li>
+			@* Modal para editar la vista personalizada del CMS -> Modal *@
+			@Html.PartialView("_modal-views/_newCmsPersonalizacion", nombreFormateadoPersonalizacion)
+		}
+	}	
+}

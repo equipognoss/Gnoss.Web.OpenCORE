@@ -134,6 +134,9 @@ var menusLateralesManagement = {
             position: 'right',
             push: false,
         });
+
+        // Eliminar clase inicial para evitar que el menú se muetre si la carga de la web es lenta
+        $('#menuLateralUsuario').removeClass("d-none");
     },
     montarMenuLateralMetabuscador: function () {
         if (!$('#menuLateralMetabuscador').length > 0) return;
@@ -162,6 +165,8 @@ var menusLateralesManagement = {
             position: 'left',
             push: false,
         });
+        // Eliminar clase inicial para evitar que el menú se muetre si la carga de la web es lenta
+        $('#menuLateral').removeClass("d-none");
     },
     montarMenuLateralComunidad: function () {
         if (!$('#menuLateralComunidad').length > 0) return;
@@ -2062,6 +2067,22 @@ var cambioVistaListado = {
                 dropdownToggleIcon.text(icon);
                 resourceList.removeClass('compacView listView mosaicView mapView graphView grafoView');
                 resourceList.addClass(clase);
+                if (clase != "graphView") {
+                    var charts = $("#divCharts");
+                    if (charts.length != 0) {
+                        charts.remove();
+                        FiltrarPorFacetas(ObtenerHash2());
+                        $(document).find('.finderSection').css('display', '');
+                        $(document).find('#finderSection').css('display', '');
+                        $(document).find('#panel-orderBy').css('display', '');
+                        $(document).find('#inputLupa').css('display', '');
+                    }
+                } else {
+                    $(document).find('.finderSection').css('display', 'none');
+                    $(document).find('#finderSection').css('display', 'none');
+                    $(document).find('#panel-orderBy').css('display', 'none');
+                    $(document).find('#inputLupa').css('display', 'none');
+                }
             }
         });
 
@@ -2134,7 +2155,8 @@ var plegarFacetasCabecera = {
                 that.mostrarOcultarFaceta(box);
             }
 
-            alturizarBodyTamanoFacetas.init();
+	    // No establecer un tamaño automático. En caso de haber muchas facetas, genera un height excesivo
+            // alturizarBodyTamanoFacetas.init();
         });
     },
     mostrarOcultarFaceta: function (box) {
@@ -2563,9 +2585,12 @@ var customizarAvisoCookies = {
      * */
     guardarAceptarCookies: function () {
         var that = this;
+
+        const urlAcceptCookies = $("#inpt_baseUrlBusqueda").val() + `/aceptar-cookies`;
+
         MostrarUpdateProgress();
         GnossPeticionAjax(
-            document.location.origin + '/aceptar-cookies',
+            urlAcceptCookies,
             null,
             true
         ).fail(function (data) {
@@ -2932,6 +2957,33 @@ function OcultarUpdateProgress() {
       };
 })(jQuery);
 
+/**
+ * Operativa Menú-Submenú de cabecera
+ */
+var MenuComunidad = {
+    init: function () {
+        this.config();
+        this.nestedDropdowns();
+    },
+    config: function () {
+        this.communityMenuMovil = $("#community-menu-movil");
+        this.dropdowns = this.communityMenuMovil.find('.con-sub-menu');
+    },
+    nestedDropdowns: function () {
+        this.dropdowns.find('> .sub-menu-toggle').on("click", function (e) {
+            const submenuToggle = $(this);
+            const submenu = submenuToggle.parent();
+            submenu.toggleClass('show');
+
+            //al cerrar, cerrar todos sus submenus que tenga
+            if (submenu.hasClass('show')) {
+                submenu.find('.con-sub-menu').removeClass('show');
+            }
+        });
+    },
+};
+
+
 
 $.fn.reverse = [].reverse;
 
@@ -2947,6 +2999,8 @@ $(function () {
         clonarMenuUsuario.init();
     }    
     menusLateralesManagement.init();
+    // Operativa submenus de la comunidad
+    MenuComunidad.init();
     metabuscador.init();
     iniciarSelects2.init();
     accionDesplegarCategorias.init();
@@ -2964,7 +3018,7 @@ $(function () {
     tooltipComunidad.init();
     solicitarAccesoComunidad.init();
     // Operativa para búsquedas rápidas JS (Categorías en Índice)
-    operativaFiltroRapido.init();
+    operativaFiltroRapido.init();   
 
     // Operativa de UsuariosOrganizacion (Administrar organización)
     if (body.hasClass('usuariosOrganizacion')) {

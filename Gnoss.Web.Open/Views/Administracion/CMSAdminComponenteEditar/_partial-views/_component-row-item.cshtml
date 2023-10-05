@@ -1,0 +1,109 @@
+@model string
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utilizará para pintar la fila de un componente que estará dentro de un contenedor de componentes.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	string componentId = Model;
+
+
+	// Variables usadas para pintar la urlEdit, urlSave del Componente dentro del grupo de componentes	
+	string urlSaveComponentFromCommunity = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/COMPONENT_KEY/save";
+	string urlEditComponentItemFromCommunity = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/COMPONENT_KEY/load-modal";
+
+	// Construir la url para el guardado del componente si este se desea editar a través del modal
+	urlSaveComponentFromCommunity = urlSaveComponentFromCommunity.Replace("COMPONENT_KEY", componentId.ToString());
+	// Construir la url para la edición del componente a través del modal
+	urlEditComponentItemFromCommunity = urlEditComponentItemFromCommunity.Replace("COMPONENT_KEY", componentId.ToString());
+
+	CMSAdminComponenteEditarViewModel.PropiedadComponente PropiedadComponente = ViewBag.PropiedadComponente;
+	bool isGrupoComponentes = PropiedadComponente.TypeComponent == TipoComponenteCMS.GrupoComponentes ? true : false;	
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Fila de información de un componente dentro de un contenedor de componentes --------------------
+*@
+
+<li class="component-wrap component-row" data-componentid="@componentId" draggable="false">
+	<div class="component">
+		<div class="component-header-wrap">
+			@* Cabecera del componente *@
+            <div class="component-header">
+                @* Icono para arrastrar *@
+				<div class="component-sortable js-component-sortable-component">
+					<span class="material-icons-outlined sortable-icon">drag_handle</span>
+				</div>
+                @* Contenido del item *@
+				<div class="component-header-content">
+					<div class="component-header-left">                                    
+						<div class="component-name-wrap">
+                            @* Nombre del item *@
+							<span class="component-name">
+								@* Mostrar loading hasta que se muestre el nombre del componente *@
+								<span class="component-real-name">
+									<span class="spinner-border spinner-border-sm" role="status">
+										<span class="sr-only">Cargando...</span>
+									</span>								
+								</span>							
+								@* ID del componente *@
+                                <span class="component-name-id">
+									@componentId
+								</span>
+							</span>
+						</div>
+					</div>
+                    @* Acciones del componente *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								@* Acción de editar componente del contenedor *@
+								@if (isGrupoComponentes)
+								{
+									<li>
+										<a class="action-edit round-icon-button js-action-edit btnEditComponentFromContainerList"
+										   href="javascript: void(0);"
+										   data-urleditcomponent="@urlEditComponentItemFromCommunity"
+										   data-urlsave="@urlSaveComponentFromCommunity"
+										   data-componentid="@componentId"
+										   draggable="false">
+											<span class="material-icons">edit</span>
+										</a>
+									</li>
+								}
+								else
+								{
+									@* Link al recurso *@
+									<li>
+										<a class="action-edit round-icon-button js-action-edit btnViewResourceFromContainerList"
+										   href="javascript: void(0);"
+										   target="_blank"
+										   title="@Html.GetText("DEVTOOLS","VERPAGINADELRECURSO")"
+										   alt="@Html.GetText("DEVTOOLS","VERPAGINADELRECURSO")">
+											<span class="material-icons">link</span>
+										</a>
+									</li>
+								}
+								@* Acción de eliminar componente del contenedor *@
+								<li>
+									<a
+										class="action-delete round-icon-button js-action-delete btnDeleteComponentFromContainerList"
+										href="javascript: void(0);"
+										data-componentid="@componentId"
+										draggable="false">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</li>

@@ -1,0 +1,65 @@
+﻿@model AdministrarTraduccionesViewModel
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón para poder crear traducción desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Traducciones".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	string urlCreateTranslate = string.Empty;
+	if (ViewBag.PersonalizacionAdministracionEcosistema != null && !ViewBag.PersonalizacionAdministracionEcosistema.Equals(Guid.Empty))
+	{
+		urlCreateTranslate = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONESECOSISTEMA") + "/crear";
+	}
+	else
+	{
+		urlCreateTranslate = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONES") + "/crear";
+	}
+}
+@*
+----------------------------------------------------------------
+
+-------------------- Vista parcial para crear una traducción --------------------*@
+
+@*Botón para la creación de una traducción 
+<ul>
+	@* Botón para crear nueva redirección
+	<li class="nuevo nueva-traduccion">*@
+		<a
+			href="javascript: void(0);"
+			class="btn btn-outline-primary dropdown-toggle no-flecha"
+			id="menuNuevaTraduccion"
+			data-toggle="dropdown"
+			aria-haspopup="true"
+			aria-expanded="false">
+			<span class="material-icons">add</span>
+			<span>@Html.GetText("DEVTOOLS","TRADUCCION")</span>
+		</a>
+		<div
+			class="dropdown-menu dropdown-menu-right basic-dropdown"
+			aria-labelledby="menuNuevaTraduccion"
+			style="will-change: transform">
+			<div>
+				<ul class="no-list-style menuCreacion">
+					<li>
+						<a
+							ahref="javascript: void(0)"
+							id="btnAddTranslation"
+							data-urlCreateTranslate = "@urlCreateTranslate"
+							style="cursor: pointer"
+							data-target="#modal-container"
+							data-toggle="modal"
+							class="item-dropdown">
+							<span class="texto">@Html.GetText("ADMINISTRACIONVISTAS","NUEVATRADUCCION")</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		@*
+	</li>		
+</ul>
+*@

@@ -1,0 +1,42 @@
+﻿@model ComAdminSemanticElemModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra una lista con los elementos correspondiente al objeto de conocimiento secundario. (Nombre y acciones a realizar sobre el elemento)
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	
+}
+
+@* Pintar cada elemento del objeto de conocimiento *@
+@foreach (string sujetoEnt in Model.SecondaryEntities.SecondaryInstancesEditables.Keys)
+{
+	// Añadir al ViewBag el sujetoEnt para usarse en la vista parcial
+	ViewBag.SujetoEnt = sujetoEnt;
+	
+	@* Elemento del OC Secundario *@
+	@Html.PartialView("_partial-views/_ontology-secondary-list-item", Model)
+}
+
+@* Mostrar panel cuando no haya instancias de entidades secundarias *@
+@if (Model.SecondaryEntities.SecondaryInstancesEditables.Count == 0)
+{
+	<li class="component-wrap element-row-no-elements">
+		<div class="component">
+			<div class="component-header-wrap">
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						<div class="component-name-wrap">																												
+							<span class="component-facetName">@Html.GetText("DEVTOOLS","NOHAYELEMENTOSASOCIADOSALOBJETODECONOCIMIENTO")</span>
+						</div>					
+					</div>
+				</div>
+			</div>
+		</div>
+	</li>	
+}
+
+

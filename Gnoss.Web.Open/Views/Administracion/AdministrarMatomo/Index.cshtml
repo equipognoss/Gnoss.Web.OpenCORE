@@ -1,0 +1,64 @@
+﻿@*
+    Descripción
+    -----------------------------------------------
+    Vista donde se muestra la configuración asociada a Matomo para la Comunidad.
+
+    Variables
+    ----------------------------------------------------------------
+*@
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    // Layout DevTools
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+}
+
+
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+        </li>
+        <li>
+            Administrar estadísticas de la comunidad
+        </li>
+    </ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+    <h2>Administrar estadísticas de la comunidad</h2>
+    <p>
+        Restablece tu usuario y contraseña para acceder a matomo.
+    </p>
+
+    @* Botón para restablecer tu usuario en Matomo*@
+    <input id="btnRestoreCurrentUser" type="button" class="btn btn-primary uppercase btnRestoreCurrentUser" data-toggle="modal" data-target="#modal-change-matomo-password" value="Restablecer tu ususario">
+
+    @* Botón para restablecer la contraseña del usuario administrador de Matomo*@
+    <input id="btnRestoreMatomoAdminPassword" type="button" class="btn btn-primary uppercase btnRestoreMatomoAdminPassword" data-toggle="modal" data-target="#modal-change-matomo-admin-password" value="Restablecer ususario Matomo">
+
+</div>
+
+@* Modal para restablecer tu usaurio en Matomo*@
+@Html.PartialView("_modal-views/_reset-matomo-password")
+
+
+@* Modal para restablecer el usuario Matomo*@
+@Html.PartialView("_modal-views/_reset-matomo-administrator-password")
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+        (function ($) {
+            // Operativa funcionamiento de Gestión Matomo
+            operativaGestionMatomo.init();
+        })();
+    </script>
+}

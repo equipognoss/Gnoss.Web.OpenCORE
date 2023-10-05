@@ -282,6 +282,7 @@ string cuerpo = "";
                     }
                     
                     <textarea id="@idTxtMensaje"
+                              name="@idTxtMensaje"
                               class="cke ckeSimple mensajes form-control"
                               cols="20"
                               rows="6">@cuerpo</textarea>
@@ -300,6 +301,10 @@ string cuerpo = "";
         </div>
     </div>
 </div>
+
+@* Modal de backup recuperación del mensaje *@
+@Html.PartialView("_modal-views/_show-email-backup-restore")
+
 
 <script type="text/javascript">
     // Parámetros para operativaEnvioMensajesGnoss
@@ -337,5 +342,9 @@ string cuerpo = "";
 
         // Gestión de operativa para funcionamiento de Edición de Tags
         operativaTagsEditable.init(pParamsTags);
+
+        // Gestión de operativa para guardado de seguridad de envío de emails
+        operativaGestionEmailsGuardadoSeguridad.init();
+
     })();
 </script>

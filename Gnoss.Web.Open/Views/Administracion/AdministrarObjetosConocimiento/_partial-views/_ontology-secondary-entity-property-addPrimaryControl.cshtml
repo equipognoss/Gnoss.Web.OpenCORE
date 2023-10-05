@@ -1,0 +1,45 @@
+﻿@model SharedSemCms
+
+@*
+Descripción
+-----------------------------------------------
+Vista que pinta cada input con su título y su propiedad con información adicional siendo de un elemento de un objeto secundario 
+cuando son propiedades "Ontologicas" desde "_ontology-secondary-entity-property-ontoData".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+
+@if (Model.semanticPropertyModel.ReadMode && Model.propertyValue != null && !string.IsNullOrEmpty(Model.propertyValue.UrlAuxiliaryLinkControl))
+{
+    string hrefLinkAux = "";
+    string targetLinkAux = "";
+
+    if (!Model.semanticPropertyModel.EntityParent.SemanticResourceModel.HideInfoIsNotMember)
+    {
+        hrefLinkAux = "href=\"" + Model.propertyValue.UrlAuxiliaryLinkControl + "\"";
+
+        if (Model.semanticPropertyModel.Element.TargetLink == null)
+        {
+            targetLinkAux = "target=\"_blank\"";
+        }
+        else if (Model.semanticPropertyModel.Element.TargetLink != "")
+        {
+            targetLinkAux = "target=\"" + Model.semanticPropertyModel.Element.TargetLink + "\"";
+        }
+    }
+
+    <a @Html.Raw(hrefLinkAux) @Html.Raw(targetLinkAux)>
+        @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControlInt", Model) *@
+        @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControlInt", Model)
+    </a>
+}
+else
+{
+    @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControlInt", Model) *@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControlInt", Model)
+}

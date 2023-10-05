@@ -33,5 +33,9 @@ COPY --from=build-env /app/out .
 
 COPY --from=build-env /app/Gnoss.Web.Open/Views/ Views/
 
+ARG version=latest
+
+RUN echo "Version    : $version \nProducto   : Web  \nFecha      : $(date +"%d/%m/%Y %H:%M:%S") \n" > wwwroot/versioninfo.txt
+
 ENTRYPOINT ["dotnet", "Gnoss.Web.dll"]
 

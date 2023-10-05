@@ -1,32 +1,87 @@
 ﻿@model ObjetoConocimientoModel.PresentacionModel
 
-<section class="bloque">
-	<p>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "LISTAPROPIEDADES")</p>
-    <ol class="propiedadesSortable">
-        @if (Model.ListaPropiedades != null)
-        {
-            foreach (ObjetoConocimientoModel.PresentacionModel.PropiedadModel propiedad in Model.ListaPropiedades.OrderBy(prop => prop.Orden))
-            {
-                @Html.PartialView("_FichaPropiedad", propiedad)
-            }
-        }
-    </ol>
-	<input type="button" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "ADDPROPIEDAD")" class="addProperty"/>
 
-	<p>
-		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARDESCRIPCION")</span>
-		<input type="checkbox" name="MostrarDescripcion"  @(Model.MostrarDescripcion?"checked":"") />
-	</p>
-	<p>
-		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARPUBLICADOR")</span>
-		<input type="checkbox" name="MostrarPublicador"  @(Model.MostrarPublicador?"checked":"") />
-	</p>
-	<p>
-		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARETIQUETAS")</span>
-		<input type="checkbox" name="MostrarEtiquetas"  @(Model.MostrarEtiquetas?"checked":"") />
-	</p>
-	<p>
-		<span class="tipo">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARCATEGORIAS")</span>
-		<input type="checkbox" name="MostrarCategorias"  @(Model.MostrarCategorias?"checked":"") />
-	</p>
-</section>
+@*
+Descripción
+-----------------------------------------------
+Vista parcial para mostrar los diferentes tipos de presentaciones en las diferentes vistas (Listado, Mosaico, Mapa…)
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+@* Autonumerico para control de los checkbox (click) *@
+string idRandom = @Guid.NewGuid().ToString().Substring(0,5);
+}
+
+@* Mostrar descripción *@
+<div class="form-group mb-3">
+	<div class="custom-control custom-checkbox">
+		<input
+			type="checkbox"
+			@(Model.MostrarDescripcion?"checked":"")
+			class="custom-control-input"
+			name="MostrarDescripcion"
+			id="mostrar-descripcion_@(idRandom)"/>
+		<label class="custom-control-label" for="mostrar-descripcion_@(idRandom)">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARDESCRIPCION")</label>
+	</div>
+</div>
+
+@* Mostrar Publicador *@
+<div class="form-group mb-3">
+	<div class="custom-control custom-checkbox">
+		<input
+			type="checkbox"
+			 @(Model.MostrarPublicador?"checked":"")
+			name="MostrarPublicador"
+			class="custom-control-input"
+			id="mostrar-publicador_@(idRandom)"/>
+		<label class="custom-control-label" for="mostrar-publicador_@(idRandom)">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARPUBLICADOR")</label>
+	</div>
+</div>
+
+@* Mostrar Etiquetas *@
+<div class="form-group mb-3">
+	<div class="custom-control custom-checkbox">
+		<input
+			type="checkbox"
+			@(Model.MostrarEtiquetas?"checked":"")
+			name="MostrarEtiquetas"
+			class="custom-control-input"
+			id="mostrar-etiquetas_@(idRandom)"/>
+		<label class="custom-control-label" for="mostrar-etiquetas_@(idRandom)">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARETIQUETAS")</label>
+	</div>
+</div>
+
+@* Mostrar Categorías *@
+<div class="form-group mb-3">
+	<div class="custom-control custom-checkbox">
+		<input
+			type="checkbox"
+			@(Model.MostrarCategorias?"checked":"")
+			name="MostrarCategorias"
+			class="custom-control-input"			
+			id="mostrar-categorias_@(idRandom)"/>
+		<label class="custom-control-label" for="mostrar-categorias_@(idRandom)">@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "MOSTRARCATEGORIAS")</label>
+	</div>
+</div>
+
+@* Panel de configurar propiedades *@
+<div class="form-group mb-4 mt-4 panelConfigurarPropiedades">
+	<div class="configurarPropiedades-header" style="display: flex;justify-content: space-between;">
+	<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("DEVTOOLS","LISTAPROPIEDADES")</label>
+		@* Botón para añadir nuevas propiedades *@
+		<a href="javascript: void(0);" class="btn btn-outline-primary new linkAddProperty">@Html.GetText("DEVTOOLS","NUEVAPROPIEDAD")</a>
+	</div>
+
+	@* Listado de propiedades *@
+	<ul class="id-added-property-list component-list no-list-style">										
+		@{
+			foreach (ObjetoConocimientoModel.PresentacionModel.PropiedadModel propiedad in Model.ListaPropiedades.OrderBy(prop => prop.Orden))
+			{
+				@Html.PartialView("_FichaPropiedad", propiedad)
+			}
+		}
+	</ul>
+</div>

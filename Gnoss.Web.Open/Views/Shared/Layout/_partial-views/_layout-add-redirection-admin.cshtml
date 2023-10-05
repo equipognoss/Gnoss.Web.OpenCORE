@@ -1,0 +1,54 @@
+﻿@model ManageRedirectionsViewModel
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón con un panel dropdown para poder crear una redirección desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Redirecciones".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+
+}
+@*
+----------------------------------------------------------------
+
+-------------------- Vista parcial para crear una redirección --------------------*@
+
+@*Botón para la creación de una redirección 
+<ul>
+	@* Botón para crear nueva redirección 
+	<li class="nuevo nueva-redireccion">*@
+		<a
+			href="javascript: void(0);"
+			class="btn btn-outline-primary dropdown-toggle no-flecha"
+			id="menuNuevaRedireccion"
+			data-toggle="dropdown"
+			aria-haspopup="true"
+			aria-expanded="false">
+			<span class="material-icons">add</span>
+			<span>@Html.GetText("DEVTOOLS","REDIRECCION")</span>
+		</a>
+		<div
+			class="dropdown-menu dropdown-menu-right basic-dropdown"
+			aria-labelledby="menuNuevoComponente"
+			style="will-change: transform">
+			<div>
+				<ul class="no-list-style menuCreacion">
+					<li>
+						<a
+							id="btnAddRedirectionItem"							
+							style="cursor: pointer"
+							class="item-dropdown">
+							<span class="texto">@Html.GetText("COMADMINREDIRECCIONES", "ADDREDIRECCION")</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		@*
+	</li>		
+</ul>
+*@

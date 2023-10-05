@@ -1,0 +1,35 @@
+﻿@model TabModel
+
+@{
+    List<TabModel.DashboardTabModel> opcionesDashboard = Model.OpcionesDashboard;
+}
+		
+<p>
+	<a class="linkEditarOpcionesDashboard" href="javascript: void(0);">Editar opciones dashboard</a>
+</p>
+
+<section class="editarOpcionesDashboard" style="display:none">
+    <p>Editar opciones dashboard</p>
+    <section class="bloque editarDashboard">
+        <p><a class="linkAgregarAsistente">Agregar gráfico</a></p>
+        <p>Previsualización de los gráficos</p>
+        <section class="bloque graficos">
+            <div class="ejemplosGraficos">
+                @foreach (TabModel.DashboardTabModel asistente in opcionesDashboard.OrderBy(x => x.Orden))
+                {
+                    string id = @asistente.AsisID + "Graf";
+                    <div id="@id" class="generados"></div>
+                }
+            </div>
+        </section>
+        <section class="editarAsistentes">
+            <p>Asistentes para la construcción de gráficos</p>
+            <ol class="exportacionesSortable asistentesLista">
+                @foreach (TabModel.DashboardTabModel asistente in opcionesDashboard.OrderBy(x => x.Orden))
+                {
+                    @Html.PartialView("_FichaAsistente", asistente)
+                }
+            </ol>
+        </section>
+    </section>
+</section>

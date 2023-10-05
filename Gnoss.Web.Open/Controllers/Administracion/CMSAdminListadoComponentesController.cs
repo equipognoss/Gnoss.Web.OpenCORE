@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -190,6 +191,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult Index(string tipoComponente, string idBloqueContenedor, string pagina, string search, string numusos)
         {
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "estructura edicion edicionComponentes listado no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Estructura;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Componentes;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "ESTRUCTURA");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONPAGINAS", "LISTADOCOMPONENTESCMS");
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
@@ -261,6 +270,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         componenteApariciones.Add(componente.Clave, 0);
                     }
+
                     //Cargamos los componentes que aparecen en los bloques
                     foreach (CMSBloque bloque in gestorCMSSinFiltros.ListaBloques.Values)
                     {
@@ -274,9 +284,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 }
                             }
                         }
-
-
                     }
+
                     //Cargamos los componentes que aparecen dentro de otros componentes
                     foreach (CMSBloque bloque in gestorCMSSinFiltros.ListaBloques.Values)
                     {
@@ -325,8 +334,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     Dictionary<TipoComponenteCMS, int> diccionarioFacetasTiposComponentes = new Dictionary<TipoComponenteCMS, int>();
                     int cont = 0;
                     int i = 1;
-                    
-                    foreach (CMSComponente componente in gestorCMSConFiltros.ListaComponentes.Values)
+
+                    CorregirFechaActualizacionComponentesAntiguos();
+                    foreach (CMSComponente componente in gestorCMSConFiltros.ListaComponentes.Values.OrderByDescending(item => item.FilaComponente.FechaUltimaActualizacion.Value))
                     {
                         if (NumUsos == -1 || (componenteApariciones.ContainsKey(componente.Clave) && componenteApariciones[componente.Clave] == NumUsos))
                         {
@@ -343,6 +353,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 ficha.Title = componente.Nombre;
                                 ficha.Key = componente.Clave;
                                 ficha.CMSComponentType = componente.TipoComponenteCMS;
+                                if (componente.FilaComponente.FechaUltimaActualizacion.HasValue)
+                                {
+                                    ficha.EditionDate = componente.FilaComponente.FechaUltimaActualizacion.Value;
+                                }   
+                                ficha.Activo = componente.Activo;
+                                
                                 mPaginaModel.Result.ListaResultados.Add(ficha);
                             }
                             i++;
@@ -395,8 +411,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
 
                     //Crear componentes
-                    if (TipoComponente == -1)
-                    {
+                    // Permitir crear componentes incluso si se están buscando componentes (TipoComponente == 0
+                    //if (TipoComponente == -1)
+                    //{
                         mPaginaModel.AvailableComponentsList = new Dictionary<CMSComponentType, string>();
 
                         foreach (TipoComponenteCMS tipoComp in Enum.GetValues(typeof(TipoComponenteCMS)))
@@ -408,7 +425,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 mPaginaModel.AvailableComponentsList.Add(tipoCMScomp, UtilIdiomas.GetText("COMADMINCMS", "COMPONENTE_" + tipoComp));
                             }
                         }
-                    }
+                    //}
 
                     #endregion
 
@@ -520,7 +537,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         #endregion
 
         #region Métodos Privados
-        
+
+        /// <summary>
+        /// A partir de la versi�n 5.6.0 es necesario que los CMSComponentes tenga FechaActualizacion, este campo antes no era necesario as� que actualizamos los componentes antiguos
+        /// para que tambi�n tengan, si no fallar�n las instrucciones siguientes.
+        /// </summary>
+        private void CorregirFechaActualizacionComponentesAntiguos()
+        {
+            if (mEntityContext.CMSComponente.Any(item => !item.FechaUltimaActualizacion.HasValue))
+            {
+                List<AD.EntityModel.Models.CMS.CMSComponente> listaComponentesSinFecha = mEntityContext.CMSComponente.Where(item => !item.FechaUltimaActualizacion.HasValue).ToList();
+                foreach (AD.EntityModel.Models.CMS.CMSComponente cmsComponenteSinFecha in listaComponentesSinFecha)
+                {
+                    cmsComponenteSinFecha.FechaUltimaActualizacion = DateTime.Now;
+                }
+
+                mEntityContext.SaveChanges();
+            }
+        }
+
         private void RecogerParametros(string tipoComponente, string idBloqueContenedor, string pagina, string search, string numusos)
         {
             if (!string.IsNullOrEmpty(pagina))

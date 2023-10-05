@@ -1,0 +1,158 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Información General
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false; 	
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();    
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Información General *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "data-target=#informacion-general" : null)								
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)				
+				aria-controls="informacion-general">
+				@Html.GetText("ADMINISTRACIONBASICA","INFORMACIONGENERAL")
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Información General *@
+	<div
+		id="informacion-general"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>Desde esta sección de las DevTools de una comunidad se pueden configurar los aspectos básicos de una comunidad. A continuación se detallan las opciones configurables de una comunidad desde esta sección:</p>
+			<ul>
+				<li>
+					<strong>Estado de la comunidad:</strong> Se puede configurar el estado que tendrá una comunidad. El estado de la comunidad indicará si se puede o no acceder a la misma. Se puede elegir entre uno de los siguientes estados:
+					<ul>
+						<li>
+							<span><strong>Abierto:</strong> Indica que la comunidad es accesible y que por lo tanto está funcionando normalmente.</span>
+							<div class="text-center">
+								<figure class="figure">						  
+									<img src="~/img/documentacionDevtools/01comunidad/estadoComunidadAbierta.png"/>					
+									<figcaption class="figure-caption">La comunidad está abierta y todo está funcionando correctamente.</figcaption>
+								</figure>
+							</div>
+						</li>
+						<li>
+							<span><strong>Cerrado temporalmente:</strong> La comunidad está en labores de mantenimiento pudiendo especificar la fecha de reapertura en formato (yyyy/mm/dd) y el motivo del cierre temporal.</span>
+							<div class="text-center">
+								<figure class="figure">						  
+									<img src="~/img/documentacionDevtools/01comunidad/estadoComunidadCerradoTemporalmente.png"/>					
+									<figcaption class="figure-caption">La comunidad está cerrada temporalmente pudiendo programar una reapertura y un motivo del cierre temporal.</figcaption>
+								</figure> 
+							</div>
+							
+						</li>
+						<li>
+							<span><strong>Cerrándose:</strong> Indica que la comunidad se va a cerrar, pero antes estará unos días en 'periodo de gracia', tiempo durante el cual los usuarios podrán: descargar recursos, leer los contenidos de la comunidad y compartirlos con otros espacios GNOSS. Sin embargo, no se podrá subir nada nuevo. Pasado este periodo no se podrá acceder a la comunidad una vez cerrada. Habría que especificar los días de gracia. Por defecto son 15 días.</span>
+							<div class="text-center">
+								<figure class="figure">						  
+									<img src="~/img/documentacionDevtools/01comunidad/estadoComunidadCerrandose.png"/>					
+									<figcaption class="figure-caption">La comunidad se va a cerrar pudiendo establecer días de gracia.</figcaption>
+								</figure> 
+							</div>									
+						</li>
+					</ul>
+				</li>
+
+				<li>
+					<span><strong>Nombre corto:</strong> Nombre corto o alias de la comunidad. Se forma a partir del nombre de la comunidad de forma automática. No obstante, se puede cambiar si así se desea teniendo en cuenta que debe contener al menos 3 caracteres en letras minúsculas.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/cambiarNombreCortoComunidad.png"/>					
+							<figcaption class="figure-caption">Se puede cambiar el nombre corto de la comunidad. Debe contener al menos 3 caracteres en letras minúscula.</figcaption>
+						</figure> 
+					</div>
+					
+				</li>
+
+				<li>
+					<strong>Tipo de acceso:</strong> Indica el tipo de acceso de una comunidad. Estos son los tipos de acceso disponibles:
+					<ul>
+						<li>
+							<strong>Pública:</strong> El acceso a la comunidad y a su contenido es libre y no requiere ningún registro ni solicitud de acceso previo.									
+						</li>
+
+						<li>
+							<strong>Restringido:</strong> Requiere un registro previo para poder acceder a los recursos e información que se encuentra dentro de la comunidad.									
+						</li>
+
+						<li>
+							<span><strong>Privada:</strong> El acceso a la comunidad debe ser solicitado previamente y concedido por el administrador.</span>
+							<div class="text-center">
+								<figure class="figure">						  
+									<img src="~/img/documentacionDevtools/01comunidad/cambiarTipoAccesoComunidad.png"/>					
+									<figcaption class="figure-caption">El tipo de comunidad se puede cambiar y requiere confirmación por seguridad.</figcaption>
+								</figure> 
+							</div>									
+						</li>
+					</ul>
+				</li>
+
+				<li>
+					<strong>Nombre de la comunidad:</strong> Nombre que tendrá la comunidad. Si la comunidad está configurado con “multilenguaje”, se puede cambiar el nombre para el idioma deseado.
+				</li>
+
+				<li>
+					<span><strong>Descripción:</strong> Descripción que tendrá la comunidad. Esta información estará visible por los usuarios de la comunidad desde la página “Acerca de”.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/nombreYDescripcionComunidad.png"/>					
+							<figcaption class="figure-caption">Nombre y Descripción de la comunidad son editables en los idiomas disponibles.</figcaption>
+						</figure> 
+					</div>							
+				</li>
+
+				<li>
+					<span><strong>Imagen de la comunidad:</strong> Imagen de cabecera o también conocida como Banner de la comunidad. Se recomienda que sea una imagen  representativa de la comunidad.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/cambiarImagenComunidad.png"/>					
+							<figcaption class="figure-caption">Arrastrar o seleccionar una imagen para ser asignada a la comunidad.</figcaption>
+						</figure>
+					</div>
+				</li>
+
+				<li>
+					<span><strong>Etiquetas:</strong> Palabras clave que sirve para enlazar esta comunidad con otras comunidades GNOSS relacionadas en función de las etiquetas o palabras que posee y las categorías del índice general a las que pertenece.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/etiquetasComunidad.png"/>					
+							<figcaption class="figure-caption">Asignación de etiquetas a la comunidad.</figcaption>
+						</figure> 
+					</div>							
+				</li>
+
+				<li>
+					<span><strong>Idioma:</strong> Posibilidad de hacer la comunidad multilingüe para que tanto páginas, categorías y componentes estén en múltiples idiomas. Bastará con elegir si se desea un sitio multi-idioma y el idioma por defecto de la comunidad.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/edicionMultiIdiomaComunidad.png"/>					
+							<figcaption class="figure-caption">Configuración de multi-idioma en la comunidad.</figcaption>
+						</figure> 
+					</div>							
+				</li>
+			</ul>
+			<p>Si se desean guardar todos los posibles cambios acometidos, será suficiente con pulsar el botón de Guardar todo para confirmar el guardado. Cabe destacar que el nombre corto se guarda directamente desde la vista modal desde la que se solicita el nuevo nombre corto de la comunidad.</p>					
+		</div>		
+	</div>
+</div>	

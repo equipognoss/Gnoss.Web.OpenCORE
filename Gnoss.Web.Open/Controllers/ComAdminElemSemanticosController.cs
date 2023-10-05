@@ -38,6 +38,9 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using static Es.Riam.Gnoss.Web.MVC.Models.Tesauro.TesauroModels;
+using AngleSharp.Text;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -149,14 +152,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return redireccion;
             }
 
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
             mModelAdmin = new ComAdminSemanticElemModel();
 
-            if (RequestParams("tessem") == "true")
+			// Carga los idiomas disponibles y el idioma por defecto
+			if (ParametrosGeneralesRow.IdiomasDisponibles)
+			{
+				mModelAdmin.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+			}
+			else
+			{
+				mModelAdmin.ListaIdiomas = new Dictionary<string, string>();
+				mModelAdmin.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+			}
+			mModelAdmin.IdiomaPorDefecto = IdiomaPorDefecto;
+
+
+			if (RequestParams("tessem") == "true")
             {
                 CargarInicial_TesSem();
+                // Añadir clase para el body del Layout
+                ViewBag.BodyClassPestanya = "grafo-de-conocimiento edicionObjetos edicionTesauros edicion no-max-width-container";
+                ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
+                ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_Tesauros_Semanticos;
+                // Establecer el título para el header de DevTools
+                ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO");
+                ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "TESAUROSSEMANTICOS");
+
             }
             else if (RequestParams("entsecund") == "true")
             {
@@ -173,6 +198,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             return View(mModelAdmin);
         }
+
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        public ActionResult CrearLoadModal()
+        {
+			ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
+			// return View("Editar", modelo);
+			return GnossResultHtml("_EditarTesSemFicha", null);
+        }
+
 
         /// <summary>
         /// Acción de eliminar un tesauro
@@ -220,7 +255,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Acción resultante</returns>
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult AddTesauro(string Nombre, string Idiomas, string Ontologia, string Prefijo, string Source)
+        public ActionResult AddTesauro(string Nombre, string Ontologia, string Prefijo, string Source)
         {
             EliminarPersonalizacionVistas();
 
@@ -240,6 +275,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return GnossResultERROR("SOURCE_REPETIDO");
             }
 
+            List<string> listaIdiomas = UtilCadenas.ObtenerTextoPorIdiomas(Nombre).Keys.ToList();
+            string idiomas = string.Empty;
+            
+            foreach(string idioma in listaIdiomas)
+            {
+                idiomas += $"{idioma},";
+            }
+
+            if (!string.IsNullOrEmpty(idiomas)){
+				idiomas = idiomas.Substring(0, idiomas.Length - 1);
+			}            
+
             ProyectoConfigExtraSem filaConfig = new ProyectoConfigExtraSem();
             filaConfig.ProyectoID = ProyectoSeleccionado.Clave;
             filaConfig.Tipo = 0;
@@ -247,7 +294,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             filaConfig.Nombre = Nombre;
             filaConfig.SourceTesSem = Source;
             filaConfig.PrefijoTesSem = Prefijo;
-            filaConfig.Idiomas = Idiomas;
+            filaConfig.Idiomas = idiomas;
             filaConfig.UrlOntologia = Ontologia;
 
             mProyTesSemDS.ListaProyectoConfigExtraSem.Add(filaConfig);
@@ -259,14 +306,41 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             proyCN.ActualizarProyectos();
             proyCN.Dispose();
 
-            Tuple<string, string, string> datosFicha = new Tuple<string, string, string>(UtilCadenas.ObtenerTextoDeIdioma(filaConfig.Nombre, UtilIdiomas.LanguageCode, null), filaConfig.UrlOntologia, filaConfig.SourceTesSem);
-
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+			// Devolver el nombre en todos lo idiomas
+			Tuple<string, string, string> datosFicha = new Tuple<string, string, string>(filaConfig.Nombre, filaConfig.UrlOntologia, filaConfig.SourceTesSem);
+            
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
             facetadoCL.Dispose();
 
-            return PartialView("_EditarTesSemFicha", datosFicha);
-        }
+
+			FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+
+            Thesaurus thesaurus = CrearThesaurus(Nombre, Ontologia, Prefijo, Source);
+
+			facetadoCN.InsertarTriplesCollection(thesaurus, UrlIntragnoss, ProyectoSeleccionado.Clave);
+
+			//return PartialView("_EditarTesSemFicha", datosFicha);
+
+			// Cargar en el ViewBag el idioma por defecto usando en la vista 
+			ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
+
+			return GnossResultHtml("_EditarTesSemFicha", datosFicha);
+			//return RedirectToAction("Index");
+		}
+
+        private Thesaurus CrearThesaurus(string pNombre, string pOntologia, string pPrefijo, string pSource)
+        {
+			Thesaurus thesaurus = new Thesaurus();
+			thesaurus.Source = pSource;
+			thesaurus.Ontology = pOntologia;
+			thesaurus.CommunityShortName = ProyectoSeleccionado.NombreCorto;
+            thesaurus.Collection = new Collection();
+            thesaurus.Collection.Subject = pPrefijo;
+            thesaurus.Collection.ScopeNote = UtilCadenas.ObtenerTextoPorIdiomas(pNombre);
+			
+            return thesaurus;
+		}
 
         /// <summary>
         /// Acción de modificar el tesauro.
@@ -301,7 +375,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CargarTesauroBD();
                 CargarTesauro();
 
-                EjecutarAccionesBackup((mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.SaveThesaurus));
+                EjecutarAccionesBackup();
 
                 if (mEditTesModel.ActionsBackUp == null)
                 {
@@ -310,7 +384,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.LoadThesaurus)
                 {
-                    return PartialView("_AccionesTesSem", mModelAdmin);
+                    // return PartialView("_AccionesTesSem", mModelAdmin);
+                    // Carga de la Vista para su edición vía modal
+                    return PartialView("_modal-views/_tesauro-details", mModelAdmin);
                 }
                 else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.CreateCategory)
                 {
@@ -336,12 +412,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     //return OrdenarCategorias();
                 }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.PrepareDeleteCategories)
-                {
-                    return PrepararEliminarCategorias();
-                }
                 else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.DeleteCategories)
-                {
+                { 
                     return EliminarCategorias();
                 }
                 else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.EditExtraProperties)
@@ -521,57 +593,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 catSelecc.Add(catTesID);
             }
 
+
             if (catSelecc.Count == 0)
             {
                 return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
             }
 
-            if (string.IsNullOrEmpty(mEditTesModel.SelectedCategory))
-            {
-                return GnossResultERROR();
-            }
+            EliminarCategoriasTesauro(catSelecc);
 
-            if (catSelecc.Count != 1)
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
-            }
-
-            string categoriaSustitutaID = mEditTesModel.SelectedCategory;
-
-
-            mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, (short)EditThesaurusPersonalSpaceModel.Action.DeleteCategories, "|_|", categoriaSustitutaID.ToString());
-
-            foreach (string idCatEliminar in catSelecc)
-            {
-                mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, "|_|", idCatEliminar.ToString());
-            }
-
-            mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, "|,|");
-
-            EliminarCategoriasTesauro(false, categoriaSustitutaID, catSelecc);
-
-            mCategoriasExpandidasStringIDs.Add(categoriaSustitutaID);
-
-            CargarTesauro();
-            mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
             FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
             facetadoCL.Dispose();
-            return PartialView("_AccionesTesSem", mModelAdmin);
+
+            return GnossResultOK();
         }
 
         /// <summary>
         /// Eliminar una serie de categorías del tesauro.
         /// </summary>
         /// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
-        /// <param name="pIDCategoriaVincular">Catetgoría nueva a la que se vincularán los elementos</param>
         /// <param name="pListaCategoriasAEliminar">Lista de categorías a eliminar</param>
-        private void EliminarCategoriasTesauro(bool pGuardarEnBD, string pIDCategoriaVincular, List<string> pListaCategoriasAEliminar)
+        private void EliminarCategoriasTesauro(List<string> pListaCategoriasAEliminar)
         {
-            CategoryModel catPadreM = (CategoryModel)mCategoriasModeloTesSem[pIDCategoriaVincular][0];
-            List<string> pathPadre = GenerarPathPadresCategorias(catPadreM);
-
             foreach (string catID in pListaCategoriasAEliminar)
             {
                 CategoryModel catHijaM = (CategoryModel)mCategoriasModeloTesSem[catID][0];
@@ -588,66 +631,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            if (pGuardarEnBD)
+            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+
+            foreach (string catEliminar in pListaCategoriasAEliminar)
             {
-                Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-
-                foreach (string catEliminar in pListaCategoriasAEliminar)
-                {
-                    ControladorDocumentacion.EliminarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, BaseURLFormulariosSem, catEliminar, pathPadre.ToArray(), docOnto, null, false, ProyectoSeleccionado.Clave);
-                }
+                ControladorDocumentacion.EliminarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, BaseURLFormulariosSem, catEliminar, docOnto, null, false, ProyectoSeleccionado.Clave);
             }
-        }
-
-        /// <summary>
-        /// Prepara la acción de mover categorías.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult PrepararEliminarCategorias()
-        {
-            mModelAdmin.SemanticThesaurus.CategoryNamesToDelete = new List<string>();
-            List<string> catSelecc = new List<string>();
-            List<Guid> catGuidSelecc = new List<Guid>();
-
-            foreach (string catTesID in mEditTesModel.SelectedCategories.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                CategoryModel categoriaM = (CategoryModel)mCategoriasModeloTesSem[catTesID][0];
-                catGuidSelecc.Add(categoriaM.Key);
-                catSelecc.Add(catTesID);
-                mCategoriasExpandidasStringIDs.Add(catTesID);
-                mModelAdmin.SemanticThesaurus.CategoryNamesToDelete.Add(categoriaM.Name);
-
-                if (((ElementoOntologia)mCategoriasModeloTesSem[catTesID][1]).ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).ValoresUnificados.Count > 0)
-                {
-                    return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_HOJA_ELIMINAR"));
-                }
-            }
-
-            if (catSelecc.Count != 1)
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
-            }
-
-            mModelAdmin.SemanticThesaurus.ParentCategoriesForDeleteCategories = new Dictionary<string, string>();
-            mModelAdmin.SemanticThesaurus.ParentCategoriesForDeleteCategories.Add("", UtilIdiomas.GetText("PERFILBASE", "SELECCIONACAT"));
-
-            foreach (ElementoOntologia entidadPrinc in mEntidadesTesSem)
-            {
-                Propiedad propMember = entidadPrinc.ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
-                foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propMember.ValoresUnificados.Values)))
-                {
-                    CargarCategoriasHijasOmitiendoCatEnLista(categoria, string.Empty, catSelecc, mModelAdmin.SemanticThesaurus.ParentCategoriesForDeleteCategories);
-                }
-            }
-
-            //CargarTesauro(); NO CARGAR, CAMBIARÍAN IDs
-            mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.SelectedCategories = catGuidSelecc;
-            mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
-            return PartialView("_AccionesTesSem", mModelAdmin);
         }
 
         /// <summary>
@@ -685,7 +674,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, "|,|");
 
-            MoverCategoriasTesauro(false, mEditTesModel.SelectedCategory, catSelecc);
+            MoverCategoriasTesauro(mEditTesModel.SelectedCategory, catSelecc);
 
             mCategoriasExpandidasStringIDs.Add(mEditTesModel.SelectedCategory);
 
@@ -696,7 +685,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
             facetadoCL.Dispose();
-            return PartialView("_AccionesTesSem", mModelAdmin);
+
+            // return PartialView("_AccionesTesSem", mModelAdmin);
+            // Devolver la vista parcial/modal que muestra solo el tesauro o los detalles del mismo
+            return PartialView("_modal-views/_tesauro-details-items", mModelAdmin);
         }
 
         /// <summary>
@@ -705,7 +697,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
         /// <param name="pCategoriaPadre">Nueva categoría padre</param>
         /// <param name="pCategoriasAMover">Categorías que movemos</param>
-        private void MoverCategoriasTesauro(bool pGuardarEnBD, string pCategoriaPadre, List<string> pCategoriasAMover)
+        private void MoverCategoriasTesauro(string pCategoriaPadre, List<string> pCategoriasAMover)
         {
             List<string> pathPadre = null;
             CategoryModel catPadreM = null;
@@ -761,14 +753,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            if (pGuardarEnBD)
-            {
-                Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
 
-                foreach (string catMover in pCategoriasAMover)
-                {
-                    ControladorDocumentacion.MoverCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, catMover, pathPadre.ToArray(), docOnto, null, false, ProyectoSeleccionado.Clave);
-                }
+            foreach (string catMover in pCategoriasAMover)
+            {
+                ControladorDocumentacion.MoverCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, catMover, pathPadre.ToArray(), docOnto, null, false, ProyectoSeleccionado.Clave);
             }
         }
 
@@ -856,7 +845,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, ((short)mEditTesModel.EditAction).ToString(), "|_|", catSeleccID.ToString(), "|_|", mEditTesModel.NewCategoryName, "|,|");
 
-            RenombrarCategoria(false, catSeleccID, mEditTesModel.NewCategoryName);
+            RenombrarCategoria(catSeleccID, mEditTesModel.NewCategoryName);
             mCategoriasExpandidasStringIDs.Add(catSeleccID);
             CargarTesauro();
 
@@ -865,8 +854,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
             facetadoCL.Dispose();
-            return PartialView("_AccionesTesSem", mModelAdmin);
-        }
+
+			// return PartialView("_AccionesTesSem", mModelAdmin);
+			// Devolver la vista actualizada del tesauro
+			return PartialView("_modal-views/_tesauro-details-items", mModelAdmin);
+		}
 
         /// <summary>
         /// Renombra una categoria.
@@ -874,7 +866,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
         /// <param name="pIdCategoria">ID de la categoría</param>
         /// <param name="pNombreCategoria">Nombre de la categoría</param>
-        private void RenombrarCategoria(bool pGuardarEnBD, string pIdCategoria, string pNombreCategoria)
+        private void RenombrarCategoria(string pIdCategoria, string pNombreCategoria)
         {
             ElementoOntologia categoriaSel = (ElementoOntologia)mCategoriasModeloTesSem[pIdCategoria][1];
             Propiedad propNombre = categoriaSel.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem);
@@ -894,12 +886,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 propNombre.AgregarValor(pNombreCategoria);
             }
 
-            if (pGuardarEnBD)
-            {
-                Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-                ControladorDocumentacion.RenombrarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, pIdCategoria, pNombreCategoria, docOnto, false, ProyectoSeleccionado.Clave);
-                docOnto.GestorDocumental.Dispose();
-            }
+            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+            ControladorDocumentacion.RenombrarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, pIdCategoria, pNombreCategoria, docOnto, false, ProyectoSeleccionado.Clave);
+            docOnto.GestorDocumental.Dispose();
         }
 
         /// <summary>
@@ -1003,7 +992,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEditTesModel.ExtraSemanticPropertiesValuesBK = string.Concat(mEditTesModel.ExtraSemanticPropertiesValuesBK, identificadorNuevaCat, "|", mEditTesModel.CategoryExtraPropertiesValues, "[|||]");
             }
 
-            CrearCategoriaTesauro(mEditTesModel.SelectedCategory, identificadorNuevaCat, mEditTesModel.NewCategoryName.Trim(), false, prefijo, mEditTesModel.CategoryExtraPropertiesValues);
+            CrearCategoriaTesauro(mEditTesModel.SelectedCategory, identificadorNuevaCat, mEditTesModel.NewCategoryName.Trim(), prefijo, mEditTesModel.CategoryExtraPropertiesValues);
             mCategoriasExpandidasStringIDs.Add(identificadorNuevaCat);
             CargarTesauro();
 
@@ -1012,8 +1001,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
             facetadoCL.Dispose();
-            return PartialView("_AccionesTesSem", mModelAdmin);
-        }
+			// return PartialView("_AccionesTesSem", mModelAdmin);
+			return PartialView("_modal-views/_tesauro-details-items", mModelAdmin);
+		}
 
         /// <summary>
         /// Crea una categoría en el tesauro
@@ -1022,7 +1012,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="pIdNuevaCategoria">Id de la nueva categoría</param>
         /// <param name="pNombreCategoria">Nombre de la nueva categoría</param>
         /// <param name="pGuardarEnBD">Indica si se debe guardar en la BD</param>
-        private void CrearCategoriaTesauro(string pIdCategoriaPadre, string pIdNuevaCategoria, string pNombreCategoria, bool pGuardarEnBD, string pPrefijoCategoria, string pExtraPropertiesValues)
+        private void CrearCategoriaTesauro(string pIdCategoriaPadre, string pIdNuevaCategoria, string pNombreCategoria, string pPrefijoCategoria, string pExtraPropertiesValues)
         {
             ElementoOntologia nuevaCat = mEntidadesTesSem[0].Ontologia.GetEntidadTipo(EstiloPlantilla.Concept_TesSem, true);
             nuevaCat.ID = pIdNuevaCategoria.Substring(pIdNuevaCategoria.LastIndexOf("/") + 1);
@@ -1068,19 +1058,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             List<string> propsExtra = ExtraerValoresExtraPropsCategorias(nuevaCat, pExtraPropertiesValues);
 
-            if (pGuardarEnBD)
+            List<string> padres = new List<string>();
+
+            if (pIdCategoriaPadre != "[RAIZ]")
             {
-                List<string> padres = new List<string>();
-
-                if (pIdCategoriaPadre != "[RAIZ]")
-                {
-                    padres.Add(pIdCategoriaPadre);
-                }
-
-                Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-                ControladorDocumentacion.CrearCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, nuevaCat, padres, docOnto, false, propsExtra, ProyectoSeleccionado.Clave);
-                docOnto.GestorDocumental.Dispose();
+                padres.Add(pIdCategoriaPadre);
             }
+
+            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+            ControladorDocumentacion.CrearCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, nuevaCat, padres, docOnto, false, propsExtra, ProyectoSeleccionado.Clave);
+            docOnto.GestorDocumental.Dispose();
         }
 
         /// <summary>
@@ -1138,7 +1125,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Ejecuta todas las acciones que se van realizando sobre el tesauro anteriormente.
         /// </summary>
         /// <param name="pGuardarEnBD">Indica si se debe guardar en la BD</param>
-        private void EjecutarAccionesBackup(bool pGuardarEnBD)
+        private void EjecutarAccionesBackup()
         {
             //Si hay acciones a realizar, se realizan
             if (!string.IsNullOrEmpty(mEditTesModel.ActionsBackUp))
@@ -1170,14 +1157,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             extraPropValores = accion2[4];
                         }
 
-                        CrearCategoriaTesauro(idPadre, idNuevaCategoria, nombreNuevaCat.Trim(), pGuardarEnBD, prefijo, extraPropValores);
+                        CrearCategoriaTesauro(idPadre, idNuevaCategoria, nombreNuevaCat.Trim(), prefijo, extraPropValores);
                         CargarTesauro();
                     }
                     else if ((short)EditThesaurusPersonalSpaceModel.Action.ReNameCategory == tipoAccion)
                     {//cambiarnombre
                         string idCategoria = accion2[1];
                         string nombreCategoria = accion2[2];
-                        RenombrarCategoria(pGuardarEnBD, idCategoria, nombreCategoria);
+                        RenombrarCategoria(idCategoria, nombreCategoria);
                     }
                     else if ((short)EditThesaurusPersonalSpaceModel.Action.MoveCategories == tipoAccion)
                     {//MoverCategorias
@@ -1187,7 +1174,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             idCat.Add(accion2[i]);
                         }
-                        MoverCategoriasTesauro(pGuardarEnBD, idNuevoPadre, idCat);
+                        MoverCategoriasTesauro(idNuevoPadre, idCat);
                     }
                     //NO BORRAR, EN BREVE SE VA A EVOLUCIONAR LA PÁGINA PARA QUE USE ÉSTO
                     //else if ((short)EditThesaurusPersonalSpaceModel.Action.OrderCategories == tipoAccion)
@@ -1208,13 +1195,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             idCategorias.Add(accion2[i]);
                         }
-                        EliminarCategoriasTesauro(pGuardarEnBD, idCategoriaVincular, idCategorias);
+                        EliminarCategoriasTesauro(idCategorias);
                     }
                     else if ((short)EditThesaurusPersonalSpaceModel.Action.EditExtraProperties == tipoAccion)
                     {//cambiarnombre
                         string idCategoria = accion2[1];
                         string extraProp = accion2[2];
-                        EditarPropiedadesExtraCategoria(pGuardarEnBD, idCategoria, extraProp);
+                        EditarPropiedadesExtraCategoria();
                     }
                 }
             }
@@ -1333,6 +1320,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 short orden = 0;
                 Propiedad propMember = entidadPrinc.ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
+
                 foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propMember.ValoresUnificados.Values)))
                 {
                     CargarCategoriaTesSem(categoria, orden, 1, null, categoryModel);
@@ -1355,13 +1343,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             foreach (ElementoOntologia elem in pCategorias)
             {
-                string orden = elem.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad;
-                if (!nuevaLista.ContainsKey(orden))
+                if (elem != null)
                 {
-                    nuevaLista.Add(orden, new List<ElementoOntologia>());
-                }
+                    string orden = elem.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad;
+                    if (!nuevaLista.ContainsKey(orden))
+                    {
+                        nuevaLista.Add(orden, new List<ElementoOntologia>());
+                    }
 
-                nuevaLista[orden].Add(elem);
+                    nuevaLista[orden].Add(elem);
+                }
             }
 
             List<ElementoOntologia> elementos = new List<ElementoOntologia>();
@@ -1534,8 +1525,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Editable == true))
             {
+				/* Cargar Tesauros con todos los posibles idiomas en bruto
                 mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables.Add(new KeyValuePair<string, string>(filaConfig.UrlOntologia, filaConfig.SourceTesSem), UtilCadenas.ObtenerTextoDeIdioma(filaConfig.Nombre, UtilIdiomas.LanguageCode, null));
-            }
+                */
+
+				mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables.Add(new KeyValuePair<string, string>(filaConfig.UrlOntologia, filaConfig.SourceTesSem), filaConfig.Nombre);			
+			}
 
             mModelAdmin.SemanticThesaurus.ListaOntologias = new Dictionary<string, string>();
 
@@ -1707,7 +1702,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditEntSecModel.OntologyUrl));//("UrlOntologia='" + mEditEntSecModel.OntologyUrl + "'")[0];
             Guid ontologiaID = new Guid(filaConfig.SourceTesSem);
-            mOntologia = ObtenerOntologia(ontologiaID); 
+            mOntologia = ObtenerOntologia(ontologiaID);
             SemCmsController.ApanyarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
             mModelAdmin.SecondaryEntities.SemanticResourceModel = new SemanticResourceModel();
 
@@ -1777,7 +1772,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             MemoryStream buffer = new MemoryStream(rdfVirtuoso);
-            
+
             StreamReader reader = new StreamReader(buffer);
             string rdfTexto = reader.ReadToEnd();
             reader.Close();

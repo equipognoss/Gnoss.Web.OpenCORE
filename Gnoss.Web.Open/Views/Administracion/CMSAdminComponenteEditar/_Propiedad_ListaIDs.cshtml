@@ -1,42 +1,113 @@
 ﻿@using Es.Riam.Gnoss.AD.CMS
 @model CMSAdminComponenteEditarViewModel.PropiedadComponente
 
-@{ 
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS que es de tipo Contenedor de Componentes.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
     string idiomaPanel = (string)ViewData["idiomaPanel"];
     string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+	// Listado de componentes
+	List<string> componentListId = new List<string>();
+
     if (!string.IsNullOrEmpty(idiomaPanel))
     {
         idPanel += "_" + idiomaPanel;
+
     }
 
     string nombrePropiedad = "";
 
-    switch (Model.TypeComponent)
-    {
-        case TipoComponenteCMS.ListadoEstatico:
-            //case TipoComponenteCMS.RecursosDestacadosEstatico:
-            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "RECURSOS");
-            break;
-        case TipoComponenteCMS.GrupoComponentes:
-            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "COMPONENTES");
-            break;
-        case TipoComponenteCMS.ListadoProyectos:
-            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "COMUNIDADES");
-            break;
-        default:
-            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
-            break;
-    }
+	@* Conocer el tipo de componente a mostrar *@
+	switch (Model.TypeComponent)
+	{
+		case TipoComponenteCMS.ListadoEstatico:
+			//case TipoComponenteCMS.RecursosDestacadosEstatico:
+			nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "RECURSOS");
+			break;
+		case TipoComponenteCMS.GrupoComponentes:
+			nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "COMPONENTES");
+			break;
+		case TipoComponenteCMS.ListadoProyectos:
+			nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS + "COMUNIDADES");
+			break;
+		default:
+			nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+			break;
+	}
+
+	@* Listado de componentes separados por coma *@
+	if (!String.IsNullOrEmpty(Model.Value))
+	{
+		componentListId = Model.Value.Split(",").ToList<string>();
+	}
+	
+	// Referencia al Recurso para ser utilizado para el botón de tipo de pintado de tipo de páginas desde la cabecera
+	ViewBag.PropiedadComponente = Model;
+
 }
 
-<div id="contenedorPrincipal_@idPanel">
-    <p id="parrafo_@idPanel">
-        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
-        <input type="hidden" id="@idPanel" value="@Model.Value">
-    </p>
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="form-group mb-5 contenedorListaIds" data-idpanel = "@idPanel">		
+	<label class="control-label d-block" for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+	@* Panel para añadir nuevos inputs *@
+	<div class="autocompletar autocompletar-recursos form-group" style="max-width:100% !important;">        
+		<div class="input-wrap form-sticky-button">
+			<input
+				type="text"
+				placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELIDDELCOMPONENTEYPULSAENTEROAÑADIR")"
+				id="txtSearchIdComponent"
+				class="form-control"
+				autocomplete="off"
+				value=""
+			/>
+			@* Botón para añadir un componente *@
+			<a href="javascript: void(0)" id="btnAddComponent" class="btn btn-outline-primary uppercase btnAddComponent">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+
+			@* Elemento Html oculto que contiene los componentes (separados por coma) *@
+			<input type="hidden" id="@idPanel" value="@Model.Value"/>
+		</div>
+		@* Listado de componentes existentes en la lista*@
+		<ul class="js-community-components-list component-list no-list-style">
+			@* Pintado de Componente Item dentro del contenedor *@			
+			@{
+				foreach (string componentId in componentListId)
+				{
+					if (!String.IsNullOrEmpty(componentId))
+					{
+						@Html.PartialView("_partial-views/_component-row-item", componentId)						
+					}					
+				}
+			}
+		</ul>
+	</div>
+
+
+    @* Label del elemento Html
+    <label class="control-label d-block">@nombrePropiedad@(Model.Required ? " *" : "")</label>
+    @* Elemento Html oculto 
+    <input type="hidden" id="@idPanel" value="@Model.Value"/>
+
+    @* Contenedor donde irán los nuevos componentes añadidos *
     <div id="contenedor_@idPanel">
         <div id="contenedorInt_@idPanel"></div>
     </div>
-    <input type="button" class="nuevo" onclick="Propiedad6_NuevoNivel();" value="Nuevo" />
-    <p></p>
+
+    @* Botón para añadir un nuevo componente al grupo
+    <button class="btn btn-primary btnAddNewComponentById"
+            data-idpanel = "@idPanel"
+            data-idiomapanel="@idiomaPanel">
+            <span class="material-icons">add</span>
+            <span class="texto">Nuevo</span>    
+    </button> 
+    @* <input type="button" class="nuevo" onclick="Propiedad6_NuevoNivel();" value="Nuevo" /> *@
+    
 </div>

@@ -1,20 +1,39 @@
 ﻿@model AdministrarComunidadUtilidades
 
-<h4>@Html.GetText("COMADMIN", "TIPOSRECURSOS")</h4>
-<p>@Html.GetText("COMADMIN", "ROLES")</p>
-<table cellspacing="5" cellpadding="0" align="center" id="tablaPermisos">
+@*
+Descripción
+-----------------------------------------------
+Vista para mostrar cada una de las opciones para configurar los permisos de recursos en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    // Url para realizar la petición para mostrar la vista modal de "Añadir grupos" para establecer permisos a un tipo de recurso
+    string urlModalAddGroups = $"{@Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADUTILIDADES")}/load-add-groups" ;    
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista para Mostrar los diferentes recursos y definir los permisos --------------------
+*@
+
+@* Tabla de contenido de permisos *@
+<table id="tablaPermisos" class="display nowrap table table-sm tabla-permisos">
+    @*Cabecera de la tabla con títulos: Contenidos, Permisos para, Acciones *@
     <thead>
         <tr>
-            <th width="300px" align="left">
-                <span id="lblTipo">@Html.GetText("COMADMIN", "TIPO")</span>
-            </th>
-            <th width="333px" align="left" colspan="3">
-                <span id="lblDisponiblePara">@Html.GetText("COMADMIN", "DISPONIBLEPARA")</span>
-            </th>
+            <th>@Html.GetText("COMADMIN", "TIPO")</th>
+            <th>@Html.GetText("COMADMIN", "DISPONIBLEPARA")</th>
+            <th>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</th>
         </tr>
     </thead>
     <tbody>
+        @* Fila de tipo servidor *@
         <tr id="FicheroServidor" class="permiso">
+            @* Controlar las opciones para Tipo Servidor *@
             @{
                 bool tipoArchivo = false;
                 bool tipoVideo = false;
@@ -37,44 +56,108 @@
                     permisosArchivoDigital = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Imagen).TipoPermiso;
                 }
             }
-            <td>@Html.GetText("COMADMIN", "ARCHIVO")</td>
+            @* Columna de Tipo de Recurso *@
             <td>
-                <input type="checkbox" class="chkUsu" @Html.Raw(permisosArchivoDigital == 2 ? "checked=\"checked\"" : "") name="checkUsuarioArchivo" id="checkUsuarioArchivo" />
-                <label for="checkUsuarioArchivo">@Html.GetText("COMADMIN", "USUARIO")</label>
+                @* Tipo de recurso*@
+                <div class="form-group">
+                    @* Nombre del tipo de recurso*@
+                    <label class="control-label d-block">@Html.GetText("COMADMIN", "ARCHIVO")</label>
+                    @* Opciones según el tipo de recurso*@
+                    @* Cualquier tipo *@
+                    <div class="form-check form-check-inline">
+                        <input id="radioButtonCualquier"
+                               class="form-check-input"
+                               type="radio"
+                               @Html.Raw(tipoArchivo ? "checked=\"checked\"" : "") 
+                               value="FicheroServidor" 
+                               name="tipoArchivo"  />
+
+                        <label class="form-check-label" 
+                               for="radioButtonCualquier">
+                               @Html.GetText("COMADMIN", "CUALQUIERTIPO")
+                        </label>
+                    </div>
+                    @* Sólo vídeos *@
+                    <div class="form-check form-check-inline">
+                        <input id="radioButtonVideos"
+                               class="form-check-input"
+                               type="radio"
+                               @Html.Raw(tipoVideo ? "checked=\"checked\"" : "")
+                               value="Vídeo" 
+                               name="tipoArchivo"  />
+
+                        <label class="form-check-label" 
+                               for="radioButtonVideos">
+                               @Html.GetText("COMADMIN", "VIDEOS")
+                        </label>
+
+                    </div>
+                    @* Sólo imágenes *@
+                    <div class="form-check form-check-inline">
+                        <input id="radioButtonImagenes"
+                               class="form-check-input"
+                               type="radio"
+                               @Html.Raw(tipoImagen ? "checked=\"checked\"" : "")
+                               value="Imagen" 
+                               name="tipoArchivo"  />
+
+                        <label class="form-check-label" 
+                               for="radioButtonImagenes">
+                               @Html.GetText("COMADMIN", "IMAGENES")
+                        </label>
+                    </div>
+                </div>
             </td>
+            @* Columna de Permisos para... *@
             <td>
-                <input type="checkbox" class="chkSup" @Html.Raw(permisosArchivoDigital >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorArchivo" id="checkSupervisorArchivo" />
-                <label for="checkSupervisorArchivo">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
+                @* Opciones de los permisos para los diferentes tipos de usuario*@
+                <div class="check-wrapper">
+                    @* Usuario *@
+                    <div class="custom-control custom-checkbox">                        
+                        <input id="checkUsuarioArchivo" 
+                               class="chkUsu custom-control-input" 
+                               type="checkbox"
+                               @Html.Raw(permisosArchivoDigital == 2 ? "checked=\"checked\"" : "") 
+                               name="checkUsuarioArchivo" />
+                        <label class="custom-control-label" 
+                               for="checkUsuarioArchivo">@Html.GetText("COMADMIN", "USUARIO")
+                        </label>
+                    </div>
+                    @* Supervisor *@
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkSupervisorArchivo"                               
+                               class="chkSup custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosArchivoDigital >= 1 ? "checked=\"checked\"" : "")
+                               name="checkSupervisorArchivo"/>
+
+                        <label class="custom-control-label" 
+                               for="checkSupervisorArchivo">@Html.GetText("COMADMIN", "SUPERVISOR")
+                        </label>                      
+                    </div>
+                    @* Administrador *@
+                    <div class="custom-control custom-checkbox">
+
+                        <input id="checkAdministradorArchivo"
+                               class="chkAdm custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosArchivoDigital >= 0 ? "checked=\"checked\"" : "") 
+                               name="checkAdministradorArchivo" />
+
+                        <label class="custom-control-label"
+                               for="checkAdministradorArchivo">
+                               @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                        </label>
+                    </div>
+                </div>
             </td>
+            @* Columna de Acciones para permisos a grupos específicos *@
             <td>
-                <input type="checkbox" class="chkAdm" @Html.Raw(permisosArchivoDigital >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorArchivo" id="checkAdministradorArchivo" />
-                <label for="checkAdministradorArchivo">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
+
             </td>
         </tr>
-        <tr>
-            <td>
-                <span style="margin-left: 20px;">
-                    <input type="radio" @Html.Raw(tipoArchivo ? "checked=\"checked\"" : "") value="FicheroServidor" name="tipoArchivo" id="radioButtonCualquier" />
-                    <label for="radioButtonCualquier">@Html.GetText("COMADMIN", "CUALQUIERTIPO")</label>
-                </span>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <span style="margin-left: 20px;">
-                    <input type="radio" @Html.Raw(tipoVideo ? "checked=\"checked\"" : "") value="Video" name="tipoArchivo" id="radioButtonVideos" />
-                    <label for="radioButtonVideos">@Html.GetText("COMADMIN", "VIDEOS")</label>
-                </span>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <span style="margin-left: 20px;">
-                    <input type="radio" @Html.Raw(tipoImagen ? "checked=\"checked\"" : "") value="Imagen" name="tipoArchivo" id="radioButtonImagenes" />
-                    <label for="radioButtonImagenes">@Html.GetText("COMADMIN", "IMAGENES")</label>
-                </span>
-            </td>
-        </tr>
+
+        @* Fila Referencia a documento físico *@
         <tr id="ReferenciaADoc" class="permiso">
             @{
                 int permisosReferenciaADoc = -1;
@@ -83,20 +166,55 @@
                     permisosReferenciaADoc = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.ReferenciaADoc).TipoPermiso;
                 }
             }
+            @* Referencia a documento físico *@
             <td>@Html.GetText("COMADMIN", "REFERENCIA")</td>
             <td>
-                <input type="checkbox" class="chkUsu" @Html.Raw(permisosReferenciaADoc == 2 ? "checked=\"checked\"" : "") name="checkUsuarioReferencia" id="checkUsuarioReferencia" />
-                <label for="checkUsuarioReferencia">@Html.GetText("COMADMIN", "USUARIO")</label>
-            </td>
-            <td>
-                <input type="checkbox" class="chkSup" @Html.Raw(permisosReferenciaADoc >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorReferencia" id="checkSupervisorReferencia" />
-                <label for="checkSupervisorReferencia">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-            </td>
-            <td>
-                <input type="checkbox" class="chkAdm" @Html.Raw(permisosReferenciaADoc >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorReferencia" id="checkAdministradorReferencia" />
-                <label for="checkAdministradorReferencia">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
-            </td>
+                <div class="check-wrapper">
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkUsuarioReferencia"
+                               class="chkUsu custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosReferenciaADoc == 2 ? "checked=\"checked\"" : "") 
+                               name="checkUsuarioReferencia" />
+
+                        <label class="custom-control-label"
+                               for="checkUsuarioReferencia">
+                               @Html.GetText("COMADMIN", "USUARIO")
+                        </label>                  
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkSupervisorReferencia"
+                               class="chkSup custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosReferenciaADoc >= 1 ? "checked=\"checked\"" : "")
+                               name="checkSupervisorReferencia" />
+
+                        <label class="custom-control-label"
+                               for="checkSupervisorReferencia">
+                               @Html.GetText("COMADMIN", "SUPERVISOR")
+                        </label>  
+                        
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkAdministradorReferencia"
+                               class="chkAdm custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosReferenciaADoc >= 0 ? "checked=\"checked\"" : "")
+                               name="checkAdministradorReferencia" />
+
+                        <label class="custom-control-label"
+                               for="checkAdministradorReferencia">
+                               @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                        </label>                         
+                    </div>
+                </div>
+            </td>            
+            @* Columna de Acciones para permisos a grupos específicos *@
+            <td>               
+            </td>            
         </tr>
+
+        @* Fila Referencia a Hipervínculo *@
         <tr id="Hipervinculo" class="permiso">
             @{
                 int permisosHipervinculo = -1;
@@ -105,20 +223,53 @@
                     permisosHipervinculo = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Hipervinculo).TipoPermiso;
                 }
             }
+            @* Referencia a Hipervínculo/Dirección *@
             <td>@Html.GetText("COMADMIN", "DIRECCION")</td>
             <td>
-                <input type="checkbox" class="chkUsu" @Html.Raw(permisosHipervinculo == 2 ? "checked=\"checked\"" : "") name="checkUsuarioDirección" id="checkUsuarioDirección" />
-                <label for="checkUsuarioDirección">@Html.GetText("COMADMIN", "USUARIO")</label>
+                <div class="check-wrapper">
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkUsuarioDirección"
+                               class="chkUsu custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosHipervinculo == 2 ? "checked=\"checked\"" : "") 
+                               name="checkUsuarioDirección" />
+
+                        <label class="custom-control-label"
+                               for="checkUsuarioDirección">
+                               @Html.GetText("COMADMIN", "USUARIO")
+                        </label>                  
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkSupervisorDireccion"
+                               class="chkSup custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosHipervinculo >= 1 ? "checked=\"checked\"" : "")
+                               name="checkSupervisorDireccion" />
+
+                        <label class="custom-control-label"
+                               for="checkSupervisorDireccion">
+                               @Html.GetText("COMADMIN", "SUPERVISOR")
+                        </label>                          
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkAdministradorDireccion"
+                               class="chkAdm custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosHipervinculo >= 0 ? "checked=\"checked\"" : "")
+                               name="checkAdministradorDireccion" />
+
+                        <label class="custom-control-label"
+                               for="checkAdministradorDireccion">
+                               @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                        </label>                         
+                    </div>
+                </div>
             </td>
-            <td>
-                <input type="checkbox" class="chkSup" @Html.Raw(permisosHipervinculo >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorDirección" id="checkSupervisorDirección" />
-                <label for="checkSupervisorDirección">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-            </td>
-            <td>
-                <input type="checkbox" class="chkAdm" @Html.Raw(permisosHipervinculo >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorDirección" id="checkAdministradorDirección" />
-                <label for="checkAdministradorDirección">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
-            </td>
+            @* Columna de Acciones para permisos a grupos específicos *@
+            <td>               
+            </td> 
         </tr>
+        @* Fila Nota *@
         <tr id="Nota" class="permiso">
             @{
                 int permisosNota = -1;
@@ -127,43 +278,113 @@
                     permisosNota = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Nota).TipoPermiso;
                 }
             }
+            @* Referencia a Nota *@
             <td>@Html.GetText("COMADMIN", "NOTA")</td>
             <td>
-                <input type="checkbox" class="chkUsu" @Html.Raw(permisosNota == 2 ? "checked=\"checked\"" : "") name="checkUsuarioNota" id="checkUsuarioNota" />
-                <label for="checkUsuarioNota">@Html.GetText("COMADMIN", "USUARIO")</label>
+                <div class="check-wrapper">
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkUsuarioNota"
+                               class="chkUsu custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosNota == 2 ? "checked=\"checked\"" : "")
+                               name="checkUsuarioNota" />
+
+                        <label class="custom-control-label"
+                               for="checkUsuarioNota">
+                               @Html.GetText("COMADMIN", "USUARIO")
+                        </label>      
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkSupervisorNota"
+                               class="chkSup custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosNota >= 1 ? "checked=\"checked\"" : "")
+                               name="checkSupervisorNota" />
+
+                        <label class="custom-control-label"
+                               for="checkSupervisorNota">
+                               @Html.GetText("COMADMIN", "SUPERVISOR")
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkAdministradorNota"
+                               class="chkAdm custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosNota >= 0 ? "checked=\"checked\"" : "")
+                               name="checkAdministradorNota" />
+
+                        <label class="custom-control-label"
+                               for="checkAdministradorNota">
+                               @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                        </label>                                                  
+                    </div>
+                </div>
             </td>
-            <td>
-                <input type="checkbox" class="chkSup" @Html.Raw(permisosNota >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorNota" id="checkSupervisorNota" />
-                <label for="checkSupervisorNota">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-            </td>
-            <td>
-                <input type="checkbox" class="chkAdm" @Html.Raw(permisosNota >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorNota" id="checkAdministradorNota" />
-                <label for="checkAdministradorNota">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
-            </td>
+            @* Columna de Acciones para permisos a grupos específicos *@
+            <td>               
+            </td> 
         </tr>
+
+        @* Fila Wiki *@
         @if (Model.WikiDisponible)
         {
-            int permisosWiki = -1;
-            if (Model.PermisosDocumentacion.Count(permiso => permiso.TipoDocumento == TiposDocumentacion.Wiki) > 0)
-            {
-                permisosWiki = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Wiki).TipoPermiso;
-            }
             <tr id="Wiki" class="permiso">
+                @{
+                    int permisosWiki = -1;
+                    if (Model.PermisosDocumentacion.Count(permiso => permiso.TipoDocumento == TiposDocumentacion.Wiki) > 0)
+                    {
+                        permisosWiki = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Wiki).TipoPermiso;
+                    }
+                }
+                @* Referencia a Wiki *@
                 <td>@Html.GetText("COMADMIN", "WIKI")</td>
                 <td>
-                    <input type="checkbox" class="chkUsu" @Html.Raw(permisosWiki == 2 ? "checked=\"checked\"" : "") name="checkUsuarioWiki" id="checkUsuarioWiki" />
-                    <label for="checkUsuarioWiki">@Html.GetText("COMADMIN", "USUARIO")</label>
+                    <div class="check-wrapper">
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkUsuarioWiki"
+                                   class="chkUsu custom-control-input"
+                                   type="checkbox" 
+                                   @Html.Raw(permisosWiki == 2 ? "checked=\"checked\"" : "")
+                                   name="checkUsuarioWiki" />
+
+                            <label class="custom-control-label"
+                                   for="checkUsuarioWiki">
+                                   @Html.GetText("COMADMIN", "USUARIO")
+                            </label>      
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkSupervisorWiki"
+                                   class="chkSup custom-control-input"
+                                   type="checkbox" 
+                                   @Html.Raw(permisosWiki >= 1 ? "checked=\"checked\"" : "") 
+                                   name="checkSupervisorWiki" />
+
+                            <label class="custom-control-label"
+                                   for="checkSupervisorWiki">
+                                   @Html.GetText("COMADMIN", "SUPERVISOR")
+                            </label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkAdministradorWiki"
+                                   class="chkAdm custom-control-input"
+                                   type="checkbox" 
+                                   @Html.Raw(permisosWiki >= 0 ? "checked=\"checked\"" : "")
+                                   name="checkAdministradorWiki" />
+
+                            <label class="custom-control-label"
+                                   for="checkAdministradorWiki">
+                                   @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                            </label>                           
+                        </div>
+                    </div>
                 </td>
-                <td>
-                    <input type="checkbox" class="chkSup" @Html.Raw(permisosWiki >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorWiki" id="checkSupervisorWiki" />
-                    <label for="checkSupervisorWiki">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
+                @* Columna de Acciones para permisos a grupos específicos *@
+                <td>                    
                 </td>
-                <td>
-                    <input type="checkbox" class="chkAdm" @Html.Raw(permisosWiki >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorWiki" id="checkAdministradorWiki" />
-                    <label for="checkAdministradorWiki">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
-                </td>
+                
             </tr>
         }
+        @* Fila Pregunta *@
         <tr id="Pregunta" class="permiso">
             @{
                 int permisosPregunta = -1;
@@ -172,20 +393,54 @@
                     permisosPregunta = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Pregunta).TipoPermiso;
                 }
             }
+            @* Referencia a Pregunta *@
             <td>@Html.GetText("COMADMIN", "PREGUNTA")</td>
             <td>
-                <input type="checkbox" class="chkUsu" @Html.Raw(permisosPregunta == 2 ? "checked=\"checked\"" : "") name="checkUsuarioPregunta" id="checkUsuarioPregunta" />
-                <label for="checkUsuarioPregunta">@Html.GetText("COMADMIN", "USUARIO")</label>
+                <div class="check-wrapper">
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkUsuarioPregunta"
+                               class="chkUsu custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosPregunta == 2 ? "checked=\"checked\"" : "")
+                               name="checkUsuarioPregunta" />
+
+                        <label class="custom-control-label"
+                               for="checkUsuarioPregunta">
+                               @Html.GetText("COMADMIN", "USUARIO")
+                        </label>      
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkSupervisorPregunta"
+                               class="chkSup custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosPregunta >= 1 ? "checked=\"checked\"" : "") 
+                               name="checkSupervisorPregunta" />
+
+                        <label class="custom-control-label"
+                               for="checkSupervisorPregunta">
+                               @Html.GetText("COMADMIN", "SUPERVISOR")
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkAdministradorPregunta"
+                               class="chkAdm custom-control-input"
+                               type="checkbox"                                
+                               @Html.Raw(permisosPregunta >= 0 ? "checked=\"checked\"" : "")
+                               name="checkAdministradorPregunta" />
+
+                        <label class="custom-control-label"
+                               for="checkAdministradorPregunta">
+                               @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                        </label> 
+                    </div>
+                </div>
             </td>
-            <td>
-                <input type="checkbox" class="chkSup" @Html.Raw(permisosPregunta >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorPregunta" id="checkSupervisorPregunta" />
-                <label for="checkSupervisorPregunta">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-            </td>
-            <td>
-                <input type="checkbox" class="chkAdm" @Html.Raw(permisosPregunta >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorPregunta" id="checkAdministradorPregunta" />
-                <label for="checkAdministradorPregunta">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
-            </td>
+            @* Columna de Acciones para permisos a grupos específicos *@
+            <td>                    
+            </td>            
         </tr>
+
+        @* Fila Encuesta *@
         <tr id="Encuesta" class="permiso">
             @{
                 int permisosEncuesta = -1;
@@ -194,20 +449,54 @@
                     permisosEncuesta = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Encuesta).TipoPermiso;
                 }
             }
-            <td>@Html.GetText("COMADMIN", "ENCUESTA")
+            @* Referencia a Pregunta *@
+            <td>@Html.GetText("COMADMIN", "ENCUESTA")</td>
             <td>
-                <input type="checkbox" class="chkUsu" @Html.Raw(permisosEncuesta == 2 ? "checked=\"checked\"" : "") name="checkUsuarioEncuesta" id="checkUsuarioEncuesta" />
-                <label for="checkUsuarioEncuesta">@Html.GetText("COMADMIN", "USUARIO")</label>
+                <div class="check-wrapper">
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkUsuarioEncuesta"
+                               class="chkUsu custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosEncuesta == 2 ? "checked=\"checked\"" : "")
+                               name="checkUsuarioEncuesta" />
+
+                        <label class="custom-control-label"
+                               for="checkUsuarioEncuesta">
+                               @Html.GetText("COMADMIN", "USUARIO")
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkSupervisorEncuesta"
+                               class="chkSup custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosEncuesta >= 1 ? "checked=\"checked\"" : "") 
+                               name="checkSupervisorEncuesta" />
+
+                        <label class="custom-control-label"
+                               for="checkSupervisorEncuesta">
+                               @Html.GetText("COMADMIN", "SUPERVISOR")
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkAdministradorEncuesta"
+                               class="chkAdm custom-control-input"
+                               type="checkbox"                                
+                               @Html.Raw(permisosEncuesta >= 0 ? "checked=\"checked\"" : "")
+                               name="checkAdministradorEncuesta" />
+
+                        <label class="custom-control-label"
+                               for="checkAdministradorEncuesta">
+                               @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                        </label> 
+                    </div>
+                </div>
             </td>
-            <td>
-                <input type="checkbox" class="chkSup" @Html.Raw(permisosEncuesta >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorEncuesta" id="checkSupervisorEncuesta" />
-                <label for="checkSupervisorEncuesta">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-            </td>
-            <td>
-                <input type="checkbox" class="chkAdm" @Html.Raw(permisosEncuesta >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorEncuesta" id="checkAdministradorEncuesta" />
-                <label for="checkAdministradorEncuesta">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
+            @* Columna de Acciones para permisos a grupos específicos *@
+            <td>                    
             </td>
         </tr>
+
+        @* Fila Debate *@
         <tr id="Debate" class="permiso">
             @{
                 int permisosDebate = -1;
@@ -216,21 +505,54 @@
                     permisosDebate = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Debate).TipoPermiso;
                 }
             }
+            @* Referencia a Pregunta *@
             <td>@Html.GetText("COMADMIN", "DEBATE")</td>
             <td>
-                <input type="checkbox" class="chkUsu" @Html.Raw(permisosDebate == 2 ? "checked=\"checked\"" : "") name="checkUsuarioDebate" id="checkUsuarioDebate" />
-                <label for="checkUsuarioDebate">@Html.GetText("COMADMIN", "USUARIO")</label>
+                <div class="check-wrapper">
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkUsuarioDebate"
+                               class="chkUsu custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosDebate == 2 ? "checked=\"checked\"" : "")
+                               name="checkUsuarioDebate" />
+
+                        <label class="custom-control-label"
+                               for="checkUsuarioDebate">
+                               @Html.GetText("COMADMIN", "USUARIO")
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkSupervisorDebate"
+                               class="chkSup custom-control-input"
+                               type="checkbox" 
+                               @Html.Raw(permisosDebate >= 1 ? "checked=\"checked\"" : "")
+                               name="checkSupervisorDebate" />
+
+                        <label class="custom-control-label"
+                               for="checkSupervisorDebate">
+                               @Html.GetText("COMADMIN", "SUPERVISOR")
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input id="checkAdministradorDebate"
+                               class="chkAdm custom-control-input"
+                               type="checkbox"                                
+                               @Html.Raw(permisosDebate >= 0 ? "checked=\"checked\"" : "")
+                               name="checkAdministradorDebate" />
+
+                        <label class="custom-control-label"
+                               for="checkAdministradorDebate">
+                               @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                        </label> 
+                    </div>
+                </div>
             </td>
-            <td>
-                <input type="checkbox" class="chkSup" @Html.Raw(permisosDebate >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorDebate" id="checkSupervisorDebate" />
-                <label for="checkSupervisorDebate">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-            </td>
-            <td>
-                <input type="checkbox" class="chkAdm" @Html.Raw(permisosDebate >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorDebate" id="checkAdministradorDebate" />
-                <label for="checkAdministradorDebate">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
+            @* Columna de Acciones para permisos a grupos específicos *@
+            <td>                    
             </td>
         </tr>
 
+        @* Fila para TOPDisponible *@
         @if (ViewBag.TOPDisponible != null && ViewBag.TOPDisponible)
         {
             <tr id="VideoTOP" class="permiso">
@@ -241,103 +563,270 @@
                         permisosTOP = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.VideoTOP).TipoPermiso;
                     }
                 }
+                @* Referencia a TopDisponible *@
                 <td>@Html.GetText("COMADMIN", "VIDEOTOP")</td>
                 <td>
-                    <input type="checkbox" class="chkUsu" @Html.Raw(permisosTOP == 2 ? "checked=\"checked\"" : "") name="checkUsuarioTOP" id="checkUsuarioTOP" />
-                    <label for="checkUsuarioTOP">@Html.GetText("COMADMIN", "USUARIO")</label>
+                    <div class="check-wrapper">
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkUsuarioTOP"
+                                   class="chkUsu custom-control-input"
+                                   type="checkbox" 
+                                   @Html.Raw(permisosTOP == 2 ? "checked=\"checked\"" : "")
+                                   name="checkUsuarioTOP" />
+
+                            <label class="custom-control-label"
+                                   for="checkUsuarioTOP">
+                                   @Html.GetText("COMADMIN", "USUARIO")
+                            </label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkSupervisorTOP"
+                                   class="chkSup custom-control-input"
+                                   type="checkbox" 
+                                   @Html.Raw(permisosTOP >= 1 ? "checked=\"checked\"" : "")
+                                   name="checkSupervisorTOP" />
+
+                            <label class="custom-control-label"
+                                   for="checkSupervisorTOP">
+                                   @Html.GetText("COMADMIN", "SUPERVISOR")
+                            </label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkAdministradorTOP"
+                                   class="chkAdm custom-control-input"
+                                   type="checkbox"                                
+                                   @Html.Raw(permisosTOP >= 0 ? "checked=\"checked\"" : "")
+                                   name="checkAdministradorTOP" />
+
+                            <label class="custom-control-label"
+                                   for="checkAdministradorTOP">
+                                   @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                            </label> 
+                        </div>
+                    </div>
                 </td>
-                <td>
-                    <input type="checkbox" class="chkSup" @Html.Raw(permisosTOP >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorTOP" id="checkSupervisorTOP" />
-                    <label for="checkSupervisorTOP">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-                </td>
-                <td>
-                    <input type="checkbox" class="chkAdm" @Html.Raw(permisosTOP >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorTOP" id="checkAdministradorTOP" />
-                    <label for="checkAdministradorTOP">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
+                @* Columna de Acciones para permisos a grupos específicos *@
+                <td>                    
                 </td>
             </tr>
-                    }
+        }
 
+        @* Fila para Plantilla DocumentacionSemantica *@
         @if (Model.PermisosDocumentacionSemantica != null && Model.PermisosDocumentacionSemantica.Count > 0)
         {
-            int permisosSemantico = -1;
-            if (Model.PermisosDocumentacion.Count(permiso => permiso.TipoDocumento == TiposDocumentacion.Semantico) > 0)
-            {
-                permisosSemantico = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Semantico).TipoPermiso;
-            }
-            <tr id="Semantico" class="filaPlantilla permiso">
-                <td>@Html.GetText("COMADMIN", "PLANTILLA")</td>
+            <tr id="Semantico" class="permiso">
+                @{
+                    int permisosSemantico = -1;
+                    if (Model.PermisosDocumentacion.Count(permiso => permiso.TipoDocumento == TiposDocumentacion.Semantico) > 0)
+                    {
+                        permisosSemantico = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Semantico).TipoPermiso;
+                    }
+                }
+                @* Referencia a Semántico *@
+                <td>@Html.GetText("ADMINISTRACIONSEMANTICA","OBJETOSDECONOCIMIENTO")</td>
                 <td>
-                    <input type="checkbox" class="chkUsu" @Html.Raw(permisosSemantico == 2 ? "checked=\"checked\"" : "") name="checkUsuarioPlantilla" id="checkUsuarioPlantilla" />
-                    <label for="checkUsuarioPlantilla">@Html.GetText("COMADMIN", "USUARIO")</label>
+                    <div class="check-wrapper">
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkUsuarioPlantilla"
+                                   class="chkUsu custom-control-input"
+                                   type="checkbox" 
+                                   @Html.Raw(permisosSemantico == 2 ? "checked=\"checked\"" : "")
+                                   name="checkUsuarioPlantilla" />
+
+                            <label class="custom-control-label"
+                                   for="checkUsuarioPlantilla">
+                                   @Html.GetText("COMADMIN", "USUARIO")
+                            </label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkSupervisorPlantilla"
+                                   class="chkSup custom-control-input"
+                                   type="checkbox" 
+                                   @Html.Raw(permisosSemantico >= 1 ? "checked=\"checked\"" : "")
+                                   name="checkSupervisorPlantilla" />
+
+                            <label class="custom-control-label"
+                                   for="checkSupervisorPlantilla">
+                                   @Html.GetText("COMADMIN", "SUPERVISOR")
+                            </label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="checkAdministradorPlantilla"
+                                   class="chkAdm custom-control-input"
+                                   type="checkbox"                                
+                                   @Html.Raw(permisosSemantico >= 0 ? "checked=\"checked\"" : "")
+                                   name="checkAdministradorPlantilla" />
+
+                            <label class="custom-control-label"
+                                   for="checkAdministradorPlantilla">
+                                   @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                            </label> 
+                        </div>
+                    </div>
                 </td>
-                <td>
-                    <input type="checkbox" class="chkSup" @Html.Raw(permisosSemantico >= 1 ? "checked=\"checked\"" : "") name="checkSupervisorPlantilla" id="checkSupervisorPlantilla" />
-                    <label for="checkSupervisorPlantilla">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-                </td>
-                <td>
-                    <input type="checkbox" class="chkAdm" @Html.Raw(permisosSemantico >= 0 ? "checked=\"checked\"" : "") name="checkAdministradorPlantilla" id="checkAdministradorPlantilla" />
-                    <label for="checkAdministradorPlantilla">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
+                @* Columna de Acciones para permisos a grupos específicos *@
+                <td>                    
                 </td>
             </tr>
+            @* Fila para Seleccionar las diferentes Plantillas semánticas *@
             if (Model.PermisosDocumentacionSemantica.Count > 0)
             {
-                int numOntologias = Model.PermisosDocumentacionSemantica.Count;
-                bool seleccionarTodosUsuario = (permisosSemantico >= 2 && Model.PermisosDocumentacionSemantica.Count(p => p.TipoPermiso >= 2) == numOntologias);
-                bool seleccionarTodosSupervisor = (permisosSemantico >= 1 && Model.PermisosDocumentacionSemantica.Count(p => p.TipoPermiso >= 1) == numOntologias);
-                bool seleccionarTodosAdministrador = (permisosSemantico >= 0 && Model.PermisosDocumentacionSemantica.Count(p => p.TipoPermiso >= 0) == numOntologias);
-
                 <tr>
-                    <td style="padding-left: 20px;font-style:italic;font-weight:bold;">@Html.GetText("COMMON", "SELECCIONARTODOS")</td>
+                    @{
+                        int numOntologias = Model.PermisosDocumentacionSemantica.Count;
+                        bool seleccionarTodosUsuario = (permisosSemantico >= 2 && Model.PermisosDocumentacionSemantica.Count(p => p.TipoPermiso >= 2) == numOntologias);
+                        bool seleccionarTodosSupervisor = (permisosSemantico >= 1 && Model.PermisosDocumentacionSemantica.Count(p => p.TipoPermiso >= 1) == numOntologias);
+                        bool seleccionarTodosAdministrador = (permisosSemantico >= 0 && Model.PermisosDocumentacionSemantica.Count(p => p.TipoPermiso >= 0) == numOntologias);
+                    }
+                    @* Referencia a Seleccionar Todos a partir de una plantilla *@
+                    <td><span class="font-weight-bold ml-3">@Html.GetText("COMMON", "SELECCIONARTODOS")</span></td>
                     <td>
-                        <input type="checkbox" @Html.Raw(seleccionarTodosUsuario ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 2 ? "disabled" : "") class="chkUsu" id="chkOntoUsu_todos" />
-                        <label style="font-style:italic;" for="chkOntoUsu_todos">@Html.GetText("COMADMIN", "USUARIO")</label>
+                        <div class="check-wrapper">
+                            <div class="custom-control custom-checkbox">
+                                <input id="chkOntoUsu_todos"
+                                       class="chkUsu custom-control-input"
+                                       type="checkbox" 
+                                       @Html.Raw(seleccionarTodosUsuario ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 2 ? "disabled" : "")
+                                       name="chkOntoUsu_todos" />
+
+                                <label class="custom-control-label"
+                                       for="chkOntoUsu_todos">
+                                       @Html.GetText("COMADMIN", "USUARIO")
+                                </label>
+
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input id="chkOntoSup_todos"
+                                       class="chkSup custom-control-input"
+                                       type="checkbox" 
+                                       @Html.Raw(seleccionarTodosSupervisor ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 1 ? "disabled" : "")
+                                       name="chkOntoSup_todos" />
+
+                                <label class="custom-control-label"
+                                       for="chkOntoSup_todos">
+                                       @Html.GetText("COMADMIN", "SUPERVISOR")
+                                </label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input id="chkOntoAdm_todos"
+                                       class="chkAdm custom-control-input"
+                                       type="checkbox"                                
+                                       @Html.Raw(seleccionarTodosAdministrador ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 0 ? "disabled" : "")
+                                       name="chkOntoAdm_todos" />
+
+                                <label class="custom-control-label"
+                                       for="chkOntoAdm_todos">
+                                       @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                                </label>
+                            </div>
+                        </div>
                     </td>
-                    <td>
-                        <input type="checkbox" @Html.Raw(seleccionarTodosSupervisor ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 1 ? "disabled" : "") class="chkSup" id="chkOntoSup_todos" />
-                        <label style="font-style:italic;" for="chkOntoSup_todos">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-                    </td>
-                    <td>
-                        <input type="checkbox" @Html.Raw(seleccionarTodosAdministrador ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 0 ? "disabled" : "") class="chkAdm" id="chkOntoAdm_todos" />
-                        <label style="font-style:italic;" for="chkOntoAdm_todos">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
+                    @* Columna de Acciones para permisos a grupos específicos *@
+                    <td>                    
                     </td>
                 </tr>
+
+                @* Lista las diferentes plantillas semánticas *@
                 foreach (AdministrarComunidadUtilidades.PermisoDocumentacionSemantica permisoOnto in Model.PermisosDocumentacionSemantica)
                 {
                     string txtOntologia = permisoOnto.Ontologia.Replace(".owl", "");
                     int permisosOnto = permisoOnto.TipoPermiso;
                     <tr class="permisoOnto" id="@txtOntologia">
-                        <td style="padding-left: 20px;" class="nameOnto">@permisoOnto.TipoDocumento</td>
+                        @* Nombre de cada Plantilla semántica *@
+                        <td><span class="ml-3 nameOnto">@permisoOnto.TipoDocumento</span></td>
                         <td>
-                            <input type="checkbox" @Html.Raw(permisosOnto >= 2 && permisosSemantico >= 2 ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 2 ? "disabled" : "") class="chkUsu chkOntoUsu" id="chkOntoUsu_@txtOntologia">
-                            <label for="chkOntoUsu_@txtOntologia">@Html.GetText("COMADMIN", "USUARIO")</label>
-                        </td>
-                        <td>
-                            <input type="checkbox" @Html.Raw(permisosOnto >= 1 && permisosSemantico >= 1 ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 1 ? "disabled" : "") class="chkSup chkOntoSup" id="chkOntoSup_@txtOntologia">
-                            <label for="chkOntoSup_@txtOntologia">@Html.GetText("COMADMIN", "SUPERVISOR")</label>
-                        </td>
-                        <td>
-                            <input type="checkbox" @Html.Raw(permisosOnto >= 0 && permisosSemantico >= 0 ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 0 ? "disabled" : "") class="chkAdm chkOntoAdm" id="chkOntoAdm_@txtOntologia">
-                            <label for="chkOntoAdm_@txtOntologia">@Html.GetText("COMADMIN", "ADMINISTRADOR")</label>
-                        </td>
-                        <td class="celda" @Html.Raw(permisosOnto >= 2 && permisosSemantico >= 2 ? "style=\"display: none\"" : "")>
-                            <a class="lnkVerGruposOnto" @Html.Raw(permisoOnto.PrivacidadGrupos.Count > 0 ? "style=\"display:none\"" : "")>Añadir grupos</a>
-                            <div @Html.Raw(permisoOnto.PrivacidadGrupos.Count > 0 ? "" : "style=\"display:none\"") class="gruposOnto">
-                                Grupos específicos
-                                @{
-                                    string listaIDsGrupos = "";
-                                    string htmlNombresGrupos = "";
+                            <div class="check-wrapper">
+                                <div class="custom-control custom-checkbox">
+                                    <input id="chkOntoUsu_@txtOntologia"
+                                           class="chkUsu chkOntoUsu custom-control-input"
+                                           type="checkbox" 
+                                           @Html.Raw(permisosOnto >= 2 && permisosSemantico >= 2 ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 2 ? "disabled" : "")
+                                           name="chkOntoUsu_@txtOntologia" />
 
-                                    foreach (Guid grupoID in permisoOnto.PrivacidadGrupos.Keys)
-                                    {
-                                        listaIDsGrupos += "g_" + grupoID.ToString() + ", ";
-                                        htmlNombresGrupos += "<li>" + permisoOnto.PrivacidadGrupos[grupoID] + "<a aux=\"" + grupoID.ToString() + "\" class=\"remove\">eliminar</a></li>";
-                                    }
+                                    <label class="custom-control-label"
+                                           for="chkOntoUsu_@txtOntologia">
+                                           @Html.GetText("COMADMIN", "USUARIO")
+                                    </label>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input id="chkOntoSup_@txtOntologia"
+                                           class="chkSup chkOntoSup custom-control-input"
+                                           type="checkbox" 
+                                           @Html.Raw(permisosOnto >= 1 && permisosSemantico >= 1 ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 1 ? "disabled" : "")
+                                           name="chkOntoSup_@txtOntologia" />
+
+                                    <label class="custom-control-label"
+                                           for="chkOntoSup_@txtOntologia">
+                                           @Html.GetText("COMADMIN", "SUPERVISOR")
+                                    </label>                                    
+
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input id="chkOntoAdm_@txtOntologia"
+                                           class="chkAdm chkOntoAdm custom-control-input"
+                                           type="checkbox"                                
+                                           @Html.Raw(permisosOnto >= 0 && permisosSemantico >= 0 ? "checked=\"checked\"" : "") @Html.Raw(permisosSemantico < 0 ? "disabled" : "")
+                                           name="chkOntoAdm_@txtOntologia" />
+
+                                    <label class="custom-control-label"
+                                           for="chkOntoAdm_@txtOntologia">
+                                           @Html.GetText("COMADMIN", "ADMINISTRADOR")
+                                    </label>
+                                </div>
+                            </div>
+                        </td>
+                        @* Columna de Acciones para permisos a grupos específicos *@
+                        <td class="celdaBuscarGrupos">   
+                            @*Input para buscar para grupos*@                            
+                            @* Campo oculto de grupos + información de los grupos asociada a la plantilla *@
+                            @{
+                                string listaIDsGrupos = "";
+                                string htmlNombresGrupos = "";
+
+                                @*Construir los ids y nombres de los grupos para asignarlos al botón en caso de desear Editar grupos *@
+                                foreach (Guid grupoID in permisoOnto.PrivacidadGrupos.Keys)
+                                {
+                                    // ID de los grupos actuales
+                                    listaIDsGrupos += "g_" + grupoID.ToString() + ",";                                    
+                                    // Nombre de los grupos actuales
+                                    htmlNombresGrupos += permisoOnto.PrivacidadGrupos[grupoID] + ",";                                   
                                 }
-                                <p>
-                                    <input type="text" id="filtroGrupos_@(txtOntologia)" name="filtroGrupos">
-                                    <input type="hidden" id="filtroGrupos_@(txtOntologia)_Hack" class="valores privacidadGrupos" name="filtroGruposValores" value="@listaIDsGrupos">
-                                </p>
-                                <ul class="resultado">@Html.Raw(htmlNombresGrupos)</ul>
+                                // Quitar la última coma de ambos listados para evitar problemas                                                                  
+                                listaIDsGrupos = listaIDsGrupos.TrimEnd(',');
+                                htmlNombresGrupos = htmlNombresGrupos.TrimEnd(',');
+
+                            }
+                            
+                            @* Contenedor de los grupos seleccionados *@
+                            <div class="contenedorGrupos @Html.Raw(permisosOnto >= 2 && permisosSemantico >= 2 ? "d-none" : "")">                                
+                                @* Botón para Añadir grupos *@
+                                <ul class="no-list-style" class=" @Html.Raw(permisoOnto.PrivacidadGrupos.Count > 0 ? "d-none" : "") ">
+                                    <li>    
+                                        @* Input oculto para guardar los grupos seleccionados *@
+                                        <input type="hidden" id="filtroGrupos_@(txtOntologia)_Hack" class="valores privacidadGrupos" name="filtroGruposValores" value="@listaIDsGrupos">                                        
+                                        <a class="lnkVerGruposOnto btn texto-gris-claro"                                            
+                                           onclick="getVistaFromUrl('@urlModalAddGroups','modal-dinamic-content', '')"                                           
+                                           data-target="#modal-container"
+                                           data-inputhack = "filtroGrupos_@(txtOntologia)_Hack"
+                                           data-idgroups = "@listaIDsGrupos"
+                                           data-groupnames = "@htmlNombresGrupos"
+                                           data-toggle="modal">
+
+                                           @* Comprobar si hay grupos para Editar o Añadir *@
+                                            @{
+                                                if (String.IsNullOrEmpty(listaIDsGrupos))
+                                                {
+                                                    <span class="material-icons">group_add</span>
+                                                    <span class="texto">@Html.GetText("DEVTOOLS","AÑADIRAGRUPOS")</span>
+                                                }
+                                                else{
+                                                    <span class="material-icons">edit</span>
+                                                    <span class="texto">@Html.GetText("DEVTOOLS","EDITARGRUPOS")</span>
+                                                }
+                                            } 
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
                         </td>
                     </tr>

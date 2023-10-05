@@ -106,19 +106,15 @@
 
         $('.cookieAceptada').each(function (indice, elemento) {
             if ($(elemento).prop("checked")) {
-                document.cookie = $(elemento).val() + "=yes; expires=" + fecha.toUTCString();
+                document.cookie = $(elemento).val() + "=yes;path=/; expires=" + fecha.toUTCString();
             }
         });
 
         $('.cookieAceptada').each(function (indice, elemento) {
             if (!$(elemento).prop("checked")) {
-                document.cookie = $(elemento).val() + "=no; expires=" + fecha.toUTCString();
+                document.cookie = $(elemento).val() + "=no;path=/; expires=" + fecha.toUTCString();
             }
-        });
-        $('#modalAvisoCookies').modal('toggle');
-        $('#modalAvisoCookies').modal('hide');
-        modal = document.getElementById("myModal");
-        modal.style.display = "none";
+        });             
         var that = this;
         MostrarUpdateProgress();
         GnossPeticionAjax(
@@ -128,11 +124,12 @@
         ).fail(function (data) {
             mostrarErrorGuardado(data);
         }).done(function () {
-            $('#phAvisoCookie').hide();
+            
         }).always(function () {
-            OcultarUpdateProgress();
-            modal = document.getElementById("myModal");
-            modal.style.display = "none";
+            OcultarUpdateProgress(); 
+            $('#phAvisoCookie').hide();
+            $("#aviso-cookies").hide();
+            $("#modalAvisoCookies").hide();
         });
     }
 

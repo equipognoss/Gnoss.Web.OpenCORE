@@ -1,0 +1,93 @@
+﻿@model ParametroBusquedaPersonalizadoModel
+
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán los detalles del objeto de conocimiento vía modal. Aquí también se incluye el modal para confirmar el borrado de la categoría cookie.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+	ParametroBusquedaPersonalizadoModel parametroBusqueda = Model;
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();		
+	string idModalParametroBusqueda = string.IsNullOrEmpty(parametroBusqueda.NombreParametro) ? "modal-parametro_busqueda_" : "modal-parametro_busqueda_" + parametroBusqueda.NombreParametro.Replace(" ", "-").Trim();
+}
+
+
+@* Modal con la información del parámetro *@
+<div
+	id="@idModalParametroBusqueda"
+	class="modal modal-top fade modal-edicion modal-con-tabs modal-parametroBusqueda"           
+	role="dialog"	
+	aria-modal="true">
+
+	@* Información oculta del objeto de conocimiento *@	        
+	<input type="hidden" name="TabEliminada" value="false" />	
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>					
+					<span class="community-name">@Html.GetText("DEVTOOLS","EDITARPARAMETRODEBUSQUEDA")</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span
+				>
+			</div>
+			<div class="modal-body">			
+				<div class="formulario-edicion no-min-height">									                             					
+					<div class="tab-content">
+
+						@* Nombre del parámetro de búsqueda *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","NOMBREDELPARAMETRODEBUSQUEDA")</label>
+							<input type="text" class="form-control txtNombreDelParametroBusqueda" 
+								   placeholder="@Html.GetText("DEVTOOLS","NOMBREDELPARAMETRODEBUSQUEDA")"
+								   name="txtNombreDelParametroBusqueda" 
+								   value="@parametroBusqueda.NombreParametro">
+						</div>						
+
+						@* Where del parámetro de búsqueda: *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","WHEREDELPARAMETRODEBUSQUEDA")</label>							
+							<textarea class="txtWhereDelParametro" 
+									  name="txtWhereDelParametro"
+									  rows="6">@parametroBusqueda.WhereParametro</textarea>
+						</div>	
+						
+						@* Order By del parámetro de búsqueda: *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","ORDERBYDELPARAMETRODEBUSQUEDA")</label>							
+							<textarea class="txtOrderByDelParametro"
+									  name="txtOrderByDelParametro"
+									  rows="6">@parametroBusqueda.OrderByParametro</textarea>
+						</div>	
+
+						@* Where faceta del parámetro *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","WHEREDELAFACETA")</label>							
+							<textarea class="txtWhereDeFacetaParametro"
+									  name="txtWhereDeFacetaParametro"
+									  rows="6">@parametroBusqueda.WhereFacetaParametro</textarea>
+						</div>	
+
+						@* Botón de guardar *@
+						<div class="panelBotonera">
+                            <a href="javascript: void(0);" class="btn btn-primary uppercase btnSaveParametroBusqueda">@Html.GetText("COMMON","GUARDAR")</a>
+                        </div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

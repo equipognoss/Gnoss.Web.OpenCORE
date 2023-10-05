@@ -1,843 +1,266 @@
 ﻿@model AdministrarObjetosConocimientoViewModel
 
+
+@*
+Descripción
+-----------------------------------------------
+Vista index donde se muestra el listado con los objetos de conocimiento de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	// Carga de idiomas de la plataforma
+	string idiomas = "";
+	// Contador del nº de pestañas listadas
+	int contNumPestañasVisibles = 0;
+	// Nº de pestañas de idiomas a visualizar en la sección Tab
+	int numMaxPestañasIdiomasVisibles = 2;		
+	// Referencia al AdministrarObjetosConocimientoViewModel para el botón de tipo de pintado de tipo cookies
+	ViewBag.AdministrarObjetosConocimientoViewModel = Model;	
 }
 
-<div class="content">
-    <h1>@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "TITULO")</h1>
-    <div>
-        <form autocomplete="off">
-            @{
-                string idiomas = "";
 
-                foreach (string idiomaKey in Model.ListaIdiomas.Keys)
-                {
-                    idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
-                }
-            }
-            <input type="hidden" id="idiomasComunidad" value="@idiomas" />
-            <input type="hidden" id="idiomaDefecto" value="@Model.IdiomaPorDefecto" />
-            <p>
-                @Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "INFOTITULO")
-            </p>
-            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-            {
-                <input type="button" style="background-color:gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "GUARDARTODO")" />
-            }
-            else
-            {
-                <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "GUARDARTODO")" />
-            }
-            <div class="panAniadir">
-                @Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "INFOADDFACETA")
-                <select id="ontology">
-                    @foreach (string ontologia in Model.ListaOntologiasCom.Keys)
-                    {
-                        if (!Model.ListaObjetosConocimiento.Any(oc => oc.Ontologia.ToLower().Equals(ontologia.ToLower())))
-                        {
-                            <option value="@ontologia">@Model.ListaOntologiasCom[ontologia]</option>
-                        }
-                    }
-                </select>
-                <input type="button" class="addObjetoConocimiento" value="@Html.GetText(" COMADMINOBJETOSCONOCIMIENTO", "ADDOBJETOCONOCIMIENTO" )" />
-            </div>
-            <ol class="table" id="sortable">
-                @foreach (ObjetoConocimientoModel objetoConocimiento in Model.ListaObjetosConocimiento)
-                {
-                    @Html.PartialView("_EdicionObjetoConocimiento", objetoConocimiento);
-                }
-            </ol>
-        </form>
+@{
+    @* Carga de idiomas *@
+    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+    {
+        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+    }     
+}
+
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
+
+
+
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/grafo-conocimiento">@Html.GetText("DEVTOOLS","GRAFOSDECONOCIMIENTO")</a>
+            </li>
+            <li>
+                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM") / Ontologías                
+            </li>
+        </ul>
     </div>
-    @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-    {
-        <input type="button" style="background-color:gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "GUARDARTODO")" />
-    }
-    else
-    {
-        <input type="button" class="guardarTodo" value="@Html.GetText("COMADMINOBJETOSCONOCIMIENTO", "GUARDARTODO")" />
-    }
-</div>
 
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.sortable.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.touch-punch.min.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
-<script>
-    var OperativaOrdenacion = {
-        init: function () {
-            this.config();
-            this.engancharComportamiento();
-        },
-        config: function () {
-            this.propiedades = $('.propiedadesSortable');
-            return;
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            that.propiedades.each(function () {
-                $(this).sortable({
-                    handle: 'span.handle.propiedad',
-                    items: 'li.row.propiedad',
-                    cancel: ".ui-state-disabled",
-                    maxLevels: 1
-
-                });
-            });
-
-            $('.header', that.propiedades).disableSelection();
-            return;
-        }
-    }
-
-    var OperativaAcciones = {
-        init: function (panelID) {
-            this.config(panelID);
-            if (this.id == '') {
-                this.engancharComportamiento();
-            }
-            this.engancharComportamientoObjetoConocimientos();
-            this.engancharMultiIdioma();
-        },
-        config: function (panelID) {
-            this.urlPagina = document.location.href;
-            this.cargarIdiomas();
-            this.id = '';
-
-            if (typeof panelID != 'undefined' && panelID != '') {
-                this.id = '#' + panelID + ' ';
-            }
-            return;
-        },
-        engancharMultiIdioma: function () {
-            var that = this;
-            if (that.ListaIdiomas.length > 1) {
-                $(that.id + 'input[name="Name"]:not(:disabled)').each(function () {
-                    var inputName = $(this);
-                    that.montarMultidioma(inputName);
-
-                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('keyup');
-                    }).blur(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('blur');
-                    });
-                });
-
-                $(that.id + 'input[name="ShortNameOntology"]:not(:disabled)').each(function () {
-                    var inputName = $(this);
-                    that.montarMultidioma(inputName);
-
-                    $('#texto_' + that.IdiomaPorDefecto, inputName.parent()).keyup(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('keyup');
-                    }).blur(function () {
-                        inputName.val($(this).val());
-                        inputName.trigger('blur');
-                    });
-                });
-
-                $(that.id + 'input[name="TabUrl"]:not(:disabled)').each(function () {
-                    var inputUrl = $(this);
-                    that.montarMultidioma(inputUrl);
-
-                    $('#texto_' + that.IdiomaPorDefecto, inputUrl.parent()).blur(function () {
-                        inputUrl.trigger('blur');
-                    });
-                });
-                componenteTabulado.init();
-            }
-        },
-        obtenerTextoYClaveDeIdioma: function (texto) {
-            var that = this;
-            var idioma = that.IdiomaPorDefecto;
-            var textoIdioma = texto;
-            if (textoIdioma.length > 3) {
-                var indice = 3;
-                var auxIdioma = textoIdioma.substr(textoIdioma.length - 3);
-                if (auxIdioma[0] == '-' && textoIdioma.length > 6) {
-                    indice = 6;
-                    auxIdioma = textoIdioma.substr(textoIdioma.length - 6);
-                }
-                if (auxIdioma[0] == '@('@')') {
-                    idioma = auxIdioma.substr(1);
-                    textoIdioma = textoIdioma.substr(0, textoIdioma.length - indice);
-                }
-            }
-            return { "key": idioma, "value": textoIdioma };
-        },
-        montarMultidioma: function (input) {
-            var that = this;
-
-            input.attr("type", "hidden");
-            var textoMultiIdioma = input.val().split('|||')
-            var listaTextos = [];
-            $.each(textoMultiIdioma, function () {
-                if (this != "") {
-                    var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
-                    listaTextos.push(objetoIdioma);
-                }
-            });
-
-            var htmlMultIdioma = '<div class=" block tabsGroup" id="edicion_multiidioma" ><div class=" acciones tabspresentation "><ul>';
-
-            $.each(that.ListaIdiomas, function (id, idioma) {
-                var key = idioma.key;
-                var value = idioma.value;
-                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
-                htmlMultIdioma += '<li class="' + (esIdiomaPorDefecto ? 'active' : '') + '"><a rel="' + id + '" href="#">' + value + (esIdiomaPorDefecto ? ' *' : '') + '</a></li>';
-            });
-
-            htmlMultIdioma += '</ul></div>';
-
-            $.each(that.ListaIdiomas, function (id, idioma) {
-                var key = idioma.key;
-                var value = idioma.value;
-                var esIdiomaPorDefecto = (key == that.IdiomaPorDefecto);
-                var textoIdioma = listaTextos.findValueByKey(key);
-                if (textoIdioma == null || textoIdioma == '') {
-                    if (key.indexOf('-') > 0) {
-                        var keyAux = key.substr(0, key.indexOf('-'));
-                        textoIdioma = listaTextos.findValueByKey(keyAux);
-                    }
-                    if (textoIdioma == null || textoIdioma == '') {
-                        if (esIdiomaPorDefecto && listaTextos.length > 0) {
-                            textoIdioma = listaTextos[0].value;
-                        }
-                        else {
-                            textoIdioma = '';
-                        }
-                    }
-                }
-                htmlMultIdioma += '<div rel="' + id + '" class=" block " id="edicion_' + key + '" style="' + (esIdiomaPorDefecto ? '' : 'display: none;') + '"><p><input type="text" id="texto_' + key + '" class="text big" value="' + textoIdioma + '"></p></div>';
-            });
-
-            htmlMultIdioma += '</div>';
-
-            input.before(htmlMultIdioma);
-        },
-        engancharComportamientoObjetoConocimientos: function () {
-            var that = this;
-            $(that.id + 'span.eliminar').click(function () {
-                that.eliminarObjetoConocimiento($(this));
-            });
-            $(that.id + 'span.editar').click(function () {
-                that.editarObjetoConocimiento($(this));
-            });
-            $(that.id + 'input[name="Name"]').keyup(function () {
-                that.cambiarNombreObjetoConocimiento($(this));
-            }).blur(function () {
-                that.cambiarAuxNombreObjetoConocimiento($(this));
-            });
-            $(that.id + '.linkConfigurarSubtipos').click(function () {
-                that.configurarSubtipos($(this));
-            });
-            $(that.id + '.addSubTipo').click(function () {
-                that.anyadirSubtipo($(this));
-            });
-            $(that.id + '.addProperty').click(function () {
-                that.anyadirPropiedad($(this));
-            });
-            $(that.id + '.addPersProperty').click(function () {
-                that.anyadirPropiedadPersonalizada($(this));
-            });
-            $(that.id + 'span.tipo').each(function () {
-                if ($(this).attr("title") != null && $(this).attr("title") != '') {
-                    $(this).append("<span class='conToolTip' title='" + $(this).attr("title") + "' >?</span>");
-                    $(this).removeAttr("title");
-                }
-            });
-
-            $(that.id + '.conToolTip').tooltip();
-            return;
-        },
-        anyadirPropiedad: function (botonAddPropiedad) {
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-               this.urlPagina + '/add-property',
-               null,
-               true
-           ).done(function (data) {
-               var listaPropiedad = botonAddPropiedad.parent().find('ol.propiedadesSortable');
-
-               listaPropiedad.append(data);
-               var propiedadNuevo = listaPropiedad.children().last();
-
-               var idPanel = propiedadNuevo.attr('id');
-               OperativaAcciones.init(idPanel);
-
-               propiedadNuevo.find('span.editar').trigger('click');
-           }).fail(function (data) {
-               console.log("ERROR =>" + data);
-           }).always(function () {
-               OcultarUpdateProgress();
-           });
-        },
-        anyadirPropiedadPersonalizada: function (botonAddPropiedad) {
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-               this.urlPagina + '/add-custom-property',
-               null,
-               true
-           ).done(function (data) {
-               var listaPropiedad = botonAddPropiedad.parent().find('ol.propiedadesSortable');
-
-               listaPropiedad.append(data);
-               var propiedadNuevo = listaPropiedad.children().last();
-
-               var idPanel = propiedadNuevo.attr('id');
-               OperativaAcciones.init(idPanel);
-
-               propiedadNuevo.find('span.editar').trigger('click');
-           }).fail(function (data) {
-               console.log("ERROR =>" + data);
-           }).always(function () {
-               OcultarUpdateProgress();
-           });
-        },
-        anyadirSubtipo: function (botonAddSubTipo) {
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-               this.urlPagina + '/add-subtipo',
-               null,
-               true
-           ).done(function (data) {
-               var listaSubtipos = botonAddSubTipo.parent().find('ol.subtipos');
-
-               listaSubtipos.append(data);
-               var subtipoNuevo = listaSubtipos.children().last();
-
-               var idPanel = subtipoNuevo.attr('id');
-               OperativaAcciones.init(idPanel);
-
-               subtipoNuevo.find('span.editar').trigger('click');
-           }).fail(function (data) {
-               console.log("ERROR =>" + data);
-           }).always(function () {
-               OcultarUpdateProgress();
-           });
-        },
-        configurarSubtipos: function (botonEditar) {
-            var fila = botonEditar.closest('.row');
-            fila.find('.configurarSubtipos').show();
-            botonEditar.parent().remove();
-        },
-        cargarIdiomas: function (bototnEditar) {
-            var that = this;
-
-            that.IdiomaPorDefecto = $('#idiomaDefecto').val();
-
-            var idiomasComunidad = $('#idiomasComunidad').val().split('&&&');
-            that.ListaIdiomas = []
-
-            $.each(idiomasComunidad, function () {
-                if (this != "") {
-                    that.ListaIdiomas.push({ "key": this.split('|')[0], "value": this.split('|')[1] });
-                }
-            });
-        },
-        comprobarCamposVacios: function () {
-            var that = this;
-            var error = false;
-            var inputsNombre = $('.row.propiedad:not(".ui-state-disabled") input[name="NombreProp"]');
-            inputsNombre.each(function () {
-                if ($(this).val() == "") {
-                    that.mostrarErrorCampoVacio($(this));
-                    error = true;
-                }
-            });
-            var inputsNombre = $('.row.propiedad:not(".ui-state-disabled") input[name="PresentacionProp"]');
-            inputsNombre.each(function () {
-                if ($(this).val() == "") {
-                    that.mostrarErrorCampoVacio($(this));
-                    error = true;
-                }
-            });
-            return error;
-        },
-        mostrarErrorCampoVacio: function (input) {
-            var that = this;
-            input.after("<span class=\"error\">El campo no puede estar vacio</span>");
-            var fila = input.closest('.row');
-            $('.panEdicion', fila).addClass('edit');
-        },
-        comprobarNombresVacios: function () {
-            var that = this;
-            var error = false;
-            var inputsNombre = $('.row:not(".ui-state-disabled") input[name="Name"]:not(":disabled")');
-            inputsNombre.each(function () {
-                if (that.comprobarNombreVacio($(this))) {
-                    error = true;
-                }
-            });
-            return error;
-        },
-        comprobarNombresCortosVacios: function () {
-            var that = this;
-            var inputsNombre = $('.row:not(".ui-state-disabled") input[name="ShortNameOntology"]:not(":disabled")');
-            inputsNombre.each(function () {
-                that.comprobarNombreVacio($(this));
-            });
-            return false;
-        },
-        comprobarNamespacesVacios: function () {
-            var that = this;
-            var error = false;
-            var inputsNombre = $('.row:not(".ui-state-disabled") input[name = "Namespace"]');
-            inputsNombre.each(function () {
-                if ($(this).val() == "") {
-                    that.mostrarErrorCampoVacio($(this));
-                    error = true;
-                }
-            });
-            return error;
-        },
-        comprobarNombreVacio: function (inputName) {
-            var that = this
-            $('.error', inputName.parent()).remove();
-
-            var panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
-            var listaTextos = [];
-            if (that.ListaIdiomas.length > 1 && panMultiIdioma.length > 0) {
-                var textoMultiIdioma = "";
-
-                var textoIdiomaDefecto = panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
-                if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
-                    that.mostrarErrorNombreVacio(inputName.closest('.row'));
-                    return true;
-                }
-
-                $.each(that.ListaIdiomas, function () {
-                    var idioma = this.key;
-                    var textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
-                    if (textoIdioma == null || textoIdioma == "") {
-                        textoIdioma = textoIdiomaDefecto;
-                    }
-                    else {
-                        textoMultiIdioma += textoIdioma + "@("@")" + idioma + "|||";
-                    }
-                    listaTextos.push({ "key": idioma, "value": textoIdioma });
-                });
-                inputName.val(textoMultiIdioma);
-            }
-
-            return false;
-        },
-        mostrarErrorNombreVacio: function (fila) {
-            var that = this;
-            var inputUrl = $('input[name = "Name"]', fila).first();
-            inputUrl.after("<span class=\"error\">@Html.GetText("COMADMINPESTANYAS", "ERRORNOMBREVACIO", Model.ListaIdiomas[Model.IdiomaPorDefecto])</span>");
-            $('.panEdicion', fila).addClass('edit');
-        },
-        cambiarNombreObjetoConocimiento: function (inputName) {
-            var nombreObjetoConocimiento = inputName.val();
-            var fila = inputName.closest('.row');
-            var header = fila.children('.header');
-            var nombreFila = header.find('.nombre');
-
-            if (nombreObjetoConocimiento == '') {
-                nombreFila.text(nombreFila.attr('aux'));
-            }
-            else {
-                nombreFila.text(nombreObjetoConocimiento);
-            }
-        },
-        cambiarAuxNombreObjetoConocimiento: function (inputName) {
-            var that = this;
-
-            $('.error', inputName.parent()).remove()
-
-            var nombreObjetoConocimiento = inputName.val();
-            var fila = inputName.closest('.row');
-            var header = fila.children('.header');
-            var nombreFila = header.find('.nombre');
-
-            if (nombreObjetoConocimiento == '') {
-                nombreFila.text(nombreFila.attr('aux'));
-                //inputName.val(nombreFila.attr('aux'));
-                that.mostrarErrorNombreVacio(fila);
-            }
-            else {
-                nombreFila.text(nombreObjetoConocimiento);
-                nombreFila.attr('aux', nombreObjetoConocimiento);
-                //inputName.val(nombreObjetoConocimiento);
-            }
-        },
-        engancharComportamiento: function () {
-            var that = this;
-            $('input.addObjetoConocimiento').click(function () {
-                that.anyadirObjetoConocimiento();
-            });
-            $('input.guardarTodo').click(function () {
-                that.guardarTodasObjetoConocimientos();
-            });
-            return;
-        },
-        deshacerEliminarObjetoConocimiento: function (botonDeshacer) {
-            var fila = botonDeshacer.closest('.row');
-
-            fila.removeClass('ui-state-disabled');
-
-            var panEditar = fila.children('.panEdicion');
-            panEditar.find('[name="TabEliminada"]').val('false');
-
-            var panCabecera = fila.children('.header');
-            panCabecera.removeClass('deleted');
-
-            var deshacer = panCabecera.children('.deshacer');
-            var eliminada = panCabecera.children('.eliminada');
-            deshacer.remove();
-            eliminada.remove();
-        },
-        eliminarObjetoConocimiento: function (botonEliminar) {
-            var that = this;
-            var fila = botonEliminar.closest('.row');
-            var filas = fila.find('.row');
-
-            fila.addClass('ui-state-disabled');
-            filas.addClass('ui-state-disabled');
-
-            var panelesEditar = fila.find('.panEdicion');
-            panelesEditar.removeClass('edit');
-            panelesEditar.find('[name="TabEliminada"]').val('true');
-
-            var panelesCabecera = fila.find('.header:not(.deleted)');
-            panelesCabecera.addClass('deleted');
-            panelesCabecera.append('<span class="deshacer">@Html.GetText("COMADMINFACETAS", "DESHACER")</span>')
-            panelesCabecera.prepend('<span class="eliminada">(@Html.GetText("COMADMINFACETAS", "ELIMINADA"))</span>')
-
-            panelesCabecera.find('span.deshacer').click(function () {
-                that.deshacerEliminarObjetoConocimiento($(this));
-            });
-        },
-        editarObjetoConocimiento: function (botonEditar) {
-            var fila = botonEditar.closest('.row');
-            var panEditar = fila.children('.panEdicion');
-
-            if (panEditar.hasClass('edit')) {
-                panEditar.removeClass('edit');
-            }
-            else {
-                panEditar.addClass('edit');
-            }
-        },
-        anyadirObjetoConocimiento: function () {
-            MostrarUpdateProgress();
-
-            var params = {
-                ontology: $('#ontology').val()
-            }
-
-            GnossPeticionAjax(
-                this.urlPagina + '/new-oc',
-                params,
-                true
-            ).done(function (data) {
-                var ultimaObjetoConocimiento = $('#sortable').children().last();
-                var panelEdicionUltimaObjetoConocimiento = ultimaObjetoConocimiento.children('.panEdicion');
-
-                $('#sortable').append(data);
-                var ObjetoConocimientoNueva = $('#sortable').children().last();
-                var idPanel = ObjetoConocimientoNueva.attr('id');
-                OperativaAcciones.init(idPanel);
-                ObjetoConocimientoNueva.find('span.editar').trigger('click');
-            }).fail(function (data) {
-                console.log("ERROR =>" + data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        guardarTodasObjetoConocimientos: function () {
-            var that = this;
-            $('.ok.general').remove();
-            $('.error').remove();
-            if (!that.comprobarErroresGuardado()) {
-                that.ListaObjetosConocimiento = {};
-                var cont = 0;
-                $('.row.ObjetoConocimiento').each(function () {
-                    that.obtenerDatosObjetoConocimiento($(this), cont++);
-                });
-                that.guardar();
-            }
-            else {
-                that.mostrarErrorGuardado();
-            }
-        },
-        mostrarErrorGuardado: function () {
-            //$('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div>');
-            var esPre = "@Html.GetComunidad().EntornoEsPre";
-            var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
-
-            if (esPre == "True") {
-                $('input.guardarTodo').before('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
-            }
-            else if (entornoBloqueado == "True") {
-                $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
-            }
-            else {
-                $('input.guardarTodo').before('<div class="error general">@Html.GetText("COMADMINPESTANYAS", "GUARDARERROR")</div > ');
-            }
-        },
-        mostrarErrorGuardadoFallo: function (data) {
-            $('input.guardarTodo').before('<div class="error general">' + data + '</div>');
-        },
-        comprobarErroresGuardado: function () {
-            var that = this;
-            var error = false;
-            if (that.comprobarNombresVacios()) {
-                error = true;
-            }
-            if (!error && that.comprobarNamespacesVacios()) {
-                error = true;
-            }
-            if (!error && that.comprobarCamposVacios()) {
-                error = true;
-            }
-
-            return error;
-        },
-        guardar: function () {
-            var that = this;
-
-            MostrarUpdateProgress();
-            GnossPeticionAjax(
-                that.urlPagina + '/save',
-                that.ListaObjetosConocimiento,
-                true
-            ).done(function (data) {
-                that.mostrarGuardadoOK();
-            }).fail(function (data) {
-                var error = data.split('|||');
-                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-                    that.mostrarErrorGuardado();
-                    if (error[0] == "NOMBRE VACIO") {
-                        that.mostrarErrorNombreVacio($('#' + error[1]));
-                    }
-                }
-                else {
-                    that.mostrarErrorGuardadoFallo(data);
-                }
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        },
-        mostrarGuardadoOK: function () {
-            $('input.guardarTodo').before('<div class="ok general">@Html.GetText("COMADMINPESTANYAS", "GUARDAROK")</div>');
-        },
-        obtenerDatosObjetoConocimiento: function (fila, num) {
-            var that = this;
-
-            var id = fila.attr('id');
-
-            var panelEdicion = fila.children('.panEdicion');
-            var prefijoClave = 'ListaObjetosConocimiento[' + num + ']';
-
-            that.ListaObjetosConocimiento[prefijoClave + '.Ontologia'] = fila.attr('id');
-            that.ListaObjetosConocimiento[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
-            that.ListaObjetosConocimiento[prefijoClave + '.Name'] = panelEdicion.find('[name="Name"]').val();
-            that.ListaObjetosConocimiento[prefijoClave + '.ShortNameOntology'] = panelEdicion.find('[name="ShortNameOntology"]').val();
-            that.ListaObjetosConocimiento[prefijoClave + '.Namespace'] = panelEdicion.find('[name="Namespace"]').val();
-            that.ListaObjetosConocimiento[prefijoClave + '.NamespaceExtra'] = panelEdicion.find('[name="NamespaceExtra"]').val();
-            that.ListaObjetosConocimiento[prefijoClave + '.NombreTesauroExclusivo'] = panelEdicion.find('[name="NombreTesauroExclusivo"]').val();
-
-            that.ListaObjetosConocimiento[prefijoClave + '.CachearDatosSemanticos'] = $('[name="CachearDatosSemanticos"]', panelEdicion).is(':checked');
-            that.ListaObjetosConocimiento[prefijoClave + '.EsBuscable'] = $('[name="EsBuscable"]', panelEdicion).is(':checked');
-
-            var panelSubTipos = panelEdicion.find('.configurarSubtipos');
-            var numSubTipo = 0;
-            $('.row.subTipo', panelSubTipos).each(function () {
-                var panSubTipo = $(this).children('.panEdicion');
-
-                var prefijoSubTipoClave = prefijoClave + '.Subtipos[' + numSubTipo + ']';
-
-                that.ListaObjetosConocimiento[prefijoSubTipoClave + '.Key'] = panSubTipo.find('[name="Tipo"]').val();
-                that.ListaObjetosConocimiento[prefijoSubTipoClave + '.Value'] = panSubTipo.find('[name="Nombre"]').val();
-                numSubTipo++;
-            });
-
-
-            var panelPresentacionListado = panelEdicion.find('.PresentacionListado');
-            var prefijoPresentacionListadoClave = prefijoClave + '.PresentacionListado';
-
-            var numPropListado = 0;
-            $('.row.propiedad:not(.ui-state-disabled)', panelPresentacionListado).each(function () {
-                var panPropiedadListado = $(this).children('.panEdicion');
-
-                var prefijoPropiedadesListadoClave = prefijoPresentacionListadoClave + '.ListaPropiedades[' + numPropListado + ']';
-
-                that.ListaObjetosConocimiento[prefijoPropiedadesListadoClave + '.Orden'] = numPropListado;
-                that.ListaObjetosConocimiento[prefijoPropiedadesListadoClave + '.Propiedad'] = panPropiedadListado.find('[name="Nombre"]').val();
-                that.ListaObjetosConocimiento[prefijoPropiedadesListadoClave + '.Presentacion'] = encodeURIComponent(panPropiedadListado.find('[name="Presentacion"]').val());
-                numPropListado++;
-            });
-
-            that.ListaObjetosConocimiento[prefijoPresentacionListadoClave + '.MostrarDescripcion'] = panelPresentacionListado.find('[name="MostrarDescripcion"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionListadoClave + '.MostrarPublicador'] = panelPresentacionListado.find('[name="MostrarPublicador"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionListadoClave + '.MostrarEtiquetas'] = panelPresentacionListado.find('[name="MostrarEtiquetas"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionListadoClave + '.MostrarCategorias'] = panelPresentacionListado.find('[name="MostrarCategorias"]').is(':checked');
-
-
-            var panelPresentacionMosaico = panelEdicion.find('.PresentacionMosaico');
-            var prefijoPresentacionMosaicoClave = prefijoClave + '.PresentacionMosaico';
-
-            var numPropMosaico = 0;
-            $('.row.propiedad:not(.ui-state-disabled)', panelPresentacionMosaico).each(function () {
-                var panPropiedadMosaico = $(this).children('.panEdicion');
-
-                var prefijoPropiedadesMosaicoClave = prefijoPresentacionMosaicoClave + '.ListaPropiedades[' + numPropMosaico + ']';
-
-                that.ListaObjetosConocimiento[prefijoPropiedadesMosaicoClave + '.Orden'] = numPropMosaico;
-                that.ListaObjetosConocimiento[prefijoPropiedadesMosaicoClave + '.Propiedad'] = panPropiedadMosaico.find('[name="Nombre"]').val();
-                that.ListaObjetosConocimiento[prefijoPropiedadesMosaicoClave + '.Presentacion'] = encodeURIComponent(panPropiedadMosaico.find('[name="Presentacion"]').val());
-                numPropMosaico++;
-            });
-
-            that.ListaObjetosConocimiento[prefijoPresentacionMosaicoClave + '.MostrarDescripcion'] = panelPresentacionMosaico.find('[name="MostrarDescripcion"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionMosaicoClave + '.MostrarPublicador'] = panelPresentacionMosaico.find('[name="MostrarPublicador"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionMosaicoClave + '.MostrarEtiquetas'] = panelPresentacionMosaico.find('[name="MostrarEtiquetas"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionMosaicoClave + '.MostrarCategorias'] = panelPresentacionMosaico.find('[name="MostrarCategorias"]').is(':checked');
-
-
-            var panelPresentacionMapa = panelEdicion.find('.PresentacionMapa');
-            var prefijoPresentacionMapaClave = prefijoClave + '.PresentacionMapa';
-
-            var numPropMapa = 0;
-            $('.row.propiedad:not(.ui-state-disabled)', panelPresentacionMapa).each(function () {
-                var panPropiedadMapa = $(this).children('.panEdicion');
-
-                var prefijoPropiedadesMapaClave = prefijoPresentacionMapaClave + '.ListaPropiedades[' + numPropMapa + ']';
-
-                that.ListaObjetosConocimiento[prefijoPropiedadesMapaClave + '.Orden'] = numPropMapa;
-                that.ListaObjetosConocimiento[prefijoPropiedadesMapaClave + '.Propiedad'] = panPropiedadMapa.find('[name="Nombre"]').val();
-                that.ListaObjetosConocimiento[prefijoPropiedadesMapaClave + '.Presentacion'] = encodeURIComponent(panPropiedadMapa.find('[name="Presentacion"]').val());
-                numPropMapa++;
-            });
-
-            that.ListaObjetosConocimiento[prefijoPresentacionMapaClave + '.MostrarDescripcion'] = panelPresentacionMapa.find('[name="MostrarDescripcion"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionMapaClave + '.MostrarPublicador'] = panelPresentacionMapa.find('[name="MostrarPublicador"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionMapaClave + '.MostrarEtiquetas'] = panelPresentacionMapa.find('[name="MostrarEtiquetas"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionMapaClave + '.MostrarCategorias'] = panelPresentacionMapa.find('[name="MostrarCategorias"]').is(':checked');
-
-            var panelPresentacionPersonalizada = panelEdicion.find('.PresentacionPersonalizado');
-            var prefijoPresentacionPersonalizadaClave = prefijoClave + '.PresentacionPersonalizado';
-
-            var numPropPersonalizada = 0;
-            $('.row.propiedadpersonalizada:not(.ui-state-disabled)', panelPresentacionPersonalizada).each(function () {
-                var panPropiedadPersonalizada = $(this).children('.panEdicion');
-
-                var prefijoPropiedadesPersonalizadasClave = prefijoPresentacionPersonalizadaClave + '.ListaPropiedades[' + numPropPersonalizada + ']';
-
-                that.ListaObjetosConocimiento[prefijoPropiedadesPersonalizadasClave + '.Orden'] = numPropPersonalizada;
-                that.ListaObjetosConocimiento[prefijoPropiedadesPersonalizadasClave + '.Identificador'] = encodeURIComponent(panPropiedadPersonalizada.find('[name="Identificador"]').val());
-                that.ListaObjetosConocimiento[prefijoPropiedadesPersonalizadasClave + '.Select'] = encodeURIComponent(panPropiedadPersonalizada.find('[name="Select"]').val());
-                that.ListaObjetosConocimiento[prefijoPropiedadesPersonalizadasClave + '.Where'] = encodeURIComponent(panPropiedadPersonalizada.find('[name="Where"]').val());
-                numPropPersonalizada++;
-            });
-
-
-            var panelPresentacionRelacionados = panelEdicion.find('.PresentacionRelacionados');
-            var prefijoPresentacionRelacionadosClave = prefijoClave + '.PresentacionRelacionados';
-
-            var numPropRelacionados = 0;
-            $('.row.propiedad:not(.ui-state-disabled)', panelPresentacionRelacionados).each(function () {
-                var panPropiedadRelacionados = $(this).children('.panEdicion');
-
-                var prefijoPropiedadesRelacionadosClave = prefijoPresentacionRelacionadosClave + '.ListaPropiedades[' + numPropRelacionados + ']';
-
-                that.ListaObjetosConocimiento[prefijoPropiedadesRelacionadosClave + '.Orden'] = numPropRelacionados;
-                that.ListaObjetosConocimiento[prefijoPropiedadesRelacionadosClave + '.Propiedad'] = panPropiedadRelacionados.find('[name="Nombre"]').val();
-                that.ListaObjetosConocimiento[prefijoPropiedadesRelacionadosClave + '.Presentacion'] = encodeURIComponent(panPropiedadRelacionados.find('[name="Presentacion"]').val());
-                numPropRelacionados++;
-            });
-
-            that.ListaObjetosConocimiento[prefijoPresentacionRelacionadosClave + '.MostrarDescripcion'] = panelPresentacionRelacionados.find('[name="MostrarDescripcion"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionRelacionadosClave + '.MostrarPublicador'] = panelPresentacionRelacionados.find('[name="MostrarPublicador"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionRelacionadosClave + '.MostrarEtiquetas'] = panelPresentacionRelacionados.find('[name="MostrarEtiquetas"]').is(':checked');
-            that.ListaObjetosConocimiento[prefijoPresentacionRelacionadosClave + '.MostrarCategorias'] = panelPresentacionRelacionados.find('[name="MostrarCategorias"]').is(':checked');
-        }
-    }
-
-    $(document).ready(function () {
-        Array.prototype.findValueByKey = function (key) {
-            var resultado = $.grep(this, function (array) {
-                return array.key == key;
-            });
-
-            if (resultado[0] != null) {
-                return resultado[0].value;
-            }
-
-            return null;
-        };
-
-        OperativaAcciones.init();
-        OperativaOrdenacion.init();
-    });
-
-</script>
-
-<style>
-    ol.table li.row section.panEdicion ol.subtipos {
-        border: 0;
-        padding: 0;
-    }
-
-    ol#sortable li.row section.panEdicion ol.subtipos li.row {
-        padding-top: 0;
-        margin-bottom: 0;
-        margin-left: 20px;
-        border-bottom: 0;
-    }
-
-        ol#sortable li.row section.panEdicion ol.subtipos li.row:last-of-type {
-            border-bottom: 1px solid;
-        }
-
-    ol.subtipos li.row.subTipo section.panEdicion {
-        width: 760px;
-    }
-
-        ol.subtipos li.row.subTipo section.panEdicion p {
-            width: 730px;
-        }
-
-        ol.subtipos li.row.subTipo section.panEdicion .bloque {
-            margin-bottom: 0;
-            border-bottom: 0;
-        }
-
-    ol.subtipos li.row.subTipo input[type="text"],
-    ol.subtipos li.row.subTipo textarea {
-        width: 520px;
-    }
-
-    ol#sortable li.row section.panEdicion input.addProperty,
-    ol#sortable li.row section.panEdicion input.addSubTipo {
-        margin-left: 20px;
-        margin-bottom: 15px;
-    }
-
-    ol#sortable li.row section.panEdicion ol.propiedadesSortable {
-        margin-left: 20px;
-        padding-left: 0;
-    }
-
-        ol#sortable li.row section.panEdicion ol.propiedadesSortable li {
-            border-bottom: 1px solid;
-        }
-
-        ol#sortable li.row section.panEdicion ol.propiedadesSortable section.panEdicion {
-            width: 739px;
-        }
-
-            ol#sortable li.row section.panEdicion ol.propiedadesSortable section.panEdicion p {
-                width: 720px;
-            }
-
-            ol#sortable li.row section.panEdicion ol.propiedadesSortable section.panEdicion .tipo {
-                width: 170px;
-            }
-</style>
+    @* Contenido Central *@
+    <div class="formulario-edicion background-blanco">       
+		@* Panel de idiomas *@	
+		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+			@* Títulos de Tabs con los diferentes idiomas a visualizar. *@
+				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
+					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
+						<li class="nav-item">
+							<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
+								id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
+								data-language = "@idioma.Key"
+								role="tab" aria-controls="@("litVer" + idioma.Key)"
+								aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+						</li>
+						contNumPestañasVisibles += 1;
+					}				
+				}
+				@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+				@if (contNumPestañasVisibles < cabecera.Languajes.Count){
+					@* Dropdown para resto de categorías *@
+					<li class="nav-item">
+						<div class="dropdown">
+							@* Desplegable del dropdown *@
+							<a
+								class="nav-link dropdown-toggle"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false">@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+
+							@* Sección para mostrar items del dropdown*@
+							<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+								<ul class="no-list-style">
+									@* Pintado del resto de pestañas en Dropdown *@									
+									@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
+										var item = cabecera.Languajes.ElementAt(i);
+										var itemKey = item.Key;
+										var itemValue = item.Value;
+
+										@* Cada item del dropdown *@
+										<li>
+											<a id="@("ver_paginas_" + itemKey)" 
+											   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+											   data-toggle="tab"
+											   href="#@("litVer" + itemKey)"
+											   data-language = "@itemKey">
+											   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+										</li>
+									}
+								</ul>
+							</div>
+						</div>
+					</li>
+				}
+		</ul>
+
+		@* Contenedor global de objetos de conocimiento *@
+		<div class="tab-content">	
+			@* Contenido de las diferentes objetos de conocimiento *@
+			<div id="panelListadoObjetosConocimiento" 
+				class="tab-pane fade show active" 
+				role="tabpanel" 
+				aria-labelledby="panelListadoObjetosConocimiento">
+
+				@* Contenedor del Título de la Sección + Buscador *@
+				<div class="row">
+					@* Título de la sección de cláusulas + Nº de OC *@
+					<div class="col col-12 header-listado">
+						<div class="h1-container">
+							<h1>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM") / Ontologías
+								<span id="numObjetosConocimiento" class="numResultados"></span>
+							</h1>
+						</div>
+						@* Acciones de Objetos de conocimiento *@
+						<div class="acciones d-flex align-items-center">
+							@* Botón de nuevo Objeto Conocimiento*@
+							<a href="javascript: void(0);" 
+							   id="btnNewOC"
+							   class="btn btn-outline-primary" 
+							   data-toggle="modal"
+							   data-target="#modal-container">@Html.GetText("DEVTOOLS","CREARNUEVOOC")</a>
+							@* Dropdown de acciones de Objeto Conocimiento*@
+							<div class="dropdown">
+								<a class="dropdown-toggle no-flecha" data-toggle="dropdown" aria-expanded="false">
+									<span class="material-icons">more_vert</span>
+								</a>
+								@* Menú Dropdown *@
+								<div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right" style="will-change: transform;">
+									@* Descargar clases y vistas *@
+									<a id="btnDownloadClasesYVistas" class="item-dropdown">
+										<span class="icon" style="padding-right:10px;">
+											<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0,0,256,256" style="fill:#000000;">
+											<g fill="#999999" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(5.33333,5.33333)"><path d="M36,5l-19,16.5l-10,-7.5l-3,1.25v17.5l3,1.25l10,-7.5l19,16.5l8,-3v-32zM8,20l5,4l-5,4zM24,24l10,-7v14z"></path></g></g>
+											</svg>    
+										</span>										
+										<span class="texto">@Html.GetText("DEVTOOLS","DESCARGARCLASESYVISTASPARANET")</span>
+									</a>
+									@* Descargar clases y vistas en Java *@
+									<a id="btnDownloadClasesYVistasJava" class="item-dropdown">										
+										<span class="icon" style="padding-right: 10px;">
+											<svg fill="#999999" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0 0 24 24">
+												<path d="M 13.445312 1 C 14.545312 3.193 9.5061094 4.5450937 9.0371094 6.3710938 C 8.6081094 8.0490938 12.02825 10 12.03125 10 C 11.51125 9.306 11.135281 8.7313906 10.613281 7.6503906 C 9.7312812 5.8223906 15.824312 3.937 13.445312 1 z M 17 4 C 17 4 13.199859 4.230875 13.005859 6.546875 C 12.919859 7.577875 14.004156 8.1279063 14.035156 8.8789062 C 14.061156 9.4909063 13.386719 10 13.386719 10 C 13.386719 10 14.500813 9.8295313 14.882812 8.8945312 C 15.305813 7.8575313 14.169875 7.1005313 14.296875 6.2695312 C 14.417875 5.4755312 17 4 17 4 z M 10.164062 10.001953 C 10.164062 10.001953 6 9.941625 6 11.140625 C 6 11.712506 7.1602183 12.030394 8.7636719 12.146484 C 8.1135167 12.17493 7.1992187 12.685807 7.1992188 13.185547 C 7.1992188 14.219547 12.102422 15.015859 15.732422 13.505859 L 14.476562 12.6875 C 12.026531 13.518779 7.5235922 13.25586 8.8085938 12.150391 C 10.71633 12.282905 13.247952 12.128366 15.349609 11.712891 C 15.349609 11.712891 16.234719 11.212359 16.511719 10.943359 C 13.958719 11.471359 8.2871094 11.318375 8.2871094 10.859375 C 8.2871094 10.436375 10.164062 10.001953 10.164062 10.001953 z M 18.59375 10.001953 C 18.135986 9.9821016 17.63475 10.134 17.203125 10.453125 C 18.104125 10.251125 18.865234 10.824328 18.865234 11.486328 C 18.865234 12.974328 16.800781 14.384766 16.800781 14.384766 C 16.800781 14.384766 20 14.003641 20 11.556641 C 20 10.546016 19.356689 10.035039 18.59375 10.001953 z M 9.7441406 14.341797 C 8.8481406 14.341797 8.2675781 14.963922 8.2675781 15.419922 C 8.2675781 16.830922 13.614375 16.880312 15.734375 15.445312 L 14.386719 14.576172 C 12.803719 15.327172 8.8291406 15.429797 9.7441406 14.341797 z M 5.8789062 16.693359 C 4.5902637 16.65192 4 17.327656 4 17.878906 C 4 20.810906 18 20.668828 18 17.673828 C 18 17.175828 17.457719 16.939172 17.261719 16.826172 C 18.404719 19.690172 5.671875 19.493734 5.671875 17.802734 C 5.671875 17.417734 6.345125 17.026078 7.203125 17.205078 C 7.203125 17.205078 6.8896094 16.831813 6.4746094 16.757812 C 6.2617344 16.720188 6.062998 16.699279 5.8789062 16.693359 z M 20 18.707031 C 17.799 20.936031 11.740813 22.289062 6.1328125 20.914062 C 11.766813 23.275062 19.973 21.442031 20 18.707031 z"></path>
+											</svg>    
+										</span>
+										<span class="texto">@Html.GetText("DEVTOOLS","DESCARGARCLASESYVISTASPARAJAVA")</span>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					@* Buscador de objetos conocimiento *@
+					<div class="col col-12 header-buscador">
+						<div class="wrapCol">
+							<div class="col-buscador" style="width: 100%">					
+							@* Formulario para búsquedas de objetos conocimiento *@
+								<form id="formBuscadorCookies" onsubmit="return false;">								
+									<div class="finderUtils" id="divCajaBusqueda">
+										<div class="group finderSection">
+											@* Input para realizar la búsqueda de oc *@
+											<input
+												type="text"
+												id="txtBuscarObjetoConocimiento"
+												class="not-outline finderSectionText"
+												autocomplete="off"
+												placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+											/>
+											@* Botón para realizar la búsqueda *@
+											<input
+												title="Buscar"
+												type="button"
+												class="findAction"
+												id="inputLupa"
+											/>
+											@* Botón para Facetas de la búsqueda *@
+											<a href="javascript: void(0);" class="btn-filtrar-movil">
+												<span class="material-icons">filter_list</span>
+												<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+											</a>
+										</div>
+									</div>								
+								</form>
+							</div>							
+						</div>
+					</div>
+					
+					@* Objetos de conocimiento de la comunidad *@					
+					<div class="col col-12 col-contenido">
+						<div class="wrapCol">
+							@* Header *@
+							<ul id="id-objetosConocimiento-list" class="header-component-list component-list no-list-style">
+								<li class="component-wrap">
+									<div class="component ">
+										<div class="component-header-wrap">
+											<div class="component-header">
+												<div class="component-header-content">
+													<div class="component-header-left">
+														<div class="component-name-wrap">
+															<span class="component-imagen">@Html.GetText("ADMINISTRACIONBASICA","IMAGEN")</span>
+														</div>
+														<div class="component-contenido-wrap">
+															<span class="component-nombre">@Html.GetText("ADMINISTRACIONBASICA","NOMBRE")</span>
+														</div>
+														<div class="component-descripcion-wrap">
+															<span class="component-namespace">Ruta relativa</span>
+														</div>
+														<div class="component-tipo-wrap">
+															<span class="component-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</span>
+														</div>
+														<div class="component-fecha-wrap">
+															<span class="component-fecha">@Html.GetText("COMMON","FECHA")</span>
+														</div>
+													</div>
+													<div class="component-header-right">
+														<div class="component-actions-wrap">
+															<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+							@* Contenido de objetos de conocimiento *@
+							<ul id="js-community-objetosConocimiento-list" class="js-community-objetosConocimiento-list component-list no-list-style">																			
+								@foreach (ObjetoConocimientoModel objetoConocimiento in Model.ListaObjetosConocimiento)
+								{
+									@Html.PartialView("_EdicionObjetoConocimiento", objetoConocimiento);
+								}
+							</ul>
+						</div>
+					</div>					
+				</div>
+			</div>		
+		</div> 	
+    </div>
+
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/grafo_conocimiento.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento de Objetos de conocimiento
+            operativaGestionObjetosConocimientoOntologias.init();
+        })();
+    </script>
+}

@@ -8,10 +8,12 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.VistaVirtualDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado;
+using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.ParametrosProyecto;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosProyecto;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.CMS;
@@ -45,6 +47,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -87,6 +90,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         public ActionResult Index()
         {
+
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "apariencia vistas edicion no-max-width-container";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas;
+
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONBASICA", "APARIENCIA");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONVISTAS", "VISTAS");
+
+            // Controlar si es o no del ecosistema            
+            bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
+            if (isInEcosistemaPlatform) {
+                ViewBag.isInEcosistemaPlatform = "true";
+            }       
+
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
@@ -243,19 +262,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        /// <summary>
-        /// Método para gestionar las vistas del servicio de resultados
-        /// </summary>
-        /// <param name="PaginaResultados">Nombre de la página</param>
-        /// <param name="Fichero">Fichero con la vista</param>
-        /// <param name="Accion">Acción a relizar</param>
-        /// <returns>ActionResult</returns>
-        [HttpPost]
+		/// <summary>
+		/// Método para gestionar las vistas del servicio de resultados
+		/// </summary>
+		/// <param name="PaginasPersonalizables">Nombre de la página</param>
+		/// <param name="Fichero">Fichero con la vista</param>
+		/// <param name="Accion">Acción a relizar</param>
+		/// <returns>ActionResult</returns>
+		[HttpPost]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult Resultados(string PaginaResultados, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        public ActionResult Resultados(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
-            CargarDatos();
+            string PaginaResultados = PaginasPersonalizables;
+			CargarDatos();
             string error = "";
 
             if (string.IsNullOrEmpty(PaginaResultados))
@@ -264,7 +284,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.Download)
             {
+                string lineaSeguridad = $"@*[security|||{PaginaResultados.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower()}|||{ProyectoSeleccionado.NombreCorto.ToLower()}]*@";
+
                 string htmlPagina = DescargarPagina(PaginaResultados, false, false);
+
+                if (!htmlPagina.StartsWith(lineaSeguridad))
+                {
+                    htmlPagina = $"{lineaSeguridad}\n{htmlPagina}";
+                }
+
                 if (!string.IsNullOrEmpty(htmlPagina))
                 {
                     MemoryStream stream = new MemoryStream();
@@ -305,34 +333,56 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.Upload)
             {
+
                 if (Fichero != null)
                 {
                     StreamReader sr = new StreamReader(Fichero.OpenReadStream());
+                    string security = sr.ReadLine().ToLower();
                     string texto = sr.ReadToEnd();
                     sr.Close();
 
-                    string errorCompilando = CompilarVista(texto);
-                    if (string.IsNullOrEmpty(errorCompilando))
+
+                    string lineaSeguridad = $"@*[security|||{PaginaResultados.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower()}|||{ProyectoSeleccionado.NombreCorto.ToLower()}]*@";
+
+                    if (security.StartsWith("@*[security|||") && security.EndsWith("]*@"))
                     {
-                        if (GuardarPagina(PaginaResultados, texto, false))
+                        string seguridadNombrePagina = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[1];
+                        string seguridadNombreProy = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[2].Replace("]*@", "");
+
+                        if (seguridadNombrePagina == PaginaResultados.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower() && seguridadNombreProy == ProyectoSeleccionado.NombreCorto.ToLower() && lineaSeguridad == security)
                         {
-                            string urlsResultados = mConfigService.ObtenerUrlServicioResultados();
-                            string[] urlsServicios = urlsResultados.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (string url in urlsServicios)
+                            string errorCompilando = CompilarVista(texto);
+                            if (string.IsNullOrEmpty(errorCompilando))
                             {
-                                CargadorResultados cargadorResultados = new CargadorResultados();
-                                cargadorResultados.Url = url;
-                                cargadorResultados.InvalidarVistas(UsuarioActual.IdentidadID);
+                                if (GuardarPagina(PaginaResultados, texto, false))
+                                {
+                                    string urlsResultados = mConfigService.ObtenerUrlServicioResultados();
+                                    string[] urlsServicios = urlsResultados.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                                    foreach (string url in urlsServicios)
+                                    {
+                                        CargadorResultados cargadorResultados = new CargadorResultados();
+                                        cargadorResultados.Url = url;
+                                        cargadorResultados.InvalidarVistas(UsuarioActual.IdentidadID);
+                                    }
+                                }
+                                else
+                                {
+                                    error = "Error al guardar los datos, intentalo de nuevo";
+                                }
+                            }
+                            else
+                            {
+                                error = errorCompilando;
                             }
                         }
                         else
                         {
-                            error = "Error al guardar los datos, intentalo de nuevo";
+                            error = $"La linea de seguridad no concuerda con lo esperado,<br />por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
                         }
                     }
                     else
                     {
-                        error = errorCompilando;
+                        error = $"Por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
                     }
                 }
                 else
@@ -342,7 +392,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
             {
+                string lineaSeguridad = $"@*[security|||{PaginaResultados.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower()}|||{ProyectoSeleccionado.NombreCorto.ToLower()}]*@";
+
                 string htmlPagina = DescargarPagina(PaginaResultados, true, false);
+
+                if (!htmlPagina.StartsWith(lineaSeguridad))
+                {
+                    htmlPagina = $"{lineaSeguridad}\n{htmlPagina}";
+                }
+
                 if (!string.IsNullOrEmpty(htmlPagina))
                 {
                     MemoryStream stream = new MemoryStream();
@@ -387,19 +445,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 
-        /// <summary>
-        /// Método para gestionar las vistas del servicio de facetas
-        /// </summary>
-        /// <param name="PaginaFacetas">Nombre de la página</param>
-        /// <param name="Fichero">Fichero con la vista</param>
-        /// <param name="Accion">Acción a relizar</param>
-        /// <returns>ActionResult</returns>
-        [HttpPost]
+		/// <summary>
+		/// Método para gestionar las vistas del servicio de facetas
+		/// </summary>
+		/// <param name="PaginasPersonalizables">Nombre de la página</param>
+		/// <param name="Fichero">Fichero con la vista</param>
+		/// <param name="Accion">Acción a relizar</param>
+		/// <returns>ActionResult</returns>
+		[HttpPost]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult Facetas(string PaginaFacetas, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        public ActionResult Facetas(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
-            CargarDatos();
+            string PaginaFacetas = PaginasPersonalizables;
+
+			CargarDatos();
             string error = "";
             if (string.IsNullOrEmpty(PaginaFacetas))
             {
@@ -430,6 +490,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     PaginaFacetas = PaginaFacetas.Replace("Views", "ViewsAdministracion");
                 }*/
+
+                string lineaSeguridad = $"@*[security|||{PaginaFacetas.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower()}|||{ProyectoSeleccionado.NombreCorto.ToLower()}]*@";
                 string htmlPagina = DescargarPagina(PaginaFacetas, true, false);
                 if (!string.IsNullOrEmpty(htmlPagina))
                 {
@@ -451,27 +513,47 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (Fichero != null)
                 {
                     StreamReader sr = new StreamReader(Fichero.OpenReadStream());
+                    string security = sr.ReadLine().ToLower();
                     string texto = sr.ReadToEnd();
                     sr.Close();
 
-                    string errorCompilando = CompilarVista(texto);
-                    if (string.IsNullOrEmpty(errorCompilando))
+                    string lineaSeguridad = $"@*[security|||{PaginasPersonalizables.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower()}|||{ProyectoSeleccionado.NombreCorto.ToLower()}]*@";
+
+                    if (security.StartsWith("@*[security|||") && security.EndsWith("]*@"))
                     {
-                        if (GuardarPagina(PaginaFacetas, texto, false))
+                        string seguridadNombrePagina = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[1];
+                        string seguridadNombreProy = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[2].Replace("]*@", "");
+
+                        if (seguridadNombrePagina == PaginasPersonalizables.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower() && seguridadNombreProy == ProyectoSeleccionado.NombreCorto.ToLower() && lineaSeguridad == security)
                         {
-                            CargadorFacetas cargadorFacetas = new CargadorFacetas();
-                            cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
-                            cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
+                            string errorCompilando = CompilarVista(texto);
+                            if (string.IsNullOrEmpty(errorCompilando))
+                            {
+                                if (GuardarPagina(PaginaFacetas, texto, false))
+                                {
+                                    CargadorFacetas cargadorFacetas = new CargadorFacetas();
+                                    cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
+                                    cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
+                                }
+                                else
+                                {
+                                    error = "Error al guardar los datos, intentalo de nuevo";
+                                }
+                            }
+                            else
+                            {
+                                error = errorCompilando;
+                            }
                         }
                         else
                         {
-                            error = "Error al guardar los datos, intentalo de nuevo";
+                            error = $"La linea de seguridad no concuerda con lo esperado,<br />por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
                         }
                     }
                     else
                     {
-                        error = errorCompilando;
-                    }
+                        error = $"Por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
+                    } 
                 }
                 else
                 {
@@ -658,41 +740,83 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult CMSExtra(string ComponentePersonalizable, Guid idPersonalizacion, bool ResourcesExtra, bool Identities, bool IdentitiesExtra, ManageViewsViewModel.Action Accion)
+        public ActionResult CMSExtra(string ComponentePersonalizable, Guid idPersonalizacion, bool ResourcesExtra, bool Identities, bool IdentitiesExtra, ManageViewsViewModel.Action Accion, IFormFile Fichero, string Nombre)
         {
             CargarDatos();
             string error = "";
             if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.Save)
             {
-                List<VistaVirtualCMS> vistaVirtualAnterior = VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.PersonalizacionComponenteID.Equals(idPersonalizacion)).ToList();
-                if (vistaVirtualAnterior.Count == 1)
+                string DatosExtra = "";
+                if (ResourcesExtra)
                 {
-                    string HTML = vistaVirtualAnterior[0].HTML;
-                    string Nombre = vistaVirtualAnterior[0].Nombre;
-                    string DatosExtra = "";
-                    if (ResourcesExtra)
+                    DatosExtra = $"{DatosExtra}{DatosExtraVistas.DatosExtraRecursos.ToString()}";
+                }
+                DatosExtra = $"{DatosExtra}&";
+                if (Identities)
+                {                   
+                    DatosExtra = $"{DatosExtra}{DatosExtraVistas.Identidades.ToString()}";
+                }
+                DatosExtra = $"{DatosExtra}&";
+                if (IdentitiesExtra)
+                {
+                    DatosExtra = $"{DatosExtra}{DatosExtraVistas.DatosExtraIdentidades.ToString()}";
+                }
+
+                if (Fichero != null)
+                {
+                    if (string.IsNullOrEmpty(Nombre.Trim()))
                     {
-                        DatosExtra += DatosExtraVistas.DatosExtraRecursos.ToString();
+                        error = "Hay que especificar un nombre en el componente";
                     }
-                    DatosExtra += "&";
-                    if (Identities)
+                    else
                     {
-                        DatosExtra += DatosExtraVistas.Identidades.ToString();
-                    }
-                    DatosExtra += "&";
-                    if (IdentitiesExtra)
-                    {
-                        DatosExtra += DatosExtraVistas.DatosExtraIdentidades.ToString();
-                    }
-                    if (!GuardarComponenteCMS(ComponentePersonalizable, HTML, Nombre, DatosExtra, idPersonalizacion))
-                    {
-                        error = "Error al guardar los datos, intentalo de nuevo";
+                        StreamReader sr = new StreamReader(Fichero.OpenReadStream());
+                        string texto = sr.ReadToEnd();
+                        sr.Close();
+
+                        if (idPersonalizacion == Guid.Empty)
+                        {
+                            idPersonalizacion = Guid.NewGuid();
+                        }
+
+                        string errorCompilando = CompilarVista(texto);
+                        if (string.IsNullOrEmpty(errorCompilando))
+                        {
+                            if (ComponentePersonalizable == pathResourceDefault || ComponentePersonalizable == pathListResourcesDefault || ComponentePersonalizable == pathGroupComponentsDefault)
+                            {
+                                ComponentePersonalizable = $"{ComponentePersonalizable}_{Guid.NewGuid()}.cshtml"; ;
+                            } 
+
+
+                            if (!GuardarComponenteCMS(ComponentePersonalizable, texto, Nombre, DatosExtra, idPersonalizacion))
+                            {
+                                error = "Error al guardar los datos, intentalo de nuevo";
+                            }
+                        }
+                        else
+                        {
+                            error = errorCompilando;
+                        }
                     }
                 }
                 else
                 {
-                    error = $"El componente '{ComponentePersonalizable}' con id='{idPersonalizacion}' no existe";
-                }
+                    List<VistaVirtualCMS> vistaVirtualAnterior = VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.PersonalizacionComponenteID.Equals(idPersonalizacion)).ToList();
+                    if (vistaVirtualAnterior.Count > 0)
+                    {
+                        string HTML = vistaVirtualAnterior[0].HTML;
+                        string NombreVista = vistaVirtualAnterior[0].Nombre;
+                        
+                        if (!GuardarComponenteCMS(ComponentePersonalizable, HTML, NombreVista, DatosExtra, idPersonalizacion))
+                        {
+                            error = "Error al guardar los datos, intentalo de nuevo";
+                        }
+                    }
+                    else
+                    {
+                        error = $"El componente '{ComponentePersonalizable}' con id='{idPersonalizacion}' no existe";
+                    }
+                }               
             }
 
             if (!string.IsNullOrEmpty(error))
@@ -720,10 +844,93 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.Personalizacion = string.Empty;
             ViewBag.PersonalizacionLayout = "";
             paginaModel.OKMessage = "Caches invalidadas correctamente";
-            return GnossResultHtml("Index", paginaModel);
+            return GnossResultOK("Caches invalidadas correctamente");            
+            //return GnossResultHtml("Index", paginaModel);
         }
 
-        private string CompilarVista(string pHtml)
+		[HttpPost]
+		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
+		public ActionResult CompartirVistasEnDominio(string pDominio)
+		{
+            string error = string.Empty;
+
+            bool yaCompartido = ComprobarDominioYaCompartido(pDominio.ToLower());
+            if (!yaCompartido)
+            {
+			    error = CompartirPersonalizacionEnDominio(pDominio.ToLower());
+            }
+            else
+            {
+                error = $"La personalización de este proyecto ya está compartida en el dominio: {pDominio}";
+            }
+
+			CargarDatos();
+			ViewBag.Personalizacion = string.Empty;
+			ViewBag.PersonalizacionLayout = "";
+			paginaModel.OKMessage = "Vistas compartidas correctamente";
+
+            if (!string.IsNullOrEmpty(error))
+            {
+				return GnossResultERROR(error);
+			}
+            else
+            {
+				return GnossResultOK("Vistas compartidas correctamente");
+			}		
+		}
+
+		[HttpPost]
+		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
+		public ActionResult DejarDeCompartirVistasEnDominio(string pDominios)
+        {
+            string error = string.Empty;
+
+            if (!string.IsNullOrEmpty(pDominios))
+            {
+				string[] dominios = pDominios.Split(',');
+
+				foreach (string dominio in dominios)
+				{
+					bool estaCompartido = ComprobarDominioYaCompartido(dominio.ToLower());
+
+					if (estaCompartido)
+					{
+						error = DejarDeCompartirPersonalizacionEnDominio(dominio.ToLower());
+					}
+					else
+					{
+						error = $"El dominio {dominio} no tiene la personalización compartida";
+					}
+
+					if (!string.IsNullOrEmpty(error))
+					{
+						break;
+					}
+				}
+            }
+            else
+            {
+                error = $"No se ha seleccionado ningún dominio.";
+            }
+            
+            
+
+			CargarDatos();
+			ViewBag.Personalizacion = string.Empty;
+			ViewBag.PersonalizacionLayout = "";
+			paginaModel.OKMessage = "La personalización se ha dejado compartir correctamente en los dominios.";
+
+			if (!string.IsNullOrEmpty(error))
+			{
+				return GnossResultERROR(error);
+			}
+			else
+			{
+				return GnossResultOK("La personalización se ha dejado compartir correctamente en los dominios seleccionados.");
+			}
+		}
+
+		private string CompilarVista(string pHtml)
         {
             Guid testID = Guid.NewGuid();
             string vistaTemporal = $"/{VIEWS_DIRECTORY}/TESTvistaTEST/{testID}$$${testID}.cshtml";
@@ -843,7 +1050,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             parametroGeneralGBD.AddTextosPersonalizadosPersonalizacion(filaTraduccion);
                             gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Add(filaTraduccion);
                         }
-
                         else
                         {
 
@@ -863,15 +1069,82 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                     indice = pHtml.IndexOf(comandoTraduccion, indice);
                 }
-                ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                try
+                {
+                    ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    parametroGeneralGBD.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                    
+                    string pattern = @"\((.*?), (.*?), (.*?)\)"; 
+                    MatchCollection matches = Regex.Matches(ex.InnerException.ToString(), pattern);
+                    string traduccionVista = string.Empty;
+                    
+                    foreach (Match match in matches)
+                    {
+                        traduccionVista = match.Groups[2].Value;
+                        break;
+                    }
 
-                parametroGeneralGBD.saveChanges();
+                    if (!string.IsNullOrEmpty(traduccionVista))
+                    {
+                        string traduccionBD = gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Find(textoBD => textoBD.TextoID.Contains(traduccionVista)).TextoID;
+
+                        return $"Hay un problema con la traduccion \"{traduccionVista}\" de la vista. Revisa que el texto esté correctamente escrito, ya que en base de datos es: \"{traduccionBD}\"";
+                    }
+
+                    return $"Revise las traducciones de la vista, hay algunas que no coinciden con las de base de datos.";                    
+                }
+                
             }
             else
             {
-                return "Ocurrió un error al obtener el PersonalizacionID de su comunidad";
+                return "No esta habilitada la personalización de vistas. Revise el campo \"Permitir administración de vistas\" en las Opciones de MetaAdministración";
             }
             return null;
+        }
+
+        private bool ComprobarDominioYaCompartido(string pDominio)
+        {
+			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            return vistaVirtualCN.ComprobarPersonalizacionCompartidaEnDominio(pDominio, ProyectoSeleccionado.Clave);
+		}
+
+        private string CompartirPersonalizacionEnDominio(string pDominio)
+        {
+            string error = string.Empty;
+
+            try
+            {
+                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                vistaVirtualCN.CompartirPersonalizacionEnDominio(pDominio, ProyectoSeleccionado.Clave);
+            }
+            catch (Exception ex)
+            {
+				error = $"Ha habido un error a la hora de compartir la personalización en el dominio: {pDominio}";
+				mLoggingService.GuardarLogError($"{error}. ERROR: {ex.Message}");            
+            }
+
+            return error;
+        }
+
+        private string DejarDeCompartirPersonalizacionEnDominio(string pDominio)
+        {
+            string error = string.Empty;
+
+            try
+            {
+                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                vistaVirtualCN.DejarDeCompartirPersonalizacionEnDominio(pDominio, ProyectoSeleccionado.Clave);
+            }
+            catch (Exception ex)
+            {
+                error = $"Ha habido un error al intentar dejar de compartir la personalización en el dominio: {pDominio}";
+                mLoggingService.GuardarLogError($"{error}. ERROR: {ex.Message}");
+            }
+
+            return error;
         }
 
         private void CargarDatos()
@@ -882,12 +1155,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             CargarVistaResultados(VistaVirtualDW);
             CargarVistaFacetas(VistaVirtualDW);
             CargarVistaCMS(VistaVirtualDW);
+            CargarDominiosCompartidos();
 
             string urlPagina = UtilIdiomas.GetText("URLSEM", "ADMINISTRARVISTAS");
 
             if (EsAdministracionEcosistema)
             {
                 urlPagina = UtilIdiomas.GetText("URLSEM", "ADMINISTRARVISTASECOSISTEMA");
+
+                if (!ParametrosAplicacionDS.Any(item => item.Parametro.Equals(TiposParametrosAplicacion.PersonalizacionEcosistemaID)))
+                {
+                    Guid personalizacionID = Guid.NewGuid();
+
+                    mEntityContext.ParametroAplicacion.Add(new ParametroAplicacion() { Parametro = TiposParametrosAplicacion.PersonalizacionEcosistemaID, Valor = personalizacionID.ToString() });
+                    mEntityContext.VistaVirtualPersonalizacion.Add(new VistaVirtualPersonalizacion() { PersonalizacionID = personalizacionID });
+                    mEntityContext.SaveChanges();
+
+                    ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    parametroAplicacionCL.InvalidarCacheParametrosAplicacion();
+
+                    mGnossCache.VersionarCacheLocal(ProyectoAD.MetaProyecto);
+
+                    ViewBag.PersonalizacionAdministracionEcosistema = personalizacionID;
+                }
             }
 
             paginaModel.UrlActionWeb = $"{urlPagina}/web";
@@ -896,7 +1186,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             paginaModel.UrlActionCMS = $"{urlPagina}/cms";
             paginaModel.UrlActionCMSExtra = $"{urlPagina}/cms-extra";
             paginaModel.UrlActionInvalidateViews = $"{urlPagina}/invalidateviews";
-        }
+            paginaModel.UrlActionShareViews = $"{urlPagina}/compartir-vistas-en-dominio";
+            paginaModel.UrlActionStopSharing = $"{urlPagina}/dejar-de-compartir";
+		}
 
         private void CargarVistaVirtual(DataWrapperVistaVirtual pVistaVirtualDW)
         {
@@ -937,7 +1229,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        private void CargarVistaRecursos(DataWrapperVistaVirtual pVistaVirtualDW)
+		private void CargarDominiosCompartidos()
+		{
+			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			paginaModel.ListDomainsShared = vistaVirtualCN.ObtenerDominiosEstaCompartidaPersonalizacion(ProyectoSeleccionado.Clave);
+		}
+
+		private void CargarVistaRecursos(DataWrapperVistaVirtual pVistaVirtualDW)
         {
             if (!EsAdministracionEcosistema)
             {
@@ -975,6 +1273,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 paginaModel.ListOriginalResultsServiceViews.Add(nombreVista);
             }
+
+            foreach(var elemento in pVistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.StartsWith("/Views/CargadorResultados") && !listaVistasResultados.Contains(item.TipoPagina)))
+            {
+				paginaModel.ListEditedResultsServiceViews.Add(elemento.TipoPagina);
+			}
         }
 
         private void CargarVistaFacetas(DataWrapperVistaVirtual pVistaVirtualDW)
@@ -993,7 +1296,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 paginaModel.ListOriginalFacetedServiceViews.Add(nombreVista);
             }
-        }
+
+			foreach (var elemento in pVistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.StartsWith("/Views/CargadorFacetas") && !listaVistasFacetas.Contains(item.TipoPagina)))
+			{
+				paginaModel.ListEditedFacetedServiceViews.Add(elemento.TipoPagina);
+			}
+		}
 
         private void CargarVistaCMS(DataWrapperVistaVirtual pVistaVirtualDW)
         {
@@ -1015,12 +1323,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 listaComponentesDisponibles.Add(tipoComponenteCMS);
             }
-            List<string> listaVistas = ObtenerFicherosDeDirectorio(Path.Combine(rootPath, $"{mViews}", "CMSPagina"));
-            mLoggingService.GuardarLogError("La ruta obtenida es: " + Path.Combine(rootPath, $"{mViews}", "CMSPagina"));
+            List<string> listaVistas = ObtenerFicherosDeDirectorio(Path.Combine(mEnv.ContentRootPath, $"{mViews}", "CMSPagina"));
+            mLoggingService.GuardarLogError($"La ruta obtenida es: {Path.Combine(mEnv.ContentRootPath, $"{mViews}", "CMSPagina")}");
             List<TipoComponenteCMS> listaComponentesDisponiblesAux = new List<TipoComponenteCMS>(listaComponentesDisponibles);
             foreach (TipoComponenteCMS componente in listaComponentesDisponiblesAux)
             {
-                if (!listaVistas.Contains($"/{mViews}/CMSPagina/" + componente.ToString() + "/_" + componente.ToString() + ".cshtml"))
+                if (!listaVistas.Contains($"/{mViews}/CMSPagina/{componente}/_{componente}.cshtml"))
                 {
                     listaComponentesDisponibles.Remove(componente);
                 }
@@ -1296,12 +1604,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         }
                     }
 
-                    LimpiarCacheVista(pagina, pEsRdfType);
-
                     if (transaccionIniciada)
                     {
                         mEntityContext.TerminarTransaccionesPendientes(true);
                     }
+                    LimpiarCacheVista(pagina, pEsRdfType);
                 }
                 catch (Exception ex)
                 {
@@ -1624,11 +1931,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             if (EsAdministracionEcosistema)
             {
                 proyCL.InvalidarTodasComunidadesMVC();
+                mGnossCache.VersionarCacheLocal(ProyectoAD.MetaProyecto);
             }
             else
             {
                 proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
                 proyCL.InvalidarComunidadMVC(ProyectoAD.MetaProyecto);
+                mGnossCache.VersionarCacheLocal(ProyectoSeleccionado.Clave);
             }
             proyCL.Dispose();
 

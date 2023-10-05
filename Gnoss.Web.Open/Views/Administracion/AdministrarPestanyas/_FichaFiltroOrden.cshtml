@@ -1,26 +1,113 @@
 ﻿@model TabModel.SearchTabModel.FiltroOrden
 
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene la visualización de filtros de orden. Estos filtros se crean en la edición de la página, al pulsar sobre "Añadir filtro orden"
+desde la sección "Lista de filtros de orden".
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    TabModel.SearchTabModel.FiltroOrden filtroOrden = Model;
+	// El filtro de orden personalizado
+	TabModel.SearchTabModel.FiltroOrden filtroOrden = Model;
+	Guid filterId = @Guid.NewGuid();
+	string collapseId = "panel_collapse_" + filterId.ToString().Substring(0,5);
 }
-<li class="bloque row filtroOrden" id="@Guid.NewGuid()">
-    <span class="handle filtroOrden">:::</span>
-    <section class="header">
-        <span class="nombreFiltroOrden" aux="@Html.ObtenerTextoIdiomaUsuario(filtroOrden.Nombre)">@Html.ObtenerTextoIdiomaUsuario(filtroOrden.Nombre)</span>
-        <span class="action eliminar">@Html.GetText("COMMON", "ELIMINAR")</span>
-        <span class="action editar">@Html.GetText("COMMON", "EDITAR")</span>
-    </section>
-    <section class="panEdicion">
-        <div>
-            <input type="hidden" name="TabEliminada" value="false" />
-            <p>
-                <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</span>
-                <input type="text" name="TabName" value="@filtroOrden.Nombre" />
-            </p>
-            <p>
-                <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "FILTRO")</span>
-                <input type="text" name="Filtro" value="@filtroOrden.Filtro" />
-            </p>
-        </div>
-    </section>
+
+@*
+----------------------------------------------------------------
+-------------------- Vista para mostrar los filtros de orden creados para una página --------------------
+*@
+
+
+<li class="component-wrap filter-row" id="@filterId" data-filterkey="@filterId" data-collapseid="@collapseId">
+
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				@* Icono para arrastrar página *@
+				<div class="component-sortable">
+					<span class="material-icons-outlined sortable-icon sortable-filter">filter_alt</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						@* Nombre del filtro *@
+						<div class="component-name-wrap">																												
+							<span class="component-filterName" data-aux="@Html.ObtenerTextoIdiomaUsuario(filtroOrden.Nombre)">@Html.ObtenerTextoIdiomaUsuario(filtroOrden.Nombre)</span>
+						</div>					
+					</div>
+					@*Sección de acciones del filtro *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de editar el filtro *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditFilter"
+									   data-toggle="collapse" 
+									   data-target="#@collapseId"									   
+									   role="button" 
+									   aria-expanded="false" 
+									   aria-controls="@collapseId">									   
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de borrar el filtro *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteFilter"
+										href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada del filtro - Collapse *@
+	<div class="collapse filter-order-info" id="@collapseId">
+		@* Indicación de que el filtro se ha eliminado *@
+		<input type="hidden" name="TabEliminada" value="false" />
+		<div class="card card-body">
+
+			@* Tabs de los idiomas en multiIdioma de la ficha FiltroOrden *@
+			<div class="panContenidoMultiIdioma">
+
+			</div>
+
+            @* Contenido de los tabs de los idiomas *@
+			<div class="inputsMultiIdioma multiIdiomaContainer" data-idmultiidiomatab="navigation_@collapseId">
+				@* Título/Nombre de la página *@
+				<div class="form-group mb-4">
+					@* <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label> *@
+					<input
+						type="text"
+						name="TabName"
+						data-labeltext="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"	
+						placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+						class="form-control multiIdioma"
+						value="@filtroOrden.Nombre">
+					<small class="form-text text-muted mb-2 mt-n2">Nombre identificativo del filtro.</small>
+				</div>			
+			</div>
+
+
+			@* Filtro *@
+			<div class="form-group mb-2">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "FILTRO")</label>
+				<input
+					type="text"
+					name="Filtro"
+					placeholder="@Html.GetText("COMADMINPESTANYAS", "FILTRO")"
+					class="form-control inputFiltroValue"
+					value="@filtroOrden.Filtro">
+				<small class="form-text text-muted mb-2">Filtro de resultados que se utilizará para realizar la búsqueda personalizada.</small>
+			</div>			
+		</div>
+	</div>	
 </li>

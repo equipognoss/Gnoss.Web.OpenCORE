@@ -1,0 +1,84 @@
+@model String
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán los detalles de la vista para subir una determinada plantilla o fichero "cshtml".
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+	// string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);
+
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	string idModalUploadVista = "";
+
+	if (ViewBag.editedWebView == true)
+	{
+		idModalUploadVista = "modal-upload-view" + Model.Replace("/","_").Replace(".","_") + "_edited";		
+	}
+	else
+	{
+		idModalUploadVista  = "modal-upload-view" + Model.Replace("/","_").Replace(".","_");		
+	}
+}
+
+
+@* Modal con la información *@
+<div
+	id="@idModalUploadVista"
+	class="modal modal-top fade modal-edicion modal-subir-vista"
+	role="dialog"	
+	aria-modal="true">
+	
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">upload</span>					
+					<span>@Html.GetText("DEVTOOLS","SUBIRVISTA")</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span
+				>
+			</div>
+			<div class="modal-body">			
+				@* Detalles de la vista a Subir *@
+				<div class="form-group mb-4">
+				    <label class="control-label d-block">@Html.GetText("DEVTOOLS","VISTA")</label>                        
+				    <div class="valueView">
+				        @Model				        
+				    </div>
+				</div>
+
+				@* Fichero de la vista *@
+				<div class="form-group mb-5">
+					<label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONALAPLANTILLASIYALATIENESDISPONIBLE")</label>
+					<input class="dragAndDrop dragAndDropInputFile" 						   
+						   type="file" 						   
+						   name="Fichero" 
+						   accept="cshtml,html"  max-size="1024">
+				</div>
+															
+				@* Botón para guardar *@
+				<div class="panelBotonera">
+				    <a href="javascript: void(0);"
+					   data-action="@((short)ManageViewsViewModel.Action.Upload)"
+					   data-url="@ViewBag.UrlActionWeb"
+					   data-personalizables="PaginasPersonalizables"
+					   data-formulariossemanticos="FormulariosSemanticos"
+
+					   class="btn btn-primary uppercase btnSaveUploadView">@Html.GetText("COMMON", "GUARDAR")</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,70 @@
+﻿@model PintarComboAdministrarCategorias
+
+@*
+ Descripción
+ -----------------------------------------------
+ Vista modal que se usará dentro de un contenedor de bootstrap para poder cargar, crear o editar categorias de una comunidad
+
+ Variables
+ ----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+@*
+ ----------------------------------------------------------------
+ -------------------- Vista Modal para añadir/editar categorías a la Comunidad --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">create_new_folder</span>@Html.GetText("DEVTOOLS","CREAR/EDITARCATEGORIA")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+@* Contenido central del modal *@
+<div class="modal-body">
+    <div class="formulario-edicion">
+		@* Título de la categoría -> Pintar caja multiidioma *@
+		@Html.PartialView("_PintarCajasMultiidioma", Model)        
+
+		@* Sección bloque de la categoría padre a elegir *@
+		<div class="form-group mb-4">
+            <label class="control-label d-block">
+                @Html.GetText("DEVTOOLS","SELECCIONALACATEGORIAPADRE")
+            </label>
+			@* Select + opciones de posibles categorías hijas *@
+            <select id="cmbCrearCategoriaEn" name="@("cmb" + Model.nombreCombo)" class="js-select2 form-control pmd-select2">
+                <option value="@Guid.Empty.ToString()">@Html.GetText("PERFILBASE", "SELECCIONACAT")</option>
+                <option value="@Guid.Empty.ToString()">@Html.GetText("COMADMINCATEGORIAS", "CATEGORIARAIZ")</option>
+                @foreach (CategoryModel categoria in Model.Thesaurus.ThesaurusCategories.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
+                {
+                    if (Model.Thesaurus.SharedCategories.Contains(categoria.Key) || (Model.pExcluirSeleccionadas && Model.Thesaurus.SelectedCategories.Contains(categoria.Key)))
+                    {
+                        continue;
+                    }
+                    <option value="@categoria.Key">@categoria.Name</option>
+                    PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
+                    pintar.Thesaurus = Model.Thesaurus;
+                    pintar.pCategoria = categoria;
+                    pintar.pExcluirSeleccionadas = Model.pExcluirSeleccionadas;
+                    @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategoriasHijas", pintar)
+                }
+            </select>
+
+		</div>
+		@* Sección botón de guardado y cierre del modal *@
+		<div class="panelBotonera">
+			<a id="btnGuardarCategory" class="btn btn-primary uppercase">@Html.GetText("COMMON","AÑADIR")</a>
+		</div>
+	</div>    
+</div>
+
+@* Carga de operativa *@
+<script>
+        (function ($) {
+            // Operativa funcionamiento de Creación de categorías
+			operativaGestionCategorias.operativaModalAddCategory();
+        })();
+</script>
+

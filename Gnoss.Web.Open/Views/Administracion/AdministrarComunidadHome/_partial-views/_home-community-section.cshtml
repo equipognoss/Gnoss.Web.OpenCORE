@@ -1,0 +1,104 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la sección de Comunidad desde la Home de DevTools.
+Esta vista se cargará en la sección central cuando se pulse sobre "Comunidad"
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+    // Conocer los permisos del usuario para administrar una comunidad
+    CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de la sección Comunidad de la Home de la Comunidad en DevTools --------------------
+*@
+
+@* Contenedor central de secciones *@
+<div class="section-list-wrap">
+    @if (permisosPaginas.EsAdministradorProyecto)
+    {
+        <div class="section section-navigation" data-parent-section="comunidad" data-section="info-comunidad">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADGENERAL")</h2>
+            <p>            
+                @Html.GetText("DEVTOOLS","ESTABLECERELESTADODELACOMUNIDAD,SUNOMBRE,ELACCESOALAMISMAYSU")
+            </p>
+        </div>        
+    }
+
+    @if (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Tesauro)))
+    {
+        <div class="section section-navigation" data-parent-section="comunidad" data-section="categorias-comunidad">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCATEGORIASCOM")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","EDICIONYCREACIONDECATEGORIASPARALACLASIFICACIONDELOSRECURSOS")
+            </p>
+        </div>        
+    }
+
+    @if (permisosPaginas.EsAdministradorProyecto)
+    {
+        <div class="section section-navigation" data-parent-section="comunidad" data-section="permisos-comunidad">
+            <h2>@Html.GetText("DEVTOOLS","TIPOSDECONTENIDO/PERMISOS")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONFIGURACIONDELOSPERMISOSDEACCESOALOSRECURSOSDELACOMUNIDADA")
+            </p>
+        </div>
+
+        <div class="section section-navigation" data-parent-section="comunidad" data-section="interaccion-comunidad">
+            <h2>@Html.GetText("DEVTOOLS","INTERACCIONSOCIAL")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONFIGURACIONDELOSPERMISOSDELOSMIEMBROSDELACOMUNIDADPARAPODE")
+            </p>
+        </div>
+
+        @if (permisosComunidad.ManageRequestAccess)
+        {
+            <div class="section section-navigation" data-parent-section="comunidad" data-section="solicitudes-comunidad">
+                <h2>@Html.GetText("SOLICITUDESACCESOPROYECTO", "TITULOPAGINA")</h2>
+                <p>                    
+                    @Html.GetText("DEVTOOLS", "ADMINISTRACIONDELASSOLICITUDESDEACCESOALACOMUNIDAD")
+                </p>
+            </div>            
+        }
+
+        @if (permisosComunidad.ManageRequestGroup) { 
+            <div class="section section-navigation" data-parent-section="comunidad" data-section="solicitudes-comunidad-grupos">
+                <h2>@Html.GetText("QUEPUEDOHACER", "SOLICITUDESPERTENECERGRUPO")</h2>
+                <p>
+                    @Html.GetText("DEVTOOLS", "ADMINISTRACIONDELASSOLICITUDESDEACCESOAGRUPOSDELACOMUNIDAD")
+                </p>
+            </div> 
+        }
+
+        <div class="section section-navigation" data-parent-section="comunidad" data-section="miembros-comunidad">
+            <h2>@Html.GetText("COMADMINCOMUNIDAD", "COMADMINCOMMIEMBROS")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","GESTIONDELOSMIEMBROS,GRUPOSYORGANIZACIONESQUEFORMANPARTEDELA")
+            </p>
+        </div> 
+        
+        <div class="section section-navigation" data-parent-section="comunidad" data-section="certificacion-comunidad">
+            <h2>@Html.GetText("DEVTOOLS","NIVELESDECERTIFICACION")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","ADMINISTRACIONDELOSNIVELESDECERTIFICACIONPARALACALIFICACIOND")
+            </p>
+        </div>
+        @*
+        <div class="section section-navigation" data-parent-section="comunidad" data-section="redes-sociales-comunidad">
+            <h2>@Html.GetText("DEVTOOLS","INTEGRACIONDEREDESSOCIALES")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","CONFIGURACIONDELAINTEGRACIONDELACOMUNIDADCONLASREDESSOCIALES")
+            </p>
+        </div>
+        *@ 
+    }
+</div>
+
+

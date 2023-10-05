@@ -636,6 +636,8 @@ const operativaEnvioMensajesGnoss = {
             // Borrado de mensaje de error actual antes de hacer petición
             that.showInfoPanelErrorOrOK(false, false, undefined);
 
+            // Eliminar el posible mensaje que haya a modo de backup
+            operativaGestionEmailsGuardadoSeguridad.deleteEmailDetailInfoInLocalStorage();
             // Enviar el mensaje
             GnossPeticionAjax(this.urlSendMessage, params, true)
                 .fail(function (data) {
@@ -654,6 +656,223 @@ const operativaEnvioMensajesGnoss = {
         }
     },
 };
+
+
+/**
+ * Operativa para realizar el guardado de un mensaje Gnoss en caso de que se pierda o no se envíe
+ */ 
+const operativaGestionEmailsGuardadoSeguridad = {
+
+    /**
+     * Inicializar operativa
+     */
+     init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.triggerEvents();            
+    },
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {
+
+        // Modal de restaurar email enviado
+        this.modalBackupEmailContent = $("#modal-email-backup-content");
+        
+        // Botones para confirmar o no la restauración de la copia de seguridad de la página cms
+        this.btnConfirmRestoreEmailContent = $(".btnConfirmRestoreEmailContent");
+        this.btnNotConfirmRestoreEmailContent = $(".btnNotConfirmRestoreEmailContent");   
+        // Input del cuerpo del mensaje
+        this.textAreaCuerpoMensaje = $("#txtMensaje");         
+        // Flags de inicio de operativa
+        // Local storage no disponible de momento
+        this.isLocalStorageAvailable = false;
+        // Indicador de si hay contenido previo al enviar un email
+        this.isBackupContentAvailableForEmail = false;
+
+        // Key que almacenará el contenido del html que se ha "copiado". Cuerpo del email
+        this.keyEmailContent = "KEY_EMAIL_CONTENT";
+    },
+
+    /*
+     * Configurar eventos de los elementos html
+     * */    
+    configEvents: function(){
+        const that = this;
+
+        // Restaurar la copia de seguridad de la página cms que se ha encontrado
+        this.btnConfirmRestoreEmailContent.on("click", function(){
+            that.handleRestoreEmailContent();            
+        });
+
+        // Cancelar la restauración de la copia de seguridad de la página cms que se ha encontrado
+        this.btnNotConfirmRestoreEmailContent.on("click", function(){
+            that.handleNotRestoreEmailContent();
+        });
+
+    },
+
+    /**
+     * Métodos que se ejecutarán al inicio de la operativa
+     */
+    triggerEvents: function(){
+        const that = this;
+
+        this.checkLocalStorage();
+        setTimeout(function () {
+            that.initBackupSaved();
+        },1500);   
+                
+        // Recargar los ckEditors
+        RecargarTodosCKEditor();
+    },
+
+    /**
+     * Método para comprobar si el localstorage está disponible. Lo guardará en la variable para futuras acciones.
+     */
+     checkLocalStorage: function(){
+        const that = this;
+        if (that.storageAvailable('localStorage')) {
+            // El storage está disponible   
+            that.isLocalStorageAvailable = true;            
+        }
+    },    
+
+    /**
+     * Método que iniciará el copiado del estado de la página siempre y cuando el localStorage esté disponible
+     */
+    initBackupSaved: function(){
+        const that = this;
+
+        that.checkBackupContentAvailableForEmail();
+
+        if (that.isBackupContentAvailableForEmail){
+            // Preguntar si se desea restaurar el contenido actual almacenado          
+            that.modalBackupEmailContent.modal("show");
+        }else{
+            if (that.isLocalStorageAvailable == true){
+                // Ejecutar copiado de backup de forma planificada
+                that.initScheduleBackupCopy();
+            }
+        }
+    },
+
+    /**
+     * Copiado programado del contenido de la página CMS
+     */
+    initScheduleBackupCopy: function(){
+        const that = this;
+        // Realizar copiado de página CMS cada 30 segundos
+        setInterval(function(){            
+            that.saveEmailBodyInLocalStorage();
+        }, 15000/*30000*/);
+    },
+
+    /**
+     * Método que copiará el contenido de la página que está siendo editada en localStorage a modo de backup
+     */
+    saveEmailBodyInLocalStorage: function(){
+        const that = this;
+       
+        // Contenido de la página CMS
+        let cuerpoMensaje = that.textAreaCuerpoMensaje.val();
+        if (cuerpoMensaje.length > 0){
+            cuerpoMensaje = encodeURIComponent(cuerpoMensaje.replace(/\n/g, ''));             
+            const backupData = cuerpoMensaje;
+            // Guardar el contenido        
+            localStorage.setItem(that.keyEmailContent, backupData); 
+        }        
+    },
+
+    /**
+     * Método que eliminará el contenido almacenado en localStorage
+     * Este método se ejecutará cuando se envíe el email de forma correcta por el usuario
+     */
+    deleteEmailDetailInfoInLocalStorage: function(){
+        const that = this;
+        
+        if (this.isLocalStorageAvailable){
+            localStorage.removeItem(that.keyEmailContent);          
+        }
+    },
+
+    /**
+     * Método que comprobará si hay información previa del email por si no se han guardado los cambios
+     */
+    checkBackupContentAvailableForEmail: function(){
+        const that = this;
+
+        let contentBackupEmail = localStorage.getItem(that.keyEmailContent);
+        if (contentBackupEmail != null || contentBackupEmail != undefined){
+            that.isBackupContentAvailableForEmail = true;
+        }else{
+            that.isBackupContentAvailableForEmail = false;
+        }
+    },
+
+    /**
+     * Método para restaurar la página de backup al CMS Builder
+     */
+    handleRestoreEmailContent: function(){
+        const that = this;
+               
+        setTimeout(function(){
+            // Contenido de la página del localStorage
+            const htmlContent = decodeURIComponent(localStorage.getItem(that.keyEmailContent));
+            // Establecer el contenido en ckeEditor para el cuerpo del mensaje            
+            CKEDITOR.instances.txtMensaje.setData(htmlContent);            
+            // Eliminar el item restaurado
+            that.deleteEmailDetailInfoInLocalStorage();
+            // Iniciar de nuevo la operativa
+            that.triggerEvents();
+        },1500);
+        
+    },
+
+    /**
+     * Método para no restaurar la vista de copia de seguridad.
+     */
+    handleNotRestoreEmailContent: function(){
+        const that = this;
+        // Eliminar el item restaurado
+        that.deleteEmailDetailInfoInLocalStorage();
+        // Ocultar el modal de restauración 
+        dismissVistaModal(that.modalBackupEmailContent);
+        // Iniciar de nuevo la operativa
+        that.triggerEvents();
+    }, 
+
+    /**
+     * Método para comprobar si está disponible el local storage del navegador
+     * @param {any} type
+     */
+    storageAvailable: function (type) {
+        try {
+            var storage = window[type],
+                x = '__storage_test__';
+            storage.setItem(x, x);
+            storage.removeItem(x);
+            return true;
+        }
+        catch (e) {
+            return e instanceof DOMException && (
+                // everything except Firefox
+                e.code === 22 ||
+                // Firefox
+                e.code === 1014 ||
+                // test name field too, because code might not be present
+                // everything except Firefox
+                e.name === 'QuotaExceededError' ||
+                // Firefox
+                e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+                // acknowledge QuotaExceededError only if there's something already stored
+                storage.length !== 0;
+        }
+    },   
+
+}
 
 
 /**

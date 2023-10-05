@@ -1,0 +1,34 @@
+﻿@model SemanticPropertyModel
+@using Microsoft.AspNetCore.Mvc.Razor;
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra la propiedad de un elemento que forma parte de un objeto secundario cuando la propiedad es de tipo Literal.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@if (string.IsNullOrEmpty(Model.LiteralInfo.LiteralLink))
+{
+    @Html.Raw(Model.LiteralInfo.LiteralName);
+}
+else
+{
+    string target = "";
+
+    if (Model.Element.TargetLink == null)
+    {
+        target = "target=\"_blank\"";
+    }
+    else if (Model.Element.TargetLink != "")
+    {
+        target = "target=\"" + Model.Element.TargetLink + "\"";
+    }
+    
+    <a href="@Model.LiteralInfo.LiteralLink" @Html.Raw(target)>@Model.LiteralInfo.LiteralName</a>
+}

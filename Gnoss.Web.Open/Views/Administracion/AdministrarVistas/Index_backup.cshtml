@@ -1,0 +1,229 @@
+﻿@model ManageViewsViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar las vistas de la comunidad. Desde aquí se podrá editar y subir las nuevas vistas que sustituyan a las originales.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";	
+	// Referencia al ManageViewsViewModel para el botón de tipo de añadir un nuevo componente
+	ViewBag.ManageViewsViewModel = Model;
+
+	// Acciones a realizar con las vistas (Upload, Download)
+	//ViewBag.DownloadOriginalAction = (short)ManageViewsViewModel.Action.DownloadOriginal;
+	//ViewBag.UploadAction = (short)ManageViewsViewModel.Action.Upload;
+	// Url para Descargar/Subir Vista-> ViewBag para que esté disponible en vistas parciales
+	string urlActionWeb = Model.UrlActionWeb;
+	string urlActionCMS = Model.UrlActionCMS;	
+	ViewBag.UrlActionWeb = urlActionWeb;
+	ViewBag.UrlActionCMS = urlActionCMS;
+	@* Guid para personalización de tipo Recurso *@
+	string idResourceNew = "";// Guid.NewGuid().ToString().Replace("-", "");
+
+}
+
+
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/apariencia">@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")</a>
+        </li>
+        <li>
+			@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")            
+        </li>
+    </ul>
+</div>
+
+
+<div class="formulario-edicion background-blanco">
+	<div class="row">
+		<div class="col col-12 col-xl-3 header-listado">
+			@* Título + Nº de vistas *@
+			<div class="h1-container">
+				<h1>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS") <span id="numVistas" class="numResultados"></span></h1>
+			</div>
+		</div>
+		<div class="col col-12 col-xl-9 header-buscador">
+			@* Invalidar vistas *@
+			<div class="wrapCol">
+				<div class="col-buscador" style="width: 100%">
+					@* Formulario para búsquedas de componentes *@
+					<form id="formBuscadorVistas" onsubmit="return false;">								
+						<div class="finderUtils" id="divCajaBusqueda">
+							<div class="group finderSection">
+								@* Input para realizar la búsqueda *@
+								<input
+									type="text"
+									id="txtBuscarVistas"
+									class="not-outline finderSectionText"
+									autocomplete="off"
+									placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+								/>
+								@* Botón para realizar la búsqueda *@
+								<input
+									title="Buscar"
+									type="button"
+									class="findAction"
+									id="inputLupa"
+								/>
+								@* Botón para Facetas de la búsqueda *@
+								<a href="javascript: void(0);" class="btn-filtrar-movil">
+									<span class="material-icons">filter_list</span>
+									<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+								</a>
+							</div>
+						</div>								
+					</form>
+				</div>
+				<a id="btnInvalidarVistas" href="javascript: void(0);" class="btn btn-outline-primary ml-2 mr-0">@Html.GetText("DEVTOOLS","INVALIDARVISTAS")</a>				 				
+				@* Botón añadir personalización para Vistas de tipo Recurso *@
+				<input type="button" 				  
+				   id="btnAniadirPersonalizacionRecurso"
+				   class="btn btn-primary d-none btnAniadirPersonalizacionRecursos"				   
+				   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+				   data-url="@(ViewBag.UrlActionCMS)"				   
+				   data-componentecms="ComponentePersonalizable"
+				   data-personalizacion="@idResourceNew" 
+				   data-nombre=""
+				   data-toggle="modal" 
+				   data-target="#modal-new-view-personalizacion"				   
+				   value="@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")"/>									   
+				
+				@* Botón añadir personalización para Vistas de tipo Listado de Recurso *@
+				<input type="button" 
+				   id="btnAniadirPersonalizacionListadoRecurso"
+				   class="btn btn-primary d-none btnAniadirPersonalizacionRecursos"				   
+				   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+				   data-url="@(ViewBag.UrlActionCMS)"				   
+				   data-componentecms="ComponentePersonalizable"
+				   data-personalizacion="@idResourceNew" 
+				   data-nombre=""
+				   data-toggle="modal" 
+				   data-target="#modal-new-view-personalizacion"					
+				   value="@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")"/>
+				
+				@* Botón añadir personalización para Vistas de tipo Grupo de Recurso *@
+				<input type="button" 
+				   id="btnAniadirPersonalizacionGrupoRecurso"
+				   class="btn btn-primary d-none btnAniadirPersonalizacionRecursos"				   
+				   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+				   data-url="@(ViewBag.UrlActionCMS)"				   
+				   data-componentecms="ComponentePersonalizable"
+				   data-personalizacion="@idResourceNew" 
+				   data-nombre=""
+				   data-toggle="modal" 
+				   data-target="#modal-new-view-personalizacion"
+				   value="@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")"/>
+				
+			</div>
+		</div>
+		@* Panel de facetas *@
+		<div class="col col-12 col-xl-3 col-facetas col-lateral izquierda">				
+			@Html.PartialView("_partial-views/_list-content-facetes", Model)
+			
+		</div>
+		@* Contenido central de vistas *@
+		<div class="col col-12 col-xl-9 col-contenido">
+			<div class="wrapCol">
+
+				@if (Comunidad.PersonalizacionProyectoID == Guid.Empty && ViewBag.PersonalizacionAdministracionEcosistema == Guid.Empty)
+				{
+					<p class="lead">@Html.Translate("La comunidad no tiene habilitada la personalización de vistas. Contacte con el administrador de la plataforma para activarla")</p>  
+				}
+				else
+				{			
+					<ul id="id-header-vistas-list" class="header-component-list component-list no-list-style">
+						<li class="component-wrap">
+							@* Cabecera de vistas *@
+							<div class="component ">
+								<div class="component-header-wrap">
+									<div class="component-header">
+										@* Sección títulos de listado de vistas  *@
+										<div class="component-header-content">
+											<div class="component-header-left">
+												<div class="component-name-wrap component-bigger-header">
+													<span class="component-name">@Html.GetText("DEVTOOLS","TITULO")</span>
+												</div>
+												<div class="component-estado-wrap component-smaller">
+													<span class="component-estado">@Html.GetText("DEVTOOLS","ESTADO")</span>
+												</div>
+												<div class="component-tipo-wrap component-smaller">
+													<span class="component-tipo">@Html.GetText("DEVTOOLS","TIPO")</span>
+												</div>
+												<div class="component-fecha-wrap component-smaller">
+													<span class="component-fecha">@Html.GetText("DEVTOOLS","FECHA")</span>
+												</div>
+											</div>
+											<div class="component-header-right">
+												<div class="component-actions-wrap">
+													<span>@Html.GetText("COMMON","ACCIONES")</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
+
+					@* Contenido de las vistas - Servicio Web *@
+					<ul id="id-added-vistas-list-web" 
+						class="js-community-vistas-list component-list no-list-style">
+
+						@Html.PartialView("_Web", Model)										
+					</ul>
+					
+					@* Contenido de las vistas - Servicio Resultados *@
+					<ul id="id-added-vistas-list-resultados"
+						class="js-community-vistas-list component-list no-list-style">
+				
+						@Html.PartialView("_Resultados", Model)                  
+					</ul>
+
+					@* Contenido de las vistas - Servicio Facetas *@
+					<ul id="id-added-vistas-list-facetas"
+						class="js-community-vistas-list component-list no-list-style">
+				
+						@Html.PartialView("_Facetas", Model)
+					</ul>
+
+					@* Contenido de las vistas - Servicio Componentes CMS *@
+					<ul id="id-added-vistas-list-componentes-cms"
+						class="js-community-vistas-list component-list no-list-style">
+						
+						@Html.PartialView("_CMS", Model)
+					</ul>
+				}
+			</div>
+		</div>
+	</div>
+</div>
+
+@* Añadir modal informativo de eliminación de Vistas *@
+@Html.PartialView("_modal-views/_deleteView.cshtml")
+@* Añadir modal para añadir nuevas vistas de tipo CMS (Reutilizarla para edición de la vista) *@
+@Html.PartialView("_modal-views/_newCmsPersonalizacion", "")
+
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/apariencia.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento
+            operativaGestionVistas.init();
+        })();
+    </script>
+}

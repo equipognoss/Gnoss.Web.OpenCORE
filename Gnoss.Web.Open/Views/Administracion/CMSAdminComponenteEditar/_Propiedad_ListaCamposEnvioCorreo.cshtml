@@ -1,23 +1,242 @@
 ﻿@model CMSAdminComponenteEditarViewModel.PropiedadComponente
 
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato Input. Este input se utiliza para añadir Campos de correo electrónico.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
     string idiomaPanel = (string)ViewData["idiomaPanel"];
     string idPanel = "propiedad" + ((short)Model.TipoPropiedadCMS);
+
     if (!string.IsNullOrEmpty(idiomaPanel))
     {
         idPanel += "_" + idiomaPanel;
     }
 
     string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.TipoPropiedadCMS);
+
+	@* Obligatoriedad del campo *@
+    var esCampoObligatorio = ""; 
+    @* Tipo de campo del formulario *@
+    var tipoCampoFormulario = ""; 
+
+    // Array de diccionarios Lista de nombres a rellenar en todos los idiomas
+    var listaTextosNombre = new List<Dictionary<string, string>>();
+    // Lista de cada campo del formulario para saber si debe ser obligatorio inputObligatorio
+    var listaInputObligatorio = new List<string>();
+    // Lista de cada campo del formulario para saber si tipo de input
+    var listaTipoInput = new List<string>();
+
+    // Todas las propiedades o elementos del menú a editar (En todos los idiomas disponibles)
+    var elementos = !string.IsNullOrEmpty(Model.Value) ? Model.Value.Split("###") : new string[0]; // Model.Value.Split("###");    
+
+    @foreach (string elemento in elementos)
+    {
+        // Obtener la fila con el Nombre y el enlace
+        var valor = elemento.Trim();
+
+        // Obtener datos de cada item
+        if (!String.IsNullOrEmpty(valor))
+        {
+            // Todos los datos del enlace
+			var datos = valor.Split("&&&");
+			// Nombre del enlace
+			var valorNombre = datos[0].Split("|||");            						
+			// Valor del enlace (Url)
+            esCampoObligatorio = datos[1]; 
+            // Tipo de campo para el formulario
+            tipoCampoFormulario = datos[2]; 			
+
+            // Obtener y construir los valores para los nombres del menú
+            @foreach (string nombre in valorNombre)
+            {
+                if (!String.IsNullOrEmpty(nombre))
+                {
+                    var objetoIdioma = Html.GetDictionaryValuesFromMultiLanguageItem(nombre);
+                    listaTextosNombre.Add(objetoIdioma);
+                }
+            }
+            // Obtener y construir los valores para saber si el input será obligatorio
+            listaInputObligatorio.Add(esCampoObligatorio);
+            listaTipoInput.Add(tipoCampoFormulario);
+         }
+	}
+
 }
 
-<div id="contenedorPrincipal_@idPanel">
-    <p id="parrafo_@idPanel">
-        <label for="@idPanel">@nombrePropiedad@(Model.Required ? " *" : "")</label>
-        <input type="hidden" id="@idPanel">
-    </p>
-    <div id="contenedor_@idPanel">
-        <div id="contenedorInt_@idPanel"></div>
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo Campo de Correo electrónico (Input) --------------------
+*@
+
+
+@* Obtener el nombre del menú item *@
+@{    
+    List<string> listaNombre = new List<string>();
+}
+
+@* Asignación a la lista los Nombres de los parámetros*@
+@foreach (Dictionary<string, string> nombreMenu in listaTextosNombre)
+{												
+    string value;
+    if (nombreMenu.TryGetValue(idiomaPanel, out value))
+    {						
+    	listaNombre.Add(value);
+    }										
+}
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="mb-4 form-group contenedorPrincipalMailList">    
+    <div class="menuList-header d-flex justify-content-between align-items-center" data-idPanel="@idPanel">
+        @* Label del elemento Html*@    
+        <label class="control-label d-block font-weight-bold" style="font-size:14px;">@nombrePropiedad@(Model.Required ? " *" : "")</label>		
+		<a href="javascript: void(0);" class="linkAddMailOption btn btn-outline-primary" data-idPanel="@idPanel" style="display: flex; text-decoration: none;">
+			<span class="material-icons">add</span>
+			<span class="texto">@Html.GetText("DEVTOOLS","NUEVOCAMPO")</span>
+		</a>
+	</div>
+         
+    @* Contenedor donde se pintarán todos los items del formulario *@
+    <div id="contenedor_@idPanel" data-idPanel="@idPanel">
+        <ul class="js-community-components-form-option-list component-list no-list-style">
+			
+
+		@for (var i = 0; i < listaNombre.Count; i++){
+			@* Nombre, Campo Obligatorio, tipoCampo *@
+			string nombreCampo = listaNombre[i];
+			bool campoObligatorio = bool.Parse(listaInputObligatorio[i]);				
+			int tipoCampo = int.Parse(listaTipoInput[i]);
+				
+
+			@* Id aleatorio para el collapsePanel *@
+			Guid randomId = Guid.NewGuid();
+			string collapseId = "panel_collapse_" + randomId.ToString().Substring(0,5);				
+			string campoId = $"{idPanel}_{i}_txt";			
+			string tipoCampoId = $"{idPanel}_{i}_ddlist";
+			
+			@* Pintar el campo del formulario (Nombre, esObligatorio, Tipo de Campo) *@
+			<li
+				class="component-wrap inputForm-row elementos_@idPanel"
+				draggable="false">
+				<div class="component">
+					<div class="component-header-wrap">
+						<div class="component-header">
+							<div class="component-sortable js-component-form-item-sortable-component">
+								<span class="material-icons-outlined sortable-icon">drag_handle</span>
+							</div>
+							<div class="component-header-content">
+								<div class="component-header-left">
+									<div class="component-name-wrap">
+										@* Información de la opción del menú *@
+										<span class="component-name">
+											<span class="component-form-option-name">@nombreCampo</span>																						
+										</span>
+									</div>
+								</div>
+								<div class="component-header-right">
+									<div class="component-actions-wrap">
+										<ul class="no-list-style component-actions">
+											<li>
+												@* Acción Editar el input del formulario *@
+												<a
+													class="action-delete round-icon-button js-action-delete btnEditFormInput"
+													href="javascript: void(0);"													
+													data-toggle="collapse" 
+													data-target="#@collapseId"									   
+													role="button" 
+													aria-expanded="false" 
+													aria-controls="@collapseId"
+													draggable="false">
+													<span class="material-icons">edit</span>
+												</a>
+											</li>
+											<li>
+												@* Acción Eliminar el input del formulario *@
+												<a
+													class="action-delete round-icon-button js-action-delete btnDeleteFormInput"
+													href="javascript: void(0);"													
+													data-idpanel="@idPanel"
+													draggable="false">
+													<span class="material-icons">delete</span>
+												</a>
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				@* Información detallada del Menú item - Collapse *@
+				<div class="collapse menuItem-info" id="@collapseId">					
+					<div class="card card-body">												
+						@* Título/Nombre de la página *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>
+							<input
+								type="text"
+								id="@campoId"
+								data-labeltext="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"	
+								placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+								class="form-control inputNombreCampoItem"
+								value="@nombreCampo"/>
+							<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREDELCAMPODELFORMULARIO")</small>
+						</div>	
+						
+						@* Es el campo obligatorio? -> RadioButton *@
+						<div class="form-group mb-3 esCampoObligatorio">
+							<label class="control-label d-block">@Html.GetText("DEVTOOLS","CAMPOOBLIGATORIO")</label>
+							<div class="form-check form-check-inline">
+								<input
+									id="esCampoObligatorio_SI_@campoId"
+									class="form-check-input esCampoObligatorio"
+									data-value="si"
+									type="radio"
+									@(campoObligatorio ? "checked" : "")
+									name="esCampoObligatorio_@campoId"/>
+								<label
+									class="form-check-label"
+									for="esCampoObligatorio_SI_@campoId">@Html.GetText("COMMON", "SI")</label>
+							</div>
+							<div class="form-check form-check-inline">
+								<input
+									id="esCampoObligatorio_NO_@campoId"
+									class="form-check-input esCampoObligatorio"
+									type="radio"
+									data-value="no"
+									@(!campoObligatorio ? "checked" : "")
+									name="esCampoObligatorio_@campoId"/>
+								<label
+									class="form-check-label"
+									for="esCampoObligatorio_NO_@campoId">@Html.GetText("COMMON", "NO")</label>
+							</div>
+							<small class="form-text text-muted mb-2 mt-n2">@Html.GetText("DEVTOOLS","ELCAMPOESOBLIGATORIOQUESEARELLENADOENELMOMENTODELENVIODELFOR")</small>
+						</div>
+						
+						@* Tipo de campo -> Select *@						
+						<div class="form-group mb-4 tipoCampo">
+							<label class="control-label d-block">Tipo de campo</label>
+							@* Select del tipo de campo del formulario *@
+							<select name="tipoCampo"
+									id="@tipoCampoId"
+									class="cmbTipoCampo js-select2"
+									tabindex="0"
+									aria-hidden="false">
+								<option @(tipoCampo == 0 ? "selected" : "") value="0">@Html.GetText("DEVTOOLS","CORTA")</option>
+								<option @(tipoCampo == 1 ? "selected" : "") value="1">@Html.GetText("DEVTOOLS","LARGA")</option>
+							</select>
+						</div>
+						<small class="form-text text-muted mb-2 mt-n2">@Html.GetText("DEVTOOLS","SELECCIONAELTIPODECAMPODELFORMULARIO")</small>
+					</div>
+				</div>	
+			</li>					
+		}	        
+        </ul>
     </div>
-    <input type="button" onclick="Propiedad25_NuevoCampo();" class="nuevo" value="Nuevo" />
 </div>

@@ -156,7 +156,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             paginaModel.Organizations = ControladorProyectoMVC.ObtenerIdentidadesPorID(listaIdsIdentidadesOrg);
 
-            return View(paginaModel);
+            //return View(paginaModel);
+            return View("Manage", paginaModel);
         }
     }
 }

@@ -1,301 +1,267 @@
 ﻿@model ManageViewsViewModel
 
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar las vistas de la comunidad. Desde aquí se podrá editar y subir las nuevas vistas que sustituyan a las originales.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    CommunityModel Comunidad = Html.GetComunidad();
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";	
+	// Referencia al ManageViewsViewModel para el botón de tipo de añadir un nuevo componente
+	ViewBag.ManageViewsViewModel = Model;
 
-    Html.SetBodyClass("layout04 full");
-    Html.GetListaJS().Add("defer/" + Html.GetBaseUrlStatic() + "/jsNuevo/jquery.demo.js");
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/demo.css");
+	// Acciones a realizar con las vistas (Upload, Download)
+	//ViewBag.DownloadOriginalAction = (short)ManageViewsViewModel.Action.DownloadOriginal;
+	//ViewBag.UploadAction = (short)ManageViewsViewModel.Action.Upload;
+	// Url para Descargar/Subir Vista-> ViewBag para que esté disponible en vistas parciales
+	string urlActionWeb = Model.UrlActionWeb;
+	string urlActionCMS = Model.UrlActionCMS;
+	string urlActionShare = Model.UrlActionShareViews;
+	string urlActionStopSharing = Model.UrlActionStopSharing;
+	ViewBag.UrlActionWeb = urlActionWeb;
+	ViewBag.UrlActionCMS = urlActionCMS;
+	ViewBag.UrlActionShareViews = urlActionShare;
+	ViewBag.UrlActionStopSharing = urlActionStopSharing;
+	@* Guid para personalización de tipo Recurso *@
+	string idResourceNew = "";// Guid.NewGuid().ToString().Replace("-", "");
+	// Controlar si se está en Administración del Ecosistema
+	bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
 
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
 }
 
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('#nav').hide();
-    });
 
-</script>
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
 
-<div id="col01">
-    <h2>Administrar vistas</h2>
-
-    <div class="box box01">
-        @if (Comunidad.PersonalizacionProyectoID == Guid.Empty && ViewBag.PersonalizacionAdministracionEcosistema == Guid.Empty)
-        { 
-            <div id="info" class="aviso columms">
-                <h3><span>Panel </span>Aviso</h3>
-                <div class="col-4">
-                    <div class="box">
-                        <p>@Html.Translate("La comunidad no tiene habilitada la personalización de vistas. Contacte con el administrador de la plataforma para activarla")</p>  
-                    </div>
-                </div>
-            </div>
-        }
-        else {
-            <div class="block  group tabsGroup ">
-                <div id="divInvalidarVistas">
-                    <input type="submit" class="actionView showConfirm"  idActualizar="#divInvalidarVistas" urlAction="@Model.UrlActionInvalidateViews" value="Invalidar todas las vistas" />
-                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                    {
-                        <div class="ok">
-                            <p>@Model.OKMessage</p>
-                        </div>
-                    }
-                    <div class="ko">
-                    </div>
-                </div>
-                <div class="acciones tabspresentation">
-                    <ul>
-                        <li class="active">
-                            <a href="#" class="tabMenuPlantillas" rel="0">Plantillas de la web</a>
-                        </li>
-                        <li class="">
-                            <a href="#" class="tabMenuPlantillas">Plantillas del servicio de Resultados</a>
-                        </li>
-                        <li class="">
-                            <a href="#" class="tabMenuPlantillas">Plantillas del servicio de Facetas</a>
-                        </li>
-                        <li class="">
-                            <a href="#" class="tabMenuPlantillas">Plantillas de los componentes del CMS</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="block" style="display:block">
-                    @Html.PartialView("_Web", Model)
-                </div>
-                <div class="block">
-                    @Html.PartialView("_Resultados", Model)
-                </div>
-                <div class="block">
-                    @Html.PartialView("_Facetas", Model)
-                </div>
-                <div class="block">
-                    @Html.PartialView("_CMS", Model)
-                </div>
-            </div>
-        }
-    </div>
+		@if (!isInEcosistemaPlatform)
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+			<li>
+				<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/apariencia">@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")</a>
+			</li>
+		}
+		else
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+		}
+        <li>
+			@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")            
+        </li>
+    </ul>
 </div>
 
 
-@section javascript{
+<div class="formulario-edicion background-blanco">
+    <div class="row">    
+        @* Cabecera de la página *@
+        <div class="col col-12 col-xl-3 pl-4">
+            <div class="row">
+                <div class="col header-listado mt-2">
+                    @* Título + nº de resultados *@
+    		        <div class="h1-container">            				
+    			        <h1>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS") <span id="numVistas" class="numResultados"></span></h1>            				          
+    		        </div>
+                </div>				    
+            </div>
+            <div class="row">
+                @* Facetas *@
+                <div class="col col-facetas">
+                    @Html.PartialView("_partial-views/_list-content-facetes", Model)
+                </div>
+            </div>
+        </div>
+    
+        @* Contenido central derecho *@
+        <div class="col col-12 col-xl-9 col-contenido derecha"> 
+            <div class="header-buscador max-width">			
+				@* Buscador de la sección + Sección de Tags usados de facetas *@				
+				<div class="wrapCol pl-0">
+					<div class="col-buscador" style="width: 100%">
+						@* Formulario para búsquedas de componentes *@
+						<form id="formBuscadorVistas" onsubmit="return false;">								
+							<div class="finderUtils" id="divCajaBusqueda">
+								<div class="group finderSection">
+									@* Input para realizar la búsqueda *@
+									<input
+										type="text"
+										id="txtBuscarVistas"
+										class="not-outline finderSectionText"
+										autocomplete="off"
+										placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+									/>
+									@* Botón para realizar la búsqueda *@
+									<input
+										title="Buscar"
+										type="button"
+										class="findAction"
+										id="inputLupa"
+									/>
+									@* Botón para Facetas de la búsqueda *@
+									<a href="javascript: void(0);" class="btn-filtrar-movil">
+										<span class="material-icons">filter_list</span>
+										<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+									</a>
+								</div>
+							</div>								
+						</form>
+					</div>
+					
+					@* Compartir vistas en dominio *@
+					<a id="btnCompartirVistasEnDominio" href="javascript: void(0);" class="btn btn-outline-primary ml-2 mr-0" data-toggle="modal"
+					   data-target="#modal-share-views">@Html.GetText("DEVTOOLS","COMPARTIRVISTASENDOMINIO")</a>
+					@* Invalidar vistas *@
+					<a id="btnInvalidarVistas" href="javascript: void(0);" class="btn btn-outline-primary ml-2 mr-0">@Html.GetText("DEVTOOLS","INVALIDARVISTAS")</a>				 				
+					@* Botón añadir personalización para Vistas de tipo Recurso *@
+					<input type="button" 		
+					   style="height: 45px;"
+					   id="btnAniadirPersonalizacionRecurso"
+					   class="btn btn-primary d-none btnAniadirPersonalizacionRecursos w-auto ml-2"				   
+					   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+					   data-url="@(ViewBag.UrlActionCMS)"				   
+					   data-componentecms="ComponentePersonalizable"
+					   data-personalizacion="@idResourceNew" 
+					   data-nombre=""
+					   data-toggle="modal" 
+					   data-target="#modal-new-view-personalizacion"				   
+					   value="@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")"/>									   
+				
+					@* Botón añadir personalización para Vistas de tipo Listado de Recurso *@
+					<input type="button"
+					   style="height: 45px;"
+					   id="btnAniadirPersonalizacionListadoRecurso"
+					   class="btn btn-primary d-none btnAniadirPersonalizacionRecursos w-auto ml-2"				   
+					   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+					   data-url="@(ViewBag.UrlActionCMS)"				   
+					   data-componentecms="ComponentePersonalizable"
+					   data-personalizacion="@idResourceNew" 
+					   data-nombre=""
+					   data-toggle="modal" 
+					   data-target="#modal-new-view-personalizacion"					
+					   value="@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")"/>
+				
+					@* Botón añadir personalización para Vistas de tipo Grupo de Recurso *@
+					<input type="button"
+					   style="height: 45px;"
+					   id="btnAniadirPersonalizacionGrupoRecurso"
+					   class="btn btn-primary d-none btnAniadirPersonalizacionRecursos w-auto ml-2"				   
+					   data-action="@((short)ManageViewsViewModel.Action.Upload)"												
+					   data-url="@(ViewBag.UrlActionCMS)"				   
+					   data-componentecms="ComponentePersonalizable"
+					   data-personalizacion="@idResourceNew" 
+					   data-nombre=""
+					   data-toggle="modal" 
+					   data-target="#modal-new-view-personalizacion"
+					   value="@Html.GetText("DEVTOOLS","AGREGARPERSONALIZACION")"/>				
+				</div>  
+				
+				@* Sección de facetas activas *@
+				<div class="etiquetas mt-2 pb-0 d-none" id="panFiltros">					                
+					<ul id="panListadoFiltros">												
+					</ul>        											
+				</div>				
+            </div>  
+            
+            @* Listado de resultados *@
+            <div id="panResultados" class="resource-list listView">
+				@if (Comunidad.PersonalizacionProyectoID == Guid.Empty && ViewBag.PersonalizacionAdministracionEcosistema == Guid.Empty)
+				{
+					<p class="lead">@Html.Translate("La comunidad no tiene habilitada la personalización de vistas. Contacte con el administrador de la plataforma para activarla")</p>  
+				}
+				else
+				{			
+					<ul id="id-header-vistas-list" class="header-component-list component-list no-list-style">
+						<li class="component-wrap">
+							@* Cabecera de vistas *@
+							<div class="component ">
+								<div class="component-header-wrap">
+									<div class="component-header">
+										@* Sección títulos de listado de vistas  *@
+										<div class="component-header-content">
+											<div class="component-header-left">
+												<div class="component-name-wrap component-bigger-header">
+													<span class="component-name">@Html.GetText("DEVTOOLS","TITULO")</span>
+												</div>
+												<div class="component-estado-wrap component-smaller">
+													<span class="component-estado">@Html.GetText("DEVTOOLS","ESTADO")</span>
+												</div>
+												<div class="component-tipo-wrap component-smaller">
+													<span class="component-tipo">@Html.GetText("DEVTOOLS","TIPO")</span>
+												</div>
+												<div class="component-fecha-wrap component-smaller">
+													<span class="component-fecha">@Html.GetText("DEVTOOLS","FECHA")</span>
+												</div>
+											</div>
+											<div class="component-header-right">
+												<div class="component-actions-wrap">
+													<span>@Html.GetText("COMMON","ACCIONES")</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
+
+					@* Contenido de las vistas - Servicio Web *@
+					<ul id="id-added-vistas-list-web" 
+						class="js-community-vistas-list component-list no-list-style">
+
+						@Html.PartialView("_Web", Model)										
+					</ul>
+					
+					@* Contenido de las vistas - Servicio Resultados *@
+					<ul id="id-added-vistas-list-resultados"
+						class="js-community-vistas-list component-list no-list-style">
+				
+						@Html.PartialView("_Resultados", Model)                  
+					</ul>
+
+					@* Contenido de las vistas - Servicio Facetas *@
+					<ul id="id-added-vistas-list-facetas"
+						class="js-community-vistas-list component-list no-list-style">
+				
+						@Html.PartialView("_Facetas", Model)
+					</ul>
+
+					@* Contenido de las vistas - Servicio Componentes CMS *@
+					<ul id="id-added-vistas-list-componentes-cms"
+						class="js-community-vistas-list component-list no-list-style">
+						
+						@Html.PartialView("_CMS", Model)
+					</ul>
+				}                
+            </div>   
+        </div>
+    </div>
+</div>
+
+@* Añadir modal informativo de eliminación de Vistas *@
+@Html.PartialView("_modal-views/_deleteView.cshtml")
+@* Añadir modal para añadir nuevas vistas de tipo CMS (Reutilizarla para edición de la vista) *@
+@Html.PartialView("_modal-views/_newCmsPersonalizacion", "")
+@* Añadir modal para permitir compartir la personalización de vistas en un dominio *@
+@Html.PartialView("_modal-views/_shareViews", Model.ListDomainsShared);
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/apariencia.js?v=@Html.GetVersion()"></script>
     <script type="text/javascript">
-        //General
-        function mostrarEdicion() {
-            $('.vistaEdicion').show();
-            $('.vistaOriginal').hide();
-            limpiarOKKO();
-        }
-        function mostrarOriginal() {
-            $('.vistaEdicion').hide();
-            $('.vistaOriginal').show();
-            limpiarOKKO();
-        }
-        function mostrarPestanya(pestanya) {
-            mostrarEdicion();
-        }
 
-        function limpiarOKKO() {
-            $('.ko').html('');
-            $('.ok').html('');
-            $('.ko').hide();
-            $('.ok').hide();
-        }
-
-        function mostrarKo(pError) {
-            var esPre = "@Html.GetComunidad().EntornoEsPre";
-            var entornoBloqueado = "@Html.GetComunidad().EntornoBloqueado";
-
-            if (esPre == "True") {
-                $('.ko').html('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
-                $('.ok').html('');
-            }
-            else if (entornoBloqueado == "True") {
-                $('.ko').html('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
-                $('.ok').html('');
-            }
-            else {
-                $('.ko').html('<p>' + pError + '<p>');
-                $('.ok').html('');
-            }
-            $('.ko').show();
-            $('.ok').hide();
-        }
-
-        $(document).ready(function () {
-            //General
-            $('.tabMenuPlantillas').click(function (e) {
-                mostrarPestanya(this);
-                resetearConfirmacion();
-                resetearEdicion();
-                e.preventDefault();
-            });
-            engancharAcciones();
-        });
-
-        function engancharConfirmacion(elemento) {
-            if ($(elemento).hasClass('showConfirm')) {
-                var htmlOriginal = $('<div>').append($(elemento).clone()).html();
-                var parent = $(elemento).parent();
-                $(elemento).replaceWith("<span class='confirm'><div class='oculto'>" + htmlOriginal + "</div>¿Estas seguro?" + htmlOriginal.replace("showConfirm", "").replace($(elemento).html(), "Sí") + " <a class='noseguro'>No</a></span>");
-                engancharAcciones();
-            }
-        }
-
-        function resetearConfirmacion() {
-            $('.confirm').each(function () {
-                $(this).replaceWith($(this).find('.oculto').html());
-            });
-            engancharAcciones();
-        }
-
-        function resetearEdicion() {
-            $('.editar.showEdit').show();
-            $('.edit').hide();
-            engancharAcciones();
-        }
-
-        function descargarArchivo(texto, nombreArchivo) {
-            if (nombreArchivo.indexOf('.cshtml') == -1) {
-                nombreArchivo = nombreArchivo + ".cshtml";
-            }
-            var textoBlob = [];
-            textoBlob.push(texto);
-            var contenidoEnBlob = new Blob(textoBlob, {
-                encoding: "UTF-8", type: "text/plain;charset=UTF-8"
-            });
-
-            var reader = new FileReader();
-            reader.onload = function (event) {
-                var save = document.createElement('a');
-                save.href = event.target.result;
-                save.target = '_blank';
-                save.download = nombreArchivo || 'archivo.dat';
-                var clicEvent = new MouseEvent('click', {
-                    'view': window,
-                    'bubbles': true,
-                    'cancelable': true
-                });
-                save.dispatchEvent(clicEvent);
-                (window.URL || window.webkitURL).revokeObjectURL(save.href);
-            };
-            reader.readAsDataURL(contenidoEnBlob);
-        };
-
-        function engancharAcciones() {
-            //WEB
-            $('#tipoPaginaEdicionPersonalizable').unbind().click(function (e) {
-                $(".vistaEdicion select[name='PaginasPersonalizables']").show();
-                $(".vistaEdicion select[name='FormulariosSemanticos']").hide();
-                $(".vistaEdicion select[name='FormulariosSemanticos']").val('');
-            });
-            $('#tipoPaginaEdicionSemantico').unbind().click(function (e) {
-                $(".vistaEdicion select[name='PaginasPersonalizables']").hide();
-                $(".vistaEdicion select[name='FormulariosSemanticos']").show();
-                $(".vistaEdicion select[name='PaginasPersonalizables']").val('');
-            });
-            $('#tipoPaginaOriginalPersonalizable').unbind().click(function (e) {
-                $(".vistaOriginal select[name='PaginasPersonalizables']").show();
-                $(".vistaOriginal select[name='FormulariosSemanticos']").hide();
-                $(".vistaOriginal select[name='FormulariosSemanticos']").val('');
-                $(".vistaOriginal input[action='@((short)ManageViewsViewModel.Action.DownloadOriginal)']").show();
-            });
-            $('#tipoPaginaOriginalSemantico').unbind().click(function (e) {
-                $(".vistaOriginal select[name='PaginasPersonalizables']").hide();
-                $(".vistaOriginal select[name='FormulariosSemanticos']").show();
-                $(".vistaOriginal select[name='PaginasPersonalizables']").val('');
-                $(".vistaOriginal input[action='@((short)ManageViewsViewModel.Action.DownloadOriginal)']").hide();
-            });
-
-            //GENERAL
-            $('.mostrarOriginal').unbind().click(function (e) {
-                mostrarOriginal();
-                resetearConfirmacion();
-                resetearEdicion();
-                e.preventDefault();
-            });
-            $('.mostrarEdicion').unbind().click(function (e) {
-                mostrarEdicion();
-                resetearConfirmacion();
-                resetearEdicion();
-                e.preventDefault();
-            });
-            $('.tabspresentation ul li').unbind().click(function (e) {
-                limpiarOKKO();
-            });
-            $('.showEdit').unbind().click(function (e) {
-                e.preventDefault();
-                $(this).hide();
-                $(this).parent().find('.edit').show();
-                resetearConfirmacion();
-            });
-            $('select').unbind().change(function (e) {
-                resetearConfirmacion();
-                resetearEdicion();
-            });
-            $('.confirm .noseguro').unbind().click(function (e) {
-                resetearConfirmacion();
-                resetearEdicion();
-            });
-            $('.actionView').unbind().click(function (e) {
-                var that = $(this);
-                e.preventDefault();
-                if ($(this).hasClass('showConfirm')) {
-                    resetearConfirmacion();
-                    resetearEdicion();
-                    engancharConfirmacion(this);
-                } else {
-                    var nombreFich = "";
-                    var dataPost = new FormData();
-                    $('.' + $(this).attr('form')).each(function () {
-                        if (this.tagName == "INPUT" && ($(this).attr('type') == "file")) {
-                            var files = $(this).get(0).files;
-                            if (files.length > 0) {
-                                dataPost.append($(this).attr('name'), files[0]);
-                            } else {
-                                dataPost.append($(this).attr('name'), null);
-                            }
-                        } else if (this.tagName == "INPUT" && ($(this).attr('type') == "checkbox")) {
-                            dataPost.append($(this).attr('name'), $(this).is(':checked'));
-                        }else {
-                            dataPost.append($(this).attr('name'), $(this).val());
-                            if ($(this).hasClass("nombreFich") && $(this).val() != '') {
-                                nombreFich = $(this).val();
-                            }
-                        }
-                    });
-                    var urlAction = $(this).attr('urlAction');
-                    var action = $(this).attr('action');
-                    dataPost.append("Accion", $(this).attr('action'));
-                    var idActualizar = $(this).attr('idActualizar');
-                    MostrarUpdateProgress();
-
-                    limpiarOKKO();
-
-                    GnossPeticionAjax(
-                        urlAction,
-                        dataPost,
-                        true
-                    ).done(function (response) {
-                        if (action == 1 || action == 3) {
-                            descargarArchivo(response, nombreFich);
-                        } else {
-                            var htmlRespuesta = document.createElement("div");
-                            htmlRespuesta.innerHTML = response;
-                            $(idActualizar).html($(htmlRespuesta).find(idActualizar).html());
-                            engancharAcciones();
-                        }
-                        OcultarUpdateProgress();
-                    }).fail(function (response) {
-                        mostrarKo(response)
-                        OcultarUpdateProgress();
-                    });
-                }
-            });
-        }
-
+        (function ($) {
+            // Operativa funcionamiento
+            operativaGestionVistas.init();
+        })();
     </script>
 }

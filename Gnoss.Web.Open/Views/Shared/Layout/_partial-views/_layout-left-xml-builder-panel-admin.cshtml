@@ -1,0 +1,180 @@
+﻿@using Es.Riam.Gnoss.Web.MVC.Models.ConfiguracionOCVistas;
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial donde se muestran las opciones para configurar y crear una página CMS.
+Desde este panel lateral, se podrá elegir, diseños predefinidos y diseños básicos para crear una página personalizada.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    // Nombre de la sección en la que se encuentra el usuario
+    AdministracionSeccionesDevTools.SeccionesDevTools seccionDevTools = Html.GetActiveSeccionDevTools();
+    // Nombre de la subsección en la que se encuentra el usuario
+    AdministracionSeccionesDevTools.SubSeccionesDevTools subSeccionDevTools = Html.GetActiveSubSeccionDevTools();
+    // Permisos de páginas
+    //PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+
+    List<EntidadModel> listaEntidades = Model.Entidades;
+    string entPrincipal = Model.EntidadPrincipal;
+    string title = "";
+    string icon = "";
+    string claseEntidad = "";
+
+
+    //Ordenamos las entidades por orden alfabético
+    listaEntidades = listaEntidades.OrderBy(e => e.ID).ToList();
+
+    //Colocamos la entidad primaria al principio
+    EntidadModel entidadPrincipal = listaEntidades.Find(e => e.ID == entPrincipal);
+    if (entPrincipal != null)
+    {
+        listaEntidades.Remove(entidadPrincipal);
+        listaEntidades.Insert(0, entidadPrincipal);
+    }
+
+    string GetEntityName(string entityid)
+    {
+        if (entityid.Contains('#'))
+        {
+            return entityid.Substring(entityid.LastIndexOf('#')+1);
+        }
+        else
+        {
+            return entityid.Substring(entityid.LastIndexOf('/')+1);
+        }
+    }
+}
+@*
+----------------------------------------------------------------
+
+@* Contenedor del panel lateral de Diseño y Componentes *@
+<aside id="panel-lateral-page-builder" class="panel-lateral" role="navigation">
+    <div class="body">
+        <ul class="nav nav-tabs" id="editionTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="entity-tab" data-toggle="tab" href="#entity-tab-content" role="tab" aria-selected="false">@Html.GetText("DEVTOOLS","ENTIDADESXML") @Model.NombreOC</a>
+            </li>
+        </ul>
+        @* Panel / Tabs: Componentes *@
+        <div class="tab-content custom-css-scroll" id="editionTabContent">
+            <div class="filtroRapido">
+                <div class="input-container">
+                    <input id="buscador-propiedades" class="form-control" type="text" placeholder="Buscar propiedad …" autocomplete="off">
+                </div>
+                <span id="input-header-searchable-icon" class="icon material-icons">search</span>
+            </div>
+            @* Panel de Entidades *@
+            <div class="tab-pane fade active show" id="entity-tab-content" role="tabpanel" aria-labelledby="entity-tab">
+                @foreach (EntidadModel entidad in listaEntidades)
+                {
+                    <div class="builder-block entidad-panel-lateral">
+                        @if (entidad.ID == entPrincipal)
+                        {
+                            claseEntidad = "entidad-principal";
+                        }
+                        <div class="builder-block-header @claseEntidad">
+                            <label>@GetEntityName(entidad.ID)</label>
+                            @if (entidad.ID == entPrincipal)
+                            {
+                                <sup>Principal</sup>
+                                claseEntidad = "";
+                            }
+                            <div class="icon lateral-collapse" data-toggle="collapse" data-target="ul.created-entities[data-entityid='@entidad.ID']">
+                                <span class="material-icons">expand_more</span>
+                            </div>
+                        </div>
+                        <ul class="js-created-entities-list builder-list no-list-style created-entities collapse" data-entityid="@entidad.ID">
+                            @foreach (PropiedadModel propiedad in entidad.Propiedades)
+                            {
+                                string clase = "builder-item-wrap";
+                                if (propiedad.Tipo.Contains("Propiedad inexistente") || propiedad.Tipo == "Falta configurar")
+                                {
+                                    clase += " no-pertenece";
+                                }
+                                @*Seleccionamos el title y el icono necesario*@
+                                @switch (propiedad.Tipo)
+                                {
+                                    case "http://www.w3.org/2001/XMLSchema#string":
+                                        icon = "text_fields";
+                                        title = "Texto";
+                                        break;
+
+                                    case "http://www.w3.org/2001/XMLSchema#int":
+                                        icon = "123";
+                                        title = "Entero";
+                                        break;
+
+                                    case "http://www.w3.org/2001/XMLSchema#float":
+                                        icon = "calculate";
+                                        title = "Float";
+                                        break;
+
+                                    case "http://www.w3.org/2001/XMLSchema#date":
+                                        icon = "calendar_month";
+                                        title = "Fecha";
+                                        break;
+
+                                    case "http://www.w3.org/2001/XMLSchema#boolean":
+                                        icon = "flaky";
+                                        title = "Booleano";
+                                        break;
+
+                                    case "Imagen":
+                                        icon = "image";
+                                        title = "Imagen";
+                                        break;
+
+                                    case "Link":
+                                        icon = "link";
+                                        title = "Enlace";
+                                        break;
+
+                                    case "Archivo":
+                                        icon = "description";
+                                        title = "Archivo";
+                                        break;
+
+                                    case "Video":
+                                        icon = "videocam";
+                                        title = "Video";
+                                        break;
+
+                                    case "Externa":
+                                        icon = "move_down";
+                                        title = "Propiedad externa";
+                                        break;
+
+                                    case "Objeto":
+                                        icon = "view_in_ar";
+                                        title = "Objeto";
+                                        break;
+
+                                    case "Falta configurar":
+                                        icon = "error_outline";
+                                        title = "No está configurada";
+                                        break;
+
+                                    case "Propiedad inexistente en el OWL":
+                                        icon = "blur_off";
+                                        title = "Esta propiedad no existe en el OWL";
+                                        break;
+                                }
+                                <li class="builder-item">
+                                    <div class="@clase">
+                                        <div title="@title" class="icon">
+                                            <span class="material-icons">@icon</span>
+                                        </div>
+                                        <div class="name">@propiedad.ID</div>
+                                        <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+</aside>

@@ -1,0 +1,53 @@
+﻿@model AdministrarUtilidadesController.AdministrarUtilidadesCertificationModel
+@*
+Descripción
+-----------------------------------------------
+Vista modal que se usará dentro de un contenedor de bootstrap para confirmar si realmente se desea eliminar un certificado que tiene asociados recursos de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista Modal confirmar la eliminación de un certificado  --------------------
+*@
+
+<div class="modal-header">
+	<p class="modal-title">
+		<span class="material-icons">delete</span>@Html.GetText("DEVTOOLS","ELIMINARCERTIFICADO")
+	</p>
+	<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+
+@* Contenido central del modal *@
+<div class="modal-body">
+	<div class="formulario-edicion">
+		<p>
+			@Html.GetText("DEVTOOLS","EXISTENDOCUMENTOSASIGNADOSAESTENIVELDECERTIFICACION")
+		</p>
+		<p>
+			@Html.GetText("DEVTOOLS","DESEASELIMINARLOSIBORRASESTENIVELDICHOSDOCUMENTOSSEQUEDARA")
+		</p>
+		<div class="panelBotonera">
+			<a id="btnConfirmarBorrarCertificado" 
+			   class="btn btn-primary uppercase"
+			   data-id="@Model.id"
+               data-orden = "@Model.position">
+			   @Html.GetText("COMMON","ACEPTAR")</a>
+			<a id="btnCancelarBorrarCertificado" class="btn btn-outline-grey uppercase">@Html.GetText("COMMON","CANCELAR")</a>
+		</div>
+	</div>
+</div>
+
+@* Carga de operativa *@
+<script>
+	(function ($) {
+		// Inicializar operativa de eliminar certificado
+		operativaGestionCertificacion.operativaModalConfirmarEliminarCertificado();
+	})();
+</script>
+

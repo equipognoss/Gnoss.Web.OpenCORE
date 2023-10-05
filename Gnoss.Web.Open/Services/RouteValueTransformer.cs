@@ -1,8 +1,11 @@
-﻿using Es.Riam.Gnoss.AD.EntityModel;
+﻿using Es.Riam.AbstractsOpen;
+using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.EntityModel.Models;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
+using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -26,10 +29,12 @@ namespace Gnoss.Web.Services
     {
         private IServiceScopeFactory mScopedFactory;
         private ConfigService mConfigService;
-        private static Dictionary<string, List<PestanyaRouteModel>> DICTIONARY_PROJECT_TABS = new Dictionary<string, List<PestanyaRouteModel>>();
+        private static Dictionary<string, List<PestanyaRouteModel>> DICTIONARY_PROJECT_TABS = new Dictionary<string, List<PestanyaRouteModel>>();       
         private static string PROYECTO_DEFECTO = "";
         private static string IDIOMA_DEFECTO = "";
-        public RouteValueTransformer(IServiceScopeFactory scopedFactory, ConfigService configService)
+		private List<RedireccionRegistroRuta> listaRedirecciones = new List<RedireccionRegistroRuta>();
+
+		public RouteValueTransformer(IServiceScopeFactory scopedFactory, ConfigService configService)
         {
             mScopedFactory = scopedFactory;
             mConfigService = configService;
@@ -51,6 +56,8 @@ namespace Gnoss.Web.Services
 
                 string nombreCortoComunidad = "";
                 UtilIdiomas utilIdiomas = null;
+             
+
                 if (segmentos[0].Length == 2)
                 {
                     if (mConfigService.ObtenerListaIdiomasDictionary().ContainsKey(segmentos[0]))
@@ -158,7 +165,15 @@ namespace Gnoss.Web.Services
 
                 values.Add("lang", idioma);
 
-                rutaPedida = ObtenerRutaPedida(segmentos, urlConIdioma, urlCorta);
+				if (ComprobarRedireccion(httpContext.Request.Path.Value, values))
+				{
+					values.Add("controller", "Redirect");
+					values.Add("action", "RedireccionamientoModeloEF");
+
+					return values;
+				}
+
+				rutaPedida = ObtenerRutaPedida(segmentos, urlConIdioma, urlCorta);
 
                 if (rutaPedida.Contains('?'))
                 {
@@ -176,7 +191,7 @@ namespace Gnoss.Web.Services
 
                 if(pestanyaRouteModel == null)
                 {
-                    pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => rutaPedida.StartsWith(item.RutaPestanya) && (item.TipoPestanya.Equals((short)TipoPestanyaMenu.BusquedaSemantica) || (item.TipoPestanya.Equals((short)TipoPestanyaMenu.BusquedaAvanzada))));
+                    pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => rutaPedida.StartsWith(item.RutaPestanya) && (item.TipoPestanya.Equals((short)TipoPestanyaMenu.BusquedaSemantica) || item.TipoPestanya.Equals((short)TipoPestanyaMenu.BusquedaAvanzada) || item.TipoPestanya.Equals((short)TipoPestanyaMenu.Recursos) || item.TipoPestanya.Equals((short)TipoPestanyaMenu.Preguntas) || item.TipoPestanya.Equals((short)TipoPestanyaMenu.Debates) || item.TipoPestanya.Equals((short)TipoPestanyaMenu.Encuestas) || item.TipoPestanya.Equals((short)TipoPestanyaMenu.PersonasYOrganizaciones)));
                 }
 
                 if (pestanyaRouteModel != null)
@@ -188,44 +203,42 @@ namespace Gnoss.Web.Services
                             values.Add("action", "Index");
                             values.Add("semanticos", "true");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
-                            if (segmentos.Contains(utilIdiomas.GetText("URLSEM", "CATEGORIA")))
-                            {
-                                int lugarCategoria = Array.IndexOf(segmentos, utilIdiomas.GetText("URLSEM", "CATEGORIA"));
-                                if (segmentos.Length >= lugarCategoria + 2 && Guid.TryParse(segmentos[lugarCategoria + 2], out Guid categoria))
-                                {
-                                    values.Add("categoria", segmentos[lugarCategoria + 2]);
-                                }
-                            }
+                            CargarParametrosCategoriasTags(segmentos, values, utilIdiomas);
                             break;
                         case (short)TipoPestanyaMenu.Recursos:
                             values.Add("controller", "Busqueda");
                             values.Add("action", "Index");
                             values.Add("Recursos", "true");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
+                            CargarParametrosCategoriasTags(segmentos, values, utilIdiomas);
                             break;
                         case (short)TipoPestanyaMenu.Preguntas:
                             values.Add("controller", "Busqueda");
                             values.Add("action", "Index");
                             values.Add("preguntas", "true");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
+                            CargarParametrosCategoriasTags(segmentos, values, utilIdiomas);
                             break;
                         case (short)TipoPestanyaMenu.Debates:
                             values.Add("controller", "Busqueda");
                             values.Add("action", "Index");
                             values.Add("debates", "true");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
+                            CargarParametrosCategoriasTags(segmentos, values, utilIdiomas);
                             break;
                         case (short)TipoPestanyaMenu.Encuestas:
                             values.Add("controller", "Busqueda");
                             values.Add("action", "Index");
                             values.Add("encuestas", "true");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
+                            CargarParametrosCategoriasTags(segmentos, values, utilIdiomas);
                             break;
                         case (short)TipoPestanyaMenu.PersonasYOrganizaciones:
                             values.Add("controller", "Busqueda");
                             values.Add("action", "Index");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
                             values.Add("perorg", "true");
+                            CargarParametrosCategoriasTags(segmentos, values, utilIdiomas);
                             break;
                         case (short)TipoPestanyaMenu.AcercaDe:
                             values.Add("controller", "AcercaDeComunidad");
@@ -237,6 +250,7 @@ namespace Gnoss.Web.Services
                             values.Add("action", "Index");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
                             values.Add("Meta", "true");
+                            CargarParametrosCategoriasTags(segmentos, values, utilIdiomas);
                             break;
                         case (short)TipoPestanyaMenu.Comunidades:
                             values.Add("controller", "Busqueda");
@@ -255,6 +269,11 @@ namespace Gnoss.Web.Services
                             break;
                         case (short)TipoPestanyaMenu.Indice:
                             values.Add("controller", "Indice");
+                            values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
+                            break;
+                        case (short)TipoPestanyaMenu.Dashboard:
+                            values.Add("controller", "Dashboard");
+                            values.Add("action", "Index");
                             values.Add("PestanyaID", pestanyaRouteModel.PestanyaID.ToString());
                             break;
                     }
@@ -429,5 +448,67 @@ namespace Gnoss.Web.Services
                 listaUrls.Add(urlMapeo, nodo["value"].InnerText);
             }
         }
+
+        /// <summary>
+        /// Carga los parámetros si se ha realizado algún filtro por categoria o etiqueta
+        /// </summary>
+        /// <param name="pSegmentos">Segmentos de la petición recibida</param>
+        /// <param name="pValues">Parametros a pasar al controlador</param>
+        /// <param name="pUtilIdiomas">Util idiomas</param>
+        private void CargarParametrosCategoriasTags(string[] pSegmentos, RouteValueDictionary pValues, UtilIdiomas pUtilIdiomas)
+        {
+            if (pSegmentos.Contains(pUtilIdiomas.GetText("URLSEM", "CATEGORIA")))
+            {
+                int lugarCategoria = Array.IndexOf(pSegmentos, pUtilIdiomas.GetText("URLSEM", "CATEGORIA"));
+                if (pSegmentos.Length >= lugarCategoria + 2 && Guid.TryParse(pSegmentos[lugarCategoria + 2], out Guid categoria))
+                {
+                    pValues.Add("categoria", pSegmentos[lugarCategoria + 2]);
+                }
+            }
+            if (pSegmentos.Contains(pUtilIdiomas.GetText("URLSEM", "TAG")))
+            {
+                int lugarTag = Array.IndexOf(pSegmentos, pUtilIdiomas.GetText("URLSEM", "TAG"));
+                if (pSegmentos.Length >= lugarTag + 1 && !string.IsNullOrEmpty(pSegmentos[lugarTag + 1]))
+                {
+                    pValues.Add("searchInfo", $"{pSegmentos[lugarTag]}/{pSegmentos[lugarTag + 1]}");
+                }
+            }
+        }
+
+        private bool ComprobarRedireccion(string pRutaPedida, RouteValueDictionary pValues)
+        {
+            CargarRedirecciones();
+
+            if (!string.IsNullOrEmpty(pRutaPedida))
+            {
+                foreach (RedireccionRegistroRuta redireccion in listaRedirecciones)
+                {
+                    string urlRedireccion = redireccion.UrlOrigen.Trim('/');
+                    pRutaPedida = pRutaPedida.Trim('/');
+                    
+                    if (urlRedireccion.Equals(pRutaPedida))
+                    {
+                        pValues.Add("redireccionID", redireccion.RedireccionID);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private void CargarRedirecciones()
+        {
+			using (var scope = mScopedFactory.CreateScope())
+			{
+				EntityContext entityContext = scope.ServiceProvider.GetRequiredService<EntityContext>();
+				LoggingService loggingService = scope.ServiceProvider.GetRequiredService<LoggingService>();
+				IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication = scope.ServiceProvider.GetRequiredService<IServicesUtilVirtuosoAndReplication>();
+				ProyectoCN proyCN = new ProyectoCN(entityContext, loggingService, mConfigService, servicesUtilVirtuosoAndReplication);
+				string dominio = mConfigService.ObtenerDominio();
+
+				listaRedirecciones = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, false);
+			}
+		}
     }
 }

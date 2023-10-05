@@ -1,0 +1,137 @@
+@model String
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán la información para editar o crear una nueva personalización de una vista CMS.
+
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	string idModalUploadCrearPersonalizacion = "";
+	string modalTitle = @Html.GetText("DEVTOOLS","EDITARPERSONALIZACION");
+	string viewNameValue = "";
+	string inputDisableClassName = "disabled";
+	string idDatosExtra = Guid.NewGuid().ToString();
+
+	// Controlar si se está en modo de edición o no
+	bool isEditModel = string.IsNullOrEmpty(Model) ? false : true;
+
+	// Modelo para tener en cuenta posible pintado de datos extra -> _cmsViewResource
+	ManageViewsViewModel.CMSResourceViewModel cmsResourceViewModel = ViewBag.CMSResourceViewModel;
+}
+
+@{
+	// Controlar si hay que editar o crear nueva personalización
+	if (!isEditModel)
+	{
+		modalTitle = @Html.GetText("DEVTOOLS", "CREARPERSONALIZACION");
+		idModalUploadCrearPersonalizacion = "modal-new-view-personalizacion";
+		inputDisableClassName = "";
+	}
+	else
+	{
+		idModalUploadCrearPersonalizacion = "modal-upload-view-personalizacion" + Model.Replace("/","_").Replace(".","_").Replace(" ","_");
+		viewNameValue = Model;
+	}
+	
+}
+
+
+@* Modal con la información *@
+<div
+	id="@idModalUploadCrearPersonalizacion"
+	class="modal modal-top fade modal-edicion modal-subir-vista"
+	role="dialog"	
+	aria-modal="true">
+	
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>					
+					<span>@modalTitle</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span
+				>
+			</div>
+			<div class="modal-body">			
+				@* Nombre de la personalización *@ 
+				<div class="form-group mb-3">
+					<label class="control-label d-block">Nombre</label>
+					<input type="text" class="form-control txtViewName" @inputDisableClassName value="@viewNameValue">
+				</div>
+
+				@* Fichero de la vista *@
+				<div class="form-group mb-4">
+					<label class="control-label d-block">@Html.GetText("DEVTOOLS","SELECCIONALAPLANTILLASIYALATIENESDISPONIBLE")</label>
+					<input class="dragAndDrop dragAndDropInputFile" 						   
+						   type="file" 						   
+						   name="Fichero" 
+						   accept="cshtml,html"  max-size="1024">
+				</div>
+
+				@* Datos extra de la vista (Sólo para Vistas de tipo Recurso Personalizadas ) *@
+				@if(ViewBag.CMSResourceViewModel != null)
+				{
+					if (cmsResourceViewModel.CustomizationID != Guid.Empty)
+					{										
+						<div class="panelDatosExtra mt-4 mb-4">
+							@foreach (ManageViewsViewModel.ExtraInformation datoExtra in cmsResourceViewModel.ExtraInformation.Keys)
+							 {
+								 if (cmsResourceViewModel.ExtraInformation[datoExtra])
+								 {					         
+									<div class="form-group mb-3">
+										<div class="custom-control custom-checkbox">                
+											<input type="checkbox" id="@(datoExtra)_@(idDatosExtra)" class="custom-control-input" name="@datoExtra" checked>
+											<label class="custom-control-label" for="@(datoExtra)_@(idDatosExtra)">@datoExtra</label>
+										</div>
+										<small class="form-text text-muted">@Html.GetText("DEVTOOLS","INCLUIRINFORMACIONEXTRADELMODELOENLAVISTA")</small>
+									</div>
+								 }
+								 else
+								 {
+									<div class="form-group mb-3">
+										<div class="custom-control custom-checkbox">                
+											<input type="checkbox" id="@(datoExtra)_@(idDatosExtra)" class="custom-control-input" name="@datoExtra">
+											<label class="custom-control-label" for="@(datoExtra)_@(idDatosExtra)">@datoExtra</label>
+										</div>
+										<small class="form-text text-muted">@Html.GetText("DEVTOOLS","INCLUIRINFORMACIONEXTRADELMODELOENLAVISTA")</small>
+									</div>					         
+								 }
+							 }   
+						 </div>
+					 }
+				}
+															
+				@* Botón para guardar *@				
+				@if (ViewBag.CMSResourceViewModel == null)
+				{
+					<div class="panelBotonera">
+						<a href="javascript: void(0);"					   
+						   data-editmode="@isEditModel"
+						   class="btn btn-primary uppercase btnSaveUploadPersonalizacionCms">@Html.GetText("COMMON", "GUARDAR")</a>														
+					</div>
+				}
+				else
+				{
+					@* Botón para guardar datos extra *@
+					<div class="panelBotonera">
+						<a href="javascript: void(0);"					   
+						   data-editmode="@isEditModel"					   
+						   class="btn btn-primary uppercase btnSaveUploadPersonalizacionCms">@Html.GetText("COMMON", "GUARDAR")</a>														
+					</div>					
+				}
+			</div>
+		</div>
+	</div>
+</div>

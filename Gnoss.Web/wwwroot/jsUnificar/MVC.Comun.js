@@ -624,7 +624,7 @@ function MVCDesplegarPanel(pPanel) {
 }
 
 /**
- * Método para filtrar elementos. En este caso, en la lista de Categor�as, modo "Lista" de la ficha Recurso.
+ * Método para filtrar elementos. En este caso, en la lista de Categorías, modo "Lista" de la ficha Recurso.
  * Al teclear en el input, filtrará (ocultará) los elementos que no correspondan con el texto de la búsqueda
  * @param {any} txt
  * @param {any} panDesplID
@@ -653,7 +653,7 @@ function MVCFiltrarListaSelCat(txt, panDesplID) {
  * @param {any} txt
  * @param {any} panDesplID
  */
-function MVCFiltrarListaSelCatArbol(txt, id, completion = undefined) {
+ function MVCFiltrarListaSelCatArbol(txt, id, completion = undefined) {
     var cadena = $(txt).val();
     // Eliminamos posibles tildes para búsqueda ampliada
     cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
@@ -681,7 +681,10 @@ function MVCFiltrarListaSelCatArbol(txt, id, completion = undefined) {
                 }
             });
         });
-    }
+     }
+     if (completion != undefined) {
+         completion();
+     }
     if (completion != undefined) {
         completion();
     }    
@@ -763,10 +766,10 @@ function MVCMarcarTodosElementosCat(pCheck, panDesplID, hackedInputId = undefine
 }
 
 /**
- * Acci�n que se ejecuta cuando se selecciona un item de categor�a para ser seleccionado e introducido en un input vac�o para as� tener control sobre el elemento que se ha seleccionado.
- * @param {any} pCheck: Ser� el input check que se ha seleccionado.
- * @param {any} panDesplID: El id del panel donde se encontrar� el input vac�o.
- * @param {any} hackedInputId: El id del inputId que estar� oculto que se utilizar� para establecer opciones que puedan servir para mandar al servidor. Si no se pasa nada, se har� caso al panDesplID. En caso contrario, se acceder� al panDesplIDSecundario para buscar ese input
+ * Acción que se ejecuta cuando se selecciona un item de categoría para ser seleccionado e introducido en un input vacío para así tener control sobre el elemento que se ha seleccionado.
+ * @param {any} pCheck: Será el input check que se ha seleccionado.
+ * @param {any} panDesplID: El id del panel donde se encontrará el input vacío.
+ * @param {any} hackedInputId: El id del inputId que estará oculto que se utilizará para establecer opciones que puedan servir para mandar al servidor. Si no se pasa nada, se hará caso al panDesplID. En caso contrario, se accederá al panDesplIDSecundario para buscar ese input
  */
 function MVCMarcarElementoSelCat(pCheck, panDesplID, hackedInputId = undefined) {
     // Debido al nuevo Front - No se accede al padre sino al ID del propio Input
@@ -931,7 +934,7 @@ function mostrarPanSubirRecurso(nombre) {
 
 /**
  * /**
- * Acci�n que se ejecuta para comprobar que el Link adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Enlace externo" 
+ * Acción que se ejecuta para comprobar que el Link adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Enlace externo" 
  * @param {any} urlPaginaSubir: Url o enlace escrito por el usuario
  * @param {any} omitirCompRep
  */
@@ -941,12 +944,12 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
         var lblUrl = document.getElementById("lblIntroducirURL");
         var url = document.getElementById("txtURLDoc");
 
-        // Panel donde se mostrar�n posibles errores en la subida del un recurso de tipo Enlace Externo (Nuevo Front)
+        // Panel donde se mostrarán posibles errores en la subida del un recurso de tipo Enlace Externo (Nuevo Front)
         const panelResourceFileErrorMessage = $('#modal-add-resource-link-messages-wrapper .ko');
         // Vaciar el panel de posibles errores anteriores y ocultarlo
         panelResourceFileErrorMessage.empty().hide(); 
 
-        var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
+        var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%()\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
         if (url.value.length > 0 && url.value.match(regexURL)) {
             MostrarUpdateProgress();
 
@@ -955,7 +958,7 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
                 //$('#divURL').hide();
                 // Cambio por nuevo Front
                 //$('#liURL').append(data);                
-                // A�adir el mensaje y mostrarlo
+                // Añadir el mensaje y mostrarlo
                 panelResourceFileErrorMessage.append(data).show();                                
 
             }).fail(function (data) {
@@ -1013,8 +1016,8 @@ $(document).on('change', '.custom-file-input', function (event) {
 });
 
 /**
- * Acci�n que se ejecuta para comprobar que el fichero adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Adjunto"
- * @param {any} urlPaginaSubir: P�gina a la que se redireccionar� para completar la creaci�n del recurso de tipo "Adjunto"
+ * Acción que se ejecuta para comprobar que el fichero adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Adjunto"
+ * @param {any} urlPaginaSubir: Página a la que se redireccionará para completar la creación del recurso de tipo "Adjunto"
  * @param {Boolean} omitirCompRep
  * @param {Boolean} extraArchivo
  */
@@ -1023,7 +1026,7 @@ function validarDocAdjuntarExt(urlPaginaSubir, omitirCompRep, extraArchivo) {
     {
         var lblDoc = document.getElementById("lblSelecionaUnDoc");
         var doc = document.getElementById("fuExaminar");
-        // Panel donde se mostrar�n posibles errores en la subida del archivo (Nuevo Front)
+        // Panel donde se mostrarán posibles errores en la subida del archivo (Nuevo Front)
         const panelResourceFileErrorMessage = $('#modal-add-resource-file-messages-wrapper .ko');
         // Vaciar el panel de posibles errores anteriores y ocultarlo
         panelResourceFileErrorMessage.empty().hide(); 
@@ -1058,13 +1061,13 @@ function validarDocAdjuntarExt(urlPaginaSubir, omitirCompRep, extraArchivo) {
                 data.append("FileName", files[0].name);
 
                 GnossPeticionAjax(urlPaginaSubir + '/selectresource', data, true).done(function (data) {
-                    // No ocultar nada para reitentar el env�o o subida de un fichero
+                    // No ocultar nada para reitentar el envío o subida de un fichero
                     //$('#divArchivo').hide();
                     // Cambio por nuevo Front
                     // $('#liArchivo').append(data);
-                    // A�ado el error y muestro el div
+                    // Añado el error y muestro el div
                     panelResourceFileErrorMessage.append(data).show();
-                    // Mostrar de nuevo bot�n de "Siguiente" para reintentar env�o de fichero
+                    // Mostrar de nuevo botón de "Siguiente" para reintentar envío de fichero
                     $('#lbSiguienteArchivo').show();
                     
                 }).fail(function (data) {

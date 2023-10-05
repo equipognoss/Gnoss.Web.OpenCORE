@@ -1,88 +1,36 @@
-﻿@using Es.Riam.Gnoss.Web.MVC.Models;
-@model ManageViewsViewModel
-@if (Model != null)
+﻿@model ManageViewsViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que carga todas las vistas de tipo Resultado.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+}
+
+@* Pintado de cada Vistas Originales de Resultados *@
+@foreach (string vista in Model.ListOriginalResultsServiceViews)
+{	
+	ViewBag.ViewServiceType = "resultados";
+	ViewBag.ViewType = "original";
+	// Url de la request para las Vistas de tipo Resultados
+	ViewBag.UrlActionWeb = Model.UrlActionResults;
+	@Html.PartialView("_partial-views/_originalWebView", vista)								
+}
+
+
+@* Pintado de cada Vistas Editadas de Resultados *@
+@foreach (string vista in Model.ListEditedResultsServiceViews)
 {
-    <fieldset class="mediumLabels">
-        <legend id="lgndPestanya">Plantillas del servicio de resultados</legend>
-        <div class="fieldsetContent">
-            <div id="plantillasServicioResultados">
-                <div class="vistaEdicion">
-                    <p>Estás viendo las páginas editadas</p>
-                    <p><a href="#" class="mostrarOriginal">Mostrar las páginas originales</a></p>
-                    <p>
-                        Selecciona la página editada a personalizar
-                        <select name="PaginaResultados" class="edicionResultados nombreFich">
-                            @foreach (string vista in Model.ListEditedResultsServiceViews)
-                {
-                                <option value="@vista">@vista.Replace("/ViewsAdministracion/CargadorResultados/", "").Replace("/Views/CargadorResultados/", "")</option>
-                            }
-                        </select>
-                    </p>
-                    <p>
-                        <label>Selecciona el HTML personalizado</label>
-                        <input type="file" name="Fichero" class="edicionResultados" />
-                    </p>
-                    <div class="fieldset actionButtons fieldset03 actionButtons">
-                        <fieldset>
-                            <p>
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.Download)" idActualizar="#plantillasServicioResultados .vistaEdicion" form="edicionResultados" urlAction="@Model.UrlActionResults" class="actionView" value="Descargalo!" />
-                                @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-                                {
-                                    <input type="submit" action="@((short)ManageViewsViewModel.Action.Upload)" idActualizar="#plantillasServicioResultados .vistaEdicion" style="background-color:gray;" diabled form="edicionResultados" urlAction="@Model.UrlActionResults" class="actionView" value="Súbelo!" />
-                                }
-                                else
-                                {
-                                    <input type="submit" action="@((short)ManageViewsViewModel.Action.Upload)" idActualizar="#plantillasServicioResultados .vistaEdicion" form="edicionResultados" urlAction="@Model.UrlActionResults" class="actionView" value="Súbelo!" />
-                                }
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.Delete)" idActualizar="#plantillasServicioResultados .vistaEdicion" form="edicionResultados " urlAction="@Model.UrlActionResults" class="actionView showConfirm" value="Elimina la personalización" />
-                            </p>
-                        </fieldset>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                    {
-                        <div class="ok">
-                            <p>@Model.OKMessage</p>
-                        </div>
-                    }
-                    <div class="ko">
-                    </div>
-                </div>
-                <div class="vistaOriginal">
-                    <p>Estás viendo las páginas originales</p>
-                    <p><a href="#" class="mostrarEdicion">Mostrar las páginas editadas</a></p>
-                    <p>
-                        Selecciona la página original a personalizar
-                        <select name="PaginaResultados" class="originalResultados nombreFich">
-                            @foreach (string vista in Model.ListOriginalResultsServiceViews)
-                {
-                                <option value="@vista">@vista.Replace("/ViewsAdministracion/CargadorResultados/", "").Replace("/Views/CargadorResultados/", "")</option>
-                            }
-                        </select>
-                    </p>
-                    <p>
-                        <label>Selecciona el HTML personalizado</label>
-                        <input type="file" name="Fichero" class="originalResultados" />
-                    </p>
-                    <div class="fieldset actionButtons fieldset03 actionButtons">
-                        <fieldset>
-                            <p>
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.DownloadOriginal)" idActualizar="#plantillasServicioResultados .vistaOriginal" form="originalResultados" urlAction="@Model.UrlActionResults" class="actionView" value="Descarga el original!" />                                
-                                <input type="submit" action="@((short)ManageViewsViewModel.Action.Upload)" idActualizar="#plantillasServicioResultados .vistaOriginal" form="originalResultados" urlAction="@Model.UrlActionResults" class="actionView" value="Sobreescribe el original!" />
-                            </p>
-                        </fieldset>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Model.OKMessage))
-                    {
-                        <div class="ok">
-                            <p>@Model.OKMessage</p>
-                        </div>
-                    }
-
-                    <div class="ko">
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </fieldset>
+	ViewBag.ViewServiceType = "resultados";
+	ViewBag.ViewType = "personalizada";
+	ViewBag.editedWebView = true;
+	// Url de la request para las Vistas de tipo Resultados
+	ViewBag.UrlActionWeb = Model.UrlActionResults;	
+	@Html.PartialView("_partial-views/_editedWebView", vista)									
 }

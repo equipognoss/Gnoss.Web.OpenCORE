@@ -1,0 +1,272 @@
+﻿@model ManageRedirectionsViewModel.RedirectionModel
+@*
+Descripción
+-----------------------------------------------
+Vista modal para mostar la información detallada de una redirección. 
+
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+String idModalRedirection = "modal-configuracion-redirection_" + Model.Key;
+
+// Tipo de redirección 
+bool esRedirecDirecta = !string.IsNullOrEmpty(Model.OriginalUrl) && Model.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Direct);
+bool esRedirecParametrizada = !string.IsNullOrEmpty(Model.OriginalUrl) && Model.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Parameterised);
+// Manter filtros de origen
+bool preserveFilters = Model.PreserveFilters;
+
+// Comprobación de si dispone de parámetros
+bool tieneParametros = Model.ParameterValues != null && Model.ParameterValues.Count > 0;
+
+@* Comprobar si es nueva para dejar solo el tipo de redirección Directa activada *@
+if (Model.EsRecienteCreacion == true)
+{
+	esRedirecDirecta = true;
+}
+
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Modal con información de una redirección.  --------------------
+*@
+
+<div
+	id="@idModalRedirection"
+	class="modal modal-top fade modal-edicion modal-con-tabs modal-redirection"     		   
+	role="dialog"	
+	aria-modal="true">
+
+    <input type="hidden" name="TabEliminada" value="false" />
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">edit</span>
+					@Html.GetText("DEVTOOLS","EDITARREDIRECCION")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				<div class="formulario-edicion no-min-height">
+					<div class="tab-content">
+						@* Input Url de origen *@ 
+						<div class="form-group mb-4">
+							<label class="control-label d-block" title="@Html.GetText("COMADMINREDIRECCIONES", "URLORIGEN")">@Html.GetText("COMADMINREDIRECCIONES", "URLORIGEN")</label>
+							<input
+								type="text"								
+								id="txtUrlOrigen_@Model.Key" 
+								value="@Model.OriginalUrl"
+								class="form-control inputUrlOrigen"
+								placeholder="@Html.GetText("DEVTOOLS","INTRODUCELAURLDEORIGEN")"								
+								name="url-origen"/>
+						</div>
+						@* Combo Tipo de restricción *@ 
+						<div class="form-group mb-4">
+							<label class="control-label d-block">@Html.GetText("COMADMINREDIRECCIONES", "ELIGETIPOREDIRECCION")</label>
+							<select								
+								class="js-select2 form-control cmbEditarTipoRedirection"
+								tabindex="0"
+								aria-hidden="false">
+								<option value="Direct" data-optionvalue="@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONDIRECTA")" @(esRedirecDirecta ? "selected = 'selected' ":"")>@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONDIRECTA")</option>
+								<option value="Parameterised" data-optionvalue="@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONPARAMETRIZADA")" @(esRedirecParametrizada ? "selected = 'selected' ":"") >@Html.GetText("COMADMINREDIRECCIONES", "REDIRECCIONPARAMETRIZADA")</option>
+							</select>
+						</div>
+
+						@* Panel de redirección directa *@
+						<div class="form-group mb-3 redireccionDirecta @Html.Raw(esRedirecParametrizada ? "d-none":"")">
+							@* Url de destino *@ 
+							<div class="form-group mb-4">
+								<label class="control-label d-block" title="@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")">
+									@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")
+								</label>
+								<input
+									type="text"
+									id="txtUrlDestino_@Model.Key"
+									value="@Model.DestinationUrl"
+									placeholder="@Html.GetText("DEVTOOLS","INTRODUCELAURLDEDESTINO")"
+									class="form-control inputUrlDestino"
+									name="url-destino"/>														
+							</div>
+
+							<label class="control-label d-block">@Html.GetText("COMADMINREDIRECCIONES", "MANTENERFILTROSORIGEN")</label>
+							<div class="form-check form-check-inline">
+								<input id="rbMantenerFiltrosOrigen_SI_@Model.Key"
+									   class="form-check-input rbMantenerFiltrosOrigen"
+									   data-value="si"
+									   type="radio" 
+									   name="rbMantenerFiltrosOrigen_@Model.Key"
+									   @(preserveFilters ? "checked" : "")>
+								<label class="form-check-label" for="rbMantenerFiltrosOrigen_SI_@Model.Key">@Html.GetText("COMMON", "SI")</label>									
+							</div>							
+							<div class="form-check form-check-inline">
+								<input id="rbMantenerFiltrosOrigen_NO_@Model.Key" 
+									   class="form-check-input rbParametrizada"
+									   data-value="no"
+									   type="radio"
+									   name="rbMantenerFiltrosOrigen_@Model.Key"
+									   @(!preserveFilters ? "checked" : "")>
+								<label class="form-check-label" for="rbMantenerFiltrosOrigen_NO_@Model.Key">@Html.GetText("COMMON", "NO")</label>									
+							</div>
+						</div>
+
+						@* Panel de redirección parametrizada *@
+						<div class="form-group mb-3 parametrizada @Html.Raw(esRedirecDirecta ? "d-none":"")">
+						  @{								
+							string nombreParametro = string.Empty;
+							if (tieneParametros)
+							{
+								nombreParametro = Model.ParameterName;
+							}							
+						  }
+							@* Input Nombre del parámetro *@ 
+							<div class="form-group mb-3">
+								<label class="control-label d-block" title="@Html.GetText("COMADMINREDIRECCIONES", "NOMBREPARAMETRO")">
+									@Html.GetText("COMADMINREDIRECCIONES", "NOMBREPARAMETRO")
+								</label>
+								<input
+									type="text"								
+									id="txtNombreParametro_@Model.Key" 
+									value="@nombreParametro"
+									class="form-control inputNombreParametro"
+									placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREDELPARAMETRO")"								
+									name="nombre-parametro"/>
+							</div>
+
+							@* Cabecera para añadir parámetro *@
+							<div class="parametrosRedirecciones-header d-flex justify-content-between align-items-center">
+								@* Label del elemento Html*@    
+								<label class="control-label d-block">@Html.GetText("DEVTOOLS","LISTADEPARAMETROS")</label>								
+								<a
+									href="javascript: void(0);"
+									class="linkAddParam btn btn-outline-primary"
+									style="display: flex; text-decoration: none">
+									<span class="material-icons">add</span>
+									<span class="texto">@Html.GetText("COMADMINREDIRECCIONES", "ADDPARAMETRO")</span>
+								</a>
+							</div>
+
+
+							
+							@* Listado de parámetros *@
+							<ul class="id-added-param-list_@Model.Key component-list no-list-style parameter-list">
+								@*  @Html.PartialView("_partial-views/_list-parameter-items", Model) *@
+								
+								@if (tieneParametros)
+								{
+									int indiceParam = 0;
+									@* Pintado de los parámetros existentes *@									
+                                    foreach (ManageRedirectionsViewModel.ParameterValue parametro in Model.ParameterValues)
+                                    {	
+										@* Parametros para el panel del parámetro *@
+                                        string redireccion = parametro.DestinationUrl;
+										string parameterId = Model.Key.ToString() + "_" + indiceParam;
+										string collapseId = "panel_collapse_" + parameterId;
+
+										<li class="component-wrap parameter-row" id="@indiceParam" data-parameterkey="@indiceParam" data-collapseid="@collapseId">
+											<div class="component">
+												<div class="component-header-wrap">
+													<div class="component-header">
+														@* Icono del parámetro *@
+														<div class="component-no-sortable">
+															<span class="material-icons-outlined sortable-icon">alt_route</span>
+														</div>
+														<div class="component-header-content">
+															<div class="component-header-left">						
+																@* Nombre del parámetro *@
+																<div class="component-name-wrap">																												
+																	<span class="component-parameterName">@parametro.Value</span>
+																</div>					
+															</div>
+															@*Sección de acciones del parámetro *@
+															<div class="component-header-right">
+																<div class="component-actions-wrap">
+																	<ul class="no-list-style component-actions">
+																		<li>
+																			@* Acción de editar el filtro *@
+																			<a class="action-edit round-icon-button js-action-edit-component btnEditParameter"
+																			   data-toggle="collapse" 
+																			   data-target="#@collapseId"									   
+																			   role="button" 
+																			   aria-expanded="false" 
+																			   aria-controls="@collapseId">									   
+																				<span class="material-icons">edit</span>
+																			</a>
+																		</li>
+																		<li>
+																			@* Acción de borrar el parámetro *@
+																			<a class="action-delete round-icon-button js-action-delete btnDeleteParameter"
+																				href="javascript: void(0);">
+																				<span class="material-icons">delete</span>
+																			</a>
+																		</li>
+																	</ul>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+
+											@* Información detallada del Parámetro - Collapse *@
+											<div class="collapse parameter-order-info" id="@collapseId">
+												
+												<div class="card card-body">													
+													@* Nombre del parámetro *@
+													<div class="form-group mb-4">
+														<label class="control-label d-block">@Html.GetText("COMADMINREDIRECCIONES", "VALORPARAMETRO")</label>
+														<input
+															type="text"															
+															data-labeltext="@Html.GetText("DEVTOOLS","VALORDELPARAMETRO")"	
+															placeholder="@Html.GetText("DEVTOOLS","VALORDELPARAMETRO")"
+															class="form-control inputParameterUrlValue"
+															value="@parametro.Value">
+														<small class="form-text text-muted">@Html.GetText("DEVTOOLS","VALORDELPARAMETRODELAREDIRECCION")</small>
+													</div>			
+													
+													@* Nombre de la Url destino *@
+													<div class="form-group mb-2">
+														<label class="control-label d-block">@Html.GetText("COMADMINREDIRECCIONES", "URLDESTINO")</label>
+														<input
+															type="text"															
+															placeholder="Url de destino"
+															class="form-control inputParameterUrlDestinationValue"
+															value="@redireccion">
+														<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","URLDEDESTINODELAREDIRECCION")</small>
+													</div>			
+												</div>
+											</div>	
+										</li>
+                                        indiceParam++;
+                                    }																		
+								}
+							</ul>
+
+						</div>
+    
+						@* Botón para guardado de la redirección *@ 
+						<div class="panelBotonera">
+							@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+							{
+								@* No permitir guardar *@
+								<input type="button" disabled class="btn btn-primary uppercase btnNoSaveRedirection" value="@Html.GetText("COMMON","GUARDAR")"/>								
+							}
+							else
+							{		
+								@* Permitir guardar *@
+								<input type="button" class="btn btn-primary uppercase btnSaveRedirection" value="@Html.GetText("COMMON","GUARDAR")"/>								
+							}						
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

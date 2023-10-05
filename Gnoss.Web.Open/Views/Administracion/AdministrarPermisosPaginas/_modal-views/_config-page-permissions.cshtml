@@ -1,0 +1,88 @@
+﻿@model PermisosPaginaUsuarioModel;
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se mostrarán los permisos de los que dispondrá un determinado usuario para la gestión de páginas de la comunidad.
+
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+// Id del usuario temporal para la gestión de checkbox
+Guid identidadID = Model.IdentidadID;
+
+}
+
+<div class="modal-header">
+    @* Título del Modal *@
+    <p class="modal-title">
+        <span class="material-icons">label</span>@Html.GetText("DEVTOOLS","ADMINISTRARPERMISOSDEPAGINAS")
+    </p>
+    @* Cierre del Modal *@
+    <span class="material-icons cerrar"
+          data-dismiss="modal"
+          aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+
+    <div class="formulario-edicion">
+        @* Descripción de la sección *@
+        <div class="form-group">
+            <label class="control-label">
+                @Html.GetText("DEVTOOLS","CONFIGURALOSPERMISOSQUEDISPONDRAELUSUARIOSOBRELASSIGUIENTESP")
+            </label>
+        </div>
+        @* Permisos páginas de Diseño *@
+        <div class="custom-control custom-checkbox themed little primary mb-4">
+            <input type="checkbox" 
+                   id="paginas_disenyo_+@(identidadID)"
+                   checked="@Model.Disenyo"
+                   class="custom-control-input checkAdminPaginasDisenyo">
+            <label class="custom-control-label" for="paginas_disenyo_+@(identidadID)">@Html.GetText("DEVTOOLS","PAGINASDEDISEÑO")</label>
+            <small class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMISOSDEACCESOPARALAEDICIONDEVISTASYESTATICOS")</small>
+        </div>
+
+        @* Permisos páginas de Páginas *@
+        <div class="custom-control custom-checkbox themed little primary mb-4">
+            <input type="checkbox" id="paginas_paginas_+@(identidadID)"
+                   checked="@Model.Pagina"
+                   class="custom-control-input checkAdminPaginasPaginas">
+            <label class="custom-control-label" for="paginas_paginas_+@(identidadID)">@Html.GetText("DEVTOOLS","PAGINASDEADMINISTRACIONDEMENU,PAGINASYCMS")</label>
+            <small class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMISOSDEACCESOPARALAADMINISTRACIONDEPAGINASYCMS")</small>
+        </div>
+
+        @* Permisos páginas de Semántica *@
+        <div class="custom-control custom-checkbox themed little primary mb-4">
+            <input type="checkbox" id="paginas_semantica_+@(identidadID)"
+                   checked="@Model.Semantica"
+                   class="custom-control-input checkAdminPaginasSemantica">
+            <label class="custom-control-label" for="paginas_semantica_+@(identidadID)">@Html.GetText("DEVTOOLS","PAGINASDEOBJETOSDECONOCIMIENTO")</label>
+            <small class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMISOSDEACCESOPARAADMINISTRARLASONTOLOGIAS,OBJETOSDECONOCI")</small>
+        </div>
+
+        @* Permisos páginas de Tesauro *@
+        <div class="custom-control custom-checkbox themed little primary mb-4">
+            <input type="checkbox" id="paginas_tesauro_+@(identidadID)"
+                   checked="@Model.Tesauro"
+                   class="custom-control-input checkAdminPaginasTesuaro">
+            <label class="custom-control-label" for="paginas_tesauro_+@(identidadID)">@Html.GetText("DEVTOOLS","PAGINASDETESAURO")</label>
+            <small class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMISOSDEACCESOPARALAADMINISTRACIONDELTESAURO")</small>
+        </div>
+
+        @* Permisos páginas de Texto *@
+        <div class="custom-control custom-checkbox themed little primary mb-4">
+            <input type="checkbox" id="paginas_texto_+@(identidadID)"
+                   checked="@Model.Texto"
+                   class="custom-control-input checkAdminPaginasTexto">
+            <label class="custom-control-label" for="paginas_texto_+@(identidadID)">@Html.GetText("DEVTOOLS","PAGINASDETRADUCCIONES")</label>
+            <small class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMISOSDEACCESOPARALAADMINISTRACIONDETRADUCCIONES")</small>
+        </div>
+
+        <div class="form-actions">
+            @* Botón que guardará posibles cambios *@
+            <button class="btn btn-primary btnSaveUserPermissions" data-user-id="@identidadID">@Html.GetText("COMMON", "ACEPTAR")</button>
+        </div>
+    </div>
+</div>

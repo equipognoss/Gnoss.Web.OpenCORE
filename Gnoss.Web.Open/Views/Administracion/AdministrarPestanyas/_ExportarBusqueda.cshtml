@@ -1,16 +1,48 @@
 ﻿@model List<TabModel.ExportacionSearchTabModel>
 
-@if (Model.Count == 0)
-{
-    <p><a class="linkEditarExportaciones">Crear Exportaciones</a></p>
+@*
+Descripción
+-----------------------------------------------
+Vista para poder añadir Exportaciones a la búsqueda de recursos de una determinada página.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+
 }
-<section class="editarExportaciones" @Html.Raw(Model.Count == 0 ? "style=\"display:none\"" : "")>
-    <p>Exportacion de la busqueda</p>
-    <ol class="exportacionesSortable">
+
+@*
+----------------------------------------------------------------
+-------------------- Vista para Exportar búsqueda dentro de una página --------------------
+*@
+
+@* Personalizar las opciones de exportar búsqueda *@
+@if(Model.Count == 0)
+{
+    <p><a class="linkEditarExportaciones" href="javascript: void(0);">@Html.GetText("ADMINISTRACIONPAGINAS","CREAREXPORTACIONES")</a></p>
+}
+
+@* Panel para los opciones de exportación de búsqueda de orden *@
+<div class="form-group mb-4 editarExportaciones @(Model.Count == 0 ? "d-none" : "") ">		
+
+	<div class="exportarBusqueda-header d-flex justify-content-between align-items-center">
+    <label class="control-label d-block font-weight-bold" style="font-size: 14px;">@Html.GetText("DEVTOOLS","EXPORTACIONDELABUSQUEDA")</label>
+		@* Botón para añadir nuevos Filtros de Exportar una búsqueda *@
+		<a href="javascript: void(0);" class="linkAddExportation btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+			<span class="material-icons">add</span>
+			<span class="texto">@Html.GetText("ADMINISTRACIONPAGINAS","AÑADIREXPORTACION")</span>
+		</a>
+	</div>
+
+	@* Listado del tipo de exportación *@
+	<ul class="id-added-exportation-list component-list no-list-style">
         @foreach (TabModel.ExportacionSearchTabModel exportacion in Model)
         {
             @Html.PartialView("_FichaExportacion", exportacion);
         }
-    </ol>
-    <input type="button" value="Añadir exportación" class="addExportation"/>
-</section>
+	</ul>
+
+</div>

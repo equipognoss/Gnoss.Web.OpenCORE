@@ -2,6 +2,7 @@
 using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.EntityModel.Models.VistaVirtualDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.Peticion;
@@ -46,7 +47,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
         {
         }
-
         private Peticion mSolicitudComunidad;
         private GestionPeticiones mGestorPeticiones;
 
@@ -172,7 +172,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 List<Es.Riam.Gnoss.AD.EntityModel.ParametroAplicacion> filas = ParametrosAplicacionDS.Where(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.CorreoSolicitudes)).ToList();
                 //StringBuilder sb = new StringBuilder();
                // sb.AppendLine($"Elementos con Parametro {TiposParametrosAplicacion.CorreoSolicitudes}: {filas.Count}");
-                if (enviarEmailConfirmacion)
+                if (enviarEmailConfirmacion && filas.Any())
                 {
                     //sb.AppendLine($"Enviar email de confirmacion: {enviarEmailConfirmacion}");
                     //mLoggingService.GuardarLogError(sb.ToString());
@@ -197,7 +197,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             AD.EntityModel.Models.Peticion.PeticionNuevoProyecto peticion = ((PeticionNuevoProyecto)mSolicitudComunidad).FilaNuevoProyecto;
             Guid organizacionID = ProyectoAD.MetaOrganizacion;
             Guid idPadre = Guid.Empty;
-
 
             if (peticion.ComunidadPrivadaPadreID.HasValue)
             {
@@ -280,6 +279,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 webClient.Dispose();
             }
 
+            //Insertar la Vista Virtual para poder administrar las vistas
+            VistaVirtualPersonalizacion filaVistaVirtualPersonalizacion = new VistaVirtualPersonalizacion();
+            filaVistaVirtualPersonalizacion.PersonalizacionID = Guid.NewGuid();
+            mEntityContext.VistaVirtualPersonalizacion.Add(filaVistaVirtualPersonalizacion);
+
+            VistaVirtualProyecto filaVistaVirtualProyecto = new VistaVirtualProyecto();
+            filaVistaVirtualProyecto.PersonalizacionID = filaVistaVirtualPersonalizacion.PersonalizacionID;
+            filaVistaVirtualProyecto.ProyectoID = proyecto.Clave;
+            filaVistaVirtualProyecto.OrganizacionID = ProyectoAD.MetaOrganizacion;
+            mEntityContext.VistaVirtualProyecto.Add(filaVistaVirtualProyecto);
 
             if (!string.IsNullOrEmpty(xml))
             {
@@ -294,6 +303,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mLoggingService.AgregarEntradaDependencia("Subir archivo de configuración por defecto al gestor documental", false, "AceptarSolicitudNuevaComunidad", sw, true);
             }
 
+            controladorProyecto.InsertarParametrosAdministracion(proyecto.Clave, organizacionID);
             if (!string.IsNullOrEmpty(xmlTesauro) && xmlTesauro.Contains("Thesaurus"))
             {
                 // configurar tesauro por defecto

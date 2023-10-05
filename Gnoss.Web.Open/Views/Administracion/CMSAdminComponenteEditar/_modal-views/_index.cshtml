@@ -1,0 +1,542 @@
+﻿@using Es.Riam.Gnoss.AD.CMS
+
+@model CMSAdminComponenteEditarViewModel
+
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra los diferentes componentes multimedia existentes que se podrán utilizar en la Comunidad. 
+En esta sección se visualizarán componentes para editar tales como Caja Buscador, Componente básico actividad reciente, componente básico con imágen...
+En este caso será una vista Modal, la cual será cargada dentro de un modal contenedor.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	// Contador del nº de pestañas listadas
+	int contNumPestañasVisibles = 0;
+	// Nº de pestañas de idiomas a visualizar en la sección Tab
+	int numMaxPestañasIdiomasVisibles = 2;
+	// Carga de idiomas de la plataforma
+	string idiomas = "";
+	// Perfiles de usuarios y grupos que están asignados a un componente
+	string htmlNombresPerfilesGrupos = "";
+	// Lista de privacidad del componente
+	string listaPrivacidad = "";
+	// Nombre del componente - Título del modal
+	string modalTitle = "";
+	bool isShortNameAGuid = Guid.TryParse(Model.ShortName, out _);
+}
+
+@{
+    @* Carga de idiomas *@
+    if (Model.ListaIdiomas.Count == 0)
+    {
+        idiomas += Model.IdiomaPorDefecto + "|" + Model.IdiomaPorDefecto;
+    }
+    else
+    {
+        foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+        {
+            idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+        }
+    }
+
+	@* Nombre del modal del componente a editar o a crear nuevo *@
+    @if (Model.EsEdicion)
+        {
+            modalTitle = Html.GetText("COMADMINCMS", "COMPONENTEEDICION") + " " + Html.GetText("COMADMINCMS", "COMPONENTE_" + Model.Type);
+        }
+        else
+        {
+            modalTitle = Html.GetText("COMADMINCMS", "COMPONENTENUEVO") + " " + Html.GetText("COMADMINCMS", "COMPONENTE_" + Model.Type);
+	}
+}
+
+
+@* Método utilizado para pintar las propiedades de la página a editar *@
+@{
+    string PintarPropiedades(string idioma, bool multiIdioma)
+    {
+        ViewData["idiomaPanel"] = "";
+        if (multiIdioma)
+        {
+            ViewData["idiomaPanel"] = idioma;
+        }
+        foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Model.Properties.Where(prop => prop.MultiLang == multiIdioma))
+        {
+            switch (propiedad.TipoPropiedadCMS)
+            {
+                case TipoPropiedadCMS.Enlace:
+                case TipoPropiedadCMS.Titulo:
+                case TipoPropiedadCMS.TextoDefecto:
+                case TipoPropiedadCMS.URLBusqueda:
+                case TipoPropiedadCMS.URLVerMas:
+                case TipoPropiedadCMS.TituloAtributoDeBusqueda:
+                case TipoPropiedadCMS.AtributoDeBusqueda:
+                case TipoPropiedadCMS.Faceta:
+                case TipoPropiedadCMS.TextoBoton:
+                case TipoPropiedadCMS.TextoMensajeOK:
+                case TipoPropiedadCMS.DestinatarioCorreo:
+                case TipoPropiedadCMS.ElementoID:
+                case TipoPropiedadCMS.NumItems:
+                case TipoPropiedadCMS.NumDias:
+                case TipoPropiedadCMS.NumItemsMostrar:
+                    @Html.PartialView("_Propiedad_Generico_TextBox", propiedad);
+                    break;
+                case TipoPropiedadCMS.Subtitulo:
+                case TipoPropiedadCMS.HTML:
+                case TipoPropiedadCMS.QuerySPARQL:
+                case TipoPropiedadCMS.QuerySQLSERVER:
+                    @Html.PartialView("_Propiedad_Generico_TextArea", propiedad);
+                    break;
+                case TipoPropiedadCMS.TieneImagen:
+                case TipoPropiedadCMS.TieneBotonHazteMiembro:
+                case TipoPropiedadCMS.VerMas:
+                case TipoPropiedadCMS.ContarPersonasNoVisibles:
+                    @Html.PartialView("_Propiedad_Generico_Booleano", propiedad);
+                    break;
+                case TipoPropiedadCMS.TipoPresentacionRecurso:
+                case TipoPropiedadCMS.TipoPresentacionGrupoComponentes:
+                case TipoPropiedadCMS.TipoActividadRecienteCMS:
+                case TipoPropiedadCMS.TipoPresentacionListadoRecursos:
+                case TipoPropiedadCMS.TipoPresentacionListadoUsuarios:
+                case TipoPropiedadCMS.TipoListadoUsuarios:
+                case TipoPropiedadCMS.TipoPresentacionFaceta:
+                case TipoPropiedadCMS.TipoListadoProyectos:
+                    @Html.PartialView("_Propiedad_Generico_Select", propiedad);
+                    break;
+                default:
+                    @Html.PartialView("_Propiedad_" + propiedad.TipoPropiedadCMS.ToString(), propiedad);
+                    break;
+            }
+        }
+        return string.Empty;
+    }
+}
+
+@* Comprobación de los perfiles (si lo hay) asignados al componente *@
+@{
+	if (Model.Private)
+	{		
+		// Perfiles de Usuarios
+		foreach (Guid perfilID in Model.PerfilesPrivacidad.Keys)
+		{
+			listaPrivacidad += perfilID + ",";			
+			htmlNombresPerfilesGrupos += "<div class='tag' id='"+ perfilID.ToString() + "' title='"+ Model.PerfilesPrivacidad[perfilID] +"'>";
+				htmlNombresPerfilesGrupos += "<div class='tag-wrap'>";
+					htmlNombresPerfilesGrupos += "<span class='tag-text'>"+ @Model.PerfilesPrivacidad[perfilID] +"</span>";
+					htmlNombresPerfilesGrupos += "<span class='tag-remove material-icons remove'>close</span>";
+				htmlNombresPerfilesGrupos += "</div>";												
+			htmlNombresPerfilesGrupos += "</div>"; 
+		}
+		// Perfiles de Grupos
+		foreach (Guid grupoID in Model.GruposPrivacidad.Keys)
+		{			
+			listaPrivacidad += "g_" + grupoID + ",";
+			htmlNombresPerfilesGrupos += "<div class='tag' id='g_"+ grupoID.ToString() +"' title='"+ Model.GruposPrivacidad[grupoID] +"'>";
+				htmlNombresPerfilesGrupos += "<div class='tag-wrap'>";
+					htmlNombresPerfilesGrupos += "<span class='tag-text'>"+ Model.GruposPrivacidad[grupoID] +"</span>";
+					htmlNombresPerfilesGrupos += "<span class='tag-remove material-icons remove'>close</span>";
+				htmlNombresPerfilesGrupos += "</div>";												
+			htmlNombresPerfilesGrupos += "</div>"; 
+		}
+	}
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar la información general de la comunidad --------------------
+*@
+
+<input type="hidden" id="fechaModificacion" value="@Model.FechaModificacion.ToString("yyyy/MM/dd HH:mm:ss")" />
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
+
+@{
+    @* Propiedades - Input con propiedades ocultas *@
+    string propiedades = "";
+    foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Model.Properties)
+    {
+        propiedades += "propiedad" + (short)propiedad.TipoPropiedadCMS + "|||";
+    }
+	<input type="hidden" value="@propiedades" id="hackProperties" name="hackProperties">
+	
+	@foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Model.Properties.Where(prop => prop.MultiLang == true))
+	{
+	    <input type="hidden" id="propiedad@((short)propiedad.TipoPropiedadCMS)" value="@propiedad.Value">
+	}
+}
+
+@* Cabecera del modal *@
+<div class="modal-header">
+    @* Título del Modal *@
+    <p class="modal-title">
+        <span class="material-icons">edit</span>
+		@modalTitle
+    </p>
+    @* Cierre del Modal *@
+    <span class="material-icons cerrar"
+          data-dismiss="modal"
+          aria-label="Close">close</span>
+</div>
+@* Cuerpo del modal *@
+<div class="modal-body">
+    <div class="formulario-edicion">
+		@* Panel de idiomas (Si hay más de un idioma disponible) *@	
+		@if (Model.ListaIdiomas.Count > 1)
+		{
+			@* Tabs o cabecera de los idiomas *@
+			<ul class="nav nav-tabs edicionMultiIdioma" id="tabIdiomasPaginas" role="tablist">
+				@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@			
+				@foreach (string idioma in Model.ListaIdiomas.Keys)
+				{
+					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+					{
+						<li class="nav-item">
+							<a class="tabIdiomaItem nav-link @Html.Raw(idioma.Equals(Model.IdiomaPorDefecto) ? "active" : "")" 
+									id="@("tab_" + idioma)" data-toggle="tab" href="#@("edicion_" + idioma)" 
+									data-language = "@idioma"
+									role="tab" aria-controls="@("edicion_" + idioma)"
+									aria-selected="true">@Model.ListaIdiomas[idioma]@(idioma.Equals(Model.IdiomaPorDefecto) ? " *" : "")</a>
+						</li>
+						contNumPestañasVisibles += 1;
+					}
+				}
+				@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+				@if (contNumPestañasVisibles < cabecera.Languajes.Count)
+				{
+					@* Dropdown para resto de categorías *@
+					<li class="nav-item">
+						<div class="dropdown">
+							@* Desplegable del dropdown *@
+							<a
+									class="nav-link dropdown-toggle"
+									data-toggle="dropdown"
+									href="#"
+									role="button"
+									aria-haspopup="true"
+									aria-expanded="false"
+									>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+							@* Sección para mostrar items del dropdown*@
+							<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+								<ul class="no-list-style">
+									@* Pintado del resto de pestañas en Dropdown *@									
+									@for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+									{
+										var item = cabecera.Languajes.ElementAt(i);
+										var itemKey = item.Key;
+										var itemValue = item.Value;
+
+										@* Cada item del dropdown *@
+										<li>
+											<a id="@("tab_" + itemKey)" 
+												   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+												   data-toggle="tab"
+												   href="#@("edicion_" + itemKey)"
+												   data-language = "@itemKey">
+												@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+										</li>
+									}
+								</ul>
+							</div>
+						</div>
+					</li>
+				}
+			</ul>
+		}
+
+		@* Contenedor + Tabs en los diferentes idiomas *@
+		<div class="tab-content">
+		
+			@{
+				@* Pintado de propiedades MultiIdioma *@ 
+				if (Model.ListaIdiomas.Count > 1)
+				{
+					@* Paneles de contenido *@
+					foreach (string idioma in Model.ListaIdiomas.Keys)
+					{
+						<div id="edicion_@idioma"
+							 class="tab-pane fade @Html.Raw(idioma.Equals(Model.IdiomaPorDefecto) ? "active show" : "")" 
+							 role="tabpanel" aria-labelledby="">
+							@* Pintar las propiedades en multiIdioma *@
+							@PintarPropiedades(idioma, true)
+						</div>
+					}
+				}
+				else { 
+					@* Pintar las propiedades solo para un idioma *@					
+					@PintarPropiedades(Model.IdiomaPorDefecto, true)
+				}
+
+				@PintarPropiedades(Model.IdiomaPorDefecto, false)
+			}
+			
+
+			@* Selección de Idiomas si el sitio permite MultiIdioma - PENDIENTE *@
+			@if (Model.ContenidoMultiIdioma)
+			{
+				<p>
+					<input type="checkbox" class="selectIdioma" id="chkSelectIdioma" name="chkSelectIdioma" @Html.Raw(Model.ListaIdiomasDisponibles.Count > 0 ? "checked=\"checked\"" : "")>
+					<span>@Html.GetText("COMADMINCMS", "SELECCIONAIDIOMAS")</span>
+				</p>
+				<div id="divSelectIdioma" @Html.Raw(Model.ListaIdiomasDisponibles.Count == 0 ? "style=\"display:none\"" : "")>
+					@Html.GetText("COMADMINCMS", "IDIOMASDISPONIBLES")
+					<p>
+						<input type="checkbox" class="idiomaMulti" @Html.Raw(Model.ListaIdiomasDisponibles.Count == 0 ? "checked=\"checked\"" : "") id="chkIdioma" name="chkIdioma">
+						<span>Todos los idiomas</span>
+					</p>
+					@foreach (string idioma in Model.ListaIdiomas.Keys)
+					{
+						bool langDisabled = Model.ListaIdiomasDisponibles.Count == 0;
+						bool langChecked = Model.ListaIdiomasDisponibles.Contains(idioma);
+						string langId = "chkIdioma" + idioma;
+						<p>
+							<input type="checkbox" lang="@idioma" class="idioma" @Html.Raw(langDisabled ? "disabled=\"disabled\"" : "") @Html.Raw(langChecked ? "checked=\"checked\"" : "") id="@langId" name="@langId">
+							<span>@Model.ListaIdiomas[idioma]</span>
+						</p>
+					}
+				</div>
+			}
+
+			@* Privacidad del componente Componente Privado *@				
+			<div class="form-group mb-4 panelActivoPrivado">
+				<label class="control-label d-block">@Html.GetText("COMADMIN", "PRIVADO")</label>
+				@* Componente Activo - Sí *@
+				<div class="form-check form-check-inline">
+					<input
+						class="form-check-input chkEditarPrivacidad"
+						type="radio"
+						name="chkEditarPrivacidad"																
+						data-value="si"
+						@Html.Raw(Model.Private ? "checked" : "")
+						id="chkEditarPrivacidad_SI"/>
+					<label class="form-check-label" for="chkEditarPrivacidad_SI">@Html.GetText("COMMON","SI")</label>									
+				</div>
+				<div class="form-check form-check-inline">
+					@* Componente Activo - NO *@
+					<input
+						class="form-check-input chkEditarPrivacidad"
+						type="radio"
+						name="chkEditarPrivacidad"																				
+						data-value="no"
+						@Html.Raw(!Model.Private ? "checked" : "")
+						id="chkEditarPrivacidad_NO"/>
+					<label class="form-check-label" for="chkEditarPrivacidad_NO">@Html.GetText("COMMON","NO")</label>									
+				</div>
+				<small class="form-text text-muted mt-n1">Indica si el componente es sólo visible para miembros o grupos de la comunidad específicos.</small>
+			</div>		
+
+			@* Privacidad del componente + Buscador de Personas para establecer privacidad del componente *@									
+			<div class="form-group mb-4 edit-privacy-panel-privacidad-perfiles-grupos @( Model.Private ? "" : "d-none")">												
+				<p>					
+					@Html.GetText("DEVTOOLS","SELECCIONALOSPERFILESYGRUPOSPARALOSQUEVAAESTARDISPONIBLEELCO")
+				</p>
+
+				@* Panel seleccíón de perfiles *@
+				<div class="form-group mb-4 edit-privacy-panel-privacidad-perfiles ">																	
+					<label class="control-label d-block">
+						@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPERFILES")
+					</label>
+					@* Contenedor del input + tags *@
+					<div class="autocompletar-tags form-group">
+						<div class="input-wrap form-sticky-button autocompletar">
+							@* Input de Tags *@
+							<input type="text"
+									name="TabPrivacidadPerfiles"
+									placeholder="Busca un perfil y pulsa AÑADIR"
+									id="privacidadPerfiles"
+									class="form-control txtAutocomplete"
+									data-avoid-autocomplete-with-enter-button="true"
+									autocomplete="off" />												
+
+							@* Botón de Añadir Privacidad Perfiles *@
+							<a id="btnAddPrivacidadPerfiles" class="btn btn-grey uppercase btnAddPrivacidadPerfiles">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+
+							@* Campo oculto _hack *@
+							<input type="hidden" id="txtHackInvitadosPagina" class="valores privacidadPerfiles txtHackInvitadosPagina" name="txtHackInvitadosPagina" value="@listaPrivacidad" />
+					
+						</div>
+						@* Tags/Perfiles añadidas por el usuario o por auto *@
+						<span id="tagsContainer" class="contenedor tag-list mb-4">							
+							@Html.Raw(htmlNombresPerfilesGrupos)
+						</span>
+					</div>	
+				</div>							
+			</div> 
+
+			@* Nombre del componente *@
+			<div class="form-group mb-4">
+				<label class="control-label d-block">@Html.GetText("COMMON", "NOMBRE") *</label>
+				<input type="text" id="nombrecomponente"
+					   placeholder="@Html.GetText("COMMON", "NOMBRE")"
+					   required
+					   class="form-control required" 
+					   value="@Model.Name">
+				<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBREDELCOMPONENTE")</small>											   
+			</div>
+                
+			@* Nombre corto - Ocultarlo en caso de que esté vacío. Se guarda aunque no tiene utilidad *@
+			<div class="form-group mb-4 @( string.IsNullOrEmpty(Model.ShortName) ? "d-none" : null) ">
+				<label class="control-label d-block">@Html.GetText("COMADMIN", "NOMBRECORTO") *</label>
+				<input type="text" 
+					   id="nombreCortocomponente"						   
+					   placeholder="@Html.GetText("COMADMIN", "NOMBRECORTO")"
+					   required						   
+					   @Html.Raw(isShortNameAGuid ? "disabled" : "")						   
+					   class="form-control required" 
+					   value="@Model.ShortName">
+				<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBRECORTOPARAIDENTIFICARELCOMPONENTEDEFORMAUNICA")</small>											   
+			</div>
+
+			@* Componente Activo (RadioButton) *@
+			<div class="form-group mb-4 panelActivoComponente">
+				<label class="control-label d-block">@Html.GetText("WIKIHISTORIAL", "ACTIVO")</label>
+				@* Componente Activo - Sí *@
+				<div class="form-check form-check-inline">
+					<input
+						class="form-check-input activoComponente"
+						type="radio"
+						name="activocomponente"																
+						data-value="si"
+						@Html.Raw(Model.Active ? "checked" : "")
+						id="activocomponente_SI"/>
+					<label class="form-check-label" for="activocomponente_SI">@Html.GetText("COMMON","SI")</label>									
+				</div>
+				<div class="form-check form-check-inline">
+					@* Componente Activo - NO *@
+					<input
+						class="form-check-input activoComponente"
+						type="radio"
+						name="activocomponente"																				
+						data-value="no"
+						@Html.Raw(!Model.Active ? "checked" : "")
+						id="activocomponente_NO"/>
+					<label class="form-check-label" for="activocomponente_NO">@Html.GetText("COMMON","NO")</label>									
+				</div>
+				<small class="form-text text-muted mt-n1">@Html.GetText("DEVTOOLS","INDICASIELCOMPONENTEESTADISPONIBLEENLASPAGINASDONDESEHAAÑADI")</small>	
+			</div>
+
+			@* Permitir acceso Público *@
+			@if (Html.GetComunidad().AccessType.Equals(CommunityModel.TypeAccessProject.Private) || Html.GetComunidad().AccessType.Equals(CommunityModel.TypeAccessProject.Reserved))
+			{
+				<div class="form-group mb-3 panelAccesoPublico">
+					<label class="control-label d-block">@Html.GetText("COMADMINCMS", "PERMITIRACCESOPUBLICO")</label>
+					@* Permitir Acceso Público - Sí *@
+					<div class="form-check form-check-inline">
+						<input
+							class="form-check-input accesopublicocomponente"
+							type="radio"
+							name="accesopublicocomponente"																
+							data-value="si"
+							@Html.Raw(Model.AccesoPublicoComponente ? "checked" : "")
+							id="accesopublicocomponente_SI"/>
+						<label class="form-check-label" for="accesopublicocomponente_SI">@Html.GetText("COMMON","SI")</label>									
+					</div>
+					<div class="form-check form-check-inline">
+						@* Permitir Acceso Público - No *@
+						<input
+							class="form-check-input accesopublicocomponente"
+							type="radio"
+							name="accesopublicocomponente"																				
+							data-value="no"
+							@Html.Raw(!Model.AccesoPublicoComponente ? "checked" : "")
+							id="accesopublicocomponente_NO"/>
+						<label class="form-check-label" for="accesopublicocomponente_NO">@Html.GetText("COMMON","NO")</label>									
+					</div>
+				</div>					
+			}
+
+			@* Personalizaciones disponibles en el componente *@
+            @if (Model.Personalizaciones.Count > 0)
+            {
+				@* Privacidad de la página *@
+				<div class="form-group mb-4 panelPersonalizacionComponente">
+					<label class="control-label d-block">@Html.GetText("COMADMINCMS", "PROPIEDAD_" + TipoPropiedadCMS.Personalizacion.ToString()) *</label>
+					@* Select de la personalización del componente *@
+					<select id="personalizacioncomponente" name="personalizacioncomponente"
+							class="cmbPersonalizacionComponente js-select2"
+							tabindex="0"
+							aria-hidden="false">
+						@* Personalización por defecto *@
+						<option value="@Guid.Empty" @Html.Raw(Model.PersonalizacionSeleccionada.Equals(Guid.Empty) ? "selected=\"selected\"": "")>@Html.GetText("DEVTOOLS","PERSONALIZACIONPORDEFECTO")</option>
+							@foreach (Guid personalizacionID in Model.Personalizaciones.Keys)
+							{
+								bool estaSeleccionada = Model.PersonalizacionSeleccionada.Equals(personalizacionID);
+								<option value="@personalizacionID" @Html.Raw(estaSeleccionada ? "selected=\"selected\"" : "")>@Model.Personalizaciones[personalizacionID]</option>
+							}
+					</select>
+				</div>
+            }
+                        				
+            @* Caducidad del componente *@
+            @if (Model.Caducidades.Count > 0)                
+            {                    
+                <div class="form-group mb-4">
+                	<label class="control-label d-block">Caducidad de la cache del componente</label>
+                	<select			
+                        id="caducidadComponente"
+                		class="js-select2 form-control"
+                		tabindex="0"
+                		aria-hidden="false">
+                        @foreach (TipoCaducidadComponenteCMS caducidad in Model.Caducidades.Keys)
+                        {
+                            <option value="@((short)caducidad)" @(Model.Caducidades[caducidad] ? "selected" : "")>@Html.GetText("COMADMINCOMCMS", "CADUCIDAD_" + caducidad.ToString())</option>                                                                
+                        }                                                                                  
+                	</select>
+                    <small class="form-text text-muted">@Html.GetText("DEVTOOLS","SELECCIONALACADUCIDADQUETENDRAELCOMPONENTEPARASERUSADAENCACH")</small> 
+                </div>                    
+   
+            }
+            @* Estilos CSS *@
+            <div class="form-group mb-4">
+                <label class="control-label d-block">Estilos CSS</label>
+                <input type="text" id="estiloscomponente" 
+                        placeholder="Introduce el estilo CSS" 
+                        class="form-control" 
+                        name="estilos-css" 
+                        value="@Model.Styles"> 
+                <small class="form-text text-muted">@Html.GetText("DEVTOOLS","INTRODUCEELESTILOCSSQUETENDRAELCOMPONENTEPARASUPERSONALIZACI")</small>                            
+            </div>			
+			
+
+
+            @* Panel para guardado (Botón Guardar) *@
+            <div class="panelBotonera">			
+                @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+                {
+                    @* Botón para el guardado con Ramas activas o en uso *@                    
+                    <a href="javascript: void(0)" class="btn btn-primary uppercase" disabled>@Html.GetText("COMMON", "GUARDAR")</a>                            
+                }
+                else
+                {
+                    <a id="btnSaveComponent" href="javascript: void(0)" class="btn btn-primary uppercase">@Html.GetText("COMMON", "GUARDAR")</a>                    
+                }
+            </div>
+		</div>
+    </div>
+</div>
+
+
+
+
+@* Carga de operativa *@
+<script type="text/javascript">
+    (function ($) {
+
+		// Parámetros útiles para JS
+        const pParams = {
+			// Indica si el componente está siendo editado o es de nueva creación
+			isEdited: "@Model.EsEdicion",
+			// Indica el tipo de componente
+			componentType: "@((short)@Model.Type)",
+		};
+
+        // Operativa funcionamiento de Edición de Componentes
+        operativaGestionComponentsCMS.operativaModalEditComponenteItem(pParams);
+    })();
+</script>

@@ -81,6 +81,43 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         /// <summary>
+        /// Método que cargará la información del componente CMS y lo insertará en una vista modal para su edición/revisión.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
+        public ActionResult CargarModal()
+        {
+            EliminarPersonalizacionVistas();
+            CargarPermisosAdministracionComunidadEnViewBag();
+
+            ActionResult partialView = View();
+
+            // Construir el modelo
+            partialView = GnossResultHtml("_modal-views/_index", PaginaModel);
+
+            // Devolver la vista modal
+            return partialView;
+        }
+
+        /// <summary>
+        /// Devolver la vista modal para confirmar la eliminación de un Componente CMS.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
+        public ActionResult CargarEliminarComponenteItem()
+        {
+            ActionResult partialView = View();
+
+            // Construir la vista que se devolverá
+            partialView = GnossResultHtml("_modal-views/_delete-component-item", null);
+
+            // Devolver la vista modal
+            return partialView;
+        }        
+
+        /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
@@ -185,10 +222,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 ControladorComponenteCMS contrComponente = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, HayIntegracionContinua);
 
                 contrComponente.AgregarPropiedadesComponente(componenteEdicion, Componente, gestorCMS, UrlIntragnossServicios, BaseURLContent);
-                
 
+                if (esEdicion)
+                {
+					error = contrComponente.ComprobarErrorConcurrencia(Componente, componenteEdicion);
+				}
+				
 
-                if (string.IsNullOrEmpty(error))
+				if (string.IsNullOrEmpty(error))
                 {
                     Guid componenteIDparaRefresecar = componenteEdicion.Clave;
 
@@ -279,7 +320,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             if (!esEdicion)
                             {
-                                return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES"));
+                                // return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES"));                                                                
+                                // OK -> Nuevo componente creado. Devolver Ok, no redirigir e incluir el id del componente creado.
+                                string idSavedComponent = componenteEdicion.Clave.ToString();
+                                return GnossResultOK(idSavedComponent);
                             }
                         }
                         
@@ -472,19 +516,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
         public ActionResult Delete(string idComponente)
         {
-            //string idComponente = RequestParams("idComponente");
             Guid ComponenteID = Guid.Empty;
 
             if (Guid.TryParse(idComponente, out ComponenteID) && !ComponenteID.Equals(Guid.Empty))
             {
-                using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication))
-                using(GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponenteID, ProyectoSeleccionado.Clave), mLoggingService, mEntityContext))
+                try
                 {
-                    ControladorComponenteCMS contrCMS = new ControladorComponenteCMS(ProyectoSeleccionado,ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                    contrCMS.BorrarComponenteCrearFilasIntegracionContinua(ComponenteID, cmsCN, gestorCMS);
-                    CMSAdminComponenteEditarViewModel componente = null;
-                    HttpResponseMessage resultado = InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(ComponenteID, componente), Formatting.Indented));
-                    return GnossResultOK();
+                    using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication))
+                    using (GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponenteID, ProyectoSeleccionado.Clave), mLoggingService, mEntityContext))
+                    {
+                        ControladorComponenteCMS contrCMS = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                        contrCMS.BorrarComponenteCrearFilasIntegracionContinua(ComponenteID, cmsCN, gestorCMS);
+                        CMSAdminComponenteEditarViewModel componente = null;
+                        HttpResponseMessage resultado = InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(ComponenteID, componente), Formatting.Indented));
+                        return GnossResultOK();
+                    }
+                }
+                catch(ErrorComponenteVinculadoPagina ex)
+                {
+                    return GnossResultERROR(ex.Message);
+                }
+                catch(Exception ex)
+                {
+                    GuardarLogError(ex); 
+                    return GnossResultERROR();
                 }
             }
 
@@ -580,9 +635,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     ControladorComponenteCMS contrComponente = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
 
                     mPaginaModel = contrComponente.CargarComponente(TipoComponenteCMSActual, CMSComponente);
-
+                    
                     mPaginaModel.Personalizaciones = new Dictionary<Guid, string>();
                     mPaginaModel.PersonalizacionSeleccionada = Guid.Empty;
+                    if (CMSComponente != null)
+                    {
+                        mPaginaModel.FechaModificacion = (DateTime)CMSComponente.FilaComponente.FechaUltimaActualizacion;
+                    }
+                    else
+                    {
+                        mPaginaModel.FechaModificacion = DateTime.Now;
+                    }
+                    
 
                     VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
                     DataWrapperVistaVirtual vistaVirtualDW = vistaVirtualCL.ObtenerVistasVirtualPorProyectoID(ProyectoSeleccionado.Clave, mControladorBase.PersonalizacionEcosistemaID, mControladorBase.ComunidadExcluidaPersonalizacionEcosistema);

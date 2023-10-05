@@ -1,0 +1,35 @@
+@model Property
+@{
+}
+<li class="component-wrap property-row propertyContent" data-propertycontent="@Model.Domain@@@Model.Uri" id="@Model.Domain@@@Model.Uri" data-tipopropiedad="date">
+    <div class="component">
+        <div class="component-header-wrap">
+            <div class="component-header">
+                <div class="component-header-content">
+                    <div class="component-header-left">
+                        <div class="component-name-wrap component-w-40">
+                            <span class="material-icons">calendar_month</span>
+                            <span class="language-component component-name searchableName">@(!Model.Name.Equals(Model.Uri) ? Model.Name + " | " : "")@Model.Uri</span>
+                        </div>
+                    </div>
+                    <div class="component-header-right">
+                        <span class="material-icons expandir pointer">navigate_next</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="component-content d-none atributos pt-2 ml-5">
+            <input type="hidden" name="@Model.Domain@@@Model.Uri@@TipoPropiedad" value="date" />
+            <div class="form-group">
+                <label for="@Model.Domain@@@Model.Uri@@Nombre">Nombre de la propiedad</label>
+                <input type="text" class="form-control" name="@Model.Domain@@@Model.Uri@@Nombre" value="@Model.Name" />
+            </div>
+            <div class="form-group">
+                <label for="@Model.Domain@@@Model.Uri@@NombreLectura">Nombre de lectura de la propiedad</label>
+                <input type="text" class="form-control" name="@Model.Domain@@@Model.Uri@@NombreLectura" value="@Model.NameLectura" />
+            </div>
+        </div>
+    </div>
+</li>
+
+

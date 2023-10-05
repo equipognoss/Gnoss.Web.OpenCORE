@@ -1,0 +1,74 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal que se utilizará para cargar el modalContainer para crear un nuevo componente multimedia
+
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista Modal para agregar un nuevo item de tipo Multimedia --------------------
+*@
+
+
+<div class="modal-header">
+    @* Título del Modal *@
+    <p class="modal-title">
+        <span class="material-icons">edit</span>
+		@Html.GetText("DEVTOOLS","AÑADIRRECURSOMULTIMEDIA")
+    </p>
+    @* Cierre del Modal *@
+    <span class="material-icons cerrar"
+          data-dismiss="modal"
+          aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+		<div class="tab-content">
+			@* Sección drag and drop del recurso multimedia *@
+			<div class="form-group mb-5">
+				<label class="control-label d-block">@Html.GetText("DEVTOOLS","RECURSOMULTIMEDIA")</label>
+				<div id="contenedorImagen" class="image-uploader js-image-uploader">
+					<div class="image-uploader__preview">
+						<img id="image-uploader-multimedia-item" class="image-uploader__img image-uploader-multimedia-item" alt="Arrastra y suelta en la zona punteada archivo multimedia para subir" src="" />
+					</div>
+					<div class="image-uploader__drop-area">
+						<div class="image-uploader__icon">
+							<span class="material-icons">backup</span>
+						</div>
+						<div class="image-uploader__info">
+							<p>
+								<strong>@Html.GetText("DEVTOOLS","ARRASTRAYSUELTAENLAZONAPUNTEADAARCHIVOMULTIMEDIAPARASUBIR")</strong>
+							</p>
+							<p>@Html.GetText("DEVTOOLS","IMAGENESENFORMATOPNGOJPG")</p>
+							<p>@Html.GetText("DEVTOOLS","ARCHIVOSENFORMATODOC,DOCX,TXTOPDF")</p>
+						</div>
+					</div>
+					<div class="image-uploader__error">
+						<p class="ko"></p>
+					</div>
+				</div>
+				<input type="file" id="image-multimedia-src" class="image-uploader__input image-multimedia-src" multiple="" accept="image/*, .pdf, .txt, .doc, .docx" />
+			</div>
+
+			@* Botón para cerrar *@
+			<div class="panelBotonera">
+				<a href="#" class="btn btn-primary uppercase" data-dismiss="modal">Cerrar</a>
+			</div>
+		</div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    
+    (function ($) {
+		// Gestión de operativa para funcionamiento de subida de un fichero multiemdia
+        operativaGestionMultimediaCMS.operativaModalAddMultimediaItem();		
+    })();
+</script>

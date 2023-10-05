@@ -1,0 +1,16 @@
+﻿@model List<TabModel.ExportacionSearchTabModel>
+
+@if (Model.Count == 0)
+{
+    <p><a class="linkEditarExportaciones">Crear Exportaciones</a></p>
+}
+<section class="editarExportaciones" @Html.Raw(Model.Count == 0 ? "style=\"display:none\"" : "")>
+    <p>Exportacion de la busqueda</p>
+    <ol class="exportacionesSortable">
+        @foreach (TabModel.ExportacionSearchTabModel exportacion in Model)
+        {
+            @Html.PartialView("_FichaExportacion", exportacion);
+        }
+    </ol>
+    <input type="button" value="Añadir exportación" class="addExportation"/>
+</section>

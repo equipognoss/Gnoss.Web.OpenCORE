@@ -1,0 +1,181 @@
+﻿@model SemanticPropertyModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra un input a modo de propiedad de tipo OntoData para un elemento de un objeto de conocimiento
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@{
+    bool readMode = Model.ReadMode;
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.Element.Propiedad;
+}
+
+
+
+@if (Model.OntologyPropInfo.UniqueValue)
+{
+    SemanticPropertyModel.PropertyValue propValue = null;
+
+    if (Model.OntologyPropInfo.PropertyValues.Count > 0)
+    {
+        propValue = Model.OntologyPropInfo.PropertyValues[0];
+    }
+
+    if (readMode && mPropiedad.EspecifPropiedad.TipoCampo == Es.Riam.Semantica.Plantillas.TipoCampoOntologia.Tiny && Model.EntityParent.Entity.Ontologia.ConfiguracionPlantilla.HtmlNuevo > 1)
+    {
+        string claseProp = "prop prop_" + Model.Element.Propiedad.NombreGeneracionClases;
+
+        <div class="@claseProp">
+            @{
+                SharedSemCms sharedSemCms = new SharedSemCms();
+                sharedSemCms.semanticPropertyModel = Model;
+                sharedSemCms.propertyValue = propValue;
+            }           
+            @* @Html.PartialView("../Shared/SemCMS/_AddTitleAndPrimaryControl", sharedSemCms) *@
+            @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addTitleAndPrimaryControl", sharedSemCms)
+        </div>
+    }
+    else if (!readMode || mPropiedad.EspecifPropiedad.TipoCampo == Es.Riam.Semantica.Plantillas.TipoCampoOntologia.Tiny)
+    {
+        SharedSemCms sharedSemCms = new SharedSemCms();
+        sharedSemCms.semanticPropertyModel = Model;
+        sharedSemCms.propertyValue = propValue;        
+        @* @Html.PartialView("../Shared/SemCMS/_AddTitleAndPrimaryControl", sharedSemCms) *@
+        @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addTitleAndPrimaryControl", sharedSemCms)
+
+        if (!readMode)
+        {
+            string idDivError = Model.OntologyPropInfo.ControlID.Replace("Campo_", "divError_");
+            <div id="@idDivError"></div>
+        }
+    }
+    else
+    {
+        string claseProp = "edit edit_" + mPropiedad.NombreGeneracionClases;
+
+        if (Model.Element.TipoPresentacion == "SinParrafo")
+        {
+            string classSpan = "values " + claseProp;            
+            @* @Html.PartialView("SemCms/_TituloPropiedad", Model) *@
+            @Html.PartialView("_partial-views/_ontology-secondary-entity-property-title",  Model)            
+
+            <span class="@classSpan">
+                @{
+                    SharedSemCms sharedSemCms = new SharedSemCms();
+                    sharedSemCms.semanticPropertyModel = Model;
+                    sharedSemCms.propertyValue = propValue;
+                    sharedSemCms.pIdioma = null;
+                }                
+                @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", sharedSemCms) *@
+                @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControl", sharedSemCms)
+            </span>
+        }
+        else
+        {
+            if (Model.EntityParent.Entity.Ontologia.ConfiguracionPlantilla.HtmlNuevo > 0 || mPropiedad.EspecifPropiedad.TipoCampo == Es.Riam.Semantica.Plantillas.TipoCampoOntologia.EmbebedObject)
+            {
+                <div class="@claseProp">                    
+                    @* @Html.PartialView("SemCms/_TituloPropiedad", Model) *@
+                    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-title",  Model)
+
+                    <span class="values">
+                        @{
+                            SharedSemCms sharedSemCms = new SharedSemCms();
+                            sharedSemCms.semanticPropertyModel = Model;
+                            sharedSemCms.propertyValue = propValue;
+                            sharedSemCms.pIdioma = null;
+                        }
+                        
+                        @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", sharedSemCms) *@
+                        @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControl", sharedSemCms)
+                    </span>
+                </div>
+            }
+            else
+            {
+                <p class="@claseProp">                    
+                    @* @Html.PartialView("SemCms/_TituloPropiedad", Model) *@
+                    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-title",  Model)
+                    <span class="values">
+                        @{
+                            SharedSemCms sharedSemCms = new SharedSemCms();
+                            sharedSemCms.semanticPropertyModel = Model;
+                            sharedSemCms.propertyValue = propValue;
+                            sharedSemCms.pIdioma = null;
+                        }                        
+                        @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", sharedSemCms) *@
+                        @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControl", sharedSemCms)
+                    </span>
+                </p>
+            }
+        }
+    }
+}
+else
+{
+    if (!readMode)
+    {
+        <div>
+            @if (Model.EntityParent.Entity.Ontologia.ConfiguracionPlantilla.HtmlNuevo > 0)
+            {
+                <div class="fila form-group">
+                    @{
+                        SharedSemCms sharedSemCms1 = new SharedSemCms();
+                        sharedSemCms1.semanticPropertyModel = Model;
+                        sharedSemCms1.propertyValue = null;
+                        sharedSemCms1.pIdioma = null;
+                    }                    
+                    @* @Html.PartialView("../Shared/SemCMS/_AddTitleAndPrimaryControl", sharedSemCms1) *@
+                    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addTitleAndPrimaryControl", sharedSemCms1)
+                </div>
+            }
+            else
+            {
+                <p class="fila">
+                    @{
+                        SharedSemCms sharedSemCms2 = new SharedSemCms();
+                        sharedSemCms2.semanticPropertyModel = Model;
+                        sharedSemCms2.propertyValue = null;
+                        sharedSemCms2.pIdioma = null;
+                    }                    
+                    @* @Html.PartialView("../Shared/SemCMS/_AddTitleAndPrimaryControl", sharedSemCms2) *@
+                    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addTitleAndPrimaryControl", sharedSemCms2)
+                </p>
+            }
+            @{
+                string idDivError = Model.OntologyPropInfo.ControlID.Replace("Campo_", "divError_");
+            }
+            <div id="@idDivError"></div>
+            @{
+                SharedSemCms sharedSemCms = new SharedSemCms();
+                sharedSemCms.semanticPropertyModel = Model;
+            }            
+            @* @Html.PartialView("../Shared/SemCMS/_AddValuesList", sharedSemCms) *@
+            @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addValuesList", sharedSemCms)           
+        </div>
+    }
+    else
+    {        
+        @* @Html.PartialView("SemCms/_TituloPropiedad", Model) *@
+        @Html.PartialView("_partial-views/_ontology-secondary-entity-property-title",  Model)
+        <span class="values">
+            @foreach (SemanticPropertyModel.PropertyValue propValue in Model.OntologyPropInfo.PropertyValues)
+            {
+                SharedSemCms sharedSemCms = new SharedSemCms();
+                sharedSemCms.semanticPropertyModel = Model;
+                sharedSemCms.propertyValue = propValue;
+                sharedSemCms.pIdioma = null;
+                
+                @* @Html.PartialView("../Shared/SemCMS/_AddPrimaryControl", sharedSemCms) *@
+                @Html.PartialView("_partial-views/_ontology-secondary-entity-property-addPrimaryControl", sharedSemCms)
+            }
+        </span>
+    }
+}

@@ -1,0 +1,123 @@
+@model ExternalProperty
+@{
+    string propiedadesLectura = "";
+    foreach (string prop in Model.PropsLectura)
+    {
+        propiedadesLectura += prop + ";";
+    }
+}
+<!--Modal de configuración de la propiedad externa-->
+<div class="modal modalEliminar fade selectorEntidad" tabindex="-1" role="dialog" aria-labelledby="ventanaModalConfigurarSelectorEntidad" aria-hidden="true" data-contentselector="@Model.Domain@@@Model.Uri" data-entitymodel="@Model.ReferredEntity" data-propertymodel="@Model.PropEdicion">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Configuración del selector de entidad de @Model.Name</h5>
+                <button type="button" class="close cerrar-selector" data-content="@Model.Domain@@@Model.Uri" data-dismiss="modal" aria-label="Close">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="smartwizard" data-sw="@Model.Domain@@@Model.Uri">
+                    <ul class="nav nav-progress">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-selected="true" href="#@Model.Domain@@@Model.Uri@@step-1">
+                                <div class="num">1</div> Seleccionar grafo referenciado
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" aria-selected="false" href="#@Model.Domain@@@Model.Uri@@step-2">
+                                <span class="num">2</span> Elegir entidad y propiedad por la que buscar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" aria-selected="false" href="#@Model.Domain@@@Model.Uri#step-3">
+                                <span class="num">3</span> Determinar propiedades mostradas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" aria-selected="false" href="#@Model.Domain@@@Model.Uri#step-4">
+                                <span class="num">4</span> ¿Hay que configurar algún selector más?
+                            </a>
+                        </li>
+                    </ul> <hr />
+                    <div class="tab-content">
+                        <div id="@Model.Domain@@@Model.Uri@@step-1" class="tab-pane fade active show" role="tabpanel" aria-labelledby="@Model.Domain@@@Model.Uri@@step-1">
+                            <h2>Elige el grafo al que pertenece la propiedad relacionada</h2>
+                            <div class="form-group">
+                                <label for="@Model.Domain@@@Model.Uri@@grafoReferenciado">Grafo referenciado</label>
+                                <select name="@Model.Domain@@@Model.Uri@@grafoReferenciado" class="js-select2 selectorGrafo" data-select-search="true" data-contiene="@Model.Domain@@@Model.Uri"  onchange="operativaConfiguracionOC.cargarEntidades('@Model.Domain@@@Model.Uri', false)">
+                                    @if (string.IsNullOrEmpty(Model.ReferredGraph)){
+                                        <option selected></option>
+                                    }
+                                    @foreach (string grafo in ViewBag.ListaOntologias)
+                                    {
+                                        <option value="@grafo" @(grafo.Equals(Model.ReferredGraph)  ? "selected" : "")>@grafo</option>
+                                    }
+                                </select>
+                                <small class="form-text text-muted">Elige el grafo al que hace referencia la propiedad externa</small>
+                            </div>
+                            <div class="errores"></div>
+                        </div>
+                        <div id="@Model.Domain@@@Model.Uri@@step-2" class="tab-pane fade active show" role="tabpanel" aria-labelledby="@Model.Domain@@@Model.Uri@@step-2">
+                            <h2>Finalice la configuración y seleccione la ontología y la propiedad por la que buscar</h2>
+                            <p>Abrir en nueva pestaña</p>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" name="@Model.Domain@@@Model.Uri@@nuevaPestanya" type="radio" @(Model.NewTab.Equals("true") ? "checked" : "")>
+                                <label class="form-check-label" for="@Model.Domain@@@Model.Uri@@nuevaPestanya">Sí</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" name="@Model.Domain@@@Model.Uri@@nuevaPestanya" type="radio" @(Model.NewTab.Equals("false") ? "checked" : "")>
+                                <label class="form-check-label" for="@Model.Domain@@@Model.Uri@@nuevaPestanya">No</label>
+                            </div>
+                            <p>Recíproca</p>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" name="@Model.Domain@@@Model.Uri@@reciproca" type="radio" @(Model.Reciproca ? "checked" : "")>
+                                <label class="form-check-label" for="@Model.Domain@@@Model.Uri@@reciproca">Sí</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" name="@Model.Domain@@@Model.Uri@@reciproca" type="radio" @(!Model.Reciproca ? "checked" : "")>
+                                <label class="form-check-label" for="@Model.Domain@@@Model.Uri@@reciproca">No</label>
+                            </div>
+                            <div class="form-group">
+                                <label for="@Model.Domain@@@Model.Uri@@entidadReferenciada">Tipo de selector de entidad</label>
+                                <select name="@Model.Domain@@@Model.Uri@@Tipo" class="js-select2" data-select-search="true">
+                                    <option value="Autocompletar" @(Model.TypeSelection.Equals("Autocompletar") ? "selected" : "")>Autocompletar</option>
+                                    <option value="Combo" @(Model.TypeSelection.Equals("Combo") ? "selected" : "")>Combo de valores</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="@Model.Domain@@@Model.Uri@@entidadReferenciada">Entidad referenciada</label>
+                                <select name="@Model.Domain@@@Model.Uri@@entidadReferenciada" class="js-select2" data-select-search="true" data-entidades="@Model.Domain@@@Model.Uri@@entidades" onchange="operativaConfiguracionOC.cargarPropiedades('@Model.Domain@@@Model.Uri', false)">
+                                </select>
+                                <small class="form-text text-muted">Elige la entidad del grafo a la que se hace referencia</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="@Model.Domain@@@Model.Uri@@propiedadReferenciada">Propiedad referenciada</label>
+                                <select name="@Model.Domain@@@Model.Uri@@propiedadReferenciada" class="js-select2" data-select-search="true" data-propiedades="@Model.Domain@@@Model.Uri@@propiedades">
+                                </select>
+                                <small class="form-text text-muted">Elige la propiedad por la que se van a buscar los recursos relacionados</small>
+
+                            </div>
+                            <div class="errores"></div>
+                        </div>
+                        <div id="@Model.Domain@@@Model.Uri@@step-3" class="tab-pane fade active show" role="tabpanel" aria-labelledby="@Model.Domain@@@Model.Uri@@step-3">
+                            <h2>Elige las propiedades a mostrar</h2>
+                            <div class="eleccionPropiedades">
+                                <div class="propiedadesSeleccionar" data-propiedadesmostrar="@Model.Domain@@@Model.Uri@@propiedadesmostrar" data-propslectura="@propiedadesLectura">
+                                </div>
+                            </div>
+                            
+                            <div class="errores"></div>
+                        </div>
+                        <div id="@Model.Domain@@@Model.Uri@@step-4" class="tab-pane fade active show" role="tabpanel" aria-labelledby="@Model.Domain@@@Model.Uri@@step-4">
+                            <h2>¿Alguna de las propiedades elegidas necesita un selector de entidad?</h2>
+                            <div class="errores"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,56 @@
+﻿@model ObjetoConocimientoModel
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra la cabecera de la sección de "Histórico" de ficheros de un objeto de conocimiento
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	
+}
+
+<div class="header-listado mb-3">
+	<div class="h1-container">
+		<h3 class="mb-0">@Html.GetText("DEVTOOLS","HISTORIALDEFICHEROSDELOBJETODECONOCIMIENTO")
+			<span class="numResultados numResultadosHistoryFiles"></span>
+		</h3>
+	</div>
+</div>
+
+@* Header de Elementos (Buscar + Añadir) *@
+<div
+	class="headerHistoryObjetosConocimiento"
+	style="display: flex; align-items: center">
+	<div class="col-buscador" style="width: 100%">
+		<form onsubmit="return false;">
+			<div class="finderUtils">
+				<div class="group finderSection">
+					<input
+						type="text"
+						class="not-outline finderSectionText findHistoryFileElements"
+						autocomplete="off"
+						placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+					/>
+					<input
+						title="Buscar"
+						type="button"
+						class="findAction"
+						id="inputLupa"
+					/>
+					<a href="javascript: void(0);" class="btn-filtrar-movil">
+						<span class="material-icons">filter_list</span>
+						<span class="texto">Filtrar</span>
+					</a>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+
+@* Panel donde se cargarán los ficheros historicos al hacer click en el Tab "Histórico" *@
+<div class="ontology-file-historial-list" data-download-history="false">
+	@* Vista que se cargará vía petición --> @Html.PartialView("_partial-views/_ontology-history-file-items") *@
+</div>		

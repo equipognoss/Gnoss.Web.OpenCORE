@@ -1,0 +1,126 @@
+@model ConfiguracionOCModel
+@{
+    bool categorization = Model.XmlFile.ConfiguracionGeneral.CategorizacionTesauroGnossObligatoria;
+    object multiidioma = Model.XmlFile.ConfiguracionGeneral.MultiIdioma;
+    string namespaceXML = Model.XmlFile.ConfiguracionGeneral.Namespace;
+    string titulo = Model.XmlFile.ConfiguracionGeneral.TituloDoc.Text;
+    string descripcion = Model.XmlFile.ConfiguracionGeneral.DescripcionDoc.Text;
+    List<string>
+    idiomas = Model.XmlFile.ConfiguracionGeneral.IdiomasOnto.IdiomaOnto;
+    bool iguales = descripcion.Equals(titulo);
+    string serviciocreacion = "";
+    string serviciocreacioncomplementario = "";
+    string serviciocreacioncomplementariosicrono = "";
+    string servicioeliminacion = "";
+
+    if (Model.XmlFile.ConfiguracionGeneral.PropiedadesOntologia != null)
+    {
+    serviciocreacion = Model.XmlFile.ConfiguracionGeneral.PropiedadesOntologia.UrlServicioCreacionRecurso;
+    serviciocreacioncomplementario = Model.XmlFile.ConfiguracionGeneral.PropiedadesOntologia.UrlServicioComplementarioCreacionRecurso;
+    serviciocreacioncomplementariosicrono = Model.XmlFile.ConfiguracionGeneral.PropiedadesOntologia.UrlServicioComplementarioCreacionRecursoSincrono;
+    servicioeliminacion = Model.XmlFile.ConfiguracionGeneral.PropiedadesOntologia.UrlServicioEliminacionRecurso;
+    }
+}
+<li class="component-wrap property-row tituloEntidad" data-tipopropiedad="general">
+    <div class="component">
+        <div class="component-header-wrap">
+            <div class="component-header">
+                <div class="component-header-content">
+                    <div class="component-header-left">
+                        <div class="component-name-wrap component-w-40">
+                            <span class="material-icons">settings</span>
+                            <span class="language-component component-name searchableName">Configuración general</span>
+                        </div>
+                    </div>
+                    <div class="component-header-right">
+                        <span class="material-icons expandir pointer">navigate_next</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="component-content d-none atributos pt-2 ml-5">
+            <div class="form-group">
+                <label for="namespace">Namespace</label>
+                <input type="text" class="form-control" name="namespace" value="@namespaceXML" />
+                <small class="form-text text-muted">Especifica el namespace que representará la URL de la ontología a la hora de pintar el RDF de los recursos creados según la plantilla.</small>
+            </div>
+            <div class="form-group">
+                <label for="titulo">Titulo</label>
+                <select name="titulo" class="js-select2" data-select-search="true">
+                    @foreach (FunctionalProperty fp in Model.OwlFile.FunctionalProperty)
+                    {
+                        if (fp.Range!= null && fp.Range.Resource.Equals("http://www.w3.org/2001/XMLSchema#string"))
+                        {
+                            <option value="@fp.About" @(fp.About.Equals(titulo) ? "selected" : "")>@fp.About</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <select name="descripcion" onchange="operativaConfiguracionOC.checkDescripcion()" class="js-select2" data-select-search="true">
+                    <option value="" @(iguales ? "selected" : "")></option>
+                    @foreach (FunctionalProperty fp in Model.OwlFile.FunctionalProperty)
+                    {
+                        if (fp.Range!= null && fp.Range.Resource.Equals("http://www.w3.org/2001/XMLSchema#string"))
+                        {
+                            <option value="@fp.About" @(fp.About.Equals(descripcion) && !iguales ? "selected" : "")>@fp.About</option>
+                        }
+                    }
+                </select>
+            </div>
+            <p>Categorización obligatoria</p>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" name="categorizacion" type="radio" @(categorization ? "checked" : "")>
+                <label class="form-check-label" for="categorizacion">Sí</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" name="categorizacion" type="radio" @(!categorization ? "checked" : "")>
+                <label class="form-check-label" for="categorizacion">No</label>
+            </div>
+
+            <p>Idiomas</p>
+            @foreach (KeyValuePair<string, string> idioma in ViewBag.IdiomasComunidad)
+            {
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" name="idiomas" type="checkbox" value="@idioma.Key" @(idiomas.Contains(idioma.Key) ? "checked" : "")>
+                    <label class="form-check-label" for="idiomas">@idioma.Value</label>
+                </div>
+            }
+
+            <p>Multidioma</p>
+            <div class="form-check form-check-inline custom-checkbox">
+                <input class="form-check-input turnMultidiomaOn" name="multidioma" type="radio" @(multiidioma != null ? "checked" : "")>
+                <label class="form-check-label" for="multidioma">Sí</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input turnMultidiomaOff" name="multidioma" type="radio" @(multiidioma == null ? "checked" : "")>
+                <label class="form-check-label" for="multidioma">No</label>
+            </div>
+
+            <div class="form-group">
+                <label for="servicioCreacion">URL servicio de creación de recursos</label>
+                <input type="text" class="form-control" name="servicioCreacion" value="@serviciocreacion" />
+                <small class="form-text text-muted">URL del servicio externo al que se llamará cuando se esté creando o editando un recurso.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="servicioComplementarioCreacion">URL servicio complementario de creación de recursos</label>
+                <input type="text" class="form-control" name="servicioComplementarioCreacion" value="@serviciocreacioncomplementario" />
+                <small class="form-text text-muted">URL del servicio externo al que se llamará tras crear o editar un recurso.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="servicioComplementarioCreacionSincrono">URL servicio síncrono complementario de creación de recursos</label>
+                <input type="text" class="form-control" name="servicioComplementarioCreacionSincrono" value="@serviciocreacioncomplementariosicrono" />
+                <small class="form-text text-muted">URL del servicio externo al que se llamará tras crear o editar un recurso esperando su respuesta.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="servicioEliminacion">URL servicio de eliminación de recursos</label>
+                <input type="text" class="form-control" name="servicioEliminacion" value="@servicioeliminacion" />
+                <small class="form-text text-muted">URL del servicio externo de eliminación de recursos.</small>
+            </div>
+        </div>
+    </div>
+</li>

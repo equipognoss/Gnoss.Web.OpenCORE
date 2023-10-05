@@ -1,0 +1,81 @@
+﻿@model List<string>
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se permitirá compartir las vistas personalizadas del proyecto en un dominio especificado, además de mostrar los dominios en los que está compartida esta personalización
+
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	string idModalUploadCrearPersonalizacion = "modal-share-views";
+	string modalTitle = @Html.GetText("DEVTOOLS", "COMPARTIRVISTASENDOMINIO");
+	string inputDisableClassName = "disabled";
+
+}
+
+@* Modal con la información *@
+<div
+	id="@idModalUploadCrearPersonalizacion"
+	class="modal modal-top fade modal-edicion modal-subir-vista"
+	role="dialog"	
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>					
+					<span>@modalTitle</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">			
+				@* Nuevo dominio donde se compartirán las vistas *@ 
+				<div class="form-group mb-3">
+					<label class="control-label d-block">Dominio (sin http/https)</label>
+					<input type="text" class="form-control txtDomainName">
+				</div>
+				@* Lista de los dominios ya compartidos *@
+				<div class="form-group mb-3" id="check-dominios">
+					<label class="control-label d-block">Dominios en los que está compartida esta personalización</label>			
+					@foreach (string dominio in Model)
+					{
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" value="@dominio" id="@dominio">
+							<label class="form-check-label" for="@dominio">
+								@dominio
+							</label>
+						</div>
+					}
+					
+				</div>
+				<div class="d-flex justify-content-between">
+
+					@* Botón para guardar *@
+					<div class="panelBotonera">
+						<a href="javascript: void(0);"
+						   data-url="@(ViewBag.UrlActionShareViews)"
+						   class="btn btn-primary uppercase btnSaveSharedDomains">@Html.GetText("DEVTOOLS", "COMPARTIR")</a>
+					</div>
+					@* Botón para dejar de compartir *@
+					<div class="panelBotonera">
+						<a href="javascript: void(0);"
+						   data-url="@(ViewBag.UrlActionStopSharing)"
+						   class="btn btn-danger uppercase btnStopSharing">@Html.GetText("COMMON", "DEJARDECOMPARTIR")</a>
+					</div>
+				</div>
+							
+			</div>
+		</div>
+	</div>
+</div>

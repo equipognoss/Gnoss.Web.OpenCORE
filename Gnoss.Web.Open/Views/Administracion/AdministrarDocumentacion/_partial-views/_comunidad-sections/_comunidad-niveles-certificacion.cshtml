@@ -1,0 +1,74 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Comunidad - Niveles de certificación
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.	
+	bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+	// Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+	bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? ( bool.Parse(ViewBag.showDocumentationSection)) : false;
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();    
+}
+
+<div class="card">			
+	<div class="card-header">
+		@* Título / Botón: Niveles de certificación *@
+		<h3 class="mb-0">
+			<button
+				class="btn btn-link"
+				data-toggle="collapse"
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "data-target=#niveles-certificacion" : null)								
+				@( (showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+				aria-controls="niveles-certificacion">
+				@Html.GetText("DEVTOOLS","NIVELESDECERTIFICACION")
+			</button>
+		</h3>
+	</div>
+	@* Contenido: Niveles de certificación *@
+	<div
+		id="niveles-certificacion"
+		class="collapse @( (showDocumentationSection) ? "show" : null)"
+		data-parent="#accordion">
+		<div class="card-body">					
+			<p>Los recursos pueden ser certificados o calificados por los supervisores. Desde esta sección de configuración de la comunidad  se pueden crear las diferentes certificaciones para que estén disponibles pudiendo personalizar el nombre y el número de niveles que mejor definan la calidad de los recursos de la comunidad. A continuación se detallan las acciones disponibles para configurar los niveles de certificación de la comunidad:</p>								
+			<ul>
+				<li>
+					<span><strong>Activar niveles de certificación de la comunidad:</strong> Consiste en activar o desactivar la posibilidad de que haya una política de certificación de recursos en la comunidad.</span>						
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/activar-niveles-certificacion.png"/>					
+							<figcaption class="figure-caption">La política de certificación de recursos de una comunidad puede activarse o desactivarse dependiendo la comunidad.</figcaption>
+						</figure> 
+					</div>	
+				</li>
+
+				<li>
+					<span><strong>Crear/Añadir nivel de certificación:</strong> Para crear un nuevo nivel de certificación, se deberá hacer clic sobre Añadir. Es necesario para poder añadir niveles de certificación que la opción Activar niveles de certificación de la comunidad esté activada. Para añadir el nivel de certificación será necesario elegir el nombre de la certificación y pulsar en Guardar.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/crear-certificacion.png"/>					
+							<figcaption class="figure-caption">Creando nuevo nivel de certificación.</figcaption>
+						</figure> 
+					</div>							
+				</li>
+				<li>
+					<span><strong>Eliminar nivel de certificación:</strong> Si se desea eliminar un nivel de certificación, se puede pulsar en el icono <span class="material-icons">delete</span>. Será necesario confirmar la eliminación pulsando en el botón "Guardar Todo" de la página de certificaciones de la comunidad.</span>
+					<div class="text-center">
+						<figure class="figure">						  
+							<img src="~/img/documentacionDevtools/01comunidad/administrar-niveles-certificacion.png"/>					
+							<figcaption class="figure-caption">Administración de los niveles de certificación de la comunidad.</figcaption>
+						</figure> 
+					</div>
+				</li>
+			</ul>
+		</div>		
+	</div>
+</div>

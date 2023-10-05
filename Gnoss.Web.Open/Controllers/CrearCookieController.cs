@@ -18,6 +18,7 @@ using Es.Riam.Util;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
@@ -34,10 +35,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
         }
 
-        //public override void OnActionExecuting(ActionExecutingContext filterContext)
-        //{
-        //    return;
-        //}
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            return;
+        }
 
         // GET: CrearCookie
         public ActionResult Index(CrearCookieLoginModel crearCookieLoginModel)

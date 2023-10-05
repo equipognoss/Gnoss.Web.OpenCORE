@@ -1,0 +1,49 @@
+﻿@model AdministrarPaginasCMSViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se indica la posibilidad de restaurar contenido previamente almancenado de la página CMS.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+                      
+}
+
+<div
+	id="modal-backup-cms-html-content"
+	class="modal modal-top fade"           
+	role="dialog"	
+	aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar restaurar la página cms *@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">restore</span>
+					@Html.GetText("DEVTOOLS","RESTAURAR")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">				
+				<div class="form-group">
+					<label class="control-label">
+						@Html.GetText("DEVTOOLS","SEHAENCONTRADOUNACOPIADESEGURIDADDELAPAGINACMSDESUULTIMAEDIC")
+					</label>
+				</div>
+				<div class="form-actions">
+					<button class="btn btn-outline-primary btnNotConfirmRestorePageCMS">@Html.GetText("COMMON","NO")</button>
+					<button class="btn btn-primary btnConfirmRestorePageCMS">@Html.GetText("COMMON","SI")</button>
+				</div>				
+			</div>
+		</div>
+	</div>
+</div>
+

@@ -1,0 +1,40 @@
+﻿@model SemanticPropertyModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra cada propiedad de un elemento de un objeto de conocimiento secundario. Dependiendo del tipo, pintará un tipo de propiedad.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+@if (Model.Element.EsGrupo)
+{    
+    @* @Html.PartialView("SemCms/_PropiedadGrupo", Model) *@    
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-group", Model)
+}
+else if (Model.Element.EsLiteral)
+{
+    @* Html.PartialView("SemCms/_PropiedadLiteral", Model) *@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-literal", Model)
+}
+else if (Model.Element.EsSelectorGrupo)
+{
+    @* @Html.PartialView("SemCms/_PropiedadSelectorGrupo", Model) *@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-selector-group", Model)
+    
+}
+else if (Model.EntityParent.SemanticResourceModel.ReadMode && Model.Element.EsEspecial)
+{
+    @*@Html.PartialView("SemCms/_PropiedadDatoEspecial", Model)*@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-dato-especial", Model)    
+}
+else if (Model.Element.Propiedad != null)
+{
+    @*@Html.PartialView("SemCms/_PropiedadOntologica", Model)*@
+    @Html.PartialView("_partial-views/_ontology-secondary-entity-property-ontologica", Model)    
+}

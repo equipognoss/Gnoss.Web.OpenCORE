@@ -1,0 +1,51 @@
+﻿@model Dictionary<string, string>
+
+@*
+Descripción
+-----------------------------------------------
+Vista que pintará cada item de tipo "Resource" de la comunidad para poder proceder a su descarga
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+	// Id aleatorio
+	string randomNumber = Guid.NewGuid().ToString().Substring(0, 5);
+	string translateItemId = $"resource_${randomNumber}";
+	string nameItem = Model["name"];
+	string nameForCheckBox = Model["nameForCheckbox"];
+}
+
+
+<li class="component-wrap translate-row" data-value="@nameForCheckBox" data-type="resource">
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				<div class="component-header-content">
+					<div class="component-header-left">
+						@* Checkbox de selección del item *@
+						<div class="component-checkbox-wrap component-w-20">
+							<div class="custom-control custom-checkbox">
+								<input type="checkbox" class="custom-control-input input-download-item" id="@nameForCheckBox" data-value="@nameForCheckBox" data-type="resource">
+								<label class="custom-control-label component-checkbox-name" for="@nameForCheckBox"></label>
+							</div>
+						</div>
+						@* Nombre del item*@
+						<div class="component-name-wrap">
+							<span class="component-name pl-0">@nameItem</span>
+						</div>
+											
+					</div>
+					@*Sección de acciones de la descarga *@
+					<div class="component-header-right">
+						@* Botón para descargar el fichero seleccionado *@
+						<a href="javascript: void(0);" title="@Html.GetText("DEVTOOLS","DESCARGARTEXTOAEXCEL")" alt="@Html.GetText("DEVTOOLS","DESCARGARTEXTOAEXCEL")" class="btn btn-outline-grey btnDownloadTranslate">
+							<span class="material-icons">download</span>@Html.GetText("ADMINISTRACIONVISTAS","DESCARGAR")
+						</a>						
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</li>
+

@@ -1,0 +1,63 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista parcial para mostrar la información relativa a la configuración inicial del usuario de acceso a la comunidad. (Nombre de usuario administrador y contraseña)
+
+Variables
+----------------------------------------------------------------
+*@
+
+@* Panel de Datos de acceso: Usuario y Contraseña *@
+<div
+	class="tab-pane fade active show"
+	id="datos-acceso"
+	role="tabpanel"
+	aria-labelledby="datos-acceso">
+
+	@* Nombre del usuario administrador *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("DEVTOOLS","NOMBREDEUSUARIO")</label>		
+		<input
+			type="text"
+			class="form-control"
+			id="txtNombreUsuario"						
+		/>
+		<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBREDELUSUARIOADMINISTRADORQUESEUTILIZARAPARAACCEDERACONFI")</small>
+	</div>
+
+	@* Email del usuario para acceso *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("DEVTOOLS","EMAIL")</label>		
+		<input
+			type="text"
+			class="form-control"
+			id="txtEmailUsuario"						
+		/>
+		<small class="form-text text-muted">@Html.GetText("LOGIN","INTRODUCEMAIL")</small>
+	</div>
+
+	@* Input de la contraseña del usuario administrador*@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">@Html.GetText("DEVTOOLS","CONTRASENYADEACCESO")</label>
+		<div 
+			class="password-data__container"
+			style="display: flex; justify-content: space-between;">	
+			<div style="flex: 0.7">
+				<input
+				type="text"
+				class="form-control"
+				id="txtPassword"
+				value=""/>
+			</div>
+			
+			@* Botón Generar password*@
+			<button
+				id="btnGeneratePassword"
+				class="btn btn-outline-primary"
+				style="flex: 0.3 0; margin-left: 10px; height:45px;">
+				Generar password
+			</button>
+		</div>
+		<small class="form-text text-muted">@Html.GetText("DEVTOOLS","CONTRASENYADELUSUARIOADMINISTRADORPARAACCEDERALAADMINISTRACIO")</small>
+	</div>
+</div>

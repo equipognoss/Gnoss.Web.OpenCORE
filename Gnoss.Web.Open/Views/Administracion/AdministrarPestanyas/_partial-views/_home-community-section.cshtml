@@ -1,0 +1,72 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la sección de Estructura desde la Home de DevTools.
+Esta vista se cargará en la sección central cuando se pulse sobre "Estructura"
+
+Variables
+----------------------------------------------------------------
+*@
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+    // Permisos para administrar aspectos relacionados con el diseño de páginas
+    bool administrarPaginas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)));
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de la sección Estructura en la Home de la Comunidad en DevTools --------------------
+*@
+
+@* Contenedor central de secciones *@
+<div class="section-list-wrap">
+
+    @if (permisosPaginas.AdministracionPaginasPermitido)
+    {
+
+        if (administrarPaginas || permisosPaginas.CMSActivado)
+        {
+            @* Administrar páginas *@
+            <div class="section section-navigation" data-parent-section="estructura" data-section="paginas-estructura">
+                <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARPESTANYASCOM")</h2>
+                <p>
+                    @Html.GetText("DEVTOOLS","CREACIONYEDICIONDELASPAGINASDELACOMUNIDADPARAMOSTRARINFORMAC")
+                </p>
+            </div>    
+            @* Administrar redirecciones *@            
+            <div class="section section-navigation" data-parent-section="estructura" data-section="redirecciones-estructura">
+                <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARREDIRECCIONES")</h2>
+                <p>
+                    @Html.GetText("DEVTOOLS","CREACIONYEDICIONDEREDIRECCIONESWEBDELACOMUNIDADPARAHACERQUEU")
+                </p>
+            </div>
+
+            @if (permisosPaginas.CMSActivado)
+            {
+                <div class="section section-navigation" data-parent-section="estructura" data-section="componentes-estructura">
+                    <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")</h2>
+                    <p>
+                        @Html.GetText("DEVTOOLS","CREACIONYEDICIONDECOMPONENTESHTMLPERSONALIZADOSPARAMOSTRARIN")
+                    </p>
+                </div>
+                <div class="section section-navigation" data-parent-section="estructura" data-section="multimedia-estructura">
+                    <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")</h2>
+                    <p>
+                        @Html.GetText("DEVTOOLS","CARGADECONTENIDOMULTIMEDIA(IMAGENES,LOGOS,BANNERS)PARASERUT")
+                    </p>
+                </div>
+            }
+        }
+    }
+
+    @* Exportar Todo -> Sin implementar. ¿Qué ha de hacer? 
+    <div class="section" data-parent-section="estructura" data-section="exportar-todo-estructura">
+        <h2>@Html.GetText("DEVTOOLS","EXPORTARTODO")</h2>
+        <p>@Html.GetText("DEVTOOLS","EXPORTALACONFIGURACIONDELASPAGINAS,COMPONENTES,ARCHIVOSMULTI")</p>
+    </div>    
+    *@
+</div>
+
+

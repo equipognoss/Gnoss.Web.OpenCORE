@@ -1,4 +1,5 @@
-﻿using Es.Riam.AbstractsOpen;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.BASE_BD.Model;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
@@ -41,6 +42,7 @@ using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Controles;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
+using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
@@ -56,6 +58,7 @@ using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+using static Es.Riam.Gnoss.Web.MVC.Controllers.Administracion.ManageRedirectionsViewModel;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -115,7 +118,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            if ((ProyectoSeleccionado.Estado == (short)EstadoProyecto.Definicion && string.IsNullOrEmpty(RequestParams("mostrarLogin")) && Invitacion == null) || (!mControladorBase.UsuarioActual.EsUsuarioInvitado && ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled) || !UsuarioActual.EsIdentidadInvitada)
+            if ((ProyectoSeleccionado.Estado == (short)EstadoProyecto.Definicion && string.IsNullOrEmpty(RequestParams("mostrarLogin")) && Invitacion == null) || (!mControladorBase.UsuarioActual.EsUsuarioInvitado && ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled) || (!UsuarioActual.EsIdentidadInvitada && Invitacion == null) && string.IsNullOrEmpty(RequestParams("registroRedesSociales")))
             {
                 return GnossResultUrl(Comunidad.Url);
             }
@@ -160,6 +163,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         UrlComunidad += "&invitacionID=" + Request.Query["invitacionID"];
                     }
+                    
                     string closePopUp = "window.opener.location.href='" + UrlComunidad + "';self.close();";
 
 
@@ -178,6 +182,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (!string.IsNullOrEmpty(urlRegitro))
                     {
+                        closePopUp = "window.opener.document.location.href='" + urlRegitro + "';self.close();";
+                    }
+                    else if (!string.IsNullOrEmpty(Request.Query["redirect_uri"]))
+                    {
+                        urlRegitro = Request.Query["redirect_uri"];
                         closePopUp = "window.opener.document.location.href='" + urlRegitro + "';self.close();";
                     }
                     else
@@ -299,7 +308,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     EstablecerPaginaOrigen();
 
                     registro.TypePage = AutenticationModel.TypeAutenticationPage.Login;
-                }
+
+					if (!string.IsNullOrEmpty(RequestParams("cargarPersonalizacion")) && RequestParams("cargarPersonalizacion").Equals("false"))
+                    {
+                        EliminarPersonalizacionVistas();
+                    }
+				}
             }
             else if (!string.IsNullOrEmpty(RequestParams("SelectorPerfilInvitacion")))
             {
@@ -393,7 +407,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (numClausulas > 0)
                     {
-                        if (!string.IsNullOrEmpty(Request.Form["clausulasSelecc"]))
+                        if (Request.Method.Equals("POST") && !string.IsNullOrEmpty(Request.Form["clausulasSelecc"]))
                         {
                             cumpleClausualas = ComprobarErroresRegistroClausulas().Count == 0;
                         }
@@ -615,7 +629,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return View(registro);
         }
 
-        public ActionResult RegistroCompleto()
+		public ActionResult RegistroCompleto()
         {
             return View("RegistroCompleto", IdentidadActual.PerfilUsuario.NombreOrganizacion);
         }
@@ -682,6 +696,54 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             return View("ReenviarEmail", registro);
         }
+        /// <summary>
+        /// Modelo de miembro
+        /// </summary>
+        [Serializable]
+        public partial class MiembroModel
+        {
+            public string nombre { get; set; }
+
+            public string apellidos { get; set; }
+
+            public string correo { get; set; }
+
+
+            public string contrasenya { get; set; }
+
+        }
+
+        /// <summary>
+        /// Añade un nuevo miembro a la organización desde el panel del admin
+        /// </summary>
+        /// <returns></returns>
+
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult RegistrarUsuarioAdmin(RegistroController.MiembroModel miembro)
+        {
+            
+            try 
+            {
+                //Validar correo
+                if (new PersonaAD(null,this.mEntityContext,this.mConfigService,null).ExisteEmail(miembro.correo))    
+                { 
+                    string error = UtilIdiomas.GetText("AGREGARDATOSCONTACTOS", "EMAILEXISTENTE");
+                    return GnossResultERROR(error);
+                }
+
+                RegistrarUsuario(miembro.correo, null, null, null, true, miembro.nombre, miembro.apellidos, miembro.contrasenya);
+                //ocultar vista modal
+
+                return GnossResultOK();
+                
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex);
+                return GnossResultERROR("Ha habido un error, intentelo de nuevo más tarde");
+            }
+        }
 
         public ActionResult CambiarCorreo(string Url)
         {
@@ -710,7 +772,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 persona = gestorPersonas.ListaPersonas[personaID];
             }
-            if(persona != null)
+            if (persona != null)
             {
                 AD.EntityModel.Models.PersonaDS.Persona filaPersona = persona.FilaPersona;
                 filaPersona.Email = correo;
@@ -1079,7 +1141,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (ObtenerParametrosLoginExterno(TipoRedSocialLogin.Google, ParametroProyecto, ParametrosAplicacionDS).Count > 0)
                     {
-                        string urlServicioLoginGoogle = mControladorBase.UrlServicioLogin + "/logingoogle.aspx?token=" + System.Net.WebUtility.UrlEncode(TokenLoginUsuario) + "&proyectoID=" + ProyectoSeleccionado.Clave.ToString() + "&urlOrigen=" + System.Net.WebUtility.UrlEncode(urlOrigen);
+                        string urlServicioLoginGoogle = mControladorBase.UrlServicioLogin + "/logingoogle?token=" + System.Net.WebUtility.UrlEncode(TokenLoginUsuario) + "&proyectoID=" + ProyectoSeleccionado.Clave.ToString() + "&urlOrigen=" + System.Net.WebUtility.UrlEncode(urlOrigen);
 
                         urlServicioLoginGoogle = AgregarEventoComunidad(urlServicioLoginGoogle);
 
@@ -1404,7 +1466,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return urlRedireccion;
         }
 
-        private string RegistrarUsuario(string pEmail, TipoRedSocialLogin? pTipoRedSocial, string pIdRedSocial, SolicitudNuevoUsuario pSolicitud)
+        private string RegistrarUsuario(string pEmail, TipoRedSocialLogin? pTipoRedSocial, string pIdRedSocial, SolicitudNuevoUsuario pSolicitud, bool pRegistroDesdeAdmin = false, string pNombre = null, string pApellidos = null, string pContrasenya = null)
         {
 
             string nombre = "";
@@ -1419,7 +1481,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string gruposEnRedSocial = "";
             string tokenEnRedSocial = "";
 
-            if (!HaySolicitudPrevia)
+            if (!HaySolicitudPrevia && !pRegistroDesdeAdmin)
             {
                 nombre = Request.Form["txtNombre"].ToString().Trim();
                 apellidos = Request.Form["txtApellidos"].ToString().Trim();
@@ -1429,6 +1491,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 password = Request.Form["txtContrasenya"];
                 fechaNacimiento = Request.Form["txtFechaNac"];
                 clausulasSelecc = Request.Form["clausulasSelecc"];
+
+                gruposEnRedSocial = Request.Form["txtGruposRed"];
+                tokenEnRedSocial = Request.Form["txtTokenRed"];
+            } else if (pRegistroDesdeAdmin)
+            {
+                nombre = pNombre.ToString().Trim();
+                apellidos = pApellidos.ToString().Trim();
+                nombreUsuario = Request.Form["txtNombreUsuario"];
+                email = pEmail;
+                emailTutor = Request.Form["txtEmailTutor"];
+                password = pContrasenya;
+                fechaNacimiento = Request.Form["txtFechaNac"];
+                clausulasSelecc = "prueba";
 
                 gruposEnRedSocial = Request.Form["txtGruposRed"];
                 tokenEnRedSocial = Request.Form["txtTokenRed"];
@@ -1489,7 +1564,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     mLoggingService.GuardarLogError("El usuario es nulo para la solicitud: " + pSolicitud.Solicitud);
                     throw new ExcepcionGeneral("El usuario es nulo para la solicitud: " + pSolicitud.Solicitud);
                 }
-                
+
             }
             else
             {
@@ -1561,6 +1636,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 try
                 {
+
                     string[] fecha = fechaNacimiento.Split('/');
 
                     int dia = int.Parse(fecha[0]);
@@ -1569,7 +1645,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     filaNuevoUsuario.FechaNacimiento = new DateTime(anio, mes, dia);
                 }
-                catch 
+                catch
                 {
                     mLoggingService.GuardarLog("Fallo obtener la fecha de nacimiento del usuario: " + filaNuevoUsuario.UsuarioID);
                 }
@@ -1649,7 +1725,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 filaNuevoUsuario.FaltanDatos = false;
                 filaNuevoUsuario.Idioma = UtilIdiomas.LanguageCode;
 
-                AdditionalFieldAutentication campoExtraPais = registro.AdditionalFields.Find(campoExtra => campoExtra.FieldName == "ddlPais");
+
+
+                AdditionalFieldAutentication campoExtraPais = null;
+                if (registro.AdditionalFields is not null)
+                {
+                    campoExtraPais = registro.AdditionalFields.Find(campoExtra => campoExtra.FieldName == "ddlPais");
+                }
+
                 if (campoExtraPais != null && campoExtraPais.FieldValue != null && campoExtraPais.FieldValue != Guid.Empty.ToString())
                 {
                     filaNuevoUsuario.PaisID = new Guid(campoExtraPais.FieldValue);
@@ -1678,49 +1761,54 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 //Dictionary<int, string> dicDatosExtraProyectoVirtuoso = new Dictionary<int, string>();
                 //Dictionary<int, string> dicDatosExtraEcosistemaVirtuoso = new Dictionary<int, string>();
 
-                foreach (AdditionalFieldAutentication campoExtra in registro.AdditionalFields)
+                if (registro.AdditionalFields is not null)
                 {
-                    string nombreCampo = campoExtra.FieldName;
-                    string valorCampo = RequestParams(nombreCampo);
 
-                    Guid guidNombreCampo = Guid.Empty;
-                    if (Guid.TryParse(nombreCampo, out guidNombreCampo))
+
+                    foreach (AdditionalFieldAutentication campoExtra in registro.AdditionalFields)
                     {
-                        Guid guidValorCampo = Guid.Empty;
-                        if (Guid.TryParse(valorCampo, out guidValorCampo) && !guidValorCampo.Equals(Guid.Empty))
+                        string nombreCampo = campoExtra.FieldName;
+                        string valorCampo = RequestParams(nombreCampo);
+
+                        Guid guidNombreCampo = Guid.Empty;
+                        if (Guid.TryParse(nombreCampo, out guidNombreCampo))
                         {
-                            DatoExtraEcosistema filaDatoExtraEcosistema = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraEcosistema.FirstOrDefault(dato => dato.DatoExtraID.Equals(guidNombreCampo));
-                            if (filaDatoExtraEcosistema != null)
+                            Guid guidValorCampo = Guid.Empty;
+                            if (Guid.TryParse(valorCampo, out guidValorCampo) && !guidValorCampo.Equals(Guid.Empty))
                             {
-                                dicDatosExtraEcosistema.Add(filaDatoExtraEcosistema.DatoExtraID, guidValorCampo);
-                            }
-                            else
-                            {
-                                DatoExtraProyecto filaDatoExtraProyecto = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraProyecto.FirstOrDefault(dato => dato.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && dato.ProyectoID.Equals(ProyectoSeleccionado.Clave) && dato.DatoExtraID.Equals(guidNombreCampo));
-                                if (filaDatoExtraProyecto != null)
+                                DatoExtraEcosistema filaDatoExtraEcosistema = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraEcosistema.FirstOrDefault(dato => dato.DatoExtraID.Equals(guidNombreCampo));
+                                if (filaDatoExtraEcosistema != null)
                                 {
-                                    dicDatosExtraProyecto.Add(filaDatoExtraProyecto.DatoExtraID, guidValorCampo);
+                                    dicDatosExtraEcosistema.Add(filaDatoExtraEcosistema.DatoExtraID, guidValorCampo);
+                                }
+                                else
+                                {
+                                    DatoExtraProyecto filaDatoExtraProyecto = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraProyecto.FirstOrDefault(dato => dato.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && dato.ProyectoID.Equals(ProyectoSeleccionado.Clave) && dato.DatoExtraID.Equals(guidNombreCampo));
+                                    if (filaDatoExtraProyecto != null)
+                                    {
+                                        dicDatosExtraProyecto.Add(filaDatoExtraProyecto.DatoExtraID, guidValorCampo);
+                                    }
                                 }
                             }
                         }
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(valorCampo))
+                        else
                         {
-                            List<DatoExtraEcosistemaVirtuoso> filasDatoExtraEcosistemaVirtuoso = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraEcosistemaVirtuoso.Where(dato => dato.Paso1Registro == true && dato.InputID.Equals(nombreCampo)).ToList();
-                            if (filasDatoExtraEcosistemaVirtuoso.Count > 0)
+                            if (!string.IsNullOrEmpty(valorCampo))
                             {
-                                dicDatosExtraEcosistemaVirtuoso.Add(filasDatoExtraEcosistemaVirtuoso[0].Orden, valorCampo);
-
-                            }
-                            else
-                            {
-                                List<DatoExtraProyectoVirtuoso> filasDatoExtraProyectoVirtuoso = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraProyectoVirtuoso.Where(dato => dato.Paso1Registro == true && dato.InputID.Equals(nombreCampo)).ToList();
-                                if (filasDatoExtraProyectoVirtuoso.Count > 0)
+                                List<DatoExtraEcosistemaVirtuoso> filasDatoExtraEcosistemaVirtuoso = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraEcosistemaVirtuoso.Where(dato => dato.Paso1Registro == true && dato.InputID.Equals(nombreCampo)).ToList();
+                                if (filasDatoExtraEcosistemaVirtuoso.Count > 0)
                                 {
-                                    dicDatosExtraProyectoVirtuoso.Add(filasDatoExtraProyectoVirtuoso[0].Orden, valorCampo);
+                                    dicDatosExtraEcosistemaVirtuoso.Add(filasDatoExtraEcosistemaVirtuoso[0].Orden, valorCampo);
 
+                                }
+                                else
+                                {
+                                    List<DatoExtraProyectoVirtuoso> filasDatoExtraProyectoVirtuoso = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraProyectoVirtuoso.Where(dato => dato.Paso1Registro == true && dato.InputID.Equals(nombreCampo)).ToList();
+                                    if (filasDatoExtraProyectoVirtuoso.Count > 0)
+                                    {
+                                        dicDatosExtraProyectoVirtuoso.Add(filasDatoExtraProyectoVirtuoso[0].Orden, valorCampo);
+
+                                    }
                                 }
                             }
                         }
@@ -1822,6 +1910,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (ParametrosGeneralesRow.FechaNacimientoObligatoria)
                     {
+                        if(fechaNacimiento == null && pRegistroDesdeAdmin)
+                        {
+                            fechaNacimiento = DateTime.Now.ToString("dd/MM/yyyy");
+                        }
+
                         string[] fecha = fechaNacimiento.Split('/');
 
                         dia = int.Parse(fecha[0]);
@@ -1832,7 +1925,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (SolicitudPrevia != null || !HaySolicitudPrevia)
                 {
-                    new ControladorIdentidades(null, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication).AceptarUsuario(IdentidadActual, filaSolicitud.SolicitudID, mSolicitudDW, dataWrapperUsuario, ParametrosGeneralesRow, ProyectoVirtual, anio, mes, dia, InvitacionAEventoComunidad, ParametroProyecto, BaseURL, InvitacionAComunidad, UrlIntragnoss, UrlIntragnossServicios, InvitacionAOrganizacion, pTipoRedSocial, pIdRedSocial, HaySolicitudPrevia);
+                    new ControladorIdentidades(null, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication).AceptarUsuario(IdentidadActual, filaSolicitud.SolicitudID, mSolicitudDW, dataWrapperUsuario, ParametrosGeneralesRow, ProyectoVirtual, anio, mes, dia, InvitacionAEventoComunidad, ParametroProyecto, BaseURL, InvitacionAComunidad, UrlIntragnoss, UrlIntragnossServicios, InvitacionAOrganizacion, pTipoRedSocial, pIdRedSocial, HaySolicitudPrevia, pRegistroDesdeAdmin);
 
                     ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
                     if (ProyectoSeleccionado.ListaTipoProyectoEventoAccion.ContainsKey(TipoProyectoEventoAccion.Registro))
@@ -2105,7 +2198,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
                         string nombreCorto = proyectoCL.ObtenerNombreCortoProyecto(SolicitudPrevia.Solicitud.ProyectoID);
                         //Insertar en la tabla UsuarioRedirect el valor del redirect
-                        if (!SaltarPasosRegistro && ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoPasoRegistro.Count > 0 && !tipoProyecto.Equals(TipoProyecto.EducacionExpandida) && !tipoProyecto.Equals(TipoProyecto.EducacionPrimaria))
+                        if (!SaltarPasosRegistro && ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoPasoRegistro.Count > 0 && !tipoProyecto.Equals(TipoProyecto.EducacionExpandida) && !tipoProyecto.Equals(TipoProyecto.EducacionPrimaria) && !pRegistroDesdeAdmin)
                         {
                             List<ProyectoPasoRegistro> filasPasos = ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoPasoRegistro.OrderBy(item => item.Orden).ToList();
 
@@ -2123,7 +2216,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         else
                         {
                             urlRedirect = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, nombreCorto);
-                            if (!SaltarPasosRegistro && !tipoProyecto.Equals(TipoProyecto.EducacionExpandida) && !tipoProyecto.Equals(TipoProyecto.EducacionPrimaria))
+                            if (!SaltarPasosRegistro && !tipoProyecto.Equals(TipoProyecto.EducacionExpandida) && !tipoProyecto.Equals(TipoProyecto.EducacionPrimaria) && !pRegistroDesdeAdmin)
                             {
                                 //Insertar en la tabla UsuarioRedirect el valor del redirect
                                 urlRedirect = urlRedirect + "/" + UtilIdiomas.GetText("URLSEM", "REGISTROUSUARIO") + "/1";
@@ -2195,7 +2288,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 else
                 {
                     urlRedirect = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
-                    if (!SaltarPasosRegistro && !ProyectoSeleccionado.TipoProyecto.Equals(TipoProyecto.EducacionExpandida) && !ProyectoSeleccionado.TipoProyecto.Equals(TipoProyecto.EducacionPrimaria))
+                    if (!SaltarPasosRegistro && !ProyectoSeleccionado.TipoProyecto.Equals(TipoProyecto.EducacionExpandida) && !ProyectoSeleccionado.TipoProyecto.Equals(TipoProyecto.EducacionPrimaria) && !pRegistroDesdeAdmin)
                     {
                         //Insertar en la tabla UsuarioRedirect el valor del redirect
                         urlRedirect = urlRedirect + "/" + UtilIdiomas.GetText("URLSEM", "REGISTROUSUARIO") + "/1";
@@ -2206,8 +2299,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
 
-                usuarioCN.InsertarUrlRedirect(filaUsuario.UsuarioID, urlRedirect);
-
+                if (!pRegistroDesdeAdmin)
+                {
+                    usuarioCN.InsertarUrlRedirect(filaUsuario.UsuarioID, urlRedirect);
+                }
+                
                 /*//Insertar en la tabla UsuarioRedirect el valor del redirect
                 urlRedirect = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
                 if (!SaltarPasosRegistro && !ProyectoSeleccionado.TipoProyecto.Equals(TipoProyecto.EducacionExpandida) && !ProyectoSeleccionado.TipoProyecto.Equals(TipoProyecto.EducacionPrimaria))
@@ -3451,7 +3547,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         //cookie.Domain = mControladorBase.DominoAplicacion;
                         mControladorBase.ExpirarCookie("skp-stps");
                     }
-                    else if (!string.IsNullOrEmpty(Request.Headers["skp-stps"]) && Request.Headers["skp-stps"].Equals("true"))
+                    else if (!string.IsNullOrEmpty(Request.Query["skp-stps"]) && Request.Query["skp-stps"].Equals("true"))
                     {
                         mSaltarPasosRegistro = true;
                     }

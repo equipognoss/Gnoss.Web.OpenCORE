@@ -33,11 +33,11 @@ string claseParent = "";
         <a onclick="@onclick">@Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages[Model.pIdioma]</a>
     </li>
     */
-    <li class="nav-item @claseParent" role="presentation" rel="@Model.pIdioma">
+    <li class="nav-item @clase" role="presentation" rel="@Model.pIdioma">
         <a class="nav-link @clase"          
            onclick="@onclick"
            data-toggle="tab" 
-           href="#" 
+           href="javascript:void(0);" 
            role="tab" 
            aria-controls="@Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages[Model.pIdioma]" 
            aria-selected="false">

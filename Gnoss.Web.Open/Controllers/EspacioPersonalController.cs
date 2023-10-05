@@ -457,7 +457,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 else if (doc.TipoDocumentacion == TiposDocumentacion.Video)
                                 {
 
-                                    CallInterntService sV = new CallInterntService(mConfigService);
+                                    CallInterntService sV = new CallInterntService(mConfigService, mLoggingService);
 
                                     espacioArchivo = sV.ObtenerEspacioVideoPersonal(recurso, mControladorBase.UsuarioActual.PersonaID);
 

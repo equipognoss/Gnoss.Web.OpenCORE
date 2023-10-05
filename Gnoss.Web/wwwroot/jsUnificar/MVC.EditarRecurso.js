@@ -828,10 +828,16 @@ function AceptarUsuarioMiembroComunidad(txtautocomp, nombre, id, identidad) {
  * @param {any} perfilID
  */
 function EliminarUsuarioMiembroComunidad(nodo, perfilID) {
-    var txtValores = $('.hackUsuSeleccionadoRec', $(nodo).parents('#panAgregarMiembros'));    
-    txtValores.val(txtValores.val().replace(perfilID + ',', ''));
-    // Actualizado debido al nuevo front
-    //$(nodo).parent().remove();
+    var txtValores = $('.hackUsuSeleccionadoRec', $(nodo).parents('#panAgregarMiembros'));
+
+    // Tener en cuenta que no haya el carácter "&". En algunos inputs no se hace separación con "," sino con "&".
+    if (txtValores.val().includes("&")){
+        txtValores.val(txtValores.val().replace("&"+ perfilID, ''));
+    } else {
+        txtValores.val(txtValores.val().replace(perfilID + ',', ''));
+    }
+
+    // Eliminar el item recién eliminado
     $(nodo).parent().parent().remove();
 }
 
@@ -1079,9 +1085,13 @@ function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, ed
     $('#fuExaminarSemCms').change(InicioCargarArchivo_SemCms);
 
     if (typeof ($('.calenFormSem').datepicker) != 'undefined') {
+        // Preparar el .datePicker para que esté disponible en la web
+        const oldYear = moment().format('YYYY') - 110;
+        const currentYear = moment().format('YYYY');
         $('.calenFormSem').datepicker({
             changeMonth: true,
-            changeYear: true
+            changeYear: true,
+            yearRange: `${oldYear}:${currentYear}`,
         });
     }
     if (typeof ($('.calenTimeFormSem').datetimepicker) != 'undefined') {

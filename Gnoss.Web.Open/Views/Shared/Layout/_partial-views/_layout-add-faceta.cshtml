@@ -1,0 +1,85 @@
+﻿@model AdministrarFacetasViewModel
+
+@*
+Descripción
+----------------------------------------------------------------
+Vista parcial que muestra un pequeño botón para poder crear una faceta desde la Administración de la comunidad.
+Esta vista se utiliza en la vista _Layout_Admin.cshtml siempre y cuando el usuario se encuentre en la sección de "Facetas".
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+string urlAddFaceta = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFACETASCOM") + "/new-facet";
+}
+
+@*    
+<ul>
+	<li class="nuevo nueva-faceta">
+*@
+		@* Botón para añadir una nueva faceta *@
+		<a
+			href="javascript: void(0);"
+			class="btn btn-outline-primary dropdown-toggle no-flecha"
+			id="menuNuevaFaceta"
+			data-toggle="dropdown"
+			aria-haspopup="true"
+			aria-expanded="true">
+			<span class="material-icons">add</span>
+			<span>@Html.GetText("ADMINISTRACIONSEMANTICA","AÑADIRFACETA")</span>
+		</a>
+		@* Dropdown con el tipo de facetas a crear *@
+		<div
+			class="dropdown-menu dropdown-menu-right basic-dropdown"
+			aria-labelledby="menuNuevaFaceta">
+			<div>
+				<ul class="no-list-style menuCreacion">   			
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewFaceta"
+							data-url="@urlAddFaceta"
+                            data-type="@((short)TipoFaceta.Texto)">@Html.GetText("DEVTOOLS","TEXTO")
+                        </a>									                 
+                    </li>  
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewFaceta"
+							data-url="@urlAddFaceta"
+                            data-type="@((short)TipoFaceta.Numero)">@Html.GetText("DEVTOOLS","NUMERO")
+                        </a>									                 
+                    </li> 
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewFaceta"
+							data-url="@urlAddFaceta"
+                            data-type="@((short)TipoFaceta.Fecha)">@Html.GetText("DEVTOOLS","FECHA")
+                        </a>									                 
+                    </li>
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewFaceta"
+							data-url="@urlAddFaceta"
+                            data-type="@((short)TipoFaceta.Tesauro)">@Html.GetText("DEVTOOLS","TESAURO")
+                        </a>									                 
+                    </li>
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewFaceta"
+							data-url="@urlAddFaceta"
+                            data-type="@((short)TipoFaceta.TextoInvariable)">@Html.GetText("DEVTOOLS","TEXTOINVARIABLE")
+                        </a>								                 
+                    </li>
+                    <li>
+                        <a
+                            class="item-dropdown linkAddNewFaceta"
+							data-url="@urlAddFaceta"
+                            data-type="@((short)TipoFaceta.Siglo)">@Html.GetText("DEVTOOLS","SIGLO")
+                        </a>									                 
+                    </li>
+				</ul>
+			</div>
+		</div>
+        @*
+	</li>
+</ul>
+*@

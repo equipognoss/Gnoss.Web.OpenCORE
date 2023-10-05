@@ -17,11 +17,10 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
-using Es.Riam.Gnoss.Web.Controles;
-using Es.Riam.Gnoss.Web.MVC.Controllers;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -37,6 +36,7 @@ using System.Web;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class VisualizarDocumentoController : ControllerBaseWeb
     {
         public const string ID_GOOGLE = "##idgoogle##";
@@ -58,7 +58,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
         [HttpGet]
         public IActionResult Index()
-        {
+        {   
             mLoggingService.AgregarEntrada("Entra page load VisualizarDocumento");
             bool OmitirRedireccionFlash = false;
             string mNombreDocumento = string.Empty;
@@ -130,7 +130,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string tipoEntidad = "", ext = "", nombre = "", archivoAdjuntoSem = "", idiomaFichero = "";
             Guid organizacion = Guid.Empty, proyecto = Guid.Empty, ficheroID = Guid.Empty, personaID = Guid.Empty, ontologiaAdjuntoSem = Guid.Empty;
-            List<Es.Riam.Gnoss.AD.EntityModel.Models.IdentidadDS.Identidad> listaFilasIdentidad = null;
+            List<AD.EntityModel.Models.IdentidadDS.Identidad> listaFilasIdentidad = null;
 
             if (!OmitirRedireccionFlash)
             {
@@ -138,8 +138,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     PaginaVisibleEnPrivada = ParametroProyecto[ParametroAD.PermitirDescargaIdentidadInvitada].Equals("1");
                 }
-
-                //base.Page_Load(sender, e);
 
                 listaFilasIdentidad = IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(identidad => identidad.ProyectoID == proyecto && identidad.Tipo != 3).ToList();
                 mLoggingService.AgregarEntrada("parametros recogidos");
@@ -205,7 +203,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 archivoAdjuntoSem = archivo.Substring(0, archivo.LastIndexOf('.'));
                 ext = archivo.Substring(archivo.LastIndexOf('.'));
             }
-
             bool descargaIframe = !string.IsNullOrEmpty(Request.Query["iframe"]) && Request.Query["iframe"].Equals("true");
 
             DocumentacionCN docsCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -214,9 +211,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             GestorDocumental gestorDocs = new GestorDocumental(new DataWrapperDocumentacion(), mLoggingService, mEntityContext);
 
             mLoggingService.AgregarEntrada("compruebo gestor documental");
-
+            
             //Carga la base de recursos del usuario:
-            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursos = new List<Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.BaseRecursos>();
+            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursos = new List<AD.EntityModel.Models.Documentacion.BaseRecursos>();
             if (gestorDocs.DataWrapperDocumentacion != null)
             {
                 gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosUsuario.Clear();
@@ -224,8 +221,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 gestorDocs.DataWrapperDocumentacion.ListaDocumentoComentario.Clear();
             }
 
-            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosUsuario = new List<Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.BaseRecursosUsuario>();
-            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosOrganizacion = new List<Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.BaseRecursosOrganizacion>();
+            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosUsuario = new List<AD.EntityModel.Models.Documentacion.BaseRecursosUsuario>();
+            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosOrganizacion = new List<AD.EntityModel.Models.Documentacion.BaseRecursosOrganizacion>();
 
             if (!proyecto.Equals(Guid.Empty))
             {
@@ -245,7 +242,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             //Comprueba si se está accediendo al recurso desde una comunidad diferente a la que se creó el recurso
             ComprobarAccesoDesdeOtroProyecto(proyecto, ficheroID);
-
+                        
             mLoggingService.AgregarEntrada("compruebo OmitirRedireccionFlash " + OmitirRedireccionFlash);
 
             if (!OmitirRedireccionFlash)
@@ -260,8 +257,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         //ParametroGeneralDS paramDS = paramCL.ObtenerParametrosGeneralesDeProyecto(proyecto);
                         GestorParametroGeneral gestorParametroGeneral = paramCL.ObtenerParametrosGeneralesDeProyecto(proyecto);
                         paramCL.Dispose();
-
-                        if (!gestorParametroGeneral.ListaParametroGeneral[0].PermitirUsuNoLoginDescargDoc)
+                        string permitirDescargaParam = "PermitirDescargaIdentidadInvitada";
+                        bool permitirVisualizarDescargarInvitado = false;
+                        if (ParametroProyecto.ContainsKey(permitirDescargaParam))
+                        {
+                            if (ParametroProyecto[permitirDescargaParam] == "1" || ParametroProyecto[permitirDescargaParam] == "true")
+                            {
+                                permitirVisualizarDescargarInvitado = true;
+                            }
+                            else if (ParametroProyecto[permitirDescargaParam] == "0" || ParametroProyecto[permitirDescargaParam] == "false")
+                            {
+                                permitirVisualizarDescargarInvitado = false;
+                            }
+                        }
+                        if (!permitirVisualizarDescargarInvitado)
                         {
                             if (!proyecto.Equals(ProyectoAD.MetaProyecto))
                             {
@@ -286,8 +295,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     url = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(idioma, UtilIdiomas, nombreCortoProyecto, "", doc, false);
                                 }
 
-                                //string url = idioma + GetText("URLSEM", "COMUNIDAD") + "/" + nombreCortoProyecto + "/" + GetText("URLSEM", "RECURSO");
-                                //string url = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(urlProyecto + idioma, UtilIdiomas, nombreCortoProyecto, "", doc, false);
                                 mLoggingService.AgregarEntrada("PageLoad: !OmitirRedireccionFlash, ListaDocumentosContieneficheroID " + ficheroID + ", EsUsuarioInvitado, !PermitirUsuNoLoginDescargDoc, !MetaProyecto");
 
                                 Response.Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, nombreCortoProyecto) + "/login/redirect/" + url);
@@ -338,37 +345,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 gestorDocs.GestorIdentidades.RecargarHijos();
                             }
                         }
-                        if (UrlReferrer.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARPLANTILLASCOM")) && ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                        if (ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
                         {
                             redireccionarFicha = false;
                         }
                         else if (doc.EsEditoraOLectoraIdentidad(IdentidadActual))
                         {
 
-                            if (descargaDesdeRdf || (UrlReferrer.ToLower().Contains(/*"/" + doc.NombreSem.ToLower() +*/ "/" + ficheroID.ToString().ToLower())))
+                            if (descargaDesdeRdf || (UrlReferrer.ToLower().Contains($"/{ficheroID.ToString().ToLower()}")))
                             {
                                 redireccionarFicha = false;
                             }
                             else if (!doc.FilaDocumento.UltimaVersion)
                             {
-                                if (descargaDesdeRdf || (UrlReferrer.EndsWith(mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARPLANTILLASCOM"))) || doc.UltimaVersion == null || (UrlReferrer.EndsWith("/" + doc.UltimaVersion.NombreSem(UtilIdiomas.LanguageCode) + "/" + doc.UltimaVersion.Clave.ToString())))
+                                if (descargaDesdeRdf || doc.UltimaVersion == null || UrlReferrer.EndsWith($"/{doc.UltimaVersion.NombreSem(UtilIdiomas.LanguageCode)}/{doc.UltimaVersion.Clave}"))
                                 {
                                     redireccionarFicha = false;
                                 }
                             }
                         }
-                        else if (IdentidadActual != null && (descargaDesdeRdf || (UrlReferrer.ToLower().Contains("/" + ficheroID.ToString().ToLower())))) //Si el recurso es publico en alguna otra comunidad a la que pertenece el usuario, le dejamos descargarlo
+                        else if (IdentidadActual != null && (descargaDesdeRdf || (UrlReferrer.ToLower().Contains($"/{ficheroID.ToString().ToLower()}")))) //Si el recurso es publico en alguna otra comunidad a la que pertenece el usuario, le dejamos descargarlo
                         {
-                            foreach (Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.DocumentoWebVinBaseRecursos filaDocVin in doc.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos)
+                            foreach (AD.EntityModel.Models.Documentacion.DocumentoWebVinBaseRecursos filaDocVin in doc.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos)
                             {
                                 if (!filaDocVin.PrivadoEditores)
                                 {
-                                    List<Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.BaseRecursosProyecto> filasBRProy = doc.GestorDocumental.DataWrapperDocumentacion.ListaBaseRecursosProyecto.Where(baseRec => baseRec.BaseRecursosID.Equals(filaDocVin.BaseRecursosID)).ToList();
+                                    List<AD.EntityModel.Models.Documentacion.BaseRecursosProyecto> filasBRProy = doc.GestorDocumental.DataWrapperDocumentacion.ListaBaseRecursosProyecto.Where(baseRec => baseRec.BaseRecursosID.Equals(filaDocVin.BaseRecursosID)).ToList();
 
                                     if (filasBRProy.Count > 0)
                                     {
-                                        Guid proyectoID = filasBRProy.First().ProyectoID;//"ProyectoID='" + proyectoID + "' AND FechaBaja is NULL AND FechaExpulsion is NULL"
-                                        List<Es.Riam.Gnoss.AD.EntityModel.Models.IdentidadDS.Identidad> filasIdent = IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(ident => ident.ProyectoID.Equals(proyectoID) && !ident.FechaBaja.HasValue && !ident.FechaExpulsion.HasValue).ToList();
+                                        Guid proyectoID = filasBRProy.First().ProyectoID;
+                                        List<AD.EntityModel.Models.IdentidadDS.Identidad> filasIdent = IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(ident => ident.ProyectoID.Equals(proyectoID) && !ident.FechaBaja.HasValue && !ident.FechaExpulsion.HasValue).ToList();
 
                                         if (filasIdent.Count > 0)
                                         {
@@ -383,12 +390,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         if (doc.FilaDocumentoWebVinBR != null && doc.FilaDocumentoWebVinBR.PrivadoEditores && !doc.FilaDocumento.UltimaVersion && doc.UltimaVersionID != Guid.Empty)//Hay que mirar los editores de la última versión.
                         {
                             //Carga la base de recursos del usuario:
-                            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursos = new List<Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.BaseRecursos>();
+                            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursos = new List<AD.EntityModel.Models.Documentacion.BaseRecursos>();
                             gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosUsuario.Clear();
                             gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosOrganizacion.Clear();
                             gestorDocs.DataWrapperDocumentacion.ListaDocumentoComentario.Clear();
-                            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosUsuario = new List<Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.BaseRecursosUsuario>();
-                            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosOrganizacion = new List<Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.BaseRecursosOrganizacion>();
+                            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosUsuario = new List<AD.EntityModel.Models.Documentacion.BaseRecursosUsuario>();
+                            gestorDocs.DataWrapperDocumentacion.ListaBaseRecursosOrganizacion = new List<AD.EntityModel.Models.Documentacion.BaseRecursosOrganizacion>();
 
                             if (proyecto != Guid.Empty)
                             {
@@ -412,8 +419,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         redireccionarFicha = ComprobarPermisosOauth(false);
                     }
-
-                    mLoggingService.AgregarEntrada("redireccionar a ficha " + redireccionarFicha);
 
                     if (redireccionarFicha)
                     {
@@ -504,7 +509,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 try
                 {
-                    CallFileService servicioArch = new CallFileService(mConfigService);
+                    CallFileService servicioArch = new CallFileService(mConfigService, mLoggingService);
 
                     if (ext == ".xml")
                     {
@@ -568,6 +573,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     byteArray = gestorDocumental.ObtenerDocumentoDeBaseRecursosOrganizacion(tipoEntidad, organizacion, ficheroID, ext);
                 }
             }
+
             mLoggingService.AgregarEntrada("Obtenido");
 
             string contentType = "application/octet-stream";
@@ -643,26 +649,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     docCN.ActualizarNumeroDescargasDocumento(ficheroID, gestorDocs.BaseRecursosIDActual);
                 }
 
-                //Le añado el tipo de contenido
-                Response.ContentType = contentType;
-
+                mLoggingService.GuardarLog($"7. {HttpContext.Response.StatusCode} Descargar iframe -> descargarIframe: {descargaIframe}");
+                
                 if (descargaIframe)
                 {
-                    //Añadimos la cabecera http al navegador
-                    Response.Headers.Add("Content-Disposition", $"filename=\"{HttpUtility.UrlEncode(nombre)}\"");
+                    agregarCabecera = false;
+                    //Añadimos la cabecera http al navegador                    
+                    Response.Headers.Add("Content-Disposition", $"inline; filename=\"{HttpUtility.UrlEncode(nombre).Replace("+", " ")}\"");
                     ConcurrentDictionary<string, string> mimetypes = Conexion.ObtenerMimeType();
                     string mimetype = "";
                     if (mimetypes.TryGetValue(ext, out mimetype))
                     {
                         Response.Headers.Add("Content-Type", mimetype);
+                        contentType = mimetype;
                     }
                     else
                     {
                         Response.Headers.Add("Content-Type", "application/octet-stream");
                     }
+                    return File(byteArray, contentType);
                 }
                 else if (agregarCabecera)
                 {
+                    //Le añado el tipo de contenido
+                    Response.ContentType = contentType;
                     //Añadimos la cabecera http al navegador
                     Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{HttpUtility.UrlEncode(nombre)}\"");
                 }
@@ -767,9 +777,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         private void ComprobarAccesoDesdeOtroProyecto(Guid pProyectoID, Guid pDocumentoID)
-        {
+        {   
             if (ProyectoSeleccionado.Clave != pProyectoID)
-            {
+            {                
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
 
                 bool comunidadPermiteDescargaAInvitados = false;
@@ -816,7 +826,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 bool usuarioTieneAccesoProyecto = !esIdentidadInvitada || ProyectoSeleccionado.EsPublico;
 
                 bool usuarioTieneAccesoRecurso = docCN.TieneUsuarioAccesoADocumentoEnProyecto(ProyectoSeleccionado.Clave, pDocumentoID, perfilID, identidadID, identidadMygnossID, false, !esIdentidadInvitada);
-
+                                
                 // Si el usuario no tiene acceso al recurso, se le redirige a la home de la comunidad
                 // Si el usuario tiene acceso al recurso, pero no tiene acceso a la comunidad o esta no permite la descarga para el usuario invitado, se le redirige a la home de la comunidad
                 if (!usuarioTieneAccesoRecurso || (!comunidadPermiteDescargaAInvitados && !usuarioTieneAccesoProyecto))

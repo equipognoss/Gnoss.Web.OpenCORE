@@ -1,771 +1,94 @@
 ﻿@model AdministrarCategoriasViewModel
 
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar la sección de Información General de la Comunidad mediante DevTools.
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
     CommunityModel Comunidad = Html.GetComunidad();
-    HeaderModel cabecera = Html.GetCabecera();
-
-    //Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/comunidades.css?v=" + Html.GetVersion());
-    //Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/comun.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/plantillas.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/forms.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/tools.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/print.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/gnossStyle.css?v=" + Html.GetVersion());
-    //Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/cabecera.css?v=" + Html.GetVersion());
-    //Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssUnificar/default.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
-
-    Html.SetBodyClass(Html.GetBodyClass() + " layout04 full  administracionComunidad  comGnoss");
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 }
 
-<style>
-    #section {
-        width:auto !important;
-    }
-    #footer {
-        width:auto !important;
-    }
-    div.ko, div.ok {
-        color: white !important;
-    }
-    #divSelCatTesauro div.externo {
-        background-color: #ddd;
-    }
-    #adminComCate #panAcciones input {
-        width: 300px;
-    }
-    #adminComCate input#filtroRapido {
-        width: 200px;
-    }
-    #adminComCate label.boton {
-        background: #eee none repeat scroll 0 0;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-        padding: 0 !important;
-    }
-    #adminComCate label.boton a {
-        font-size: 12px;
-        padding: 4px 10px;
-    }
-
-    #divSelCatTesauro.filtrado .panHijos{
-        margin-left:0px !important;
-        display:block !important;
-    }
-</style>
-<div class="content">
-    <h1>
-        Configurar Categorías del tesauro
-    </h1>
-    <div id="contenedorAdminTesauro" >
-        <p>
-            <span id="lblTextoCategoriasBotones">@Html.GetText("COMADMINCATEGORIAS", "TEXTOSUPBOTONES")</span>
-        </p>
-        <p>
-            @Html.GetText("COMADMINCATEGORIAS", "INFOARBOLCATEGORIAS")<br>
-            @Html.GetText("COMADMINCATEGORIAS", "INFOARBOLCATEGORIAS2")
-        </p>
-
-        <input id="guardarTodo" class="guardarTodo" type="button" value="Guardar" onclick="Guardar()">
-
-        <p id="pActivarMultiidioma">
-            <span type="checkbox">
-                <input type="checkbox" @Html.Raw(Model.MultiLanguaje?"checked=\"checked\"":"") name="chkMultiIdioma" id="chkMultiIdioma" />
-            </span> @Html.GetText("COMADMINCATEGORIAS", "ACTIVAREDICIONMULTIIDIOMA")
-        </p>
-
-        <div id="adminComCate">
-            <div class="botonera floatLeft">
-                <label class="boton btGris"><a id="lbMostarCreacionCategoria">@Html.GetText("COMADMINCATEGORIAS", "CREARNUEVA")</a></label>
-                <label class="boton btGris"><a id="lbMostarCambiarNombreCategoria">@Html.GetText("COMADMINCATEGORIAS", "CAMBIARNOMBRE")</a></label>
-                <label class="boton btGris"><a id="lbMostarMoverCategoria">@Html.GetText("COMADMINCATEGORIAS", "MOVER")</a></label>
-                <label class="boton btGris"><a id="lbMostarOrdenarCategoria">@Html.GetText("COMADMINCATEGORIAS", "ORDENAR")</a></label>
-                <label class="boton btGris"><a id="lbMostarEliminacionCategoria">@Html.GetText("COMADMINCATEGORIAS", "ELIMINAR")</a></label>
-                <label class="boton btGris"><a id="lbMostarCompartirCategoria">@Html.GetText("PERFILBASERECURSOSFICHA", "COMPARTIR")</a></label>
-            </div>
-            <div class="floatRight">
-                <span class="filtroRapido floatRight">
-                    Buscar
-                    <input type="text" id="filtroRapido">
-                    <span id="filtroRapido_reset" style="display:none" class="reset">
-                        <a class="eliminarFiltro">&nbsp;</a>
-                    </span>
-                </span>
-            </div>
-            <div class="clear">
-            </div>
-            <div style="display: none" class="panDesplegable" id="panAcciones"></div>
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar las categorías de la comunidad --------------------
+*@
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>                
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")</a>
+            </li>
+            <li>
+                @Html.GetText("ADMINISTRACIONBASICA","CATEGORIAS")
+            </li>
+        </ul>
+        @* Botón de documentación *@
+        <div class="col-breadcrumb__documentation" style="display: flex; align-items: center;">    
+            <button type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" data-toggle="modal" data-target="#right_modal_lg">
+                <span class="material-icons texto-primario documentation__icon" data-toggle="modal" data-target="#right_modal_lg" style="cursor:pointer">description</span>
+                <span class="documentation__text" style="font-weight: 300;">Documentación</span>
+            </button>
         </div>
-        <h3>@Html.GetText("PERFILBASERECURSOSFICHA", "ARBOLCATEGORIAS")</h3>
-        <div id="panTesauro">
-            @Html.PartialView("_Tesauro", Model)
-        </div>
-        <input id="guardarTodo" class="guardarTodo" type="button" value="Guardar" onclick="Guardar()">
     </div>
-</div>
-<script type="text/javascript">
-    var urlPagina = "@Html.GetUrlPagina()";
 
-
-    $(document).ready(function () {
-        window.onbeforeunload = function (e) {
-            return ComprobarCambios();
-        }
-        $("#chkMultiIdioma").change(function () {
-            clickMultiIdioma();
-        });
-
-        $("#lbMostarCreacionCategoria").click(function () {
-            DesplegarCrearCategoria();
-        });
-        $("#lbMostarCambiarNombreCategoria").click(function () {
-            DesplegarCambiarNombreCategoria();
-        });
-        $("#lbMostarMoverCategoria").click(function () {
-            DesplegarMoverCategoria();
-        });
-        $("#lbMostarOrdenarCategoria").click(function () {
-            DesplegarOrdenarCategoria();
-        });
-        $("#lbMostarEliminacionCategoria").click(function () {
-            DesplegarEliminarCategoria();
-        });
-        $("#lbMostarCompartirCategoria").click(function () {
-            DesplegarCompartirCategoria();
-        });
-
-        $("#filtroRapido").keyup(function () {
-            FiltrarRapido();
-        }).keyup(function (event) {
-            if (event.which || event.keyCode) {
-                if ((event.which == 13) || (event.keyCode == 13)) {
-                    return false;
-                }
-            }
-        });
-        $("#filtroRapido_reset a.eliminarFiltro").click(function () {
-            ResetFiltro();
-        });
-    });
-
-    function ObtenerParametrosComunes() {
-        var params = {
-            IdiomaSeleccionado:  $('#txtHackIdiomaTesauro').val(),
-            multiLanguage: $('#chkMultiIdioma').is(':checked'),
-            CategoriasExpandidas: $('#txtCategoriasExpandidas').val(),
-            CategoriasSeleccionadas: $('#txtCategoriasSeleccionadas').val(),
-            PasosRealizados: $('#txtAccionesTesauroHack').val()
-        }
-        return params;
-    }
-
-    /*FILTRAR*/
-
-    function FiltrarRapido() {
-        var filtro = $('#filtroRapido').val();
-        if (filtro.length == 0) {
-            ResetFiltro();
-        }
-        else {
-            $('#filtroRapido_reset').css('display', '');
-            filtrar(filtro);
-        }
-    }
-
-    function ResetFiltro() {
-        $('#filtroRapido').val('');
-        $('#filtroRapido_reset').css('display', 'none');
-        filtrar('');
-    }
-
-    function filtrar(filtro) {
-        var listadoCategorias = $('#divSelCatTesauro span');
-
-        if (filtro == "") {
-            $('#divSelCatTesauro').removeClass("filtrado");
-        }
-        else {
-            $('#divSelCatTesauro').addClass("filtrado");
-        }
-
-        listadoCategorias.each(function () {
-            var item = $(this);
-            var itemText = item.find('label').text();
-
-            item.parent().children(':not(div)').show();
-
-            if (itemText.toLowerCase().indexOf(filtro) < 0) {
-                item.parent().children(':not(div)').hide();
-            }   
-        });
-
-        return;
-    }
-
-    /*GUARDAR*/
-
-    var guardando = 'false';
-
-    function Guardar() {
-        if ($('#txtAccionesTesauroHack').val() != "") {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-            guardando = 'true'
-            var params = ObtenerParametrosComunes();
-
-            GnossPeticionAjax(urlPagina + "/save", params, true).done(function (data) {
-                $('#panTesauro').html(data);
-                MostrarGuardadoOK();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function ComprobarCambios() {
-        if (guardando != 'true' && document.getElementById('txtAccionesTesauroHack').value != "") {
-            return (form.perderdatosbio);
-        }
-    }
-
-    /*CREAR CATEGORIA*/
-
-    function DesplegarCrearCategoria() {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-
-            GnossPeticionAjax(urlPagina + "/show-action/create", params, true).done(function (data) {
-                $('#panAcciones').html(data);
-                SlideDown();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function CrearCategoriaTesauro() {
-        LimpiarError();
-        MostrarUpdateProgress();
-        var catPadre = $('#cmbCrearCategoriaEn').val();
-        var nombreCat = "";
-        var esMultiIdioma = $('#chkMultiIdioma').is(':checked');
-        $('#panAcciones input.inputIdioma').each(function () {
-            if (!esMultiIdioma) {
-                if ($(this).attr('rel') == $('#txtHackIdiomaTesauro').val()) {
-                    nombreCat = $(this).attr('rel') + '@("@@@")' +$(this).val() + '$$$';
-                }
-            }
-            else {
-                nombreCat += $(this).attr('rel') + '@("@@@")' +$(this).val() + '$$$';
-            }
-        });
-        nombreCat = nombreCat.substring(0, nombreCat.length - 3);
-
-        var params = ObtenerParametrosComunes();
-
-        params.name = nombreCat;
-        params.parentKey = catPadre;
-
-        GnossPeticionAjax(urlPagina + "/action/create", params, true).done(function (data) {
-            $('#panTesauro').html(data);
-            SlideUp();
-        }).fail(function (data) {
-            MostrarERROR(data);
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    /*CAMBIAR NOMBRE CATEGORIA*/
-
-    function DesplegarCambiarNombreCategoria() {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-            
-            var params = ObtenerParametrosComunes();
-
-            GnossPeticionAjax(urlPagina + "/show-action/change-name", params, true).done(function (data) {
-                $('#panAcciones').html(data);
-                SlideDown();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function CambiarNombreCategoriaTesauro() {
-        LimpiarError();
-        MostrarUpdateProgress();
-        var categoria = $('#txtHackCatIDCambioNombre').val();
-
-        var nombreCat = "";
-        var esMultiIdioma = $('#chkMultiIdioma').is(':checked');
-        $('#panAcciones input.inputIdioma').each(function () {
-            if (!esMultiIdioma) {
-                if ($(this).attr('rel') == $('#txtHackIdiomaTesauro').val()) {
-                    nombreCat = $(this).attr('rel') + '@("@@@")' + $(this).val() + '$$$';
-                }
-            }
-            else {
-                nombreCat += $(this).attr('rel') + '@("@@@")' +$(this).val() + '$$$';
-            }
-        });
-        nombreCat = nombreCat.substring(0, nombreCat.length - 3);
-        
-        var params = ObtenerParametrosComunes();
-        
-        params.name = nombreCat;
-        params.categoryKey = categoria;
-
-        GnossPeticionAjax(urlPagina + "/action/change-name", params, true).done(function (data) {
-            $('#panTesauro').html(data);
-            SlideUp();
-        }).fail(function (data) {
-            MostrarERROR(data);
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    /*MOVER CATEGORIA*/
-
-    function DesplegarMoverCategoria() {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-
-            GnossPeticionAjax(urlPagina + "/show-action/move", params, true).done(function (data) {
-                $('#panAcciones').html(data);
-                SlideDown();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function MoverCategoriaTesauro() {
-        LimpiarError();
-
-        var catPadre = $('#cmbCategoriasMover').val();
-
-        if (catPadre != '') {
-            MostrarUpdateProgress();
-            var categorias = $('#txtHackCatIDMover').val();
-
-            var params = ObtenerParametrosComunes();
-
-            params.CategoriasSeleccionadas = categorias;
-            params.parentKey = catPadre;
-
-            GnossPeticionAjax(urlPagina + "/action/move", params, true).done(function (data) {
-                $('#panTesauro').html(data);
-                SlideUp();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    /*ORDENAR CATEGORIA*/
-
-    function DesplegarOrdenarCategoria() {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-
-            GnossPeticionAjax(urlPagina + "/show-action/order", params, true).done(function (data) {
-                $('#panAcciones').html(data);
-                SlideDown();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function OrdenarCategoriaTesauro() {
-        LimpiarError();
-
-        var catSup = $('#cmbCategoriasOrdenar').val();
-
-        if (catSup != '') {
-            MostrarUpdateProgress();
-            var categorias = $('#txtHackCatIDOrdenar').val();
-
-            var params = ObtenerParametrosComunes();
-
-            params.CategoriasSeleccionadas = categorias;
-            params.parentKey = catSup;
-
-            GnossPeticionAjax(urlPagina + "/action/order", params, true).done(function (data) {
-                $('#panTesauro').html(data);
-                SlideUp();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    /*ELIMINAR CATEGORIA*/
-
-    function DesplegarEliminarCategoria() {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-
-            GnossPeticionAjax(urlPagina + "/show-action/delete", params, true).done(function (data) {
-
-                // Comprobar si es un objeto o array (La versión 5 devuelve un objeto de arrays)             
-                if (!Array.isArray(data)) {
-                    // Asegurarse de que no es html plano -> Elegir panel para mover recursos cuya categoría va a eliminarse
-                    if (data.$values == undefined){
-                        $('#panAcciones').html(data);
-                        SlideDown();
-                    }else if (data.$values.length == 1 && data.$values[0].updateTargetId == "tesauro"){
-                        // V5 -> Objeto de arrays -> Acceder al elemento 2 del objeto para proceder al borrado
-                        $('#panTesauro').html(data.$values[0].html);
-                        SlideUp();
-                    }else{
-                        $('#panAcciones').html(data.$values);
-                        SlideDown();
-                    }                                    
-                } else {
-                    // V4 -> Array solo ha sido devuelto
-                    if (data.length == 1 && data[0].updateTargetId == "tesauro") {
-                        $('#panTesauro').html(data[0].html);
-                        SlideUp();
-                    }
-                    else {
-                        $('#panAcciones').html(data);
-                        SlideDown();
-                    }
-                }
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function EliminarCategoriaTesauro() {
-        var catSup = $('#cmbMoverATrasEliminar').val();
-
-        if (catSup != '') {
-            LimpiarError();
-            MostrarUpdateProgress();
-
-            var mover = $('#cmbMoverElementosTrasBorrar').val();
-            if (mover == undefined || mover == '') {
-                mover = "TODOS";
-            }
-
-            var params = ObtenerParametrosComunes();
-
-            var categorias = $('#txtHackCatIDEliminar').val();
-            params.CategoriasSeleccionadas = categorias;
-            params.parentKey = catSup;
-            params.moveTo = mover;
-
-            GnossPeticionAjax(urlPagina + "/action/delete", params, true).done(function (data) {
-                $('#panTesauro').html(data);
-                SlideUp();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    /*COMPARTIR CATEGORIA*/
-
-    function DesplegarCompartirCategoria()
-    {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-
-            GnossPeticionAjax(urlPagina + "/show-action/share", params, true).done(function (data) {
-                $('#panAcciones').html(data);
-                SlideDown();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function CargarTesauroComunidadCompartirCategoria() {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-            params.ComunidadCompartirKey = $('#cmbComunidadCompartir').val();
-
-            GnossPeticionAjax(urlPagina + "/show-action/share-load", params, true).done(function (data) {
-                $('#panAcciones').html(data);
-                SlideDown();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function CompartirCategoriaTesauro() {
-        LimpiarError();
-
-        var categoriaID = $('#cmbCategoriaCompartir').val();
-
-        if (categoriaID != '') {
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-            params.ComunidadCompartirKey = $('#txtHackComunidadCompartir').val();
-            params.CategoriaCompartirKey = categoriaID;
-
-            GnossPeticionAjax(urlPagina + "/action/share", params, true).done(function (data) {
-                $('#panTesauro').html(data);
-                SlideUp();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    /*CATEGORIA SOLICITADA*/
-
-    function aceptarSolicitudCategoria(catID) {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-
-            params.CategoryKey = catID;
-
-            GnossPeticionAjax(urlPagina + "/action/acept-category", params, true).done(function (data) {
-                $('#panTesauro').html(data);
-                SlideUp();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    function rechazarSolicitudCategoria(catID) {
-        if ($('#txtGuardarObligatorio').val() != 'true') {
-            LimpiarError();
-            SlideUp();
-            MostrarUpdateProgress();
-
-            var params = ObtenerParametrosComunes();
-
-            params.CategoryKey = catID;
-
-            GnossPeticionAjax(urlPagina + "/action/reject-category", params, true).done(function (data) {
-                $('#panTesauro').html(data);
-                SlideUp();
-            }).fail(function (data) {
-                MostrarERROR(data);
-            }).always(function () {
-                OcultarUpdateProgress();
-            });
-        }
-    }
-
-    /*CAMBIO IDIOMAS*/
-
-    function PintarListaIdiomas() {
-        var esMultiIdioma = $('#chkMultiIdioma').is(':checked');
-        if (esMultiIdioma) {
-            $('#divIdioma a.enlaceIdioma').each(function () {
-                if ($(this).attr('rel') == $('#txtHackIdiomaTesauro').val()) {
-                    $(this).hide();
-                }
-                else {
-                    $(this).show();
-                }
-            });
-            $('#divIdioma .litIdioma').each(function () {
-                if ($(this).attr('rel') == $('#txtHackIdiomaTesauro').val()) {
-                    $(this).show();
-                }
-                else {
-                    $(this).hide();
-                }
-            });
-            $('#divIdioma').show();
-        }
-        else {
-            $('#divIdioma').hide();
-        }
-    }
-
-    function seleccionarIdioma(idioma) {
-        $('#txtHackIdiomaTesauro').val(idioma)
-
-        MostrarUpdateProgress();
-        PintarListaIdiomas();
-        
-        var params = ObtenerParametrosComunes();
-
-        GnossPeticionAjax(urlPagina + "/action/multilanguaje", params, true).done(function (data) {
-            $('#panTesauro').html(data);
-            SlideUp();
-        }).fail(function (data) {
-            MostrarERROR(data);
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
-    }
-
-    function clickMultiIdioma()
-    {
-        if (!$('#chkMultiIdioma').is(':checked')) {
-            var $confirmar = $(['<div class="confirmar"><div class="pregunta"><span>', categorias.desactivarEdicionMultIidioma, '</span></br><span id="divRespuestaInicial" ><button onclick="return false;" class="btMini">', borr.si, '</button><button onclick="return false;" class="btMini">', borr.no, '</button></span></div><div class="mascara"></div></div>'].join(''));
-
-            $('#pActivarMultiidioma').after($confirmar);
-
-            $confirmar.find('button').eq(0).click(function () {
-                SeleccionarUnicoIdioma(this);
-            });
-            $confirmar.find('button').eq(1).click(function () {
-                RemarcarMultiIdioma(this);
-            });
-
-        } else {
-            $('#txtHackIdiomaTesauro').val($('#txtHackIdiomaTesauroDefecto').val());
-            MultiIdioma();
-        }
-    }
-
-    function MarcarCatSelEditorTes(nodo) {
-        var padre = $(nodo).parent();
-        var checked = nodo.checked;
-        var catID = padre.attr('class');
-
-        var txtHack = $('#txtCategoriasSeleccionadas');
-
-        if (checked) {
-            txtHack.val(txtHack.val() + catID + ',');
-        }
-        else {
-            txtHack.val(txtHack.val().replace(catID + ',', ''));
-        }
-    }
-    
-    function MarcarDesplegarTreeView(pImagen) {
-        var imagen = $(pImagen);
-
-        var txtHack = $('#txtCategoriasExpandidas');
-        var catID = imagen.next().attr('class');
-
-        if (pImagen.src.indexOf('verMas') > 0) {
-            txtHack.val(txtHack.val() + catID + ',');
-        }
-        else {
-            txtHack.val(txtHack.val().replace(catID + ',', ''));
-        }
-    }
-
-    function SeleccionarUnicoIdioma(boton) {
-        guardando = 'true';
-        MostrarUpdateProgress();
-        MultiIdioma();
-
-        var params = ObtenerParametrosComunes();
-
-        GnossPeticionAjax(urlPagina + "/action/onlylanguaje", params, true).done(function (data) {
-            $('#panTesauro').html(data);
-            SlideUp();
-        }).fail(function (data) {
-            MostrarERROR(data);
-        }).always(function () {
-            boton.closest('.confirmar').remove();
-            OcultarUpdateProgress();
-        });
-    }
-
-    function RemarcarMultiIdioma(boton) {
-        $('#chkMultiIdioma').prop("checked", true);
-        boton.closest('.confirmar').remove();
-    }
-
-    /*METODOS COMUNES*/
-
-    function MultiIdioma() {
-        SlideUp();
-        PintarListaIdiomas();
-    }
-    
-    function MostrarGuardadoOK() {
-        $('#panGuardado').show();
-    }
-
-    function MostrarERROR(error) {
-        $('#lblError').text(error);
-        $('#panError').show();
-    }
-
-    function LimpiarError() {
-        $('#panError').hide();
-        $('#lblError').html('');
-        $('#panGuardado').hide();
-    }
-
-    function SlideDown() {
-        $('#panAcciones').slideDown();
-    }
-
-    function SlideUp() {
-        $('#panAcciones').slideUp();
-    }
-
-    function endsWith(str, suffix) {
-        return str.indexOf(suffix, str.length - suffix.length) !== -1;
-    }
-
-</script>
+    @* Contenido Central *@
+	<div class="formulario-edicion background-blanco">
+		@* Título de la sección *@
+		<h2>@Html.GetText("ADMINISTRACIONBASICA","CATEGORIAS")</h2>
+		<p>			            
+            @Html.GetText("DEVTOOLS","EDICIONYCREACIONDECATEGORIASPARALACLASIFICACIONDELOSRECURSOS")
+		</p>        
+
+        @* Permitir multilenguaje de categorías *@
+        <div class="custom-control custom-checkbox mr-sm-2 mb-2">
+            <input type="checkbox" id="chkMultiIdioma" 
+                   name="chkMultiIdioma" 
+                   class="custom-control-input" 
+                   @Html.Raw(Model.MultiLanguaje?"checked=\"checked\"":"")>
+            <label class="custom-control-label" for="chkMultiIdioma">@Html.GetText("COMADMINCATEGORIAS", "ACTIVAREDICIONMULTIIDIOMA")</label>
+        </div>
+		
+		@* Contenido central de Tesauro de Categorías + Tabs de idiomas *@
+		<div id="panTesauro">	
+            @Html.PartialView("_Tesauro", Model)
+		</div>
+	
+		@* Botón para guardado de datos *@
+		@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+		{
+			@* No permitir guardar *@
+			<input type="button" disabled class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/>								
+		}
+		else
+		{		
+			@* Permitir guardar *@
+			<input id="btnGuardarCategorias" type="button" @(Model.PasosRealizados != "" ? "disabled": "") class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/>								
+		}		
+	</div>
+
+    @* Modal de documentación de la sección *@
+    @Html.PartialView("_modal-views/_documentation-section")   
+    @* Modal de confirmación de eliminación de la categoría *@
+    @Html.PartialView("_modal-views/_delete-category")
+
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento de Gestión de Categorías
+			operativaGestionCategorias.init();
+        })();
+    </script>
+}

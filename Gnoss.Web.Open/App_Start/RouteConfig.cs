@@ -37,6 +37,8 @@ namespace Es.Riam.Gnoss.Web.MVC
         private ConfigService mConfigService;
         private RedisCacheWrapper mRedisCacheWrapper;
         private VirtuosoAD mVirtuosoAD;
+        private UtilIdiomasFactory mUtilIdiomasFactory;
+        private Regex mRegExprRoutes;
         //private IHttpContextAccessor mHttpContextAccessor;
         //private GnossCache mGnossCache;
         //private EntityContextBASE mEntityContextBASE;
@@ -53,16 +55,14 @@ namespace Es.Riam.Gnoss.Web.MVC
             //mGnossCache = gnossCache;
             //mEntityContextBASE = entityContextBASE;
             mRedisCacheWrapper = redisCacheWrapper;
+            mUtilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService);
             //mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor);
+            mRegExprRoutes = new Regex("(@#@\\$[^@#@$]*,\\|,[^@#@$]*\\$@#@)");
         }
 
         public static string IdiomaPrincipalDominio = "";
 
         private static bool mRecalculandoRutasPaginas = false;
-        /// <summary>
-        /// Lista de las rutas de las pestañas por comunidades
-        /// </summary>
-        private static Dictionary<string, Dictionary<string, List<IRouter>>> mListaRutasPestanyas = new Dictionary<string, Dictionary<string, List<IRouter>>>();
 
         /// <summary>
         /// Lista de correspondencias entre rutas y name
@@ -73,14 +73,6 @@ namespace Es.Riam.Gnoss.Web.MVC
         /// Lista de las idiomas que se han cargado sus URLs
         /// </summary>
         private static List<string> mListaIdiomasCargados = new List<string>();
-
-        /// <summary>
-        /// Lista de las rutas de las pestañas por comunidades
-        /// </summary>
-        public static Dictionary<string, Dictionary<string, List<IRouter>>> ListaRutasPestanyas
-        {
-            get { return mListaRutasPestanyas; }
-        }
 
         /// <summary>
         /// Lista de correspondencias entre rutas y name
@@ -473,13 +465,23 @@ namespace Es.Riam.Gnoss.Web.MVC
                                 ProcesarURL(routes, url, listaUrls[url], idioma);
                                 ProcesarURL(routes, "@#@$URLSEM,|,IDENTIDAD$@#@/{nombreOrgRewrite}/" + url, listaUrls[url], idioma);
                             }
-                        }
-
-                        foreach (string url in listaUrlsMetaProyecto.Keys)
+                        }                        
+                    }
+                    // registrar las rutas del metaproyecto
+                    foreach (string url in listaUrlsMetaProyecto.Keys)
+                    {
+                        if (!url.Equals("@#@$URLSEM,|,HOME$@#@") || string.IsNullOrEmpty(NombreProyectoSinNombreCorto))
                         {
                             foreach (string idioma in listaIdiomas.Keys)
                             {
                                 ProcesarURL(routes, url, listaUrlsMetaProyecto[url], idioma);
+                                ProcesarURL(routes, "@#@$URLSEM,|,IDENTIDAD$@#@/{nombreOrgRewrite}/" + url, listaUrlsMetaProyecto[url], idioma);
+                            }
+                        }
+                        else
+                        {
+                            foreach (string idioma in listaIdiomas.Keys)
+                            {
                                 ProcesarURL(routes, "@#@$URLSEM,|,IDENTIDAD$@#@/{nombreOrgRewrite}/" + url, listaUrlsMetaProyecto[url], idioma);
                             }
                         }
@@ -526,9 +528,10 @@ namespace Es.Riam.Gnoss.Web.MVC
                             if (!string.IsNullOrEmpty(NombreProyectoSinNombreCorto))
                             {
                                 ProcesarURL(routes, url, listaUrls[url] + "?nombreProy=" + NombreProyectoSinNombreCorto, idioma);
-                            }
-                            ProcesarURL(routes, "@#@$URLSEM,|,COMUNIDAD$@#@/{nombreProy}/" + url, listaUrls[url], idioma);
-                        }
+								ProcesarURL(routes, "@#@$URLSEM,|,IDENTIDAD$@#@/{nombreOrgRewrite}/" + url, listaUrls[url], idioma);
+							}
+                            ProcesarURL(routes, "@#@$URLSEM,|,COMUNIDAD$@#@/{nombreProy}/" + url, listaUrls[url], idioma);						
+						}
                     }
 
                     RegistrarRutaSoloGuid(routes, listaIdiomas);
@@ -569,88 +572,6 @@ namespace Es.Riam.Gnoss.Web.MVC
             {
                 GuardarLogError(" ERROR: " + ex.Message + "\r\nStackTrace: " + ex.StackTrace);
                 throw;
-            }
-        }
-
-        /// <summary>
-        /// Recalcula todas las rutas de las pestañas de un proyecto
-        /// </summary>
-        /// <param name="pProyectoID">Clave del proyecto del que vamos a recalcular las rutas de las pestañas</param>
-        /// <param name="pNombreCortoProy">Nombre corto del proyecto del que vamos a recalcular las rutas de las pestañas</param>
-        public void InvalidarRutasPestanyasProyecto(Guid pProyectoID, string pNombreCortoProy, List<string> pRutasPestanyas)
-        {
-            Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
-
-            if (ListaRutasPestanyas.ContainsKey(pNombreCortoProy))
-            {
-                foreach (string rutaMapeada in pRutasPestanyas)
-                {
-                    if (!string.IsNullOrEmpty(rutaMapeada) && ListaRutasPestanyas[pNombreCortoProy].ContainsKey(rutaMapeada))
-                    {
-                        foreach (Route ruta in ListaRutasPestanyas[pNombreCortoProy][rutaMapeada])
-                        {
-                            try
-                            {
-                                if (RouteBuilder.Routes.Contains(ruta))
-                                {
-                                    RouteBuilder.Routes.Remove(ruta);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                GuardarLogError(" ERROR: " + ex.Message + "\r\nStackTrace: " + ex.StackTrace);
-                            }
-                        }
-                        ListaRutasPestanyas[pNombreCortoProy].Remove(rutaMapeada);
-                    }
-                }
-            }
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, null);
-            proyCL.InvalidarPestanyasProyecto(pProyectoID);
-            proyCL.InvalidarFilaProyecto(pProyectoID);
-            proyCL.Dispose();
-        }
-
-        /// <summary>
-        /// Recalcula todas las rutas de las pestañas de un proyecto
-        /// </summary>
-        /// <param name="pProyectoID">Clave del proyecto del que vamos a recalcular las rutas de las pestañas</param>
-        /// <param name="pNombreCortoProy">Nombre corto del proyecto del que vamos a recalcular las rutas de las pestañas</param>
-        public void RecalcularRutasPestanyasProyecto(Guid pProyectoID, string pNombreCortoProy)
-        {
-            if (!mRecalculandoRutasPaginas)
-            {
-                mRecalculandoRutasPaginas = true;
-
-                Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
-
-                if (ListaRutasPestanyas.ContainsKey(pNombreCortoProy))
-                {
-                    foreach (List<IRouter> rutas in ListaRutasPestanyas[pNombreCortoProy].Values)
-                    {
-                        foreach (IRouter ruta in rutas)
-                        {
-                            RouteBuilder.Routes.Remove(ruta);
-                        }
-                    }
-                    ListaRutasPestanyas[pNombreCortoProy] = new Dictionary<string, List<IRouter>>();
-                }
-                else
-                {
-                    ListaRutasPestanyas[pNombreCortoProy] = new Dictionary<string, List<IRouter>>();
-                }
-
-                //RegistrarRutasPestanyas(RouteBuilder, listaIdiomas, pProyectoID);
-
-                if (pProyectoID != Guid.Empty)
-                {
-                    ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, null);
-                    proyCL.InvalidarPestanyasProyecto(pProyectoID);
-                    proyCL.InvalidarFilaProyecto(pProyectoID);
-                    proyCL.InvalidarCabeceraMVC(pProyectoID);
-                    proyCL.InvalidarComunidadMVC(pProyectoID);
-                    proyCL.Dispose();
-                }
             }
         }
 
@@ -860,10 +781,6 @@ namespace Es.Riam.Gnoss.Web.MVC
                         if (!string.IsNullOrEmpty(pagina))
                         {
                             pagina += "?nombreProy=" + nombreCortoProy;
-                            if (!ListaRutasPestanyas.ContainsKey(nombreCortoProy))
-                            {
-                                ListaRutasPestanyas.Add(nombreCortoProy, new Dictionary<string, List<IRouter>>());
-                            }
 
                             bool error = false;
                             if (ruta.StartsWith("http://") || ruta.StartsWith("https://"))
@@ -879,11 +796,6 @@ namespace Es.Riam.Gnoss.Web.MVC
 
                                     try
                                     {
-                                        if (!ListaRutasPestanyas[nombreCortoProy].ContainsKey(rutaAuxInt))
-                                        {
-                                            ListaRutasPestanyas[nombreCortoProy].Add(rutaAuxInt, new List<IRouter>());
-                                        }
-
                                         string rutaAux = UtilCadenas.ObtenerTextoDeIdioma(ruta, idioma, null).Trim();
 
                                         if (pRegistroRutasEcosistema)
@@ -900,12 +812,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                                             rutaAux += "/{*searchInfo}";
                                         }
 
-                                        IRouter rutaMapeada = ProcesarURL(routes, rutaAux, pagina, idioma);
-
-                                        if (!ListaRutasPestanyas[nombreCortoProy][rutaAuxInt].Contains(rutaMapeada))
-                                        {
-                                            ListaRutasPestanyas[nombreCortoProy][rutaAuxInt].Add(rutaMapeada);
-                                        }
+                                        ProcesarURL(routes, rutaAux, pagina, idioma);
                                     }
                                     catch (Exception)
                                     {
@@ -1048,7 +955,7 @@ namespace Es.Riam.Gnoss.Web.MVC
         /// <returns>Devuelve una url convertida al idioma deseado</returns>
         public string ConvertirUrlAIdioma(string url, string idioma, bool pObtenerIdioma)
         {
-            UtilIdiomas UtilIdiomas = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService).ObtenerUtilIdiomas(idioma);
+            UtilIdiomas UtilIdiomas = mUtilIdiomasFactory.ObtenerUtilIdiomas(idioma);
 
             string urlMap = url.Trim('/');
             if (idioma != IdiomaPrincipalDominio && pObtenerIdioma)
@@ -1056,14 +963,11 @@ namespace Es.Riam.Gnoss.Web.MVC
                 urlMap = idioma + "/" + urlMap;
             }
 
-            string expresionRegular = "(@#@\\$[^@#@$]*,\\|,[^@#@$]*\\$@#@)";
-            Regex regExpr = new Regex(expresionRegular);
-
             while (urlMap.Contains("@#@$"))
             {
                 List<string> lista = new List<string>();
 
-                MatchCollection collection = regExpr.Matches(urlMap);
+                MatchCollection collection = mRegExprRoutes.Matches(urlMap);
 
                 if (collection.Count == 0)
                 {
@@ -1119,7 +1023,7 @@ namespace Es.Riam.Gnoss.Web.MVC
         /// <param name="urlDestino">Pagina o controlador de destino </param>
         /// <param name="idioma">Idioma en el que vamos a procesar la url</param>
         /// <returns>Devuelve la ruta procesada</returns>
-        private IRouter ProcesarURL(IRouteBuilder routes, string url, string urlDestino, string idioma)
+        private void ProcesarURL(IRouteBuilder routes, string url, string urlDestino, string idioma)
         {
             try
             {
@@ -1178,7 +1082,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                         mListaRutasURLName.Add(urlMap, idioma + "/" + url);
                     }
 
-                    return routes.Routes.ElementAt(routes.Routes.Count - 1);
+                    //return routes.Routes.ElementAt(routes.Routes.Count - 1);
                 }
             }
             catch (Exception ex)
@@ -1186,7 +1090,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                 GuardarLogError(" ERROR: " + ex.Message + "\r\nStackTrace: " + ex.StackTrace);
             }
 
-            return routes.Routes.ElementAt(routes.Routes.Count - 1);
+            //return routes.Routes.ElementAt(routes.Routes.Count - 1);
         }
 
         public bool EsHijoEcosistemaProyecto(Guid pProyectoIDPadre)

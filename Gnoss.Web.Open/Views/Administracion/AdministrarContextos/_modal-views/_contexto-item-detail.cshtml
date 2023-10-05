@@ -1,0 +1,453 @@
+﻿@model ContextoModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista en detalle del contexto de la comunidad que se desea editar. Se trata de una vista de tipo Modal donde se cargarán las diferentes propiedades que tendrá el contexto.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+	@*
+	// Objetos de conocimiento / htmlObjetos
+	string objetosSeleccionados = "";
+	string htmlObjetosSeleccionados = "";
+	*@
+
+	// Nombre del tipo de contexto/gadget
+	string nombreTipoGadget = "";
+    // Cabecera para obtención de idiomas de la Comunidad
+    HeaderModel cabecera = Html.GetCabecera();
+    // Diccionario de nombre de la faceta para multiIdiomas
+    Dictionary<string, string> contextoNameDictionary = new Dictionary<string, string>();
+    // Id para la llamada al modal para edición de la faceta
+    string idModalContexto = "modal-configuracion-contexto_" + @Model.Key;
+	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);
+}
+
+@{
+	@* Controlar el tipo de Contexto/Gadget *@
+    nombreTipoGadget = Model.TipoGadget.ToString();
+    switch (Model.TipoGadget)
+    {
+        case TipoGadget.HtmlIncrustado:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADHTML");
+            break;
+        case TipoGadget.UltPreguntas:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTPREGUNTAS");
+            break;
+        case TipoGadget.UltDebates:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTDEBATES");
+            break;
+        case TipoGadget.UltEncuestas:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADULTENCUESTAS");
+            break;
+        case TipoGadget.Consulta:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONSULTA");
+            break;
+        case TipoGadget.ProyRelacionados:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADPROYRELACIONADOS");
+            break;
+        case TipoGadget.QueEstaPasando:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADQUEESTAPASANDO");
+            break;
+        case TipoGadget.RecursosContextos:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADCONTEXTO");
+            break;
+        case TipoGadget.RecursosRelacionados:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADRECURSOSRELACIONADOS");
+            break;
+        case TipoGadget.CMS:
+            nombreTipoGadget = Html.GetText("COMADMINCONTEXTOS", "TIPOGADCMS");
+            break;
+    }
+}
+
+
+@* Modal con la información de la faceta *@
+<div
+	id="@idModalContexto"
+	class="modal modal-top fade modal-edicion modal-con-tabs modal-contexto"           
+	role="dialog"	
+	aria-modal="true">
+
+	@* Información oculta de la pestaña *@
+    <input type="hidden" name="TabEliminada" value="false" />
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+            @* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>
+					@Html.GetText("DEVTOOLS","CONFIGURACION:")
+					<span class="community-name">@Html.ObtenerTextoIdiomaUsuario(Model.Name)</span>
+				</p>
+				<span
+					class="material-icons cerrar"
+					data-dismiss="modal"
+					aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				<div class="formulario-edicion no-min-height">
+                    
+					@* Tabs de los idiomas en multiIdioma *@
+					<div class="panContenidoMultiIdioma basicInfo">
+
+					</div>
+
+                    @* Contenido de los tabs de los idiomas *@
+					<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+                            @* Nombre del contexto *@
+							<div class="form-group mb-3">							
+								<input
+									type="text"
+									name="Name"
+									data-labeltext = "@Html.GetText("COMADMINCONTEXTOS", "NOMBRE")"									
+									data-helptext = "@Html.GetText("DEVTOOLS","NOMBREDELCOMPONENTE,SERAELTITULOQUESEMUESTREENELCOMPONENTE")"
+									placeholder="@Html.GetText("COMADMINCONTEXTOS", "NOMBRE")"
+									class="form-control multiIdioma Name"
+									value="@Model.Name"/>
+							</div>	
+							
+							@if (Model.TipoGadget == TipoGadget.HtmlIncrustado){
+								@* Contenido *@
+								<div class="form-group mb-3">														
+									<textarea class="form-control multiIdioma Contenido" 
+											  rows="3"											  
+											  data-labeltext = "@Html.GetText("COMADMINCONTEXTOS", "CONTENIDO")"										  										
+											  name="Contenido">@Model.Contenido</textarea>															
+								</div>							
+							}							
+
+					</div>
+
+					@* Contenedor de las opciones que no son multiIdioma *@
+					<div class="pageContainer tab-content pt-2">	
+						
+						@* Tipo de Contexto-Gadget *@
+						<div class="form-group mb-3 panOntologias">
+							<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "TIPOGADGET")</label>
+							<input
+								type="text"								
+								placeholder="@Html.GetText("COMADMINFACETAS", "TIPOFACETA")"
+								class="form-control"								
+								value="@nombreTipoGadget"
+								disabled/>
+							<input type="hidden" class="TipoGadget" name="TipoGadget" value="@Model.TipoGadget"/>
+						</div>
+
+						@* Nombre corto del Contexto*@
+						<div class="form-group mb-3 panOntologias">
+							<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "NOMBRECORTO")</label>
+							<input
+								type="text"
+								name="ShortName"
+								placeholder="@Html.GetText("COMADMINCONTEXTOS", "NOMBRECORTO")"
+								class="form-control ShortName"								
+								value="@Model.ShortName"/>		
+							<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "NOMBRECORTO")</small>								
+						</div>
+
+						@if (Model.TipoGadget == TipoGadget.CMS)
+						{
+							@* Panel de Faceta Carga por Ajax *@
+							<div class="form-group mb-3 panCargaAjax">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "CARGARPORAJAX")</label>
+								@* Ajax: Sí *@
+								<div class="form-check form-check-inline">
+									<input
+										class="form-check-input chkCargaAjax"
+										type="radio"
+										name="chkCargaAjax_@Model.Key"
+										@(Model.Ajax ? "checked" : "")										
+										data-value="si"
+										id="chkCargaAjax_SI_@Model.Key"/>
+									<label class="form-check-label" for="chkReciproca_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+								</div>
+								@* Ajax: No *@
+								<div class="form-check form-check-inline">								
+									<input
+										class="form-check-input chkCargaAjax"
+										type="radio"
+										name="chkCargaAjax_@Model.Key"									
+										@(!Model.Ajax ? "checked" : "")
+										data-value="no"
+										id="chkCargaAjax_NO_@Model.Key"/>
+									<label class="form-check-label" for="chkCargaAjax_SI_@Model.Key">@Html.GetText("COMMON","NO")</label>
+								</div>
+								<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "CARGARPORAJAX")</small>													
+							</div>
+						}
+						else
+						{
+							<input class="d-none" type="checkbox" name="chkCargaAjax_@Model.Key" />
+						}
+						@* Clases *@
+						<div class="form-group mb-3">
+							<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "CLASES")</label>
+							<input
+								type="text"
+								name="Clases"								
+								placeholder="@Html.GetText("COMADMINCONTEXTOS", "CLASES")"
+								class="form-control Clases"								
+								value="@Model.Clases"/>		
+							<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "CLASES")</small>								
+						</div>			
+
+						@* Visible *@						
+						<div class="form-group mb-3 panVisible">
+							<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "VISIBLE")</label>
+							@* Visible: Sí *@
+							<div class="form-check form-check-inline">
+								<input
+									class="form-check-input chkVisible"
+									type="radio"
+									name="chkVisible_@Model.Key"
+									@(Model.Visible ? "checked" : "")									
+									data-value="si"
+									id="chkVisible_SI_@Model.Key"/>
+								<label class="form-check-label" for="chkVisible_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+							</div>
+							@* Visible: No *@
+							<div class="form-check form-check-inline">								
+								<input
+									class="form-check-input chkVisible"
+									type="radio"
+									name="chkVisible_@Model.Key"									
+									@(!Model.Visible ? "checked" : "")
+									data-value="no"
+									id="chkVisible_NO_@Model.Key"/>
+								<label class="form-check-label" for="chkVisible_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>
+							</div>
+							<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "VISIBLE")</small>													
+						</div>
+
+						@* Filtro destino *@
+						<div class="form-group mb-3">
+							<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "FILTROSDESTINO")</label>							
+							<textarea class="form-control" 
+									  rows="3"
+									  name="FiltrosDestino">@Model.FiltrosDestino</textarea>							
+							<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "FILTROSDESTINO")</small>								
+						</div>	
+
+						@if (Model.TipoGadget == TipoGadget.RecursosContextos) {
+							@* Comunidad Origen *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "COMUNIDADORIGEN")</label>							
+								<textarea class="form-control ComunidadOrigen" 
+										  rows="3"
+										  name="ComunidadOrigen">@Model.Contexto.ComunidadOrigen</textarea>							
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "COMUNIDADORIGEN")</small>								
+							</div>
+
+							@* Filtros origen *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "FILTROSORIGEN")</label>							
+								<textarea class="form-control" 
+										  rows="3"
+										  name="FiltrosOrigen">@Model.Contexto.FiltrosOrigen</textarea>							
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "FILTROSORIGEN")</small>								
+							</div>
+
+							@* Relación Origen Destino*@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "RELACIONORIGENDESTINO")</label>							
+								<textarea class="form-control RelacionOrigenDestino" 
+										  rows="3"
+										  name="RelacionOrigenDestino">@Model.Contexto.RelacionOrigenDestino</textarea>							
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "RELACIONORIGENDESTINO")</small>								
+							</div>	
+
+							@* Número de resultados *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "NUMRESULTADOSCONTEXTO")</label>
+								<input
+									type="number"
+									name="NumResultados"								
+									placeholder="@Html.GetText("COMADMINCONTEXTOS", "NUMRESULTADOSCONTEXTO")"
+									class="form-control NumResultados"								
+									value="@Model.Contexto.NumResultados"/>		
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "NUMRESULTADOSCONTEXTO")</small>								
+							</div>
+
+							@* Orden resultado contexto *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "ORDENRESULTADOSCONTEXTO")</label>
+								<input
+									type="text"
+									name="OrdenResultados"								
+									placeholder="@Html.GetText("COMADMINCONTEXTOS", "ORDENRESULTADOSCONTEXTO")"
+									class="form-control OrdenResultados"								
+									value="@Model.Contexto.OrdenResultados"/>		
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "ORDENRESULTADOSCONTEXTO")</small>								
+							</div>
+
+							@* Seleccionar Imagen *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "IMAGEN")</label>
+								<select name="selectImagen"
+										class="selectImagen js-select2"									
+										tabindex="0"
+										aria-hidden="false">																										
+										<option @(Model.Contexto.Imagen == 0 ? "selected" : "") value="0">@Html.GetText("COMADMINCONTEXTOS", "IMAGENSINIMAGEN")</option>
+										<option @(Model.Contexto.Imagen == 1 ? "selected" : "") value="1">@Html.GetText("COMADMINCONTEXTOS", "IMAGENNORMAL")</option>
+										<option @(Model.Contexto.Imagen == 2 ? "selected" : "" )value="2">@Html.GetText("COMADMINCONTEXTOS", "IMAGENREDUCIDA")</option>																								
+								</select>
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "IMAGEN")</small>								
+							</div>
+
+							@* Mostrar enlace original *@						
+							<div class="form-group mb-3 panMostrarEnlaceOriginal">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "MOSTRARENLACEORIGINAL")</label>
+								@* Mostrar enlace original: Sí *@
+								<div class="form-check form-check-inline">
+									<input
+										class="form-check-input chkMostrarEnlaceOriginal"
+										type="radio"
+										name="chkMostrarEnlaceOriginal_@Model.Key"
+										@(Model.Contexto.MostrarEnlaceOriginal ? "checked" : "")									
+										data-value="si"
+										id="chkMostrarEnlaceOriginal_SI_@Model.Key"/>
+									<label class="form-check-label" for="chkMostrarEnlaceOriginal_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+								</div>
+								@* Mostrar enlace original: No *@
+								<div class="form-check form-check-inline">								
+									<input
+										class="form-check-input chkMostrarEnlaceOriginal"
+										type="radio"
+										name="chkMostrarEnlaceOriginal_@Model.Key"									
+										@(!Model.Contexto.MostrarEnlaceOriginal ? "checked" : "")
+										data-value="no"
+										id="chkMostrarEnlaceOriginal_NO_@Model.Key"/>
+									<label class="form-check-label" for="chkMostrarEnlaceOriginal_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>
+								</div>
+								<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "MOSTRARENLACEORIGINAL")</small>													
+							</div>
+
+							@* Mostrar ver más *@						
+							<div class="form-group mb-3 panMostrarVerMas">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "MOSTRARVERMAS")</label>
+								@* Mostrar Ver más: Sí *@
+								<div class="form-check form-check-inline">
+									<input
+										class="form-check-input chkMostrarVerMas"
+										type="radio"
+										name="chkMostrarVerMas_@Model.Key"
+										@(Model.Contexto.MostrarVerMas ? "checked" : "")
+										data-value="si"
+										id="chkMostrarVerMas_SI_@Model.Key"/>
+									<label class="form-check-label" for="chkMostrarVerMas_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+								</div>
+								@* Mostrar Ver más: No *@
+								<div class="form-check form-check-inline">								
+									<input
+										class="form-check-input chkMostrarVerMas"
+										type="radio"
+										name="chkMostrarVerMas_@Model.Key"									
+										@(!Model.Contexto.MostrarVerMas ? "checked" : "")
+										data-value="no"
+										id="chkMostrarVerMas_NO_@Model.Key"/>
+									<label class="form-check-label" for="chkMostrarVerMas_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>
+								</div>
+								<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "MOSTRARVERMAS")</small>													
+							</div>
+
+							@* Mostrar en nueva pestaña ver más *@						
+							<div class="form-group mb-3 panAbrirEnNuevaPestaya">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "ABRIRNUEVAPESTANYA")</label>
+								@* Mostrar en nueva pestaña: Sí *@
+								<div class="form-check form-check-inline">
+									<input
+										class="form-check-input chkAbrirEnPestanyaNueva"
+										type="radio"
+										name="chkAbrirEnPestanyaNueva_@Model.Key"
+										@(Model.Contexto.AbrirEnPestanyaNueva ? "checked" : "")
+										data-value="si"
+										id="chkAbrirEnPestanyaNueva_SI_@Model.Key"/>
+									<label class="form-check-label" for="chkAbrirEnPestanyaNueva_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+								</div>
+								@* Mostrar en nueva pestaña: No *@
+								<div class="form-check form-check-inline">								
+									<input
+										class="form-check-input chkAbrirEnPestanyaNueva"
+										type="radio"
+										name="chkAbrirEnPestanyaNueva_@Model.Key"									
+										@(!Model.Contexto.AbrirEnPestanyaNueva ? "checked" : "")
+										data-value="no"
+										id="chkAbrirEnPestanyaNueva_NO_@Model.Key"/>
+									<label class="form-check-label" for="chkAbrirEnPestanyaNueva_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>
+								</div>
+								<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "ABRIRNUEVAPESTANYA")</small>													
+							</div>
+
+							@* Namespaces extra *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "NAMESPACESEXTRA")</label>
+								<input
+									type="text"
+									name="NamespacesExtra"								
+									placeholder="@Html.GetText("COMADMINCONTEXTOS", "NAMESPACESEXTRA")"
+									class="form-control NamespacesExtra"								
+									value="@Model.Contexto.NamespacesExtra"/>		
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "NAMESPACESEXTRA")</small>								
+							</div>
+
+							@* Resultados excluir *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "RESULTADOSEXCLUIR")</label>
+								<input
+									type="text"
+									name="ResultadosExcluir"								
+									placeholder="@Html.GetText("COMADMINCONTEXTOS", "RESULTADOSEXCLUIR")"
+									class="form-control ResultadosExcluir"								
+									value="@Model.Contexto.ResultadosExcluir"/>		
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "RESULTADOSEXCLUIR")</small>								
+							</div>							
+						}else if (Model.TipoGadget == TipoGadget.Consulta)
+						{
+							@* Página búsqueda *@
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "PAGINABUSQUEDA")</label>							
+								<textarea class="form-control Contenido" 
+										  rows="3"
+										  name="Contenido">@Model.Contenido</textarea>				
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "PAGINABUSQUEDA")"</small>								
+							</div>
+						}else if (Model.TipoGadget == TipoGadget.CMS)
+						{
+							<div class="form-group mb-3">
+								<label class="control-label d-block">@Html.GetText("COMADMINCONTEXTOS", "IMAGEN")</label>
+								<select name="Contenido"
+										class="Contenido js-select2"									
+										tabindex="0"
+										aria-hidden="false">																																				
+										@{
+											Guid contenidoID = new Guid(Model.Contenido);
+											foreach (Guid componenteID in ViewBag.ListaComponentesCMS.Keys)
+											{
+												<option @(contenidoID.Equals(componenteID) ? "selected" : "") value="@componenteID">@ViewBag.ListaComponentesCMS[componenteID]</option>
+											}
+										}										
+								</select>
+								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINCONTEXTOS", "IMAGEN")</small>								
+							</div>
+						}
+
+						@* Botón para guardar *@
+						<div class="panelBotonera">
+							<a 
+								href="javascript: void(0)"
+								class="btn btn-primary uppercase btnSaveContexto">@Html.GetText("COMMON","GUARDAR")</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

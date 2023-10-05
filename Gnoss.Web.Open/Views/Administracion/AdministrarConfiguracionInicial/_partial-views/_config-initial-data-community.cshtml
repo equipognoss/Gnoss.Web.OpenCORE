@@ -1,0 +1,188 @@
+﻿@model ComunidadInicialModel
+@*
+Descripción
+-----------------------------------------------
+Vista parcial para mostrar la información relativa a la configuración inicial de una comunidad. (Tipo de Comunidad, Nombre de la comunidad)...
+
+Variables
+----------------------------------------------------------------
+*@
+
+<div
+    class="tab-pane fade"
+    id="datos-dominio-url"
+    role="tabpanel"
+    aria-labelledby="datos-dominio-url">
+
+    <h3>@Html.GetText("DEVTOOLS","URLYDOMINIODELPROYECTO")</h3>
+
+    @* Url Web Inicial / Web de proyectos públicos *@
+    <div class="form-group mb-3">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","DIRECCIONWEBDEPROYECTOSPUBLICOS")</label>
+        <input type="text" class="form-control" id="txtUrlWeb" value="@Model.UrlProyectosPublicos">
+        <small class="form-text text-muted">@Html.GetText("DEVTOOLS","DOMINIODONDEESTARANALOJADOSLOSPROYECTOSPUBLICOSODEACCESOREST")</small>
+    </div>
+
+    @* RadioButton de uso de misma URL para proyectos públicos y privados *@
+    <div class="form-group mb-3 panelUseSameProjectsUrl">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","USARLAMISMAURLDEPROYECTOS")</label>                                            
+        <div class="form-check form-check-inline">
+            <input id="rbUseSameProjectsUrl_SI" class="form-check-input rbUseSameProjectsUrl" data-value="si" type="radio" name="useSameProjectsUrl" checked>
+            <label class="form-check-label" for="rbUseSameProjectsUrl_SI">@Html.GetText("COMMON","SI")</label>									
+        </div>
+        <div class="form-check form-check-inline">
+            <input id="rbUseSameProjectsUrl_NO" class="form-check-input rbUseSameProjectsUrl" type="radio" data-value="no" name="useSameProjectsUrl">
+            <label class="form-check-label" for="rbUseSameProjectsUrl_NO">@Html.GetText("COMMON","NO")</label>									
+        </div>
+        <small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS","INDICASISEDESEAUTILIZARLAMISMAURLPARAPROYECTOSPUBLICOS/RESTR")</small>
+    </div>
+
+    @* Web de Proyectos / Web de proyectos privados *@
+    <div id="panelUrlPrivateProjects" class="form-group mb-3 d-none">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","DIRECCIONWEBDEPROYECTOSPRIVADOS")</label>
+        <input type="text" class="form-control" id="txtUrlProjects" placeholder="@Model.UrlProyectosPublicos">
+        <small class="form-text text-muted">@Html.GetText("DEVTOOLS","URLODIRECCIONWEBDELOSPROYECTOS")</small>
+    </div>
+
+    @* Web de IntraGnoss *@
+    <div class="form-group mb-3">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","URLDEINTRAGNOSS")</label>
+        <input type="text" class="form-control" id="txtUrlIntragnoss" value="http://gnoss.com/">
+        <small class="form-text text-muted">@Html.GetText("DEVTOOLS","DOMINIOBASEQUESEUTILIZARAPARAFORMARLASURISDELASONTOLOGIASYEN")</small>
+    </div>
+
+    <h3>@Html.GetText("DEVTOOLS","DETALLESDELACOMUNIDAD")</h3>
+    @* Nombre de la comunidad *@
+    <div class="form-group mb-3">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","NOMBREDELACOMUNIDAD")</label>
+        <input placeholder="@Html.GetText("SOLICITARCOMUNIDAD", "NOMBRE")" type="text" id="txtNombreComunidad" value="" class="form-control not-outline">
+        <small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBREDELACOMUNIDAD")</small>
+    </div>
+
+    @* Nombre Corto de la comunidad *@
+    <div class="form-group mb-3">
+        <label class="control-label d-block" for="">@Html.GetText("SOLICITARCOMUNIDAD", "NOMBRECORTO")</label>
+        <input placeholder="@Html.GetText("SOLICITARCOMUNIDAD", "NOMBRECORTO")"
+               type="text"              
+               id="txtNombreCortoComunidad"               
+               class="form-control not-outline" />
+        <small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBRECORTOOIDENTIFICADORDELACOMUNIDADQUESEUTILIZARALASURLSD")</small>
+    </div>
+
+    @* Tipo de comunidad *@
+    <div class="form-group mb-3 edit-community-type">
+        <label class="control-label d-block" for="">@Html.GetText("SOLICITARCOMUNIDAD", "TIPO")</label>
+        @* Opción Público *@
+        <div class="custom-control themed little custom-radio">
+            <input type="radio"
+                   id="community-type-publico"
+                   name="communityType"
+                   data-value="0"
+                   class="custom-control-input">
+            <label class="custom-control-label" for="community-type-publico">@Html.GetText("COMADMIN","PUBLICO")</label>
+        </div>
+        @* Opción Privado *@
+        <div class="custom-control themed little custom-radio">
+            <input type="radio" 
+                   id="community-type-privado"
+                   name="communityType"
+                   data-value="1"
+                   class="custom-control-input">
+            <label class="custom-control-label" 
+                   for="community-type-privado">@Html.GetText("ADMINISTRACIONPAGINAS","PRIVADO")</label>
+        </div>
+        @* Opción Restringido *@
+        <div class="custom-control themed little custom-radio">
+            <input type="radio" 
+                   id="community-type-restringido"
+                   name="communityType"
+                   data-value="2"
+                   class="custom-control-input">
+            <label class="custom-control-label" for="community-type-restringido">@Html.GetText("DEVTOOLS","RESTRINGIDO")</label>
+        </div> 
+        <small class="form-text text-muted">@Html.GetText("DEVTOOLS","SELECCIONAELTIPODECOMUNIDADACREAR")</small>
+    </div>
+
+    @* Descripciones del tipo de comunidad *@
+    <div id="communityDescriptions" class="mt-3">                
+        @* Información Comunidad Pública *@
+        <div id="panParrafoAcceso0" class="d-none">
+            <p>
+                <strong>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSERIGENPORLASSIGUIENTESNORMAS:")
+                </strong>
+            </p>
+            <ul class="AdminComunidades">
+                <li>
+                    @Html.GetText("DEVTOOLS","CUALQUIERUSUARIODEPUEDEHACERSEMIEMBROYCONTRIBUIRENLACOMUNIDA")
+                </li>
+                <li>
+                    @Html.GetText("DEVTOOLS","LOSUSUARIOSNOMIEMBROSDELACOMUNIDADEINTERNAUTASNOREGISTRADOSE")
+                </li>
+                <li>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSONVISIBLESENELDIRECTORIODECOMUNIDADES")                                    
+                </li>
+            </ul>
+        </div>
+
+        @* Información Comunidad Pública *@
+        <div id="panParrafoAcceso0" class="d-none">
+            <p>
+                <strong>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSERIGENPORLASSIGUIENTESNORMAS:")
+                </strong>
+            </p>
+            <ul class="AdminComunidades">
+                <li>
+                    @Html.GetText("DEVTOOLS","CUALQUIERUSUARIODEGNOSSPUEDEHACERSEMIEMBROYCONTRIBUIRENLACOM")
+                </li>
+                <li>
+                    @Html.GetText("DEVTOOLS","LOSUSUARIOSDEGNOSSNOMIEMBROSDELACOMUNIDADEINTERNAUTASNOREGIS")
+                </li>
+                <li>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASSONVISIBLESENELDIRECTORIODECOMUNIDADES")
+                </li>
+            </ul>
+        </div>
+
+        @* Información Comunidad Privada *@
+        <div id="panParrafoAcceso1" class="d-none">
+            <p>
+                <strong>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPRIVADASSERIGENPORLASSIGUIENTESNORMAS:")
+                </strong>
+            </p>
+            <ul class="AdminComunidades">
+                <li>
+                    @Html.GetText("DEVTOOLS","SOLOPODRANSERMIEMBROSDEUNACOMUNIDADPRIVADALOSUSUARIOSQUERECI")        
+                </li>
+                <li>                                    
+                    @Html.GetText("DEVTOOLS","LOSUSUARIOSDEGNOSSQUENOSEANMIEMBROSNOPUEDENACCEDERAESTASCOMU")
+                </li>
+                <li>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPRIVADASNOSONVISIBLESENELDIRECTORIODECOMUNIDAD")                                    
+                </li>
+            </ul>
+        </div>
+
+        @* Información Comunidad Restringida *@
+        <div id="panParrafoAcceso2" class="d-none">
+            <p>
+                <strong>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESRESTRINGIDASSERIGENPORLASSIGUIENTESNORMAS:")
+                </strong>
+            </p>
+            <ul class="AdminComunidades">
+                <li>
+                    @Html.GetText("DEVTOOLS","CUALQUIERUSUARIOPUEDESOLICITARACCESOPARASERMIEMBRODELACOMUNI")
+                </li>
+                <li>
+                    @Html.GetText("DEVTOOLS","LOSUSUARIOSNOMIEMBROSDELACOMUNIDADEINTERNAUTASNOREGISTRADOSP")                                    
+                </li>
+                <li>
+                    @Html.GetText("DEVTOOLS","LASCOMUNIDADESPUBLICASDEACCESORESTRINGIDOSONVISIBLESENELDIRE")
+                </li>
+            </ul>
+        </div>
+    </div>        
+</div>                  

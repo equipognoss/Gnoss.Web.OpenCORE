@@ -1,0 +1,78 @@
+﻿@*
+    Descripción
+    -----------------------------------------------
+    Vista dinámica que se usará dentro de un contenedor de bootstrap para poder cargar o añadir grupos a determinados tipos
+    de recursos
+
+    Variables
+    ----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    // ID del contenedor donde estarán todos los grupos (lógica Js)
+    string idPanelBuscarGrupos = "panelBuscarGrupos";
+    // ID del input para buscar grupos
+    string idTxtBuscarGrupos = "txtBuscarGrupos";
+    // Id del inputHack de los grupos
+    string idTxtBuscarGrupos_Hack = "txtBuscarGrupos_Hack";
+    // Id del inputHack de los nombres de los grupos
+    string idTxtBuscarGruposNombre_Hack = "txtBuscarGruposNombre_Hack";
+    // Id del contendor de los grupos seleccionados o encontrados
+    string idTagsContainer = "tagsContainer";
+
+}
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista Modal para añadir grupos a tipo de recursos de Comunidad --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">create_new_folder</span>@Html.GetText("DEVTOOLS","AÑADIRAGRUPOS")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+
+@* Contenido central del modal *@
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <p>@Html.GetText("DEVTOOLS","AÑADEAGRUPOSDELACOMUNIDADPARAESTABLECERLOSPERMISOSDESEADOSPA")</p>
+        <div class="form-group mb-5">            
+                @* Añadir destinatarios al email (No ORG) *@
+                <div id="@idPanelBuscarGrupos" class="form-group mb-5 edit-etiquetas">
+                    <div class="autocompletar-tags form-group">
+                        <label class="control-label d-block">Grupo</label>
+                        <div class="input-wrap form-sticky-button autocompletar">                            
+                            @* Input para buscar grupos *@
+                            <input type="text"                                   
+                                   placeholder="@Html.GetText("DEVTOOLS","BUSCARENGRUPOS")"
+                                   onfocus=""
+                                   class="txtAutocomplete form-control"
+                                   id="@idTxtBuscarGrupos"                                   
+                                   autocomplete="off" />
+
+                            @* Campo oculto que almacenará los grupos existentes *@
+                            <input type="hidden" id="@idTxtBuscarGrupos_Hack" value="" />
+                            @* Campo oculto que almacenará los nombres de los grupos existentes *@
+                            <input type="hidden" id="@idTxtBuscarGruposNombre_Hack" value="" />
+                        </div>
+                        @* Contactos añadidos por el usuario para enviar el mensaje *@
+                        <span id="@idTagsContainer" class="contenedor tag-list mb-4">
+                        </span>
+                    </div>
+                </div>
+        </div>
+        <div class="panelBotonera">
+            <a id="btnGuardarAddGrupos" class="btn btn-primary uppercase">@Html.GetText("COMADMINPESTANYAS", "ACEPTAR")</a>
+        </div>
+    </div>
+</div>
+
+
+@* Carga de operativa *@
+<script>
+        (function ($) {            
+            // Inicializar operativa de búsqueda de grupos una vez el modal se cargue
+            operativaContenidosYPermisos.operativaModalBuscarGrupos();            
+        })();
+</script>

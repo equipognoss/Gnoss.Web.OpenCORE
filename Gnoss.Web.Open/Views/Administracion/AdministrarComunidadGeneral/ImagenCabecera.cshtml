@@ -1,25 +1,95 @@
 ﻿@model AdministrarComunidadGeneralModel.ImageCoordenadas
 
-Imagen de la cabecera:
-<div class="panContenedorImagen" style="@(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
-    <img src="@(string.IsNullOrEmpty(Model.Ruta) ? "" : Model.Ruta + "?" + Guid.NewGuid().ToString())" id="ImageHead_Ruta">
-    <input type="hidden" value="@Model.Ruta" id="ImageHead_src" />
+@*
+Descripción
+-----------------------------------------------
+Vista para cargar la imagen de la cabecera de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+@* Coordenadas de la imagen de la cabecera *@
+var Pos_X_0 = @Model.Pos_X_0;
+var Pos_Y_0 = @Model.Pos_Y_0;
+var Pos_X_1 = @Model.Pos_X_1;
+var Pos_Y_1 = @Model.Pos_Y_1;
+string rutaImagen = Model.Ruta;
+}
+
+@*
+----------------------------------------------------------------
+--------------------´Vista para cargar una imagen para la cabecera para la comunidad --------------------
+*@
+
+<h3>Imágenes</h3>
+@* Contenedor para imagen de la cabecera de la comunidad *@
+<div class="form-group mb-3">
+    @* Campos de información de la imagen de la cabecera *@
+    <input type="hidden" id="ImageHead_Pos_X_0" value="@Pos_X_0" />
+    <input type="hidden" id="ImageHead_Pos_Y_0" value="@Pos_Y_0" />
+    <input type="hidden" id="ImageHead_Pos_X_1" value="@Pos_X_1" />
+    <input type="hidden" id="ImageHead_Pos_Y_1" value="@Pos_Y_1" />
+    @* Ancho y Alto *@
+    <input type="hidden" class="jcropText image_width" id="ImageHead_Ancho" value="@Model.Ancho" />
+    <input type="hidden" class="jcropText image_height" id="ImageHead_Alto" value="@Model.Alto" />
+
+    <input type="hidden" value="@rutaImagen" id="ImageHead_src" />
+
+    
+
+    <label class="control-label d-block">Imagen de la comunidad</label>
+    <div id="contenedorImagenCabecera" class="image-uploader js-image-uploader @(!string.IsNullOrEmpty(Model.Ruta) ? "d-none" : "")">                
+        <div class="image-uploader__drop-area">
+            <div class="image-uploader__icon">
+                <span class="material-icons-outlined">image</span>
+            </div>
+            <div class="image-uploader__info">
+                <p>Arrastra y suelta una imagen para que sea la imagen de la comunidad</p>
+                <p>@Html.GetText("COMMON", "IMAGENES_FORMATO_JPG_PNG")</p>
+            </div>
+        </div>
+        <div class="image-uploader__error">
+            <p class="ko"></p>
+        </div>
+    </div>
+    
+
+
+    @* Imagen de la cabecera subida,  la previsualización y acciones de Subir y Eliminar imagen*@
+    <div id="contenedorImagenesCabeceraJcrop" class="@(string.IsNullOrEmpty(Model.Ruta) ? "d-none" : "")">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div id="image-cabecera__container" class="image-container-jcrop mt-1 img-container">
+                      <img id="image-uploader__cabecera" class="image-uploader__cabecera" alt="Imagen de la cabecera de la comunidad" src="@(string.IsNullOrEmpty(Model.Ruta) ? "" : Model.Ruta + "?" + Guid.NewGuid().ToString())">                       
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    @* Imagen preview del recorte jCrop *@
+	                <label class="control-label d-block mt-3">Previsualización</label>
+	                <div class="img-preview preview-lg @(string.IsNullOrEmpty(Model.Ruta) ? "d-none" : "")"></div>
+                    @* Input para poder cambiar imagen*@
+                    <input id="fileUploadChangeImgCabecera" type="file" class="image-uploader__input" accept="image/*">
+
+                    <label class="control-label d-block mt-3">@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</label>
+                    @* Acciones para Cambiar o Eliminar la imagen de la cabecera *@
+                    <div id="panelAccionesImagenCabecera" class="panelAccionesImagenCabecera mt-2 d-flex flex-column">        
+	                    @* Cambiar/Subir imagen *@
+	                    <button id="cambiarImagenCabecera" class="btn btn-outline-primary mb-1">
+		                    <span class="material-icons">file_upload</span>
+		                    <span class="texto">@Html.GetText("DEVTOOLS","CAMBIAR")</span>
+	                    </button>          
+	                    @* Eliminar imagen *@
+	                    <button id="eliminarImagenCabecera" class="btn btn-outline-primary">
+		                    <span class="material-icons">delete</span>
+		                    <span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>    
+	                    </button>
+                    </div>
+
+                </div>                
+            </div>
+        </div>
+    </div>
 </div>
-<div class="panImgSize" style="margin-bottom:20px; margin-top: @(20 + Model.Alto)px; @(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
-    <input type="hidden" id="ImageHead_Pos_X_0" value="@Model.Pos_X_0" />
-    <input type="hidden" id="ImageHead_Pos_Y_0" value="@Model.Pos_Y_0" />
-    <input type="hidden" id="ImageHead_Pos_X_1" value="@Model.Pos_X_1" />
-    <input type="hidden" id="ImageHead_Pos_Y_1" value="@Model.Pos_Y_1" />
-    Ancho <input type="text" class="jcropText image_width" id="ImageHead_Ancho" value="@Model.Ancho" />
-    Alto <input type="text" class="jcropText image_height" id="ImageHead_Alto" value="@Model.Alto" />
-</div>
-<div class="panAccionesNew" style=" @(!string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
-    <input type="button" id="addImgCabecera" value="Seleccionar imagen" onclick="$('#fileUploadAddImgCabecera').trigger('click')" />
-    <input type="file" style="display:none" id="fileUploadAddImgCabecera" accept="image/*" />
-</div>
-<div  class="panAccionesChange" style=" @(string.IsNullOrEmpty(Model.Ruta) ? "display:none;" : "")">
-    <input type="button" id="changeImgCabecera" value="Cambiar imagen" onclick="$('#fileUploadChangeImgCabecera').trigger('click')" />
-    <input type="file" style="display:none" id="fileUploadChangeImgCabecera" accept="image/*" />
-    <input type="button" id="eliminarImgCabecera" value="Eliminar imagen" />
-</div>
-<div id="lblErrorImgCabecera" class="error general" style="display:none"></div>

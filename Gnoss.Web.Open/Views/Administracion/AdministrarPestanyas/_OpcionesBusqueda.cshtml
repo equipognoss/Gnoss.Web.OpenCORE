@@ -1,107 +1,490 @@
 ﻿@model TabModel
 
+@*
+Descripción
+-----------------------------------------------
+Vista para añadir opciones de búsqueda a una página/pestaña de tipo "Búsqueda"
+
+Variables
+----------------------------------------------------------------
+*@
+
 @{
-    TabModel.SearchTabModel opcionesBusqueda = Model.OpcionesBusqueda;
+	List<string> listaFiltros = null;
+	// Opciones de búsqueda del tipo de página 
+	TabModel.SearchTabModel opcionesBusqueda = Model.OpcionesBusqueda;
+	// Id para los checkbox de tipo de visualización
+	string filterId = @Guid.NewGuid().ToString().Substring(0,5);
+	// Controlar el campo filtro que no esté vacío
+	string campoFiltro = String.IsNullOrEmpty(opcionesBusqueda.CampoFiltro) ? "rdf:type=Recurso|" : opcionesBusqueda.CampoFiltro;
+
+	listaFiltros = campoFiltro.Trim().Split("|").ToList();
+	while (listaFiltros.Contains("")) { listaFiltros.Remove(""); }
+	
+	string filtrosSeleccionados = "";
+	string htmlFiltros = "";
+	string collapseId = "panel_collapse_" + filterId.ToString().Substring(0,5);
 }
 
+@*
+----------------------------------------------------------------
+-------------------- Vista para Añadir opciones de búsqueda a la página --------------------
+*@
+
+@* Personalizar las opciones de búsqueda por defecto *@
 @if(opcionesBusqueda.ValoresPorDefecto)
 {
-    <p><a class="linkEditarOpcionesBusqueda">@Html.GetText("COMADMINPESTANYAS", "PERSONALIZAROPCIONESBUSQUEDA")</a></p>
+    <p><a class="linkEditarOpcionesBusqueda" href="javascript: void(0);">@Html.GetText("COMADMINPESTANYAS", "PERSONALIZAROPCIONESBUSQUEDA")</a></p>
 }
-<section class="editarOpcionesBusqueda" @Html.Raw(opcionesBusqueda.ValoresPorDefecto?"style=\"display:none\"":"")>
-	<p>@Html.GetText("COMADMINPESTANYAS", "OPCIONESBUSQUEDA")</p>
-    <section class="bloque editarBusqueda">
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "CAMPOFILTRO")">@Html.GetText("COMADMINPESTANYAS", "CAMPOFILTRO")</span>
-            <input type="text" name="TabCampoFiltro" value="@opcionesBusqueda.CampoFiltro" @(Model.Type == TipoPestanyaMenu.BusquedaSemantica ? "" : "disabled") />
-        </p>
-        @if (opcionesBusqueda.FiltrosOrden.Count == 0)
-        {
-            <p>
-                <a class="linkEditarFiltroOrden">@Html.GetText("COMADMINPESTANYAS", "CREARFILTROSORDEN")</a>
-            </p>
-        }
-        <section @Html.Raw(opcionesBusqueda.FiltrosOrden.Count == 0 ? "style=\"display:none\"" : "") class="editarFiltroOrden">
-            <p>@Html.GetText("COMADMINPESTANYAS", "LISTAFILTROSORDEN")</p>
-            <ol class="filtrosOrdenSortable">
-                @foreach (TabModel.SearchTabModel.FiltroOrden filtroOrden in opcionesBusqueda.FiltrosOrden)
-                {
-                    @Html.PartialView("_FichaFiltroOrden", filtroOrden)
-                }
-            </ol>
-            <input type="button" value="@Html.GetText("COMADMINPESTANYAS", "ADDFILTROSORDEN")" class="addFiltroOrden" />
-        </section>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "VISTASDISPONIBLES")">@Html.GetText("COMADMINPESTANYAS", "VISTASDISPONIBLES")</span>
-        </p>
-        <section class="bloque">
-            <p>
-                <input type="radio" class="vistas listado" name="@(Model.Key)_VistaPorDefecto" @(opcionesBusqueda.OpcionesVistas.VistaListado ? "" : "disabled") @(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 0 ? "checked" : "") value="0" />
-                <input class="vistas listado" name="TabVistaListado" type="checkbox" @(opcionesBusqueda.OpcionesVistas.VistaListado ? "checked" : "") /> @Html.GetText("COMADMINPESTANYAS", "VISTALISTADO")
-            </p>
-            <p>
-                <input type="radio" class="vistas mosaico" name="@(Model.Key)_VistaPorDefecto" @(opcionesBusqueda.OpcionesVistas.VistaMosaico ? "" : "disabled") @(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 1 ? "checked" : "") value="1" />
-                <input class="vistas mosaico" name="TabVistaMosaico" type="checkbox" @(opcionesBusqueda.OpcionesVistas.VistaMosaico ? "checked" : "") /> @Html.GetText("COMADMINPESTANYAS", "VISTAMOSAICO")
-            </p>
-            <p>
-                <input type="radio" class="vistas mapa" name="@(Model.Key)_VistaPorDefecto" @(opcionesBusqueda.OpcionesVistas.VistaMapa ? "" : "disabled") @(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 2 ? "checked" : "") value="2" />
-                <input class="vistas mapa" name="TabVistaMapa" type="checkbox" @(opcionesBusqueda.OpcionesVistas.VistaMapa ? "checked" : "") /> @Html.GetText("COMADMINPESTANYAS", "VISTAMAPA")
-            </p>
-            <section class="bloque mapa" @Html.Raw(!opcionesBusqueda.OpcionesVistas.VistaMapa ? "style=\"display:none\"" : "")>
-                <p>
-                    <span class="tipo">@Html.GetText("COMADMINPESTANYAS", "POSICIONCENTRALMAPA")</span>
-                    <input type="text" value="@opcionesBusqueda.OpcionesVistas.PosicionCentralMapa" name="TabPosicionCentralMapa" />
-                </p>
-            </section>
-            <p>
-                <input type="radio" class="vistas grafico" name="@(Model.Key)_VistaPorDefecto" @(opcionesBusqueda.OpcionesVistas.VistaMapa ? "" : "disabled") @(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 3 ? "checked" : "") value="3" />
-                <input class="vistas grafico" name="TabVistaGrafico" type="checkbox" @(opcionesBusqueda.OpcionesVistas.VistaGrafico ? "checked" : "") /> @Html.GetText("COMADMINPESTANYAS", "VISTAGRAFICO")
-            </p>
-        </section>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "NUMERORESULTADOS")">@Html.GetText("COMADMINPESTANYAS", "NUMERORESULTADOS")</span>
-            <input type="text" value="@opcionesBusqueda.NumeroResultados" name="TabNumeroResultados" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "MOSTRARFACETAS")">@Html.GetText("COMADMINPESTANYAS", "MOSTRARFACETAS")</span>
-            <input type="checkbox" @(opcionesBusqueda.MostrarFacetas ? "checked" : "") name="TabMostrarFacetas" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "AGRUPARFACETASPORTIPO")">@Html.GetText("COMADMINPESTANYAS", "AGRUPARFACETASPORTIPO")</span>
-            <input type="checkbox" @(opcionesBusqueda.AgruparFacetasPorTipo ? "checked" : "") name="TabAgruparFacetasPorTipo" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "MOSTRARENBUSQUEDACABECERA")">@Html.GetText("COMADMINPESTANYAS", "MOSTRARENBUSQUEDACABECERA")</span>
-            <input type="checkbox" @(opcionesBusqueda.MostrarEnBusquedaCabecera ? "checked" : "") name="TabMostrarEnBusquedaCabecera" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "MOSTRARCAJABUSQUEDA")">@Html.GetText("COMADMINPESTANYAS", "MOSTRARCAJABUSQUEDA")</span>
-            <input type="checkbox" @(opcionesBusqueda.MostrarCajaBusqueda ? "checked" : "") name="TabMostrarCajaBusqueda" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "PROYECTOORIGENBUSQUEDA")">@Html.GetText("COMADMINPESTANYAS", "PROYECTOORIGENBUSQUEDA")</span>
-            <input type="text" value="@(opcionesBusqueda.ProyectoOrigenBusqueda.Equals(Guid.Empty)?"":opcionesBusqueda.ProyectoOrigenBusqueda.ToString())" name="TabProyectoOrigenBusqueda" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "OCULTARRESULTADOSSINFILTROS")">@Html.GetText("COMADMINPESTANYAS", "OCULTARRESULTADOSSINFILTROS")</span>
-            <input type="checkbox" @(opcionesBusqueda.OcultarResultadosSinFiltros ? "checked" : "") name="TabOcultarResultadosSinFiltros" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "TEXTOBUSQUEDASINRESULTADOS")">@Html.GetText("COMADMINPESTANYAS", "TEXTOBUSQUEDASINRESULTADOS")</span>
-            <textarea rows="3" cols="40" name="TabTextoBusquedaSinResultados">@opcionesBusqueda.TextoBusquedaSinResultados</textarea>
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "IGNORARPRIVACIDADENBUSQUEDA")">@Html.GetText("COMADMINPESTANYAS", "IGNORARPRIVACIDADENBUSQUEDA")</span>
-            <input type="checkbox" @(opcionesBusqueda.IgnorarPrivacidadEnBusqueda ? "checked" : "") name="TabIgnorarPrivacidadEnBusqueda" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "OMITIRCARGAINICIALFACETASRESULTADOS")">@Html.GetText("COMADMINPESTANYAS", "OMITIRCARGAINICIALFACETASRESULTADOS")</span>
-            <input type="checkbox" @(opcionesBusqueda.OmitirCargaInicialFacetasResultados ? "checked" : "") name="TabOmitirCargaInicialFacetasResultados" />
-        </p>
-        <p>
-            <span class="tipo" title="@Html.GetText("AYUDACOMADMINPESTANYAS", "RELACIONMANDATORY")">@Html.GetText("COMADMINPESTANYAS", "RELACIONMANDATORY")</span>
-            <input type="text" value="@opcionesBusqueda.RelacionMandatory" name="TabFiltroRelacionMandatory" />
-        </p>
-    </section>
-</section>
 
+@* Contenedor de editarOpcionesBusqueda *@
+<div class="form-group mb-4 editarOpcionesBusqueda   @(opcionesBusqueda.ValoresPorDefecto ? "d-none" : "") ">
+	<p>@Html.GetText("COMADMINPESTANYAS", "OPCIONESBUSQUEDA")</p>
+
+	@* Campo de filtro *@  
+
+	@* Inputs Ocultos para el autocompletado *@
+	<input type="hidden" id="autoOntologia3_@(filterId)_Hack" class="valores autoOnto" name="TabValoresAutoCompletadoOntologia" value="">
+	<ul class="resultado"></ul>
+
+	@* Campo de filtro *@  
+	<div class="form-group mb-4 panFiltrosAuto" id="filtroAuto">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "CAMPOFILTRO")</label>
+		<div class="input-wrap autocompletar form-sticky-button">
+			<input type="text"
+				   id="autoOntologia3_@(filterId)"
+				   class="form-control inputCampoFiltro anadirFiltroAutocomplete"
+				   placeholder=""
+				   name="TabCampoFiltro"
+				   value="@opcionesBusqueda.CampoFiltro"
+			@(Model.Type == TipoPestanyaMenu.BusquedaSemantica ? "" : "disabled")>
+			<a class="btn btn-grey uppercase btnAddFilterPanFilter">@Html.GetText("PERFIL","ANYADIR")</a>
+		</div>		
+		@* Ayuda *@
+		<small class="form-text text-muted">@Html.GetText("AYUDACOMADMINPESTANYAS", "CAMPOFILTRO")"</small>
+		@if (listaFiltros != null && listaFiltros.Count > 0)
+		{
+			@* Panel de condiciones*@
+
+			@* condiciones activas *@
+			@foreach (string item in listaFiltros)
+			{
+
+				filtrosSeleccionados += item + "|";
+
+				htmlFiltros += "<div class='tag' id='" + item + "' > ";
+				htmlFiltros += "<div class='tag-wrap'>";
+				htmlFiltros += "<span class='tag-text'>" + item + "</span>";
+				htmlFiltros += "<span class='tag-remove tag-remove-filtro material-icons remove'>close</span>";
+				htmlFiltros += "</div>";
+				htmlFiltros += "</div>";
+
+			}
+		}
+		<span id="panListadoFiltros" class="tag-list mb-4 mt-3 panListadoFiltros">@Html.Raw(htmlFiltros)</span>
+		<input type="hidden" class="valores auxFiltrosSeleccionados" id="auxFiltrosSeleccionados" value="@filtrosSeleccionados" />
+
+	</div>
+	
+	@* Opciones para crear filtros de Orden *@
+	@if (opcionesBusqueda.FiltrosOrden.Count == 0)
+    {
+        <p>
+            <a href="javascript: void(0);" class="linkEditarFiltroOrden">@Html.GetText("COMADMINPESTANYAS", "CREARFILTROSORDEN")</a>
+        </p>
+    }
+
+	@* Panel para los filtros de orden *@
+	<div class="form-group mb-4 editarFiltroOrden @(opcionesBusqueda.FiltrosOrden.Count == 0 ? "d-none" : "") ">		
+
+		<div class="filtrosOrden-header d-flex justify-content-between align-items-center">
+        <label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("COMADMINPESTANYAS", "LISTAFILTROSORDEN")</label>
+			@* Botón para añadir nuevos Filtros de Orden *@
+			<a href="javascript: void(0);" class="linkAddFiltroOrden btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+				<span class="material-icons">add</span>
+				<span class="texto">@Html.GetText("COMADMINPESTANYAS", "ADDFILTROSORDEN")</span>
+			</a>
+		</div>
+
+
+		@* Listado de los filtros de Orden *@
+		<ul class="id-added-filter-list component-list no-list-style" id="id-added-filter-list_@filterId">
+			@foreach (TabModel.SearchTabModel.FiltroOrden filtroOrden in opcionesBusqueda.FiltrosOrden)
+            {
+                @Html.PartialView("_FichaFiltroOrden", filtroOrden)
+            }
+		</ul>
+
+	</div>
+
+	@* Panel para las visualizaciones disponibles de resultados *@
+	<div class="form-group mb-4 vistasDisponibles">
+		@* Opciones de visualización de recursos en la búsqueda *@
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "VISTASDISPONIBLES")</label>
+		<p>
+			@Html.GetText("AYUDACOMADMINPESTANYAS", "VISTASDISPONIBLES")
+		</p>
+
+		<div class="subPanel-sin-margen panelVistasDisponibles">
+			@* Radio + Checkbox- Visualizaciones de tipo Listado *@
+			<div class="form-group mb-2 form-inline">
+				@* RadioButton *@			
+				<input type="radio" 			
+						class="vistas listado form-check-input" 
+						name="@(Model.Key)_VistaPorDefecto" 
+						@(opcionesBusqueda.OpcionesVistas.VistaListado ? "" : "disabled") 
+						@(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 0 ? "checked" : "") 
+						value="0">
+				@* Checkbox + Label *@
+				<div class="custom-control custom-checkbox">                
+					<input id="vistaListado_@filterId"
+						   type="checkbox" 					   
+						   class="custom-control-input vistas listado checkboxSeleccionVista" 
+						   name="TabVistaListado"
+						   @(opcionesBusqueda.OpcionesVistas.VistaListado ? "checked" : "")>				
+					<label class="custom-control-label" for="vistaListado_@filterId">@Html.GetText("COMADMINPESTANYAS", "VISTALISTADO")</label>
+				</div> 			
+			</div>
+			<small class="form-text text-muted mb-2">Visualización de los resultados de la búsqueda en modo listado.</small>
+
+			@* Radio + Checkbox- Visualizaciones de tipo Mosaico *@
+			<div class="form-group mb-2 form-inline">
+				@* RadioButton *@			
+				<input type="radio" 			
+						class="vistas mosaico form-check-input" 
+						name="@(Model.Key)_VistaPorDefecto"
+						@(opcionesBusqueda.OpcionesVistas.VistaMosaico ? "" : "disabled") 
+						@(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 1 ? "checked" : "") 
+						value="1">					  
+
+				@* Checkbox + Label *@
+				<div class="custom-control custom-checkbox">                
+					<input type="checkbox" 
+						   id="vistaMosaico_@filterId" 
+						   class="custom-control-input vistas mosaico checkboxSeleccionVista" 
+						   name="TabVistaMosaico"
+						   @(opcionesBusqueda.OpcionesVistas.VistaMosaico ? "checked" : "")>				
+
+					<label class="custom-control-label" for="vistaMosaico_@filterId">@Html.GetText("COMADMINPESTANYAS", "VISTAMOSAICO")</label>
+				</div> 			
+			</div>
+			<small class="form-text text-muted mb-2">Visualización de los resultados de la búsqueda en modo mosaico.</small>
+
+			@* Radio + Checkbox- Visualizaciones de tipo Mapa *@
+			<div class="form-group mb-2 form-inline">
+				@* RadioButton *@			
+				<input type="radio" 			
+						class="vistas mapa form-check-input" 
+						name="@(Model.Key)_VistaPorDefecto"
+						@(opcionesBusqueda.OpcionesVistas.VistaMapa ? "" : "disabled")
+						@(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 2 ? "checked" : "")
+						value="2">								
+
+				@* Checkbox + Label *@
+				<div class="custom-control custom-checkbox">                
+					<input type="checkbox" 
+						   id="vistaMapa_@filterId" 
+						   class="custom-control-input vistas mapa checkboxSeleccionVista" 
+						   name="TabVistaMapa"
+						   @(opcionesBusqueda.OpcionesVistas.VistaMapa ? "checked" : "")>				
+
+					<label class="custom-control-label" for="vistaMapa_@filterId">@Html.GetText("COMADMINPESTANYAS", "VISTAMAPA")</label>				
+				</div> 
+			</div>
+			@* Visualizaciones Posición central Mapa *@
+			<div class="form-group mb-2 @(!opcionesBusqueda.OpcionesVistas.VistaMapa ? "d-none" : "") panelVistaMapa">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "POSICIONCENTRALMAPA")</label>
+				<input
+					type="text"
+					class="form-control"
+					placeholder=""
+					name="TabPosicionCentralMapa"
+					value="@opcionesBusqueda.OpcionesVistas.PosicionCentralMapa"  
+					/>			
+			</div>
+			<small class="form-text text-muted mb-2">Visualización de los resultados de la búsqueda en modo mapa.</small>	
+
+			@* Radio + Checkbox- Visualizaciones de tipo Gráfico *@
+			<div class="form-group mb-2 form-inline">
+				@* RadioButton *@			
+				<input type="radio" 			
+						class="vistas grafico form-check-input" 					
+						name="@(Model.Key)_VistaPorDefecto"
+						@(opcionesBusqueda.OpcionesVistas.VistaGrafico ? "" : "disabled")					
+						@(opcionesBusqueda.OpcionesVistas.VistaPorDefecto == 3 ? "checked" : "")
+						value="3">	
+								
+				@* Checkbox + Label *@
+				<div class="custom-control custom-checkbox">                
+					<input type="checkbox" 
+						   id="vistaGrafico_@filterId"
+						   class="custom-control-input vistas grafico checkboxSeleccionVista" 
+						   name="TabVistaGrafico"
+						   @(opcionesBusqueda.OpcionesVistas.VistaGrafico ? "checked" : "")>				
+
+					<label class="custom-control-label" for="vistaGrafico_@filterId">@Html.GetText("COMADMINPESTANYAS", "VISTAGRAFICO")</label>					
+
+				</div> 			
+			</div>
+			<small class="form-text text-muted mb-2">Visualización de los resultados en modo gráfico.</small>
+		</div>
+		
+	</div>
+
+	@* Nº de resultados *@
+	<div class="form-group mb-4 numerResultados">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NUMERORESULTADOS")</label>
+		<input
+			type="number"
+			placeholder="@Html.GetText("COMADMINPESTANYAS", "NUMERORESULTADOS")"
+			class="form-control"
+			style="width:100px;"
+			name="TabNumeroResultados"
+			value="@opcionesBusqueda.NumeroResultados">
+		@* Ayuda *@
+		<small class="form-text text-muted">@Html.GetText("AYUDACOMADMINPESTANYAS", "NUMERORESULTADOS")</small>
+	</div>	
+
+	@* Mostrar facetas *@
+	<div class="form-group mb-4 mostrarFacetas">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "MOSTRARFACETAS")</label>
+		@* Abrir en nueva pestaña: Sí *@
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input TabMostrarFacetas"
+				type="radio"
+				name="TabMostrarFacetas_@Model.Key"								
+				@(opcionesBusqueda.MostrarFacetas ? "checked" : "")
+				data-value="si"
+				id="TabMostrarFacetas_SI_@Model.Key"/>
+			<label class="form-check-label" for="TabMostrarFacetas_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+		</div>
+		<div class="form-check form-check-inline">
+			@* Abrir en nueva pestaña: No *@
+			<input
+				class="form-check-input TabMostrarFacetas"
+				type="radio"
+				name="TabMostrarFacetas_@Model.Key"																				
+				data-value="no"
+				@(!opcionesBusqueda.MostrarFacetas ? "checked" : "")
+				id="TabMostrarFacetas_NO_@Model.Key"/>
+			<label class="form-check-label" for="TabMostrarFacetas_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>									
+		</div>
+		<small class="form-text text-muted mt-n3">@Html.GetText("AYUDACOMADMINPESTANYAS", "MOSTRARFACETAS")</small>
+	</div>
+
+	@* Agrupar facetas por tipo *@
+	<div class="form-group mb-4 agruparFacetasPorTipo">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "AGRUPARFACETASPORTIPO")</label>
+		@* Agrupoar facetas por tipo: Sí *@
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input TabAgruparFacetasPorTipo"
+				type="radio"
+				name="TabAgruparFacetasPorTipo_@Model.Key"								
+				@(opcionesBusqueda.AgruparFacetasPorTipo ? "checked" : "")
+				data-value="si"
+				id="TabAgruparFacetasPorTipo_SI_@Model.Key"/>
+			<label class="form-check-label" for="TabAgruparFacetasPorTipo_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+		</div>
+		<div class="form-check form-check-inline">
+			@* Agrupoar facetas por tipo: No *@
+			<input
+				class="form-check-input TabAgruparFacetasPorTipo"
+				type="radio"
+				name="TabAgruparFacetasPorTipo_@Model.Key"																				
+				data-value="no"
+				@(!opcionesBusqueda.AgruparFacetasPorTipo ? "checked" : "")
+				id="TabAgruparFacetasPorTipo_NO_@Model.Key"/>
+			<label class="form-check-label" for="TabAgruparFacetasPorTipo_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>									
+		</div>
+		<small class="form-text text-muted mt-n3">@Html.GetText("AYUDACOMADMINPESTANYAS", "AGRUPARFACETASPORTIPO")</small>
+	</div>
+
+
+	@* Mostrar búsqueda en cabecera *@
+	@* Deprecado CORE-4941
+	<div class="form-group mb-4 mostrarEnBusquedaCabecera">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "MOSTRARENBUSQUEDACABECERA")</label>
+		@* Abrir en nueva pestaña: Sí 
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input TabMostrarEnBusquedaCabecera"
+				type="radio"
+				name="TabMostrarEnBusquedaCabecera_@Model.Key"								
+				@(opcionesBusqueda.MostrarEnBusquedaCabecera ? "checked" : "") 
+				data-value="si"
+				id="TabMostrarEnBusquedaCabecera_SI_@Model.Key"/>
+			<label class="form-check-label" for="TabMostrarEnBusquedaCabecera_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+		</div>
+		<div class="form-check form-check-inline">
+			@* Abrir en nueva pestaña: No 
+			<input
+				class="form-check-input TabMostrarEnBusquedaCabecera"
+				type="radio"
+				name="TabMostrarEnBusquedaCabecera_@Model.Key"																				
+				data-value="no"
+				@(!opcionesBusqueda.MostrarEnBusquedaCabecera ? "checked" : "") 
+				id="TabMostrarEnBusquedaCabecera_NO_@Model.Key"/>
+			<label class="form-check-label" for="TabMostrarEnBusquedaCabecera_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>									
+		</div>
+		<small class="form-text text-muted mt-n3">@Html.GetText("AYUDACOMADMINPESTANYAS", "MOSTRARENBUSQUEDACABECERA")</small>
+	</div>
+	*@
+	            
+      
+	@* Mostrar caja de búsqueda DEPRECADO CORE-4941 - Ocultarlo para mandar los valores true por defecto*@	
+	<div class="form-group mb-4 mostrarCajaBusqueda d-none">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "MOSTRARCAJABUSQUEDA")</label>
+		@* Abrir en nueva pestaña: Sí *@
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input TabMostrarCajaBusqueda"
+				type="radio"
+				name="TabMostrarCajaBusqueda_@Model.Key"								
+				@(opcionesBusqueda.MostrarCajaBusqueda ? "checked" : "") 
+				data-value="si"
+				id="TabMostrarCajaBusqueda_SI_@Model.Key"/>
+			<label class="form-check-label" for="TabMostrarCajaBusqueda_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+		</div>
+		<div class="form-check form-check-inline">
+			@* Abrir en nueva pestaña: No *@
+			<input
+				class="form-check-input TabMostrarCajaBusqueda"
+				type="radio"
+				name="TabMostrarCajaBusqueda_@Model.Key"																				
+				data-value="no"
+				@(!opcionesBusqueda.MostrarCajaBusqueda ? "checked" : "") 
+				id="TabMostrarCajaBusqueda_NO_@Model.Key"/>
+			<label class="form-check-label" for="TabMostrarCajaBusqueda_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>									
+		</div>
+		<small class="form-text text-muted mt-n3">@Html.GetText("AYUDACOMADMINPESTANYAS", "MOSTRARCAJABUSQUEDA")</small>
+	</div>
+	
+	   
+
+	@* Proyecto origen búsqueda *@
+	<div class="form-group mb-4 proyectoOrigenBusqueda">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "PROYECTOORIGENBUSQUEDA")</label>
+		<input
+			type="text"
+			placeholder="@Html.GetText("COMADMINPESTANYAS", "PROYECTOORIGENBUSQUEDA")"
+			class="form-control"
+			name="TabProyectoOrigenBusqueda"
+			value="@(opcionesBusqueda.ProyectoOrigenBusqueda.Equals(Guid.Empty)?"":opcionesBusqueda.ProyectoOrigenBusqueda.ToString())">	
+			@* Ayuda *@
+			<small class="form-text text-muted">@Html.GetText("AYUDACOMADMINPESTANYAS", "PROYECTOORIGENBUSQUEDA")</small> 
+	</div>
+
+	@* Ocultar resultados sin filtros *@
+	<div class="form-group mb-4 ocultarResultadosSinFiltros">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "OCULTARRESULTADOSSINFILTROS")</label>
+		@* Abrir en nueva pestaña: Sí *@
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input TabOcultarResultadosSinFiltros"
+				type="radio"
+				name="TabOcultarResultadosSinFiltros_@Model.Key"								
+				@(opcionesBusqueda.OcultarResultadosSinFiltros ? "checked" : "")
+				data-value="si"
+				id="TabOcultarResultadosSinFiltros_SI_@Model.Key"/>
+			<label class="form-check-label" for="TabOcultarResultadosSinFiltros_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+		</div>
+		<div class="form-check form-check-inline">
+			@* Abrir en nueva pestaña: No *@
+			<input
+				class="form-check-input TabOcultarResultadosSinFiltros"
+				type="radio"
+				name="TabOcultarResultadosSinFiltros_@Model.Key"																				
+				data-value="no"
+				@(!opcionesBusqueda.OcultarResultadosSinFiltros ? "checked" : "") 
+				id="TabOcultarResultadosSinFiltros_NO_@Model.Key"/>
+			<label class="form-check-label" for="TabOcultarResultadosSinFiltros_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>									
+		</div>
+		<small class="form-text text-muted mt-n3">@Html.GetText("AYUDACOMADMINPESTANYAS", "OCULTARRESULTADOSSINFILTROS")</small> 
+	</div>
+	  	
+	@* Texto de búsquedas sin resultados *@
+	<div class="form-group mb-4 textoBusquedasSinResultados">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "TEXTOBUSQUEDASINRESULTADOS")</label>
+		<input
+			type="text"
+			placeholder="@Html.GetText("AYUDACOMADMINPESTANYAS", "TEXTOBUSQUEDASINRESULTADOS")"
+			class="form-control"			
+			name="TabTextoBusquedaSinResultados"
+			value="@opcionesBusqueda.TextoBusquedaSinResultados">	
+			@* Ayuda *@
+			<small class="form-text text-muted">@Html.GetText("AYUDACOMADMINPESTANYAS", "TEXTOBUSQUEDASINRESULTADOS")</small> 
+	</div>
+
+	@* Ignorar privacidad en búsquedas *@
+	<div class="form-group mb-4 ignorarPrivacidadEnBusqueda">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "IGNORARPRIVACIDADENBUSQUEDA")</label>
+		@* Abrir en nueva pestaña: Sí *@
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input TabIgnorarPrivacidadEnBusqueda"
+				type="radio"
+				name="TabIgnorarPrivacidadEnBusqueda_@Model.Key"								
+				@(opcionesBusqueda.IgnorarPrivacidadEnBusqueda ? "checked" : "")
+				data-value="si"
+				id="TabIgnorarPrivacidadEnBusqueda_SI_@Model.Key"/>
+			<label class="form-check-label" for="TabIgnorarPrivacidadEnBusqueda_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+		</div>
+		<div class="form-check form-check-inline">
+			@* Abrir en nueva pestaña: No *@
+			<input
+				class="form-check-input TabIgnorarPrivacidadEnBusqueda"
+				type="radio"
+				name="TabIgnorarPrivacidadEnBusqueda_@Model.Key"																				
+				data-value="no"
+				@(!opcionesBusqueda.IgnorarPrivacidadEnBusqueda ? "checked" : "")
+				id="TabIgnorarPrivacidadEnBusqueda_NO_@Model.Key"/>
+			<label class="form-check-label" for="TabIgnorarPrivacidadEnBusqueda_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>									
+		</div>
+		<small class="form-text text-muted mt-n3">@Html.GetText("AYUDACOMADMINPESTANYAS", "IGNORARPRIVACIDADENBUSQUEDA")</small>
+	</div>
+	  
+
+	@* Omitir carga inicial de facetas *@
+	<div class="form-group mb-4 omitirCargaInicialFacetas">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "OMITIRCARGAINICIALFACETASRESULTADOS")</label>
+		@* Omitar carga inicial : Sí *@
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input TabOmitirCargaInicialFacetasResultados"
+				type="radio"
+				name="TabOmitirCargaInicialFacetasResultados_@Model.Key"								
+				@(opcionesBusqueda.OmitirCargaInicialFacetasResultados ? "checked" : "")
+				data-value="si"
+				id="TabOmitirCargaInicialFacetasResultados_SI_@Model.Key"/>
+			<label class="form-check-label" for="TabOmitirCargaInicialFacetasResultados_SI_@Model.Key">@Html.GetText("COMMON","SI")</label>									
+		</div>
+		<div class="form-check form-check-inline">
+			@* Omitar carga inicial : No *@
+			<input
+				class="form-check-input TabOmitirCargaInicialFacetasResultados"
+				type="radio"
+				name="TabOmitirCargaInicialFacetasResultados_@Model.Key"																				
+				data-value="no"
+				@(!opcionesBusqueda.OmitirCargaInicialFacetasResultados ? "checked" : "")
+				id="TabOmitirCargaInicialFacetasResultados_NO_@Model.Key"/>
+			<label class="form-check-label" for="TabOmitirCargaInicialFacetasResultados_NO_@Model.Key">@Html.GetText("COMMON","NO")</label>									
+		</div>
+		<small class="form-text text-muted mt-n3">@Html.GetText("AYUDACOMADMINPESTANYAS", "OMITIRCARGAINICIALFACETASRESULTADOS")</small> 
+	</div>
+	
+	@* Relación mandatory *@  
+	<div class="form-group mb-4 relacionMantadory">
+		<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "RELACIONMANDATORY")</label>
+		<input
+			type="text"
+			class="form-control"
+			placeholder=""
+			name="TabFiltroRelacionMandatory"
+			value="@opcionesBusqueda.RelacionMandatory" 			
+			/>
+		@* Ayuda *@
+		<small class="form-text text-muted">@Html.GetText("AYUDACOMADMINPESTANYAS", "RELACIONMANDATORY")</small>
+	</div>
+</div>

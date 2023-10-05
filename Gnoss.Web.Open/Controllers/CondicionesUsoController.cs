@@ -1,7 +1,9 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
@@ -12,6 +14,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +24,7 @@ using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class CondicionesUsoController : ControllerBaseWeb
     {
 
@@ -61,6 +65,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 textoCondiciones = UtilCadenas.ObtenerTextoDeIdioma(condicionesUso.Texto, IdiomaUsuario, null);
             }
+
+            ViewBag.NombreProyClausulas = proyCL.ObtenerNombreDeProyectoID(ProyectoAD.MetaProyecto);
+
             return textoCondiciones;
         }
     }

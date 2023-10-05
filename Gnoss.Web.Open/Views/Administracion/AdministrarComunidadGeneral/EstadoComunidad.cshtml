@@ -1,72 +1,169 @@
 ﻿@model AdministrarComunidadGeneralModel.StateCommunity
+@*
+Descripción
+-----------------------------------------------
+Vista para mostrar información acerca de los diferentes estados en los que puede estar una comunidad. (Cerrándose, Cerrado temporalmente)
+
+Variables
+----------------------------------------------------------------
+*@
 @{
-    CommunityModel Comunidad = Html.GetComunidad(); 
+CommunityModel Comunidad = Html.GetComunidad();
+// Estado de la comunidad (String y Value)
+string estadoComunidadString = "";
+string estadoComunidadValue = "";
+// Url para administrar categorías -> Panel en definición
+string urlAdminCat = @Html.GetGeneradorURLs().ObtenerURLComunidad(Html.GetUtilIdiomas(), Html.GetBaseUrlIdioma(), Comunidad.ShortName) + "/" + Html.GetText("URLSEM", "ADMINISTRARCATEGORIASCOM");                       
+// Indica si la comuniad está o no en definición
+bool estaEnDefinicion = false;
 }
 
-<h3>@Html.GetText("COMMON", "ADMINCOMTITESTADOCOMUNIDAD")</h3>
-<div class="contenedor">
-    <p>
-        @Html.GetText("COMADMIN", "ESTADO")
-        @if (Model.State.Equals((short)EstadoProyecto.Definicion))
-        {
-            <span style="font-weight:bold;">@Html.GetText("COMADMIN", "DEFINICION")</span>
-            <input type="hidden" id="cmbEstado" value="2" />
-        }
-        else
-        {
-            <select style="width:250px" id="cmbEstado" name="cmbEstado">
-                @if (Model.State.Equals((short)EstadoProyecto.Cerrado))
-                {
-                    <option value="0" selected="selected">@Html.GetText("COMADMIN", "CERRADO")</option>
-                }
-                <option value="1" @Html.Raw(Model.State.Equals((short)EstadoProyecto.CerradoTemporalmente) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "CERRADOTMP")</option>
+@{
+    @* Estado de comunidad *@
+    switch (Model.State)
+    {
+        case (short)EstadoProyecto.Cerrado:
+            estadoComunidadValue = "0";
+            estadoComunidadString = @Html.GetText("COMADMIN", "CERRADO");
+            break;
 
-                <option value="3" @Html.Raw(Model.State.Equals((short)EstadoProyecto.Abierto) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "ABIERTO")</option>
-                <option value="4" @Html.Raw(Model.State.Equals((short)EstadoProyecto.Cerrandose) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "CERRANDOSE")</option>
-            </select>
-        }
-    </p>
+        case (short)EstadoProyecto.CerradoTemporalmente:
+            estadoComunidadValue = "1";
+            estadoComunidadString = @Html.GetText("COMADMIN", "CERRADOTMP");
+            break;
+
+        case (short)EstadoProyecto.Definicion:
+            estadoComunidadValue = "2";
+            estadoComunidadString = @Html.GetText("COMADMIN", "DEFINICION");
+            break;
+
+        case (short)EstadoProyecto.Abierto:
+            estadoComunidadValue = "3";
+            estadoComunidadString = @Html.GetText("COMADMIN", "ABIERTO");
+            break;
+
+        case (short)EstadoProyecto.Cerrandose:
+            estadoComunidadValue = "4";
+            estadoComunidadString = @Html.GetText("COMADMIN", "CERRANDOSE");
+            break;
+
+        default:
+            estadoComunidadValue = "";
+            break;
+    }
+
+    @* Comprobar que la comunidad está en definición *@
     @if (Model.State.Equals((short)EstadoProyecto.Definicion))
     {
-        <div id="estado2" class="explicacionEstado activo">
-            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONDEFINICION"))
-            <input id="lbAbrirCom" class="abrirComunidad" @(!Model.CanBeOpened ? "disabled" : "") value="@Html.GetText("COMADMIN", "ABRIRCOM")" />
-        </div>
-        <div id="opcionestado2" class="opcionesEstado activo">
-            @{
-                string urlAdminCat = @Html.GetGeneradorURLs().ObtenerURLComunidad(Html.GetUtilIdiomas(), Html.GetBaseUrlIdioma(), Comunidad.ShortName) + "/" + Html.GetText("URLSEM", "ADMINISTRARCATEGORIASCOM");
+        estaEnDefinicion = true;
+    }
+    else
+    {
+        estaEnDefinicion = false;
+    }
+
+
+}
+
+
+@*
+----------------------------------------------------------------
+-------------------- Vista de mensajes de información con los diferentes estados de la comunidad --------------------
+*@
+
+
+<div id="panelEstadoComunidad" class="form-group mb-3">
+    @* Estado actual de la comunidad *@         
+    <input type="hidden" 
+    id="cmbEstado" name="cmbEstado" 
+    value="@estadoComunidadValue" 
+    data-estadocomunidadvalue="@estadoComunidadValue"
+    data-estadocomunidadstring="@estadoComunidadString" />
+
+    <label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","ESTADODELACOMUNIDAD")</label>
+    @* Select para cambiar el estado de la comunidad (No mostrar si está en definición) *@
+    <div id="controlEstadoComunidad" class="@( (estaEnDefinicion) ? "d-none" : "d-flex align-items-center")">
+        <span class="texto-seleccionado">@estadoComunidadString</span>
+        @* Select de Estado de comunidad Temporal *@         
+        <select id="selectEstadoComunidad" name="selectEstadoComunidad" class="js-select2">
+            @if (Model.State.Equals((short)EstadoProyecto.Cerrado))
+            {
+                <option value="0" selected="selected">@Html.GetText("COMADMIN", "CERRADO")</option>
             }
-            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONABRIRCOM", urlAdminCat));
+            <option value="1" @Html.Raw(Model.State.Equals((short)EstadoProyecto.CerradoTemporalmente) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "CERRADOTMP")</option>
+            <option value="3" @Html.Raw(Model.State.Equals((short)EstadoProyecto.Abierto) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "ABIERTO")</option>
+            <option value="4" @Html.Raw(Model.State.Equals((short)EstadoProyecto.Cerrandose) ? "selected=\"selected\"" : "")>@Html.GetText("COMADMIN", "CERRANDOSE")</option>
+        </select>        
+    </div>
+
+    @* Botón para cambiar estado de la comunidad -> Sustituido por la parte de arriba
+    <a href="javascript: void(0);" class="btn btn-outline-grey">Cambiar estado</a>
+    *@
+
+    @* Paneles informativos del estado de la comunidad *@
+    @* En definición *@
+    @if (Model.State.Equals((short)EstadoProyecto.Definicion)) {  
+        <div id="panelEstadoComunidadEnDefinicion" class="alert alert-info" role="alert">
+            <span class="material-icons">info</span>
+            <p class="titulo">Aviso</p>
+            <p>@Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONDEFINICION"))</p>
+            <p>@Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONABRIRCOM", urlAdminCat))</p>
+
+            <div class="form-group mb-3">                
+                <input id="btnAbrirCom" type="button" class="btn btn-outline-grey" value="@Html.GetText("COMADMIN", "ABRIRCOM")" @(!Model.CanBeOpened ? "disabled" : "")/>
+            </div>
         </div>
     }
     else
     {
-        <div id="estado0" class="explicacionEstado">
-            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRADA", Html.GetNombreProyectoEcosistema()))
+        // Controlar los diferentes estados diferentes a "En Definición"
+        @* Abierto *@
+        <div id="panelEstadoComunidadAbierto" class="alert alert-success" role="alert">
+            <span class="material-icons">done</span>
+            <p class="titulo"> @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONABIERTA"))</p>
         </div>
-        <div id="estado1" class="explicacionEstado">
-            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRADATMP"))
+
+        @* Cerrado *@     
+        <div id="panelEstadoComunidadCerrado" class="alert alert-info" role="alert">
+            <span class="material-icons">info</span>
+            <p class="titulo"> Aviso</p>
+            <p>@Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRADA", Html.GetNombreProyectoEcosistema()))</p>
         </div>
-        <div id="estado3" class="explicacionEstado">
-            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONABIERTA"))
+
+        @* Cerrado temporalmente *@
+        <div id="panelEstadoComunidadCerradoTemporalmente" class="alert alert-info" role="alert">
+            <span class="material-icons">info</span>
+            <p class="titulo">Aviso</p>
+            <p>@Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRADATMP"))</p>    
+            <div class="form-group mb-3">
+                <label class="control-label d-block">Fecha de reapertura (YYYY/MM/DD)</label>
+                <input type="text"
+                       class="selDesde form-control not-outline" 
+                       id="txtFechaReapertura" 
+                       name="txtFechaReapertura" 
+                       value="@(!Model.ReOpenDate.Equals(DateTime.MinValue) ? Model.ReOpenDate.ToString("yyyy/MM/dd") : "")">
+            </div>
+    
+            <div class="form-group mb-3">
+                <label class="control-label d-block">@Html.Raw(Html.GetText("COMADMIN", "MOTIVOCIERRETMP"))</label>        
+                <input type="text" 
+                       id="txtMotivoCierre" 
+                       name="txtMotivoCierre" 
+                       class="form-control not-outline"
+                       placeholder="Indica el motivo del cierre"
+                       value="@Model.CauseOfClose"
+                >
+            </div>
         </div>
-        <div id="estado4" class="explicacionEstado">
-            @Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRANDOSE", Html.GetNombreProyectoEcosistema()))
-        </div>
-        <div id="opcionestado0" class="opcionesEstado">
-        </div>
-        <div id="opcionestado1" class="opcionesEstado">
-            Fecha de reapertura (YYYY/MM/DD)
-            <input type="text" class="selDesde" id="txtFechaReapertura" name="txtFechaReapertura" value="@(!Model.ReOpenDate.Equals(DateTime.MinValue) ? Model.ReOpenDate.ToString("yyyy/MM/dd") : "")">
-            @Html.Raw(Html.GetText("COMADMIN", "MOTIVOCIERRETMP"))
-            <textarea id="txtMotivoCierre" rows="4" name="txtMotivoCierre">@Model.CauseOfClose</textarea>
-        </div>
-        <div id="opcionestado3" class="opcionesEstado">
-        </div>
-        <div id="opcionestado4" class="opcionesEstado">
-            <p>
-                @Html.GetText("COMADMIN", "DIASDEGRACIA")
-                <select style="width: 50px;" id="ddlDiasGracia" name="ddlDiasGracia">
+
+        @* Cerrándose *@
+        <div id="panelEstadoComunidadCerrandose" class="alert alert-warning" role="alert">
+            <span class="material-icons">info</span>
+            <p class="titulo">Aviso</p>
+            <p>@Html.Raw(Html.GetText("COMADMIN", "EXPLICACIONCERRANDOSE", Html.GetNombreProyectoEcosistema()))</p>    
+            <div class="form-group mb-3">        
+                <label class="control-label d-block">@Html.GetText("COMADMIN", "DIASDEGRACIA")</label>
+                <select id="ddlDiasGracia" class="form-control">
                     <option value="5" @Html.Raw(Model.DaysOfGrace.Equals(5) ? "selected=\"selected\"" : "")>5</option>
                     <option value="10" @Html.Raw(Model.DaysOfGrace.Equals(10) ? "selected=\"selected\"" : "")>10</option>
                     <option value="15" @Html.Raw(Model.DaysOfGrace.Equals(15) ? "selected=\"selected\"" : "")>15</option>
@@ -74,11 +171,29 @@
                     <option value="25" @Html.Raw(Model.DaysOfGrace.Equals(25) ? "selected=\"selected\"" : "")>25</option>
                     <option value="30" @Html.Raw(Model.DaysOfGrace.Equals(30) ? "selected=\"selected\"" : "")>30</option>
                 </select>
-            </p>
-            <p>
-                @Html.GetText("COMADMIN", "FECHACIERRE") <span id="fechaFinalGracia"></span>
-            </p>
-        </div>
+                <p class="mt-2">
+                    @Html.GetText("COMADMIN", "FECHACIERRE") <span id="fechaFinalGracia"></span>
+                </p>
+            </div>
+        </div>    
     }
 </div>
-<div id="infoAbrirCom" class="ok general" style="display:none"></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

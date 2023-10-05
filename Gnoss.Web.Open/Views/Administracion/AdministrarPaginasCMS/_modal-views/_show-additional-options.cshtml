@@ -1,0 +1,65 @@
+﻿@model AdministrarPaginasCMSViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista modal donde se cargarán opciones adicionales para la edición de una página CMS.
+Este tipo de opciones pueden ser casos como "Mostrar sólo el cuerpo de la página".
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+                      
+}
+
+
+<div id="modal-show-additional-options" class="modal modal-top fade modal-edicion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">edit</span>
+                    @Html.GetText("DEVTOOLS","OPCIONES")
+                </p>
+                <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+            </div>
+            <div class="modal-body">
+                <div class="formulario-edicion">                
+                    <div class="form-group mb-3 showOnlyPageBody">
+					    <label class="control-label d-block">@Html.GetText("ADMINISTRACIONPAGINAS","MOSTRARSOLOELCUERPODELAPAGINA")</label>                        
+                        @* Mostrar sólo el cuerpo *@
+                        <div class="form-check form-check-inline">
+							<input class="form-check-input rbMostrarSoloCuerpo" 
+                                   type="radio" 
+                                   data-value="si" 
+                                   name="rbMostrarSoloCuerpo"
+                                   @Html.Raw(Model.MostrarSoloCuerpo ? "checked=\"checked\"" : "")
+                                   id="rbMostrarSoloCuerpo_SI">
+							<label class="form-check-label" for="rbMostrarSoloCuerpo_SI">Sí</label>
+                        </div>
+                        @* No Mostrar el cuerpo *@
+						<div class="form-check form-check-inline">
+						    <input class="form-check-input rbMostrarSoloCuerpo" type="radio" 
+                                   data-value="no"
+                                   @Html.Raw(!Model.MostrarSoloCuerpo ? "checked=\"checked\"" : "")
+                                   name="rbMostrarSoloCuerpo" 
+                                   id="rbMostrarSoloCuerpo_NO">
+						    <label class="form-check-label" for="rbMostrarSoloCuerpo_NO">No</label>
+						</div>
+                        <small class="form-text text-muted mt-n2 mb-2">@Html.GetText("DEVTOOLS","MOSTRARSOLOELCUERPODELAPAGINASINELLAYOUTDELAPAGINADELACOMUNI")</small>
+                    </div>
+                    
+                    @* Botón para cerrar modal *@
+                    <div class="panelBotonera">
+							<a href="javascript: void(0)" 
+                               data-dismiss="modal" 
+                               class="btn btn-primary uppercase">Cerrar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

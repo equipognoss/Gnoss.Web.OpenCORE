@@ -1,0 +1,189 @@
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarOpcionesAvanzadasViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista indice donde se gestionarán los ajustes de "Usuarios" relacionados con "Interacción social" en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista para Administrar los niveles de certificación de la Comunidad --------------------
+*@
+
+@* Contenedor central *@
+
+    @* Migas de Pan *@
+    <div class="col col-12 col-breadcrumb">
+        <ul>
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")</a>
+            </li>
+            <li>
+                @Html.GetText("DEVTOOLS","INTERACCIONSOCIAL")
+            </li>
+        </ul>
+        
+        @* Botón de documentación *@
+        <div class="col-breadcrumb__documentation" style="display: flex; align-items: center;">    
+            <button type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" data-toggle="modal" data-target="#right_modal_lg">
+                <span class="material-icons texto-primario documentation__icon" data-toggle="modal" data-target="#right_modal_lg" style="cursor:pointer">description</span>
+                <span class="documentation__text" style="font-weight: 300;">Documentación</span>
+            </button>
+        </div>
+    </div>
+
+    @* Contenido Central *@
+    <div class="formulario-edicion background-blanco">
+        @* Título + Descripción de la sección según el tipo de comunidad *@
+        <h2>@Html.GetText("DEVTOOLS","INTERACCIONSOCIAL")</h2>
+            <p>                
+                @Html.GetText("DEVTOOLS","GESTIONDELOSMIEMBROS,GRUPOSYORGANIZACIONESQUEFORMANPARTEDELA")
+            </p>                       
+
+        @* Contenedor para activar los niveles de certificación de la comunidad *@
+        @* Checkbox Invitaciones disponibles *@
+        <div class="form-group mb-3">
+            <div class="custom-control custom-checkbox">                
+                <input type="checkbox" 
+                       id="InvitacionesDisponibles"
+                       class="custom-control-input"
+                       name="InvitacionesDisponibles" 
+                       @(Model.InvitacionesDisponibles ? "checked" : "")>
+                <label class="custom-control-label" for="InvitacionesDisponibles">@Html.GetText("ADMINISTRACIONBASICA","INVITACIONESDISPONIBLES")</label>
+            </div>
+            <small id="InvitacionesDisponiblesHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMITIRENVIARINVITACIONESATRAVESDEEMAILPARAQUEPUEDANUNIRSEA")</small>
+        </div>
+
+        @* Checkbox Votaciones disponibles *@
+        <div class="form-group mb-3">
+            <div class="custom-control custom-checkbox">                
+                <input type="checkbox" 
+                       id="VotacionesDisponibles"
+                       class="custom-control-input"
+                       name="VotacionesDisponibles" 
+                       @(Model.VotacionesDisponibles ? "checked" : "")>
+                <label class="custom-control-label" for="VotacionesDisponibles">@Html.GetText("ADMINISTRACIONBASICA","VOTACIONESDISPONIBLES")</label>
+            </div>
+            <small id="VotacionesDisponiblesHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMITIRALOSMIEMBROSDELACOMUNIDADVOTARRECURSOS")</small>
+
+            @* Subpanel de votaciones *@
+            <div id="panelVotaciones" class="form-group mb-3 ml-4 mb-3 mt-3  @( (!Model.VotacionesDisponibles) ? "d-none" : null)">
+                <div class="form-group mb-3">
+                    <div class="custom-control custom-checkbox">
+                        @* Checkbox Votaciones negativas *@
+                        <input type="checkbox" 
+                               id="PermitirVotacionesNegativas"
+                               class="custom-control-input"
+                               name="PermitirVotacionesNegativas"
+                               @(Model.PermitirVotacionesNegativas ? "checked" : "")>
+                        <label class="custom-control-label" for="PermitirVotacionesNegativas">@Html.GetText("ADMINISTRACIONBASICA","PERMITIRVOTACIONESNEGATIVAS")</label>
+                    </div> 
+                    <small id="PermitirVotacionesNegativasHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMITIRALOSMIEMBROSDELACOMUNIDADVOTARDEFORMANEGATIVAUNRECUR")</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <div class="custom-control custom-checkbox">
+                        @* Checkbox Mostrar votaciones *@
+                        <input type="checkbox" 
+                               id="MostrarVotaciones"
+                               class="custom-control-input"
+                               name="MostrarVotaciones" 
+                               @(Model.MostrarVotaciones ? "checked" : "")>
+                        <label class="custom-control-label" for="MostrarVotaciones">@Html.GetText("ADMINISTRACIONBASICA","MOSTRARLASVOTACIONES")</label>
+                    </div> 
+                    <small id="MostrarVotacionesHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMITIRMOSTRARELNUMERODEVOTOSQUEUNRECURSOHARECIBIDO")</small>
+                </div>
+            </div>
+        </div>
+        
+        @* Checkbox Comentarios disponibles *@
+        <div class="form-group mb-3">
+            <div class="custom-control custom-checkbox">                
+                <input type="checkbox" 
+                       id="ComentariosDisponibles"
+                       class="custom-control-input"
+                       name="ComentariosDisponibles" 
+                       @(Model.ComentariosDisponibles ? "checked" : "")>
+                <label class="custom-control-label" for="ComentariosDisponibles">@Html.GetText("ADMINISTRACIONBASICA","COMENTARIOSDISPONIBLES")</label>
+            </div> 
+            <small id="ComentariosDisponiblesHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMITIRALOSMIEMBROSDELACOMUNIDADREALIZARCOMENTARIOSENLAFICH")</small>
+        </div>
+
+        @* Checkbox Supervisores pueden Administrar grupos de la comunidad *@
+        <div class="form-group mb-3">
+            <div class="custom-control custom-checkbox">                
+                <input type="checkbox" 
+                       id="SupervisoresPuedenAdministrarGrupos"
+                       class="custom-control-input"
+                       name="SupervisoresPuedenAdministrarGrupos" 
+                       @(Model.SupervisoresPuedenAdministrarGrupos ? "checked" : "")>
+                <label class="custom-control-label" for="SupervisoresPuedenAdministrarGrupos">@Html.GetText("ADMINISTRACIONBASICA","PERMITIRALOSSUPERVISORESADMINISTRARLOSGRUPOS")</label>
+            </div> 
+            <small id="SupervisoresPuedenAdministrarGruposHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","DELEGARLAADMINISTRACIONDEGRUPOSDELACOMUNIDADALOSMIEMBROSQUET")</small>        </div>
+
+        @* Checkbox Compartir recursos en otras comunidades *@
+        <div class="form-group mb-3">
+            <div class="custom-control custom-checkbox">                
+                <input type="checkbox" 
+                       id="CompartirRecursoPermitido"
+                       class="custom-control-input"
+                       name="CompartirRecursoPermitido" 
+                       @(Model.CompartirRecursoPermitido ? "checked" : "")>
+                <label class="custom-control-label" for="CompartirRecursoPermitido">@Html.GetText("ADMINISTRACIONBASICA","LOSUSUARIOSPUEDENCOMPARTIRRECURSOSDEESTACOMUNIDADAOTRASCOMUN")</label>
+            </div> 
+            <small id="CompartirRecursoPermitidoHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMITIRCOMPARTIRRECURSOSENOTRASCOMUNIDADESPARAQUEPUEDANSERA")</small>
+        </div>
+
+        @* Checkbox Permitir recursos privados *@
+        <div class="form-group mb-3">
+            <div class="custom-control custom-checkbox">                
+                <input type="checkbox" 
+                       id="PermitirRecursosPrivados"
+                       class="custom-control-input"
+                       name="PermitirRecursosPrivados" 
+                       @(Model.PermitirRecursosPrivados ? "checked" : "")>
+                <label class="custom-control-label" for="PermitirRecursosPrivados">@Html.GetText("ADMINISTRACIONBASICA","LOSUSUARIOSPUEDENCREARRECURSOSPRIVADOSENLACOMUNIDAD")</label>
+            </div>
+            <small id="PermitirRecursosPrivadosHelp" class="form-text text-muted">@Html.GetText("DEVTOOLS","PERMITIRALOSMIEMBROSDELACOMUNIDADLAPOSIBILIDADDECREARRECURSO")</small>
+        </div>
+
+        @* Nº de caracteres máximo para descripción *@
+        <div class="form-group mb-5">    
+            <label class="control-label d-block">@Html.GetText("DEVTOOLS","NUMERODECARACTERESMAXIMODELADESCRIPCIONDECADARECURSOENELBOLE")</label>
+            <input type="number" 
+                   class="form-control" id="NumeroCaracteresDescripcionSuscripcion" name="NumeroCaracteresDescripcionSuscripcion" 
+                   placeholder="Número de caracteres" 
+                   value="@Model.NumeroCaracteresDescripcionSuscripcion"
+                   style="width: 220px;">                           
+        </div>
+                         
+        @* Botón para guardado de datos *@
+        <input id="btnGuardarInteraccionSocial" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />        
+    </div>
+
+    @* Modal de documentación de la sección *@
+    @Html.PartialView("_modal-views/_documentation-section")    
+
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+            // Operativa funcionamiento de Gestión de certificados de recursos de la comunidad
+            operativaGestionInteraccionSocial.init();            
+        })();
+    </script>
+}

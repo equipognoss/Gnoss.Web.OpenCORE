@@ -1,16 +1,76 @@
 ﻿@model List<CategoriaCookieModel>
 
-<h1>@Html.GetText("COMADMINCOOKIES", "NOMBRECATEGORIAS")</h1>
-<p>
-    @Html.GetText("COMADMINCOOKIES", "INFOTITULOCATEGORIAS")
-</p>
-<div class="panAniadir">
-    <input type="button" class="addCategoria" value="@Html.GetText("COMADMINCOOKIES", "ADDCATEGORIA")" />
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra el listado de las categorías de las cookies de la comunidad. Esta vista se utiliza directamente en el index.
+
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+
+}
+
+@* Título de sección "Categorías de cookies". Oculto por defecto *@
+<div class="header-listado mb-0">
+	<div class="h1-container">
+		<h3>@Html.GetText("ADMINISTRACIONBASICA","CATEGORIAS")
+			<span id="numCategoryCookies" class="numResultados numResultadosCategory"></span>
+		</h3>
+	</div>
 </div>
-<ol class="table" id="sortableCategory">
-    @foreach (CategoriaCookieModel categoriaCookie in Model.OrderBy(item => item.CategoriaProyectoCookie.NombreCorto))
-    {
-        @Html.PartialView("_EdicionCategoriaCookie", categoriaCookie)
-    }
-</ol>
+
+@* Contenido o tabla con las categorías cookies de la comunidad *@
+<div class="mb-5">	
+	<div class="wrapCol">
+		@* Cabecera del listado de las categorías cookies *@
+		<ul id="id-header-cookies-list" class="header-component-list component-list no-list-style">
+			<li class="component-wrap">
+				@* Cabecera de Cookies *@
+				<div class="component ">
+					<div class="component-header-wrap">
+						<div class="component-header">
+							<div class="component-sortable js-component-sortable-page">
+								<span class="material-icons-outlined sortable-icon">drag_handle</span>
+							</div>
+							@* Sección títulos de listado de categorias cookies *@
+							<div class="component-header-content">
+								<div class="component-header-left">
+									<div class="component-name-wrap">
+										<span class="component-name">@Html.GetText("DEVTOOLS","COOKIE")</span>
+									</div>
+									<div class="component-tipo-wrap">
+										<span class="component-tipo">@Html.GetText("DEVTOOLS","NOMBRECORTO")</span>
+									</div>
+									<div class="component-fecha-wrap">
+										<span class="component-fecha">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</span>
+									</div>
+								</div>
+								<div class="component-header-right">
+									<div class="component-actions-wrap">
+										<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</li>
+		</ul>
+
+		@* Contenido de cookies *@
+		<ul id="id-added-category-cookies-list" 
+			class="js-community-category-cookies-list component-list no-list-style">
+
+			@* Pintado de cada categoría cookie *@							
+			@foreach (CategoriaCookieModel categoriaCookie in Model.OrderBy(item => item.CategoriaProyectoCookie.NombreCorto))
+			{
+				@Html.PartialView("_EdicionCategoriaCookie", categoriaCookie)
+			}
+		</ul>
+	</div>
+</div>
 
