@@ -29,8 +29,12 @@ Variables
 	AdministrarPaginasCMSViewModel pAdministrarPaginasCMSViewModel = ViewBag.AdministrarPaginasCMSViewModel;
 
 	// Visibilizar el botón u ocultar si está o no en modo "Wizard"
-	bool disableActionButtons = pAdministrarPaginasCMSViewModel.Rows.Count == 0 ? true : false; 
+	bool disableActionButtons = pAdministrarPaginasCMSViewModel.Rows.Count == 0 ? true : false;
 
+	// Url para volver
+	string refererUrl = string.IsNullOrEmpty(Context.Request.Headers["Referer"].ToString())
+	? $"{Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")}"
+	: Context.Request.Headers["Referer"].ToString();
 }
 @*
 ----------------------------------------------------------------
@@ -79,8 +83,13 @@ Variables
 							<span id="panel-lateral-trigger" class="material-icons">menu</span>
 
 							<div class="logo-wrapper">
-								<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")" class="texto-blanco">
-									Semantic Web Tools							
+								<a href="@refererUrl" class="texto-blanco d-flex align-items-center">
+									<span class="material-icons-outlined mr-2">
+										arrow_back_ios
+									</span>
+									<span class="texto">
+										Semantic Web Tools
+								</span>
 								</a>
 							</div>
 						</div>

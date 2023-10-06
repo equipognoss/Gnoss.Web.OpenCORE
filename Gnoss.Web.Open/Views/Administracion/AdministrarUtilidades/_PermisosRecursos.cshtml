@@ -324,66 +324,7 @@ Variables
             <td>               
             </td> 
         </tr>
-
-        @* Fila Wiki *@
-        @if (Model.WikiDisponible)
-        {
-            <tr id="Wiki" class="permiso">
-                @{
-                    int permisosWiki = -1;
-                    if (Model.PermisosDocumentacion.Count(permiso => permiso.TipoDocumento == TiposDocumentacion.Wiki) > 0)
-                    {
-                        permisosWiki = Model.PermisosDocumentacion.First(permiso => permiso.TipoDocumento == TiposDocumentacion.Wiki).TipoPermiso;
-                    }
-                }
-                @* Referencia a Wiki *@
-                <td>@Html.GetText("COMADMIN", "WIKI")</td>
-                <td>
-                    <div class="check-wrapper">
-                        <div class="custom-control custom-checkbox">
-                            <input id="checkUsuarioWiki"
-                                   class="chkUsu custom-control-input"
-                                   type="checkbox" 
-                                   @Html.Raw(permisosWiki == 2 ? "checked=\"checked\"" : "")
-                                   name="checkUsuarioWiki" />
-
-                            <label class="custom-control-label"
-                                   for="checkUsuarioWiki">
-                                   @Html.GetText("COMADMIN", "USUARIO")
-                            </label>      
-                        </div>
-                        <div class="custom-control custom-checkbox">
-                            <input id="checkSupervisorWiki"
-                                   class="chkSup custom-control-input"
-                                   type="checkbox" 
-                                   @Html.Raw(permisosWiki >= 1 ? "checked=\"checked\"" : "") 
-                                   name="checkSupervisorWiki" />
-
-                            <label class="custom-control-label"
-                                   for="checkSupervisorWiki">
-                                   @Html.GetText("COMADMIN", "SUPERVISOR")
-                            </label>
-                        </div>
-                        <div class="custom-control custom-checkbox">
-                            <input id="checkAdministradorWiki"
-                                   class="chkAdm custom-control-input"
-                                   type="checkbox" 
-                                   @Html.Raw(permisosWiki >= 0 ? "checked=\"checked\"" : "")
-                                   name="checkAdministradorWiki" />
-
-                            <label class="custom-control-label"
-                                   for="checkAdministradorWiki">
-                                   @Html.GetText("COMADMIN", "ADMINISTRADOR")
-                            </label>                           
-                        </div>
-                    </div>
-                </td>
-                @* Columna de Acciones para permisos a grupos específicos *@
-                <td>                    
-                </td>
-                
-            </tr>
-        }
+        
         @* Fila Pregunta *@
         <tr id="Pregunta" class="permiso">
             @{

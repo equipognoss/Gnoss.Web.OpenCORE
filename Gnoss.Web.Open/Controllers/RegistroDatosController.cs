@@ -334,7 +334,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         //Borramos Cache de la Identidad actual
                         IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Persona.Clave, IdentidadActual.PerfilID);
+                        identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                         identidadCL.Dispose();
 
                     }
@@ -734,11 +734,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     string nombreCampo = campoExtra.FieldName;
                     string valorCampo = RequestParams(nombreCampo);
-
                     Guid guidNombreCampo = Guid.Empty;
-                    if (Guid.TryParse(nombreCampo, out guidNombreCampo))
+                    Guid guidValorCampo = Guid.Empty;
+
+                    if (Guid.TryParse(nombreCampo, out guidNombreCampo) && Guid.TryParse(valorCampo, out guidValorCampo) && !guidValorCampo.Equals(Guid.Empty))
                     {
-                        Guid guidValorCampo = Guid.Empty;
                         if (Guid.TryParse(valorCampo, out guidValorCampo) && !guidValorCampo.Equals(Guid.Empty))
                         {
                             DatoExtraEcosistema filaDatoExtraEcosistema = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraEcosistema.FirstOrDefault(dato=>dato.DatoExtraID.Equals(guidNombreCampo));
@@ -754,7 +754,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     dicDatosExtraProyecto.Add(filaDatoExtraProyecto.DatoExtraID, guidValorCampo);
                                 }
                             }
-                        }
+                        }                       
                     }
                     else
                     {
@@ -948,7 +948,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 //Borramos Cache de la Identidad actual
                 IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Persona.Clave, IdentidadActual.PerfilID);
+                identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                 identidadCL.Dispose();
 
                 Session.Set("tieneDatosRegistro", true);
@@ -1140,7 +1140,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             DataWrapperIdentidad identidadDW = new DataWrapperIdentidad();
             if (IdentidadActual.TrabajaConOrganizacion || IdentidadActual.TrabajaPersonaConOrganizacion || IdentidadActual.OrganizacionID.HasValue)
             {
-                DataWrapperIdentidad identidadesPersonas = identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true);
+                DataWrapperIdentidad identidadesPersonas = identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true, IdentidadActual.Clave);
                 Identidad identidad = identidadesPersonas.ListaIdentidad.FirstOrDefault(ident => ident.Tipo == 0);
                 if (identidad != null)
                 {
@@ -1395,7 +1395,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         DataWrapperIdentidad identidadDW = new DataWrapperIdentidad();
                         if (IdentidadActual.TrabajaConOrganizacion || IdentidadActual.TrabajaPersonaConOrganizacion || IdentidadActual.OrganizacionID.HasValue)
                         {
-                            DataWrapperIdentidad dataWrapperIdentidad = identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true);
+                            DataWrapperIdentidad dataWrapperIdentidad = identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true, IdentidadActual.Clave);
                             if (dataWrapperIdentidad.ListaIdentidad.Any(ident => ident.Tipo==0))
                             {
                                 identidadDW = identidadCN.ObtenerDatosExtraProyectoOpcionIdentidadPorIdentidadID(dataWrapperIdentidad.ListaIdentidad.FirstOrDefault(ident => ident.Tipo == 0).IdentidadID);

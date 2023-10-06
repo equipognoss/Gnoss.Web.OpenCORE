@@ -291,7 +291,15 @@ Variables
                                         onclick="AgregarAchivoClick(event,'@idControl', '@tipoArchivo');event.stopPropagation(); event.preventDefault();">
                                     <span class="material-icons pr-0">edit</span>
                                 </button>
-
+                                @* Botón de descarga *@
+                                @if (!string.IsNullOrEmpty(valorPropTexto)){
+                                        <button type="button"
+                                            class="btn downloadButton ml-4"
+                                            onclick="DownloadAchivoClick(event,'@idControl', '@tipoArchivo', this); event.stopPropagation(); event.preventDefault();">
+                                        <span class="material-icons pr-0">download</span>
+                                    </button>
+                                }
+                                
                                 <button type="button"
                                         class="btn removeButton"
                                         data-showmodalcentered="1"

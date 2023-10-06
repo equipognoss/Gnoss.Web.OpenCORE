@@ -70,7 +70,7 @@ string inputIsExternalSearched = "ProfilePersonal.IsExternalSearched";
 @* Nombre *@
 <div class="form-group mb-5 edit-nombre">
     <label class="control-label d-block" for="@idName">@Html.GetText("REGISTRO", "NOMBRE")</label>
-    <input placeholder="Introduce tu nombre"
+    <input placeholder="@Html.GetText("PERFIL", "INTRODUCENOMBRE")"
            type="text"
            name="@inputName"
            id="@idName"
@@ -80,7 +80,7 @@ string inputIsExternalSearched = "ProfilePersonal.IsExternalSearched";
 @* Apellidos *@
 <div class="form-group mb-5 edit-apellidos">
     <label class="control-label d-block" for="@idLastName">@Html.GetText("REGISTRO", "APELLIDOS")</label>
-    <input placeholder="Introduce tus apellidos"
+    <input placeholder="@Html.GetText("PERFIL", "INTRODUCEAPELLIDO")"
            type="text"
            name="@inputLastName"
            value="@Perfil.LastName"
@@ -90,7 +90,7 @@ string inputIsExternalSearched = "ProfilePersonal.IsExternalSearched";
 @* Correo electrónico - Email *@
 <div class="form-group mb-5 edit-correo">
     <label class="control-label d-block" for="@idEmail">@Html.GetText("REGISTROUSUARIOORGANIZACION", "EMAIL")</label>
-    <input placeholder="Introduce tu correo electrónico"
+    <input placeholder="@Html.GetText("PERFIL", "INTRODUCEEMAIL")"
            type="text"
            name="@inputEmail"
            id="@idEmail"

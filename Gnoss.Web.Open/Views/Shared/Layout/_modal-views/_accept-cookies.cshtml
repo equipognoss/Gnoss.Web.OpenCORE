@@ -12,6 +12,7 @@
     CommunityModel Comunidad = Html.GetComunidad();
     string avisoCookies = Html.GetCookiesWarning();
     string rutaCookies = Comunidad.Url + "/" + Html.GetText("URLSEM", "POLITICACOOKIES");
+    string textoPoliticaCookies = Html.GetCookiesText();
 }
 
 @*
@@ -26,7 +27,13 @@
         <div class="contenido">
             @* Contenedor informativo de gestión de Cookies *@
             <div class="box aviso">
-                <p class="titulo">Uso de cookies</p>
+                <p class="titulo">@Html.GetText("POLITICACOOKIES", "TITULO")</p>
+                @if (!string.IsNullOrEmpty(textoPoliticaCookies))
+                {
+                   @Html.Raw(textoPoliticaCookies);
+                }
+                else
+                {
                 <p>
                     GNOSS usa cookies, propias y de terceros, con finalidad principalmente
                     técnica y necesaria para prestación de nuestros servicios y mostrarles
@@ -36,6 +43,7 @@
                     ACEPTA para confirmar que has leído la información y aceptado su
                     instalación. Puedes modificar la configuración de tu navegador.
                 </p>
+                }            
             </div>
             @* Panel donde se mostrará posible error al guardar cookie*@
             <div id="modal-accept-coookie-wrapper" class="mt-2">

@@ -849,6 +849,7 @@ table.tabla-multimedia > tbody > tr > td.td-titulo > div .texto-alternativo-imag
 
 
 /* PAGE BUILDER */
+.page-builder .filtroRapido input { width: 100% !important; }
 .page-builder #panel-lateral-page-builder { width: 360px; position: fixed; top: 60px;}
 .page-builder #panel-lateral-page-builder .body { height: calc(100vh - 60px); }
 .page-builder #panel-lateral-page-builder + .wrapCol.container { max-width: calc(100% - 400px) !important; margin-right: 20px;}

@@ -119,8 +119,6 @@ function loadCustomCSS(config){
 						loadingOcultar();
 						ckEditorRecargarTodos();										
 					},1000);
-				}else{
-					loadingOcultar();
 				}
 			}
 		});
@@ -302,4 +300,15 @@ CKEDITOR.on( 'instanceReady', function( ev ) {
 
 	// Eliminar el botón de "About" del plugin "CodeMirror"
 	$('.cke_button__codemirrorabout').addClass("d-none");
+
+	// Evitar propiedad Sandbox en iframes
+	ev.editor.dataProcessor.htmlFilter.addRules({
+		elements: {
+			iframe: function(element) {
+				delete element.attributes.sandbox;
+			}
+		}
+	});	
+
+
 });

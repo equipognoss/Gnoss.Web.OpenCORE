@@ -363,7 +363,7 @@ Variables
             }
 
             @* Campos extra para solicitar al usuario *@
-            if (Model.AdditionalFields != null && Model.AdditionalFields.Count > 0)
+            if (!IdentidadActual.IsGuestUser && Model.AdditionalFields != null && Model.AdditionalFields.Count > 0)
             {
                 <div id="panCamposConfigurablesProyecto">
                     @foreach (AdditionalFieldAutentication campoExtra in Model.AdditionalFields)
@@ -601,50 +601,22 @@ Variables
 
     </form>
 
-</div>
-    <div class="panel-centrado-separator"></div>
-    <div class="box box02">
-    @if (IdentidadActual.IsGuestUser && Cabecera.SocialNetworkRegister.Keys.Count > 0)
-    {
-        <fieldset id="fsPrefieresRedesSociales">
-            <legend>@Html.GetText("REGISTRO", "OSILOPREFIERES")</legend>
-            <ul class="lista-redes-sociales lista-redes-sociales--registro no-list-style">
+</div>    
+    @if (IdentidadActual.IsGuestUser && Cabecera.SocialNetworkRegister.Keys.Count > 0) { 
+        <div class="box box02 registroRedesSociales mt-3">
+            <div class="separator">
+                <h2>@Html.GetText("REGISTRO", "OSILOPREFIERES")</h2>
+            </div>
+            @* Panel de Login Redes Sociales *@
+            <div class="redesSocialesActions">
                 @foreach (string nombre in Cabecera.SocialNetworkRegister.Keys)
                 {
-                    string classLi = "icon" + nombre;
-                    <li class="@classLi">
-                        @Html.GetText("LOGIN", "CONECTATECON") <a href="@Cabecera.SocialNetworkRegister[nombre]">@nombre</a>
-                    </li>
+                    string socialNetworkLogo = Html.GetLogoForSocialNetworkName(nombre);
+                    <a class="redesSocialesAction__button" alt="@nombre" title="@nombre" href="@Cabecera.SocialNetworkRegister[nombre]">@Html.Raw(socialNetworkLogo)</a>
                 }
-            </ul>
-        </fieldset>
+            </div>
+        </div>
     }
-        @*<fieldset id="fsPrefieresRedesSociales">
-            <p>O bien,</p>
-            <ul class="lista-redes-sociales lista-redes-sociales--registro no-list-style">
-                <li class="twitter">
-                    <a href="http://serviciospruebas.gnoss.net/login/logintwitter.aspx?token=%252btM2RDGm6hGfWlvP767TUpAjhjRmuzn9nxFyhMo%252bBRQ%253d&amp;proyectoID=e01d50a3-73e0-4707-a6c9-10e0ca7dd165&amp;urlOrigen="
-                       title="Twitter">
-                        <i class="fab fa-twitter"></i>
-                        <span>Regístrate con Twitter</span>
-                    </a>
-                </li>
-                <li class="facebook">
-                    <a href="http://serviciospruebas.gnoss.net/login/loginfacebook.aspx?token=%252btM2RDGm6hGfWlvP767TUpAjhjRmuzn9nxFyhMo%252bBRQ%253d&amp;proyectoID=e01d50a3-73e0-4707-a6c9-10e0ca7dd165&amp;urlOrigen="
-                       title="Facebook">
-                        <i class="fab fa-facebook-f"></i>
-                        <span>Regístrate con Facebook</span>
-                    </a>
-                </li>
-                <li class="google">
-                    <a href="#" title="google">
-                        <i class="google-icon"></i>
-                        <span>Regístrate con Google</span>
-                    </a>
-                </li>
-            </ul>
-        </fieldset>*@
-    </div>
     
 
 

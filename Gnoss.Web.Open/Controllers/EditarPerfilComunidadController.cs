@@ -201,7 +201,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     UsarImagenPersonal(bool.Parse(RequestParams("UsarFotoPersonal")));
                     IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.PersonaID.Value, IdentidadActual.PerfilID);
+                    identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                     identidadCL.Dispose();
                     return new EmptyResult();
                 }
@@ -281,7 +281,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             GuardarCVRapido(pCurriculum.Description, pCurriculum.Tags, true);
             IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-            identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.PersonaID.Value, IdentidadActual.PerfilID);
+            identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
             identidadCL.Dispose();
             return GnossResultOK(UtilIdiomas.GetText("COMADMINCMS", "COMPONENTEGUARDADOOK"));
 
@@ -364,7 +364,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 errores = GuardarPerfilProfesor(paginaModel.ProfileTeacher);
             }
             IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-            identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.PersonaID.Value, IdentidadActual.PerfilID);
+            identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
             identidadCL.Dispose();
 
             if (errores.Count > 0)
@@ -457,7 +457,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 GuardarCVRapido(description, tags, true);
                 IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.PersonaID.Value, IdentidadActual.PerfilID);
+                identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                 identidadCL.Dispose();
             }
 
@@ -529,7 +529,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 
                 IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.PersonaID.Value, IdentidadActual.PerfilID);
+                identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                 identidadCL.Dispose();
 
                 ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", "", ProyectoSeleccionado.Clave);
@@ -695,12 +695,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             IdentidadActual.OrganizacionPerfil.FilaOrganizacion.VersionLogo = versionFoto;
                             IdentidadActual.OrganizacionPerfil.FilaOrganizacion.CoordenadasLogo = coordenadasFoto;
 
+                            mEntityContext.SaveChanges();
+
                             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                             //identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
                             identidadCN.ActualizarFotoIdentidadesOrganizacion(IdentidadActual.OrganizacionID.Value, false);
                             identidadCN.Dispose();
-
-                            mEntityContext.SaveChanges();
                         }
                         else if (IdentidadActual.TrabajaConOrganizacion)
                         {
@@ -713,13 +713,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             filaPersona.CoordenadasFoto = coordenadasFoto;
                             filaPersona.FechaAnadidaFoto = DateTime.Now;
                             filaPersona.UsarFotoPersonal = false;
+                            mEntityContext.SaveChanges();
 
                             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                             identidadCN.ActualizarFotoIdentidadesDePersonaDeOrganizacion(IdentidadActual.PersonaID.Value, filaPersona.OrganizacionID, false, false);
                             //identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
                             identidadCN.Dispose();
-
-                            mEntityContext.SaveChanges();
                         }
                         else if (IdentidadActual.ModoPersonal)
                         {
@@ -730,12 +729,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             IdentidadActual.Persona.FilaPersona.VersionFoto = versionFoto;
                             IdentidadActual.Persona.FilaPersona.CoordenadasFoto = coordenadasFoto;
                             IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = DateTime.Now;
+                            mEntityContext.SaveChanges();
 
                             IdentidadCN identidadCN = new IdentidadCN(mEntityContext,mLoggingService,mConfigService, mServicesUtilVirtuosoAndReplication);
                             identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
                             identidadCN.Dispose();
-
-                            mEntityContext.SaveChanges();
                         }
                     }
                     else
@@ -1092,6 +1090,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (!existenErrores)
                 {
+                    if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State == EntityState.Detached)
+                    {
+                        IdentidadActual.Persona.FilaPersona = personaCN.ObtenerFilaPersonaPorID(IdentidadActual.Persona.FilaPersona.PersonaID);
+                    }
                     bool CambiadoNombre = false;
                     bool CambiadoApellidos = false;
                     if (!string.IsNullOrEmpty(pPerfilPersonal.Name))
@@ -1274,9 +1276,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else
                     {
+                        mEntityContext.SaveChanges();
                         IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
                         identidadCL.InvalidarFichasIdentidadesMVC(IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Select(item => item.IdentidadID).ToList());
-                        mEntityContext.SaveChanges();
                     }
 
                     ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", antiguoEmail, ProyectoSeleccionado.Clave);
@@ -1786,9 +1788,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 datoExtraProyectoOpcionIdentidad.ProyectoID = ProyectoSeleccionado.Clave;
                 datoExtraProyectoOpcionIdentidad.DatoExtraID = datoExtra;
                 datoExtraProyectoOpcionIdentidad.OpcionID = dicDatosExtraProyecto[datoExtra];
-
-                //dataWrapperIdentidad.ListaDatoExtraProyectoOpcionIdentidad.AddDatoExtraProyectoOpcionIdentidadRow(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, datoExtra, dicDatosExtraProyecto[datoExtra], IdentidadActual.FilaIdentidad);
-                dataWrapperIdentidad.ListaDatoExtraProyectoOpcionIdentidad.Add(datoExtraProyectoOpcionIdentidad);
+                datoExtraProyectoOpcionIdentidad.IdentidadID = IdentidadActual.Clave;
+				//dataWrapperIdentidad.ListaDatoExtraProyectoOpcionIdentidad.AddDatoExtraProyectoOpcionIdentidadRow(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, datoExtra, dicDatosExtraProyecto[datoExtra], IdentidadActual.FilaIdentidad);
+				dataWrapperIdentidad.ListaDatoExtraProyectoOpcionIdentidad.Add(datoExtraProyectoOpcionIdentidad);
                 mEntityContext.DatoExtraProyectoOpcionIdentidad.Add(datoExtraProyectoOpcionIdentidad);
             }
 
@@ -2243,7 +2245,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             #region Borramos caché
 
             IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-            identidadCL.EliminarCacheGestorIdentidadActual(UsuarioActual.UsuarioID, UsuarioActual.PersonaID, UsuarioActual.PerfilID);
+            identidadCL.EliminarCacheGestorIdentidadActual(UsuarioActual.UsuarioID, UsuarioActual.IdentidadID, UsuarioActual.PersonaID);
             identidadCL.Dispose();
 
             #endregion
@@ -2358,12 +2360,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 IdentidadActual.OrganizacionPerfil.FilaOrganizacion.Logotipo = null;
                 IdentidadActual.OrganizacionPerfil.FilaOrganizacion.CoordenadasLogo = null;
-
+                mEntityContext.SaveChanges();
                 IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, true);
                 identidadCN.Dispose();
-
-                mEntityContext.SaveChanges();
             }
             else if (IdentidadActual.TrabajaConOrganizacion)
             {
@@ -2375,13 +2375,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 filaPersona.Foto = null;
                 filaPersona.CoordenadasFoto = null;
                 filaPersona.FechaAnadidaFoto = null;
-
+                mEntityContext.SaveChanges();
                 IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, true);
                 identidadCN.Dispose();
-
-
-                mEntityContext.SaveChanges();
             }
             else if (IdentidadActual.ModoPersonal)
             {
@@ -2393,12 +2390,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 IdentidadActual.Persona.FilaPersona.CoordenadasFoto = null;
                 IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = null;
 
-
+                mEntityContext.SaveChanges();
                 IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, true);
                 identidadCN.Dispose();
-
-                mEntityContext.SaveChanges();
             }
 
             EliminarCaches();
@@ -2463,6 +2458,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarDatosPerfilPersonal()
         {
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State == EntityState.Detached)
+            {
+                IdentidadActual.Persona.FilaPersona = personaCN.ObtenerFilaPersonaPorID(IdentidadActual.Persona.FilaPersona.PersonaID);
+            }
+            personaCN.Dispose();
             paginaModel.ProfilePersonal.Name = IdentidadActual.Persona.Nombre;
             paginaModel.ProfilePersonal.LastName = IdentidadActual.Persona.Apellidos;
 
@@ -2662,7 +2663,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             DataWrapperIdentidad dataWrapperIdentidad = new DataWrapperIdentidad();
             if (IdentidadActual.TrabajaConOrganizacion || IdentidadActual.TrabajaPersonaConOrganizacion || IdentidadActual.OrganizacionID.HasValue)
             {
-                DataWrapperIdentidad identidadesPersonas = identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true);
+                DataWrapperIdentidad identidadesPersonas = identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true, IdentidadActual.Clave);
                 if (identidadesPersonas.ListaIdentidad.Any(identidad => identidad.Tipo == 0))
                 {
                     dataWrapperIdentidad = identidadCN.ObtenerDatosExtraProyectoOpcionIdentidadPorIdentidadID(identidadesPersonas.ListaIdentidad.FirstOrDefault(Identidad => Identidad.Tipo == 0).IdentidadID);
@@ -2787,6 +2788,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (datoExtraEcosistemaVirtuosoPerfil != null)
                     {
                         opcionSeleccionada = datoExtraEcosistemaVirtuosoPerfil.Opcion;
+                    }
+                    else
+                    {
+                        AD.EntityModel.Models.IdentidadDS.DatoExtraProyectoVirtuosoIdentidad datoExtraIdentidad = dataWrapperIdentidad.ListaDatoExtraProyectoVirtuosoIdentidad.FirstOrDefault(datoExtra => datoExtra.DatoExtraID.Equals(fila.DatoExtraID));
+                        if (datoExtraIdentidad != null)
+                        {
+                            opcionSeleccionada = datoExtraIdentidad.Opcion;
+                        }
                     }
 
                     AdditionalFieldAutentication campoExtra = new AdditionalFieldAutentication();

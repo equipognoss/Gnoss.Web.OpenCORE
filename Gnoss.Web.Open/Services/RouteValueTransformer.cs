@@ -11,6 +11,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.Routes;
+using Es.Riam.Util;
 using Gnoss.Web.Open.Properties;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -71,8 +72,8 @@ namespace Gnoss.Web.Services
 
                     if (segmentos.Length > 2 && !string.IsNullOrEmpty(segmentos[2]))
                     {
-                        string comunidadSegmento = segmentos[1].ToLower();
-                        if (comunidadSegmento.Equals(comunidadTxt))
+                        string comunidadSegmento = UtilCadenas.RemoveAccentsWithRegEx(segmentos[1].ToLower());
+                        if (comunidadSegmento.Equals(UtilCadenas.RemoveAccentsWithRegEx(comunidadTxt)))
                         {
                             nombreCortoComunidad = segmentos[2];
                             urlCorta = false;

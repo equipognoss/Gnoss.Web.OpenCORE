@@ -314,6 +314,15 @@ Variables
                                        @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOOKIESCOM")
                                    </a>                            
                                 </li>
+
+                                @* Configurar FTP *@
+                                <li>
+                                    <a href="@Comunidad.Url/@Html.GetText("URLSEM", "CONFIGURAFTP")" 
+                                       data-searchable="ftp, conexión ftp, conexión, subir, estilos, css"
+                                       class="ftp-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_AccesoFTP) ? "activo" : null)">
+                                       @Html.GetText("COMADMINCOMUNIDAD", "CONFIGURAFTP")
+                                   </a>                            
+                                </li>
                             }
                         }
 
@@ -345,7 +354,74 @@ Variables
                                </a>                            
                             </li>                                                                                                                                                                       
                         }
-                        
+                        @* Administrar datos extra *@
+                        @if (isInEcosistemaPlatform){
+                            @* Administrar datos extra (Ecosistema) *@                                                                                                                                                   
+                            <li>
+                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDATOSEXTRAECOSISTEMA")"
+                                   data-searchable="datos, extra, datosextra, registro, dato, datos registro,"
+                                   class="datosextra-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_DatosExtra) ? "activo" : null)">
+                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")
+                                </a>                            
+                            </li>                                                                                                                                                                       
+                        }
+                        else
+                        {
+                            bool administrarDatosExtra = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
+                            if (administrarDatosExtra)
+                            {
+                                @if (administrarDatosExtra && !string.IsNullOrEmpty(Comunidad.ShortName))
+                                {
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDATOSEXTRA")"
+                                           data-searchable="datos, extra, datosextra, registro, dato, datos registro"
+                               class="datosextra-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_DatosExtra) ? "activo" : null)">
+                                           @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")                                           
+                                       </a>                            
+                                    </li>                                                                                                           
+                                }
+                            }
+                        }
+
+                         @* Administrar trazas (Comunidad) *@
+                        @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+                        {                            
+                            bool administrarTrazas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
+                            if (administrarTrazas)
+                            {
+                                @if (administrarTrazas && !string.IsNullOrEmpty(Comunidad.ShortName))
+                                {
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRAZAS")"
+                                           data-searchable="traza, trazas"
+                                           class="trazas-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Trazas) ? "activo" : null)">
+                                           @Html.GetText("DEVTOOLS","TRAZAS")                                    
+                                       </a>                            
+                                    </li>                                                                                                           
+                                }
+                            }
+                        }
+
+
+                        @* Administrar descargar configuraciones *@
+                        @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+                        {                            
+                            bool administrarDescargasConfiguracion = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
+                            if (administrarDescargasConfiguracion)
+                            {
+                                @if (administrarDescargasConfiguracion && !string.IsNullOrEmpty(Comunidad.ShortName))
+                                {
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESCARGARCONFIGURACION")"
+                                           data-searchable="configuracion, configuraciones"
+                                           class="descargar-configuraciones @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Descargar_Configuraciones) ? "activo" : null)">
+                                           @Html.GetText("DEVTOOLS","DESCARGACONFIG")                               
+                                       </a>                            
+                                    </li>                                                                                                           
+                                }
+                            }
+                        }
+
 
                         @* Chequear Instalaciones (Comunidad) Deshabilitado hasta asegurarse de qué añadir en la vista final. De momento funciona correctamente
                         @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
@@ -366,6 +442,25 @@ Variables
                             }
                         }
                          *@
+
+                        @* Administrar cache (Comunidad) *@
+                        @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+                        {
+                            bool administrarCache = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
+                            if (administrarCache)
+                            {
+                                @if (administrarCache && !string.IsNullOrEmpty(Comunidad.ShortName))
+                                {
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCACHE")"
+                                           data-searchable="cache, caches"
+                                           class="cache-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cache) ? "activo" : null)">
+                                           Cache                                    
+                                       </a>
+                                    </li>                                                                                                           
+                                }
+                            }
+                        }
 
                         @if (permisosPaginas.EsAdministradorProyecto && !isInEcosistemaPlatform )
                         {
@@ -502,6 +597,39 @@ Variables
                                     *@
                                 }
 
+                                @if (permisosPaginas.AdministracionDesarrolladoresPermitido)
+                                {
+                                    administrarDiseño = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
+                                    if (administrarDiseño)
+                                    {                           
+                                        @* Opción SparQL *@                                                                                                                                     
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCONSULTASPARQL")" 
+                                               data-searchable="sparql, consultas, consultas sparql"
+                                               class="sparql @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_SparQL) ? "activo" : null)">
+                                               @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCONSULTASPARQL")
+                                           </a>                            
+                                        </li>
+
+                                        @* Opción Carga masiva *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "CONSULTACARGAMASIVA")"
+                                               data-searchable="carga, carga masiva, masiva, datos"
+                                               class="carga-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_CargaMasiva) ? "activo" : null)">
+                                               @Html.GetText("DEVTOOLS","CONSULTARCARGASMASIVAS")
+                                           </a>                            
+                                        </li>
+
+                                        @* Opción Borrado masivo *@                                                                                                                                     
+                                        <li> 
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRABORRADOMASIVO")"
+                                               data-searchable="borrar, borrado masivo, masivo"
+                                               class="borrado-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_BorradoMasivo) ? "activo" : null)">
+                                               @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRABORRADOMASIVO")
+                                           </a>                            
+                                        </li>                                      
+                                    }
+                                }
 	                        </ul>
                         </div>
                 </div>                

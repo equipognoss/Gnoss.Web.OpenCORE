@@ -386,6 +386,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     // return PartialView("_AccionesTesSem", mModelAdmin);
                     // Carga de la Vista para su edición vía modal
+                    mModelAdmin.IdiomaPorDefecto = IdiomaPorDefecto;
                     return PartialView("_modal-views/_tesauro-details", mModelAdmin);
                 }
                 else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.CreateCategory)

@@ -76,14 +76,17 @@ Variables
 
             <div class="col col-12 header-buscador">
 
-                @* Boton Añadir *@
+                @* Botones para añadir miembros y grupos*@
                 <div class="acciones d-flex align-items-center justify-content-end" style="margin-bottom: 18px;">
+                    <a href="@Html.GetText("URLSEM", "GRUPOS")/@Html.GetText("URLSEM", "CREARGRUPO")" class="btn btn-outline-primary dropdown-toggle no-flecha" style="margin-right: 20px;">
+                        <span class="material-icons">add</span>
+                        <span>@Html.GetText("COMADMIN","ANADIRNUEVOGRUPO")</span>
+                    </a>
                     <a class="btn btn-outline-primary dropdown-toggle no-flecha" data-toggle="modal" data-target="#add_member">
                         <span class="material-icons">add</span>
-                        <span>Añadir Miembro</span>
-                    </a>
+                        <span>@Html.GetText("COMADMIN","ANADIRNUEVOMIEMBRO")</span>
+                    </a>                    
                 </div>
-
                 @* Barra de búsqueda *@
                 <div class="header-buscador max-width">
                     @* Buscador de la sección + Sección de Tags usados de facetas *@

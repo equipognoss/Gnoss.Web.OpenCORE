@@ -274,9 +274,9 @@ var textoRecursos = {
     seguroEliminar: '¿Estás seguro de que deseas eliminar los recursos seleccionados?',
     soloUnaCat: 'Sólo puede seleccionarse una categoría.',
     almenosunaCat: 'Debes seleccionar al menos una categoría.',
-    guardadoOK: 'Se ha guardado correctamente.',
-    soloUnElem: 'Sólo puede seleccionarse un elemento.',
-    almenosunElem: 'Debes seleccionar al menos un elemento.',
+    guardadoOK: 'Saved successfully.',
+    soloUnElem: 'You only can select one element.',
+    almenosunElem: 'You must to select at least one element.',
     recursos: 'resources',
     recurso: 'resource'
 };

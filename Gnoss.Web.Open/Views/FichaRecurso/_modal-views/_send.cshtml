@@ -221,7 +221,7 @@ string instrucciones = "";
             <select id="@idDlIdioma" class="js-select2 form-control pmd-select2">
                 @foreach (KeyValuePair<string, string> idioma in Cabecera.Languajes)
                 {
-                <option value="@idioma.Key" @if (Html.GetUtilIdiomas().LanguageCode == idioma.Key){<text>selected="selected"</text>}>@idioma.Value</option>
+                    <option value="@idioma.Key" @if (Html.GetUtilIdiomas().LanguageCode == idioma.Key){<text>selected="selected"</text>}>@idioma.Value</option>
                 }
             </select>
           </div>

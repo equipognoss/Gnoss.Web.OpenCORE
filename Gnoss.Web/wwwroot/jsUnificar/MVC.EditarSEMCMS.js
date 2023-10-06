@@ -2854,7 +2854,8 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
         // Cambio por nuevo Front
         //fila += '<td class="tdaccion"><a class="remove" onclick="MostrarPanelConfirmacionEvento(event, \''+textoFormSem.confimEliminarEntidad+'\', \''+metodoEliminar+'\')"></a></td>';    
         fila += `<td class="tdaccion">                    
-                    <a href="javascript:void(0)"                                        
+                    <a href="javascript:void(0)"    
+                       class="remove"
                         data-showmodalcentered="1"
                         onclick="
                             $('#modal-container').modal('show', this);
@@ -2879,7 +2880,8 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
         // Cambio por nuevo Front
         // fila += '<td class="tdaccion"><a class="remove" onclick="MostrarPanelConfirmacionEvento(event, \''+textoEliminar+'\', \''+metodoEliminar+'\')"></a></td>';    
         fila += `<td class="tdaccion">                 
-                    <a href="javascript:void(0)"                                        
+                    <a href="javascript:void(0)"
+                       class="remove"
                         data-showmodalcentered="1"
                         onclick="
                             $('#modal-container').modal('show', this);
@@ -3005,9 +3007,20 @@ function DarValorAPropiedadDeEntidad(pEntidad, pPropiedad, pTxtValores, pTxtIDs,
             if (inputHack.length > 0 && inputHack.hasClass("autocompletarSelecEnt")) {
                 inputHack.prop("disabled", true);
                 var contenedor = $('#' + idControl).closest('div.cont');
-                var aspa = $('a.removeAutocompletar', contenedor);
-                if (aspa.length == 0) {
-                    contenedor.append('<a class="remove removeAutocompletar"></a>');
+                // Controlar visibilidad del "X" en caso de que no exista valor                
+                let aspaOcultaClassName = "";                
+                let aspa = $('a.removeAutocompletar', contenedor);                               
+                if (aspa.length == 0 ) {
+                    // Añadir el "X" dentro del contenedor ".input-with-icon" si existe
+                    const contenedorWithIcon = contenedor.find(".input-with-icon");
+                    if (inputHack.val().trim() == ""){
+                        aspaOcultaClassName = "d-none";
+                    }
+                    if (contenedorWithIcon.length > 0){
+                        contenedorWithIcon.append(`<a class="remove removeAutocompletar ${aspaOcultaClassName}"></a>`);                        
+                    }else{
+                        contenedor.append(`<a class="remove removeAutocompletar ${aspaOcultaClassName}"></a>`);
+                    }                    
                     $('a.removeAutocompletar', contenedor).click(function () {
                         inputHack.val('');
                         inputHack.prop("disabled", false);
@@ -3937,6 +3950,24 @@ function AgregarAchivoClick(event, pControlID, pTipo) {
 }
 
 /**
+ * Método para descargar un fichero que ha sido subido previamente y que una vez guardado, se precisa su descarga
+ * @param {any} event
+ * @param {any} pControlID
+ * @param {any} pTipo
+ * @param {any} pElement: Elemento sobre el que se ha hecho clic.
+ */
+function DownloadAchivoClick(event, pControlID, pTipo, pElement) {
+    const dragDropArea = $(pElement).closest('.dragdropArea-preview-wrap-content');
+    const linkElement = dragDropArea.find('a');    
+
+    if (linkElement.length > 0) {
+        const downloadLink = linkElement.attr('href');
+        // Realizar acciones con downloadLink
+        window.location.href = downloadLink;
+    }
+}
+
+/**
  * Método para cargar un archivo/imagen editando un recurso del tipo Objeto de conocimiento al arrastrar un elemento (Drag & Drop).
  * Se utiliza, (por ejemplo) en la vista _PropiedadOntoData.cshtml
  * @param {any} event
@@ -4240,8 +4271,15 @@ function AgregarEntidadSeleccAutocompletar(pData) {
         var inputHack = $('#' + idHack);
         var inputSelEnt = $('#' + idControl);
         inputHack.prop("disabled", true);
-        var contenedor = $('#' + idControl).closest('div.cont');
+        var contenedor = $('#' + idControl).closest('div.cont');        
         contenedor.append('<a class="remove removeAutocompletar"></a>');
+        // Contenedor donde iría el "X"
+        const contenedorWithIcon = contenedor.find(".input-with-icon");
+        if (contenedorWithIcon.length > 0){
+            contenedorWithIcon.append('<a class="remove removeAutocompletar"></a>');
+        }else{
+            contenedor.append('<a class="remove removeAutocompletar"></a>');
+        }
         $('a.remove', contenedor).click(function () {
             inputHack.val('');
             inputSelEnt.val('');

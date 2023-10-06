@@ -1116,7 +1116,7 @@ function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, ed
     var aspaAutocompletar = $('a.removeAutocompletar');
     if (aspaAutocompletar.length > 0) {
         aspaAutocompletar.click(function () {
-            var contenedor = $(this).parent();
+            var contenedor = $(this).parent().parent();
             var inputAutocompletar = $('input.autocompletarSelecEnt', contenedor);
             var inputSelEntId = inputAutocompletar.attr('id').replace('hack_', 'selEnt_');
             var inputSelEnt = $('#' + inputSelEntId);

@@ -37,7 +37,6 @@ Variables
 	}
 	else
 	{
-
 		@* Tabs con panel con los idiomas *@
 		if (Model.SemanticThesaurus.SemThesaurusLanguajes.Count > 1)
 		{
@@ -47,7 +46,7 @@ Variables
 				@foreach (string idioma in Model.SemanticThesaurus.SemThesaurusLanguajes.Keys)
 				{
 					<li class="nav-item" role="presentation">
-						<a class="nav-link active"
+						<a class="nav-link @( Model.IdiomaPorDefecto == idioma ? "active" : null)"						
 						id="tab_@(idioma)"
 						data-toggle="tab"					   
 						href="#languageVer_@(idioma)"
@@ -62,9 +61,10 @@ Variables
 		}
 
 		@* Paneles con los diferentes inputs con los idiomas *@
-		foreach (string idioma in Model.SemanticThesaurus.SemThesaurusLanguajes.Keys)
-		{		
-			<div class="tab-pane fade edicion_@(idioma) @((contIdiomas == 0) ? "active show" : null)" id="languageVer_@(idioma)" role="tabpanel" aria-labelledby="languageVer_@(idioma)">
+		<div class="tab-content mt-n4">
+			@foreach (string idioma in Model.SemanticThesaurus.SemThesaurusLanguajes.Keys)
+			{
+			<div class="tab-pane fade edicion_@(idioma)  @(Model.IdiomaPorDefecto == idioma ? "active show" : null)" id="languageVer_@(idioma)" role="tabpanel" aria-labelledby="languageVer_@(idioma)">
 				<div class="form-group mb-3">
 					<label class="control-label d-block">@Html.GetText("COMADMINCATEGORIAS", "NOMBRE") @Model.SemanticThesaurus.SemThesaurusLanguajes[idioma]</label>
 					<input type="text" class="form-control txtNombreCatPadreCreacion @idioma" data-language="@idioma" />
@@ -73,8 +73,8 @@ Variables
 					</small>
 				</div>
 			</div>
-			contIdiomas = +1;
-		}
+			}
+		</div>		
 	}
 
 	@if (Model.SemanticThesaurus.ThesaurusEditorModel.ExtraPropertiesCategories.Count > 0)

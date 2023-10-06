@@ -103,7 +103,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             cabecera.SocialNetworkRegister = new Dictionary<string, string>();
             if (mControllerBase.ObtenerParametrosLoginExterno(TipoRedSocialLogin.Facebook, mControllerBase.ParametroProyecto, mControllerBase.ParametrosAplicacionDS).Count > 0)
             {
-                string urlServicioLoginFacebook = mControladorBase.UrlServicioLogin + "/loginfacebook.aspx?token=" + System.Net.WebUtility.UrlEncode(mControllerBase.TokenLoginUsuario) + "&proyectoID=" + ProyectoSeleccionado.Clave.ToString() + "&urlOrigen=" + System.Net.WebUtility.UrlEncode(mControllerBase.BaseURL + mHttpContextAccessor.HttpContext.Request.Path);
+                string urlServicioLoginFacebook = mControladorBase.UrlServicioLogin + "/loginfacebook?token=" + System.Net.WebUtility.UrlEncode(mControllerBase.TokenLoginUsuario) + "&proyectoID=" + ProyectoSeleccionado.Clave.ToString() + "&urlOrigen=" + System.Net.WebUtility.UrlEncode(mControllerBase.BaseURL + mHttpContextAccessor.HttpContext.Request.Path);
 
                 urlServicioLoginFacebook = AgregarEventoComunidad(urlServicioLoginFacebook);
 
