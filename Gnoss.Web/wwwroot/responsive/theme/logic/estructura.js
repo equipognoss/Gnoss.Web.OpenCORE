@@ -203,11 +203,15 @@ const operativaGestionPaginas = {
         // Panel donde se encuentran la opción de "Añadir propiedades"
         this.panelEditarPropiedades = $(".edit-exportation-properties");
         // Listado de propiedades de una exportación de una página
-        this.listProperties = $('.id-added-exportation-property-list');        
+        this.listExportationPropertyClassName = "id-added-exportation-property-list";
+        this.listProperties = $(`.${this.listExportationPropertyClassName}`);        
+        // Icono de exportaciones para ordenar
+        this.sortableExportationIconClassName = "sortable-export-property";       
         // Botón para editar la propiedad de una exportación
         this.btnEditProperty = $(".btnEditProperty");
         // Botón para eliminar la propiedad de una exportación
-        this.btnDeleteProperty = $(".btnDeleteProperty"); 
+        this.btnDeletePropertyClassName = "btnDeleteProperty";
+        this.btnDeleteProperty = $(`.${this.btnDeletePropertyClassName}`); 
         // Input donde se colocará el nombr ede la propiedad
         this.inputNombrePropiedad = $(".inputNombrePropiedad"); 
                 
@@ -318,10 +322,11 @@ const operativaGestionPaginas = {
         // Flag para detectar errores durante la obtención de datos de páginas             
         this.errorDuranteObtenerDatosPestaya = false;
 
-        // 
-        
+
         /* Flags para confirmar la eliminación de una página */
         this.confirmDeletePage = false;
+        // Flag para indicar el item a borrar para ser eliminado una vez se guarde
+        this.pendingToBeRemovedClassName = "pendingToBeRemoved";
 
     }, 
 
@@ -356,12 +361,17 @@ const operativaGestionPaginas = {
         operativaMultiIdioma.init(this.operativaMultiIdiomaParams);  
         
         // Setup de sortable tabla para los filtros (Dentro de cada página)
-        const listCustomFilterPanels = $(`.${that.listCustomFiltersClassName}`);
-        // Now it can be used reliably with $.map()
-        $.map( listCustomFilterPanels, function( item ) {
-            // Do something
+        const listCustomFilterPanels = $(`.${that.listCustomFiltersClassName}`);        
+        $.map( listCustomFilterPanels, function( item ) {            
             const id = $(item).prop("id");            
             setupBasicSortableList(id, that.sortableFilterIconClassName, undefined, undefined, undefined, undefined);
+        });
+
+        // Setup de sortable tabla para las exportaciones (Dentro de cada página)          
+        const listExportationProperty = $(`.${that.listExportationPropertyClassName}`);        
+        $.map( listExportationProperty, function( item ) {            
+            const id = $(item).prop("id");            
+            setupBasicSortableList(id, that.sortableExportationIconClassName, undefined, undefined, undefined, undefined);
         });
      
         that.setupFiltersForAutocomplete();
@@ -545,12 +555,18 @@ const operativaGestionPaginas = {
         });
 
         // Botón para eliminar una determinada propiedad de la exportación de una página
-        this.btnDeleteProperty.off().on("click", function(){
-            const btnDeleted = $(this);
-            // Fila correspondiente a la opción editada
-            that.filaPagina = btnDeleted.closest('.page-row');
-            that.handleDeleteCustomPropertyExportation(that.filaPagina, btnDeleted, true);                        
-        }); 
+        configEventByClassName(`${that.btnDeletePropertyClassName}`, function(element){
+            const deleteButton = $(element);
+            if (deleteButton.length > 0) {
+                // Fila del elemento a eliminar
+                const pElementRow = deleteButton.closest('.property-row');
+                // Pasar la función como parámetro al plugin
+                const pluginOptions = {
+                    onConfirmDeleteMessage: () => that.handleDeleteCustomPropertyExportation(pElementRow)
+                }               
+                deleteButton.confirmDeleteItemInModal(pluginOptions);
+            }                         
+        });         
 
         /* Eventos relativos a la Creación de Dashboard */
         //******************************************************
@@ -577,8 +593,6 @@ const operativaGestionPaginas = {
             });                   
         });
                  
-
-
          // Botón añadir Grafico
          this.linkAnyadirGrafico.off().on("click", function () {
              const btnSelected = $(this);
@@ -600,14 +614,7 @@ const operativaGestionPaginas = {
                 that.handleAgregarColumna(buttonAddColumn);               
             });                   
         });           
-         
-         // Botón eliminar asiste
-         /*this.linkEliminarAsistente.off().on("click", function () {
-             const btnSelected = $(this);
-             that.handleEliminarAsistente(btnSelected);
-         });
-         */
-         
+                  
          // Botón opciones labels
          this.linkOpcionesLabels.off().on("click", function () {
              const btnSelected = $(this);
@@ -692,13 +699,6 @@ const operativaGestionPaginas = {
             const btnSelected = $(this);
             that.handleAddFacet(btnSelected);
         });
-
-        // Botón para cargar el listado de facetas existentes en una comunidad.
-        /*this.linkLoadFacetList.off().on("click", function(){
-            const btnSelected = $(this);            
-            that.handleLoadFacetList(btnSelected);
-        });
-        */
         
         // Botón para la selección de faceta-objeto de conocimiento en la página
         this.selectListaFacetas.off().on("change", function(){
@@ -1874,63 +1874,16 @@ const operativaGestionPaginas = {
     /**
      * Método para marcar una propiedad de una exportación como "Eliminada". 
      * Si se decide eliminar, no se elimina por completo hasta que se guarda la sección de páginas.
-     * @param {*} filaPagina : Fila de la página que se deseará eliminar o revertir su eliminación 
-     * @param {*} btnDeleted : Botón para borrar o revertir el borrado de la propiedad
-     * @param {bool} deleteExportationProperty : Valor booleano de si se desea eliminar la propiedad
+     * @param {*} pElementRow : Fila de la página que se deseará eliminar o revertir su eliminación 
      */
-     handleDeleteCustomPropertyExportation: function(filaPagina, btnDeleted, deleteExportationProperty){
-        const that = this;
-        
-        // Fila de la página que está siendo seleccionada        
-        const filaExportationProperty = btnDeleted.closest('.property-row');
-        
-        // Botón de eliminación y edición de la página actual
-        const btnEliminarCurrentPropertyExportation = filaExportationProperty.find(that.btnDeleteProperty);
-        const btnEditCurrentPropertyExportation = filaExportationProperty.find(that.btnEditProperty);
-        let btnRevertDeleteExportationProperty = filaExportationProperty.find(".btnRevertDeleteExportationProperty");
-        // Area donde están los botones de acción (Editar, Eliminar, Revertir)
-        const areaComponentActions = filaExportationProperty.find(".component-actions");
-        
-        if (deleteExportationProperty){
-            // Realizar el "borrado" de la propiedad
-            // 1 - Marcar la opción "TabEliminada" a true           
-            filaExportationProperty.find('[name="TabEliminada"]').val("true");                                   
-            // 2 - Crear y añadir un botón de revertir el borrado de la página
-            btnRevertDeleteExportationProperty = `
-            <li>
-                <a class="action-delete round-icon-button js-action-delete btnRevertDeleteExportationProperty" href="javascript: void(0);">
-                    <span class="material-icons">restore_from_trash</span>
-                </a>
-            </li>
-            `;
-            // 3 - Ocultar los botones de editar y eliminar la página actual
-            btnEliminarCurrentPropertyExportation.addClass("d-none");
-            // Dejarlo como disabled
-            btnEditCurrentPropertyExportation.addClass("inactiveLink");
-            // 4 - Añadir el botón de revertir
-            areaComponentActions.append(btnRevertDeleteExportationProperty);            
-            // 5- Añadir comportamiento de revertir la página            
-            filaExportationProperty.find(".btnRevertDeleteExportationProperty").off().on("click", function(){
-                that.handleDeleteCustomPropertyExportation(filaPagina, $(this), false,);
-            });
-            // 6- Añadir la clase de "deleted" a la fila de la página            
-            filaExportationProperty.addClass("deleted");
-            
-            // 7- Colapsar el panel si se desea eliminar y este está abierto
-            const collapseId = filaExportationProperty.data("collapseid");
-            $(`#${collapseId}`).removeClass("show");
-        }else{
-            // Revertir el "borrado" de la página
-            // 1 - Marcar la opción "TabEliminada" a false            
-            filaExportationProperty.find('[name="TabEliminada"]').val("false");  
-            // 2 - Eliminar el botón de revertir la filtro de la página
-            btnRevertDeleteExportationProperty.remove();
-            // 3 - Mostrar de nuevo los botones de editar y eliminar la página actual
-            btnEliminarCurrentPropertyExportation.removeClass("d-none");
-            btnEditCurrentPropertyExportation.removeClass("inactiveLink");    
-            // 4 - Quitar la clase de "deleted" a la fila de la página            
-            filaExportationProperty.removeClass("deleted");
-        }
+     handleDeleteCustomPropertyExportation: function(pElementRow){
+        const that = this;                  
+        // Eliminar la fila sin petición            
+        pElementRow.fadeOut(300, function() { 
+            // Ocultar la vista a eliminar y asignarle la propiedad de "deleted"
+            $(this).find('[name="TabEliminada"]').val("true");                       
+            $(this).addClass(`d-none ${that.pendingToBeRemovedClassName}`);
+        });                
      }, 
 
 
@@ -3258,6 +3211,8 @@ const operativaGestionPaginas = {
                     // Resetear flag de confirmar eliminación de página
                     if (error == true){that.confirmDeletePage = false;} 
                     loadingOcultar();
+                    // Eliminar los items pendientes de ser eliminados y no mostrados una vez se ha guardado la página
+                    $(`.${that.pendingToBeRemovedClassName}`).remove();
                     completion != undefined && completion(error);
                 });                
             }else{
@@ -4630,12 +4585,6 @@ const operativaGestionPaginas = {
      * Método para proceder al guardado de las páginas en BD.
      * El guardado se realiza una vez se ha comprobado que no hay errores (comprobarErroresGuardado) y que se han obtenidos los datos de las páginas modificadas (obtenerDatosPestanya)
      * Se envían las páginas que se han modificado
-     */
-
-    /**
-     * Método para proceder al guardado de las páginas en BD.
-     * El guardado se realiza una vez se ha comprobado que no hay errores (comprobarErroresGuardado) y que se han obtenidos los datos de las páginas modificadas (obtenerDatosPestanya)
-     * Se envían las páginas que se han modificado
      * @param {*} completion: Cuando finalice de procesar la tarea, conjunto de acciones que se desean realizar
      */
     savePages: function(completion){
@@ -4648,7 +4597,7 @@ const operativaGestionPaginas = {
             true
         ).done(function (data) {
             // OK - Mostrar el mensaje de guardado correcto
-            mostrarNotificacion("success","Los cambios se han guardado correctamente");
+            mostrarNotificacion("success","Los cambios se han guardado correctamente");                        
             completion != undefined && completion(false);             
         }).fail(function (data) {
             // KO - Mostrar el error del guardado de páginas realizado
@@ -5809,6 +5758,8 @@ const operativaGestionComponentsCMS = {
         this.txtBuscarComponentItem = $("#txtBuscarComponente");
         // Lupa del buscador
         this.inputLupa = $("#inputLupa");
+        // Input del nombre corto del componente
+        this.inputNombreCortoComponenteId = "nombreCortocomponente"; 
 
         /* Nuevos items de Componentes */
         // Botones de tipo de componentes multimedia a añadir
@@ -6058,13 +6009,13 @@ const operativaGestionComponentsCMS = {
         // Controlar los inputs que son "required" para que no sean "nulos"
         configEventByClassName(`${that.inputRequiredClassName}`, function(element){
             const $jqueryElement = $(element);
-            $jqueryElement.off().on("keyup", function(){                 
+            $jqueryElement.off().on("input", function(){                 
                 const input = $(this);
-                comprobarInputNoVacio(input, true, false, "Esta propiedad no puede estar vacía", 0);                          
+                comprobarInputNoVacio(input, true, false, "Esta propiedad no puede estar vacía.", 0);                          
             });	                        
         });
 
-        // Controlar los inputs que son "required" para que no sean "nulos"
+        // Añadir un componente a un contenedor de componentes
         configEventByClassName(`${that.btnAddNewComponentByIdClassName}`, function(element){
             const $jqueryElement = $(element);
             $jqueryElement.off().on("click", function(){                 
@@ -6267,7 +6218,7 @@ const operativaGestionComponentsCMS = {
             if ($input.length > 0){                                
                 that.getAndSetIdiomasComunidad($input);                
             }  
-        });
+        });       
     },
 
     /**
@@ -7269,7 +7220,12 @@ const operativaGestionComponentsCMS = {
         datosComponente[prefijoClave + '.Name'] = $('#nombrecomponente').val();
        
         // Nombre corto del componente
-        datosComponente[prefijoClave + '.ShortName'] = $('#nombreCortocomponente').val();
+        const nombreCortoComponente = $(`#${that.inputNombreCortoComponenteId}`);
+        if (that.isInputIsEmpty(nombreCortoComponente, true)){
+            loadingOcultar();
+            return;
+        }        
+        datosComponente[prefijoClave + '.ShortName'] = $(`#${that.inputNombreCortoComponenteId}`).val();
         
         // Estado del componente (Activo -> Sí / No)
         const isComponentActive = $(`#activocomponente_SI`).is(':checked');
@@ -7779,8 +7735,33 @@ const operativaGestionComponentsCMS = {
         if (searchString != ""){
             that.AgregarFiltroComponentes(`search=${searchString}`);
         }    
-    }
+    },
 
+    /**
+     * Método para comprobar si un determinado input está vacío para mostrar un posible error
+     * @param {*} input 
+     * @param {*} showError 
+     * @returns 
+     */
+    isInputIsEmpty: function(input, showError = false){
+        const that = this;        
+        let isInputEmpty = false;
+        isInputEmpty = input.val().trim().length == 0;
+
+        if (showError && isInputEmpty){
+            that.showErrorEmptyProperty(input);
+        }
+        return isInputEmpty;
+    },
+
+    /**
+     * Método para mostrar el error debido a que el input no se ha insertado
+     * @param {*} input: Input correspondiente donde se ha encontrado error por estar vacío.
+     */
+    showErrorEmptyProperty: function (input) {        
+        const that = this;
+        comprobarInputNoVacio(input, true, false, "Esta propiedad no puede estar vacía.", 0);                    
+    },    
 }
 
 /**

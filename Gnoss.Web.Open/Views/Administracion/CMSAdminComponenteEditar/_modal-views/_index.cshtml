@@ -30,6 +30,7 @@ Variables
 	// Nombre del componente - Título del modal
 	string modalTitle = "";
 	bool isShortNameAGuid = Guid.TryParse(Model.ShortName, out _);
+	bool isEmptyShortName = string.IsNullOrEmpty(Model.ShortName);
 }
 
 @{
@@ -380,14 +381,16 @@ Variables
 				<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBREDELCOMPONENTE")</small>											   
 			</div>
                 
-			@* Nombre corto - Ocultarlo en caso de que esté vacío. Se guarda aunque no tiene utilidad *@
+			@* Nombre corto - Ocultarlo en caso de que esté vacío. Se guarda aunque no tiene utilidad 
 			<div class="form-group mb-4 @( string.IsNullOrEmpty(Model.ShortName) ? "d-none" : null) ">
+			*@
+			<div class="form-group mb-4">
 				<label class="control-label d-block">@Html.GetText("COMADMIN", "NOMBRECORTO") *</label>
 				<input type="text" 
-					   id="nombreCortocomponente"						   
+					   id="nombreCortocomponente"	
+					   @(!isEmptyShortName ? "disabled" : "")					   
 					   placeholder="@Html.GetText("COMADMIN", "NOMBRECORTO")"
-					   required						   
-					   @Html.Raw(isShortNameAGuid ? "disabled" : "")						   
+					   required
 					   class="form-control required" 
 					   value="@Model.ShortName">
 				<small class="form-text text-muted">@Html.GetText("DEVTOOLS","NOMBRECORTOPARAIDENTIFICARELCOMPONENTEDEFORMAUNICA")</small>											   

@@ -531,8 +531,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 			Guid tokenAfinidad = Guid.NewGuid();
 
-			string conexionAfinidadVirtuoso = mServicesUtilVirtuosoAndReplication.ConexionAfinidad;
-
 			paginaModel.TipoPagina = TipoPagina.ToString();
 			if (RequestParams("contribuciones") != null && RequestParams("contribuciones").Equals("true") && IdentidadPaginaContribuciones != null)
 			{

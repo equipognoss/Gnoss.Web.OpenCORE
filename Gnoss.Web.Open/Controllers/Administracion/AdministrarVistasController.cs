@@ -1206,11 +1206,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             //Insertamos las vistas que no corresponden con componentes del CMS
             foreach (string nombreVista in listaVistas)
             {
-                bool esVistaEdicionRecurso = nombreVista.StartsWith($"/{VIEWS_DIRECTORY}/EditarRecurso/_");
+                //bool esVistaEdicionRecurso = nombreVista.StartsWith($"/{VIEWS_DIRECTORY}/EditarRecurso/_");
                 bool esVistaAdministracion = nombreVista.StartsWith($"/{VIEWS_DIRECTORY}/Administracion");
                 bool esVistaCMS = nombreVista.StartsWith($"/{VIEWS_DIRECTORY}/CMSPagina") && nombreVista.LongCount(letra => letra.ToString() == "/") > 3;
 
-                if (!esVistaEdicionRecurso && !esVistaAdministracion && !esVistaCMS && !nombreVista.StartsWith($"/Views/CargadorFacetas") && !nombreVista.StartsWith($"/Views/CargadorResultados") && !nombreVista.StartsWith($"/Views/Shared/_ResultadoMensaje.cshtml") && !nombreVista.StartsWith($"/Views/CargadorContextoMensajes/CargarContextoMensajes.cshtml"))
+                if (/*!esVistaEdicionRecurso && */ !esVistaAdministracion && !esVistaCMS && !nombreVista.StartsWith($"/Views/CargadorFacetas") && !nombreVista.StartsWith($"/Views/CargadorResultados") && !nombreVista.StartsWith($"/Views/Shared/_ResultadoMensaje.cshtml") && !nombreVista.StartsWith($"/Views/CargadorContextoMensajes/CargarContextoMensajes.cshtml"))
                 {
                     if (pVistaVirtualDW.ListaVistaVirtual.Any(item => item.TipoPagina.Equals(nombreVista)))
                     {

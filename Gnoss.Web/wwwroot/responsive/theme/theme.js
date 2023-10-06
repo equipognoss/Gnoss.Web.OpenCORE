@@ -1616,7 +1616,9 @@ var modificarCabeceraOnScrolling = {
         this.buscador.css("width", "100%");
     },
     ajustarNombreComunidad: function () {
-        $('.community-menu-wrapper .page-name-wrapper').css("width", this.buscador.offset().left - 100 + "px");
+        if (this.buscador.offset() != undefined) {
+            $('.community-menu-wrapper .page-name-wrapper').css("width", this.buscador.offset().left - 100 + "px");
+        }
     },
     volverNombreComunidadEstadoInicial: function () {
         $('.community-menu-wrapper .page-name-wrapper').css("width", "auto");

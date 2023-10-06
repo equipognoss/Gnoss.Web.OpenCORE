@@ -94,6 +94,7 @@ using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
+using Universal.Common.Extensions;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -1131,35 +1132,62 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                         //El usuario no tiene acceso a este proyecto, le llevo a la home de la comunidad
                                         string redirect = ObtenerUrlRedirect(ref url);
 
-                                        //if (!MaximoRedireccionesExcedidas())
+                                        if (url.Equals("/") && !string.IsNullOrEmpty(RouteConfig.NombreProyectoSinNombreCorto))
                                         {
-                                            string urlComunidadLogin = BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "LOGIN");
-                                            if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
-                                            {
-                                                urlComunidadLogin = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
+                                            Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
 
-                                                if (mControladorBase.UsuarioActual.EsUsuarioInvitado || !ProyectoSeleccionado.EsPublico || !ParametrosGeneralesRow.HomeVisible)
+                                            string idioma = UtilIdiomas.LanguageCode;
+                                            bool emptyPath = string.IsNullOrEmpty(Request.Path) || Request.Path.Equals("/");
+
+                                            if (!EsBot && !Request.Headers.ContainsKey("Referer") && Request.Headers.ContainsKey("accept-language") && emptyPath)
+                                            {
+                                                var languages = Request.Headers["accept-language"].ToString().Split(',')
+                                                    .Select(System.Net.Http.Headers.StringWithQualityHeaderValue.Parse)
+                                                    .OrderByDescending(s => s.Quality.GetValueOrDefault(1));
+
+                                                foreach (var userLanguaje in languages)
                                                 {
-                                                    urlComunidadLogin += "/" + UtilIdiomas.GetText("URLSEM", "LOGIN");
-                                                }
-                                                else
-                                                {
-                                                    redirect = "";
+                                                    string idiomaNavegador = userLanguaje.Value.Split('-')[0];
+                                                    if (listaIdiomas.ContainsKey(idiomaNavegador))
+                                                    {
+                                                        idioma = idiomaNavegador;
+                                                        if (UtilIdiomas.LanguageCode != idioma)
+                                                        {
+                                                            UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+                                                        }
+                                                        break;
+                                                    }
                                                 }
                                             }
 
-                                            //Si el redirect ya contiene esta cadena, significa que ya se le ha redireccionado a login (ya estamos en esa página, no hay que volver a redireccionar)
-                                            if (!redirect.Contains(urlComunidadLogin) && (!redirect.Contains("/login/redirect")) && (!redirect.EndsWith("/login")))
-                                            {
-                                                if (this.GetType().Name.Equals("LogoutController") && this.GetType().Name.Equals("LoadingController"))
-                                                {
-                                                    redirect = "";
-                                                }
+                                        }
 
-                                                //Realiza la redirección
-                                                pFilterContext.Result = Redirect(urlComunidadLogin + redirect);
-                                                return;
+                                        string urlComunidadLogin = BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "LOGIN");
+                                        if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
+                                        {
+                                            urlComunidadLogin = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
+
+                                            if (mControladorBase.UsuarioActual.EsUsuarioInvitado || !ProyectoSeleccionado.EsPublico || !ParametrosGeneralesRow.HomeVisible)
+                                            {
+                                                urlComunidadLogin += "/" + UtilIdiomas.GetText("URLSEM", "LOGIN");
                                             }
+                                            else
+                                            {
+                                                redirect = "";
+                                            }
+                                        }
+
+                                        //Si el redirect ya contiene esta cadena, significa que ya se le ha redireccionado a login (ya estamos en esa página, no hay que volver a redireccionar)
+                                        if (!redirect.Contains(urlComunidadLogin) && (!redirect.Contains("/login/redirect")) && (!redirect.EndsWith("/login")))
+                                        {
+                                            if (this.GetType().Name.Equals("LogoutController") && this.GetType().Name.Equals("LoadingController"))
+                                            {
+                                                redirect = "";
+                                            }
+
+                                            //Realiza la redirección
+                                            pFilterContext.Result = Redirect(urlComunidadLogin + redirect);
+                                            return;
                                         }
                                     }
                                 }
@@ -1501,7 +1529,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 perfil.IsAdministrator = esAdministradorOrg;
 
                 ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                AD.EncapsuladoDatos.DataWrapperProyecto dataSetComunidades = proyCN.ObtenerProyectosParticipaPerfil(IdentidadActual.PerfilID);
+                AD.EncapsuladoDatos.DataWrapperProyecto dataSetComunidades = proyCN.ObtenerProyectosParticipaPerfilLimite10(IdentidadActual.PerfilID);
 
                 List<Guid> ListaProyectosSinRegistro = proyCN.ObtenerListaIDsProyectosSinRegistroObligatorio();
                 proyCN.Dispose();
@@ -3832,7 +3860,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (!devolver && ParametroProyecto.ContainsKey(ParametroAD.ProyectoIDPatronOntologias))
                 {
                     proyectoOntologiasID = new Guid(ParametroProyecto[ParametroAD.ProyectoIDPatronOntologias]);
-                    devolver = mControladorBase.ComprobarPermisoEnOntologiaDeProyectoEIdentidad(proyectoOntologiasID, pDocumentoID, false);
+                    devolver = mControladorBase.ComprobarPermisoEnOntologiaDeProyectoEIdentidad(proyectoOntologiasID, pDocumentoID, true, true);
                 }
                 return devolver;
             }
@@ -4113,10 +4141,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (ruta.Values.Contains(parteUrl))
                     {
-                        string claveDiccionario = "{" + ruta.Where(x => x.Value.Equals(parteUrl)).Select(x => x.Key).First() + "}";
+                        string claveDiccionario = "{" + ruta.Where(x => x.Value != null && x.Value.Equals(parteUrl)).Select(x => x.Key).First() + "}";
                         if (!claveDiccionario.Equals("{lang}"))
                         {
-                            url = url.Replace("/" + parteUrl + "/", "/" + claveDiccionario + "/");
+                            if (url.Contains("/" + parteUrl + "/"))
+                            {
+                                url = url.Replace("/" + parteUrl + "/", "/" + claveDiccionario + "/");
+                            }
+                            if (url.EndsWith("/" + parteUrl))
+                            {
+                                url = url.Replace("/" + parteUrl, "/" + claveDiccionario);
+                            }
                         }
                     }
                 }
@@ -4124,6 +4159,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (url.StartsWith("/"))
                 {
                     url = url.Remove(0, 1);
+                }
+                if (url.EndsWith("/"))
+                {
+                    url = url.TrimEnd('/');
                 }
 
                 if (RouteConfig.ListaRutasURLName.ContainsKey(url))
@@ -4901,11 +4940,35 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (cookieAviso == null || !cookieAviso.ContainsKey("aceptada") || cookieAviso["aceptada"] == "false")
                 {
                     ViewBag.CookiesWarning = "Cookies no aceptadas";
+
+                    AnadirTextoPoliticaCookiesViewBag();
                 }
 
                 if (actualizarCookie && pFilterContext.Result != null)
                 {
                     Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(cookieAviso, mEntityContext), new CookieOptions { Expires = DateTime.Now.AddYears(1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = true });
+                }
+            }
+        }
+
+        private void AnadirTextoPoliticaCookiesViewBag()
+        {
+            UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DataWrapperUsuario usuarioDW = usuarioCN.ObtenerPoliticaCookiesProyecto(ProyectoSeleccionado.Clave);
+            usuarioCN.Dispose();
+            List<AD.EntityModel.Models.UsuarioDS.ClausulaRegistro> filasCabecera = usuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoSeleccionado.Clave) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesCabecera)).ToList();
+            
+            if (filasCabecera.Count > 0)
+            {
+                ViewBag.TextoPoliticaCookies = UtilCadenas.ObtenerTextoDeIdioma(filasCabecera[0].Texto, UtilIdiomas.LanguageCode, null);
+            }
+            else
+            {
+                //si el proyecto no la tiene personalizada, buscamos la cláusula de cabecera asociada a la cláusula de PoliticaCookiesUrlPagina en el ecosistema
+                List<AD.EntityModel.Models.UsuarioDS.ClausulaRegistro> filasCabeceraEcosistema = usuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoAD.MetaProyecto) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesCabecera)).ToList();
+                if (filasCabeceraEcosistema.Count > 0)
+                {
+                    ViewBag.TextoPoliticaCookies = UtilCadenas.ObtenerTextoDeIdioma(filasCabeceraEcosistema[0].Texto, UtilIdiomas.LanguageCode, null);
                 }
             }
         }

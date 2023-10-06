@@ -1,0 +1,186 @@
+﻿@model AdministrarDatosExtraViewModel
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	// Carga de idiomas de la plataforma
+	string idiomas = "";
+	// Contador del nº de pestañas listadas
+	int contNumPestañasVisibles = 0;
+	// Nº de pestañas de idiomas a visualizar en la sección Tab
+	int numMaxPestañasIdiomasVisibles = 2;
+	bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+}
+
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+	<ul>
+		@if (!isInEcosistemaPlatform)
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+			<li>
+				<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+			</li>
+		}
+		else
+		{
+			<li>
+				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+			</li>
+		}
+		<li>
+			@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")
+		</li>
+	</ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+	@* Contenedor global de Traducciones *@
+	<div class="tab-content">
+		@* Contenido de las diferentes traducciones *@
+		<div id="panelListadoDatosExtra"
+			 class="tab-pane fade show active"
+			 role="tabpanel"
+			 aria-labelledby="panelListadoDatosExtra">
+
+			@* Contenedor del Título de la Sección + Buscador *@
+			<div class="row">
+				@* Título de la sección de traducciones + Nº de traducciones *@
+				<div class="col col-12 header-listado">
+					<div class="h1-container">
+						<h1>
+							@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")
+							<span id="numTraducciones" class="numResultados"></span>
+						</h1>
+					</div>
+					@* Botón para crear item *@
+					<div class="acciones d-flex align-items-center">
+						<a id="btnNuevoDatoExtra" href="javascript: void(0);" class="btn btn-outline-primary ml-2 mr-0" data-toggle="modal"
+						   data-target="#modal-new-extra-data">@Html.GetText("DEVTOOLS","NUEVODATOEXTRA")</a>
+					</div>
+				</div>
+
+				@* Buscador de Datos extra 
+				<div class="col col-12 header-buscador">
+					<div class="wrapCol">
+						<div class="col-buscador" style="width: 100%">
+
+							<form id="formBuscadorDatosExtra" onsubmit="return false;">
+								<div class="finderUtils" id="divCajaBusqueda">
+									<div class="group finderSection">
+
+										<input type="text"
+											   id="txtBuscarDatoExtra"
+											   class="not-outline finderSectionText"
+											   autocomplete="off"
+											   placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")" />
+
+										<input title="Buscar"
+											   type="button"
+											   class="findAction"
+											   id="inputLupa" />
+
+										<a href="javascript: void(0);" class="btn-filtrar-movil">
+											<span class="material-icons">filter_list</span>
+											<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>
+										</a>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>*@
+				@* Contenido o tabla con las traducciones de la comunidad *@
+				<div class="col col-12 col-contenido">
+					<div class="wrapCol">
+						@* Cabecera del listado de traducciones *@
+						<ul id="id-header-translates-list" class="header-component-list component-list no-list-style">
+							<li class="component-wrap">
+								@* Cabecera de páginas *@
+								<div class="component ">
+									<div class="component-header-wrap">
+										<div class="component-header">
+											@* Sección títulos de listado de páginas *@
+											<div class="component-header-content">
+												<div class="component-header-left">
+													<div class="component-name-wrap">
+														<span class="component-name">Nombre</span>
+													</div>
+													<div class="component-tipo-wrap">
+														<span class="component-tipo">Tipo</span>
+													</div>
+													<div class="component-orden-wrap">
+														<span class="component-orden">Orden</span>
+													</div>
+													<div class="component-predicado-wrap">
+														<span class="component-predicado">URI</span>
+													</div>
+													<div class="component-obligatorio-wrap">
+														<span class="component-obligatorio">Obligatorio</span>
+													</div>
+												</div>
+												<div class="component-header-right">
+													<div class="component-actions-wrap">
+														<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+						<ul id="id-added-pages-list" 
+								class="js-community-pages-list component-list no-list-style">
+							@if(isInEcosistemaPlatform)
+							{
+								@foreach (DatoExtraModel dato in Model.ListaDatosExtraProyecto)
+								{								
+									@Html.PartialView("../Administracion/AdministrarDatosExtra/_PintarDato", dato)																						
+								}
+								@foreach (DatoExtraVirtuosoModel dato in Model.ListaDatosExtraVirtuoso)
+								{
+									@Html.PartialView("../Administracion/AdministrarDatosExtra/_PintarDatoVirtuoso", dato)
+								}
+							}
+							else
+							{
+								@foreach (DatoExtraModel dato in Model.ListaDatosExtraProyecto)
+								{
+									@Html.PartialView("../Administracion/AdministrarDatosExtra/_PintarDato", dato)
+								}
+								@foreach (DatoExtraVirtuosoModel dato in Model.ListaDatosExtraVirtuoso)
+								{
+									@Html.PartialView("../Administracion/AdministrarDatosExtra/_PintarDatoVirtuoso", dato)
+								}
+							}
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@Html.PartialView("_modal-views/_new-extra-data")
+@Html.PartialView("_modal-views/_delete-extra-data")
+
+@* Carga de operativa *@
+@section operativaScript{
+	<script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+	<script type="text/javascript">
+
+		(function ($) {
+		@* Operativa funcionamiento de Gestión de Traducciones *@
+				operativaGestionDatosExtra.init();
+		})();
+	</script>
+}
+
+
+
+

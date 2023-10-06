@@ -69,7 +69,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     identidadCN.Dispose();
 
                     IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.PersonaID.Value, IdentidadActual.PerfilID);
+                    identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                     identidadCL.Dispose();
                     IdentidadActual = null;
 

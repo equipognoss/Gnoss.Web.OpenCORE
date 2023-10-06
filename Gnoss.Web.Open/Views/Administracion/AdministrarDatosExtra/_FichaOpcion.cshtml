@@ -1,0 +1,72 @@
+﻿@{
+	// Id para los checkbox de tipo de visualización
+	Guid filterId = @Guid.NewGuid();
+	string collapseId = "panel_collapse_" + filterId.ToString().Substring(0, 5);
+	string nombreFiltroPreview = "";
+}
+
+
+<li class="component-wrap filter-row" id="@filterId" data-filterkey="@filterId" data-collapseid="@collapseId">
+
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+				@* Icono para arrastrar filtro *@
+				<div class="component-no-sortable">
+					<span class="material-icons-outlined sortable-icon">filter_alt</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">
+						@* Nombre del filtro *@
+						<div class="component-name-wrap">
+							<span class="component-filterName">@nombreFiltroPreview</span>
+						</div>
+					</div>
+					@*Sección de acciones del filtro *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de editar el filtro *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditFilter"
+									   data-toggle="collapse"
+									   data-target="#@collapseId"
+									   role="button"
+									   aria-expanded="false"
+									   aria-controls="@collapseId">
+										<span class="material-icons">edit</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de borrar el filtro *@
+									<a class="action-delete round-icon-button js-action-delete btnDeleteFilter"
+									   href="javascript: void(0);">
+										<span class="material-icons">delete</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada del filtro - Collapse *@
+	<div class="collapse faceta-filter-info" id="@collapseId">
+		@* Indicación de que el filtro se ha eliminado *@
+		<input type="hidden" name="TabEliminada" value="false" />
+		<div class="card card-body">
+			@* Nombre del Filtro *@
+			<div class="form-group mb-4">
+				<label class="control-label d-block">@Html.GetText("AYUDACOMADMINFACETAS", "FILTRO")</label>
+				<input type="text"
+					   name="TabNombre"
+					   placeholder="@Html.GetText("AYUDACOMADMINFACETAS", "FILTRO")"
+					   class="form-control txtNombreFiltro"
+					   value="Opcion">
+				<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "NOMBREFILTRO")</small>
+			</div>
+		</div>
+	</div>
+</li>

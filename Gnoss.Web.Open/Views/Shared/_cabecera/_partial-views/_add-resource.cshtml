@@ -50,12 +50,8 @@ CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
                 // Si el usuario está al menos en la página Mi espacio personal
                 <li id="liNota">
                     <a id="linkNota" class="item-dropdown">
-                        <span class="material-icons">
-                            note_add
-                        </span>
-                        <span class="texto">
-                            @Html.GetText("PERFILBASESUBIR", "NOTA")
-                        </span>
+                        <span class="material-icons">note_add</span>
+                        <span class="texto">@Html.GetText("PERFILBASESUBIR", "NOTA")</span>
                     </a>
                 </li>
             }
@@ -134,8 +130,8 @@ CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
                         <span class="material-icons">
                             bookmark_border
                         </span>
-                        <span class="texto">
-                            @Html.GetText("PERFILBASESUBIR", "ARTICULOWIKI")
+                        <span class="texto">                            
+                            @Html.GetText("PERFILBASESUBIR", "REFERENCIAADOC")
                         </span>
                     </a>
                 </li>
@@ -238,15 +234,38 @@ CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
     </div>
 </li>
 
+
+string urlSem = Html.GetText("URLSEM", Html.EsPaginaEspacioPersonal() || Html.EsPaginaContribuciones() ? "SUBIRRECURSOMYGNOSS" : "SUBIRRECURSO");
+
+string metodoInicializarSubirRecurso = $"InicializarSubirRecursoExt('{Comunidad.Url}/{urlSem}')";
+
+
 <script>
+
+    $(document).ready(function () {
+
+        @Html.Raw(metodoInicializarSubirRecurso);
+
+    });
+
+</script>
+
+    @*       
     /**
      * Llamada a acción para inicializar la opción de crear el recurso de tipo Nota al pulsar sobre "Nueva Nota o artículo"
      *
      */
     $(document).ready(function () {
+        @if (Html.EsPaginaEspacioPersonal() || Html.EsPaginaContribuciones())
+        {
+            InicializarSubirRecursoExt("@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRRECURSOMYGNOSS")");
+        }
+        else
+        {
+            InicializarSubirRecursoExt("@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRRECURSO")");
+        }
         InicializarSubirRecursoExt("@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRRECURSO")");
-    });
-</script>
+    });*@
 }
 
 

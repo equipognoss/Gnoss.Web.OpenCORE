@@ -2152,7 +2152,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			foreach (CategoriaTesauro catTes in GestorTesauro.ListaCategoriasTesauroPrimerNivel.Values)
 			{
-				CategoryModel categoriaTesauro = CargarCategoria(catTes);
+				CategoryModel categoriaTesauro = CargarCategoria(catTes, pIdiomaTesauro);
 				if (!string.IsNullOrEmpty(pIdiomaTesauro))
 				{
 					categoriaTesauro.Lang = pIdiomaTesauro;

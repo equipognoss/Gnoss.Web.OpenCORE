@@ -43,7 +43,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             controladorPersonas.ActualizarModeloBaseSimple(IdentidadActual, ProyectoSeleccionado.Clave, UrlIntragnoss);
 
             IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-            identidadCL.EliminarCacheGestorIdentidadActual(UsuarioActual.UsuarioID, UsuarioActual.PersonaID, UsuarioActual.PerfilID);
+            identidadCL.EliminarCacheGestorIdentidadActual(UsuarioActual.UsuarioID, UsuarioActual.IdentidadID, UsuarioActual.PersonaID);
             identidadCL.Dispose();
 
             EditCvCommunityModel paginaModel = new EditCvCommunityModel();

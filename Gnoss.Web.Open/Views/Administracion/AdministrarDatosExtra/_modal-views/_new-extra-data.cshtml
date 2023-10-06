@@ -1,0 +1,140 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal donde se permitirá añadir un nuevo dato extra al registro
+
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	string idModalUploadCrearPersonalizacion = "modal-new-extra-data";
+	string modalTitle = @Html.GetText("DEVTOOLS", "NUEVODATOEXTRA");
+	string inputDisableClassName = "disabled";
+	Guid key = Guid.NewGuid();
+
+}
+
+@* Modal con la información *@
+<div id="@idModalUploadCrearPersonalizacion"
+	 class="modal modal-top fade modal-edicion modal-nuevo-dato-extra"
+	 role="dialog"
+	 aria-modal="true">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>
+					<span>@modalTitle</span>
+				</p>
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				@* Nombre del dato extra *@
+				<div class="form-group mb-3">
+					<label class="control-label d-block">Nombre</label>
+					<input type="text" class="form-control txtNombre" id="inptNombreNuevoDato">
+				</div>
+				<div class="form-group mb-3">
+					<label class="control-label d-block">URI de la propiedad</label>
+					<input type="text" class="form-control txtURI" id="inptURINuevoDato"><br />
+					<small class="form-text text-muted mt-n2">URI de la propiedad que se guardará en Virtuoso</small>
+				</div>
+				<div class="form-group mb-3">
+					<label class="control-label d-block">Orden</label>
+					<input type="number" class="form-control txtOrden" id="inptOrdenNuevoDato">
+				</div>
+				@*<div class="form-check">
+					<input class="form-check-input" type="checkbox" value="Obligatorio" id="chkObligatorioNuevoDato">
+					<label class="form-check-label" for="chkObligatorioNuevoDato">
+						Obligatorio
+					</label>
+				</div>*@
+				<div class="custom-control custom-checkbox">
+					<input id="chkObligatorioNuevoDato" class="chkSup custom-control-input" type="checkbox" name="chkObligatorioNuevoDato">
+					<label class="custom-control-label" for="chkObligatorioNuevoDato">Obligatorio</label>
+				</div>
+				<br />
+				@* Tipo: Opción o texto libre *@
+				<div class="form-group mb-3 typeExtraData">
+					<label class="control-label d-block">@Html.GetText("DEVTOOLS", "TIPODATOEXTRA")</label>
+					<div class="form-check form-check-inline">
+						@* Texto libre *@
+						<input class="form-check-input TypeExtraData"
+							   type="radio"
+							   name="TypeExtraData"
+							   data-value="TextoLibre"
+							   id="TypeExtraData_TEXTOLIBRE" checked />
+						<label class="form-check-label" for="TypeExtraData_TEXTOLIBRE">@Html.GetText("COMMON","TEXTOLIBRE")</label>
+					</div>
+					@* Opción *@
+					<div class="form-check form-check-inline">
+						<input class="form-check-input TypeExtraData"
+							   type="radio"
+							   name="TypeExtraData"
+							   data-value="Opcion"
+							   id="TypeExtraData_OPCIONES" />
+						<label class="form-check-label" for="TypeExtraData_OPCIONES">@Html.GetText("COMMON","CONOPCIONES")</label>
+					</div>
+					
+				</div>
+				@* Si son opciones, nuevo panel para añadirlas *@
+				@*<div class="form-group mb-4 editarOpcionesDatoExtra" style="display: none">
+					<div class="filtrosFaceta-header d-flex justify-content-between align-items-center">
+						<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("DEVTOOLS","OPCIONES")</label>
+						<a href="javascript: void(0);" class="linkAddFiltroFaceta btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+							<span class="material-icons">add</span>
+							<span class="texto">@Html.GetText("DEVTOOLS","CREAROPCION")</span>
+						</a>
+					</div>
+				</div>*@
+				<div class="background-gris editarOpcionesDatoExtra" style="display: none">
+					<h3>@Html.GetText("DEVTOOLS","OPCIONESDATOEXTRA")</h3>
+					@* Panel seleccíón de palabras para opciones *@
+					<div class="form-group mb-3">
+						@* Contenedor del input + tags *@
+						<div class="autocompletar-tags form-group">
+							<div class="form-sticky-button opcion input-wrap">
+								@* Input de Tags *@
+								<input type="text"
+									   name="txtOpciones"
+									   placeholder="Introduce una opcion ..."
+									   data-avoid-autocomplete-with-enter-button="true"
+									   id="txtOpcion"
+									   class="form-control"
+									   autocomplete="off" />
+
+								@* Botón de Añadir *@
+								<a id="btnAddOpcion" class="btn btn-grey uppercase btnAddOpcion">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+
+								@* Campo oculto _hack *@
+								<input type="hidden" id="txtOpcion_Hack" class="valores opciones" name="Opciones" value="" />
+							</div>
+							@* Tags/ propiedades autocompletar añadidas por el usuario o por auto *@
+							<span id="tagsContainer_opciones" class="contenedor tag-list mb-4">
+							</span>
+						</div>
+					</div>
+				</div>
+				<br />
+				<div class="d-flex justify-content-between">
+
+					@* Botón para guardar *@
+					<div class="panelBotonera">
+						<a href="javascript: void(0);"
+						   data-url="@(ViewBag.UrlActionSaveExtraData)"
+						   class="btn btn-primary uppercase btnSaveExtraData">@Html.GetText("DEVTOOLS", "GUARDAR")</a>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>

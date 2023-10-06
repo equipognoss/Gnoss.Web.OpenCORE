@@ -2080,7 +2080,8 @@ function urlEncode(s)
     var is_firefox = navigator.userAgent.toLowerCase().indexOf('firefox/') > -1;  
     if (is_firefox)
     {
-        return encodeURIComponent(s).replace( /[^0-9a-z]/g, urlEncodeCharacter );
+        //return encodeURIComponent(s).replace( /[^0-9a-z]/g, urlEncodeCharacter );
+        return encodeURIComponent(s);
     }
     else
     {
@@ -2093,7 +2094,8 @@ function urlDecode(s)
     var is_firefox = navigator.userAgent.toLowerCase().indexOf('firefox/') > -1;  
     if (is_firefox)
     {
-        return decodeURIComponent(s).replace( /\%([0-9a-f]{2})/g, urlDecodeCharacter);
+        //return decodeURIComponent(s).replace( /\%([0-9a-f]{2})/g, urlDecodeCharacter);
+        return decodeURIComponent(s);
     }
     else
     {
@@ -7575,6 +7577,7 @@ function EtiquetadoAutomaticoDeRecursosMultiple(titulo, descripcion, numMax, par
         }
     });*/
 }
+
 
 /**
  * Método que se ejecutará para procesar y mostrar los Tags sugeridos.
@@ -13270,7 +13273,7 @@ const scrollingListadoRecursos = {
             : $(document).find("#panelResultados.resource-list");
         
         // Tener en cuenta la posible existencia de un div adicional de clase ".resource-list-wrap"
-        this.contenedorPrincipal = this.contenedor.find(".resource-list-wrap").length > 1 
+        this.contenedorPrincipal = this.contenedor.find(".resource-list-wrap").length > 0 
         ? this.contenedor.find(".resource-list-wrap")
         : this.contenedor;
                                 
@@ -13350,11 +13353,8 @@ var MontarResultadosScroll = {
                         that.isLoadingData = true;
                         /* Antes de hacer petición visualizar el "Loading" */
                         scrollingListadoRecursos.crearCargando();
-                        /* Realizar petición al servidor */
-                        
-
+                        /* Realizar petición al servidor */                        
                         const peticionScrollResultadosPromise = that.peticionScrollResultados();
-
                         peticionScrollResultadosPromise
                         .then(function(data) {                                                        
                             let htmlRespuesta = document.createElement("div");
@@ -13383,35 +13383,10 @@ var MontarResultadosScroll = {
                             that.isLoadingData = false;
                             // Fin de petición -> Ocultar loading
                             scrollingListadoRecursos.cargandoScrolling();
-                        });
-
-                        /*
-                        that.peticionScrollResultados().done(function (data) {
-                            // Respuesta obtenida -> Ocultar loading
-                            scrollingListadoRecursos.cargandoScrolling();
-                            var htmlRespuesta = document.createElement("div");
-                            htmlRespuesta.innerHTML = data;
-                            if ($(htmlRespuesta).find(that.item).length > 0) {
-                                that.CargarResultadosScroll(data);
-                            } else {
-                                that.CargarResultadosScroll('');
-                                // No se traen más datos -> Eliminar scrolling
-                                // that.destroyScroll();
-                                // La petición ha terminado. Permitir hacer más peticiones
-                                that.isLoadingData = false;
-                            }
-                            if ((typeof CompletadaCargaRecursos != 'undefined')) {
-                                CompletadaCargaRecursos();
-                            }
-                            if (typeof (urlCargarAccionesRecursos) != 'undefined') {
-                                ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
-                            }
-                        });
-                        */                        
+                        });                       
                     }              
                 }, 500); 
             },
-
             //offset: 'bottom-in-view' // Disparar petición cuando se visualice el footer
             // Cambiado debido a que listado de recursos, al pulsar en "Ctrol + Fin" no detectaba ese comportamiento
             offset: '100%', // Disparar petición cuando se visualice el footer
@@ -19799,6 +19774,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
                 dataPost = {
                     Guests: that.txtHackInvitados.val(),
                     Message: encodeURIComponent(that.txtNotas.val().replace(/\n/g, '')),
+                    Groups: that.txtHackGrupos.val()
                 };
             }
             newUrlRequest = that.urlSend + document.location.search;
@@ -19834,6 +19810,274 @@ const operativaEnviarResource_Link_Community_Invitation = {
         });
     }
 };
+
+/**
+ * Clase jquery para poder enviar un recurso a los participantes de grupos de la comunidad
+ *  - Desde la ficha de un recurso
+ * */
+const operativaEnviarRecursoParticipantesGruposComunidad = {
+   
+    /**
+    * Inicializar operativa
+    */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        if (pParams.autocompleteParams) { 
+            this.configAutocompleteService(pParams.autocompleteParams)
+        }
+        this.configRutas(pParams); 
+        this.triggerEvents();     
+    },
+
+    /**
+     * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
+     */
+    triggerEvents: function(){
+        const that = this;
+
+        // Permitir enviar o no dependiendo del botón del envío
+        this.handleCheckIfLanguageIsSelected();
+    },
+
+    /*
+    * Inicializar elementos de la vista
+    * */
+    config: function (pParams) {
+        const that = this;
+
+        // Input para buscar grupos de autocomplete
+        this.txtFilterGroupsId = "txtFilterGroupsNewsletter";
+        this.txtFilterGroups = $(`#${this.txtFilterGroupsId}`);
+        // Input hack para la selección de items
+        this.txtHackGroupsSendNewsletterId = "txtHackGroupsSendNewsletter";
+        this.txtHackGroupsSendNewsletter = $(`#${this.txtHackGroupsSendNewsletterId}`);
+        // Botón para hacer el envío de la newsletter
+        this.btnSendNewsletterToCommunityGroupsId = "btnSendNewsletterToCommunityGroups";
+        this.btnSendNewsletterToCommunityGroups = $(`#${this.btnSendNewsletterToCommunityGroupsId}`);
+        // Panel o contenedor de los usuarios seleccionados para el envío
+        this.panGroupsContainerSendNewsletterId = "panGroupsContainerSendNewsletter";
+        this.panGroupsContainerSendNewsletter = $(`#${this.panGroupsContainerSendNewsletterId}`);
+        // Checkbox/RadioButton de los idiomas en los que se desea enviar la newsletter
+        this.selectLanguageOptionsClassName = "rbSelectNewsletterLanguage";
+        this.selectLanguageOptions = $(`.${this.selectLanguageOptionsClassName}`);   
+        
+        // Flag para controlar si hay al menos una opción seleccionada
+        this.isLanguageOptionSelected = false;
+        this.languageSelected = "";
+    },
+
+    /**
+     * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
+     */
+    configRutas: function (pParams) {
+        // Url para editar un certificado
+        this.urlSendResourceToCommunityGroups = pParams.urlSend;       
+    },    
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+        // Configurar el borrado de grupos al pulsar en (x) de un item de grupos        
+        this.panGroupsContainerSendNewsletter.on('click', '.tag-remove', function (event) {
+            const groupId = $(event.target).parent().parent().attr("id");
+            that.removeGroup(groupId);
+            that.handleCheckIfLanguageIsSelected();
+        });
+
+        // Agrega un evento change a los radio buttons
+        this.selectLanguageOptions.on("change", function() {
+            that.handleCheckIfLanguageIsSelected();
+            // Guardar el idioma seleccionado
+            that.languageSelected = $(this).data("language");             
+        });
+
+        // Acción de enviar la newsletter a los grupos elegidos
+        this.btnSendNewsletterToCommunityGroups.on("click", function(){
+            that.handleSendNewsletterToCommunityGroups();
+        });
+    }, 
+    
+    /**
+     * Método para controlar si hay al menos un idioma seleccionado para posibilitar el envío de la newsletter
+     */
+    handleCheckIfLanguageIsSelected: function(){
+        const that = this;
+
+        // Flag para comprobar que haya grupos seleccionados para el envío
+        let areGroupsSelected = false;
+
+        // Tener en cuenta que hay grupos destinatarios        
+        var txtHackGroupsWithoutComma = this.txtHackGroupsSendNewsletter.val().replace(/,/g, '');
+
+        // Verifica si el valor resultante sin comas está vacío o no
+        if (txtHackGroupsWithoutComma.trim() != '') {
+            // Con destinatarios
+            areGroupsSelected = true;
+        } 
+            
+        // Verifica si al menos un radio button está seleccionado
+        if (that.selectLanguageOptions.is(":checked") && areGroupsSelected) {
+            // Habilita el botón
+            that.btnSendNewsletterToCommunityGroups.prop("disabled", false);
+            that.isLanguageOptionSelected = true;
+        } else {
+            // Deshabilita el botón si ninguno está seleccionado
+            that.btnSendNewsletterToCommunityGroups.prop("disabled", true);
+            that.isLanguageOptionSelected = false;
+        }        
+    },
+
+    /**
+     * Método para configurar el servicio autocomplete/select
+     */
+    configAutocompleteService: function(autoCompleteParams){
+        const that = this;
+
+        // Objeto que albergará los extraParams para el servicio autocomplete
+        let extraParams = {};
+
+        // Configuración de extraParams dependiendo isEcosistemasinMetaProyecto
+        if (autoCompleteParams.isEcosistemasinMetaProyecto) {
+            extraParams = {
+                lista: ",",
+                identidad: autoCompleteParams.identidad,
+                identidadMyGnoss: autoCompleteParams.identidadMyGnoss, 
+                identidadOrg: autoCompleteParams.identidadOrg, 
+                proyecto: autoCompleteParams.proyecto, 
+                bool_esPrivada: autoCompleteParams.esPrivada
+            }
+        } else {
+            extraParams = {
+                lista: ",",
+                identidad: autoCompleteParams.identidad,
+                proyecto: autoCompleteParams.proyecto,
+            }
+        }
+        // Configuración del autocomplete para el input de búsqueda de nombres
+        this.txtFilterGroups.autocomplete(
+            null,
+            {
+                url: $(`#${autoCompleteParams.idInpt_urlServicioAutocompletar}`).val() + '/' + autoCompleteParams.metodo,
+                type: "POST",
+                delay: 0,
+                multiple: true,
+                scroll: false,
+                selectFirst: false,
+                minChars: 1,
+                width: 300,
+                cacheLength: 0,
+                NoPintarSeleccionado: true,
+                txtValoresSeleccID: that.txtHackGroupsSendNewsletterId,
+                extraParams,
+            }
+        );
+
+        // Configuración la acción select (cuando se seleccione un item de autocomplete)
+        this.txtFilterGroups.result(function (event, data, formatted) {
+            that.handleSelecGroup(data[0], data[1]);
+            that.handleCheckIfLanguageIsSelected();
+        });         
+    },    
+
+    /**
+     * Método para seleccionar un item a partir de la lista de autocomplete
+     */
+    /**
+     * Método para seleccionar un item a partir de la lista de autocomplete
+     * @param groupName: Nombre del grupo seleccionado
+     * @param groupId: Id o Key del grupo seleccionado
+     */
+    handleSelecGroup: function(groupName, groupId){
+        const that = this;
+
+        // Item que se añadirá como elemento seleccionado
+        let itemHtml = "";
+
+        itemHtml += `<div class="tag" id="${groupId}" data-item="${groupId}">`;
+            itemHtml += `<div class="tag-wrap">`;
+                itemHtml += `<span class="tag-text">${groupName}</span>`;
+                itemHtml += `<span class="tag-remove material-icons">close</span>`;
+            itemHtml += `</div>`;
+        itemHtml += `</div>`;
+
+        // Añadir la identidad al input de grupos (Separado por comas)            
+        this.txtHackGroupsSendNewsletter.val(`${this.txtHackGroupsSendNewsletter.val()},${groupId}`);        
+
+        // Añadir el item en el contenedor de grupos
+        this.panGroupsContainerSendNewsletter.append(itemHtml);
+        
+        // Vaciamos el input donde se ha introducido el grupo a buscar
+        this.txtFilterGroups.val('');          
+    },
+
+    /**
+     * Acción que eliminará a un elemento al pulsar sobre su (x). Desaparecerá del contenedor y del input oculto que contiene
+     * los items seleccionados para el envío de la solicitud
+     * @param {any} groupId             
+     */
+     removeGroup: function (groupId) {
+
+        // Eliminar la groupId al input construyendo el nuevo valor que tomará
+        let newTxtHackInvitados = this.txtHackGroupsSendNewsletter.val().replace(',' + groupId, '');
+        this.txtHackGroupsSendNewsletter.val(newTxtHackInvitados);
+
+        // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electrónicos)
+        let data_item = groupId.replace(/\@/g, '_');
+        data_item = data_item.replace(".", '_');
+        const itemToDelete = $(`*[data-item="${data_item}"]`);
+        itemToDelete.remove();
+    },   
+
+    /**
+     * Método para enviar las newsletter a los grupos elegidos de la comunidad
+     */
+    handleSendNewsletterToCommunityGroups: function(){
+        const that = this;
+
+        // Obtén el valor de los grupos
+        const txtGroupsSendNewsletterValue = this.txtHackGroupsSendNewsletter.val();
+        // Generar un array excluyendo posibles espacios vacíos
+        const arrayItems = txtGroupsSendNewsletterValue.split(',');        
+        const arrayGroupsSendNewsletterValue = arrayItems.filter(function(item) {
+            return item.trim() !== '';
+        });
+        
+
+        MostrarUpdateProgress();
+    
+        // Construcción del objeto dataPost
+        let dataPost = {
+            Language: that.languageSelected,
+            Groups: arrayGroupsSendNewsletterValue,            
+        };
+                
+        GnossPeticionAjax(
+            that.urlSendResourceToCommunityGroups,
+            dataPost,
+            true
+        ).done(function (response) {            
+            // Cerrar modal y mostrar                         
+            $('#modal-container').modal('hide');
+            // 3 - Mostrar mensaje OK
+            setTimeout(() => {
+                mostrarNotificacion('success', response);
+            }, 1500)
+        }).fail(function (response) {           
+            setTimeout(() => {
+                mostrarNotificacion('error', response);
+            }, 1500)
+        }).always(function (response) {
+            OcultarUpdateProgress();
+        });            
+    },
+};
+
+
 
 /**
  * Clase jquery para poder gestionar la suscripción de un usuario a las categorías de una comunidad

@@ -101,7 +101,9 @@ namespace Gnoss.Web.Controllers
             {
                 solicitud.FechaProcesado = DateTime.Now;
                 solicitud.Estado = (short)EstadoSolicitud.Aceptada;
-                DataWrapperIdentidad dataWrapperIdentidad = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerPerfilesDePersona(solicitudUsuario.PersonaID, false);
+                IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                Guid identidadIDProyecto = identCN.ObtenerIdentidadIDDePersonaEnProyecto(ProyectoSeleccionado.Clave, solicitudUsuario.PersonaID)[0];
+                DataWrapperIdentidad dataWrapperIdentidad = identCN.ObtenerPerfilesDePersona(solicitudUsuario.PersonaID, false, identidadIDProyecto);
                 GestionIdentidades gestorIdentidades = new GestionIdentidades(dataWrapperIdentidad, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                 GestionUsuarios gestorUsuarios = new GestionUsuarios(dataWrapperUsuario, mLoggingService, mEntityContext, mConfigService);
                 PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);

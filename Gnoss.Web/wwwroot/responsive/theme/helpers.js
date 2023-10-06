@@ -35,6 +35,10 @@ const App = {};
 const requestFinishResult = {
 	ok: 'OK',
 	ko: 'KO',
+	errorInvitado: "ErrorInvitado",
+	errorInvitadoMessage: "No dispones de credenciales para realizar esta acción. Por favor, inicia sesión con mayores privilegios y vuelva intentarlo de nuevo.",
+	errorNoLogin: "ErrorNoLogin",
+	errorNoLoginMessage: "No puedes acceder a esta función porque no estás autenticado en el sistema. Por favor, inicia sesión para continuar.",	
 	message: "",   
 }
 
@@ -1407,6 +1411,9 @@ const GnossPeticionAjax = function (
 	return defr;
 };
 
+
+
+
 /**
  * Método similar a getvistaFromUrl. Implementado para evitar posibles errores en Front (Ej: Footer compartido)
  * @param {*} urlAccion 
@@ -2728,7 +2735,7 @@ const operativaMultiIdioma = {
 				const esTextArea = texto.esTextArea;
 				const onInputCallback = texto.onInputCallback;	
 				const textAreaWithCke = texto.textAreaWithCke;
-				const textAreaWithCkeClassName = textAreaWithCke == true ? "cke toolBar_simple": ""; 
+				const textAreaWithCkeClassName = textAreaWithCke == true ? "cke editorHtml": ""; 
 				const id = texto.id; 
 			
 				// Incluirlo en el tab ya que es el mismo idioma

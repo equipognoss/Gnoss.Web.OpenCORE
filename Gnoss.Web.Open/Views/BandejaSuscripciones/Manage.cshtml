@@ -162,12 +162,9 @@
                                     <div class="acciones-usuario-wrap">
                                         <ul class="no-list-style">
                                             <li>
-                                                <a href="#" class="btn btn-outline-grey"
-                                                   onclick="DeployActionInModalPanel('@urlModalAdministrarCategoriasPersona', this, 'modal-dinamic-content', '')"
-                                                   data-toggle="modal"
-                                                   data-target="#modal-container">
-                                                    <span class="material-icons">edit</span>
-                                                    <span>@Html.GetText("COMMON", "EDITAR")</span>
+                                                <a class="btn btn-primary btn-no-seguir" onclick="AccionPerfil_NoSeguir(this, '@urlPerfil/unfollow')">
+                                                    <span class="material-icons">person_remove_alt_1</span>
+                                                    <span>@Html.GetText("COMMON", "NOSEGUIR")</span>
                                                 </a>
                                             </li>
                                         </ul>

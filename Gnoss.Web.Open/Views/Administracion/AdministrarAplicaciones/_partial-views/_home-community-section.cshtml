@@ -88,6 +88,14 @@ Variables
             </p>
         </div>
 
+        @* Administrar Descarga Configuraciones *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="descargar-configuraciones">
+            <h2>@Html.GetText("DEVTOOLS","DESCARGACONFIG")</h2>
+            <p>                
+                @Html.GetText("DEVTOOLS","DESCARGACONFIG")
+            </p>
+        </div>
+
         @* Chequear Instalaciones (Comunidad) - Deshabilitado hasta asegurarse de qué añadir en la vista final. De momento funciona correctamente
         @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
         {

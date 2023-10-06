@@ -7,8 +7,8 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
-CommunityModel Comunidad = Html.GetComunidad();
-    HeaderModel Cabecera = Html.GetCabecera();
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel Cabecera = Html.GetCabecera();            
 }
 @*
 ----------------------------------------------------------------
@@ -112,26 +112,25 @@ CommunityModel Comunidad = Html.GetComunidad();
         </fieldset>
     </div>
 </form>
-<div class="box box02 registroRedesSociales">
-    @if (IdentidadActual.IsGuestUser && Cabecera.SocialNetworkRegister.Keys.Count > 0)
-    {
-        <fieldset id="fsPrefieresRedesSociales">
-            <legend>@Html.GetText("REGISTRO", "OSILOPREFIERES")</legend>
-            <ul class="lista-redes-sociales lista-redes-sociales--registro no-list-style">
-                @foreach (string nombre in Cabecera.SocialNetworkRegister.Keys)
-                {
-                    string classI = $"{nombre.ToLower()}-icon";
-                    <li class="@nombre.ToLower()">                        
-                        @Html.GetText("LOGIN", "CONECTATECON")
-                        <i class="@classI">
-                        <a href="@Cabecera.SocialNetworkRegister[nombre]">@nombre</a>
-                        </i>
-                    </li>
-                }
-            </ul>
-        </fieldset>
-    }
-</div>
+
+@if (Cabecera.SocialNetworkRegister.Count > 0)
+{
+    <div class="box box02 registroRedesSociales mt-3">
+        <div class="separator">
+            <h2>@Html.GetText("REGISTRO", "OSILOPREFIERES")</h2>
+        </div>
+        @* Panel de Login Redes Sociales *@
+        <div class="redesSocialesActions">
+            @foreach (string nombre in Cabecera.SocialNetworkRegister.Keys)
+            {
+                string socialNetworkLogo = Html.GetLogoForSocialNetworkName(nombre);
+                <a class="redesSocialesAction__button" alt="@nombre" title="@nombre" href="@Cabecera.SocialNetworkRegister[nombre]">@Html.Raw(socialNetworkLogo)</a>
+            }
+        </div>
+    </div>
+}
+
+
 <script type="text/javascript">
     // Gestión de operativa Login -> Este Login aprovecha la Lógica de la operativa Login Emergente    
     setTimeout(operativaLoginEmergente.init(), 500);    

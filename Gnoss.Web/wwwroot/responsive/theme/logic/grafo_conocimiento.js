@@ -4162,7 +4162,10 @@ const operativaGestionObjetosConocimientoOntologias = {
 
     LimpiarHtmlControl: function(pControl){
         const that = this;
-
+        
+        if (typeof pControl === "undefined" || pControl === null || pControl === ""){
+            return;
+        }        
         const inputToDisplayError = $(`#${pControl}`).parent().find("input");
         displayInputWithErrors(inputToDisplayError, false, "");        
 

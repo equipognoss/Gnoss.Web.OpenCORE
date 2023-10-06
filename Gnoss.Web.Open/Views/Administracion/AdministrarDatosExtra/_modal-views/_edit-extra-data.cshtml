@@ -1,0 +1,120 @@
+﻿@model DatoExtraEditModel
+@{
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	string idModalUploadCrearPersonalizacion = "modal-edit-extra-data";
+	string modalTitle = @Html.GetText("DEVTOOLS", "EDITARDATOEXTRA");
+	string inputDisableClassName = "disabled";
+	Guid key = Guid.NewGuid();
+	string opciones = "";
+
+	foreach (DatoExtraOpcionModel opcion in Model.Opciones)
+	{
+		opciones += opcion.Nombre + ",";
+	}
+	string tagsAutoCompletarHtml = "";
+	foreach (string item in opciones.Split(","))
+	{
+		if (!string.IsNullOrEmpty(item))
+		{
+			string tagId = @Guid.NewGuid().ToString().Substring(0, 5);
+			tagsAutoCompletarHtml += "<div class='tag' id='" + tagId + "' title='" + item + "'>";
+			tagsAutoCompletarHtml += "<div class='tag-wrap'>";
+			tagsAutoCompletarHtml += "<span class='tag-text'>" + item + "</span>";
+			tagsAutoCompletarHtml += "<span class='tag-remove tag-remove-option-edit material-icons remove'>close</span>";
+			tagsAutoCompletarHtml += "</div>";
+			tagsAutoCompletarHtml += "</div>";
+		}
+	}
+}
+
+
+@* Modal con la información *@
+
+@* Título del modal *@
+<div class="modal-header">
+	<p class="modal-title">
+		<span class="material-icons">edit</span>
+		<span>@modalTitle</span>
+	</p>
+	<span class="material-icons cerrar"
+		  data-dismiss="modal"
+		  aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+	@* Nombre del dato extra *@
+	<div class="form-group mb-3">
+		<label class="control-label d-block">Nombre</label>
+		<input type="text" class="form-control txtNombre" id="inptNombre_@Model.DatoExtraID" value="@Model.Nombre">
+	</div>
+	<div class="form-group mb-3">
+		<label class="control-label d-block">URI de la propiedad</label>
+		<input type="text" class="form-control txtNombre" id="inptURI_@Model.DatoExtraID" value="@Model.PredicadoRDF"><br />
+		<small class="form-text text-muted mt-n2">URI de la propiedad que se guardará en Virtuoso</small>
+	</div>
+	<div class="form-group mb-3">
+		<label class="control-label d-block">Orden</label>
+		<input type="number" class="form-control txtOrden" id="inptOrden_@Model.DatoExtraID" value="@Model.Orden">
+	</div>
+	@*<div class="form-check">
+		<input class="form-check-input" type="checkbox" id="chkObligatorio_@Model.DatoExtraID" value="Obligatorio" name="chkObligatorio" @(Model.Obligatorio ? "checked" : "") />
+		<label class="form-check-label" for="chkObligatorio_@Model.DatoExtraID">
+			Obligatorio
+		</label>
+	</div>*@
+	<div class="custom-control custom-checkbox">
+		<input id="chkObligatorio_@Model.DatoExtraID" value="Obligatorio" class="chkSup custom-control-input" type="checkbox" name="chkObligatorio" @(Model.Obligatorio ? "checked" : "")>
+		<label class="custom-control-label" for="chkObligatorio_@Model.DatoExtraID">Obligatorio</label>
+	</div>
+	<br />
+	<input type="hidden" value="@Model.DatoExtraID" name="datoExtraID" />
+	@* Tipo: Opción o texto libre *@
+	<label class="control-label d-block">@Html.GetText("DEVTOOLS", "TIPODATOEXTRA")</label>
+	<div class="form-check form-check-inline">
+		<input class="form-check-input" type="radio" id="TypeExtraDataEditLibre_@Model.DatoExtraID" name="TypeExtraDataEdit" value="TextoLibre" @(Model.Tipo.Equals(TipoDatoExtra.TextoLibre) ? "checked" : "") />
+		<label class="form-check-label" for="TypeExtraDataEditLibre_@Model.DatoExtraID">@Html.GetText("DEVTOOLS", "TEXTOLIBRE")</label>
+	</div>
+	<div class="form-check form-check-inline">
+		<input class="form-check-input" type="radio" id="TypeExtraDataEdit_@Model.DatoExtraID" name="TypeExtraDataEdit" value="Opcion" @(Model.Tipo.Equals(TipoDatoExtra.Opcion) ? "checked" : "") />
+		<label class="form-check-label" for="TypeExtraDataEdit_@Model.DatoExtraID">@Html.GetText("COMMON", "CONOPCIONES")</label>
+	</div>
+	@* Si son opciones, nuevo panel para añadirlas *@
+	<div class="background-gris editarOpcionesDatoExtra">
+		<h3>@Html.GetText("DEVTOOLS","OPCIONESDATOEXTRA")</h3>
+		@* Panel seleccíón de palabras para opciones *@
+		<div class="form-group mb-3">
+			@* Contenedor del input + tags *@
+			<div class="autocompletar-tags form-group">
+				<div class="form-sticky-button opcion input-wrap">
+					@* Input de Tags *@
+					<input type="text"
+						   name="txtOpciones"
+						   placeholder="Introduce una opcion ..."
+						   data-avoid-autocomplete-with-enter-button="true"
+						   id="txtOpcion_@Model.DatoExtraID"
+						   class="form-control txtOpciones"
+						   autocomplete="off" />
+
+					@* Botón de Añadir *@
+					<button id="btnAddOpcionEdit_@Model.DatoExtraID" class="btn btn-grey uppercase btnAddOpcionEdit">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</button>
+
+					@* Campo oculto _hack *@
+					<input type="hidden" id="txtOpcion_Hack_@Model.DatoExtraID" class="valores opciones hack_opciones" name="Opciones" value="@opciones" />
+				</div>
+				@* Tags/ propiedades autocompletar añadidas por el usuario o por auto *@
+				<span id="tagsContainer_opciones_@Model.DatoExtraID" class="contenedor tag-list mb-4">
+					@Html.Raw(tagsAutoCompletarHtml)
+				</span>
+			</div>
+		</div>
+	</div>
+	<br />
+	<div class="d-flex justify-content-between">
+		@* Botón para guardar *@
+		<div class="panelBotonera">
+			<a href="javascript: void(0);"
+			   data-url="@(ViewBag.UrlActionSaveExtraData)"
+			   class="btn btn-primary uppercase btnSaveEditData">@Html.GetText("DEVTOOLS", "GUARDAR")</a>
+		</div>
+	</div>
+</div>

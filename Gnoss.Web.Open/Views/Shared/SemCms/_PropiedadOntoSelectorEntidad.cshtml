@@ -104,6 +104,10 @@
         <div class="position-relative input-with-icon">
             <i class="material-icons">search</i>
             <input placeholder="@Model.OntologyPropInfo.DefaultUnselectableValue" id="@idTxtHack" type="text" class=" mb-2 form-control edit text big autocompletarSelecEnt @classPlaceHolder" onfocus="@onfocus" value="@valueControlAuto" @disabled onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;} " onchange="if (this.value == ''){$('#@idControl').val('');}" />
+            @if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Autocompletar" && !string.IsNullOrEmpty(valueControlAuto))
+            {
+            <a class="remove removeAutocompletar"></a>
+            }
         </div>
         if (Model.OntologyPropInfo.EntitySelector.AdditionalExtraTitleWhereAutoCompletes != null)
         {
@@ -122,11 +126,6 @@
                 </div>
                 count++;
             }
-        }
-
-        if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Autocompletar" && !string.IsNullOrEmpty(valueControlAuto))
-        {
-            <a class="remove removeAutocompletar"></a>
         }
     }
     else if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "ListaCheck")

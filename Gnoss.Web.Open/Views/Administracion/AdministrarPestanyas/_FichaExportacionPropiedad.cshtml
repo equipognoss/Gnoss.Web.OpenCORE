@@ -22,14 +22,14 @@ string collapseId = "panel_collapse_" + propertyId.ToString().Substring(0,5);
 *@
 
 
-<li class="component-wrap property-row" data-propertykey="@propertyId" data-collapseid="@collapseId">
+<li class="component-wrap property-row containerConfirmDeleteItemInModal" data-propertykey="@propertyId" data-collapseid="@collapseId">
 
 	<div class="component">
 		<div class="component-header-wrap">
 			<div class="component-header">
 				@* Icono para arrastrar la propiedad *@
-				<div class="component-no-sortable">
-					<span class="material-icons-outlined sortable-icon">post_add</span>
+				<div class="component-sortable">
+					<span class="material-icons-outlined sortable-icon sortable-export-property">drag_handle</span>
 				</div>
 				<div class="component-header-content">
 					<div class="component-header-left">						

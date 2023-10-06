@@ -1,4 +1,4 @@
-FROM gnoss/gnoss.web.opencore:latest
+FROM docker.gnoss.com/web:latest
 
 COPY CargadorFacetas/*.cshtml Views/CargadorFacetas/
 

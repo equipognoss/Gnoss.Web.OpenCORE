@@ -5194,7 +5194,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             #region Cargo listas identidades proyectos perfil
 
             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerPerfilesDePersona(mControladorBase.UsuarioActual.PersonaID, true), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerPerfilesDePersona(mControladorBase.UsuarioActual.PersonaID, true, mControladorBase.UsuarioActual.IdentidadID), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCN.Dispose();
 
             int contadorListaIdentidadProyPERFILORGANIZACION = 0;

@@ -474,6 +474,488 @@ const operativaGestionMatomo = {
    
 }
 
+/**
+ * Operativa para la gestión de Datos Extra
+ */
+const operativaGestionDatosExtra = {
+
+    /**
+     * Inicializar operativa
+     */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas();
+        this.triggerEvents();
+    },
+
+    /**
+     * Método a ejecutar para inicialización de funcionalidad necesaria 
+     */
+    triggerEvents: function () {
+        const that = this;
+    },
+
+    /**
+     * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
+     */
+    configRutas: function (pParams) {
+        this.urlBase = refineURL();
+        this.urlSaveNewExtraData = `${this.urlBase}/new-extra-data`;
+        this.urlSaveEditExtraData = `${this.urlBase}/edit-extra-data`;
+        this.urlDeleteExtraData = `${this.urlBase}/delete-extra-data`;
+        this.urlEditModal = `${this.urlBase}/load-edit-modal`;
+    },
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {
+        this.modalContainer = $("#modal-container");
+        this.modalNewExtraData = $("#modal-new-extra-data");
+        this.modalEditExtraData = $("#modal-edit-extra-data");
+        this.modalDeleteExtraData = $("#modal-delete-extra-data")
+        this.opcionesCheck = $("#TypeExtraData_OPCIONES");
+        //this.btnDeleteExtraDataClassName = "btnConfirmDeleteExtraData";
+        this.btnDeleteExtraDataClassName = "btnDeleteExtraData";
+        //this.btnEditExtraDataClassName = "btnSaveEditData";
+        this.btnEditExtraDataClassName = "btnEditExtraData";
+        this.btnConfirmDeleteExtraDataClassName = "btnConfirmDeleteExtraData";
+        this.btnDeleteExtraData = $(`.${this.btnConfirmDeleteExtraDataClassName}`);   
+        this.btnEditExtraData = $(`.${this.btnEditExtraDataClassName}`);
+        this.btnSaveExtraDataClassName = 'btnSaveExtraData';
+        this.btnSaveExtraData = $(`.${this.btnSaveExtraDataClassName}`);
+        this.btnAddOpcion = $("#btnAddOpcion");
+        this.btnAddOpcionEditClassName = "btnAddOpcionEdit";
+        this.btnAddOpcionEdit = $(`.${this.btnAddOpcionEditClassName}`);
+        this.txtOpcion = $("#txtOpcion");
+        this.txtOpcionEditClassName = "txtOpciones";
+        this.txtOpcionEdit = $(`.${this.txtOpcionEditClassName}`);
+        this.btnRemoveTagOptionClassName = 'tag-remove-option';
+        this.btnRemoveTagOptionEditClassName = 'tag-remove-option-edit';
+        this.inputOpcion = $('[name="Opciones"]');
+        this.translateListItemClassName = "translate-row";
+        this.btnSaveEditExtraDataClassName = "btnSaveEditData";
+    },
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+        configEventByClassName(`${that.btnConfirmDeleteExtraDataClassName}`, function (element) {
+            const $deleteButton = $(element);
+            $deleteButton.off().on("click", function () {
+                // Mostar loading y cerrar modal --> Se recargará la pagina al realizar el guardado desde el Controller
+                var idDato = that.filaTraduccion.find("input[type=hidden]").first().val();
+                that.handleDeleteExtraData(idDato);
+            });
+        });
+
+        this.modalContainer.on('show.bs.modal', (e) => {
+            // Establecer quién ha disparado el modal para poder cambiar sus atributos una vez se guarden los grupos desde el modal
+            that.triggerModalContainer = $(e.relatedTarget);
+        })
+            .on('hide.bs.modal', (e) => {
+                // Acción de ocultar el modal
+            })
+            .on('hidden.bs.modal', (e) => {
+                // Vaciar el modal
+                resetearModalContainer();
+                // Quitar la clasea de modal-con-tabs
+                $(e.currentTarget).hasClass("modal-con-tabs") && that.modalContainer.removeClass("modal-con-tabs");
+            });
+
+        this.btnAddOpcion.on("click", function () {
+            // Añadir propiedad si se ha escrito algo
+            if (that.txtOpcion.length > 0) {
+                that.handleSelectOption($(this));
+            }
+        }); 
+
+        this.btnAddOpcionEdit.on("click", function () {
+            // Añadir propiedad si se ha escrito algo
+            if (that.txtOpcion.length > 0) {
+                that.handleSelectOption($(this));
+            }
+        }); 
+
+        $("input[name='TypeExtraData']").change(function () {
+            $(".editarOpcionesDatoExtra").toggle();
+        });
+
+        that.modalNewExtraData.on('show.bs.modal', (e) => {
+            // Aparición del modal           
+        }).on('hide.bs.modal', (e) => {
+            // Acción de ocultar el modal
+        });
+
+        that.modalEditExtraData.on('show.bs.modal', (e) => {
+            // Aparición del modal           
+        }).on('hide.bs.modal', (e) => {
+            // Acción de ocultar el modal
+        });
+
+        this.modalDeleteExtraData.on('show.bs.modal', (e) => {
+            // Aparición del modal
+        })
+            .on('hide.bs.modal', (e) => {
+                // Acción de ocultar el modal
+                // Si el modal se cierra sin confirmar borrado, desactiva el borrado
+                //if (that.confirmDeleteTranslate == false) {
+                //    that.handleSetDeleteTranslate(false);
+                //}
+            }); 
+
+        configEventByClassName(`${that.btnEditExtraDataClassName}`, function (element) {
+            const $editButton = $(element);
+            $editButton.off().on("click", function () {
+                // Fila de la traducción correspondiente
+                that.filaTraduccion = $(this).closest(`.${that.translateListItemClassName}`);
+                // Obtener la url a editar     
+                that.handleLoadCreateEditData(this.id);
+            });
+        }); 
+
+        configEventByClassName(`${that.btnDeleteExtraDataClassName}`, function (element) {
+            const $deleteButton = $(element);
+            $deleteButton.off().on("click", function () {
+                // Fila de la traducción correspondiente
+                that.filaTraduccion = $(this).closest(`.${that.translateListItemClassName}`);
+            });
+        });
+
+        configEventByClassName(`${that.btnSaveExtraDataClassName}`, function (element) {
+            const $saveButton = $(element);
+            $saveButton.off().on("click", function () {
+                // Mostar loading y cerrar modal --> Se recargará la pagina al realizar el guardado desde el Controller
+                that.handleSaveExtraData();
+            });
+        });
+
+        configEventByClassName(`${that.btnSaveEditExtraDataClassName}`, function (element) {
+            const $saveButton = $(element);
+            $saveButton.off().on("click", function () {
+                // Mostar loading y cerrar modal --> Se recargará la pagina al realizar el guardado desde el Controller
+                that.handleSaveEditExtraData();
+            });
+        });
+
+        configEventByClassName(`${that.btnExtraDataClassName}`, function (element) {
+            const $confirmDeleteButton = $(element);
+            $confirmDeleteButton.off().on("click", function () {
+                that.DeleteExtraData = true;
+                that.handleDeleteExtraData();
+            });
+        });  
+
+        // Botón (X) para poder eliminar items desde el Tag                           
+        configEventByClassName(`${that.btnRemoveTagOptionClassName}`, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                const $itemRemoved = $jqueryElement.parent().parent();
+                that.handleClickBorrarTagOption($itemRemoved);
+            });
+        });
+
+        // Botón (X) para poder eliminar items desde el Tag editando                          
+        configEventByClassName(`${that.btnRemoveTagOptionEditClassName}`, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                const $itemRemoved = $jqueryElement.parent().parent();
+                that.handleClickBorrarTagOptionEdit($itemRemoved);
+            });
+        });
+        
+        configEventByClassName(`${that.btnAddOpcionEditClassName}`, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                if (that.txtOpcion.length > 0) {
+                    that.handleSelectOptionEdit($(this));
+                }
+            });
+        });
+    },
+    handleClickBorrarTagOption: function (itemDeleted) {
+        const that = this;
+
+        // Panel o sección donde se encuentra el panel de Tags a Eliminar (input_hack)
+        const panelTagItem = itemDeleted.parent().parent();
+
+        // Buscar el input oculto y seleccionar la propiedad corresponde con item a eliminar
+        const idItemDeleted = itemDeleted.prop("title");
+        // Items id dependiendo del tipo a borrar (Perfil, Grupo)
+        let itemsId = "";
+        // Input del que habrá que eliminar el item seleccionado
+        let inputOpcion = that.inputOpcion;       
+
+        let $inputHack = panelTagItem.find(inputOpcion);
+
+        itemsId = $inputHack.val().split(",");
+        itemsId.splice($.inArray(idItemDeleted, itemsId), 1);
+        // Pasarle los datos al input hidden
+        $inputHack.val(itemsId.join(","));
+        // Eliminar el item del contenedor visual
+        itemDeleted.remove();
+    },  
+    handleClickBorrarTagOptionEdit: function (itemDeleted) {
+        const that = this;
+
+        // Panel o sección donde se encuentra el panel de Tags a Eliminar (input_hack)
+        const panelTagItem = itemDeleted.parent().parent();
+
+        // Buscar el input oculto y seleccionar la propiedad corresponde con item a eliminar
+        const idItemDeleted = itemDeleted.prop("title");
+        // Items id dependiendo del tipo a borrar (Perfil, Grupo)
+        let itemsId = "";
+        let id = that.filaTraduccion.find("input[type=hidden]").first().val();
+        // Input del que habrá que eliminar el item seleccionado
+
+        let $inputHack = panelTagItem.find("#txtOpcion_Hack_"+id);
+
+        itemsId = $inputHack.val().split(",");
+        itemsId.splice($.inArray(idItemDeleted, itemsId), 1);
+        // Pasarle los datos al input hidden
+        $inputHack.val(itemsId.join(","));
+        // Eliminar el item del contenedor visual
+        itemDeleted.remove();
+    },
+    handleSelectOption: function () {
+        const that = this;
+
+        // Añadir propiedad para autocompletar
+        let propertyId = guidGenerator();
+        const propertyValue = that.txtOpcion.val().trim();
+
+        if (propertyValue.trim().length == 0) {
+            return;
+        }
+
+        // Panel/Sección donde se ha realizado toda la operativa
+        let tagsSection = that.txtOpcion.parent().parent();
+
+        // Contenedor de items donde se añadirá el nuevo seleccionado para su visualización
+        let tagContainer = tagsSection.find(".tag-list");
+        // Input oculto donde se añadirá el nuevo item seleccionado
+        let inputHack = tagsSection.find("input[type=hidden]").first();
+        // Añadido el id del item seleccionado al inputHack                
+        inputHack.val(inputHack.val() + propertyValue + ',');
+
+        // Etiqueta del item seleccionado        
+        let autocompletePropertyTag = '';
+        autocompletePropertyTag += '<div class="tag" id="' + propertyId + '" title="' + propertyValue + '">';
+        autocompletePropertyTag += '<div class="tag-wrap">';
+        autocompletePropertyTag += '<span class="tag-text">' + propertyValue + '</span>';
+        autocompletePropertyTag += "<span class=\"tag-remove tag-remove-option material-icons\">close</span>";
+        autocompletePropertyTag += '</div>';
+        autocompletePropertyTag += '</div>';
+
+        // Añadir el item en el contenedor de items para su visualización
+        tagContainer.append(autocompletePropertyTag); 
+    },
+    handleSelectOptionEdit: function () {
+        const that = this;
+
+        // Añadir propiedad para autocompletar
+        let propertyId = guidGenerator();
+        var id = $("#modal-dinamic-content").find("input[type=hidden]").first().val();
+        var txtOpcionEdit = "txtOpcion_"+id;
+        const propertyValue = $("#"+txtOpcionEdit).val().trim();
+
+        if (propertyValue.trim().length == 0) {
+            return;
+        }
+
+        // Contenedor de items donde se añadirá el nuevo seleccionado para su visualización
+        let tagContainer = $("#modal-dinamic-content").find("#tagsContainer_opciones_" + id);
+        // Input oculto donde se añadirá el nuevo item seleccionado
+        let inputHack = $("#modal-dinamic-content").find("#txtOpcion_Hack_" + id);
+        // Añadido el id del item seleccionado al inputHack                
+        inputHack.val(inputHack.val() + propertyValue + ',');
+
+        // Etiqueta del item seleccionado        
+        let autocompletePropertyTag = '';
+        autocompletePropertyTag += '<div class="tag" id="' + propertyId + '" title="' + propertyValue + '">';
+        autocompletePropertyTag += '<div class="tag-wrap">';
+        autocompletePropertyTag += '<span class="tag-text">' + propertyValue + '</span>';
+        autocompletePropertyTag += '<span class="tag-remove tag-remove-option-edit material-icons">close</span>';
+        autocompletePropertyTag += '</div>';
+        autocompletePropertyTag += '</div>';
+
+        // Añadir el item en el contenedor de items para su visualización
+        tagContainer.append(autocompletePropertyTag);
+    },
+    handleSaveExtraData: function () {
+        const that = this;
+        // Bandera para controlar posibles errores antes de realizar guardado
+        let error = false;
+
+        let tagsSection = that.txtOpcion.parent().parent();
+
+        // Contenedor de items donde se añadirá el nuevo seleccionado para su visualización
+        let tagContainer = tagsSection.find(".tag-list");
+        // Input oculto donde se añadirá el nuevo item seleccionado
+        let inputHack = tagsSection.find("input[type=hidden]").first();
+        var nombre = $("#inptNombreNuevoDato").val();
+        var predicado = $("#inptURINuevoDato").val();
+        var orden = $("#inptOrdenNuevoDato").val();
+        var tipo = $('#TypeExtraData_OPCIONES')[0].checked ? "Opcion" : "TextoLibre";
+        var obligatorio = $('#chkObligatorioNuevoDato')[0].checked;
+        var opciones = "";
+        if (tipo == "Opcion") {
+            opciones = inputHack.val();
+        }
+
+        const params = {
+            pNombre: nombre,
+            pTipo: tipo,
+            pOpciones: opciones,
+            pObligatorio: obligatorio,
+            pOrden: orden,
+            pPredicadoRDF: predicado
+        };
+
+        // Mostrar loading
+        loadingMostrar();
+
+        GnossPeticionAjax(
+            that.urlSaveNewExtraData,
+            params,
+            true
+        ).done(function (data) {
+            // OK - Mostrar el mensaje de guardado correcto
+            mostrarNotificacion("success", "El dato extra ha sido creado correctamente");
+
+            setTimeout(function () {
+                location.reload();
+            }, 1000);
+
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            // Ocultar el loading
+            loadingOcultar();
+        });
+    },
+    handleSaveEditExtraData: function () {
+        const that = this;
+
+        var modal = $("#modal-dinamic-content");
+        var id = modal.find("input[type=hidden]").first().val();
+        // Contenedor de items donde se añadirá el nuevo seleccionado para su visualización
+        let tagContainer = modal.find("#tagsContainer_opciones_" + id);
+        // Input oculto donde se añadirá el nuevo item seleccionado
+        let inputHack = modal.find("#txtOpcion_Hack_" + id);
+        var nombre = modal.find("#inptNombre_" + id).val();
+        var predicado = modal.find("#inptURI_"+id).val();
+        var tipo = modal.find("#TypeExtraDataEdit_"+id)[0].checked ? "Opcion" : "TextoLibre";
+        var obligatorio = modal.find("#chkObligatorio_" + id)[0].checked;
+        var orden = modal.find("#inptOrden_"+id).val();
+        var opciones = "";
+        if (tipo == "Opcion") {
+            opciones = inputHack.val();
+        }
+
+        const params = {
+            pDatoExtraID: id,
+            pNombre: nombre,
+            pTipo: tipo,
+            pOpciones: opciones,
+            pObligatorio: obligatorio,
+            pOrden: orden,
+            pPredicadoRDF: predicado
+        };
+
+        // Mostrar loading
+        loadingMostrar();
+
+        GnossPeticionAjax(
+            that.urlSaveEditExtraData,
+            params,
+            true
+        ).done(function (data) {
+            // OK - Mostrar el mensaje de guardado correcto
+            mostrarNotificacion("success", "El dato extra ha sido creado correctamente");
+
+            setTimeout(function () {
+                location.reload();
+            }, 1000);
+
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            // Ocultar el loading
+            loadingOcultar();
+        });
+    },
+    handleDeleteExtraData: function (id) {
+        const that = this;
+
+        loadingMostrar();
+
+        const params = {
+            pDatoExtraID: id
+        };
+
+        GnossPeticionAjax(
+            that.urlDeleteExtraData,
+            params,
+            true
+        ).done(function (data) {
+            // OK - Mostrar el mensaje de guardado correcto
+            mostrarNotificacion("success", "El dato extra ha sido eliminado correctamente");
+
+            setTimeout(function () {
+                location.reload();
+            }, 1000);
+
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            // Ocultar el loading
+            loadingOcultar();
+        });
+    },
+    handleEditExtraData: function () {
+        const that = this;
+
+        loadingMostrar();
+
+        GnossPeticionAjax(
+            that.urlEditExtraData,
+            null,
+            true
+        ).done(function (data) {
+            // OK - Mostrar el mensaje de guardado correcto
+            mostrarNotificacion("success", "El dato extra ha sido eliminado correctamente");
+
+            setTimeout(function () {
+                location.reload();
+            }, 1000);
+
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            // Ocultar el loading
+            loadingOcultar();
+        });
+    },
+    handleLoadCreateEditData: function (id) {
+        const that = this;
+
+        // Cargar la vista para editar o crear una nueva traducción
+        getVistaFromUrl(that.urlEditModal+"?pDatoID="+id, 'modal-dinamic-content', '', function (result) {
+            if (result != requestFinishResult.ok) {
+                // KO al cargar la vista
+                mostrarNotificacion("error", "Error al tratar de crear/editar un dato extra.");
+                dismissVistaModal();
+            }
+        });
+    },
+}
+
 
 /**
   * Operativa para la gestión de Traducciones de la plataforma
@@ -1133,7 +1615,7 @@ const operativaGestionDescargaTraducciones = {
     handleManageFileSelected: function(validateFile){
         const that = this;
 
-        // Obtener el fichero a subir                
+        // Obtener el fichero a subir      
         const file = that.getFileFromInputFile(that.inputTranslateFile);
         if (file != undefined){
             // Importar o Validar el fichero
@@ -2063,6 +2545,411 @@ const operativaGestionCache = {
 }
 
 
+
+/**
+ *  Operativa para la descarga de configuraciones
+ * */
+const operativaDescargaConfiguracion = {
+    /**
+    * Inicializar operativa
+    */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas();
+    },
+
+    configRutas: function () {
+        // Url base
+        this.urlBase = refineURL();
+        // Url para descargar las configuraciones
+        this.urlDownloadConfig = `${this.urlBase}/download`;
+    },
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {
+
+        // Input para buscar items 
+        this.txtBuscarDescargaConfig = $('#txtBuscarDescargaConfiguracion');
+
+        // Botones para descargar cada una de las configuraciones
+        this.btnDownloadSingleConfigClassName = 'btnDownloadSingleConfig';
+        // Cada una de las filas que contienen las configuraciones
+        this.configRowClassName = "config-row";
+
+        // Botón para descarga la selección de las configuraciones
+        this.btnDownloadConfigId = "btnDownloadConfig";
+        this.btnDownloadConfig = $(`#${this.btnDownloadConfigId}`);
+
+
+        // Checkbox para marcar o desmarcar todos los items
+        this.checkAllTextsId = "checkAllTexts";
+        this.checkAllTexts = $(`#${this.checkAllTextsId}`);
+
+        // Contenedores de las config 
+        this.configListClassName = "component-config-list";
+
+        // Checkbox de cada uno de los inputs (Single checkbox) para marcar o desmarcar la selección
+        this.checkBoxDownloadSingleInputClassName = "input-download-item";
+
+
+        // Objeto que almacenará los items a enviar para su guardado
+        this.dataPostDownloadItems = new FormData();
+        // Array para almacenar los items que se seleccionarán
+        this.configRowsSelected = [];
+
+
+        // Flag para guardar la existencia de errores
+        this.isError = false;
+    },
+
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+        // Botón para la descarga de configuraciones
+        this.btnDownloadConfig.on("click", function () {
+            that.handleDownloadConfig();
+        });
+
+        // Botón para la descarga de una única configuración
+        configEventByClassName(`${that.btnDownloadSingleConfigClassName}`, function (element) {
+            const btnSingleConfigDownload = $(element);
+            btnSingleConfigDownload.off().on("click", function () {
+                // Array de rows a descargar. En este caso, sólo hay una fila (Descargar vía botón)              
+                const downloadRows = [btnSingleConfigDownload.closest(`.${that.configRowClassName}`)];
+
+                that.handleDownloadSingleConfig(downloadRows);
+            });
+        });
+
+
+        // Input para buscar configuraciones
+        this.txtBuscarDescargaConfig.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchConfigByName();
+            }, 500);
+        });  
+
+
+ 
+        // Checkbox de cada configuración
+        configEventByClassName(`${that.checkBoxDownloadSingleInputClassName}`, function (element) {
+            const configCheckbox = $(element);
+            configCheckbox.off().on("change", function () {
+                that.handleCheckConfigSelected();
+            });
+        });
+
+
+        // Checkbox de selección múltiple
+        configEventById(`${that.checkAllTextsId}`, function (element) {
+            const $checkAllTextsId = $(element);
+            $checkAllTextsId.off().on("change", function () {
+                that.handleCheckUncheckAllConfigItems();
+            });
+        });                 
+    },
+
+
+   /**
+    * Método para obtener las selecciones para la descarga de configuraciones mediante petición a backEnd
+    */
+    handleDownloadConfig: function () {
+        const that = this;
+
+        // Listado de configuraciones a descargar
+        const pListaConfiguracion = new FormData();
+
+        // Listado de configuraciones seleccionadas
+        const listSelectedConfig = $(`input[type="checkbox"].${that.checkBoxDownloadSingleInputClassName}:checked`);
+
+        // Recorrer los items/checkbox activos para crear el objeto
+        $.each(listSelectedConfig, function (index) {
+            const service = $(this);
+            // Se añaden los checks seleccionados al pListaConfiguracion
+
+            const prefijoClave = `pListaConfiguracion[${index}]`;
+
+            pListaConfiguracion.append(prefijoClave + '.Nombre', service.data("name"));
+            pListaConfiguracion.append(prefijoClave + '.Seleccionada', service.is(':checked'));
+            pListaConfiguracion.append(prefijoClave + '.Url', service.data("url"));
+        });
+
+        // Comprobar que haya checks seleccionados
+        if (listSelectedConfig.length == 0) {
+            mostrarNotificacion("info", "Selecciona al menos una configuración para descagar");
+            return;
+        }
+
+        loadingMostrar();
+        // Petición ajax
+        const ajax = new XMLHttpRequest();
+        ajax.open("POST", that.urlDownloadConfig, true);
+        ajax.responseType = "blob";
+        ajax.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    const respuesta = this.statusText;
+                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
+                        // KO
+                        mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
+                        loadingOcultar();
+                    }
+                    else {
+                        //OK
+                        var blob = new Blob([this.response], { type: "application/octet-stream" });
+                        saveAs(blob, 'configuraciones.zip');
+                        mostrarNotificacion("success", "Descarga completada");
+                        loadingOcultar();
+                    }
+                }
+            }
+        };
+        ajax.send(pListaConfiguracion); 
+    },
+
+    /**
+    * Método para descargar una única configuración
+    */
+    handleDownloadSingleConfig: function (downloadRows) {
+        const that = this;
+        const pListaConfiguracion = new FormData();
+
+        const prefijoClave = 'pListaConfiguracion[0]';
+        
+        pListaConfiguracion.append(prefijoClave + '.Nombre', downloadRows[0].data("name"));
+        pListaConfiguracion.append(prefijoClave + '.Seleccionada', true);
+        pListaConfiguracion.append(prefijoClave + '.Url', downloadRows[0].data("url"));
+
+        loadingMostrar();
+        // Petición ajax
+        const ajax = new XMLHttpRequest();
+        ajax.open("POST", that.urlDownloadConfig, true);
+        ajax.responseType = "blob";
+        ajax.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    const respuesta = this.statusText;
+                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
+                        // KO
+                        mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
+                        loadingOcultar();
+                    }
+                    else {
+                        //OK
+                        var blob = new Blob([this.response], { type: "application/octet-stream" });
+                        saveAs(blob, 'configuraciones.zip');
+                        mostrarNotificacion("success", "Descarga completada");
+                        loadingOcultar();
+                    }
+                }
+            }
+        };
+        ajax.send(pListaConfiguracion); 
+    },
+
+
+
+    /*
+     * Método para la búsqueda de configuraciones para descargar
+     */
+    handleSearchConfigByName: function () {
+        const that = this;
+
+        let cadena = this.txtBuscarDescargaConfig.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        // Cada una de las filas que muestran la traducción        
+        const configRows = $(`.${that.configRowClassName}`);
+
+        // Buscar dentro de cada fila       
+        $.each(configRows, function (index) {
+            const rowConfig = $(this);
+            // Seleccionamos el nombre de la traducción quitando tildes y caracteres extraños
+            const configName = $(this).find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            if (configName.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                rowConfig.removeClass("d-none");
+            } else {
+                // Ocultar fila resultado
+                rowConfig.addClass("d-none");
+            }
+        });
+    },
+
+
+    handleCheckConfigSelected: function () {
+        const that = this;
+
+        // Vaciar posible selección anterior
+        this.configRowsSelected = [];
+
+        // Selecciona todos los checkboxes seleccionados
+        const configCheckbox = $(`.${that.checkBoxDownloadSingleInputClassName}:checked`);
+
+        // Habilitar/InHabilitar el botón de "Descarga de selección"
+        configCheckbox.length > 0 ? that.btnDownloadConfig.prop('disabled', false) : that.btnDownloadConfig.prop('disabled', true)
+
+        // Guardar los items seleccionados
+        configCheckbox.each(function () {
+            const configRow = $(this).closest(`.${that.configRowClassName}`);
+            that.configRowsSelected = [...that.configRowsSelected, configRow];
+        });
+    },
+
+
+    /**
+     * Método para marcar/desmarcar todos los items cuando se haga clic en el checkbox de "Todos"
+     */
+    handleCheckUncheckAllConfigItems: function () {
+        const that = this;
+
+        // Controlar si se desean marcar los checkbox de configuraciones que se están visualizando actualmente
+        const setCheckboxAsSelected = $(`#${that.checkAllTextsId}`).prop('checked');
+
+        // Desmarcar/Marcar todos los items        
+        $(`.${that.checkBoxDownloadSingleInputClassName}`).each(function () {
+            // Accede a cada checkbox individualmente
+            const checkbox = $(this);
+            // Desmarcarlo por defecto
+            checkbox.prop('checked', false);
+
+            // Activar sólo aquellas que están visibles
+            if (setCheckboxAsSelected) {
+                const isContainerVisible = !$(this).closest(`.${that.configListClassName}`).hasClass("d-none");
+                isContainerVisible && checkbox.prop('checked', true);
+            }
+        });
+
+        // Controlar el botón de descarga múltiple
+        const configCheckbox = $(`.${that.checkBoxDownloadSingleInputClassName}:checked`);
+
+        if (configCheckbox.length > 0) {
+            that.btnDownloadConfig.prop("disabled", false);
+        } else {
+            that.btnDownloadConfig.prop("disabled", true);
+        }
+    },
+
+}
+
+
+/**
+ *  Operativa para la subida de configuraciones
+ **/
+const operativaSubirConfiguracion = {
+    /**
+    * Inicializar operativa
+    */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas();
+    },
+
+    configRutas: function () {
+        // Url para editar un certificado
+        this.urlBase = refineURL();
+        // Url para descargar las configuraciones
+        this.urlUploadConfig = `${this.urlBase}/upload`;
+
+        // Input file para seleccionar un fichero
+        this.inputConfigZipId = "inputConfigZip";
+        this.inputConfigZip = $(`#${this.inputConfigZipId}`);
+    },
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {
+
+        // Contenedor modal
+        this.modalContainer = $("#modal-container");
+        //Checkbox para seleccionar una configuración
+        this.configCheckbox = "select-config";
+        // Cada una de las filas que muestran las configuraciones en el modal
+        this.serviceRowClassName = "service-row";
+        // Label donde se muestra el nombre de la configuracion
+        this.serviceNameClassName = "service-name";
+        // Boton para descargar las configuraciones
+        this.btnUploadConfigClassName = 'btnUploadConfig';
+        this.btnUploadConfigId = "btnUploadConfig";
+        this.btnUploadConfig = $(`#${this.btnUploadConfigId}`);
+    },
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+        // Comportamientos del modal container 
+        this.modalContainer.on('show.bs.modal', (e) => {
+            // Aparición del modal
+            // Establecer quién ha disparado el modal para poder cambiar sus atributos una vez se guarden los grupos desde el modal
+            that.triggerModalContainer = $(e.relatedTarget);
+        })
+            .on('hide.bs.modal', (e) => {
+                // Acción de ocultar el modal
+            })
+            .on('hidden.bs.modal', (e) => {
+                // Vaciar el modal
+                resetearModalContainer();
+            });
+
+
+        // Botón para la subida de configuraciones
+        configEventByClassName(`${that.btnUploadConfigClassName}`, function (element) {
+            const $btnUploadConfig = $(element);
+            $btnUploadConfig.off().on("click", function () {
+                that.handleUploadConfig();
+            });
+        });
+    },
+
+    /**
+     * Método para pasar a backEnd el fichero zip a subir
+     */
+    handleUploadConfig: function () {
+        const that = this;
+
+        // Se recoge el zip del input
+        var inputFichero = $('input[name=inputConfigZip]')[0];
+
+        if (inputFichero.files.length > 0) {
+            loadingMostrar();
+
+            var dataPost = new FormData();
+            dataPost.append("ficheroZip", inputFichero.files[0]);
+            // Envío del zip mediante una petición ajax
+            $.ajax({
+                url: that.urlUploadConfig,
+                type: "POST",
+                processData: false,
+                contentType: false,
+                data: dataPost
+            }).done(function (data) {
+                mostrarNotificacion("success", data);
+            }).fail(function (data) {
+                mostrarNotificacion("error", data);
+            }).always(function () {
+                loadingOcultar();
+            });
+        }
+    },
+}
+
+
 /**
  * Operativa para la gestión de Trazas
  */
@@ -2086,6 +2973,8 @@ const operativaGestionTrazas = {
         this.urlLoadModalAddTraza = `${this.urlBase}/load-modal-add-traza`;
         // Url para guardar las trazas
         this.urlSaveServiceTrazas = `${this.urlBase}/save`;
+
+
     },
 
     /*
@@ -2493,8 +3382,6 @@ const operativaGestionTrazas = {
             }        
         });
     },
-
-
 }
 
 

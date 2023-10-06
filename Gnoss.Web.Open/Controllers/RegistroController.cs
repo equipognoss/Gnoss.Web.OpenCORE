@@ -1664,7 +1664,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             Dictionary<Guid, Guid> dicDatosExtraProyecto = new Dictionary<Guid, Guid>();
             Dictionary<Guid, Guid> dicDatosExtraEcosistema = new Dictionary<Guid, Guid>();
-
+            Dictionary<Guid, string> dicExtraIdentidad = new Dictionary<Guid, string>();
             Dictionary<int, string> dicDatosExtraProyectoVirtuoso = new Dictionary<int, string>();
             Dictionary<int, string> dicDatosExtraEcosistemaVirtuoso = new Dictionary<int, string>();
             if (!HaySolicitudPrevia)
@@ -1790,6 +1790,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     }
                                 }
                             }
+                            else
+                            {
+                                DatoExtraEcosistema filaDatoExtraEcosistema = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraEcosistema.FirstOrDefault(dato => dato.DatoExtraID.Equals(guidNombreCampo));
+                                if (filaDatoExtraEcosistema != null)
+                                {
+                                    dicExtraIdentidad.Add(filaDatoExtraEcosistema.DatoExtraID, valorCampo);
+                                }
+                                else
+                                {
+                                    DatoExtraProyecto filaDatoExtraProyecto = DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraProyecto.FirstOrDefault(dato => dato.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && dato.ProyectoID.Equals(ProyectoSeleccionado.Clave) && dato.DatoExtraID.Equals(guidNombreCampo));
+                                    if (filaDatoExtraProyecto != null)
+                                    {
+                                        dicExtraIdentidad.Add(filaDatoExtraProyecto.DatoExtraID, valorCampo);
+                                    }
+                                }
+                            }
                         }
                         else
                         {
@@ -1818,7 +1834,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 SolicitudDW.ListaSolicitudNuevoUsuario.Add(filaNuevoUsuario);
                 mEntityContext.SolicitudNuevoUsuario.Add(filaNuevoUsuario);
                 //Recogemos y agregamos los campos extra
-                GuardarDatosExtra(SolicitudDW, filaSolicitud, dicDatosExtraEcosistema, dicDatosExtraProyecto);
+                GuardarDatosExtra(SolicitudDW, filaSolicitud, dicDatosExtraEcosistema, dicDatosExtraProyecto, dicExtraIdentidad);
                 GuardarDatosExtraVirtuoso(SolicitudDW, filaSolicitud, dicDatosExtraEcosistemaVirtuoso, dicDatosExtraProyectoVirtuoso);
             }
 
@@ -2383,7 +2399,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <summary>
         /// Guarda los datos extra
         /// </summary>
-        private void GuardarDatosExtra(DataWrapperSolicitud pSolicitudDW, Solicitud pSolicitud, Dictionary<Guid, Guid> pDicDatosExtraEcosistema, Dictionary<Guid, Guid> pDicDatosExtraProyecto)
+        private void GuardarDatosExtra(DataWrapperSolicitud pSolicitudDW, Solicitud pSolicitud, Dictionary<Guid, Guid> pDicDatosExtraEcosistema, Dictionary<Guid, Guid> pDicDatosExtraProyecto, Dictionary<Guid, string> pDicDatosExtraIdentidad)
         {
             if (!HaySolicitudPrevia)
             {

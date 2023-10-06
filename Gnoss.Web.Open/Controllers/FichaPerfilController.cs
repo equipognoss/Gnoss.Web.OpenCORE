@@ -710,49 +710,43 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         ControladorSuscripciones.SuscribirmePerfil(IdentidadActual, ProyectoSeleccionado, BaseURL, UrlIntragnoss, IdentidadPagina, true, null, null, UtilIdiomas.LanguageCode);
 
-                        //Comprobar si el me sigue a mi tambien
-                        List<Guid> listaIdentidadesSuscritasPerfil = suscripcionCL.ObtenerListaIdentidadesSuscritasPerfil(IdentidadPagina.PerfilID);
-                        List<Guid> identidadesSuscritas = listaIdentidadesSuscritasPerfil.Intersect(IdentidadActual.ListaTodosIdentidadesDeIdentidad).ToList();
+                        AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, "contactos/", mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        GestionAmigos gestAmigos = new GestionAmigos(new DataWrapperAmigos(), new GestionIdentidades(new DataWrapperIdentidad(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        bool guardarAmigos = false;
 
-                        if (identidadesSuscritas.Count > 0)
+                        if (!amigosCN.EsAmigoDeIdentidad(IdentidadActual.IdentidadMyGNOSS.Clave, IdentidadPagina.IdentidadMyGNOSS.Clave))
                         {
-                            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, "contactos/", mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-                            GestionAmigos gestAmigos = new GestionAmigos(new DataWrapperAmigos(), new GestionIdentidades(new DataWrapperIdentidad(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            bool guardarAmigos = false;
-
-                            if (!amigosCN.EsAmigoDeIdentidad(IdentidadActual.IdentidadMyGNOSS.Clave, IdentidadPagina.IdentidadMyGNOSS.Clave))
-                            {
-                                gestAmigos.CrearFilaAmigo(IdentidadActual.IdentidadMyGNOSS.Clave, IdentidadPagina.IdentidadMyGNOSS.Clave);
-                                facetadoCN.InsertarNuevoContacto(IdentidadActual.IdentidadMyGNOSS.Clave.ToString(), IdentidadPagina.IdentidadMyGNOSS.Clave.ToString());
-                                guardarAmigos = true;
-                            }
-
-                            if (!amigosCN.EsAmigoDeIdentidad(IdentidadPagina.IdentidadMyGNOSS.Clave, IdentidadActual.IdentidadMyGNOSS.Clave))
-                            {
-                                gestAmigos.CrearFilaAmigo(IdentidadPagina.IdentidadMyGNOSS.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
-                                facetadoCN.InsertarNuevoContacto(IdentidadPagina.IdentidadMyGNOSS.Clave.ToString(), IdentidadActual.IdentidadMyGNOSS.Clave.ToString());
-                                guardarAmigos = true;
-                            }
-
-                            if (guardarAmigos)
-                            {
-                                mEntityContext.SaveChanges();
-
-                                //Agregamos una fila al BASE
-                                ControladorContactos contrContactos = new ControladorContactos(mLoggingService, mEntityContext, mConfigService, mEntityContextBASE, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-                                contrContactos.ActualizarModeloBaseSimple(IdentidadActual.IdentidadMyGNOSS.Clave, IdentidadPagina.IdentidadMyGNOSS.Clave);
-                                contrContactos.ActualizarModeloBaseSimple(IdentidadPagina.IdentidadMyGNOSS.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
-
-                                //Limpiamos la cache de los contactos
-                                AmigosCL amigosCL = new AmigosCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                                amigosCL.InvalidarAmigos(IdentidadActual.IdentidadMyGNOSS.Clave);
-                                amigosCL.InvalidarAmigos(IdentidadPagina.IdentidadMyGNOSS.Clave);
-                                amigosCL.Dispose();
-                            }
-                            amigosCN.Dispose();
-                            facetadoCN.Dispose();
+                            gestAmigos.CrearFilaAmigo(IdentidadActual.IdentidadMyGNOSS.Clave, IdentidadPagina.IdentidadMyGNOSS.Clave);
+                            facetadoCN.InsertarNuevoContacto(IdentidadActual.IdentidadMyGNOSS.Clave.ToString(), IdentidadPagina.IdentidadMyGNOSS.Clave.ToString());
+                            guardarAmigos = true;
                         }
+
+                        if (!amigosCN.EsAmigoDeIdentidad(IdentidadPagina.IdentidadMyGNOSS.Clave, IdentidadActual.IdentidadMyGNOSS.Clave))
+                        {
+                            gestAmigos.CrearFilaAmigo(IdentidadPagina.IdentidadMyGNOSS.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
+                            facetadoCN.InsertarNuevoContacto(IdentidadPagina.IdentidadMyGNOSS.Clave.ToString(), IdentidadActual.IdentidadMyGNOSS.Clave.ToString());
+                            guardarAmigos = true;
+                        }
+
+                        if (guardarAmigos)
+                        {
+                            mEntityContext.SaveChanges();
+
+                            //Agregamos una fila al BASE
+                            ControladorContactos contrContactos = new ControladorContactos(mLoggingService, mEntityContext, mConfigService, mEntityContextBASE, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                            contrContactos.ActualizarModeloBaseSimple(IdentidadActual.IdentidadMyGNOSS.Clave, IdentidadPagina.IdentidadMyGNOSS.Clave);
+                            contrContactos.ActualizarModeloBaseSimple(IdentidadPagina.IdentidadMyGNOSS.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
+
+                            //Limpiamos la cache de los contactos
+                            AmigosCL amigosCL = new AmigosCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            amigosCL.InvalidarAmigos(IdentidadActual.IdentidadMyGNOSS.Clave);
+                            amigosCL.InvalidarAmigos(IdentidadPagina.IdentidadMyGNOSS.Clave);
+                            amigosCL.Dispose();
+                        }
+                        amigosCN.Dispose();
+                        facetadoCN.Dispose();
+
                     }
                     else
                     {
@@ -1242,7 +1236,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             usuCN.Dispose();
 
             IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            IdentidadPagina.GestorIdentidades.DataWrapperIdentidad.Merge(identCN.ObtenerPerfilesDePersona(IdentidadPagina.PersonaID.Value, false));
+            IdentidadPagina.GestorIdentidades.DataWrapperIdentidad.Merge(identCN.ObtenerPerfilesDePersona(IdentidadPagina.PersonaID.Value, false, IdentidadPagina.FilaIdentidad.IdentidadID));
             identCN.Dispose();
 
             //Boqueo Usuario:
