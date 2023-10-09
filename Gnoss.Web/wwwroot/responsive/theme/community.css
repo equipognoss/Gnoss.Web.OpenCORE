@@ -502,7 +502,8 @@ table.table.mosaicView > tbody > tr > td.td-titulo img { height: 100%; width: 10
 .component-sortable { order: 2; cursor: move; cursor: -webkit-grabbing; display: flex; }
 .component-sortable .sortable-icon { color: var(--c-texto-super-claro); padding-right: 0; margin-left: 8px; }
 .component-header-wrap .showHide-icon { color: var(--c-texto-super-claro); font-size: 18px; margin-right: 5px; cursor: pointer; }
-.component-header-wrap { padding: 6px 10px 11px 10px; display: flex; flex-direction: column; border-bottom: 1px solid var(--c-gris-borde); }
+/*.component-header-wrap { padding: 6px 10px 11px 10px; display: flex; flex-direction: column; border-bottom: 1px solid var(--c-gris-borde); }*/
+.component-header-wrap {padding: 6px 10px 11px 10px;display: flex;flex-direction: column;border-bottom: 1px solid var(--c-gris-borde);position: relative;}
 .component-header { flex: 1; overflow: hidden; display: flex; align-items: center; }
 .component-header-content { order: 1; flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; }
 .component-header-left { display: flex; flex: 1; min-width: 0; align-items: center; }
@@ -742,9 +743,12 @@ table.tabla-miembros > tbody > tr > td.td-nombre { padding-left: 12px; }
 /* EDICION PAGINAS */
 
 /* Panel informativo de NestedSortable para cancelar la acción */
-.page-row .component-header-wrap .sortable-helper-info{ display: none; position: absolute; bottom: 0; left: 50px;}
+/*.page-row .component-header-wrap .sortable-helper-info{ display: none; position: absolute; bottom: 0; left: 50px;}*/
+.page-row .component-header-wrap .sortable-helper-info{display: none;position: absolute;bottom: 25%;left: 36%;right: 0;letter-spacing: 0.5px;background-color: #F8F8F8;}
+
 .page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info{ display: block !important;}
-.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info > .sortable-helper-info--message{font-size: small; color: var(--c-primario);}
+/*.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info > .sortable-helper-info--message{font-size: small; color: var(--c-primario);}*/
+.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info > .sortable-helper-info--message{font-size: 30px;color: var(--c-primario);}
 .page-row.ac_over{ background-color: var(--c-blanco); }
 
 /* Evitar que el input de búsqueda del panel lateral se salga del panel*/
