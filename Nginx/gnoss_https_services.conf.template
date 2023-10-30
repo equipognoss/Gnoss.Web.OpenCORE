@@ -66,80 +66,6 @@ server {
 }
 
 
-upstream apiservice {
-	#server 127.0.0.1:8189;
-    server api;
-}
-
-server {
-    listen 80;
-    server_name ${api_domain}; 
-	
-	access_log            /var/log/nginx/webgnoss_access.log;
-    error_log             /var/log/nginx/webgnoss_error.log;
-	
-	ssl_certificate           /etc/ssl/api_certificate.crt
-    ssl_certificate_key       /etc/ssl/api_certificate.key
-    
-    ssl_session_cache  builtin:1000  shared:SSL:10m;
-    ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
-    ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
-    ssl_prefer_server_ciphers on;
-    
-    location / {
-		try_files $uri @apiservice;
-	}
-
-    location @apiservice {
-		proxy_pass 			http://apiservice;
-		proxy_set_header 	X-Real-IP $remote_addr;
-		proxy_set_header 	Host $host;
-		proxy_set_header 	X-Forwarded-For $proxy_add_x_forwarded_for;
-		proxy_http_version 	1.1;
-		proxy_set_header 	Upgrade $http_upgrade;
-		proxy_set_header 	Connection "upgrade";
-		
-		proxy_buffer_size          128k;
-		proxy_buffers              4 256k;
-		proxy_busy_buffers_size    256k;
-	}
-}
-
-
-server {
-    listen 443;
-    server_name ${api_domain}; 
-	
-	access_log            /var/log/nginx/webgnoss_access.log;
-    error_log             /var/log/nginx/webgnoss_error.log;
-	
-	ssl_certificate           /etc/ssl/services_certificate.crt
-    ssl_certificate_key       /etc/ssl/services_certificate.key
-    
-    ssl_session_cache  builtin:1000  shared:SSL:10m;
-    ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
-    ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
-    ssl_prefer_server_ciphers on;
-    
-    location / {
-		try_files $uri @apiservice;
-	}
-
-    location @apiservice {
-		proxy_pass 			http://apiservice;
-		proxy_set_header 	X-Real-IP $remote_addr;
-		proxy_set_header 	Host $host;
-		proxy_set_header 	X-Forwarded-For $proxy_add_x_forwarded_for;
-		proxy_http_version 	1.1;
-		proxy_set_header 	Upgrade $http_upgrade;
-		proxy_set_header 	Connection "upgrade";
-		
-		proxy_buffer_size          128k;
-		proxy_buffers              4 256k;
-		proxy_busy_buffers_size    256k;
-	}
-}
-
 server {
     listen 80;
     server_name ${services_domain}; 
@@ -211,13 +137,6 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
-    location /lucene_autocomplete/ {
-        proxy_http_version 1.1;
-        proxy_pass         http://lucene_autocomplete/;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Upgrade $http_upgrade;
-    }
     location /autocompletaretiquetas/ {
         proxy_http_version 1.1;
         proxy_pass         http://autocompletaretiquetas/;
@@ -228,6 +147,13 @@ server {
     location /static/ {
 		proxy_http_version 1.1;
         proxy_pass         http://static/;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Upgrade $http_upgrade;
+	}
+    location /api/ {
+		proxy_http_version 1.1;
+        proxy_pass         http://api/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
@@ -306,13 +232,6 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
-    location /lucene_autocomplete/ {
-        proxy_http_version 1.1;
-        proxy_pass         http://lucene_autocomplete/;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Upgrade $http_upgrade;
-    }
     location /autocompletaretiquetas/ {
         proxy_http_version 1.1;
         proxy_pass         http://autocompletaretiquetas/;
@@ -323,6 +242,13 @@ server {
     location /static/ {
 		proxy_http_version 1.1;
         proxy_pass         http://static/;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Upgrade $http_upgrade;
+	}
+    location /api/ {
+		proxy_http_version 1.1;
+        proxy_pass         http://api/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
