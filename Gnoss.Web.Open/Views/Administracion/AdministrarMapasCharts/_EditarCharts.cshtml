@@ -7,7 +7,7 @@
     <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
     <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
     string nombreChartIdiomaUsuario = Model.Idiomas.FirstOrDefault(x => string.Compare(x, Model.IdiomaUsuario, true) == 0);
-    Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
     Html.ViewData.Add("0", nombreChartIdiomaUsuario);
     Html.ViewData.Add("1", Model.Idiomas);
 

@@ -94,7 +94,7 @@ string urlSendInvitation_invite_community = $"{@Html.GetComunidad().Url}/{@Html.
             @* Título del modal *@
             <div class="modal-header">
                 <p class="modal-title">
-                    <span class="material-icons">group_add</span>Invitar a comunidad
+                    <span class="material-icons">group_add</span>@Html.GetText("COMMON","INVITARACOMUNIDAD")
                 </p>
                 <span class="material-icons cerrar"
                       data-dismiss="modal"
@@ -109,12 +109,12 @@ string urlSendInvitation_invite_community = $"{@Html.GetComunidad().Url}/{@Html.
                              <div class="autocompletar autocompletar-tags form-group">
                                  <div class="input-wrap form-sticky-button">
                                      <input type="text"
-                                            placeholder="Introduce los correos separados por comas y haz clic en añadir"
+                                            placeholder="@Html.GetText("COMMON","INTRODUCELOSCORREOSSEPARADOSPORCOMASYHAZCLICENAÑADIR")"
                                             id="@idTxtCorreoAInvitar_invite_community"
                                             class="form-control"
                                             autocomplete="off" />
                                      <a id="@idButtonLitAniadirCorreo_invite_community"
-                                        class="btn btn-primary uppercase">Añadir</a>
+                                        class="btn btn-primary uppercase">@Html.GetText("COMMON","ANYADIRENMAYUSCULA")</a>
                                  </div>
                              </div>                                                           
                         </div>
@@ -123,7 +123,7 @@ string urlSendInvitation_invite_community = $"{@Html.GetComunidad().Url}/{@Html.
                     @* Panel informativo de Destinatarios/No Destinatarios *@
                     <div id="@idPanContenedorInvitados_invite_community" class="mb-3 @idPanContenedorInvitados_invite_community">                        
                         @* Panel No Destinatarios *@
-                        <span id="@idNoDestinatarios_invite_community" class="@idNoDestinatarios_invite_community texto-gris-claro mb-3">Ningún destinatario añadido...</span>
+                        <span id="@idNoDestinatarios_invite_community" class="@idNoDestinatarios_invite_community texto-gris-claro mb-3">@Html.GetText("COMMON","NINGUNDESTINATARIOAÑADIDO")</span>
                         @* Panel con Destinatarios ELEGIDOS PARA ENVIAR *@
                         <span class="tag-list @idListaDestinatarios_invite_community" id="@idListaDestinatarios_invite_community">
                         </span>

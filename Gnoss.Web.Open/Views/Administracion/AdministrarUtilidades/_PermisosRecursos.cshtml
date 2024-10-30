@@ -12,7 +12,8 @@ Variables
 @{
     CommunityModel Comunidad = Html.GetComunidad();
     // Url para realizar la petición para mostrar la vista modal de "Añadir grupos" para establecer permisos a un tipo de recurso
-    string urlModalAddGroups = $"{@Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADUTILIDADES")}/load-add-groups" ;    
+    string urlModalAddGroups = $"{@Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADUTILIDADES")}/load-add-groups" ;
+    bool secundariasPintadas = false;
 }
 
 @*
@@ -666,15 +667,24 @@ Variables
                     <td>                    
                     </td>
                 </tr>
-
+                
                 @* Lista las diferentes plantillas semánticas *@
                 foreach (AdministrarComunidadUtilidades.PermisoDocumentacionSemantica permisoOnto in Model.PermisosDocumentacionSemantica)
                 {
+                    if(!secundariasPintadas && permisoOnto.EsSecundaria)
+                    {
+                        secundariasPintadas = true;
+                        <tr>
+                            <td>@Html.GetText("COMADMINCOMUNIDAD","ADMINENTSECUND")</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    }
                     string txtOntologia = permisoOnto.Ontologia.Replace(".owl", "");
                     int permisosOnto = permisoOnto.TipoPermiso;
                     <tr class="permisoOnto" id="@txtOntologia">
-                        @* Nombre de cada Plantilla semántica *@
-                        <td><span class="ml-3 nameOnto">@permisoOnto.TipoDocumento</span></td>
+                        @* Nombre de cada Plantilla semántica en el idioma correspondiente del usuario *@
+                        <td><span class="ml-3 nameOnto">@Html.ObtenerTextoIdiomaUsuario(permisoOnto.TipoDocumento)</span></td>
                         <td>
                             <div class="check-wrapper">
                                 <div class="custom-control custom-checkbox">

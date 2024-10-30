@@ -56,7 +56,8 @@ Variables
 				   class="form-control inputCampoFiltro anadirFiltroAutocomplete"
 				   placeholder=""
 				   name="TabCampoFiltro"
-				   value="@opcionesBusqueda.CampoFiltro"
+				   value=""
+				   @*value="@opcionesBusqueda.CampoFiltro"*@				   
 			@(Model.Type == TipoPestanyaMenu.BusquedaSemantica ? "" : "disabled")>
 			<a class="btn btn-grey uppercase btnAddFilterPanFilter">@Html.GetText("PERFIL","ANYADIR")</a>
 		</div>		
@@ -86,6 +87,34 @@ Variables
 
 	</div>
 	
+
+	@*************************************************************************@
+	@*************************************************************************@
+	@************************** ASISTENTE DE FILTROS ************************
+	@* https://redproyectos.gnoss.com/comunidad/desarrollo-de-gnoss-sistema-s/recurso/informe-requisitos-para-asistente-de-filtros-en/c961e2b4-db3e-4e9d-9b93-acbcddff6cba *@
+	@* Asistente de Creación de filtros de resultados
+	<div class="form-group mb-4 searchAssistant">
+		<div class="searchAssistant__header d-flex justify-content-between align-items-center mb-3">
+			<label class="control-label d-block font-weight-bold"
+				   style="font-size: 14px">Opciones de búsquedas</label>
+			<a href="javascript: void(0);"
+			   class="linkAddSearchFilter btn btn-outline-primary new"
+			   style="display: flex; text-decoration: none">
+				<span class="material-icons">add</span>
+				<span class="texto">Añadir opciones de búsqueda</span>
+			</a>
+		</div>
+		@* Descripción de la sección
+	    <p class="searchAssistant__description">Personaliza tus opciones de búsqueda al elegir el objeto y las propiedades o características específicas por las cuales deseas filtrar los datos en la lista de resultados de búsqueda.</p>
+		<p class="searchAssistant__noFiltersAvailable d-none">
+			No se han configurado filtros. Para crear nuevos criterios de búsqueda, selecciona
+			<span class="texto-primario">Añadir opciones de búsqueda.</span>
+		</p>
+		@* Lista de filtros semánticos
+		@Html.PartialView("_partial-views/_searchFilterList")
+	</div>
+	************************************************************************@
+
 	@* Opciones para crear filtros de Orden *@
 	@if (opcionesBusqueda.FiltrosOrden.Count == 0)
     {

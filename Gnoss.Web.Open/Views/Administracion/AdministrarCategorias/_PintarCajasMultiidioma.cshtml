@@ -11,6 +11,8 @@ Variables
 @{
     Dictionary<string, string> nombreCategoria = Model.Categoria.Value;
     HeaderModel cabecera = Html.GetCabecera();
+    // Contador del nº de pestañas listadas
+    int contNumPestañasVisibles = 0;
 }
 @*
  ----------------------------------------------------------------
@@ -26,18 +28,18 @@ Variables
         @* Pinta los tabs *@
         <ul class="nav nav-tabs" id="tabIdiomasCajasMultiIdioma" role="tablist">
 		@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
-			@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){				
-			    <li class="nav-item">
+			@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
+                <li class="nav-item" role="presentation">
 			    	<a  class="tabIdiomaCajaMultiIdiomaItem nav-link @( Model.IdiomaTesauro == idioma.Key ? "active" : null)"                                                         
 			    	    id="@("cajaMultiIdioma_" + idioma.Key)" 
                         data-toggle="tab" 
                         href="#@("ver_cajaMultiIdioma_" + idioma.Key)" 							
 			    		role="tab" 
                         aria-controls="@("ver_cajaMultiIdioma_" + idioma.Key)"
-			    		aria-selected="true">@idioma.Value</a>
+                        aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@idioma.Value</a>
 			    </li>
-								
-			}
+                contNumPestañasVisibles += 1;
+            }
 	    </ul>
 
         @* Contenido de los Tabs*@

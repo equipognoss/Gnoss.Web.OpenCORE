@@ -146,10 +146,10 @@ Variables
 											@if (isOriginal)
 											{
 												@* Controlar CI-CD *@
-                                                @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+												@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
                                                 {
                                                     @* Deshabilitado *@
-													<li>
+													<li title="@Html.GetComunidad().MensajeAvisoAdministracionIC">
 														<a class="item-dropdown js-action-edit-component btnNoUploadPersonalizacionCMS disabled">
 															<span class="material-icons">edit</span>
 															<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
@@ -177,10 +177,10 @@ Variables
 											else
 											{
 												@* Editar (Guardar Datos Extra de la personalización ) Controlar CI-CD*@
-                                                @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+												@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
                                                 {
                                                     @* Deshabilitado *@
-													<li>
+													<li title="@Html.GetComunidad().MensajeAvisoAdministracionIC">
 														<a class="item-dropdown js-action-edit-component btnNoUploadPersonalizacionCMS disabled">
 															<span class="material-icons">edit</span>
 															<span class="texto">@Html.GetText("DEVTOOLS","EDITARDATOSEXTRA")</span>
@@ -213,10 +213,10 @@ Variables
 												if (Model.Generic)
 												{
 													@* Eliminar personalización del Original Controlar CI-CD *@
-													@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+													@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 													{
 														@* Deshabilitado *@
-														<li>
+														<li title="@Html.GetComunidad().MensajeAvisoAdministracionIC">
 															<a class="item-dropdown js-action-edit-component btnNoDeletePersonalizacionCMS disabled">												
 																<span class="material-icons">delete</span>
 																<span class="texto">@Html.GetText("DEVTOOLS","ELIMINARPERSONALIZACION")</span>
@@ -245,10 +245,10 @@ Variables
 												else
 												{
 													@* Borrar vista personalizada subida Controlar CI-CD *@
-													@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+													@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 													{
 														@* Deshabilitado *@
-														<li>
+														<li title="@Html.GetComunidad().MensajeAvisoAdministracionIC">
 															<a class="item-dropdown js-action-edit-component btnNoDeletePersonalizacionCMS disabled">												
 																<span class="material-icons">delete</span>
 																<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>

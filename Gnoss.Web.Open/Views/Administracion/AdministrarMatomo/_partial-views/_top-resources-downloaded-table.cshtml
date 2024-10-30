@@ -1,0 +1,52 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista parcial que contiene una tabla donde se muestran la lista de los recursos más descargados en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+<div class="table-responsive matomoContainer__table">    
+    <div class="d-flex align-items-center justify-content-between">
+        <h3 class="matomoContainer__header">Descarga de recursos</h3>            
+        <button id="parellelBt" class="parellelBtIndex btn btn-outline-primary matomoContainer__downloadButton">Descargar en CSV</button>
+    </div>
+    <hr />   
+    <table id="table_top_resources_downloaded" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Top</th>
+                <th>Recurso</th>
+                <th>Nº de descargas</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td id="top1Download" class="text-truncate"></td>
+                <td id="top1DownloadNumber" class="text-truncate"></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td id="top2Download" class="text-truncate"></td>
+                <td id="top2DownloadNumber" class="text-truncate"></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td id="top3Download" class="text-truncate"></td>
+                <td id="top3DownloadNumber" class="text-truncate"></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td id="top4Download" class="text-truncate"></td>
+                <td id="top4DownloadNumber" class="text-truncate"></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td id="top5Download" class="text-truncate"></td>
+                <td id="top5DownloadNumber" class="text-truncate"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

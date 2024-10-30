@@ -385,4 +385,19 @@ var descargarTraduccionesErrores = {
     errorFecha: 'La fecha final debe ser mayor que la fecha inicial',
     validar: 'Validado',
     errorValidar: 'Archivo no validado'
-}
+};
+
+var espacioPersonal = {
+    avisoEditarOrganizarEnCategorias: 'Selecciona un recurso antes de intentar editar su categoría',
+};
+
+var facetas = {
+    siguientes: "Siguientes",
+    anteriores: "Anteriores",
+};
+
+var accionesUsuarios = {
+    seguir: "Seguir",
+    dejarDeSeguir: "Dejar de seguir",
+    sinSeguimiento: "Sin seguimiento",
+};

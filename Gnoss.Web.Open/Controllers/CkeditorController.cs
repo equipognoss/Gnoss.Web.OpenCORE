@@ -41,8 +41,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private string mExtension;
 
 
-        public CkeditorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
-            : base(httpContextAccessor, entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD, gnossCache, viewEngine, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication)
+        public CkeditorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IHostingEnvironment env, EntityContextBASE entityContextBASE)
+            : base(httpContextAccessor, entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD, gnossCache, viewEngine, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, env, entityContextBASE)
         {
         }
 
@@ -70,7 +70,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mUsuarioID = Session.Get<GnossIdentity>("Usuario").UsuarioID;
                 mEspecialID = Guid.NewGuid();
 
-                IFormFile fileUpload = Request.Form.Files["fuCKEditor"];
+                //IFormFile fileUpload = Request.Form.Files["fuCKEditor"];
+                IFormFile fileUpload = Request.Form.Files[0];
                 if (fileUpload == null)
                 {
                     fileUpload = Request.Form.Files["upload"];

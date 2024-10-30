@@ -29,13 +29,17 @@ using System.Linq;
 using System.Net;
 using ClosedXML.Excel;
 using Es.Riam.Gnoss.Web.MVC.Controles;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Microsoft.Extensions.Hosting;
+using Es.Riam.Util;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
     public class DescargarTraduccionesController : ControllerBaseWeb
     {
-        public DescargarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public DescargarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -128,6 +132,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
         public ActionResult subirFicheros(IFormFile file, bool validar)
         {
+            GuardarLogAuditoria();
             if (!validar)
             {
 
@@ -355,7 +360,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             BaseDeDatos bd = new BaseDeDatos(ProyectoSeleccionado, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mRedisCacheWrapper, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
             XLWorkbook excel = new XLWorkbook();
             TraduccionXmlOntologias ontologiaXML = new TraduccionXmlOntologias();
-            List<string> listaIdiomas = mConfigService.ObtenerListaIdiomas();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
 
             bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
 
@@ -372,7 +378,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
 
                 TraduccionXmlCore xml = new TraduccionXmlCore();
-                xml.XmlToExcelCore(diccionarioXMLCore, excel);
+                xml.XmlToExcelCore(diccionarioXMLCore, excel, mConfigService);
             }
 
             if (OpcionesDescarga.DescargarXMLMensajesCore) //descargar excel de mensajes de XML
@@ -396,7 +402,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
 
                 TraduccionXmlMensajes xml = new TraduccionXmlMensajes();
-                xml.XmlToExcelMensajes(diccionarioXMLMensajesCore, excel);
+                xml.XmlToExcelMensajes(diccionarioXMLMensajesCore, excel, mConfigService);
             }
 
             //Ontologias principales    
@@ -416,7 +422,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             Stream stream = new MemoryStream(array);
 
-                            ontologiaXML.XmlOntologiaToExcel(stream, excel, nombreHoja);
+                            ontologiaXML.XmlOntologiaToExcel(stream, excel, nombreHoja, mConfigService);
                         }
                     }
                 }
@@ -529,6 +535,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         WebRequest request = WebRequest.Create(urlJS);
                         request.Credentials = CredentialCache.DefaultCredentials;
+                        request.Headers.Add("UserAgent", UtilWeb.GenerarUserAgent());
                         HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                         Stream dataStream = response.GetResponseStream();
                         StreamReader reader = new StreamReader(dataStream);
@@ -555,7 +562,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
 
                 TraduccionJavaScript js = new TraduccionJavaScript();
-                js.JavascriptToExcel(excel, diccionarioJavaScript);
+                js.JavascriptToExcel(excel, diccionarioJavaScript, mConfigService);
             }
 
             if (excel.Worksheets.Count > 0)

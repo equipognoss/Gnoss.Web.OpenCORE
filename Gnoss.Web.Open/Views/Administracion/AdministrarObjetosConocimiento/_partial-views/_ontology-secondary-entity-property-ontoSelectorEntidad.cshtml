@@ -238,12 +238,19 @@ Variables
 
     SharedSemCms sharedSemCms = new SharedSemCms();
     sharedSemCms.semanticPropertyModel = Model;
-    @Html.PartialView("../Shared/SemCMS/_AddEditionButtons", sharedSemCms)
+    /*@Html.PartialView("../Shared/SemCMS/_AddEditionButtons", sharedSemCms) _ Edición DEVTOOLS - Modal */
+    @Html.PartialView("_partial-views/_ontology-secondary-addEditionButtons", sharedSemCms)
+    
+
+
+
 
     string idDivError = idControl.Replace("selEnt_", "divError_");
     <div id="@idDivError"></div>
 
-    @Html.PartialView("../Shared/SemCMS/_AddEditionAddedValues", sharedSemCms)
+    /*@Html.PartialView("../Shared/SemCMS/_AddEditionAddedValues", sharedSemCms)*/
+    @Html.PartialView("_partial-views/_ontology-secondary-addEditionAddedValues", sharedSemCms)
+    
 }
 else
 {

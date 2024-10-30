@@ -1,0 +1,144 @@
+@model ChartViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista en detalle del gráfico de la comunidad que se desea editar. Se trata de una vista de tipo Modal donde se cargarán las diferentes propiedades que tendrá el gráfico.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	
+	CommunityModel Comunidad = Html.GetComunidad();
+	String idModalGraph = "modal-configuracion-graph_" + Model.ChartID;		
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista en detalle de cada gráfico mostrada cuando se edite o cree uno nuevo --------------------
+*@
+
+
+@* Modal con la información de la página *@
+<div id="@idModalGraph"
+	 class="modal modal-top fade modal-edicion modal-con-tabs modal-graph"
+	 role="dialog"
+	 aria-modal="true">
+	
+	@* Información oculta del graph *@
+	<input type="hidden" name="TabOrden" value="@Model.Orden" />
+	<input type="hidden" name="TabEliminada" value="false" />
+	<input type="hidden" name="TabChartID" value="@Model.ChartID" />	
+	    
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Título del modal *@
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">edit</span>
+					@Html.GetText("DEVTOOLS","CONFIGURACION"):
+					<span class="community-name">@Html.ObtenerTextoIdiomaUsuario(Model.Nombre)</span>
+				</p>
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				<div class="formulario-edicion">
+
+					@* Tabs de los idiomas en multiIdioma *@
+					<div class="panContenidoMultiIdioma basicInfo">
+					</div>
+
+					@* Contenido de los tabs de los idiomas *@
+					<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+
+						@* Nombre del gráfico *@
+						<div class="form-group mb-4">
+							@*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>*@
+							<input type="text"
+								   name="TabName"
+								   data-labeltext="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+								   data-helptext="Nombre del gráfico"
+								   data-on-input-function="operativaGestionCharts.handleOnInputTabNameChanged(event)"
+								   placeholder="Introduce el nombre del gráfico"
+								   class="form-control multiIdioma"
+								   value="@Model.Nombre"/>							
+						</div>
+					
+						@* Metadescripción
+						<div class="form-group mb-4">
+							<textarea class="form-control multiIdioma noCKE"
+									  rows="3"
+									  data-labeltext="Mís datos"
+									  name="TabMasDatos"
+									  data-helptext="Valor help para el ckEditor">Valor para ser insertado en textarea</textarea>
+                        </div> *@
+
+					</div>
+
+					@* Contenedor de las opciones que no son multiIdioma *@
+					<div class="pageContainer tab-content pt-2">
+						
+						@* Texto del SELECT del gráfico *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">Texto del SELECT</label>
+							<input type="text"
+								   id="pSelect|||@Model.ChartID"
+								   name="TextoSelect"								   								   								   
+								   placeholder="Texto Select del gráfico"
+								   class="form-control"
+								   value="@Model.Select" />
+							<small class="form-text text-muted">Introduce el texto del select a utilizar en el gráfico.</small>
+						</div>
+
+						@* Texto del WHERE del gráfico *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">Texto del WHERE</label>
+							<textarea 
+	   								  id="pTextWhere|||@Model.ChartID"
+									  class="form-control multiIdioma noCKE"
+									  rows="3"
+									  name="TextoWhere">@Model.Where</textarea>
+						</div>
+						<small class="form-text text-muted">Para que la consulta sea óptima y funcionen correctamente los filtros recuerda utilizar ?s.</small>
+						@* Javascript para pintar del gráfico *@
+						<div class="form-group mb-4">
+							<label class="control-label d-block">Javascript para pintar (Model)</label>
+							<textarea id="pTextJavascript|||@Model.ChartID"
+									  class="form-control multiIdioma noCKE"
+									  rows="3"
+									  name="TextoJavascript">@Model.Javascript</textarea>
+							<small class="form-text text-muted">Introduce el Javascript que se utilizará para pintar el gráfico.</small>
+						</div>	
+						
+						<div class="form-group mb-4">
+							<label class="control-label d-block">Nombre de la función (Javascript)</label>
+							<input type="text"
+								   id="pNombreFuncionJS|||@Model.ChartID"
+								   name="NombreFuncionJS"
+								   placeholder="Nombre de la función Javascript"
+								   class="form-control"
+								   value="@Model.FuncionJS" />
+							<small class="form-text text-muted">Introduce el nombre de la función Javascript que se utilizará para pintar el gráfico.</small>
+						</div>
+						
+						@* Botón para guardar la página. Controlar CI-CD *@
+						<div class="panelBotonera">
+							@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+							{
+								<input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase btnNoGuardarGrafico" value="@Html.GetText("COMMON","GUARDAR")" />
+							}
+							else
+							{
+								<input type="button" class="btn btn-primary uppercase btnGuardarGrafico" value="@Html.GetText("COMMON","GUARDAR")" />
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -20,7 +20,7 @@ Variables
 	// Contador del nº de pestañas listadas
 	int contNumPestañasVisibles = 0;
 	// Nº de pestañas de idiomas a visualizar en la sección Tab
-	int numMaxPestañasIdiomasVisibles = 2;
+	int numMaxPestañasIdiomasVisibles = 3;
 	// Carga de idiomas de la plataforma
 	string idiomas = "";
 	// Perfiles de usuarios y grupos que están asignados a un componente
@@ -212,40 +212,36 @@ Variables
 				@if (contNumPestañasVisibles < cabecera.Languajes.Count)
 				{
 					@* Dropdown para resto de categorías *@
-					<li class="nav-item">
-						<div class="dropdown">
-							@* Desplegable del dropdown *@
-							<a
-									class="nav-link dropdown-toggle"
-									data-toggle="dropdown"
-									href="#"
-									role="button"
-									aria-haspopup="true"
-									aria-expanded="false"
-									>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
-							@* Sección para mostrar items del dropdown*@
-							<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
-								<ul class="no-list-style">
-									@* Pintado del resto de pestañas en Dropdown *@									
-									@for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
-									{
-										var item = cabecera.Languajes.ElementAt(i);
-										var itemKey = item.Key;
-										var itemValue = item.Value;
+					<li class="nav-item dropdown">						
+						@* Desplegable del dropdown *@
+						<a
+								class="nav-link dropdown-toggle languageOculto"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false"
+								>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+						@* Sección para mostrar items del dropdown*@
+						<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">							
+							@* Pintado del resto de pestañas en Dropdown *@									
+							@for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+							{
+								var item = cabecera.Languajes.ElementAt(i);
+								var itemKey = item.Key;
+								var itemValue = item.Value;
 
-										@* Cada item del dropdown *@
-										<li>
-											<a id="@("tab_" + itemKey)" 
-												   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
-												   data-toggle="tab"
-												   href="#@("edicion_" + itemKey)"
-												   data-language = "@itemKey">
-												@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
-										</li>
-									}
-								</ul>
-							</div>
-						</div>
+								@* Cada item del dropdown *@
+								
+								<a id="@("tab_" + itemKey)" 
+									   class="item-dropdown languageOcultoItem tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+									   data-toggle="tab"
+									   role="tab"
+									   href="#@("edicion_" + itemKey)"
+									   data-language = "@itemKey">
+									  @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>								
+							}							
+						</div>						
 					</li>
 				}
 			</ul>
@@ -285,10 +281,11 @@ Variables
 					<input type="checkbox" class="selectIdioma" id="chkSelectIdioma" name="chkSelectIdioma" @Html.Raw(Model.ListaIdiomasDisponibles.Count > 0 ? "checked=\"checked\"" : "")>
 					<span>@Html.GetText("COMADMINCMS", "SELECCIONAIDIOMAS")</span>
 				</p>
-				<div id="divSelectIdioma" @Html.Raw(Model.ListaIdiomasDisponibles.Count == 0 ? "style=\"display:none\"" : "")>
-					@Html.GetText("COMADMINCMS", "IDIOMASDISPONIBLES")
+				
+				<div id="divSelectIdioma" class="form-group mb-4 @( (Model.ListaIdiomasDisponibles.Count == 0) ? "d-none" : "")">
+					<label class="control-label d-block">@Html.GetText("COMADMINCMS", "IDIOMASDISPONIBLES")</label>					
 					<p>
-						<input type="checkbox" class="idiomaMulti" @Html.Raw(Model.ListaIdiomasDisponibles.Count == 0 ? "checked=\"checked\"" : "") id="chkIdioma" name="chkIdioma">
+						<input type="checkbox" class="idiomaMulti mt-3" @Html.Raw(Model.ListaIdiomasDisponibles.Count == 0 ? "checked=\"checked\"" : "") id="chkIdioma" name="chkIdioma">
 						<span>Todos los idiomas</span>
 					</p>
 					@foreach (string idioma in Model.ListaIdiomas.Keys)
@@ -349,7 +346,7 @@ Variables
 							@* Input de Tags *@
 							<input type="text"
 									name="TabPrivacidadPerfiles"
-									placeholder="Busca un perfil y pulsa AÑADIR"
+									placeholder="@Html.GetText("COMMON","BUSCAUNPERFILYPULSAAÑADIR")"
 									id="privacidadPerfiles"
 									class="form-control txtAutocomplete"
 									data-avoid-autocomplete-with-enter-button="true"
@@ -387,8 +384,7 @@ Variables
 			<div class="form-group mb-4">
 				<label class="control-label d-block">@Html.GetText("COMADMIN", "NOMBRECORTO") *</label>
 				<input type="text" 
-					   id="nombreCortocomponente"	
-					   @(!isEmptyShortName ? "disabled" : "")					   
+					   id="nombreCortocomponente"						   					   
 					   placeholder="@Html.GetText("COMADMIN", "NOMBRECORTO")"
 					   required
 					   class="form-control required" 
@@ -509,12 +505,12 @@ Variables
 
 
             @* Panel para guardado (Botón Guardar) *@
-            <div class="panelBotonera">			
-                @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+            <div class="panelBotonera">
+				@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
                 {
-                    @* Botón para el guardado con Ramas activas o en uso *@                    
-                    <a href="javascript: void(0)" class="btn btn-primary uppercase" disabled>@Html.GetText("COMMON", "GUARDAR")</a>                            
-                }
+                    @* Botón para el guardado con Ramas activas o en uso *@
+					<a href="javascript: void(0)" class="btn btn-primary uppercase" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC">@Html.GetText("COMMON", "GUARDAR")</a>
+				}
                 else
                 {
                     <a id="btnSaveComponent" href="javascript: void(0)" class="btn btn-primary uppercase">@Html.GetText("COMMON", "GUARDAR")</a>                    

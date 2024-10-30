@@ -243,16 +243,16 @@ const botonDesplegarMenuClonado = {
         this.menusOcultar = ["espacio", "comunidades", "gestionar", "identidades", "desconectar", "metaAdministrador"];
 
         this.areaMenuClonado = $('<div />').addClass('area-grab-menu-clonado');
-        this.button = $('<button />').addClass('navigation-area-grab');
+        // this.button = $('<button />').addClass('navigation-area-grab');
         //this.botonDesplegarMenuClonadoHTML = `<i id='${this.idBtnDesplegarMenuClonado}' class="material-icons material-icons--rounded">${this.iconoDesplegarMenuClonado}</i>`;
 
         this.botonDesplegarMenuClonadoHTML = `
-        <i id='${this.idBtnDesplegarMenuClonado}' class="material-icons material-icons--rounded">
+        <i id='${this.idBtnDesplegarMenuClonado}' class="material-icons material-icons--rounded" aria-label="Alternar menú lateral">
             ${this.iconoDesplegarMenuClonado}
         </i>
     `;
         this.menuClonado.after(this.areaMenuClonado);
-        this.areaMenuClonado.append(this.button);
+        // this.areaMenuClonado.append(this.button);
         this.areaMenuClonado.append(this.botonDesplegarMenuClonadoHTML);
                       
         // Registro el botón menú clonado
@@ -708,8 +708,9 @@ var metabuscador = {
 
             if (that.validarKeyPulsada(e) == true) {
                 clearTimeout(that.timer);
-                that.timer = setTimeout(function () {
-                    var val = that.input.val();
+                that.timer = setTimeout(function () {                    
+                    let val = that.input.val();
+                    val = escapeHTML(val);
                     if (val.length > 2) {
                         that.ocultarResultados();
                         // Ocultar panel sin resultados por posible busqueda anterior sin resultados
@@ -1436,6 +1437,10 @@ var metabuscador = {
         let searchRepeated = false;
 
         try {
+
+            // Aplicar escapeHTML a la variable de búsqueda
+            const escapedSearch = escapeHTML(search);
+
             // Obtener las búsquedas actuales que hay en el localStorage. Si no hay devolverá array vacío
             const localSearchs = JSON.parse(
                 localStorage.getItem(this.KEY_LOCAL_SEARCHS) || "[]"
@@ -1443,7 +1448,7 @@ var metabuscador = {
 
             // Comprobar que no existe la búsqueda actual en localStorage
             localSearchs.forEach((item) => {
-                if (item.search.indexOf(search) != -1) {
+                if (item.search.indexOf(escapedSearch) != -1) {
                     searchRepeated = true;
                 }
             });
@@ -1458,7 +1463,7 @@ var metabuscador = {
             }
 
             // Crear el nuevo item "search" y guardarlo en localStorage
-            const searchObject = { "search": search };
+            const searchObject = { "search": escapedSearch };
             localSearchs.push(searchObject);
             localStorage.setItem(this.KEY_LOCAL_SEARCHS, JSON.stringify(localSearchs));
         } catch (error) {
@@ -1493,9 +1498,12 @@ var metabuscador = {
 
         // Construir cada itemList con las búsquedas almacenadas en localStorage
         localSearchs.reverse().forEach((item) => {
-            searchListItems += `<li class="reciente con-icono-before icono-busqueda">
-                                    <a href="javascript: void(0);">${item.search}</a>
-                                </li>`;
+            const itemValue = escapeHTML(item.search);
+            if (!containsEscapeHTML(itemValue)){
+                searchListItems += `<li class="reciente con-icono-before icono-busqueda">
+                <a href="javascript: void(0);">${itemValue}</a>
+                </li>`;
+            }
         });
 
         // Añadir los items para el metabuscador
@@ -2752,7 +2760,8 @@ var solicitarAccesoComunidad = {
  * @param  {string} contenido 'Mensaje que se quiere mostrar'
  */
 var mostrarNotificacion = function (tipo, contenido) {
-    toastr[tipo](contenido, '', {
+    
+    const $toast = toastr[tipo](contenido, '', {
         toastClass: 'toast themed',
         positionClass: "toast-bottom-center",
         target: 'body',
@@ -2761,7 +2770,8 @@ var mostrarNotificacion = function (tipo, contenido) {
         timeOut: 5000,
         escapeHtml: false,
         closeButton: true,
-    });
+    });    
+    $toast.attr('role', 'status');
 };
 
 function comportamientoCargaFacetasComunidad() {
@@ -2966,6 +2976,7 @@ var MenuComunidad = {
     init: function () {
         this.config();
         this.nestedDropdowns();
+        this.checkVisibilityMenuItems();
     },
     config: function () {
         this.communityMenuMovil = $("#community-menu-movil");
@@ -2983,6 +2994,94 @@ var MenuComunidad = {
             }
         });
     },
+
+    /**
+     * Asignar evento de resize siempre y cuando el tamaño de los items a mostrar sean más grandes que la pantalla     
+     * En resize se añade un "debounce" para evitar que la función se ejecute continuamente durante el redimensionamiento rápido de la ventana del navegador            
+     */
+    checkVisibilityMenuItems: function() {
+        const that = this;
+
+        const menu = $('#community-menu');
+
+        if (menu.length <= 0){
+            return;
+        }
+
+        const itemsMenu = menu.find("li").not(".showMore");                
+        // Calcular inicialmente el espacio disponible para los elementos del menú
+        const menuRect = menu[0].getBoundingClientRect();
+        const totalWidth = menuRect.width;
+        let itemsWidth = 0;        
+
+        // Iterar sobre los elementos del menú para calcular su ancho total
+        itemsMenu.each(function() {
+            var itemRect = this.getBoundingClientRect();
+            // Ancho del item incluyendo el margen derecho
+            itemsWidth += itemRect.width + parseFloat(window.getComputedStyle(this).marginRight);
+        })
+
+        // Comprobar el tamaño inicialmente por si hiciera falta aplicar la operativa en "resize"
+        if (itemsWidth > totalWidth) {    
+            // Setup inicial
+            that.handleCheckVisibilityMenuItems();            
+            var resizeTimer;
+            $(window).on('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    that.handleCheckVisibilityMenuItems();
+                }, 250);
+            }); 
+        }              
+    },   
+
+    /**
+     * Controla la visibilidad de los elementos del menú en función del espacio disponible.
+     * Muestra u oculta elementos del menú según el tamaño del contenedor.
+     */    
+    handleCheckVisibilityMenuItems: function(){
+        const menu = $('#community-menu');
+        const itemsMenu = menu.find("> ul > li").not(".showMore");;
+        const showMoreButtonMenuItem = $('#community-menu .showMore');
+        const showMoreButtonMenuContainerItems = $('#community-menu .showMore').find("#submenu_showMore");
+
+        // Mostrar todos los elementos del menú
+        itemsMenu.removeClass("d-none");
+
+        // Calcular el espacio disponible para los elementos del menú        
+        const totalWidth = $(window).width(); //menuRect.width;
+        let itemsWidth = 0;
+        let hiddenItems = [];
+
+        // Iterar sobre los elementos del menú para calcular su ancho total
+        itemsMenu.each(function() {
+            var itemRect = this.getBoundingClientRect();
+            // Ancho del item incluyendo el margen derecho
+            itemsWidth += itemRect.width + parseFloat(window.getComputedStyle(this).marginRight);
+
+            // Si el elemento no cabe, ocultarlo y agregarlo a la lista de elementos ocultos. Añadir espacio para el propio "Ver más"            
+            if (itemsWidth + 80 > totalWidth) {
+                $(this).addClass("d-none");
+                // Clonar el item para no hacerlo desaparecer
+                hiddenItems.push($(this).clone());                                
+            }
+        });
+        
+        // Si hay elementos ocultos, mostrar el botón "Mostrar Más" y añadir los items ocultos
+        if (hiddenItems.length > 0) {
+            // Vaciar todos de forma inicial
+            showMoreButtonMenuContainerItems.empty();
+            showMoreButtonMenuItem.removeClass("d-none");
+            // Agregar los items al parent de "ShowMore"
+            hiddenItems.forEach(function(item) {
+                $(item).removeClass("d-none");
+                showMoreButtonMenuContainerItems.append(item);
+            });        
+        } else {
+            showMoreButtonMenuItem.addClass("d-none");
+        }
+    },
+
 };
 
 
@@ -3066,3 +3165,52 @@ $(function () {
         operativaEspacioPersonalGnoss.init();
     }
 });
+
+
+
+
+
+/**
+ * Controla la visibilidad de los elementos del menú en función del espacio disponible.
+ * Muestra u oculta elementos del menú según el tamaño del contenedor.
+ */
+function controlarVisibilidadMenu() {
+    const menu = $('#community-menu');
+    const itemsMenu = menu.find("li").not(".showMore");
+    const showMoreButtonMenuItem = $('#community-menu .showMore');
+    const showMoreButtonMenuContainerItems = $('#community-menu .showMore').find("#submenu_showMore");
+
+    // Mostrar todos los elementos del menú
+    itemsMenu.removeClass("d-none");
+
+    // Calcular el espacio disponible para los elementos del menú
+    var menuRect = menu[0].getBoundingClientRect();
+    var totalWidth = menuRect.width;
+    var itemsWidth = 0;
+    var hiddenItems = [];
+
+    // Iterar sobre los elementos del menú para calcular su ancho total
+    itemsMenu.each(function() {
+        var itemRect = this.getBoundingClientRect();
+        // Ancho del item + 25px margin right
+        itemsWidth += itemRect.width + 25;
+
+        // Si el elemento no cabe, ocultarlo y agregarlo a la lista de elementos ocultos
+        if (itemsWidth > totalWidth) {
+            $(this).addClass("d-none");
+            hiddenItems.push(this);
+        }
+    });
+    
+    // Si hay elementos ocultos, mostrar el botón "Mostrar Más" y añadir los items ocultos
+    if (hiddenItems.length > 0) {
+        showMoreButtonMenuItem.removeClass("d-none");
+        // Agregar los items al parent de "ShowMore"
+        hiddenItems.forEach(function(item) {
+            $(item).removeClass("d-none");
+            showMoreButtonMenuContainerItems.append(item);
+        });        
+    } else {
+        showMoreButtonMenuItem.addClass("d-none");
+    }
+}

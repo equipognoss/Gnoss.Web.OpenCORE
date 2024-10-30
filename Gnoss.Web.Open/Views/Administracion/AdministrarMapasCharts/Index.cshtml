@@ -1,0 +1,253 @@
+﻿@model AdministrarChartsViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar/visualizar los gráficos a utilizar en la comunidad
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+	// Carga de idiomas de la plataforma
+	string idiomas = "";
+	// Contador del nº de pestañas listadas
+	int contNumPestañasVisibles = 0;
+	// Nº de pestañas de idiomas a visualizar en la sección Tab
+	int numMaxPestañasIdiomasVisibles = 2;
+	// Nº de páginas existentes en la comunidad
+	int numGraficos = Model.ListaCharts.Count;
+	// Control de poder guardar datos según el estado de CI/CD
+	bool allowSaveData = true;
+	// Idioma por defecto de la comunidad
+	string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
+}
+
+@{
+	@* Carga de idiomas *@
+	foreach (string idiomaKey in cabecera.Languajes.Keys)
+	{
+		idiomas += idiomaKey + "|" + cabecera.Languajes[idiomaKey] + "&&&";
+	}
+
+	@* Controlar la posibilidad de guardar datos (CI/CD) *@
+	if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+	{
+		allowSaveData = false;
+	}
+}
+
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@idiomaPorDefecto" id="idiomaDefecto" />
+
+
+
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+	<ul>
+		<li>
+			<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+		</li>
+		<li>
+			<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/estructura">@Html.GetText("DEVTOOLS","ESTRUCTURA")</a>
+		</li>
+		<li>
+			@Html.GetText("COMBUSQUEDAAVANZADA","GRAFICOS")
+		</li>
+	</ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+	@* Panel de idiomas *@
+	<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+		@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
+		@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+		{
+			if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+			{
+				<li class="nav-item">
+					<a class="tabIdiomaItem nav-link @( idiomaPorDefecto == idioma.Key ? "active" : null)"
+					   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+					   data-language="@idioma.Key"
+					   role="tab" aria-controls="@("litVer" + idioma.Key)"
+					   aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+				</li>
+				contNumPestañasVisibles += 1;
+			}
+		}
+		@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+		@if (contNumPestañasVisibles < cabecera.Languajes.Count)
+		{
+			@* Dropdown para resto de categorías *@
+			<li class="nav-item">
+				<div class="dropdown">
+					@* Desplegable del dropdown *@
+					<a class="nav-link dropdown-toggle"
+					   data-toggle="dropdown"
+					   href="#"
+					   role="button"
+					   aria-haspopup="true"
+					   aria-expanded="false">@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+					@* Sección para mostrar items del dropdown*@
+					<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+						<ul class="no-list-style">
+							@* Pintado del resto de pestañas en Dropdown *@
+							@for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+							{
+								var item = cabecera.Languajes.ElementAt(i);
+								var itemKey = item.Key;
+								var itemValue = item.Value;
+
+								@* Cada item del dropdown *@
+								<li>
+									<a id="@("ver_paginas_" + itemKey)"
+									   class="item-dropdown tabIdiomaItem @( idiomaPorDefecto == itemKey ? "active" : null)"
+									   data-toggle="tab"
+									   href="#@("litVer" + itemKey)"
+									   data-language="@itemKey">
+										@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+									</a>
+								</li>
+							}
+						</ul>
+					</div>
+				</div>
+			</li>
+		}
+	</ul>
+
+	@* Contenedor global de gráficos *@
+	<div class="tab-content">
+		@* Contenido de las diferentes gráficos *@
+		<div id="panelListadoGraficos"
+			 class="tab-pane fade show active"
+			 role="tabpanel"
+			 aria-labelledby="panelListadoGraficos">
+
+			@* Contenedor del Título de la Sección + Buscador *@
+			<div class="row">
+				@* Título de la sección de páginas + Nº de páginas *@
+				<div class="col col-12 header-listado">
+					<div class="h1-container">
+						<h1>
+							@Html.GetText("DEVTOOLS","ADMINISTRARGRAFICOS")
+							<span id="numGraficos" class="numResultados">@numGraficos</span>
+						</h1>
+					</div>
+					@* Botón para crear un gráfico *@
+					<div class="acciones d-flex align-items-center">						
+						<a id="btnCrearGrafico" href="javascript: void(0);" class="btn btn-outline-primary">
+							<span class="material-icons">add</span>
+							<span class="texto">Crear gráfico</span>
+						</a>
+					</div>
+				</div>
+
+				@* Buscador de páginas *@
+				<div class="col col-12 header-buscador">
+					<div class="wrapCol">
+						<div class="col-buscador" style="width: 100%">
+							@* Formulario para búsquedas de gráficos *@
+							<form id="formBuscadorGraficos" onsubmit="return false;">
+								<div class="finderUtils" id="divCajaBusqueda">
+									<div class="group finderSection">
+										@* Input para realizar la búsqueda de páginas *@
+										<input type="text"
+											   id="txtBuscarGrafico"
+											   class="not-outline finderSectionText"
+											   autocomplete="off"
+											   placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")" />
+										@* Botón para realizar la búsqueda *@
+										<input title="Buscar"
+											   type="button"
+											   class="findAction"
+											   id="inputLupa" />
+										@* Botón para Facetas de la búsqueda *@
+										<a href="javascript: void(0);" class="btn-filtrar-movil">
+											<span class="material-icons">filter_list</span>
+											<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>
+										</a>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+				@* Contenido o tabla con las páginas de la comunidad *@
+				<div class="col col-12 col-contenido">
+					<div class="wrapCol">
+						@* Cabecera del listado de gráficos *@
+						<ul id="id-header-graphs-list" class="header-component-list component-list no-list-style">
+							<li class="component-wrap">
+								@* Cabecera de gráficos *@
+								<div class="component ">
+									<div class="component-header-wrap">
+										<div class="component-header">
+											<div class="component-sortable js-component-sortable-page">
+												<span class="material-icons-outlined sortable-icon">drag_handle</span>
+											</div>
+											@* Sección títulos de listado de gráficos *@
+											<div class="component-header-content">
+												<div class="component-header-left">
+													<div class="component-name-wrap component-w-100">
+														<span class="component-name">@Html.GetText("COMMON","NOMBRE")</span>
+													</div>													
+												</div>
+												<div class="component-header-right">
+													<div class="component-actions-wrap">
+														<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+
+						@* Contenido de gráficos *@
+						<ul id="id-added-graphs-list"
+							class="js-community-graphs-list component-list no-list-style">
+
+							@* Pintado de cada gráfico *@
+							@foreach (ChartViewModel graphModel in Model.ListaCharts.OrderBy(g => g.Orden))
+							{																																
+								@Html.PartialView("../Administracion/AdministrarMapasCharts/_partial-views/_graphListItem", graphModel)																
+							}
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Modal para eliminación de la página *@
+	@Html.PartialView("_modal-views/_delete-graph")
+	
+</div>
+
+
+
+@* Carga de operativa *@
+@section operativaScript{
+	<script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/descubrimiento_analisis.js?v=@Html.GetVersion()"></script>
+	
+	<script type="text/javascript">
+
+		(function ($) {
+			// Permitir o no guardar datos
+			const pParams =
+			{
+				allowSaveData: "@allowSaveData",
+			}
+
+			// Operativa funcionamiento de Gráficos
+			operativaGestionCharts.init(pParams);
+		})();
+	</script>
+}

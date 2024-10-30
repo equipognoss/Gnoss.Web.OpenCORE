@@ -10,735 +10,723 @@ Variables
 *@
 
 @{
-	CommunityModel Comunidad = Html.GetComunidad();
-	// Id generado o correspondiente al id de la faceta (creado en _EdicionFaceta)
-	var idTemp = ViewBag.idTemp;
-	List<string> listaCondiciones = Model.Condicion.Trim().Split("|").ToList();
-	while (listaCondiciones.Contains("")) { listaCondiciones.Remove(""); }
-	// Id para la llamada al modal para edición de la faceta
-	string idModalFaceta = "modal-configuracion-faceta_" + idTemp;								
-	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
-	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);
-	// Nombre del tipo de faceta
-	string nombreTipoFaceta = "";
+    CommunityModel Comunidad = Html.GetComunidad();
+    // Id generado o correspondiente al id de la faceta (creado en _EdicionFaceta)
+    var idTemp = ViewBag.idTemp;
+    List<string> listaCondiciones = Model.Condicion.Trim().Split("|").ToList();
+    while (listaCondiciones.Contains("")) { listaCondiciones.Remove(""); }
+    // Id para la llamada al modal para edición de la faceta
+    string idModalFaceta = "modal-configuracion-faceta_" + idTemp;
+    // Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+    // Nombre del tipo de faceta
+    string nombreTipoFaceta = "";
 
-	// Nombres de grupos para privacidad de faceta
-	string listaIDsGrupos = "";
-	string htmlNombresGrupos = "";
+    // Nombres de grupos para privacidad de faceta
+    string listaIDsGrupos = "";
+    string htmlNombresGrupos = "";
 
-	// Objetos de conocimiento / htmlObjetos
-	string objetosSeleccionados = "";
-	string htmlObjetosSeleccionados = "";
-	// Value y HTML de Condiciones de la faceta
-	string condSeleccionadas = "";
-	string htmlCondSeleccionadas = "";
-	
-} 
+    // Objetos de conocimiento / htmlObjetos
+    string objetosSeleccionados = "";
+    string htmlObjetosSeleccionados = "";
+    // Value y HTML de Condiciones de la faceta
+    string condSeleccionadas = "";
+    string htmlCondSeleccionadas = "";
+
+}
 
 @{
-	@* Controlar el tipo de Faceta *@
+    @* Controlar el tipo de Faceta *@
     switch (Model.Type)
     {
         case TipoFaceta.Texto:
-            nombreTipoFaceta = @Html.GetText("DEVTOOLS","TEXTO");
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS", "TEXTO");
             break;
         case TipoFaceta.Numero:
-            nombreTipoFaceta = @Html.GetText("DEVTOOLS","NUMERO");
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS", "NUMERO");
             break;
         case TipoFaceta.Fecha:
-            nombreTipoFaceta = @Html.GetText("DEVTOOLS","FECHA");
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS", "FECHA");
             break;
         case TipoFaceta.Tesauro:
-            nombreTipoFaceta = @Html.GetText("DEVTOOLS","TESAURO");
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS", "TESAURO");
             break;
         case TipoFaceta.TextoInvariable:
-            nombreTipoFaceta = @Html.GetText("DEVTOOLS","TEXTOINVARIABLE");
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS", "TEXTOINVARIABLE");
+            break;
+        case TipoFaceta.Siglo:
+            nombreTipoFaceta = @Html.GetText("DEVTOOLS", "SIGLO");
             break;
     }
 
-	@* Controlar grupos para privacidad de una faceta *@
-	foreach (Guid grupoID in Model.PrivacidadGrupos.Keys)
-	{
-		listaIDsGrupos += "g_" + grupoID.ToString() + ",";		
-		htmlNombresGrupos += "<div class='tag' id='g_"+ grupoID.ToString() +"' title='"+ Model.PrivacidadGrupos[grupoID] +"'>";
-			htmlNombresGrupos += "<div class='tag-wrap'>";
-				htmlNombresGrupos += "<span class='tag-text'>"+ Model.PrivacidadGrupos[grupoID] +"</span>";
-				htmlNombresGrupos += "<span class='tag-remove tag-remove-group material-icons remove'>close</span>";
-			htmlNombresGrupos += "</div>";												
-		htmlNombresGrupos += "</div>"; 
-	}
+    @* Controlar grupos para privacidad de una faceta *@
+    foreach (Guid grupoID in Model.PrivacidadGrupos.Keys)
+    {
+        listaIDsGrupos += "g_" + grupoID.ToString() + ",";
+        htmlNombresGrupos += "<div class='tag' id='g_" + grupoID.ToString() + "' title='" + Model.PrivacidadGrupos[grupoID] + "'>";
+        htmlNombresGrupos += "<div class='tag-wrap'>";
+        htmlNombresGrupos += "<span class='tag-text'>" + Model.PrivacidadGrupos[grupoID] + "</span>";
+        htmlNombresGrupos += "<span class='tag-remove tag-remove-group material-icons remove'>close</span>";
+        htmlNombresGrupos += "</div>";
+        htmlNombresGrupos += "</div>";
+    }
 }
 
 
 @* Modal con la información de la faceta *@
-<div
-	id="@idModalFaceta"
-	class="modal modal-top fade modal-edicion modal-con-tabs modal-faceta"           
-	role="dialog"	
-	aria-modal="true">
+<div id="@idModalFaceta"
+     class="modal modal-top fade modal-edicion modal-con-tabs modal-faceta"
+     role="dialog"
+     aria-modal="true">
 
-	@* Información oculta de la pestaña/página *@
+    @* Información oculta de la pestaña/página *@
     <input type="hidden" name="TabEliminada" value="" />
 
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
             @* Título del modal *@
-			<div class="modal-header">
-				<p class="modal-title">
-					<span class="material-icons">edit</span>
-					@Html.GetText("DEVTOOLS","CONFIGURACION"):
-					<span class="community-name">@Html.ObtenerTextoIdiomaUsuario(Model.Name)</span>
-				</p>
-				<span
-					class="material-icons cerrar"
-					data-dismiss="modal"
-					aria-label="Close">close</span>
-			</div>
-			<div class="modal-body">
-				<div class="formulario-edicion">
-                    
-					@* Tabs de los idiomas en multiIdioma *@
-					<div class="panContenidoMultiIdioma basicInfo">
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">edit</span>
+                    @Html.GetText("DEVTOOLS","CONFIGURACION"):
+                    <span class="community-name">@Html.ObtenerTextoIdiomaUsuario(Model.Name)</span>
+                </p>
+                <span class="material-icons cerrar"
+                      data-dismiss="modal"
+                      aria-label="Close">close</span>
+            </div>
+            <div class="modal-body">
+                <div class="formulario-edicion">
 
-					</div>
+                    @* Tabs de los idiomas en multiIdioma *@
+                    <div class="panContenidoMultiIdioma basicInfo">
+                    </div>
 
                     @* Contenido de los tabs de los idiomas *@
-					<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
-                            @* Nombre de la faceta *@
-							<div class="form-group mb-3">							
-								<input
-									type="text"
-									name="TabName"									
-									data-labeltext = "@Html.GetText("COMADMINFACETAS", "NOMBREFACETA")"									
-									data-helptext = "@Html.GetText("DEVTOOLS","TITULOQUESEMOSTRARAENLAFACETA")"
-									placeholder="@Html.GetText("COMADMINFACETAS", "NOMBREFACETA")"									
-									data-on-input-function="operativaGestionFacetas.handleOnInputTabNameChanged(event)"
-									class="form-control multiIdioma"
-									value="@Model.Name"/>
-							</div>
-					</div>
+                    <div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+                        @* Nombre de la faceta *@
+                        <div class="form-group mb-3">
+                            <input type="text"
+                                   name="TabName"
+                                   data-labeltext="@Html.GetText("COMADMINFACETAS", "NOMBREFACETA")"
+                                   data-helptext="@Html.GetText("DEVTOOLS","TITULOQUESEMOSTRARAENLAFACETA")"
+                                   placeholder="@Html.GetText("COMADMINFACETAS", "NOMBREFACETA")"
+                                   data-on-input-function="operativaGestionFacetas.handleOnInputTabNameChanged(event)"
+                                   class="form-control multiIdioma"
+                                   value="@Model.Name" />
+                        </div>
+                    </div>
 
-					@* Contenedor de las opciones que no son multiIdioma *@
-					<div class="pageContainer tab-content pt-2">	
-						
-						@* Tipo de faceta *@
-						<div class="form-group mb-3 panOntologias">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPOFACETA")</label>
-							<input
-								type="text"
-								placeholder="@Html.GetText("COMADMINFACETAS", "TIPOFACETA")"
-								class="form-control"								
-								value="@nombreTipoFaceta"
-								disabled/>
-							<input type="hidden" class="Type" name="Type" value="@Model.Type"/>														
-						</div>
-						
-						<input type="hidden" id="autoOntologia_@(idTemp)_Hack" class="valores autoOnto" name="TabValoresAutoCompletadoOntologia" value="">			
-						<ul class="resultado"></ul>
-						
+                    @* Contenedor de las opciones que no son multiIdioma *@
+                    <div class="pageContainer tab-content pt-2">
 
-						@* Clave de faceta*@  
-						<div class="form-group mb-3">
-							<label class="control-label d-block">@Html.GetText("DEVTOOLS","FILTRODELAFACETA")</label>							
-							<div class="input-wrap">
-								<input type="text"
-									   placeholder="@Html.GetText("DEVTOOLS","FILTRODELAFACETA")"
-									   class="form-control ClaveFaceta facetaFilter"
-									   name="ClaveFaceta"
-									   id="autoOntologia_@(idTemp)"
-									   value="@Model.ClaveFaceta" />
-							</div>							
-							<small class="form-text text-muted mt-2">@Html.GetText("DEVTOOLS", "INDICALAPROPIEDADPORLAQUESEDESEAQUEFUNCIONEELFILTRODELAFACET")</small>														
-						</div>
+                        @* Tipo de faceta *@
+                        <div class="form-group mb-3 panOntologias">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPOFACETA")</label>
+                            <input type="text"
+                                   placeholder="@Html.GetText("COMADMINFACETAS", "TIPOFACETA")"
+                                   class="form-control"
+                                   value="@nombreTipoFaceta"
+                                   disabled />
+                            <input type="hidden" class="Type" name="Type" value="@Model.Type" />
+                        </div>
 
-						@* Panel de Faceta Recíproca *@
-						<div class="form-group mb-3 panReciproca">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "RECIPROCA")</label>
-							@* Faceta recíproca: Sí *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkReciproca"
-									type="radio"
-									name="chkReciproca_@idTemp"									
-									@(!string.IsNullOrEmpty(Model.Reciprocidad) ? "checked" : "")
-									data-value="si"
-									id="chkReciproca_SI_@idTemp"/>
-								<label class="form-check-label" for="chkReciproca_SI_@idTemp">@Html.GetText("COMMON","SI")</label>									
-							</div>
-							@* Faceta recíproca: No *@
-							<div class="form-check form-check-inline">								
-								<input
-									class="form-check-input chkReciproca"
-									type="radio"
-									name="chkReciproca_@idTemp"									
-									@(string.IsNullOrEmpty(Model.Reciprocidad) ? "checked" : "")
-									data-value="no"
-									id="chkReciproca_NO_@idTemp"/>
-								<label class="form-check-label" for="chkReciproca_SI_@idTemp">@Html.GetText("COMMON","NO")</label>
-							</div>
-							<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "RECIPROCA")</small>
-														
-							@* Panel si es recíproca la faceta (Visible si es activo) *@
-							<div class="form-group mb-3 mb-3 mt-3 panReciprocaDetail @(string.IsNullOrEmpty(Model.Reciprocidad) ? "d-none" : "")">
-								<div class="form-group mb-3">									
-									<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "RECIPROCIDAD")</label>
-									<input type="text" 
-										   id="autoOntologiaRe_@idTemp" 
-										   class="form-control autoOntologiaRe_@idTemp Reciprocidad"
-										   name="Reciprocidad" 
-										   value="@Model.Reciprocidad"										   				   										   
-										   placeholder="@Html.GetText("COMADMINFACETAS", "RECIPROCIDAD")" />
-									<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "RECIPROCIDAD")</small>										
-								</div>
-							</div>
-						</div>
-					
-						@* Panel Objetos de conocimiento en los que va a aparecer la faceta --> PENDIENTE*@				
-						<div class="form-group mb-3 panObjetosConocimiento">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "OBJETOCONOCIMIENTO")</label>							
-							<select name="selectObjetosConocimiento"
-									class="cmbSelectObjetosConocimiento js-select2"
-									data-select-search="true"
-									tabindex="0"
-									aria-hidden="false">
-								@{
-									@* Evitar que haya una opción seleccionada por defecto *@
-									<option></option>
-									foreach(string oc in  ViewBag.ListaOntologias.Keys)
-									{
-										//Genera un id para identificarlo de forma única cada item
-										var optionKey = @Guid.NewGuid().ToString().Substring(0,5);										
-										if(Model.ObjetosConocimiento.Contains(oc))
-										{
-											objetosSeleccionados += oc.ToString() + ",";
-										
-											htmlObjetosSeleccionados += "<div data-key='"+ optionKey +"' class='tag' id='"+ oc +"' title='"+ ViewBag.ListaOntologias[oc] +"'>";
-												htmlObjetosSeleccionados += "<div class='tag-wrap'>";
-													htmlObjetosSeleccionados += "<span class='tag-text'>"+ ViewBag.ListaOntologias[oc] +"</span>";
-													htmlObjetosSeleccionados += "<span class='tag-remove tag-remove-objeto-conocimiento material-icons remove'>close</span>";
-												htmlObjetosSeleccionados += "</div>";												
-											htmlObjetosSeleccionados += "</div>"; 										
-										}	
-										
-										<option value="@oc"
-												data-key="@optionKey"												
-												data-value="@oc"
-												data-title="@ViewBag.ListaOntologias[oc]"
-												@(Model.ObjetosConocimiento.Contains(oc) ? "disabled" : "") 
-												class="objetoConocimientoItem">
-												@ViewBag.ListaOntologias[oc]
-										</option>
-									}								
-								}
-							</select>
-						
-							@* Tag de objetos de conocimiento por el usuario o por auto *@
-							<span id="tagsContainerObjetosConocimiento_@idTemp" class="contenedor contenedorObjetosConocimiento tag-list mb-4 mt-3">							
-								@Html.Raw(htmlObjetosSeleccionados)
-							</span>						
-							<input type="hidden" class="valores ObjetosConocimiento" name="ObjetosConocimiento" value="@objetosSeleccionados"/>
-						</div>			
-
-						@* Características especiales según Tipo de Faceta *@
-						@if (Model.Type.Equals(TipoFaceta.Texto) || Model.Type.Equals(TipoFaceta.TextoInvariable)){
-							@* Faceta Texto | Texto Invariable *@						
-							@* Presentación *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "PRESENTACION")</label>							
-								<select name="Presentacion"
-										class="cmbPresentacion js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="0" @(Model.Presentacion == 0 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","SINTRANSFORMACION")</option>
-									<option value="1" @(Model.Presentacion == 1 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PRIMERALETRAENMAYUSCULASENTODASLASPALABRAS")</option>
-									<option value="2" @(Model.Presentacion == 2 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PRIMERALETRAENMAYUSCULASENTODOMENOSLOSARTICULOS")</option>
-									<option value="3" @(Model.Presentacion == 3 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PRIMERALETRAENMAYUSCULASENLAPRIMERAPALABRA")</option>
-									<option value="4" @(Model.Presentacion == 4 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","MAYUSCULASTODASLASLETRAS")</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "PRESENTACION")</small>
-							</div>
-
-							@* Comportamiento *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "COMPORTAMIENTO")</label>
-								@* Select de comportamiento de la faceta *@
-								<select name="Comportamiento"
-										class="cmbComportamiento js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="0" @(Model.Comportamiento == 0 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PORDEFECTO")</option>                        
-									<option value="1" @(Model.Comportamiento == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","MOSTRARSOLOLACAJAENLAPRIMERAPAGINA,LUEGOLACAJAYLASFACETAS")</option>
-									<option value="2" @(Model.Comportamiento == 2 ? "selected" : "")>@Html.GetText("DEVTOOLS","MOSTRARSOLOLACAJAENTODASLASPAGINAS")</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "COMPORTAMIENTO")</small>								
-							</div>
-
-							@* Panel de Autocompletar *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "AUTOCOMPLETAR")</label>
-								@* Autocompletar: Sí *@
-								<div class="form-check form-check-inline">
-									<input
-										class="form-check-input chkAutocompletar"
-										type="radio"
-										name="chkAutocompletar_@idTemp"									
-										@(Model.Autocompletar ? "checked" : "")
-										data-value="si"
-										id="chkAutocompletar_SI_@idTemp"/>
-									<label class="form-check-label" for="chkAutocompletar_SI_@idTemp">@Html.GetText("COMMON","SI")</label>									
-								</div>
-								@* Autocompletar: No *@
-								<div class="form-check form-check-inline">
-									<input
-										class="form-check-input chkAutocompletar"
-										type="radio"
-										name="chkAutocompletar_@idTemp"									
-										@(!Model.Autocompletar ? "checked" : "")
-										data-value="si"
-										id="chkAutocompletar_NO_@idTemp"/>
-									<label class="form-check-label" for="chkAutocompletar_NO_@idTemp">@Html.GetText("COMMON","NO")</label>									
-								</div>
-								<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "AUTOCOMPLETAR")</small>
-							</div>
-
-							@* Algoritmo Transformación *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
-								@* Select de transformación de la faceta *@
-								<select name="AlgoritmoTransformacion"
-										class="cmbAlgoritmoTransformacion js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="8" @(Model.AlgoritmoTransformacion == 8 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","NINGUNO")</option>
-									<option value="1" @(Model.AlgoritmoTransformacion == 1 ? "selected" : "")>Comunidad</option>
-									<option value="10" @(Model.AlgoritmoTransformacion == 10 ? "selected" : "")>Sin Caja</option>
-									<option value="11" @(Model.AlgoritmoTransformacion == 11 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","TIPO")</option>
-									<option value="13" @(Model.AlgoritmoTransformacion == 13 ? "selected" : "")>Tipo Doc</option>
-									<option value="14" @(Model.AlgoritmoTransformacion == 14 ? "selected" : "")>Tipo Doc Ext</option>
-									<option value="17" @(Model.AlgoritmoTransformacion == 17 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","MULTIIDIOMA")</option>
-									<option value="21" @(Model.AlgoritmoTransformacion == 21 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","BOOLEANO")</option>
-									<option value="25" @(Model.AlgoritmoTransformacion == 25 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","MULTIPLE")</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>								
-							</div>
-
-							@* Orden *@						
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ORDEN")</label>
-								@* Select de orden de la faceta *@
-								<select name="Disenyo"
-										class="cmbDisenyo js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="1" @(Model.Disenyo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTAORDENADAPORCANTIDAD")</option>
-									<option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>
-									<option value="4" @(Model.Disenyo == 4 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMENORAMAYOR")</option>								
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ORDEN")</small>							
-							</div>
-                
-							@* Filtros de la faceta *@
-							@Html.PartialView("_EdicionFiltro", Model.ListaFiltrosFacetas)             
-
-						}else if (Model.Type.Equals(TipoFaceta.Numero))
-						{
-							@* Faceta Número *@
-
-							@* Tipo diseño *@						
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPODISEÑO")</label>
-								@* Select de Disenyo de la faceta *@
-								<select name="Disenyo"
-										class="cmbDisenyo js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="1" @(Model.Disenyo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTAORDENADAPORCANTIDAD")</option>
-									<option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>
-									<option value="4" @(Model.Disenyo == 4 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMENORAMAYOR")</option>
-									<option value="6" @(Model.Disenyo == 6 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLODESDE")</option>
-									<option value="7" @(Model.Disenyo == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLOHASTA")</option>							
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "TIPODISEÑO")</small>
-								
-							</div>
-
-							@* Algoritmo Transformación *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
-								@* Select de transformación de la faceta *@
-								<select name="AlgoritmoTransformacion"
-										class="cmbAlgoritmoTransformacion js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="8" @(Model.AlgoritmoTransformacion == 8 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","NINGUNO")</option>
-									<option value="3" @(Model.AlgoritmoTransformacion == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","CODIGOPOSTAL")</option>
-									<option value="7" @(Model.AlgoritmoTransformacion == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","NIVELDECERTIFICACION")</option>
-									<option value="9" @(Model.AlgoritmoTransformacion == 9 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","RANGOS")</option>
-									<option value="10" @(Model.AlgoritmoTransformacion == 10 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","SINCAJA")</option>
-									<option value="23" @(Model.AlgoritmoTransformacion == 23 ? "selected" : "")>@Html.GetText("DEVTOOLS","ESTADOUSUARIO")	</option>
-									<option value="24" @(Model.AlgoritmoTransformacion == 24 ? "selected" : "")>@Html.GetText("DEVTOOLS","ROLUSUARIO")</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>								
-							</div>
-						
-							@* Filtros*@
-							<input type="hidden" name="Filtros" value="" />
-							@* Presentación *@
-							<input type="hidden" class="cmbPresentacion" name="Presentacion" value="0" />
-
-						}else if (Model.Type.Equals(TipoFaceta.Fecha))
-						{
-							@* Faceta Fecha *@
-
-							@* Tipo diseño *@						
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPODISEÑO")</label>
-								@* Select de Disenyo de la faceta *@
-								<select name="Disenyo"
-										class="cmbDisenyo js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="0" @(Model.Disenyo == 0 ? "selected" : "")>@Html.GetText("DEVTOOLS","DESDEHASTADIASMESYAÑO")</option>
-									<option value="5" @(Model.Disenyo == 5 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","CALENDARIO")</option>
-									<option value="6" @(Model.Disenyo == 6 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLODESDE")</option>
-									<option value="7" @(Model.Disenyo == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLOHASTA")</option>
-									<option value="8" @(Model.Disenyo == 8 ? "selected" : "")>@Html.GetText("DEVTOOLS","CALENDARIOCONRANGOS")</option>
-									<option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>					
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "TIPODISEÑO")</small>
-							</div>
-
-							@* Algoritmo Transformación *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
-								@* Select de transformación de la faceta *@
-								<select name="AlgoritmoTransformacion"
-										class="cmbAlgoritmoTransformacion js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="8" @(Model.AlgoritmoTransformacion == 8 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","NINGUNO")</option>
-									<option value="6" @(Model.AlgoritmoTransformacion == 6 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","FECHAS")</option>
-									<option value="9" @(Model.AlgoritmoTransformacion == 9 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","RANGOS")</option>
-									<option value="18" @(Model.AlgoritmoTransformacion == 18 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","CALENDARIO")</option>
-									<option value="19" @(Model.AlgoritmoTransformacion == 19 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","SIGLO")</option>
-									<option value="20" @(Model.AlgoritmoTransformacion == 20 ? "selected" : "")>@Html.GetText("DEVTOOLS","CALENDARIOCONRANGOS")</option>
-									<option value="26" @(Model.AlgoritmoTransformacion == 26 ? "selected" : "")>@Html.GetText("DEVTOOLS","FECHAMINIMAYMAXIMA")</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>
-							</div>
-						
-							@* Filtros*@
-							<input type="hidden" name="Filtros" value="" />
-							@* Presentación *@
-							<input type="hidden" class="cmbPresentacion" name="Presentacion" value="0" />
+                        <input type="hidden" id="autoOntologia_@(idTemp)_Hack" class="valores autoOnto" name="TabValoresAutoCompletadoOntologia" value="">
+                        <ul class="resultado"></ul>
 
 
-						}else if (Model.Type.Equals(TipoFaceta.Tesauro))
-						{
-							@* Faceta Tesauro *@
+                        @* Clave de faceta*@
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">@Html.GetText("DEVTOOLS","FILTRODELAFACETA")</label>
+                            <div class="input-wrap">
+                                <input type="text"
+                                       placeholder="@Html.GetText("DEVTOOLS","FILTRODELAFACETA")"
+                                       class="form-control ClaveFaceta facetaFilter"
+                                       name="ClaveFaceta"
+                                       id="autoOntologia_@(idTemp)"
+                                       value="@Model.ClaveFaceta" />
+                            </div>
+                            <small class="form-text text-muted mt-2">@Html.GetText("DEVTOOLS", "INDICALAPROPIEDADPORLAQUESEDESEAQUEFUNCIONEELFILTRODELAFACET")</small>
+                        </div>
 
-							@* Presentación *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "PRESENTACION")</label>							
-								<select name="Presentacion"
-										class="cmbPresentacion js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="0" @(Model.Presentacion == 0 ? "selected" : "")>Sin transformación</option>
-									<option value="1" @(Model.Presentacion == 1 ? "selected" : "")>Primera letra en mayúsculas en todas las palabras</option>
-									<option value="2" @(Model.Presentacion == 2 ? "selected" : "")>Primera letra en mayúsculas en todo menos los articulos</option>
-									<option value="3" @(Model.Presentacion == 3 ? "selected" : "")>Primera letra en mayúsculas en la primera palabra</option>
-									<option value="4" @(Model.Presentacion == 4 ? "selected" : "")>Mayúsculas todas las letras</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "PRESENTACION")</small>
-							</div>
+                        @* Panel de Faceta Recíproca *@
+                        <div class="form-group mb-3 panReciproca">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "RECIPROCA")</label>
+                            @* Faceta recíproca: Sí *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkReciproca"
+                                       type="radio"
+                                       name="chkReciproca_@idTemp"
+                                       @(!string.IsNullOrEmpty(Model.Reciprocidad) ? "checked" : "")
+                                       data-value="si"
+                                       id="chkReciproca_SI_@idTemp" />
+                                <label class="form-check-label" for="chkReciproca_SI_@idTemp">@Html.GetText("COMMON","SI")</label>
+                            </div>
+                            @* Faceta recíproca: No *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkReciproca"
+                                       type="radio"
+                                       name="chkReciproca_@idTemp"
+                                       @(string.IsNullOrEmpty(Model.Reciprocidad) ? "checked" : "")
+                                       data-value="no"
+                                       id="chkReciproca_NO_@idTemp" />
+                                <label class="form-check-label" for="chkReciproca_SI_@idTemp">@Html.GetText("COMMON","NO")</label>
+                            </div>
+                            <small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "RECIPROCA")</small>
 
-							@* Algoritmo Transformación *@
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
-								@* Select de transformación de la faceta *@
-								<select name="AlgoritmoTransformacion"
-										class="cmbAlgoritmoTransformacion js-select2"
-										tabindex="0"
-										aria-hidden="false">
-									<option value="0" @(Model.AlgoritmoTransformacion == 0 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","CATEGORIA")</option>
-									<option value="15" @(Model.AlgoritmoTransformacion == 15 ? "selected" : "")>@Html.GetText("DEVTOOLS","CATEGORIAARBOL")</option>
-									<option value="16" @(Model.AlgoritmoTransformacion == 16 ? "selected" : "")>@Html.GetText("DEVTOOLS","TESAUROSEMANTICO")</option>
-									<option value="22" @(Model.AlgoritmoTransformacion == 22 ? "selected" : "")>@Html.GetText("DEVTOOLS","TESAUROSEMANTICOORDENADO")</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>								
-							</div>
+                            @* Panel si es recíproca la faceta (Visible si es activo) *@
+                            <div class="form-group mb-3 mb-3 mt-3 panReciprocaDetail @(string.IsNullOrEmpty(Model.Reciprocidad) ? "d-none" : "")">
+                                <div class="form-group mb-3">
+                                    <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "RECIPROCIDAD")</label>
+                                    <input type="text"
+                                           id="autoOntologiaRe_@idTemp"
+                                           class="form-control autoOntologiaRe_@idTemp Reciprocidad"
+                                           name="Reciprocidad"
+                                           value="@Model.Reciprocidad"
+                                           placeholder="@Html.GetText("COMADMINFACETAS", "RECIPROCIDAD")" />
+                                    <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "RECIPROCIDAD")</small>
+                                </div>
+                            </div>
+                        </div>
 
-							@* Tipo diseño-orden *@						
-							<div class="form-group mb-3">
-								<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPODISEÑO")</label>
-								@* Select de Disenyo de la faceta *@
-								<select name="Disenyo"
-										class="cmbDisenyo js-select2"
-										tabindex="0"
-										aria-hidden="false">						
-									<option value="1" @(Model.Disenyo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTAORDENADAPORCANTIDAD")</option>
-									<option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>
-									<option value="4" @(Model.Disenyo == 4 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMENORAMAYOR")</option>
-									<option value="6" @(Model.Disenyo == 6 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLODESDE")</option>
-									<option value="7" @(Model.Disenyo == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLOHASTA")</option>
-								</select>
-								<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ORDEN")</small>
-							</div>
-						
-							@* Panel para los filtros de facetas *@
-							@Html.PartialView("_EdicionFiltro", Model.ListaFiltrosFacetas)
-						
-						}
+                        @* Panel Objetos de conocimiento en los que va a aparecer la faceta --> PENDIENTE*@
+                        <div class="form-group mb-3 panObjetosConocimiento">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "OBJETOCONOCIMIENTO")</label>
+                            <select name="selectObjetosConocimiento"
+                                    class="cmbSelectObjetosConocimiento js-select2"
+                                    data-select-search="true"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                @{
+                                    @* Evitar que haya una opción seleccionada por defecto *@
+                                    <option></option>
+                                    foreach (string oc in ViewBag.ListaOntologias.Keys)
+                                    {
+                                        //Genera un id para identificarlo de forma única cada item
+                                        var optionKey = @Guid.NewGuid().ToString().Substring(0, 5);
+                                        if (Model.ObjetosConocimiento.Contains(oc))
+                                        {
+                                            objetosSeleccionados += oc.ToString() + ",";
 
-						@* Tipo Faceta que no sea Texto | TextoInvariable *@
-						@if (!Model.Type.Equals(TipoFaceta.Texto) && !Model.Type.Equals(TipoFaceta.TextoInvariable))
-						{
-							<input type="hidden" class="cmbComportamiento" name="Comportamiento" value="0" />
-							<input type="checkbox" name="Autocompletar" style="display:none" />
-						}
+                                            htmlObjetosSeleccionados += "<div data-key='" + optionKey + "' class='tag' id='" + oc + "' title='" + ViewBag.ListaOntologias[oc] + "'>";
+                                            htmlObjetosSeleccionados += "<div class='tag-wrap'>";
+                                            htmlObjetosSeleccionados += "<span class='tag-text'>" + ViewBag.ListaOntologias[oc] + "</span>";
+                                            htmlObjetosSeleccionados += "<span class='tag-remove tag-remove-objeto-conocimiento material-icons remove'>close</span>";
+                                            htmlObjetosSeleccionados += "</div>";
+                                            htmlObjetosSeleccionados += "</div>";
+                                        }
 
-						@* Elementos visibles *@
-						<div class="form-group mb-3">    
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ELEMENTOSVISIBLES")</label>
-							<input type="number" 
-								   class="form-control NumElementosVisibles" 							   
-								   name="NumElementosVisibles" 
-								   placeholder="@Html.GetText("COMADMINFACETAS", "ELEMENTOSVISIBLES")" 
-								   value="@Model.NumElementosVisibles"
-								   style="width: 220px;"/>
-							<small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ELEMENTOSVISIBLES")</small>								   
-						</div>
+                                        <option value="@oc"
+                                            data-key="@optionKey"
+                                            data-value="@oc"
+                                            data-title="@ViewBag.ListaOntologias[oc]"
+                                            @(Model.ObjetosConocimiento.Contains(oc) ? "disabled" : "")
+                                            class="objetoConocimientoItem">
+                                            @ViewBag.ListaOntologias[oc]
+                                        </option>
+                                    }
+                                }
+                            </select>
 
-						@* Ocultar facetas *@
-						<div class="form-group mb-3">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "OCULTAENFACETAS")</label>
-							@* Ocultar facetas: Sí *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkOcultaEnFacetas"
-									type="radio"
-									name="chkOcultaEnFacetas_@idTemp"									
-									@(Model.OcultaEnFacetas ? "checked" : "")
-									data-value="si"
-									id="chkOcultaEnFacetas_SI_@idTemp"/>
-								<label class="form-check-label" for="chkOcultaEnFacetas_SI_@idTemp">@Html.GetText("COMMON","SI")</label>									
-							</div>
-							@* Ocultar facetas: No *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkOcultaEnFacetas"
-									type="radio"
-									name="chkOcultaEnFacetas_@idTemp"									
-									@(!Model.OcultaEnFacetas ? "checked" : "")
-									data-value="no"
-									id="chkOcultaEnFacetas_NO_@idTemp"/>
-								<label class="form-check-label" for="chkOcultaEnFacetas_NO_@idTemp">@Html.GetText("COMMON","NO")</label>									
-							</div>
-							<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "OCULTAENFACETAS")</small>
-						</div>
+                            @* Tag de objetos de conocimiento por el usuario o por auto *@
+                            <span id="tagsContainerObjetosConocimiento_@idTemp" class="contenedor contenedorObjetosConocimiento tag-list mb-4 mt-3">
+                                @Html.Raw(htmlObjetosSeleccionados)
+                            </span>
+                            <input type="hidden" class="valores ObjetosConocimiento" name="ObjetosConocimiento" value="@objetosSeleccionados" />
+                        </div>
 
-						@* Comportamiento OR *@
-						<div class="form-group mb-3">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "COMPORTAMIENTOOR")</label>
-							@* Comportamiento OR: Sí *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkComportamientoOR"
-									type="radio"
-									name="chkComportamientoOR_@idTemp"									
-									@(Model.ComportamientoOr ? "checked" : "")
-									data-value="si"
-									id="chkComportamientoOR_SI_@idTemp"/>
-								<label class="form-check-label" for="chkComportamientoOR_SI_@idTemp">@Html.GetText("COMMON","SI")</label>									
-							</div>
-							@* Comportamiento OR: No *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkComportamientoOR"
-									type="radio"
-									name="chkComportamientoOR_@idTemp"									
-									@(!Model.ComportamientoOr ? "checked" : "")
-									data-value="no"
-									id="chkComportamientoOR_NO_@idTemp"/>
-								<label class="form-check-label" for="chkComportamientoOR_NO_@idTemp">@Html.GetText("COMMON","NO")</label>									
-							</div>
-							<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "COMPORTAMIENTOOR")</small>
-						</div>
+                        @* Características especiales según Tipo de Faceta *@
+                        @if (Model.Type.Equals(TipoFaceta.Texto) || Model.Type.Equals(TipoFaceta.TextoInvariable))
+                        {
+                            @* Faceta Texto | Texto Invariable *@
+                            @* Presentación *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "PRESENTACION")</label>
+                                <select name="Presentacion"
+                                    class="cmbPresentacion js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="0" @(Model.Presentacion == 0 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","SINTRANSFORMACION")</option>
+                                    <option value="1" @(Model.Presentacion == 1 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PRIMERALETRAENMAYUSCULASENTODASLASPALABRAS")</option>
+                                    <option value="2" @(Model.Presentacion == 2 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PRIMERALETRAENMAYUSCULASENTODOMENOSLOSARTICULOS")</option>
+                                    <option value="3" @(Model.Presentacion == 3 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PRIMERALETRAENMAYUSCULASENLAPRIMERAPALABRA")</option>
+                                    <option value="4" @(Model.Presentacion == 4 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","MAYUSCULASTODASLASLETRAS")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "PRESENTACION")</small>
+                            </div>
 
-						@* Ocultar en Filtros *@
-						<div class="form-group mb-3">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "OCULTAENFILTROS")</label>
-							@* Ocultar en filtros: Sí *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkOcultarEnFiltros"
-									type="radio"
-									name="chkOcultarEnFiltros_@idTemp"									
-									@(Model.OcultaEnFiltros? "checked": "")
-									data-value="si"
-									id="chkOcultarEnFiltros_SI_@idTemp"/>
-								<label class="form-check-label" for="chkOcultarEnFiltros_SI_@idTemp">@Html.GetText("COMMON","SI")</label>									
-							</div>
-							@* Ocultar en filtros: No *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkOcultarEnFiltros"
-									type="radio"
-									name="chkOcultarEnFiltros_@idTemp"									
-									@(!Model.OcultaEnFiltros ? "checked" : "")
-									data-value="no"
-									id="chkOcultarEnFiltros_NO_@idTemp"/>
-								<label class="form-check-label" for="chkOcultarEnFiltros_NO_@idTemp">@Html.GetText("COMMON","NO")</label>									
-							</div>
-							<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "OCULTAENFILTROS")</small>
-						</div>
+                            @* Comportamiento *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "COMPORTAMIENTO")</label>
+                                @* Select de comportamiento de la faceta *@
+                                <select name="Comportamiento"
+                                    class="cmbComportamiento js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="0" @(Model.Comportamiento == 0 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","PORDEFECTO")</option>
+                                    <option value="1" @(Model.Comportamiento == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","MOSTRARSOLOLACAJAENLAPRIMERAPAGINA,LUEGOLACAJAYLASFACETAS")</option>
+                                    <option value="2" @(Model.Comportamiento == 2 ? "selected" : "")>@Html.GetText("DEVTOOLS","MOSTRARSOLOLACAJAENTODASLASPAGINAS")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "COMPORTAMIENTO")</small>
+                            </div>
 
-						@* Priorizar orden resultados *@
-						<div class="form-group mb-3">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "PRIORIZARORDENRESULTADOS")</label>
-							@* Priorizar orden resultados: Sí *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkPriorizarOrdenResultados"
-									type="radio"
-									name="chkPriorizarOrdenResultados_@idTemp"									
-									@(Model.PriorizarOrdenResultados ? "checked": "")
-									data-value="si"
-									id="chkPriorizarOrdenResultados_SI_@idTemp"/>
-								<label class="form-check-label" for="chkPriorizarOrdenResultados_SI_@idTemp">@Html.GetText("COMMON","SI")</label>									
-							</div>
-							@* Priorizar orden resultados: No *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkPriorizarOrdenResultados"
-									type="radio"
-									name="chkPriorizarOrdenResultados_@idTemp"									
-									@(!Model.PriorizarOrdenResultados ? "checked" : "")
-									data-value="no"
-									id="chkPriorizarOrdenResultados_NO_@idTemp"/>
-								<label class="form-check-label" for="chkPriorizarOrdenResultados_NO_@idTemp">@Html.GetText("COMMON","NO")</label>									
-							</div>
-							<small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "PRIORIZARORDENRESULTADOS")</small>							
-						</div>
+                            @* Panel de Autocompletar *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "AUTOCOMPLETAR")</label>
+                                @* Autocompletar: Sí *@
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input chkAutocompletar"
+                                       type="radio"
+                                       name="chkAutocompletar_@idTemp"
+                                       @(Model.Autocompletar ? "checked" : "")
+                                       data-value="si"
+                                       id="chkAutocompletar_SI_@idTemp" />
+                                    <label class="form-check-label" for="chkAutocompletar_SI_@idTemp">@Html.GetText("COMMON","SI")</label>
+                                </div>
+                                @* Autocompletar: No *@
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input chkAutocompletar"
+                                       type="radio"
+                                       name="chkAutocompletar_@idTemp"
+                                       @(!Model.Autocompletar ? "checked" : "")
+                                       data-value="si"
+                                       id="chkAutocompletar_NO_@idTemp" />
+                                    <label class="form-check-label" for="chkAutocompletar_NO_@idTemp">@Html.GetText("COMMON","NO")</label>
+                                </div>
+                                <small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "AUTOCOMPLETAR")</small>
+                            </div>
+
+                            @* Algoritmo Transformación *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
+                                @* Select de transformación de la faceta *@
+                                <select name="AlgoritmoTransformacion"
+                                    class="cmbAlgoritmoTransformacion js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="8" @(Model.AlgoritmoTransformacion == 8 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","NINGUNO")</option>
+                                    <option value="1" @(Model.AlgoritmoTransformacion == 1 ? "selected" : "")>Comunidad</option>
+                                    <option value="10" @(Model.AlgoritmoTransformacion == 10 ? "selected" : "")>Sin Caja</option>
+                                    <option value="11" @(Model.AlgoritmoTransformacion == 11 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","TIPO")</option>
+                                    <option value="13" @(Model.AlgoritmoTransformacion == 13 ? "selected" : "")>Tipo Doc</option>
+                                    <option value="14" @(Model.AlgoritmoTransformacion == 14 ? "selected" : "")>Tipo Doc Ext</option>
+                                    <option value="17" @(Model.AlgoritmoTransformacion == 17 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","MULTIIDIOMA")</option>
+                                    <option value="21" @(Model.AlgoritmoTransformacion == 21 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","BOOLEANO")</option>
+                                    <option value="25" @(Model.AlgoritmoTransformacion == 25 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","MULTIPLE")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>
+                            </div>
+
+                            @* Orden *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ORDEN")</label>
+                                @* Select de orden de la faceta *@
+                                <select name="Disenyo"
+                                    class="cmbDisenyo js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="1" @(Model.Disenyo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTAORDENADAPORCANTIDAD")</option>
+                                    <option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>
+                                    <option value="4" @(Model.Disenyo == 4 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMENORAMAYOR")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ORDEN")</small>
+                            </div>
+
+                            @* Filtros de la faceta *@
+                            @Html.PartialView("_EdicionFiltro", Model.ListaFiltrosFacetas)
+
+                        }
+                        else if (Model.Type.Equals(TipoFaceta.Numero))
+                        {
+                            @* Faceta Número *@
+
+                            @* Tipo diseño *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPODISEÑO")</label>
+                                @* Select de Disenyo de la faceta *@
+                                <select name="Disenyo"
+                                    class="cmbDisenyo js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="1" @(Model.Disenyo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTAORDENADAPORCANTIDAD")</option>
+                                    <option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>
+                                    <option value="4" @(Model.Disenyo == 4 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMENORAMAYOR")</option>
+                                    <option value="6" @(Model.Disenyo == 6 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLODESDE")</option>
+                                    <option value="7" @(Model.Disenyo == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLOHASTA")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "TIPODISEÑO")</small>
+
+                            </div>
+
+                            @* Algoritmo Transformación *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
+                                @* Select de transformación de la faceta *@
+                                <select name="AlgoritmoTransformacion"
+                                    class="cmbAlgoritmoTransformacion js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="8" @(Model.AlgoritmoTransformacion == 8 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","NINGUNO")</option>
+                                    <option value="3" @(Model.AlgoritmoTransformacion == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","CODIGOPOSTAL")</option>
+                                    <option value="7" @(Model.AlgoritmoTransformacion == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","NIVELDECERTIFICACION")</option>
+                                    <option value="9" @(Model.AlgoritmoTransformacion == 9 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","RANGOS")</option>
+                                    <option value="10" @(Model.AlgoritmoTransformacion == 10 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","SINCAJA")</option>
+                                    <option value="23" @(Model.AlgoritmoTransformacion == 23 ? "selected" : "")>@Html.GetText("DEVTOOLS","ESTADOUSUARIO")	</option>
+                                    <option value="24" @(Model.AlgoritmoTransformacion == 24 ? "selected" : "")>@Html.GetText("DEVTOOLS","ROLUSUARIO")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>
+                            </div>
+
+                            @* Filtros*@
+                            <input type="hidden" name="Filtros" value="" />
+                            @* Presentación *@
+                            <input type="hidden" class="cmbPresentacion" name="Presentacion" value="0" />
+
+                        }
+                        else if (Model.Type.Equals(TipoFaceta.Fecha))
+                        {
+                            @* Faceta Fecha *@
+
+                            @* Tipo diseño *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPODISEÑO")</label>
+                                @* Select de Disenyo de la faceta *@
+                                <select name="Disenyo"
+                                    class="cmbDisenyo js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="0" @(Model.Disenyo == 0 ? "selected" : "")>@Html.GetText("DEVTOOLS","DESDEHASTADIASMESYAÑO")</option>
+                                    <option value="5" @(Model.Disenyo == 5 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","CALENDARIO")</option>
+                                    <option value="6" @(Model.Disenyo == 6 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLODESDE")</option>
+                                    <option value="7" @(Model.Disenyo == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLOHASTA")</option>
+                                    <option value="8" @(Model.Disenyo == 8 ? "selected" : "")>@Html.GetText("DEVTOOLS","CALENDARIOCONRANGOS")</option>
+                                    <option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "TIPODISEÑO")</small>
+                            </div>
+
+                            @* Algoritmo Transformación *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
+                                @* Select de transformación de la faceta *@
+                                <select name="AlgoritmoTransformacion"
+                                    class="cmbAlgoritmoTransformacion js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="8" @(Model.AlgoritmoTransformacion == 8 ? "selected" : "")>@Html.GetText("ADMINISTRACIONBASICA","NINGUNO")</option>
+                                    <option value="6" @(Model.AlgoritmoTransformacion == 6 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","FECHAS")</option>
+                                    <option value="9" @(Model.AlgoritmoTransformacion == 9 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","RANGOS")</option>
+                                    <option value="18" @(Model.AlgoritmoTransformacion == 18 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","CALENDARIO")</option>
+                                    <option value="19" @(Model.AlgoritmoTransformacion == 19 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","SIGLO")</option>
+                                    <option value="20" @(Model.AlgoritmoTransformacion == 20 ? "selected" : "")>@Html.GetText("DEVTOOLS","CALENDARIOCONRANGOS")</option>
+                                    <option value="26" @(Model.AlgoritmoTransformacion == 26 ? "selected" : "")>@Html.GetText("DEVTOOLS","FECHAMINIMAYMAXIMA")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>
+                            </div>
+
+                            @* Filtros*@
+                            <input type="hidden" name="Filtros" value="" />
+                            @* Presentación *@
+                            <input type="hidden" class="cmbPresentacion" name="Presentacion" value="0" />
 
 
-						@* Panel privacidad de la faceta *@										
-						<div class="form-group mb-3 edit-privacy-panel-privacidad-perfiles ">																	
-							<label class="control-label d-block">
-								@Html.GetText("COMADMINFACETAS", "FACETAPRIVADAGURPOS")
-							</label>
-							@* Contenedor del input + tags *@
-							<div class="autocompletar-tags form-group">
-								<div class="input-wrap form-sticky-button autocompletar">
-									@* Input de Tags *@
-									<input type="text"
-											name="TabPrivacidadGrupos"
-											placeholder="Busca un perfil y pulsa AÑADIR"
-											id="privacidadGrupos_@idTemp"
-											class="form-control txtAutocomplete TabPrivacidadGrupos"														
-											autocomplete="off" />																				
-									@* Botón de Añadir Privacidad Perfiles *@
-									<a id="btnAddPrivacidadPerfiles_@(idTemp)" class="btn btn-grey uppercase btnAddPrivacidadGrupos">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+                        }
+                        else if (Model.Type.Equals(TipoFaceta.Tesauro))
+                        {
+                            @* Faceta Tesauro *@
 
-									@* Campo oculto _hack *@													
-									<input type="hidden" id="privacidadGrupos_@(idTemp)_Hack" class="valores TabValoresPrivacidadGrupos" name="TabValoresPrivacidadGrupos" value="@listaIDsGrupos" />							
-								</div>
-								<small class="form-text text-muted mt-2 mt-n2 mb-2">@Html.GetText("AYUDACOMADMINFACETAS", "FACETAPRIVADAGURPOS")</small>
-								@* Tags/Perfiles añadidas por el usuario o por auto *@
-								<span id="tagsContainer_@idTemp" class="contenedor tag-list mb-4">
-									@Html.Raw(htmlNombresGrupos)
-								</span>
-							</div>							
-						</div>
+                            @* Presentación *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "PRESENTACION")</label>
+                                <select name="Presentacion"
+                                    class="cmbPresentacion js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="0" @(Model.Presentacion == 0 ? "selected" : "")>Sin transformación</option>
+                                    <option value="1" @(Model.Presentacion == 1 ? "selected" : "")>Primera letra en mayúsculas en todas las palabras</option>
+                                    <option value="2" @(Model.Presentacion == 2 ? "selected" : "")>Primera letra en mayúsculas en todo menos los articulos</option>
+                                    <option value="3" @(Model.Presentacion == 3 ? "selected" : "")>Primera letra en mayúsculas en la primera palabra</option>
+                                    <option value="4" @(Model.Presentacion == 4 ? "selected" : "")>Mayúsculas todas las letras</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "PRESENTACION")</small>
+                            </div>
 
-						<input type="hidden" id="autoOntologia2_@(idTemp)_Hack" class="valores autoOnto" name="TabValoresAutoCompletadoOntologia" value="">
-						<ul class="resultado"></ul>
+                            @* Algoritmo Transformación *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ALGORITMOTRANSFORMACION")</label>
+                                @* Select de transformación de la faceta *@
+                                <select name="AlgoritmoTransformacion"
+                                    class="cmbAlgoritmoTransformacion js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="0" @(Model.AlgoritmoTransformacion == 0 ? "selected" : "")>@Html.GetText("ADMINISTRACIONSEMANTICA","CATEGORIA")</option>
+                                    <option value="15" @(Model.AlgoritmoTransformacion == 15 ? "selected" : "")>@Html.GetText("DEVTOOLS","CATEGORIAARBOL")</option>
+                                    <option value="16" @(Model.AlgoritmoTransformacion == 16 ? "selected" : "")>@Html.GetText("DEVTOOLS","TESAUROSEMANTICO")</option>
+                                    <option value="22" @(Model.AlgoritmoTransformacion == 22 ? "selected" : "")>@Html.GetText("DEVTOOLS","TESAUROSEMANTICOORDENADO")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ALGORITMOTRANSFORMACION")</small>
+                            </div>
+
+                            @* Tipo diseño-orden *@
+                            <div class="form-group mb-3">
+                                <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "TIPODISEÑO")</label>
+                                @* Select de Disenyo de la faceta *@
+                                <select name="Disenyo"
+                                    class="cmbDisenyo js-select2"
+                                    tabindex="0"
+                                    aria-hidden="false">
+                                    <option value="1" @(Model.Disenyo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTAORDENADAPORCANTIDAD")</option>
+                                    <option value="3" @(Model.Disenyo == 3 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMAYORAMENOR")</option>
+                                    <option value="4" @(Model.Disenyo == 4 ? "selected" : "")>@Html.GetText("DEVTOOLS","LISTADEMENORAMAYOR")</option>
+                                    <option value="6" @(Model.Disenyo == 6 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLODESDE")</option>
+                                    <option value="7" @(Model.Disenyo == 7 ? "selected" : "")>@Html.GetText("DEVTOOLS","RANGOSOLOHASTA")</option>
+                                </select>
+                                <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ORDEN")</small>
+                            </div>
+
+                            @* Panel para los filtros de facetas *@
+                            @Html.PartialView("_EdicionFiltro", Model.ListaFiltrosFacetas)
+
+                        }
+
+                        @* Tipo Faceta que no sea Texto | TextoInvariable *@
+                        @if (!Model.Type.Equals(TipoFaceta.Texto) && !Model.Type.Equals(TipoFaceta.TextoInvariable))
+                        {
+                            <input type="hidden" class="cmbComportamiento" name="Comportamiento" value="0" />
+                            <input type="checkbox" name="Autocompletar" style="display:none" />
+                        }
+
+                        @* Elementos visibles *@
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "ELEMENTOSVISIBLES")</label>
+                            <input type="number"
+                                   class="form-control NumElementosVisibles"
+                                   name="NumElementosVisibles"
+                                   placeholder="@Html.GetText("COMADMINFACETAS", "ELEMENTOSVISIBLES")"
+                                   value="@Model.NumElementosVisibles"
+                                   style="width: 220px;" />
+                            <small class="form-text text-muted mt-2">@Html.GetText("AYUDACOMADMINFACETAS", "ELEMENTOSVISIBLES")</small>
+                        </div>
+
+                        @* Ocultar facetas *@
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "OCULTAENFACETAS")</label>
+                            @* Ocultar facetas: Sí *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkOcultaEnFacetas"
+                                       type="radio"
+                                       name="chkOcultaEnFacetas_@idTemp"
+                                       @(Model.OcultaEnFacetas ? "checked" : "")
+                                       data-value="si"
+                                       id="chkOcultaEnFacetas_SI_@idTemp" />
+                                <label class="form-check-label" for="chkOcultaEnFacetas_SI_@idTemp">@Html.GetText("COMMON","SI")</label>
+                            </div>
+                            @* Ocultar facetas: No *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkOcultaEnFacetas"
+                                       type="radio"
+                                       name="chkOcultaEnFacetas_@idTemp"
+                                       @(!Model.OcultaEnFacetas ? "checked" : "")
+                                       data-value="no"
+                                       id="chkOcultaEnFacetas_NO_@idTemp" />
+                                <label class="form-check-label" for="chkOcultaEnFacetas_NO_@idTemp">@Html.GetText("COMMON","NO")</label>
+                            </div>
+                            <small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "OCULTAENFACETAS")</small>
+                        </div>
+
+                        @* Comportamiento OR *@
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "COMPORTAMIENTOOR")</label>
+                            @* Comportamiento OR: Sí *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkComportamientoOR"
+                                       type="radio"
+                                       name="chkComportamientoOR_@idTemp"
+                                       @(Model.ComportamientoOr ? "checked" : "")
+                                       data-value="si"
+                                       id="chkComportamientoOR_SI_@idTemp" />
+                                <label class="form-check-label" for="chkComportamientoOR_SI_@idTemp">@Html.GetText("COMMON","SI")</label>
+                            </div>
+                            @* Comportamiento OR: No *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkComportamientoOR"
+                                       type="radio"
+                                       name="chkComportamientoOR_@idTemp"
+                                       @(!Model.ComportamientoOr ? "checked" : "")
+                                       data-value="no"
+                                       id="chkComportamientoOR_NO_@idTemp" />
+                                <label class="form-check-label" for="chkComportamientoOR_NO_@idTemp">@Html.GetText("COMMON","NO")</label>
+                            </div>
+                            <small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "COMPORTAMIENTOOR")</small>
+                        </div>
+
+                        @* Ocultar en Filtros *@
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "OCULTAENFILTROS")</label>
+                            @* Ocultar en filtros: Sí *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkOcultarEnFiltros"
+                                       type="radio"
+                                       name="chkOcultarEnFiltros_@idTemp"
+                                       @(Model.OcultaEnFiltros? "checked": "")
+                                       data-value="si"
+                                       id="chkOcultarEnFiltros_SI_@idTemp" />
+                                <label class="form-check-label" for="chkOcultarEnFiltros_SI_@idTemp">@Html.GetText("COMMON","SI")</label>
+                            </div>
+                            @* Ocultar en filtros: No *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkOcultarEnFiltros"
+                                       type="radio"
+                                       name="chkOcultarEnFiltros_@idTemp"
+                                       @(!Model.OcultaEnFiltros ? "checked" : "")
+                                       data-value="no"
+                                       id="chkOcultarEnFiltros_NO_@idTemp" />
+                                <label class="form-check-label" for="chkOcultarEnFiltros_NO_@idTemp">@Html.GetText("COMMON","NO")</label>
+                            </div>
+                            <small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "OCULTAENFILTROS")</small>
+                        </div>
+
+                        @* Priorizar orden resultados *@
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "PRIORIZARORDENRESULTADOS")</label>
+                            @* Priorizar orden resultados: Sí *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkPriorizarOrdenResultados"
+                                       type="radio"
+                                       name="chkPriorizarOrdenResultados_@idTemp"
+                                       @(Model.PriorizarOrdenResultados ? "checked": "")
+                                       data-value="si"
+                                       id="chkPriorizarOrdenResultados_SI_@idTemp" />
+                                <label class="form-check-label" for="chkPriorizarOrdenResultados_SI_@idTemp">@Html.GetText("COMMON","SI")</label>
+                            </div>
+                            @* Priorizar orden resultados: No *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkPriorizarOrdenResultados"
+                                       type="radio"
+                                       name="chkPriorizarOrdenResultados_@idTemp"
+                                       @(!Model.PriorizarOrdenResultados ? "checked" : "")
+                                       data-value="no"
+                                       id="chkPriorizarOrdenResultados_NO_@idTemp" />
+                                <label class="form-check-label" for="chkPriorizarOrdenResultados_NO_@idTemp">@Html.GetText("COMMON","NO")</label>
+                            </div>
+                            <small class="form-text text-muted mt-2 mt-n2">@Html.GetText("AYUDACOMADMINFACETAS", "PRIORIZARORDENRESULTADOS")</small>
+                        </div>
+
+
+                        @* Panel privacidad de la faceta *@
+                        <div class="form-group mb-3 edit-privacy-panel-privacidad-perfiles ">
+                            <label class="control-label d-block">
+                                @Html.GetText("COMADMINFACETAS", "FACETAPRIVADAGURPOS")
+                            </label>
+                            @* Contenedor del input + tags *@
+                            <div class="autocompletar-tags form-group">
+                                <div class="input-wrap form-sticky-button autocompletar">
+                                    @* Input de Tags *@
+                                    <input type="text"
+                                           name="TabPrivacidadGrupos"
+                                           placeholder="@Html.GetText("COMMON","BUSCAUNPERFILYPULSAAÑADIR")"
+                                           id="privacidadGrupos_@idTemp"
+                                           class="form-control txtAutocomplete TabPrivacidadGrupos"
+                                           autocomplete="off" />
+                                    @* Botón de Añadir Privacidad Perfiles *@
+                                    <a id="btnAddPrivacidadPerfiles_@(idTemp)" class="btn btn-grey uppercase btnAddPrivacidadGrupos">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+
+                                    @* Campo oculto _hack *@
+                                    <input type="hidden" id="privacidadGrupos_@(idTemp)_Hack" class="valores TabValoresPrivacidadGrupos" name="TabValoresPrivacidadGrupos" value="@listaIDsGrupos" />
+                                </div>
+                                <small class="form-text text-muted mt-2 mt-n2 mb-2">@Html.GetText("AYUDACOMADMINFACETAS", "FACETAPRIVADAGURPOS")</small>
+                                @* Tags/Perfiles añadidas por el usuario o por auto *@
+                                <span id="tagsContainer_@idTemp" class="contenedor tag-list mb-4">
+                                    @Html.Raw(htmlNombresGrupos)
+                                </span>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="autoOntologia2_@(idTemp)_Hack" class="valores autoOnto" name="TabValoresAutoCompletadoOntologia" value="">
+                        <ul class="resultado"></ul>
 
 
 
-						@* Condiciones *@
+                        @* Condiciones *@
 
-						@* Html de condiciones actuales *@
-						@if (listaCondiciones != null && listaCondiciones.Count > 0)
-						{
-							@* condiciones activas *@
-							@foreach (string item in listaCondiciones)
-							{
+                        @* Html de condiciones actuales *@
+                        @if (listaCondiciones != null && listaCondiciones.Count > 0)
+                        {
+                            @* condiciones activas *@
+                            @foreach (string item in listaCondiciones)
+                            {
 
-								condSeleccionadas += item + "|";
+                                condSeleccionadas += item + "|";
 
-								htmlCondSeleccionadas += "<div class='tag' id='" + item + "' > ";
-								htmlCondSeleccionadas += "<div class='tag-wrap'>";
-								htmlCondSeleccionadas += "<span class='tag-text'>" + item + "</span>";
-								htmlCondSeleccionadas += "<span class='tag-remove tag-remove-condicion material-icons remove'>close</span>";
-								htmlCondSeleccionadas += "</div>";
-								htmlCondSeleccionadas += "</div>";
+                                htmlCondSeleccionadas += "<div class='tag' id='" + item + "' > ";
+                                htmlCondSeleccionadas += "<div class='tag-wrap'>";
+                                htmlCondSeleccionadas += "<span class='tag-text'>" + item + "</span>";
+                                htmlCondSeleccionadas += "<span class='tag-remove tag-remove-condicion material-icons remove'>close</span>";
+                                htmlCondSeleccionadas += "</div>";
+                                htmlCondSeleccionadas += "</div>";
 
-							}
-						}
-						@* Input de Condicion + Panel de Condiciones *@
-						<div class="form-group mb-3 panCondiciones" id="condicionFacetaAuto">
-							<label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "CONDICION")</label>
-							@* Sección para añadir *@
-							<div class="input-wrap autocompletar form-sticky-button">
-								<input id="autoOntologia2_@(idTemp)"   
-									   type="text"
-									   data-avoid-autocomplete-with-enter-button="true"
-									   class="form-control condicion inputAddConditionFaceta ClaveFaceta"
-									   placeholder="@Html.GetText("DEVTOOLS","AÑADELACONDICIONPARALAFACETAYPULSAAÑADIR")"
-									   autocomplete="off">
-								<a class="btn btn-grey uppercase btnAddConditionPanCondition">@Html.GetText("CONTROLESDOCUMENTACION", "ANYADIR")</a>
-							</div>
-							<small class="form-text text-muted mt-2 mt-n2 mb-2">@Html.GetText("AYUDACOMADMINFACETAS", "CONDICION")</small>
-							@* Panel del listado *@
-							<span class="tag-list mb-4 mt-3 panListadoCondiciones">@Html.Raw(htmlCondSeleccionadas)</span>
-							<input type="hidden" class="valores auxCondicionesSeleccionadas" value="@condSeleccionadas" />
-						</div>
+                            }
+                        }
+                        @* Input de Condicion + Panel de Condiciones *@
+                        <div class="form-group mb-3 panCondiciones" id="condicionFacetaAuto">
+                            <label class="control-label d-block">@Html.GetText("COMADMINFACETAS", "CONDICION")</label>
+                            @* Sección para añadir *@
+                            <div class="input-wrap autocompletar form-sticky-button">
+                                <input id="autoOntologia2_@(idTemp)"
+                                       type="text"
+                                       data-avoid-autocomplete-with-enter-button="true"
+                                       class="form-control condicion inputAddConditionFaceta ClaveFaceta"
+                                       placeholder="@Html.GetText("DEVTOOLS","AÑADELACONDICIONPARALAFACETAYPULSAAÑADIR")"
+                                       autocomplete="off">
+                                <a class="btn btn-grey uppercase btnAddConditionPanCondition">@Html.GetText("CONTROLESDOCUMENTACION", "ANYADIR")</a>
+                            </div>
+                            <small class="form-text text-muted mt-2 mt-n2 mb-2">@Html.GetText("AYUDACOMADMINFACETAS", "CONDICION")</small>
+                            @* Panel del listado *@
+                            <span class="tag-list mb-4 mt-3 panListadoCondiciones">@Html.Raw(htmlCondSeleccionadas)</span>
+                            <input type="hidden" class="valores auxCondicionesSeleccionadas" value="@condSeleccionadas" />
+                        </div>
 
-						@* Inmutable *@	
-						<div class="form-group mb-3">
-							<label class="control-label d-block">@Html.GetText("ADMINISTRACIONSEMANTICA","INMUTABLE")</label>
-							@* Inmutable: Sí *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkInmutable"
-									type="radio"
-									name="chkInmutable_@idTemp"									
-									@(Model.Inmutable ? "checked": "")
-									data-value="si"
-									id="chkInmutable_SI_@idTemp"/>
-								<label class="form-check-label" for="chkInmutable_SI_@idTemp">@Html.GetText("COMMON","SI")</label>									
-							</div>
-							@* Inmutable: No *@
-							<div class="form-check form-check-inline">
-								<input
-									class="form-check-input chkInmutable"
-									type="radio"
-									name="chkInmutable_@idTemp"
-								@(!Model.Inmutable ? "checked" : "")
-									data-value="no"
-									id="chkInmutable_NO_@idTemp"/>
-								<label class="form-check-label" for="chkInmutable_NO_@idTemp">@Html.GetText("COMMON","NO")</label>									
-							</div>							
-						</div>					
-													
-						@* Botón para guardar la página *@
-						<div class="panelBotonera">
-							@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-							{
-								@* No permitir guardar *@
-								<input type="button" disabled class="btn btn-primary uppercase btnNoSaveFaceta" value="@Html.GetText("COMMON","GUARDAR")"/>								
-							}
-							else
-							{		
-								@* Permitir guardar *@
-								<input type="button" class="btn btn-primary uppercase btnSaveFaceta" value="@Html.GetText("COMMON","GUARDAR")"/>								
-							}
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                        @* Inmutable *@
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">@Html.GetText("ADMINISTRACIONSEMANTICA","INMUTABLE")</label>
+                            @* Inmutable: Sí *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkInmutable"
+                                       type="radio"
+                                       name="chkInmutable_@idTemp"
+                                       @(Model.Inmutable ? "checked": "")
+                                       data-value="si"
+                                       id="chkInmutable_SI_@idTemp" />
+                                <label class="form-check-label" for="chkInmutable_SI_@idTemp">@Html.GetText("COMMON","SI")</label>
+                            </div>
+                            @* Inmutable: No *@
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input chkInmutable"
+                                       type="radio"
+                                       name="chkInmutable_@idTemp"
+                                       @(!Model.Inmutable ? "checked" : "")
+                                       data-value="no"
+                                       id="chkInmutable_NO_@idTemp" />
+                                <label class="form-check-label" for="chkInmutable_NO_@idTemp">@Html.GetText("COMMON","NO")</label>
+                            </div>
+                        </div>
+
+                        @* Botón para guardar la página *@
+                        <div class="panelBotonera">
+                            @if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+                            {
+                                @* No permitir guardar *@
+                                <input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase btnNoSaveFaceta" value="@Html.GetText("COMMON","GUARDAR")" />
+                            }
+                            else
+                            {
+                                @* Permitir guardar *@
+                                <input type="button" class="btn btn-primary uppercase btnSaveFaceta" value="@Html.GetText("COMMON","GUARDAR")" />
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

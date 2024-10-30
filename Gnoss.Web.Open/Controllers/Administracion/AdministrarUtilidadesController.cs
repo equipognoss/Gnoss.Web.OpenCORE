@@ -6,6 +6,7 @@ using Es.Riam.Gnoss.AD.ParametrosProyecto;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
@@ -18,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Net;
@@ -28,8 +30,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
     public class AdministrarUtilidadesController : ControllerBaseWeb
     {
-        public AdministrarUtilidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarUtilidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -152,7 +154,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
         {
-
+            GuardarLogAuditoria();
             bool iniciado = false;
             try
             {
@@ -222,7 +224,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult SaveCertifications(AdministrarComunidadUtilidades DatosGuardado)
         {
-
+            GuardarLogAuditoria();
             bool iniciado = false;
             try
             {
@@ -318,6 +320,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     mPaginaModel = contrUtilidades.CargarUtilidades();
 
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+                    mPaginaModel.IdiomaDefecto = IdiomaPorDefecto;
 
                     //Si no hay videos de brightcove disponibles, deshabilito los checks de brightcove
                     if (ParametrosGeneralesRow.PlataformaVideoDisponible == (short)PlataformaVideoDisponible.Brightcove)

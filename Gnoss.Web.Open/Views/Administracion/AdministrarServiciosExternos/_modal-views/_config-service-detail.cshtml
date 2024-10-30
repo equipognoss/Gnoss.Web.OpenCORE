@@ -7,62 +7,49 @@ Vista modal para configurar la URL del servicio. Se utilizará para que se pueda
 Variables
 ----------------------------------------------------------------
 *@
-@{
-	// Controlar la posibilidad de guardar datos
-	bool allowSaveData = true;
-	@* Controlar la posibilidad de guardar datos (CI/CD) *@
-	if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-	{
-		allowSaveData = false;
-	}
-}
 
 @* Modal de edición de url base *@
-<div
-	id="modal-external-service-base"
-	class="modal modal-top fade modal-external-service-base"           
-	role="dialog"	
-	aria-modal="true">
+<div id="modal-external-service-base"
+     class="modal modal-top fade modal-external-service-base"
+     role="dialog"
+     aria-modal="true">
 
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
-			@* Modal para controlar el borrado *@
-			<div class="modal-header">
-				@* Título del Modal *@
-				<p class="modal-title">
-					<span class="material-icons">edit</span>
-					@Html.GetText("DEVTOOLS","URLBASEDESERVICIOS")
-				</p>
-				@* Cierre del Modal *@
-				<span class="material-icons cerrar"
-					  data-dismiss="modal"
-					  aria-label="Close">close</span>
-			</div>
-			<div class="modal-body">				
-				<div class="formulario-edicion no-min-height">
-					<p>
-						@Html.GetText("DEVTOOLS","CONFIGURACIONDELAURLBASEPARALACONSTRUCCIONDELASURLSDELOSSERV")
-					</p>					
-					@Html.Raw(Html.GetText("DEVTOOLS","{P}SISECONFIGURALAURLCOMOHTTP://SERVICIOSGNOSSCOM/{SERVICE"))					
-				</div>
-				@* Input del nombre del servicio del proyecto *@
-				<div class="form-group mb-4">
-					<label class="control-label d-block">@Html.GetText("DEVTOOLS","URLBASEDESERVICIOS")</label>				                        
-					<input id="urlBaseService" type="text" 
-						   name="urlBaseService"
-						   placeholder="http://servicios.gnoss.com/{ServiceName}" 
-						   value="@Model.ServiceName"
-						   class="form-control urlBaseService">
-					<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","ESNECESARIOQUELAURLCONTENGAELTEXTO{SERVICENAME}PARAUNACORREC")</small>
-				</div>
-				@* Botón guardar *@
-				@if (allowSaveData)
-				{
-					<div class="form-actions">					
-						<button id="btnSaveUrlBaseService" class="btn btn-primary btnSaveUrlBaseService">@Html.GetText("COMMON", "GUARDAR")</button>
-					</div>					
-				}				
-			</div>
-		</div>
-	</div>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            @* Modal para controlar el borrado *@
+            <div class="modal-header">
+                @* Título del Modal *@
+                <p class="modal-title">
+                    <span class="material-icons">edit</span>
+                    @Html.GetText("DEVTOOLS", "URLBASEDESERVICIOS")
+                </p>
+                @* Cierre del Modal *@
+                <span class="material-icons cerrar"
+                      data-dismiss="modal"
+                      aria-label="Close">close</span>
+            </div>
+            <div class="modal-body">
+                <div class="formulario-edicion no-min-height">
+                    <p>
+                        @Html.GetText("DEVTOOLS", "CONFIGURACIONDELAURLBASEPARALACONSTRUCCIONDELASURLSDELOSSERV")
+                    </p>
+                    @Html.Raw(Html.GetText("DEVTOOLS", "{P}SISECONFIGURALAURLCOMOHTTP://SERVICIOSGNOSSCOM/{SERVICE"))
+                </div>
+                @* Input del nombre del servicio del proyecto *@
+                <div class="form-group mb-4">
+                    <label class="control-label d-block">@Html.GetText("DEVTOOLS", "URLBASEDESERVICIOS")</label>
+                    <input id="urlBaseService" type="text"
+                           name="urlBaseService"
+                           placeholder="http://servicios.gnoss.com/{ServiceName}"
+                           value="@Model.ServiceName"
+                           class="form-control urlBaseService">
+                    <small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS", "ESNECESARIOQUELAURLCONTENGAELTEXTOSERVICENAMEPARAUNACORREC", "{ServiceName}")</small>
+                </div>
+                @* Botón guardar *@
+                <div class="form-actions">
+                    <button id="btnSaveUrlBaseService" class="btn btn-primary btnSaveUrlBaseService">@Html.GetText("COMMON", "GUARDAR")</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

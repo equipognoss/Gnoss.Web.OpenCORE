@@ -38,6 +38,8 @@ string idModalPage = "modal-configuracion-pagina_" + tabModel.Key;
 string idModalPageDelete = "modal-delete-page";
 // Fecha de modificación. Al ser nueva, coger la fecha actual (Día de creación)
 string fechaModificacion = DateTime.Now.ToString("dd/MM/yyyy"); // tabModel.FechaModificacion.ToString("dd/MM/yyyy");
+// Id modal para mover "manualmente" una página
+string idModalMovePaginaFaceta = "modal-move-pagina";
 
 }
 
@@ -203,11 +205,23 @@ string fechaModificacion = DateTime.Now.ToString("dd/MM/yyyy"); // tabModel.Fech
 											</a>
 										</li>
 
+										@* Mover página *@
+										<li>
+											<a class="item-dropdown js-action-edit-component btnMovePagina"
+											   data-toggle="modal"
+											   data-target="#@idModalMovePaginaFaceta">
+												<span class="material-icons">move_up</span>
+												<span class="texto">
+													@Html.GetText("DEVTOOLS","MOVERPAGINA")
+												</span>
+											</a>
+										</li>
+
 										@* Editar página CMS *@
 										@if (tabModel.Type == TipoPestanyaMenu.CMS && !tabModel.Nueva)
 										{								
 											<li>
-												<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/@tabModel.Key">
+												<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/@tabModel.Key">
 													<span class="material-icons">view_quilt</span>
 													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINACMS")</span>
 												</a>
@@ -221,7 +235,7 @@ string fechaModificacion = DateTime.Now.ToString("dd/MM/yyyy"); // tabModel.Fech
 											@if (tabModel.HomeCMS.HomeTodosUsuarios)
 											{
 												<li>
-													<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/2">
+													<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/2">
 														<span class="material-icons">view_quilt</span>
 														<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOME")</span>
 													</a>
@@ -231,7 +245,7 @@ string fechaModificacion = DateTime.Now.ToString("dd/MM/yyyy"); // tabModel.Fech
 											@if (tabModel.HomeCMS.HomeMiembros)
 											{
 												<li>
-													<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/0">
+													<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/0">
 														<span class="material-icons">view_quilt</span>
 														<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOMEPARAMIEMBROS")</span>
 													</a>
@@ -241,7 +255,7 @@ string fechaModificacion = DateTime.Now.ToString("dd/MM/yyyy"); // tabModel.Fech
 											@if (tabModel.HomeCMS.HomeNoMiembros)
 											{
 												<li>
-													<a class="item-dropdown" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/1">
+													<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/1">
 														<span class="material-icons">view_quilt</span>
 														<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOMEPARANOMIEMBROS")</span>
 													</a>

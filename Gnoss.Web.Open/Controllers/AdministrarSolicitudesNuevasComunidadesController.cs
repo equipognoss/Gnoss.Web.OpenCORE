@@ -46,6 +46,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -56,8 +57,8 @@ namespace Gnoss.Web.Controllers
 {
     public class AdministrarSolicitudesNuevasComunidadesController : ControllerBaseWeb
     {
-        public AdministrarSolicitudesNuevasComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarSolicitudesNuevasComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
         [HttpGet]
@@ -136,7 +137,8 @@ namespace Gnoss.Web.Controllers
                 DataWrapperUsuario dataWrapperUsuario = null;
                 DataWrapperIdentidad identidadadDW = null;
 
-                Es.Riam.Gnoss.Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, imagenLogo, out orgDW, out dataWrapperProyecto, out paramDS, out tesauroDW, out dataWrapperDocumentacion, out dataWrapperUsuario, out identidadadDW);
+                Es.Riam.Gnoss.Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, imagenLogo, out orgDW, out dataWrapperProyecto, out paramDS, out tesauroDW, out dataWrapperDocumentacion, out dataWrapperUsuario, out identidadadDW, true, null, DominioConfigurado);
+
                 peticion.Peticion.Estado = (short)EstadoPeticion.Aceptada;
                 peticion.Peticion.FechaProcesado = DateTime.Now;
                 PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);

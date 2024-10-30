@@ -60,9 +60,21 @@
     animation-fill-mode: backwards;
 }
 
-#menu #usuario_salir{
+#menu .group-collapse.ayuda{
     animation: scootRight .5s ease;
     animation-delay: 0.9s;
+    animation-fill-mode: backwards;
+}
+
+#menu .group-collapse.mantenimiento{
+    animation: scootRight .5s ease;
+    animation-delay: 1.0s;
+    animation-fill-mode: backwards;
+}
+
+#menu #usuario_salir{
+    animation: scootRight .5s ease;
+    animation-delay: 1.1s;
     animation-fill-mode: backwards;
 }
 
@@ -75,13 +87,18 @@
 
 /* CKEditor */
 .cke_editable {padding: 10px;}
+/* TinyMCE*/
+/* Eliminación de margen de separación del Editor de código del TinyMCE */
+.ace_print-margin-layer{display: none !important;}
+/* Evitar visualizar contenido hasta que no se cargue en Editor TinyMCE */
+.cke, .tcme{color: transparent;}
 
 
 /* NAV TABS */
-.nav-tabs .nav-item .nav-link { font-size: .867rem; font-weight: 300; color: #c5c5c5; }
+.nav-tabs .nav-item .nav-link { font-size: .867rem; font-weight: 300; color: #767474; }
 .nav-tabs .nav-item .nav-link.active { font-weight: 500; color: var(--c-negro); border-color: var(--c-negro); }
 .nav-tabs .nav-item .dropdown-menu { top: 36px !important; }
-.nav-tabs .nav-item .dropdown-menu .item-dropdown { font-size: .867rem; font-weight: 300; color: #c5c5c5; }
+.nav-tabs .nav-item .dropdown-menu .item-dropdown { font-size: .867rem; font-weight: 300; color: #767474; }
 .nav-tabs .nav-item .dropdown-menu .item-dropdown.active { font-weight: 500; border-bottom: 4px solid var(--c-negro); color: var(--c-negro); }
 /* */
 
@@ -304,12 +321,14 @@ body:not(.home) .con-panel-lateral > .wrapCol { margin-top: 20px; padding: 0 8px
 /* MAX WIDTH CONTAINER */
 .max-width-container .con-panel-lateral > .wrapCol { max-width: 864px; }
 /* Evitar comportamiento para algunas páginas -> ViewBag */
-.no-max-width-container .con-panel-lateral > .wrapCol { max-width: 1280px !important; }
-/* */
-
-
+@media only screen and (min-width: 992px) {    
+    .no-max-width-container .con-panel-lateral > .wrapCol {
+      max-width: 1280px;      
+      min-width: 720px;      
+    }
+}
 /* FORMULARIOS GENÃ‰RICOS */
-.form-group .control-label { font-weight: 400; color: #aaa; }
+.form-group .control-label { font-weight: 400; color: #737373; }
 
 .form-check { margin-right: 25px; margin-bottom: 20px; user-select: none; }
 .form-check:last-child { margin-bottom: 0; }
@@ -382,7 +401,7 @@ body:not(.home) .con-panel-lateral > .wrapCol { margin-top: 20px; padding: 0 8px
 /* Color del título modal para sección páginas */
 .modal .modal-header .modal-title { position: relative; padding-left: 50px; display: block !important; color: inherit; }
 .modal .modal-header .modal-title .material-icons { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); }
-.modal .modal-header .modal-title .community-name { font-size: 1.267rem; font-weight: 300; letter-spacing: .38px; padding-left: 16px; }
+.modal .modal-header .modal-title .community-name { font-size: 1.267rem; font-weight: 300; letter-spacing: .38px; padding-left: 16px;}
 
 .modal .modal-body .formulario-edicion { box-shadow: none; padding: 0; }
 .modal .modal-body .formulario-edicion fieldset { padding: 40px 100px; }
@@ -409,7 +428,8 @@ body:not(.home) .con-panel-lateral > .wrapCol { margin-top: 20px; padding: 0 8px
 .modal.modal-con-tabs .modal-body .formulario-edicion .card-body .nav-tabs{padding: 0.5em 0rem 0em;}
 
 .modal.modal-con-tabs .modal-body .formulario-edicion .nav-tabs .nav-item .dropdown-menu { top: 60px !important; }
-.modal.modal-con-tabs .modal-body .formulario-edicion .tab-content { padding: 40px 100px; }
+/*.modal.modal-con-tabs .modal-body .formulario-edicion .tab-content { padding: 40px 100px; }*/
+.modal.modal-con-tabs .modal-body .formulario-edicion .tab-content { padding: 40px 40px; }
 /* Contenido de modales "tab-content" en paneles de tipo card-body para multiIdioma */
 .modal.modal-con-tabs .modal-body .formulario-edicion .card-body .tab-content{padding: 1em 0em;}
 /* Contenido de card-body usados en modales */
@@ -587,6 +607,11 @@ table.tabla-miembros > tbody > tr > td.td-nombre { padding-left: 12px; }
 
 .listado.scrolling header .row .col.col03 ul li.nuevo.nueva-pagina .btn .material-icons { font-size: 2rem; padding-right: 0; }
 
+
+@media (max-width: 1199px){
+    .upper-row .page-name-wrapper { display: block; }    
+}
+
 @media (min-width: 1200px) {
     .listado.scrolling header .col03 ul li:not(.nuevo) { display: flex; }
 }
@@ -614,17 +639,21 @@ table.tabla-miembros > tbody > tr > td.td-nombre { padding-left: 12px; }
 .edicion .formulario-edicion .tab-content { padding-top: 45px; }
 
 .edicion table.table > tbody > tr > td { font-weight: 300; color: var(--c-texto-claro); }
+.edicion table.table > tbody > tr > td.uriElement { color: var(--c-primario); }
 .edicion table.table > tbody > tr > td.td-fuente > a { display: flex; align-items: center; }
 .edicion table.table > tbody > tr > td:not(.td-acciones) span.material-icons { margin-left: 10px; }
 .edicion table.table > tbody > tr > td > a { color: var(--c-texto-claro); text-decoration: none; }
 .edicion table.table > tbody > tr > td.td-titulo { color: var(--c-texto-medio); font-weight: 500; }
 .edicion table.table > tbody > tr > td.td-titulo > div { font-weight: 300; color: var(--c-texto-claro); display: flex; align-items: center; }
+.edicion table.table > tbody > tr > td.td-checkbox { max-width: 1px !important; }
 .edicion table.table > tbody > tr > td .info-component .material-icons { padding-left: 10px; }
 .estructura table.table > tbody > tr > td .info-component .component-id { white-space: nowrap; }
 .edicion table.table > tbody > tr > td.td-acciones { width: 140px; }
 .edicion table.table > tbody > tr > td.td-acciones .btn { font-size: 14px; font-weight: 400; height: 100%; padding: 8px 14px; white-space: nowrap; }
 .edicion table.table > tbody > tr > td.td-acciones .btn span.material-icons,
 .edicion table.table > tbody > tr > td.td-acciones .btn span.material-icons-outlined { padding-right: 10px; }
+
+
 
 .edicion .acciones-listado { margin-bottom: 0; }
 .edicion .acciones-listado .dropdown .dropdown-toggle { height: 45px; }
@@ -659,6 +688,7 @@ table.tabla-miembros > tbody > tr > td.td-nombre { padding-left: 12px; }
 /* Mayor tamaño para el div en listados (Ej: Administrar vistas) */
 .component-smaller{ flex: 0.15 !important; }
 
+.component-w-020{flex: 0.02 !important;}
 .component-w-10{flex: 0.1 !important;}
 .component-w-15{flex: 0.15 !important;}
 .component-w-20{flex: 0.2 !important;}
@@ -744,11 +774,11 @@ table.tabla-miembros > tbody > tr > td.td-nombre { padding-left: 12px; }
 
 /* Panel informativo de NestedSortable para cancelar la acción */
 /*.page-row .component-header-wrap .sortable-helper-info{ display: none; position: absolute; bottom: 0; left: 50px;}*/
-.page-row .component-header-wrap .sortable-helper-info{display: none;position: absolute;bottom: 25%;left: 36%;right: 0;letter-spacing: 0.5px;background-color: #F8F8F8;}
+.page-row .component-header-wrap .sortable-helper-info, .graph-row .component-header-wrap .sortable-helper-info {display: none;position: absolute;bottom: 25%;left: 36%;right: 0;letter-spacing: 0.5px;background-color: #F8F8F8;}
 
-.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info{ display: block !important;}
+.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info, .graph-row.ui-sortable-helper .component-header-wrap .sortable-helper-info{ display: block !important;}
 /*.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info > .sortable-helper-info--message{font-size: small; color: var(--c-primario);}*/
-.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info > .sortable-helper-info--message{font-size: 30px;color: var(--c-primario);}
+.page-row.ui-sortable-helper .component-header-wrap .sortable-helper-info > .sortable-helper-info--message, .graph-row.ui-sortable-helper .component-header-wrap .sortable-helper-info > .sortable-helper-info--message{font-size: 30px;color: var(--c-primario);}
 .page-row.ac_over{ background-color: var(--c-blanco); }
 
 /* Evitar que el input de búsqueda del panel lateral se salga del panel*/
@@ -1098,6 +1128,19 @@ table.tabla-multimedia > tbody > tr > td.td-titulo > div .texto-alternativo-imag
 #modal-results-graph-query .textoBusquedaPrincipalInput { position: relative; width: 710px; }
 #modal-results-graph-query .buscador input { height: 45px; width: 100%; padding: 10px; }
 #modal-results-graph-query .botonSearch { position: absolute; top: 50%; right: 20px; transform: translateY(-50%); }
+.list-group .prefix-row { padding: 4px; }
+.input-container {position: relative;}
+input.txtBusquedaGraphQuery {height: 37px; width: 200px; padding-right: 20px; padding-left: 33px; font-size: 13px; font-weight: 300; }
+
+.input-container-search {position: absolute; top: 6px;left: 5px; color: #999;}
+
+#modal-results-graph-query .graphList { margin-bottom: 10px;}
+#modal-results-graph-query .graphListItem { display: inline-block; margin: 0 5px 5px 0; max-width: 100%; }
+#modal-results-graph-query .graphListItemWrapper { max-width: 100%; display: flex; align-items: center; height: 32px; font-weight: 500; font-size: 1rem; border: 1px solid var(--c-gris-borde); }
+#modal-results-graph-query span.graphListItemText { padding: 0 10px; max-width: 100%; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; color: var(--c-texto-claro); font-size: 13px; }
+#modal-results-graph-query span.graphListItemCopyIcon { cursor: pointer; display: inline-block; font-size: 1.5rem; color: var(--c-blanco); height: 100%; line-height: 28px; width: 30px; text-align: center; background: rgba(0,0,0,.2); }
+
+
 /**/
 
 /* VISTAS */
@@ -1177,8 +1220,11 @@ table.tabla-multimedia > tbody > tr > td.td-titulo > div .texto-alternativo-imag
 .modal-page .datasetsLista{ background-color:white !important; }
 .modal-page .colorpick-eyedropper-input-trigger{ display: none; }
 .modal-page .previewGraph {width: 60%; display: flex; justify-content: center; align-items: center; padding: 10px; margin: 0 auto; }
-/* Chequear Instalaciones */
-.check-service-status-info{}
+/* Estado Sistemas */
+.check-service-status-info{width: 100%;}
+.component-service-status.statusDescription{width: 100%; overflow: hidden; word-wrap: break-word;}
+.material-icons[data-icon="question_mark"] {color: black !important;}
+
 .check-service-status-info .material-icons{ margin-right: 5px;}
 .check-service-status-info.okStatus > .material-icons{color: var(--c-success);}
 .check-service-status-info.koStatus > .material-icons{color: var(--c-error);}
@@ -1188,3 +1234,115 @@ table.tabla-multimedia > tbody > tr > td.td-titulo > div .texto-alternativo-imag
 
    
 .modal-page .editarOpcionesDashboard{ /*padding: 20px; border: 1px solid var(--c-gris-fondo);*/}
+
+/* Asistente de creación de filtros en páginas */
+.searchAssistant .filter-row .card-body{ background-color: var(--c-gris-fondo); padding: 20px 25px;}
+.searchAssistant .panelSelectProperty__propertySelected{ color: var(--c-primario);}
+
+/* Contenedor del panel de los Criterios de búsqueda */
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer {
+    width: 90%;
+    margin: 0 auto;
+}
+
+/* Fila panel de cada criterio o filtro*/
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;    
+}
+
+/* Formgroup para inputs de filtros (Filtrado y Condición) */
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .form-group {
+    flex: 1; 
+    margin-right: 10px;
+}
+
+/* Panel de Tipo de filtrado y condición */
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemInfo {
+    display: flex;    
+    flex: 0.9;
+    position: relative;
+}
+/* Etiqueta OR*/
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemInfo .panelCriterialListItemInfo__orLabel{
+    font-weight: bold;
+    color: var(--c-primario);
+    font-size: 13px;
+    position: absolute;
+    top: 50%;
+    left: -25px;
+}
+
+/* Panel de botones de acción para filtros */
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemActions {
+    display: flex;     
+    flex: 0.1;
+    margin-top: 15px;
+}
+/* Botones de acciones para filtros */
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemActions span.material-icons{ color: var(--c-primario); padding-right: 0;}
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemActions .btnCriterialListItemActions.add{ margin-right: 5px;}
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemActions .btnCriterialListItemActions{ background-color: #fff; margin: 0; padding: 8px; }
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemActions .btnCriterialListItemActions.remove.disabled {cursor: not-allowed; pointer-events: none;}
+.searchAssistant .panelCriterialList .panelCriterialListItemContainer .panelCriterialListItem .panelCriterialListItemActions .btnCriterialListItemActions.remove.disabled .material-icons{ color: var(--c-texto-claro);}
+
+/* Matomo - Estadísticas de la comunidad */
+.matomoContainer__table table th{
+    color: #555 !important;
+    text-transform: uppercase;
+    font-size: 11px !important;
+    font-weight: 800;
+    background-color: #fff !important;
+}
+
+.matomoContainer__table table > tbody > tr > td{
+    color: #555 !important; 
+}
+
+.matomoContainer__table table tbody tr:nth-child(odd) {    
+    background-color: rgba(0, 110, 255, 0.1);
+}
+
+.matomoContainer--pie{
+    width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+    padding:10px;  
+}
+
+.matomoContainer__table, .matomoContainer__pie {
+    border: 1px solid var(--c-gris-borde);
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.matomoContainer__table .matomoContainer__downloadButton{
+   color: var(--c-primario);
+   border: none !important;
+   text-decoration: none;  
+}
+
+.matomoContainer__table .matomoContainer__header, .matomoContainer__pie .matomoContainer__header{
+    color: #555555;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 15px 11px;
+    margin-bottom: 0px;
+}
+
+.matomoContainer__table hr, .matomoContainer__pie hr{
+    margin-top: 0px;
+    margin-bottom:0px;
+}
+
+.matomoContainer__table > table{
+    margin-bottom:0px !important;
+}
+
+.matomoContainer__pie .matomoContainer__pieContent{
+    text-align: center;
+    display: block !important;    
+}
+
+/* ACCESIBILIDAD */
+.withTextShadow{text-shadow: 1px 1px rgba(0, 0, 0, 0.5)};

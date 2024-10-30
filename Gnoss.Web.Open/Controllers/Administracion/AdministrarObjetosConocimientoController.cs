@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Office.CustomUI;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
@@ -13,10 +14,13 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Documentacion;
 using Es.Riam.Gnoss.CL.Facetado;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
+using Es.Riam.Gnoss.Logica.Identidad;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -41,6 +45,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using OntologiaAClase;
 using SixLabors.ImageSharp;
@@ -58,6 +63,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
 using System.Xml;
+using CallFileService = Es.Riam.Gnoss.UtilServiciosWeb.CallFileService;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -81,8 +87,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class AdministrarObjetosConocimientoController : ControllerBaseWeb
     {
-        public AdministrarObjetosConocimientoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IMassiveOntologyToClass massiveOntologyToClass)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarObjetosConocimientoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IMassiveOntologyToClass massiveOntologyToClass, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
             mMassiveOntologyToClass = massiveOntologyToClass;
         }
@@ -122,7 +128,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <summary>
         /// Interfaz utilizada para generar las clases
         /// </summary>
-        private IMassiveOntologyToClass mMassiveOntologyToClass;
+        private readonly IMassiveOntologyToClass mMassiveOntologyToClass;
 
         /// <summary>
         /// Lista con los grafos simples para autocompletar configurados en el XML.
@@ -148,6 +154,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// La ontología cuyos elementos se están editando
         /// </summary>
         private Ontologia mOntologiaEntidadSecundaria;
+
+        /// <summary>
+        /// Tipo de acceso a esta página a los usuarios con diferentes permisos
+        /// </summary>
+        private TipoAccesoObjetosConocimiento mAcceso;
 
         #endregion
 
@@ -176,9 +187,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult Index()
         {
+            mAcceso = ComprobarPermisosUsuarioNoAdministrador();
+            if (mAcceso.Equals(TipoAccesoObjetosConocimiento.SinAcceso))
+            {
+                return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto));
+            }
+
             // Añadir clase para el body del Layout
             ViewBag.BodyClassPestanya = "grafo-de-conocimiento edicion edicionObjetos no-max-width-container";
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
@@ -186,6 +203,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             // Establecer el título para el header de DevTools                       
             ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO");
             ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "OBJETOSDECONOCIMIENTO/ONTOLOGIAS");
+            if (mAcceso.Equals(TipoAccesoObjetosConocimiento.SoloSecundarias))
+            {
+                ViewBag.HideLeftNavigationPanel = "true";
+            }
 
             // Establecer en el ViewBag el idioma por defecto
             ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
@@ -212,7 +233,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult CrearOntologia(EditOntologyViewModel Ontologia)
         {
             bool iniciado = false;
@@ -365,7 +386,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                                 if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                                 {
-                                    throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                                    throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                                 }
                             }
 
@@ -410,13 +431,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 objetoConocimientoModel.Ontologia = Ontologia.Name.Replace(".owl", string.Empty);
                 objetoConocimientoModel.Name = objetoConocimientoModel.Ontologia;
                 objetoConocimientoModel.GrafoActual = Ontologia.Name;
-            }           
+            }
 
             return PartialView("_EdicionObjetoConocimiento", objetoConocimientoModel);
         }
 
         [HttpGet]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult DownloadVersion(Guid? ontologyID, string copyName, string ontologyName)
         {
             if (!string.IsNullOrEmpty(copyName) && ontologyID.HasValue)
@@ -441,9 +462,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult GuardarEdicionObjetoConocimiento(EditarObjetoConocimientoYOntologiaModel ObjetoConocimiento)
         {
+            GuardarLogAuditoria();
             bool iniciado = false;
             try
             {
@@ -496,8 +518,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     proyAD.TerminarTransaccion(false);
                 }
-
-                return GnossResultERROR(ex.Message);
+                string mensaje = $"Error en el objeto de conocimiento {UtilCadenas.ObtenerTextoDeIdioma(ObjetoConocimiento.ObjetoConocimiento.Name, IdiomaUsuario, IdiomaPorDefecto)} {ex.Message}";
+                return GnossResultERROR(mensaje);
             }
 
             contrObjetosConocim.InvalidarCaches(UrlIntragnoss);
@@ -513,9 +535,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult EliminarObjetoConocimiento(Guid DocumentoId, string Id)
         {
+            GuardarLogAuditoria();
             bool iniciado = false;
             try
             {
@@ -531,13 +554,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string nombreOntologia = $"{Id}.owl";
             bool esPrincipal = false;
             ObjetoConocimientoModel objetoConocimiento = contrObjetosConocim.CargarObjetoConocimiento(nombreOntologia);
-            
-            if(objetoConocimiento != null)
+
+            if (objetoConocimiento != null)
             {
                 objetoConocimiento.Deleted = true;
                 esPrincipal = true;
             }
-            
+
             EditOntologyViewModel ontologyBorrar = contrObjetosConocim.EliminarObjetoConocimientoOntologia(DocumentoId, Id, iniciado, esPrincipal);
 
             if (iniciado)
@@ -559,12 +582,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return GnossResultOK();
         }
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult DownloadClasses()
         {
             Dictionary<string, string> dicPref = new Dictionary<string, string>();
             Dictionary<string, KeyValuePair<Ontologia, byte[]>> diccionarioOntologias = new Dictionary<string, KeyValuePair<Ontologia, byte[]>>();
-            List<string> listaIdiomas = mConfigService.ObtenerListaIdiomas();
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
+
             foreach (var ontologiaPrimaria in DescargaClasesModel.Templates)
             {
                 if (!ontologiaPrimaria.OntologyName.Equals("dbpedia"))
@@ -579,6 +604,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         if (!dicPref.ContainsKey(key))
                         {
                             dicPref.Add(key, ontologia.NamespacesDefinidos[key]);
+
                         }
                     }
                     diccionarioOntologias.Add(ontologiaPrimaria.OntologyName, new KeyValuePair<Ontologia, byte[]>(ontologia, bytesXmlOntologia));
@@ -689,12 +715,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult DownloadClassesJava()
         {
             Dictionary<string, string> dicPref = new Dictionary<string, string>();
             Dictionary<string, KeyValuePair<Ontologia, byte[]>> diccionarioOntologias = new Dictionary<string, KeyValuePair<Ontologia, byte[]>>();
-            List<string> listaIdiomas = mConfigService.ObtenerListaIdiomas();
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
             foreach (var ontologiaPrimaria in DescargaClasesModel.Templates)
             {
                 if (!ontologiaPrimaria.OntologyName.Equals("dbpedia"))
@@ -890,7 +917,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             // return PartialView("_partial-views/_ontology-secondary-list-detail-item", mSecondaryEntityModel); *@
             // Indicar que el item se va a editar y no es nuevo
             ViewBag.isNewCreation = "true";
-            return PartialView("_partial-views/_ontology-secondary-list-item", mSecondaryEntityModel);            
+            return PartialView("_partial-views/_ontology-secondary-list-item", mSecondaryEntityModel);
         }
 
         /// <summary>
@@ -905,7 +932,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             CargarInicial_EntSecund();
             CrearEditarIntanciaOntologiaSecundaria(Grafo, false, SujetoEntidad);
-            
+
             // Indicar que el item se va a editar y no es nuevo            
             ViewBag.isNewCreation = "false";
             return PartialView("_partial-views/_ontology-secondary-list-detail-item", mSecondaryEntityModel);
@@ -921,6 +948,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         public ActionResult GuardarElementoEntidadSecundaria(string SujetoEntidad, string Grafo, bool ElementoNuevo, string Rdf)
         {
+            GuardarLogAuditoria();
             string tildes = "[áéíóúöüÁÉÍÓÚÖÜ]";
             if (!string.IsNullOrEmpty(SujetoEntidad))
             {
@@ -936,6 +964,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         public ActionResult EliminarElementoEntidadSecundaria(string Grafo, string SujetoEntidad)
         {
+            GuardarLogAuditoria();
             EliminarPersonalizacionVistas();
 
             CargarInicial_EntSecund();
@@ -952,14 +981,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 else
                 {
                     return GnossResultERROR(ex.Message);
-                }                
+                }
             }
 
             return GnossResultOK("El elemento se ha borrado correctamente");
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
+        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
         public ActionResult HistorialFicheros(Guid ontoID)
         {
             OntologicalTemplatesAdministrationViewModel viewModel = new OntologicalTemplatesAdministrationViewModel() { OntologyID = ontoID };
@@ -1002,6 +1031,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>Acción resultado</returns>
         private ActionResult GuardarIntanciaOntologiaSecundaria(string pSujeto, string pGrafo, bool pElementoNuevo, string pRdf)
         {
+            GuardarLogAuditoria();
             CrearEditarIntanciaOntologiaSecundaria(pGrafo, pElementoNuevo, pSujeto);
             List<ElementoOntologia> entidadesGuardar = mSemController.RecogerValoresRdf(HttpUtility.HtmlDecode(pRdf), null);
 
@@ -1050,11 +1080,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             facetadoCL.Dispose();
 
             // Pasar en el ViewBag el sujeto necesario para la vista 
-            ViewBag.SujetoEnt = mSecondaryEntityModel.SecondaryEntities.SecondaryInstancesEditables.Keys;                        
+            ViewBag.SujetoEnt = mSecondaryEntityModel.SecondaryEntities.SecondaryInstancesEditables.Keys;
             return PartialView("_partial-views/_ontology-secondary-list", mSecondaryEntityModel);
         }
 
-        private bool GuardarEdicionOntologia(EditOntologyViewModel Ontologia, bool pIniciado)
+        private void GuardarEdicionOntologia(EditOntologyViewModel Ontologia, bool pIniciado)
         {
             Guid documentoID = Ontologia.OntologyID;
             Ontologia.Description = HttpUtility.UrlDecode(Ontologia.Description);
@@ -1072,8 +1102,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 try
                 {
-                    ControladorIdentidades controladorIdentidades = new ControladorIdentidades(IdentidadActual.GestorIdentidades, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-
                     string rutaFichero = GuardarArchivos(Ontologia, documentoID, ref AgregadoCSS, ref AgregadoIMG, ref AgregadoJS, ref error);
 
                     if (!string.IsNullOrEmpty(error))
@@ -1086,7 +1114,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     if (rutaFichero != null && docCN.ExisteOtraOntologiaEnProyecto(ProyectoSeleccionado.Clave, rutaFichero, documentoID))
                     {
                         docCN.Dispose();
-                        return false;
                     }
 
                     docCN.Dispose();
@@ -1145,21 +1172,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         }
                     }
 
-                    if (!Ontologia.Principal && Ontologia.EditXML) //Se ha pulsado el botón para interacturar con el archivo de configuración.
+                    if (!Ontologia.Principal && Ontologia.EditXML && !Ontologia.NoUseXML) //Se ha pulsado el botón para interacturar con el archivo de configuración.
                     {
-                        if (!Ontologia.NoUseXML)//Hemos subido XML a la entidad secundaria, generico o no.
-                        {
-                            ProyectoConfigExtraSem filaConfigSem = new ProyectoConfigExtraSem();
-                            filaConfigSem.ProyectoID = ProyectoSeleccionado.Clave;
-                            filaConfigSem.UrlOntologia = GestorDocumental.ListaDocumentos[documentoID].FilaDocumento.Enlace;
-                            filaConfigSem.SourceTesSem = documentoID.ToString();
-                            filaConfigSem.Tipo = (short)TipoConfigExtraSemantica.EntidadSecundaria;
-                            filaConfigSem.Nombre = GestorDocumental.ListaDocumentos[documentoID].FilaDocumento.Titulo;
-                            filaConfigSem.Editable = true;
-                            ProyectoConfigSemDataWrapperProyecto.ListaProyectoConfigExtraSem.Add(filaConfigSem);
-                            mEntityContext.ProyectoConfigExtraSem.Add(filaConfigSem);
-                        }
+                        ProyectoConfigExtraSem filaConfigSem = new ProyectoConfigExtraSem();
+                        filaConfigSem.ProyectoID = ProyectoSeleccionado.Clave;
+                        filaConfigSem.UrlOntologia = GestorDocumental.ListaDocumentos[documentoID].FilaDocumento.Enlace;
+                        filaConfigSem.SourceTesSem = documentoID.ToString();
+                        filaConfigSem.Tipo = (short)TipoConfigExtraSemantica.EntidadSecundaria;
+                        filaConfigSem.Nombre = GestorDocumental.ListaDocumentos[documentoID].FilaDocumento.Titulo;
+                        filaConfigSem.Editable = true;
+                        ProyectoConfigSemDataWrapperProyecto.ListaProyectoConfigExtraSem.Add(filaConfigSem);
+                        mEntityContext.ProyectoConfigExtraSem.Add(filaConfigSem);
                     }
+
                     List<ProyectoConfigExtraSem> listaProyectoConfigExtraSemBorrar = ProyectoConfigSemDataWrapperProyecto.ListaProyectoConfigExtraSem.Where(proy => proy.UrlOntologia.Equals(GestorDocumental.ListaDocumentos[documentoID].FilaDocumento.Enlace) && proy.Tipo.Equals((short)TipoConfigExtraSemantica.GrafoSimple)).ToList();
                     foreach (ProyectoConfigExtraSem fila in listaProyectoConfigExtraSemBorrar)
                     {
@@ -1199,7 +1224,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             {
                                 if (prop.Contains("="))
                                 {
-                                    string[] valores = prop.Split(new char[] { '=' });
+                                    string[] valores = prop.Split('=');
                                     dicPropsOnto.Add(valores[0], valores[1]);
                                 }
                             }
@@ -1263,7 +1288,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             HttpResponseMessage resultado = AdministrarIntegracionContinua(Ontologia, documentoID);
                             if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                             {
-                                throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                                throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                             }
                         }
 
@@ -1279,7 +1304,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             proyAD.TerminarTransaccion(false);
                         }
                         GuardarLogError(ex.ToString());
-                        return false;
                     }
 
                     if (rutaActualizarDocsOnto != null)
@@ -1295,17 +1319,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     docCL.Dispose();
 
                     mGnossCache.VersionarCacheLocal(ProyectoSeleccionado.Clave);
-
-                    return true;
                 }
                 catch (Exception ex)
                 {
                     GuardarLogError(ex.ToString());
-                    throw new Exception(ex.Message,ex);
+                    throw new ExcepcionWeb(ex.Message, ex);
                 }
             }
-
-            return true;
         }
 
         /*
@@ -1698,14 +1718,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             }
                             Dictionary<string, List<string>> selectores = new Dictionary<string, List<string>>();
                             selectores = ObtenerSelectores(buffer1);
+                            List<AD.EntityModel.Models.Documentacion.Documento> documentos = mEntityContext.Documento.Where(item => selectores.Keys.Contains(item.Enlace)).ToList();
                             foreach (string grafo in selectores.Keys)
                             {
+                                bool esSecundaria = EsEntidadSecundaria(documentos, grafo);
                                 foreach (string selector in selectores[grafo])
                                 {
                                     FacetaEntidadesExternas facetaEntidad = new FacetaEntidadesExternas();
                                     facetaEntidad.Grafo = grafo;
                                     facetaEntidad.BuscarConRecursividad = true;
-                                    facetaEntidad.EsEntidadSecundaria = false;
+                                    facetaEntidad.EsEntidadSecundaria = esSecundaria;
                                     facetaEntidad.EntidadID = $"{UrlIntragnoss}items/{selector}";
                                     facetaEntidad.OrganizacionID = UsuarioActual.OrganizacionID;
                                     facetaEntidad.ProyectoID = UsuarioActual.ProyectoID;
@@ -1811,6 +1833,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 throw;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Obtenemos dada una lista de documentos si la entidad pasada por parámetro es secundaria o no
+        /// </summary>
+        /// <param name="pDocumentos">Lista de documentos entre los que está la entidad buscada</param>
+        /// <param name="pEntidad">Entidad a buscar</param>
+        /// <returns>Si la entidad pasada por parametro es principal o no</returns>
+        private bool EsEntidadSecundaria(List<AD.EntityModel.Models.Documentacion.Documento> pDocumentos, string pEntidad)
+        {
+            return ((TiposDocumentacion)pDocumentos.Where(item => item.Enlace.Equals(pEntidad)).Select(item => item.Tipo).FirstOrDefault()) == TiposDocumentacion.OntologiaSecundaria;
         }
 
         /// <summary>
@@ -2279,15 +2312,63 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             CallFileService fileService = new CallFileService(mConfigService, mLoggingService);
 
-            string[] archivos = fileService.ObtenerHistorialOntologia(pOntologiaID);
+            string[] archivos = fileService.ObtenerHistorialOntologia(pOntologiaID).OrderByDescending(item => item).ToArray();
 
-            if (archivos != null && archivos.Length > 0)
+            if (archivos.Length > 0)
             {
                 listadoCopias = new List<string>(archivos);
             }
 
 
             return listadoCopias;
+        }
+
+        private TipoAccesoObjetosConocimiento ComprobarPermisosUsuarioNoAdministrador()
+        {
+            if (ProyectoSeleccionado.EsAdministradorUsuario(UsuarioActual.UsuarioID))
+            {
+                return TipoAccesoObjetosConocimiento.Administrador;
+            }
+
+            Guid proyectoOntologiasID = mControladorBase.UsuarioActual.ProyectoID;
+            if (ParametroProyecto.ContainsKey(ParametroAD.ProyectoIDPatronOntologias))
+            {
+                proyectoOntologiasID = new Guid(ParametroProyecto[ParametroAD.ProyectoIDPatronOntologias]);
+            }
+            DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DataWrapperDocumentacion docOntoDW = docCL.ObtenerOntologiasProyecto(proyectoOntologiasID, true);
+            List<AD.EntityModel.Models.Documentacion.Documento> filasDoc = docOntoDW.ListaDocumento.Where(documento => documento.Tipo.Equals((short)TiposDocumentacion.OntologiaSecundaria)).ToList();
+
+            foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc)
+            {
+                if (filaDoc.Tipo.Equals((short)TiposDocumentacion.OntologiaSecundaria) && ComprobarPermisoEnOntologiaDeProyectoEIdentidad(filaDoc.DocumentoID))
+                {
+                    return TipoAccesoObjetosConocimiento.SoloSecundarias;
+                }
+            }
+
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            docOntoDW.Merge(documentacionCN.ObtenerEditoresDocumentos(filasDoc.Select(x => x.DocumentoID).ToList()));
+            //DataWrapperIdentidad dwIdentidad = identidadCN.ObtenerGruposParticipaIdentidad(IdentidadActual.Clave, true);
+            //dwIdentidad.Merge(identidadCN.ObtenerGruposParticipaIdentidad(IdentidadActual.IdentidadOrganizacion.Clave, true));
+            Dictionary<Guid, String> gruposIdentidad = identidadCN.ObtenerGruposIDParticipaPerfil(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
+            Dictionary<Guid, String> gruposIdentidadOrg = identidadCN.ObtenerGruposIDParticipaPerfil(IdentidadActual.IdentidadOrganizacion.Clave, IdentidadActual.IdentidadOrganizacion.IdentidadMyGNOSS.Clave);
+
+            foreach (AD.EntityModel.Models.Documentacion.DocumentoRolGrupoIdentidades documentoRol in docOntoDW.ListaDocumentoRolGrupoIdentidades)
+            {
+                if (identidadCN.ParticipaIdentidadEnGrupo(IdentidadActual.Clave, documentoRol.GrupoID) || gruposIdentidad.ContainsKey(documentoRol.GrupoID) || gruposIdentidadOrg.ContainsKey(documentoRol.GrupoID))
+                {
+                    documentacionCN.Dispose();
+                    identidadCN.Dispose();
+                    return TipoAccesoObjetosConocimiento.SoloSecundarias;
+                }
+            }
+
+            documentacionCN.Dispose();
+            identidadCN.Dispose();
+
+            return TipoAccesoObjetosConocimiento.SinAcceso;
         }
 
         #endregion
@@ -2471,7 +2552,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             mProyectoEntidadSecundariaDW = proyCN.ObtenerConfiguracionSemanticaExtraDeProyecto(ProyectoSeleccionado.Clave);
 
-            ProyectoConfigExtraSem filaConfig = mProyectoEntidadSecundariaDW.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(pGrafo));
+            ProyectoConfigExtraSem filaConfig = mProyectoEntidadSecundariaDW.ListaProyectoConfigExtraSem.Find(proy => proy.UrlOntologia.Equals(pGrafo));
 
             Guid ontologiaID = new Guid(filaConfig.SourceTesSem);
             Ontologia ontologia = ObtenerObjetoOntologia(ontologiaID);
@@ -2505,6 +2586,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             mSecondaryEntityModel.SecondaryEntities.SecondaryOntologyNameSelected = docCN.ObtenerTituloDocumentoPorID(ontologiaID);
+            // Propiedad que representa el título de la ontología                        
+            mSecondaryEntityModel.SecondaryEntities.PropertyNameRepresentOntologyTitle = $"{ontologia.ConfiguracionPlantilla.PropiedadTitulo.Key} | {ontologia.ConfiguracionPlantilla.PropiedadTitulo.Value}";
             docCN.Dispose();
         }
 
@@ -2540,16 +2623,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
             //Comprobamos en cada proyecto donde está compartida la ontología si se usa la entidad:
-            foreach (Guid proyectoID in docOnto.ListaProyectos)
+            foreach (Guid proyID in docOnto.ListaProyectos)
             {
-                FacetadoDS facDS = facCN.ObtenerTripletasConObjeto(proyectoID.ToString(), pSujeto.ToLower());
+                FacetadoDS facDS = facCN.ObtenerTripletasConObjeto(proyID.ToString(), pSujeto.ToLower());
 
                 foreach (DataRow fila in facDS.Tables[0].Rows)
                 {
                     if ((string)fila[1] != "http://gnoss/hasEntidad")
                     {
                         string error = UtilIdiomas.GetText("COMADMIN", "ENTIDADSECUNDNOBORRABLE", pSujeto, pGrafo);
-                        throw new Exception(error);
+                        throw new ExcepcionWeb(error);
                     }
                 }
 
@@ -2558,10 +2641,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             ControladorDocumentacion.BorrarRDFDeVirtuoso(idHasEntidadPrincipal, pGrafo, UrlIntragnoss, "acid", ProyectoSeleccionado.Clave, true);
 
-            foreach (Guid proyectoID in docOnto.ListaProyectos)
+            foreach (Guid proyID in docOnto.ListaProyectos)
             {
-                ControladorDocumentacion.BorrarRDFDeVirtuoso(idHasEntidadPrincipal, proyectoID.ToString().ToLower(), UrlIntragnoss, "acid", ProyectoSeleccionado.Clave, true);
-                facCN.BorrarTripleta(proyectoID.ToString().ToLower(), $"<{UrlIntragnoss}{pGrafo.ToLower()}>", "<http://gnoss/hasEntidad>", $"<{UrlIntragnoss}{idHasEntidadPrincipal}>", true);
+                ControladorDocumentacion.BorrarRDFDeVirtuoso(idHasEntidadPrincipal, proyID.ToString().ToLower(), UrlIntragnoss, "acid", ProyectoSeleccionado.Clave, true);
+                facCN.BorrarTripleta(proyID.ToString().ToLower(), $"<{UrlIntragnoss}{pGrafo.ToLower()}>", "<http://gnoss/hasEntidad>", $"<{UrlIntragnoss}{idHasEntidadPrincipal}>", true);
             }
         }
 
@@ -2581,11 +2664,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else
             {
-                pSujetoEntidad = "entidadsecun_" + pSujetoEntidad.Substring(pSujetoEntidad.LastIndexOf("/") + 1).ToLower();
+                pSujetoEntidad = $"entidadsecun_{pSujetoEntidad.Substring(pSujetoEntidad.LastIndexOf("/") + 1).ToLower()}";
             }
 
             GestionOWL gestorOWL = new GestionOWL();
-            gestorOWL.UrlOntologia = $"{BaseURLFormulariosSem}/Ontologia/{pGrafo}#"; ;
+            gestorOWL.UrlOntologia = $"{BaseURLFormulariosSem}/Ontologia/{pGrafo}#";
             gestorOWL.NamespaceOntologia = GestionOWL.NAMESPACE_ONTO_GNOSS;
 
             MemoryStream buffer = new MemoryStream(ControladorDocumentacion.ObtenerRDFDeVirtuoso(pSujetoEntidad, pGrafo, UrlIntragnoss, pGrafo, gestorOWL.NamespaceOntologia, pOntologia, null, false));
@@ -2635,13 +2718,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 string mensajeError = $"Error al leer el XML de la ontología con ID {pOntologiaID}:{Environment.NewLine}{ex}";
                 GuardarLogErrorAJAX(mensajeError);
-                throw;
+                throw new ExcepcionWeb(mensajeError);
             }
 
             if (arrayOnto == null)
             {
                 string mensajeError = "No ha sido posible gererar el formulario porque el array de la ontología es nulo";
-                throw new Exception(mensajeError);
+                throw new ExcepcionWeb(mensajeError);
             }
 
             try
@@ -2656,7 +2739,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 string mensajeError = $"La ontología con ID {pOntologiaID} no es correcta:{Environment.NewLine}{ex}";
                 GuardarLogErrorAJAX(mensajeError);
-                throw;
+                throw new ExcepcionWeb(mensajeError);
             }
 
             if (ontologia.ConfiguracionPlantilla.ListaIdiomas.Count == 0)
@@ -2764,15 +2847,101 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarObjetosConocimientoViewModel();
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
                     if (ParametrosGeneralesRow.IdiomasDisponibles)
                     {
-                        mPaginaModel.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                     }
                     else
                     {
                         mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
-                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                    }
+
+                    mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
+                    mPaginaModel.ListaOntologiasCom = new Dictionary<string, string>();
+
+                    DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
+                    DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    Guid proyectoIDPatronOntologias = Guid.Empty;
+                    if (ParametroProyecto.ContainsKey("ProyectoIDPatronOntologias"))
+                    {
+                        Guid.TryParse(ParametroProyecto["ProyectoIDPatronOntologias"], out proyectoIDPatronOntologias);
+                        documentacionCN.ObtenerOntologiasProyecto(proyectoIDPatronOntologias, dataWrapperDocumentacion, false, true, true);
+                    }
+
+                    documentacionCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, dataWrapperDocumentacion, false, true, true);
+
+                    List<AD.EntityModel.Models.Documentacion.Documento> filasDoc = new List<AD.EntityModel.Models.Documentacion.Documento>();
+
+                    if (mAcceso.Equals(TipoAccesoObjetosConocimiento.SoloSecundarias))
+                    {
+                        List<AD.EntityModel.Models.Documentacion.Documento> documentos = dataWrapperDocumentacion.ListaDocumento.Where(documento => documento.Tipo.Equals((short)TiposDocumentacion.OntologiaSecundaria)).ToList();
+                        IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        dataWrapperDocumentacion.Merge(documentacionCN.ObtenerEditoresDocumentos(documentos.Select(x => x.DocumentoID).ToList()));
+                        Dictionary<Guid, String> gruposIdentidad = identidadCN.ObtenerGruposIDParticipaPerfil(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
+                        Dictionary<Guid, String> gruposIdentidadOrg = identidadCN.ObtenerGruposIDParticipaPerfil(IdentidadActual.IdentidadOrganizacion.Clave, IdentidadActual.IdentidadOrganizacion.IdentidadMyGNOSS.Clave);
+
+                        foreach (AD.EntityModel.Models.Documentacion.DocumentoRolGrupoIdentidades documentoRol in dataWrapperDocumentacion.ListaDocumentoRolGrupoIdentidades)
+                        {
+                            if (identidadCN.ParticipaIdentidadEnGrupo(IdentidadActual.Clave, documentoRol.GrupoID) || gruposIdentidad.ContainsKey(documentoRol.GrupoID) || gruposIdentidadOrg.ContainsKey(documentoRol.GrupoID))
+                            {
+                                filasDoc.Add(dataWrapperDocumentacion.ListaDocumento.Where(doc => doc.DocumentoID.Equals(documentoRol.DocumentoID) && !doc.Eliminado).FirstOrDefault());
+                            }
+                        }
+
+                        identidadCN.Dispose();
+                    }
+                    else
+                    {
+                        filasDoc = dataWrapperDocumentacion.ListaDocumento.Where(doc => doc.Tipo == (short)TiposDocumentacion.Ontologia || doc.Tipo == (short)TiposDocumentacion.OntologiaSecundaria && !doc.Eliminado).ToList();
+                    }
+
+                    documentacionCN.Dispose();
+                    mPaginaModel.ListaObjetosConocimiento = new List<ObjetoConocimientoModel>();
+
+                    ControladorObjetosConocimiento contrObjetosConocim = new ControladorObjetosConocimiento(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+
+                    foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc)
+                    {
+                        var enlace = filaDoc.Enlace.Replace(".owl", "");
+                        if (!mPaginaModel.ListaOntologiasCom.Any(x => string.Compare(x.Key, enlace, true) == 0))
+                        {
+                            mPaginaModel.ListaOntologiasCom.Add(enlace, filaDoc.Titulo);
+                        }
+                        ObjetoConocimientoModel objetoConocimiento = contrObjetosConocim.CargarObjetoConocimiento(filaDoc);
+
+                        if (objetoConocimiento != null && !mPaginaModel.ListaObjetosConocimiento.Any(o => o.Ontologia == objetoConocimiento.Ontologia))
+                        {
+                            mPaginaModel.ListaObjetosConocimiento.Add(objetoConocimiento);
+                        }
+                    }
+                }
+
+                mPaginaModel.ListaObjetosConocimiento = mPaginaModel.ListaObjetosConocimiento.OrderByDescending(item => item.EsObjetoPrimario).ThenBy(item => item.Name).ToList();
+
+                return mPaginaModel;
+            }
+        }
+
+        private AdministrarObjetosConocimientoViewModel PaginaModelEntidadesSecundarias
+        {
+            get
+            {
+                if (mPaginaModel == null)
+                {
+                    mPaginaModel = new AdministrarObjetosConocimientoViewModel();
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+
+                    if (ParametrosGeneralesRow.IdiomasDisponibles)
+                    {
+                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+                    }
+                    else
+                    {
+                        mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
+                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
                     }
 
                     mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
@@ -2928,5 +3097,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public Guid OntologyID { get; set; }
         public List<string> VersionList { get; set; }
         public string OntologyName { get; set; }
+    }
+
+    public enum TipoAccesoObjetosConocimiento
+    {
+        Administrador = 0,
+        SoloSecundarias = 1,
+        SinAcceso = 2
     }
 }

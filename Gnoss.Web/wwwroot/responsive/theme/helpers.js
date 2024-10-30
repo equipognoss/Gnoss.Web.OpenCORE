@@ -51,7 +51,8 @@ const stringToBoolean = (stringValue) => {
     switch(stringValue?.toLowerCase()?.trim()){
         case "True":
 		case "true": 
-        case "yes": 
+        case "yes":
+		case "si": 
         case "1": 
           return true;
 
@@ -466,6 +467,32 @@ function scrollInModalView(jqueryElmentToScrollTo, modalIdToScroll = undefined, 
 }
 
 
+/**
+ * Método para eliminar un elemento del DOM de una manera suave y no tan brusca.
+ * @param {*} jqueryObject Objeto jquery que se eliminará de manera suave
+ * @param {*} callback Función que se ejecutará, si se proporciona, justo después de la eliminación del elemento
+ */
+function deleteJqueryObjectSmooth(jqueryObject, callback = undefined){
+	jqueryObject.fadeOut("normal", function() {
+		// Obtener el padre del elemento a eliminar por si fuera necesario
+		const parentElement = $(this).parent();		
+		$(this).remove();
+
+		/*
+		setTimeout(function(){
+			if (typeof callback === "function") {
+				// Llamar a la función de callback si se proporciona
+				callback();
+			}
+		},500);       
+		*/
+		if (typeof callback === "function") {
+			// Llamar a la función de callback si se proporciona pasándole el padre del elemento que ha sido eliminado
+			callback(parentElement);
+		}				 
+	});   
+}
+
 
 /**
  * Método para sustituir un texto de entrada en base a la búsqueda realizada. Utilizado por jqueryAutocomplete cuando se está introduciendo texto en el input de tipo
@@ -524,13 +551,24 @@ const comportamientoInicial = {
 	 */
 	iniciarSelects2: function (pParams) {		
 		// Configurar Selects2
-		this.select2 = $("body").find('.js-select2');
+		this.select2ClassName = "js-select2";
+		this.select2 = $("body").find(`.${this.select2ClassName}`);
 		this.defaultOptions = {
 				minimumResultsForSearch: 10,
 				width: '100%',
 		};	
 		// Montar Selects
 		this.select2.select2(this.defaultOptions);	
+		// Ejecutar el escuchador
+		this.setupListenerForSelects2();
+	},
+
+	setupListenerForSelects2: function () {	
+		const that = this;	
+        configEventByClassName(`${this.select2ClassName}`, function(element){
+			const $cmbSelect2 = $(element);            
+			$cmbSelect2.length > 0 && $cmbSelect2.select2(that.defaultOptions);
+        });		
 	},
 	
 	/**
@@ -540,177 +578,43 @@ const comportamientoInicial = {
 		// Código del idioma actual de la plataforma
 		App.LANGUAGE_CODE = $("#inpt_Idioma").val();
 	},
-
-	/**
-	 * Método para resaltar en la página las posibles coincidencias buscadas por el usuario a través del buscador lateral de DevTools.
-	 * Este método se ejecutará al cargar la página. Si existe un parámetro en la url de "helpersearcher", se buscarán posibles coincidencias en la web cargada.
-	 */
-	highlightHelperResults: function(){
-		// Comprobar si hay parámetros para búsqueda "ayudada/sugerida" 
-		const queryString = new URL(location.href).searchParams.get('helpersearcher')
-
-		if (queryString != undefined && queryString.length > 3){	
-			const myHilitor = new Hilitor("mainContent");
-			myHilitor.setMatchType("left");
-			// Aplicar búsqueda para resaltar las palabras
-  			myHilitor.apply(queryString);
-			setTimeout(function () {
-				myHilitor.remove();
-			},5000);
-
-		}
-	},
 };
-
-/**
- * Función para resaltar elementos en una página. Ej. Usado para sombrear o resaltar palabras que coincidan con la búsqueda realizada 
- * por el usuario desde el menú lateral de navegación (Búsqueda asistida)
- * @param {*} id : ID del html donde se deseará buscar. Si no se indica nada, tomará el body de la web.
- * @param {*} tag 
- */
-function Hilitor(id, tag){
-  // private variables
-  var targetNode = document.getElementById(id) || document.body;
-  var hiliteTag = tag || "MARK";
-  var skipTags = new RegExp("^(?:" + hiliteTag + "|SCRIPT|FORM|SPAN)$");
-  var colors = ["#006eff"];
-  var wordColor = [];
-  var colorIdx = 0;
-  var matchRegExp = "";
-  var openLeft = false;
-  var openRight = false;
-
-  // characters to strip from start and end of the input string
-  var endRegExp = new RegExp('^[^\\w]+|[^\\w]+$', "g");
-
-  // characters used to break up the input string into words
-  var breakRegExp = new RegExp('[^\\w\'-]+', "g");
-
-  this.setEndRegExp = function(regex) {
-    endRegExp = regex;
-    return endRegExp;
-  };
-
-  this.setBreakRegExp = function(regex) {
-    breakRegExp = regex;
-    return breakRegExp;
-  };
-
-  this.setMatchType = function(type)
-  {
-    switch(type)
-    {
-      case "left":
-        this.openLeft = false;
-        this.openRight = true;
-        break;
-
-      case "right":
-        this.openLeft = true;
-        this.openRight = false;
-        break;
-
-      case "open":
-        this.openLeft = this.openRight = true;
-        break;
-
-      default:
-        this.openLeft = this.openRight = false;
-
-    }
-  };
-
-  this.setRegex = function(input)
-  {
-    input = input.replace(endRegExp, "");
-    input = input.replace(breakRegExp, "|");
-    input = input.replace(/^\||\|$/g, "");
-    if(input) {
-      var re = "(" + input + ")";
-      if(!this.openLeft) {
-        re = "\\b" + re;
-      }
-      if(!this.openRight) {
-        re = re + "\\b";
-      }
-      matchRegExp = new RegExp(re, "i");
-      return matchRegExp;
-    }
-    return false;
-  };
-
-  this.getRegex = function()
-  {
-    var retval = matchRegExp.toString();
-    retval = retval.replace(/(^\/(\\b)?|\(|\)|(\\b)?\/i$)/g, "");
-    retval = retval.replace(/\|/g, " ");
-    return retval;
-  };
-
-  // recursively apply word highlighting
-  this.hiliteWords = function(node)
-  {
-    if(node === undefined || !node) return;
-    if(!matchRegExp) return;
-    if(skipTags.test(node.nodeName)) return;
-
-    if(node.hasChildNodes()) {
-      for(var i=0; i < node.childNodes.length; i++)
-        this.hiliteWords(node.childNodes[i]);
-    }
-    if(node.nodeType == 3) { // NODE_TEXT
-
-      var nv, regs;
-
-      if((nv = node.nodeValue) && (regs = matchRegExp.exec(nv))) {
-
-        if(!wordColor[regs[0].toLowerCase()]) {
-          wordColor[regs[0].toLowerCase()] = colors[colorIdx++ % colors.length];
-        }
-
-        var match = document.createElement(hiliteTag);
-        match.appendChild(document.createTextNode(regs[0]));
-        match.style.backgroundColor = wordColor[regs[0].toLowerCase()];
-        //match.style.color = "#000";
-		match.style.color = "#fff";
-
-        var after = node.splitText(regs.index);
-        after.nodeValue = after.nodeValue.substring(regs[0].length);
-        node.parentNode.insertBefore(match, after);
-
-      }
-    }
-  };
-
-  // remove highlighting
-  this.remove = function()
-  {
-    var arr = document.getElementsByTagName(hiliteTag), el;
-    while(arr.length && (el = arr[0])) {
-      var parent = el.parentNode;
-      parent.replaceChild(el.firstChild, el);
-      parent.normalize();
-    }
-  };
-
-  // start highlighting at target node
-  this.apply = function(input)
-  {
-    this.remove();
-    if(input === undefined || !(input = input.replace(/(^\s+|\s+$)/g, ""))) {
-      return;
-    }
-    if(this.setRegex(input)) {
-      this.hiliteWords(targetNode);
-    }
-    return matchRegExp;
-  };
-
-}
 
 //****************************************************************************************************************/
 // Utiles: Funciones útiles que pueden aprovecharse en Backoffice.
 /*****************************************************************************************************************/
+
+/**
+ * Método para escapar caracteres extraños para evitar inyección de código
+ * @param {*} text Texto a escapar
+ * @returns Devuelve el texto limpio para evitar inyección de código, por ejemplo, en buscadores
+ */
+function escapeHTML(text) {
+	var map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	};
+	return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+/**
+ * Método que devuelve si el texto contiene caracteres HTML a escapar
+ * @param {*} text Texto a analizar
+ * @return {*} Indica si contiene caracteres HTML que es necesario "escapar"
+ */
+function containsEscapeHTML(text) {
+	const specialCharacters = ['&amp;', '&lt;', '&gt;', '&quot;', '&#039;'];
+	for (let i = 0; i < specialCharacters.length; i++) {
+	  if (text.includes(specialCharacters[i])) {
+		return true;
+	  }
+	}
+	return false;
+}
+
 
 
 /**
@@ -772,20 +676,25 @@ function createElementFromHTML(htmlString) {
 	return div;
 }
 
+
 /**
  * Método para copiar un texto al portapapeles y mostrar el aviso al usuario del copiado correcto
- * @param {String} text : Texto que se desea copiar
+* @param {String} text : Texto que se desea copiar
+ * @param {*} notificacion : Texto a mostrar que se desea mostrar cuando se realice el copiado
  * @returns 
  */
-function copyTextToClipBoard(text){
+function copyTextToClipBoard(text, notificacion = undefined){
 	
+
+	notificacion === undefined && "ID copiado al portapapeles";
+
 	if (!navigator.clipboard) {
 		fallbackCopyTextToClipboard(text);
 		return;
 	}
 	navigator.clipboard.writeText(text).then(
 		function () {
-			mostrarNotificacion("success", "ID copiado al portapapeles");
+			mostrarNotificacion("success", notificacion);
 		},
 		function (err) {
 			console.error(err);
@@ -797,21 +706,21 @@ function copyTextToClipBoard(text){
  * Método par copiar texto en el portapapeles. Se ejecutará dentro del método "copyTextToClipBoard" una vez el navegador sea compatible con esta característica.
  * @param {String} text : Texto que se desea copiar en el portapapeles
  */
-function fallbackCopyTextToClipboard(text) {
+function fallbackCopyTextToClipboard(text, notificacion = undefined) {
+	notificacion === undefined && "ID copiado al portapapeles";
+ 
 	const textarea = document.createElement('textarea');
 	textarea.textContent = text;
 	document.body.appendChild(textarea);
-  
 	let selection = document.getSelection();
 	let range = document.createRange();
 	range.selectNode(textarea);
 	selection.removeAllRanges();
 	selection.addRange(range);
-  
 	try {
 		const successful = document.execCommand("copy");
 		if (successful) {
-			mostrarNotificacion("success", "ID copiado al portapapeles");
+			mostrarNotificacion("success", notificacion);
 		}
 	} catch (err) {
 		console.error(err);
@@ -1318,7 +1227,6 @@ function ObtenerAccionesListadoMVC(pUrlPagina) {
 $(document).ready(function() {
     comportamientoInicial.iniciarSelects2();
 	comportamientoInicial.setCurrentLanguage();
-	comportamientoInicial.highlightHelperResults();
 });
 
 //****************************************************************************************************************/
@@ -1412,7 +1320,82 @@ const GnossPeticionAjax = function (
 };
 
 
+/**
+ * Realiza una solicitud AJAX POST a una URL dada y devuelve una Promesa que se resuelve con la respuesta o se rechaza con un error.
+ *
+ * @param {string} url - La URL a la que se enviará la solicitud POST.
+ * @param {Object|FormData} parametros - Los parámetros de la solicitud. Puede ser un objeto de datos o un FormData.
+ * @param {boolean} pTraerJson - Determina si se espera una respuesta JSON (true) o cualquier otro tipo de respuesta (false).
+ * @returns {Promise} Una Promesa que se resuelve con la respuesta del servidor o se rechaza con un error en caso de problemas.
+ *
+ * @example
+ * // Ejemplo de uso:
+ * const url = 'https://ejemplo.com/api/backend';
+ * const parametros = {
+ *   nombre: 'Ejemplo',
+ *   edad: 30,
+ * };
+ *
+ * GnossPeticionAjaxPromise(url, parametros, true)
+ *   .then((respuesta) => {
+ *     console.log('Respuesta del backend:', respuesta);
+ *     // Puedes manejar la respuesta aquí
+ *   })
+ *   .catch((error) => {
+ *     console.error('Error en la solicitud:', error);
+ *     // Puedes manejar el error aquí
+ *   });
+ *   .catch((handleBasicErrorsFromPromise) => {
+ *   // KO
+ *   })
+ *   .finally(() => {
+ *       loadingOcultar();                
+ *   });
+ */
 
+function GnossPeticionAjaxPromise(url, parametros, pTraerJson) {
+	return new Promise((resolve, reject) => {
+	  $.ajax({
+		url: url,
+		type: 'POST',
+		headers: {
+		  Accept: pTraerJson ? 'application/json' : '*/*',
+		},
+		processData: true, // Dejar que jQuery procese los datos
+		contentType: parametros instanceof FormData ? false : 'application/x-www-form-urlencoded',
+		data: parametros,
+
+		success: function (data) {
+			if (data && (data.Status === requestFinishResult.errorNoLogin || data.Status === requestFinishResult.errorInvitado)) {
+				// Rechaza la Promesa con el código de estado ('NOLOGIN' o 'INVITADO')
+				reject(data.Status); 
+			} else {
+				// Resuelve la Promesa con los datos obtenidos
+				resolve(data);
+			}
+		},
+		error: function (error) {
+		  reject(error); // Rechaza la Promesa con el error si lo hay
+		},
+	  });
+	});
+}
+
+/**
+ * Maneja errores básicos de una Promesa, como 'NOLOGIN' e 'INVITADO', mostrando mensajes comunes.
+ *
+ * @param {string} error - El código de error que se va a manejar.
+ * @returns {void}
+ */
+function handleBasicErrorsFromPromise(error) {
+	if (error === requestFinishResult.errorNoLogin) {
+	  // Muestra un mensaje común para 'NOLOGIN'
+	  mostrarNotificacion("error", requestFinishResult.errorNoLoginMessage);	  
+	} else if (error === requestFinishResult.errorInvitado) {
+	  // Muestra un mensaje común para 'invitado'
+	  mostrarNotificacion("error", requestFinishResult.errorInvitadoMessage);
+	}
+}
 
 /**
  * Método similar a getvistaFromUrl. Implementado para evitar posibles errores en Front (Ej: Footer compartido)
@@ -1723,18 +1706,20 @@ const hideInputsWithErrors = function(input){
  *
  * @param  {string} pTipo: Puede ser 'info', 'success', 'warning', 'error'. Será el tipo de mensaje a mostrar. Dependiendo del tipo, se mostrarán los mensajes de colores diferentes.
  * @param  {string} pContenido: Mensaje que se desea mostrar.
+ * @param  {string} pDuration: Duración en milisegundos. Por defecto, si no se proporciona valor, será de 5000
  */
-const mostrarNotificacion = function (pTipo, pContenido) {
-	toastr[pTipo](pContenido, "", {
+const mostrarNotificacion = function (pTipo, pContenido, pDuration = undefined) {
+	const $toast = toastr[pTipo](pContenido, "", {
 		toastClass: "toast themed",
 		positionClass: "toast-bottom-center",
 		target: "body",
 		closeHtml: '<span class="material-icons">close</span>',
 		showMethod: "slideDown",
-		timeOut: 5000,
+		timeOut: pDuration === undefined ? 5000 : pDuration,
 		escapeHtml: false,
 		closeButton: true,
 	});
+    $toast.attr('role', 'status');	
 };
 
 /**
@@ -1742,11 +1727,12 @@ const mostrarNotificacion = function (pTipo, pContenido) {
  * Muestra una máscara de loading ya sea en pantalla completa o dentro de un elemento html deseado.
  * Requiere librería busy-load.
  * @param  {jQueryObject} pJqueryHtmlElemento: Elemento jQuery - Html. Por defecto el loading se mostrará en toda la pantalla.
+ * @param  {jQueryObject} loadingText: Texto que se desea mostrar junto con el loading. Por defecto no se muestra.
  * Si se desea mostrar el loading dentro de un elemento html (Ej: div), proporcionar en pJqueryHtmlElemento el elemento html.
  * Ejemplo de uso
  * https://github.com/piccard21/busy-load
  */
-const loadingMostrar = function (pJqueryHtmlElemento = undefined) {
+const loadingMostrar = function (pJqueryHtmlElemento = undefined, loadingText = undefined) {
 	// Mostrar/ocultar loading por defecto en fullScreen
 	let isFullScreenElement = true;
 
@@ -1769,7 +1755,9 @@ const loadingMostrar = function (pJqueryHtmlElemento = undefined) {
 		animation: "fade", // -> Animación de aparición del Loading
 		containerClass: "mascara-loading", // -> Nombre de la clase para el contenedor del loading
 		containerItemClass: "mi-item-contenedor-mascara-loading",
-		custom: $(customSpinner), // --> Custom spinner de bootstrap
+		custom: $(customSpinner), // --> Custom spinner de bootstrap		
+		text: loadingText != undefined ? loadingText : "",
+		textPosition: "bottom",
 	};
 
 	// Mostrar loading
@@ -1993,6 +1981,9 @@ const filtrarListaItemsConHijos = function (
  */
 const ckEditorRecargarTodos = function () {	
 	const textAreas = $("textarea.cke");
+
+	// METIENDO CKEDITOR V5
+	return;
 
 	ckEditorDestruirTodos();
 
@@ -3824,6 +3815,71 @@ const operativaNestedSortable = {
 		observer.observe(target, config);
 	}
 }
+
+/**
+ * Método para observar la posible aparición de un editor TinyMCE
+ * @param {*} className 
+ * @param {*} callback 
+
+function setupObserverForTinyMCE(className, callback) {
+    // Función recursiva para buscar elementos con la clase deseada
+    function buscarElementos(node) {
+        if (node.nodeType === Node.ELEMENT_NODE && $(node).hasClass(className)) {
+            callback($(node));
+        }
+        node.childNodes.forEach(buscarElementos);
+    }
+
+    // Ejecutar la búsqueda en el documento completo
+    buscarElementos(document.body);
+
+    // Configurar el MutationObserver para observar cambios en el DOM
+    let observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                buscarElementos(node);
+            });
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+*/
+
+/**
+ * Método para observar la posible aparición de un editor TinyMCE
+ * @param {Array} classNames - Lista de clases a observar
+ * @param {Function} callback - Función a ejecutar cuando se detecta una clase
+ */
+function setupObserverForTinyMCE(classNames, callback) {
+    // Función recursiva para buscar elementos con las clases deseadas
+    function buscarElementos(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            classNames.forEach(function(className) {
+                if ($(node).hasClass(className)) {
+                    callback($(node));
+                }
+            });
+        }
+        node.childNodes.forEach(buscarElementos);
+    }
+
+    // Ejecutar la búsqueda en el documento completo
+    buscarElementos(document.body);
+
+    // Configurar el MutationObserver para observar cambios en el DOM
+    let observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                buscarElementos(node);
+            });
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+
+
+
 /*************************************************/
 
 /**

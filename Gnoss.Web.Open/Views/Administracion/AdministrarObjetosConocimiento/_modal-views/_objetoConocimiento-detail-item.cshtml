@@ -169,6 +169,8 @@ Variables
 											/>
 									</div>	
 
+
+
 									@* Nombre corto / Url referente del objeto de conocimiento *@
 									<div class="form-group mb-3">								
 										<input
@@ -177,14 +179,24 @@ Variables
 											value="@Model.ShortNameOntology"
 											data-labeltext = "@Html.GetText("DEVTOOLS","RUTARELATIVA/URLREFERENTEDELOBJETODECONOCIMIENTO")"			
 											data-helptext = "@Html.GetText("DEVTOOLS","URLASOCIADAALOBJETODECONOCIMIENTO")"
+											data-on-input-function="operativaGestionObjetosConocimientoOntologias.handleOnInputChanged(event)"
 											placeholder="Ej: https://www.dominio.es/UrlRelativaObjetoConocimiento/"
 											class="form-control multiIdioma not-outline"																
 											/>
 									</div>	
 								</div>
-					
+
+
+
 								@* Contenedor de Inputs sin multiidioma*@
-								<div class="content-no-multiIdioma">							
+								<div class="content-no-multiIdioma">
+									
+									@* Panel de alerta de reinicio de la aplicación en la plataforma*@
+									<div class="alert alert-warning flex-column pt-3 panelAvisoNecesarioReinicio d-none" role="alert">
+										<span class="title mb-2" style="font-weight: 700">Reinicio necesario</span><p>
+											@Html.GetText("DEVTOOLS", "SIMODIFICASLARUTARELATIVAELCAMBIONOSURTIRAEFECTOHASTAQUESERE")
+										</p>
+									</div>
 
 									@* Grafo *@
 									<div class="form-group mb-3">

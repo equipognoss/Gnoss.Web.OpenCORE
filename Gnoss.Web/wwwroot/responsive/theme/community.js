@@ -809,10 +809,10 @@ var alturizarBodyTamanoFacetas = {
                                                 <ul class="no-list-style">
                                                     <li class="js-anterior-facetas-modal">
                                                         <span class="material-icons">navigate_before</span>
-                                                        <span class="texto">Anteriores</span>
+                                                        <span class="texto">${facetas.anteriores}</span>
                                                     </li>
                                                     <li class="js-siguiente-facetas-modal">
-                                                        <span class="texto">Siguientes</span>
+                                                        <span class="texto">${facetas.siguientes}</span>
                                                         <span class="material-icons">navigate_next</span>
                                                     </li>
                                                 </ul>
@@ -1357,10 +1357,7 @@ const comportamientoOcultarPanelLateral = {
                         // Cambiar el color a primario para destacar del resto de coincidencias encontradas
                         $(this).css("color", "var(--c-primario)");
                         // Indicar que se ha encontrado la keyWord en la sección analizada.
-                        comportamientoHeaderSearchable.keywordFound = true
-                        // Añadir a la url el string buscado
-                        const newUrl = `${refineURL($(this).attr("href"))}?helpersearcher=${cadena}`;
-                        $(this).attr("href", newUrl);                        
+                        comportamientoHeaderSearchable.keywordFound = true                                            
                     }else if (cadena == ""){
                         // Se ha eliminado la búsqueda -> Dejarlo por defecto
                         $(this).parent().removeClass("d-none");
@@ -1370,8 +1367,6 @@ const comportamientoOcultarPanelLateral = {
                         $(this).parent().addClass("d-none");
                         // Dejar el color por defecto
                         $(this).css("color", "");
-                        // Quitar posible enlace modificado previamente para el helpersearcher
-                        $(this).attr("href", refineURL($(this).attr("href")));
                     } 
                     // Restablecemos la búsqueda por subSección
                     comportamientoHeaderSearchable.foundInSubsection = false;           
@@ -1809,7 +1804,13 @@ var PageBuilderEdition = {
                 handle: ".js-action-handle-row",
                 onAdd: function (evt) {
                     var item = $(evt.item);
-                    PageBuilderEdition.columnsEdition.onBasicColumnAdded(evt);
+                    if (!item.hasClass("auto-column")){                        
+                        PageBuilderEdition.columnsEdition.onBasicColumnAdded(evt);                        
+                    }else{
+                        // Añadir columna auto que ocupe el ancho disponible
+                        PageBuilderEdition.columnsEdition.onAutoColumnAdded(evt);                        
+                    }
+                    
                 },
             };
         },
@@ -1825,18 +1826,26 @@ var PageBuilderEdition = {
                 onMove: function (evt) {
                     const to = $(evt.to);
                     const item = $(evt.dragged);
-                    const itemPercent = parseInt(item.attr("data-percent"));
+                    const itemPercent = parseInt(item.data("percent"));
                     const lis = to.find("li.cmscolumn");
 
                     if (lis.length > 0) {
                         let sum = 0;
                         lis.each(function () {
-                            sum += parseInt($(this).attr("data-percent"));
+                            sum += parseInt($(this).data("percent"));
                         });
-
-                        if (sum + itemPercent > 100) {
-                            return false;
-                        }
+                        
+                        // Tener en cuenta las columnas "auto"
+                        if (!item.hasClass("auto-column")){
+                            if (sum + itemPercent > 100) {
+                                return false;
+                            }
+                        }else{
+                            // Espacio mínimo
+                            if (sum >= 83.33) {
+                                return false;                                
+                            }
+                        }                        
                     }
                 },
             };
@@ -1931,6 +1940,77 @@ var PageBuilderEdition = {
         getColumnWidthByPercent: function (percent) {
             return "calc(" + percent + "% - 16px)";
         },
+
+        /**
+         * Método que se ejecuta al añadir una columna de tipo "Auto" para que se rellene el espacio sin usar de la fila
+         * @param {*} event 
+         */
+        onAutoColumnAdded: function(event){                            
+            var item = $(event.item);
+            item.removeClass("builder-item").addClass("cmscolumn");
+            // Crear un Guid para la nueva columna añadida
+            const columnId = guidGenerator();   
+            item.attr("id",columnId);
+
+            // Calcular espacio libre para el tamaño de la columna auto
+            const dataPercent = this.getFreeColumnsAvailableForAutoColumn(item);            
+            const classNameFromFreePercentage = this.getSpanClassFromFreePercentage(dataPercent).replace(/-/g, '');            
+            const columnClassName = `${classNameFromFreePercentage} break`;
+            // Asignar a columnclass y dataPercent
+            item.data("columnclass", columnClassName);
+            item.data("percent",dataPercent);
+            item.data("spanclass", classNameFromFreePercentage);
+
+            // Asignar el porcentaje para la vista preliminar del elemento en el editor           
+            item.css("width", this.getColumnWidthByPercent(dataPercent));
+            
+            var columnTemplate = this.getColumnWrapHtmlTemplate();
+            item.empty().append(columnTemplate);
+            // Indicar que hay cambios en el CMS para posibilitar el guardado
+            operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);            
+            PageBuilderManagement.init();                        
+        },
+
+        /**
+         * Devuelve el nº de columnas disponibles de la fila y en base al nº de columnas disponible, devolver la clase o spanClass necesario
+         * @param {*} item Item que se ha arrastrado. En este caso, el de tipo "auto"
+         */
+        getFreeColumnsAvailableForAutoColumn: function(item){
+            // Obtener el contenedor donde se ha alojado la celda auto
+            const columnsListSpace = item.closest(".columns-list");
+            const siblingsColumns = columnsListSpace.children("li.cmscolumn").not(item);
+            let dataPercentageForAutoColumn = 100;
+            let rowPercentageUsage = 0;
+
+            if (siblingsColumns.length > 0) {
+                siblingsColumns.each(function () {
+                    rowPercentageUsage += parseFloat($(this).attr("data-percent"));
+                });
+            }      
+            const freePercentage = dataPercentageForAutoColumn - rowPercentageUsage;
+            console.log(freePercentage);
+            return freePercentage;
+        },
+
+        /**
+         * Devuelve la clase span correspondiente en base al porcentaje libre.
+         * @param {number} freePercentage El porcentaje libre en la fila.
+         * @returns {string} La clase span correspondiente.
+         */
+        getSpanClassFromFreePercentage: function (freePercentage) {
+            if (freePercentage >= 100) return 'span-1-1';
+            if (freePercentage >= 83.00) return 'span-5-6';
+            if (freePercentage >= 75.00) return 'span-3-4';            
+            if (freePercentage >= 66.66) return 'span-2-3';
+            if (freePercentage >= 62.5) return 'span-5-8';
+            if (freePercentage >= 50) return 'span-1-2';
+            if (freePercentage >= 37.5) return 'span-3-8';
+            if (freePercentage >= 33.33) return 'span-1-3';
+            if (freePercentage >= 25) return 'span-1-4';
+            if (freePercentage >= 16.66) return 'span-1-6';
+            if (freePercentage >= 8.33) return 'span-1-12';
+            return 'Sin Span válido'; // Devuelve una cadena vacía si no hay suficiente espacio para ninguna columna.
+        }        
     },
     componentsEdition: {
         initComponents: function () {
@@ -2543,5 +2623,8 @@ $(function () {
     /*if ($('body').hasClass('edicionComponentes')) {
         ComponentesPageManagement.init();
     }*/
+
+    // Inicializar operativa de TinyCME
+    operativaTinyMceConfig.init();
 
 });

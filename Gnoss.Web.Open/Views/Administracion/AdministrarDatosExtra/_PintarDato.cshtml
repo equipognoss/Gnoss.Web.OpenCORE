@@ -11,8 +11,11 @@ Variables
 @{
     // Establecer en el ViewBag el idioma por defecto
     string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
+    HeaderModel cabecera = Html.GetCabecera();
     string urlEdit = "";
     string obligatorio = Model.Obligatorio ? "Sí" : "No";
+    string visible = Model.VisibleEnPerfil ? "Sí" : "No";
+    Dictionary<string, string> clausulaDescriptionDictionary = new Dictionary<string, string>();
     DatoExtraEditModel editModel = new DatoExtraEditModel();
     editModel.Nombre = Model.Nombre;
     editModel.DatoExtraID = Model.DatoExtraID;
@@ -21,7 +24,10 @@ Variables
     editModel.Tipo = Model.Tipo;
     editModel.PredicadoRDF = Model.PredicadoRDF;
 }
-
+@{
+    // Obtener descripción/contenido de la cláusula en formato diccionario con los multiIdiomas para ser mostrados en la row de la cláusula
+    clausulaDescriptionDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Nombre);
+}
 @*
 ----------------------------------------------------------------
 -------------------- Vista parcial para cada traducción --------------------
@@ -33,7 +39,29 @@ Variables
         <div class="component-header-content">
             <div class="component-header-left">
                 <div class="component-name-wrap">
-                    <span class="component-name">@Model.Nombre</span>
+                    @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+                    {
+                        <span class="language-component component-name @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">
+                            @* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@
+                            @{
+                                string value = "";
+                                if (clausulaDescriptionDictionary.TryGetValue(idioma.Key, out value))
+                                {
+                                    @* Html.CleanHtmlParagraphsStringHtml(@value);*@
+                                    var valueFormatted = Html.CleanHtmlParagraphsStringHtml(value);
+                                    valueFormatted = Html.CleanHtmlFromMultimediaItems(valueFormatted);
+                                    valueFormatted = UtilCadenas.HtmlDecode(valueFormatted);
+                                    @valueFormatted
+                                    ;
+                                    @* @value *@
+                                }
+                            }
+                        </span>
+                    }
+                    @*<span class="component-shortname">@Model.Nombre</span>*@
+                </div>
+                <div class="component-shortname-wrap">
+                    <span class="component-shortname">@Model.NombreCorto</span>
                 </div>
                 <input type="hidden" value="@Model.DatoExtraID" name="hack_dato_editar" />
                 <div class="component-tipo-wrap">
@@ -47,6 +75,9 @@ Variables
                 </div>
                 <div class="component-obligatorio-wrap">
                     <span class="component-obligatorio">@obligatorio</span>
+                </div>
+                <div class="component-visible-wrap">
+                    <span class="component-visible">@visible</span>
                 </div>
             </div>
             @* Acciones del dato extra *@

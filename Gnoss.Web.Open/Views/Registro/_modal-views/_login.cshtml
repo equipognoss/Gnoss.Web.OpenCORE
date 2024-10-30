@@ -51,8 +51,8 @@ bool showModalLogin = true;
                     <div id="content">
                         @* Header del Modal *@
                         <div class="modal-header">
-                            <p class="modal-title">                        
-                                Inicia sesión o regístrate
+                            <p class="modal-title">                                                        
+                                @Html.GetText("COMMON","INICIASESIONOREGISTRATE")
                             </p>
                             <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
                         </div>
@@ -67,7 +67,7 @@ bool showModalLogin = true;
                                         <div class="fieldsetContent">
                                             <div class="form-group">
                                                 <label for="usuario_Login" class="control-label">@Html.GetText("LOGIN", "NOMBREUSUARIOOCORREO")</label>
-                                                <input placeholder="Introduce tu correo electrónico"
+                                                <input placeholder="@Html.GetText("COMMON","INTRODUCETUCORREOELECTRONICO")"
                                                        type="text"
                                                        name="usuario"
                                                        id="usuario_Login"
@@ -75,7 +75,7 @@ bool showModalLogin = true;
                                             </div>
                                             <div class="form-group">
                                                 <label for="password_login" class="control-label">@Html.GetText("LOGIN", "CONTRASEÑA")</label>
-                                                <input placeholder="Introduce tu contraseña"
+                                                <input placeholder="@Html.GetText("COMMON","INTRODUCETUCONTRASEÑA")"
                                                        type="password"
                                                        name="password"
                                                        id="password_login"
@@ -142,12 +142,12 @@ bool showModalLogin = true;
 
                                                     if (Comunidad.AccessType == CommunityModel.TypeAccessProject.Restricted && (!Comunidad.MetaProyect))
                                                     {
-                                                        <span>Si todavía no tienes cuenta</span>
+                                                        <span>@Html.GetText("COMMON","SITODAVIANOTIENESCUENTA")</span>
                                                         <a class="olvidaste-password" href="@Comunidad.Url/@Html.GetText("URLSEM", "SOLICITARACCESO")">@Html.GetText("COMINICIOLOGIN", "SOLICITARACCESO")</a>
                                                     }
                                                     else if (Comunidad.AccessType == CommunityModel.TypeAccessProject.Public && (!Comunidad.MetaProyect))
                                                     {
-                                                        <span>Si todavía no tienes cuenta</span>
+                                                        <span>@Html.GetText("COMMON","SITODAVIANOTIENESCUENTA")</span>
                                                         <a class="olvidaste-password" href="@Comunidad.Url/@Html.GetText("URLSEM", "HAZTEMIEMBRO")">@Html.GetText("COMINICIOLOGIN", "HACERSEMIEMBRO")</a>
                                                     }
                                                 }

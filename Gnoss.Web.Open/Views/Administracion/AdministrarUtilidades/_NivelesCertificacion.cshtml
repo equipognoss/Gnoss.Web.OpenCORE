@@ -9,7 +9,7 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
-
+    string idioma = Html.GetUtilIdiomas().LanguageCode;
 }
 @*
 ----------------------------------------------------------------
@@ -38,7 +38,7 @@ Variables
     	                    <div class="component-header-left">
     		                    <div class="component-name-wrap">
     			                    <span class="component-icon"></span>
-    			                    <span class="component-name">@nivelCertificacion.Nombre</span>
+                                    <span class="component-name">@UtilCadenas.ObtenerTextoDeIdioma(nivelCertificacion.Nombre, idioma, null)</span>
     		                    </div>
     	                    </div>
     	                    <div class="component-header-right">

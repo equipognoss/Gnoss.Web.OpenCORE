@@ -1,0 +1,34 @@
+﻿@model TabModel
+@*
+Descripción
+-----------------------------------------------
+Vista que presenta un menú desplegable (Combo/Select) diseñado para cargar las propiedades o clases asociadas a un objeto específico.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    string randomId = Guid.NewGuid().ToString().Substring(0, 5);
+}
+
+<div class="panelPropertyObject">
+    @* Panel para la selección de Propiedades (Select lleno con las propiedades del objeto de conocimiento) *@
+    <div class="panelSelectProperty mb-3" id="panelSelectProperty_@(randomId)">
+        <label class="control-label d-block">Propiedad de <span class="panelSelectProperty__propertySelected">Película</span></label>
+        @* Select/ComboBox para selección de una Propiedad *@
+        <select id="cmbPropertyFromObject_@(randomId)"
+                data-select-search="true"
+                class="cmbPropertyFromObject js-select2"
+                name="PropertyFromObject_@(randomId)">
+            <option value="schema:name" data-property-name="schema:name" data-property-id="schema:name">schema:name</option>
+            <option value="schema:aggregateRating" data-object-name="schema:name" data-object-id="45dad123">schema:aggregateRating</option>
+            <option value="schema:datePublished" data-object-name="schema:datePublished" data-object-id="4fff5123">schema:datePublished</option>
+            <option value="schema:duration" data-object-name="schema:duration" data-object-id="45eas123">schema:duration</option>
+            <option value="schema:description" data-object-name="schema:description" data-object-id="4fasdf5123">schema:description</option>
+            <option value="schema:inLanguage" data-object-name="schema:inLanguage" data-object-id="4ffff5123">schema:inLanguage</option>
+            <option value="gnossf:boxOffice" data-object-name="gnossf:boxOffice" data-object-id="45ccae123">gnossf:boxOffice</option>
+            @*<option @(pestanya.Privacidad == 2 ? "selected" : "") value="2">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADLECTORES")</option>*@
+        </select>
+    </div>
+</div>
+

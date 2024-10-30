@@ -143,7 +143,7 @@ string FiltroOrdenSeleccionado = Model.FilterOrderSelected;
 <script type="text/javascript">
         @Html.Raw(jsExtra)
 
-        @if (htmlFacetas == null && htmlResultados == null)
+    @if (string.IsNullOrWhiteSpace(htmlFacetas) && string.IsNullOrWhiteSpace(htmlResultados) && Model.JSONResourceList == null && Model.JSONFaceted == null)
         {
             <text>
                 $(document).ready(function () {

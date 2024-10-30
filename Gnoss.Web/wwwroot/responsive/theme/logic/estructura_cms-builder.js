@@ -292,8 +292,16 @@ const operativaGestionCMSBuilder = {
         const that = this;
         // Url para editar el componente seleccionado
         that.urlEditComponent = editButton.data("urleditcomponent");
+        // Identificador del proyecto
+        that.proyectoID = $('.inpt_proyID').val();
+        that.args = '';
+
+        if (that.proyectoID != undefined) {
+            that.args = 'proyectoID=' + that.proyectoID;
+        }
+        
         // Cargar la vista para mostrarla en el contenedor
-        getVistaFromUrl(`${that.urlEditComponent}`, 'modal-dinamic-content', '', function(result){
+        getVistaFromUrl(`${that.urlEditComponent}`, 'modal-dinamic-content', that.args, function(result){
             if (result == requestFinishResult.ok){                    
                 // OK al cargar la vista
                 // Añadir el estilo de tabs al modal 
@@ -689,8 +697,9 @@ const operativaGestionCMSBuilder = {
             let className = elemento.data("columnclass") == undefined ? "" : elemento.data("columnclass");// elemento.data("aux") == undefined ? "" : elemento.data("aux"); // elemento.data("columnclass") == undefined ? "" : elemento.data("columnclass");
             // Formateo de los atributos de la fila
             let attributesRow = elemento.data("aux") == undefined ? "" : elemento.data("aux");
-            // Formateo de la className
+            // Remplazo las _ para escaparlas, siendo caracteres de control en estos componentes para permitirlas en el nombre de la clase y atributo
             className = replaceAll(className,"_", "@#*") + "_";
+            attributesRow = replaceAll(attributesRow,"_", "@#*");
             if (attributesRow != ""){
                 inicio = "bloque_" + attributesRow + className;
             }else{

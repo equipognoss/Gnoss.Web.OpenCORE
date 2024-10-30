@@ -33,6 +33,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
+using Es.Riam.Gnoss.Web.Controles.Solicitudes;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
@@ -44,6 +45,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -160,8 +162,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
     public class UsuariosOrganizacionController : ControllerBaseWeb
     {
-        public UsuariosOrganizacionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public UsuariosOrganizacionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -235,7 +237,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 ProyectosUsuViewModel proyParticipa = new ProyectosUsuViewModel();
                 proyParticipa.Key = filaProyecto.ProyectoID;
-                proyParticipa.Nombre = filaProyecto.Nombre;
+                proyParticipa.Nombre = UtilCadenas.ObtenerTextoDeIdioma(filaProyecto.Nombre, IdiomaUsuario, IdiomaPorDefecto);
                 proyParticipa.Participa = estaEnProyecto;
                 proyParticipa.TipoParticipacion = tipoParticipacion;
                 proyParticipa.Administra = esAdmin;
@@ -334,10 +336,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             mEntityContext.SaveChanges();
 
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            proyCL.InvalidarMisProyectos(perfilID);
-            proyCL.Dispose();
+            EliminarCacheAsignarComunidad(perfilID, IdentidadActual.Clave);
+
             return GnossResultOK();
+        }
+
+        /// <summary>
+        /// Se encarga de eliminar la caché necesaria al asignar a un usuario de una organización a una comunidad o cambiar su modo de participación en ella.
+        /// </summary>
+        /// <param name="pPerfilID">Perfil del usuario a modificar</param>
+        /// <param name="pIdentidadID">Identidad del usuario a modificar</param>
+        private void EliminarCacheAsignarComunidad(Guid pPerfilID, Guid pIdentidadID)
+        {
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            identidadCL.InvalidarFichaIdentidadMVC(pIdentidadID);
+            identidadCL.Dispose();
+
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            proyCL.InvalidarMisProyectos(pPerfilID);
+            proyCL.Dispose();
         }
 
         private void CambiarModoParticipaComunidad(Guid comunidadID, Guid perfilID, TiposIdentidad modoIdentidad, GestionIdentidades gestIdentidades)
@@ -451,8 +468,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Elementos.Identidad.Identidad ObjetoIdentidadProy = ControladorIdentidades.AgregarIdentidadPerfilYUsuarioAProyecto(gestIdentidades, gestIdentidades.GestorUsuarios, OrganizacionID, comunidadID, filaUsuario, identidad.PerfilUsuario, recibirNewsletterDefectoProyectos);
                 gestIdentidades.RecargarHijos();
 
-                //asigno el modo de participacion
-                List<AD.EntityModel.Models.IdentidadDS.Identidad> filasIdentidadProyecto = gestIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(ident => ident.PerfilID.Equals(identidad.PerfilUsuario.Clave) && ident.ProyectoID.Equals(comunidadID) && !ident.FechaBaja.HasValue).ToList();
+				ControladorDeSolicitudes controladorDeSolicitudes = new ControladorDeSolicitudes(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+				controladorDeSolicitudes.RegistrarUsuarioEnProyectoAutomatico(identidad.PerfilUsuario, filaUsuario, gestIdentidades.GestorUsuarios, gestIdentidades);
+
+				//asigno el modo de participacion
+				List<AD.EntityModel.Models.IdentidadDS.Identidad> filasIdentidadProyecto = gestIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(ident => ident.PerfilID.Equals(identidad.PerfilUsuario.Clave) && ident.ProyectoID.Equals(comunidadID) && !ident.FechaBaja.HasValue).ToList();
                 List<AD.EntityModel.Models.IdentidadDS.Identidad> filasIdentidadMetaProyecto = gestIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(ident => ident.PerfilID.Equals(identidad.PerfilUsuario.Clave) && ident.ProyectoID.Equals(ProyectoAD.MetaProyecto) && !ident.FechaBaja.HasValue).ToList();
 
                 Elementos.Identidad.Identidad identidadProyecto = gestIdentidades.ListaIdentidades[filasIdentidadProyecto[0].IdentidadID];

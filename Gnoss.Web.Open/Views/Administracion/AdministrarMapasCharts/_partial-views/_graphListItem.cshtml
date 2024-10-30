@@ -1,0 +1,137 @@
+@model ChartViewModel
+@*
+Descripción
+-----------------------------------------------
+Vista para administrar/visualizar cada una de las filas o rows de los gráficos existentes en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+// Cabecera para obtención de idiomas de la Comunidad
+HeaderModel cabecera = Html.GetCabecera();
+// Diccionario de nombre del gráfico para multiIdiomas
+Dictionary<string, string> graphNameDictionary = new Dictionary<string, string>();
+
+// Id para la llamada al modal para edición del gráfico
+
+// Id aleatorio para el collapse y el panel
+//string randomId = Guid.NewGuid().ToString().Substring(0,5);
+string idModalGraph = "modal-configuracion-graph_" + Model.ChartID;
+
+//String idModalPageDelete = "modal-configuracion-pagina_delete" + tabModel.Key;
+string idModalGraphDelete = "modal-delete-graph";
+
+// Idioma por defecto de la comunidad
+string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
+
+// Detectar si es un nuevo gráfico
+string newGraphClassName = !string.IsNullOrEmpty(ViewBag.isNewGraph?.ToString()) ? "newGraph modified" : "";
+}
+
+@* Construir los diferentes items en idiomas (Nombre y Url) *@
+@{
+	// Obtener el nombre y Url en formato diccionario con los multiIdiomas de Nombre y Url para ser mostrados en la row de la página
+	graphNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Nombre);
+}
+
+<li class="component-wrap graph-row @newGraphClassName" data-graphkey="@Model.ChartID" id="@Model.ChartID">
+	<div class="component">
+		<div class="component-header-wrap">		
+			@* Panel informativo cancelable para el NestedSortable *@
+			<div class="sortable-helper-info">
+				<span class="sortable-helper-info--message">
+					@Html.GetText("DEVTOOLS","PULSAR")
+					<span>
+						<svg id="esc-button-icon" xmlns="http://www.w3.org/2000/svg" width="35.000" height="32.000" viewBox="0 0 20.998 18.616">
+							<path d="M3.932,0H17.066A3.944,3.944,0,0,1,21,3.932V14.684a3.944,3.944,0,0,1-3.932,3.932H3.932A3.944,3.944,0,0,1,0,14.684V3.932A3.944,3.944,0,0,1,3.932,0ZM4.3,5.775h3.87V6.833H5.753v.788H7.995V8.63H5.753V9.6H8.244v1.119H4.3V5.775ZM8.707,9.729,10,9.6a.666.666,0,0,0,.224.345.647.647,0,0,0,.383.1.622.622,0,0,0,.4-.118.267.267,0,0,0,.113-.219.255.255,0,0,0-.147-.231,2.6,2.6,0,0,0-.557-.142,5.5,5.5,0,0,1-.94-.232.994.994,0,0,1-.443-.359,1.043,1.043,0,0,1,.014-1.189,1.164,1.164,0,0,1,.537-.384,2.718,2.718,0,0,1,.916-.126,3.007,3.007,0,0,1,.894.1,1.152,1.152,0,0,1,.482.3,1.6,1.6,0,0,1,.32.559l-1.229.125a.457.457,0,0,0-.159-.253.62.62,0,0,0-.369-.108.493.493,0,0,0-.32.084.251.251,0,0,0-.1.2.217.217,0,0,0,.126.2,1.849,1.849,0,0,0,.554.121,3.589,3.589,0,0,1,.964.217,1.068,1.068,0,0,1,.482.395,1,1,0,0,1,.167.564,1.147,1.147,0,0,1-.178.6,1.214,1.214,0,0,1-.557.468,2.542,2.542,0,0,1-1.039.174,2.345,2.345,0,0,1-1.322-.282,1.251,1.251,0,0,1-.507-.795Zm6.753-.407,1.235.145a1.88,1.88,0,0,1-.335.709,1.548,1.548,0,0,1-.6.465,2.209,2.209,0,0,1-.921.166,3.268,3.268,0,0,1-.9-.106,1.572,1.572,0,0,1-.619-.345,1.707,1.707,0,0,1-.4-.559,2.074,2.074,0,0,1-.147-.851,2.091,2.091,0,0,1,.179-.921,1.761,1.761,0,0,1,.825-.8,2.451,2.451,0,0,1,.974-.166,2.163,2.163,0,0,1,1.268.313,1.661,1.661,0,0,1,.612.918l-1.222.173a.6.6,0,0,0-.208-.347.659.659,0,0,0-.408-.116.645.645,0,0,0-.523.244,1.157,1.157,0,0,0-.2.742,1,1,0,0,0,.2.672.632.632,0,0,0,.5.229.675.675,0,0,0,.429-.137.84.84,0,0,0,.26-.422ZM.846,13.227a3.218,3.218,0,0,0,.83,1.437A3.176,3.176,0,0,0,3.93,15.6H17.064c.036,0,.07,0,.106,0l.22-.015a3.181,3.181,0,0,0,1.912-.9l.015-.017a3.2,3.2,0,0,0,.83-1.437v-9.3A3.1,3.1,0,0,0,17.063.846H3.932A3.092,3.092,0,0,0,.847,3.93v9.3Z" fill="#006eff" fill-rule="evenodd"></path>
+						</svg>						
+					</span> @Html.GetText("DEVTOOLS","PARACANCELAR")
+				</span>
+			</div>
+
+			<div class="component-header">
+				@* Icono para arrastrar el gráfico *@
+				<div class="component-sortable js-component-sortable-graph">
+					<span class="material-icons-outlined sortable-icon">drag_handle</span>
+				</div>
+				<div class="component-header-content">
+					<div class="component-header-left">						
+						<div class="component-name-wrap component-w-40">							
+							@* Nombre del gráfico *@
+							@* Recorrer los idiomas existentes y crear los datos para Nombre de página siempre que haya *@
+							@if (graphNameDictionary.Count == 0)
+							{
+								<span class="language-component component-name @(idiomaPorDefecto)" data-languageitem="@idiomaPorDefecto">
+									@Model.Nombre
+								</span>
+							}
+							else
+							{														
+								@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+									{																												
+									<span class="language-component component-name @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
+										@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
+										@{
+											string value = "";
+											if (graphNameDictionary.TryGetValue(idioma.Key, out value))
+											{
+												@value;
+											}										
+										}
+									</span>
+								}	
+							}							
+						</div>
+					</div>
+					@*Sección de acciones del gráfico *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							@* Botón dropdown de acciones *@
+							<div class="dropdown">
+								<a
+									class="nav-link dropdown-toggle btn btn-outline-grey"
+									data-toggle="dropdown"
+									href="#"
+									role="button"
+									aria-haspopup="true"
+									aria-expanded="false">
+									<span class="material-icons">create</span>
+									<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+								</a>
+								@* Panel dropdown con las acciones disponibles *@
+								<div class="dropdown-menu dropdown-menu-left basic-dropdown">
+									<ul class="no-list-style">
+										@* Editar Grafico *@
+										<li>
+											<a class="item-dropdown js-action-edit-component btnEditGraph"
+											   data-toggle="modal" 
+											   data-target="#@idModalGraph">
+												<span class="material-icons">create</span>
+												<span class="texto">Editar gráfico</span>
+											</a>
+										</li>
+
+										@* Eliminar gráfico *@
+										<li>
+											<a class="item-dropdown js-action-delete-component btnDeleteGraph"
+											   data-toggle="modal" 
+											   data-target="#@idModalGraphDelete">
+												<span class="material-icons">delete</span>
+												<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
+											</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Información detallada de la pestaña -> Modal *@
+	@Html.PartialView("../Administracion/AdministrarMapasCharts/_partial-views/_graphListItemDetail", Model)
+</li>

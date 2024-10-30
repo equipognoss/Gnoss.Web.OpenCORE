@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;
 
@@ -43,8 +44,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     public class LogoutController : ControllerBaseWeb
     {
 
-        public LogoutController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public LogoutController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -111,7 +112,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 identCL.EliminarCacheIdentidadActualUsuario(usuario.UsuarioID);
             }
 
-            string query = "?dominio=" + BaseURL + "/&eliminar=true";
+            string query = $"?dominio={BaseURL}&eliminar=true&proyecto={ProyectoSeleccionado.Clave}&idioma={IdiomaUsuario}";
 
             Es.Riam.Gnoss.AD.EntityModel.ParametroAplicacion busqueda = ParametrosAplicacionDS.FirstOrDefault(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.LoginUnicoPorUsuario));
             bool loginUnicoPorUsuario = busqueda != null && busqueda.Valor.Equals("1");
@@ -124,7 +125,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             Session.Clear();
 
             //Elimino las cookies
-            mControladorBase.ExpirarCookies(usuario);
+            mControladorBase.ExpirarCookies(ExisteNombrePoliticaCookiesMetaproyecto, NombrePoliticaCookiesMetaproyecto, usuario);
 
 
             LogoutModel paginaModel = new LogoutModel();
@@ -132,7 +133,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             paginaModel.NombreComunidad = nombre;
             paginaModel.ShowPowered = showPowered;
             
-            paginaModel.UrlIframe = mControladorBase.UrlServicioLogin + "/eliminarCookie" + query;
+            paginaModel.UrlIframe = $"{mControladorBase.UrlServicioLogin}/eliminarCookie{query}";
             paginaModel.UrlRedirect = UrlRedireccion;
 
             return View(paginaModel);

@@ -22,6 +22,8 @@ Variables
 	int numMaxPestañasIdiomasVisibles = 2;		
 	// Referencia al AdministrarObjetosConocimientoViewModel para el botón de tipo de pintado de tipo cookies
 	ViewBag.AdministrarObjetosConocimientoViewModel = Model;	
+	// Posibilidad de NO mostrar el panel lateral izquierdo de las DevTools
+	bool hideLeftNavigationPanel = !string.IsNullOrEmpty(ViewBag.HideLeftNavigationPanel) ? (bool.Parse(ViewBag.HideLeftNavigationPanel)) : false;
 }
 
 
@@ -37,21 +39,26 @@ Variables
 <input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
 
 
-
-    @* Migas de Pan *@
-    <div class="col col-12 col-breadcrumb">
-        <ul>
-            <li>
-                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-            </li>
-            <li>
-                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/grafo-conocimiento">@Html.GetText("DEVTOOLS","GRAFOSDECONOCIMIENTO")</a>
-            </li>
-            <li>
-                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM") / Ontologías                
-            </li>
-        </ul>
-    </div>
+@{
+	if (!hideLeftNavigationPanel)
+	{
+		@* Migas de Pan *@
+		<div class="col col-12 col-breadcrumb">
+			<ul>
+				<li>
+					<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+				</li>
+				<li>
+					<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/grafo-conocimiento">@Html.GetText("DEVTOOLS","GRAFOSDECONOCIMIENTO")</a>
+				</li>
+				<li>
+					@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM") / Ontologías                
+				</li>
+			</ul>
+		</div>
+	}
+}
+    
 
     @* Contenido Central *@
     <div class="formulario-edicion background-blanco">       
@@ -60,12 +67,12 @@ Variables
 			@* Títulos de Tabs con los diferentes idiomas a visualizar. *@
 				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
 					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
-						<li class="nav-item">
+						<li class="nav-item" role="presentation">
 							<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
 								id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
 								data-language = "@idioma.Key"
-								role="tab" aria-controls="@("litVer" + idioma.Key)"
-								aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+								role="tab"
+								aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
 						</li>
 						contNumPestañasVisibles += 1;
 					}				
@@ -130,11 +137,15 @@ Variables
 						@* Acciones de Objetos de conocimiento *@
 						<div class="acciones d-flex align-items-center">
 							@* Botón de nuevo Objeto Conocimiento*@
-							<a href="javascript: void(0);" 
-							   id="btnNewOC"
-							   class="btn btn-outline-primary" 
-							   data-toggle="modal"
-							   data-target="#modal-container">@Html.GetText("DEVTOOLS","CREARNUEVOOC")</a>
+							@if (!hideLeftNavigationPanel)
+							{
+								<a href="javascript: void(0);"
+								id="btnNewOC"
+								class="btn btn-outline-primary"
+								data-toggle="modal"
+								data-target="#modal-container">@Html.GetText("DEVTOOLS","CREARNUEVOOC")</a>						
+							}
+						
 							@* Dropdown de acciones de Objeto Conocimiento*@
 							<div class="dropdown">
 								<a class="dropdown-toggle no-flecha" data-toggle="dropdown" aria-expanded="false">

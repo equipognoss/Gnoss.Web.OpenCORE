@@ -150,21 +150,6 @@ Variables
 							@Html.PartialView("_EdicionRedireccion", redireccion);
 						}
 					</ul>
-					
-
-					@* Botón para guardado de datos *@
-					@* Controlar la integración contínua
-					@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-					{
-						//<input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
-						<input disabled id="btnGuardarPaginas" type="button" class="btn btn-outline-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" /> 
-					}
-					else
-					{
-						//<input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
-						<input disabled id="btnGuardarPaginas" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />        
-					} 
-					*@
 				</div>
 			</div>
 		</div>        

@@ -47,14 +47,9 @@ const operativaGestionPaginas = {
         this.urlLoadFacetList = `${this.urlPagina}/cargar-facetas`; 
         // Url para realizar la petición para el guardado de Páginas
         this.urlSavePages = `${this.urlPagina}/save`; 
-
-        // Clase de cada una fila de las páginas existentes
-        this.pageRowClassName = "page-row";
-        // Contador de páginas
-        this.numPaginas = $("#numPaginas");
         
         // Variable que contendrá la fila o página activa. Por defecto "undefined"
-        this.filaPagina = this.filaPagina != undefined ? this.filaPagina : undefined;
+        this.filaPagina = this.filaPagina != undefined ? this.filaPagina : undefined;        
     },     
     
 
@@ -77,7 +72,8 @@ const operativaGestionPaginas = {
         // Input para buscar páginas en el listado de páginas
         this.inputTxtBuscarPagina = $('#txtBuscarPagina');
         // Contenedor de todas las páginas de la comunidad
-        this.pageListContainer = $('#id-added-pages-list');
+        this.pageListContainerId = 'id-added-pages-list';
+        this.pageListContainer = $(`#${this.pageListContainerId}`);
 
         /* Control de comportamiento de radioButtons */
         // Abrir en nueva Ventana (si/no)
@@ -127,7 +123,7 @@ const operativaGestionPaginas = {
         // Botón para eliminar el filtro de páginas
         this.tagRemoveFiltro = "tag-remove-filtro";
         // Botón para añadir el filtro del input autocomplete
-        this.btnAddFilterPanFilter = "btnAddFilterPanFilter" 
+        this.btnAddFilterPanFilter = "btnAddFilterPanFilter"; 
 
         // Botón para eliminar la página
         this.btnDeletePage = $(".btnDeletePage");
@@ -206,7 +202,16 @@ const operativaGestionPaginas = {
         this.listExportationPropertyClassName = "id-added-exportation-property-list";
         this.listProperties = $(`.${this.listExportationPropertyClassName}`);        
         // Icono de exportaciones para ordenar
-        this.sortableExportationIconClassName = "sortable-export-property";       
+        this.sortableExportationIconClassName = "sortable-export-property";
+
+
+        // Listado de propiedades de una exportación de una página
+        this.listFacetaPropertyClassName = "id-added-facet-list";
+        this.listFacetasProperties = $(`.${this.listFacetaPropertyClassName}`);          
+        // Icono de exportaciones para ordenar
+        this.sortableFacetaIconClassName = "sortable-faceta-property";   
+        
+        
         // Botón para editar la propiedad de una exportación
         this.btnEditProperty = $(".btnEditProperty");
         // Botón para eliminar la propiedad de una exportación
@@ -307,7 +312,7 @@ const operativaGestionPaginas = {
         // Modal de cada una de las páginas
         this.modalPageClassName = "modal-page";
         // Modal de eliminación de páginas
-        this.modalDeletePageClassName = "modal-confirmDelete";
+        this.modalDeletePageClassName = "modal-confirmDelete";        
 
         /* Flags para controlar URL de la página */
         // Flag para detectar error en el input por ruta vacía
@@ -321,14 +326,33 @@ const operativaGestionPaginas = {
         this.errorExportaciones = false; 
         // Flag para detectar errores durante la obtención de datos de páginas             
         this.errorDuranteObtenerDatosPestaya = false;
-
+        // Clase de cada una fila de las páginas existentes
+        this.pageRowClassName = "page-row";
+        // Contador de páginas
+        this.numPaginas = $("#numPaginas");    
+        
+        this.btnMovePaginaClassName = "btnMovePagina";
+        // Backup de los items ordenados en caso de que no se proceda al guardado correcto
+        this.backupArraySortableListItems = undefined;  
+        // Select de la página a elegir para mover
+        this.cmbListaPaginasClassName = "cmbListaPaginas";
+        this.cmbListaPaginas = $(`.${this.cmbListaPaginasClassName}`);            
+        // Título de la página del modal que se desea mover
+        this.modalTitleMovePageClassName = `move-page-title`;
+        this.modalTitleMovePage = $(`.${this.modalTitleMovePageClassName}`); 
+        // Botón para guardar movimiento de la página
+        this.btnSavePaginaMoveClassName = "btnSavePaginaMove";
+        this.btnSavePaginaMove = $(`.${this.btnSavePaginaMoveClassName}`);  
+        // Modal para mover una página
+        this.modalMovePaginaId = "modal-move-pagina";
+        this.modalMovePagina = $(`#${this.modalMovePaginaId}`);                     
 
         /* Flags para confirmar la eliminación de una página */
         this.confirmDeletePage = false;
         // Flag para indicar el item a borrar para ser eliminado una vez se guarde
         this.pendingToBeRemovedClassName = "pendingToBeRemoved";
-
-    }, 
+    
+    },
 
     /**
      * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
@@ -373,7 +397,18 @@ const operativaGestionPaginas = {
             const id = $(item).prop("id");            
             setupBasicSortableList(id, that.sortableExportationIconClassName, undefined, undefined, undefined, undefined);
         });
-     
+
+        that.handleUpdatePageListInModal();
+        
+        // Setup de sortable tabla para las facetas (Dentro de cada página) 
+        /* Deshabilitado por el momento - La ordenación en BackEnd no está implementada             
+        const listFacetaProperty = $(`.${that.listFacetaPropertyClassName}`);
+        $.map( listFacetaProperty, function( item ) {            
+            const id = $(item).prop("id");            
+            setupBasicSortableList(id, that.sortableFacetaIconClassName, undefined, undefined, undefined, undefined);
+        });        
+        */
+
         that.setupFiltersForAutocomplete();
     },     
     
@@ -778,7 +813,6 @@ const operativaGestionPaginas = {
             }
         );
 
-        
         /**
          * Comportamiento resultado cuando se selecciona una resultado de autocomplete de Perfiles
          */
@@ -901,8 +935,7 @@ const operativaGestionPaginas = {
                     $input[0].value = "";
                 }    
             });
-        }); 
-        
+        });        
         
         // Botón para añadir el filtro elegido vía autocomplete        
         configEventByClassName(`${that.btnAddFilterPanFilter}`, function(element){              
@@ -915,6 +948,24 @@ const operativaGestionPaginas = {
                 inputAutocompletar.val("");
             });
         });
+
+        /* Eventos relativos al movimiento "manual" desde el modal de páginas */
+        // Botón para cargar el modal para mover la página        
+        configEventByClassName(`${that.btnMovePaginaClassName}`, function(element){                        
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){
+                that.filaPagina = $(this).closest(`.${that.pageRowClassName}`);                                                                
+                that.handleSetPageTitleInModal();
+            });	 
+        });  
+                        
+        // Botón del modal para guardar el movimiento de una faceta de forma "manual" justo debajo de la elegida
+        configEventByClassName(`${that.btnSavePaginaMoveClassName}`, function(element){                        
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){
+                that.handleMovePageManually();
+            });	 
+        });                          
     }, 
 
     /**
@@ -922,6 +973,116 @@ const operativaGestionPaginas = {
      * Acciones a realizar, funciones
      * **************************************************************************************************************************
      */ 
+
+    /**
+     * Método para asignar el nombre de la página al modal de "Mover" si se desea establecer un nombre     
+     */
+    handleSetPageTitleInModal: function(){
+        const that = this;
+
+        // Resetear posibles options que se han ocultado previamente
+        // Obtén todas las opciones dentro del select
+        that.cmbListaPaginas.find('option').prop("disabled", false);        
+        
+        if (that.filaPagina == undefined){
+            return;
+        }
+        // Nombre de la página seleccionada        
+        const pageName = $(that.filaPagina.find(`.${that.componentPageNameClassName}:not(.d-none)`)[0]).text().trim();
+        that.modalTitleMovePage.text(pageName);
+        const pageSelectedKey = that.filaPagina.prop("id");
+        const pageSelectedOption = that.cmbListaPaginas.find(`option[name="${pageSelectedKey}"]`);                
+        // Deshabilita la opción (opcional, puedes comentar esta línea si solo quieres ocultarla visualmente)
+        pageSelectedOption.prop('disabled', true); 
+        // Deshabilitar las opciones hijas del padre para su movimiento
+        that.filaPagina.find(`.${that.pageRowClassName}`).map(function(){
+            const childrenPageId = $(this).prop('id');
+            that.cmbListaPaginas.find(`option[name="${childrenPageId}"]`).prop('disabled', true);
+        });      
+              
+        // Actualiza el select2 después de modificar las opciones
+        that.cmbListaPaginas.trigger('change');        
+    },    
+
+  
+    
+    /**
+     * Método para comprobar y ejecutar la ordenación o movimiento de una página debajo de la seleccionada. Si ha habido un error, revertirá el movimiento realizado
+     * @returns 
+     */  
+    handleMovePageManually: function(){     
+        const that = this;
+        // En that.filaPagina se guarda la página que se ha seleccionado y se desesa mover
+        if (that.filaPagina == undefined){
+            return;
+        }
+ 
+        const pageSelectedId = that.filaPagina.prop("id");
+        const pageSelectedHtml = that.filaPagina.clone();
+        // Pagina seleccionada para posicionar justo debajo la filaPagina
+        const pageMoveBelowId = that.cmbListaPaginas.find(':selected').attr("name");
+        const pageMoveBelow = $(`.${that.pageRowClassName}`).filter(`[id="${pageMoveBelowId}"]`);
+ 
+        // Comprobar que la página seleccionada y la página destino son diferentes
+        if (pageSelectedId === pageMoveBelowId){
+            mostrarNotificacion("error", "No es posible mover la página debajo de sí misma. Por favor, selecciona otra faceta.");
+            return;
+        }
+                                                 
+        // Obtener los ListItems de (padres e hijos)
+        const sortableListItems = $(`.${that.pageRowClassName}`);     
+        // Backup de la lista
+        that.backupArraySortableListItems = sortableListItems.clone();
+        // Eliminar el elemento actual para moverlo
+        that.filaPagina.remove();        
+        pageMoveBelow.after(pageSelectedHtml);
+        // Necesario actualizar el parentKey por si se mueven hijos/padres
+        that.handleReorderPages($(`#${pageSelectedId}`), false);
+
+        // Reiniciar la operativa de gestión Páginas para los nuevos items
+        operativaGestionPaginas.init();        
+                    
+        that.handleSavePages(function(isError){                        
+            if (isError == false){                
+                // Datos guardados correctamente al haber ordenado los items. Cerrar modal de mover items   
+                dismissVistaModal(that.modalMovePagina);                  
+            }else{
+                // Error al guardar items, restaurar el orden previo de los items
+                const errorMessage = "Se ha producido un error al mover la página. Por favor, inténtalo de nuevo más tarde.";
+                mostrarNotificacion("error", errorMessage);
+                // Restaurar el movimiento de la página por el error
+                sortableList.sort(that.backupArraySortableListItems);                                
+            }
+        }); 
+                                  
+     },    
+
+    /**
+     * Método para actualizar la lista de facetas en base al actual listado
+     */
+    handleUpdatePageListInModal: function(){    
+        const that = this;
+
+        setTimeout(function(){
+            // Html de los optionItems que se actualizará cuando haya cambios
+            let pageOptionHtml = '';
+
+            $(`.${that.pageRowClassName}`).each(function() {
+                const id = $(this).prop('id');                      
+                const dataName = $($(this).find(`.${that.componentPageNameClassName}:not(.d-none)`)[0]).text().trim();                 
+                pageOptionHtml += `
+                    <option class="pagina-item"
+                        value="${dataName}"
+                        name="${id}">
+                        ${dataName}                                        
+                    </option>`;                    
+            });
+
+            // Agrega las opciones generadas dinámicamente al select        
+            that.cmbListaPaginas.html(pageOptionHtml);        
+            comportamientoInicial.iniciarSelects2();
+        },1000);
+    },
 
     /**
      * Método que se ejecuta al influir en el input del filtro. Genera una lista de valores de autocompletado
@@ -954,8 +1115,9 @@ const operativaGestionPaginas = {
         );
         //Comportamiento resultado cuando se selecciona una resultado de autocomplete 
         inputFiltro.result(function (event, data, formatted) {
-            // Añadir el resultado al posible valor existente del input de autocomplete             
-            $(this).val($(this).val() + data[0]);               
+            // Añadir el resultado al posible valor existente del input de autocomplete
+            //$(this).val($(this).val() + data[0]);               
+            $(this).val(data[0]);               
         });        
     },
 
@@ -1103,9 +1265,9 @@ const operativaGestionPaginas = {
         let componentUrlPageName = undefined ;
         
         if (language != undefined){
-            componentUrlPageName = pageRow.find(`.${that.componentUrlPageNameClassName}`).filter(`[data-languageitem='${language}']`);
+            componentUrlPageName = pageRow.find(`.${that.componentUrlPageNameClassName}`).filter(`[data-languageitem='${language}']`).first();
         }else{
-            componentUrlPageName = pageRow.find(`.${that.componentUrlPageNameClassName}`);
+            componentUrlPageName = pageRow.find(`.${that.componentUrlPageNameClassName}`).first();
         }
                 
         // Actualizar el contenido de la faceta
@@ -1289,7 +1451,7 @@ const operativaGestionPaginas = {
                 editionNewPagePanel.find('[name="TabOrden"]').val(parseInt(orden) + 1);
                     
                 // Reiniciar la operativa de gestión Páginas para los nuevos items
-                operativaGestionPaginas.init()                
+                operativaGestionPaginas.init();                
 
                 // Abrir el modal para poder editar/gestionar la nueva página añadida                     
                 newPage.find(that.btnEditPage).trigger("click");
@@ -3068,29 +3230,48 @@ const operativaGestionPaginas = {
      * teniendo en cuenta el arrastre realizado de una de las páginas.
      * @param {jqueryObject} $itemEl : Objeto o fila jquery correspondiente con la página que ha sido arrastrada
      */
-    handleReorderPages: function($itemEl){
+    handleReorderPages: function($itemEl, saveCurrentPage = true){
         const that = this;
        
-       // Obtener el padre del item arrastrado                
-       let $parentNode = $itemEl.parents("li").first();
-       // Si sólo se ordena y no se hace "Jerarquía", asignarlo correctamente (root)                
-       if ($parentNode.length == 0){
-           // Arrastrado al root de Páginas
-           $parentNode = that.pageListContainer;
-           // Asignar el parentKey "root" al $itemEl arrastrado                    
-           $itemEl.find('[name="ParentTabKey"]').val("00000000-0000-0000-0000-000000000000");
-       }else{
-           // Arrastrado dentro de una página
-           $parentNode = $parentNode;
-           // Asignar el parentKey al $itemEl que corresponde con el $parentNode
-           $itemEl.find('[name="ParentTabKey"]').val($parentNode.data("pagekey"));
-           // Actualizar el TabOrden del parentNode
-           //$parentNode.find('[name="TabOrden"]').val($parentNode.index());
-       }
-       // Asignar la posición de la página                
-       //$itemEl.find('[name="TabOrden"]').val($itemEl.index());                                                                 
-       // Proceder al guardado de la página
-       that.handleSaveCurrentPage(false);        
+        // Obtener el padre del item arrastrado                
+        let $parentNode = $itemEl.parents("li").first();
+        // Si sólo se ordena y no se hace "Jerarquía", asignarlo correctamente (root)                
+        if ($parentNode.length == 0){
+            // Arrastrado al root de Páginas
+            $parentNode = that.pageListContainer;
+            // Asignar el parentKey "root" al $itemEl arrastrado             
+            const $parentTabKeyInputs = $itemEl.find('[name="ParentTabKey"]');
+            const totalParentTabKeyInputs = $parentTabKeyInputs.length;
+            
+            if (totalParentTabKeyInputs > 0) {
+              const lastIndex = totalParentTabKeyInputs - 1;
+              $($parentTabKeyInputs[lastIndex]).val("00000000-0000-0000-0000-000000000000");
+            }                                         
+        }else{
+            // Arrastrado dentro de una página
+            $parentNode = $parentNode;
+            // Asignar el parentKey al $itemEl que corresponde con el $parentNode
+            //$itemEl.find('[name="ParentTabKey"]').val($parentNode.data("pagekey"));
+            // Actualizar el TabOrden del parentNode
+            //$parentNode.find('[name="TabOrden"]').val($parentNode.index());
+
+
+            const $parentTabKeyInputs = $itemEl.find('[name="ParentTabKey"]');
+            const totalParentTabKeyInputs = $parentTabKeyInputs.length;
+            
+            if (totalParentTabKeyInputs > 0) {
+              const lastIndex = totalParentTabKeyInputs - 1;
+              $($parentTabKeyInputs[lastIndex]).val($parentNode.data("pagekey"));
+            } 
+
+
+        }
+        // Asignar la posición de la página                
+        //$itemEl.find('[name="TabOrden"]').val($itemEl.index());                                                                 
+        // Proceder al guardado de la página si hiciera falta
+        if (saveCurrentPage){
+            that.handleSaveCurrentPage(false);        
+        }       
     },
 
 
@@ -4296,6 +4477,8 @@ const operativaGestionPaginas = {
                         that.ListaPestanyas[prefijoFiltroOrdenClave + '.Deleted'] = panFiltro.find('[name="TabEliminada"]').val();
                         that.ListaPestanyas[prefijoFiltroOrdenClave + '.Nombre'] = panFiltro.find('[name="TabName"]').val();
                         that.ListaPestanyas[prefijoFiltroOrdenClave + '.Filtro'] = panFiltro.find('[name="Filtro"]').val();
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Consulta'] = panFiltro.find('[name="TabConsulta"]').val();
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.OrderBy'] = panFiltro.find('[name="TabOrderBy"]').val();
 
                         numFiltro++;
                     });                    
@@ -4524,8 +4707,22 @@ const operativaGestionPaginas = {
                     that.ListaPestanyas[prefijoExportacionesClave + '.Key'] = $(this).attr('id');
                     that.ListaPestanyas[prefijoExportacionesClave + '.Orden'] = numExport;
                     that.ListaPestanyas[prefijoExportacionesClave + '.Deleted'] = panExportacion.find('[name="TabEliminada"]').val();
-                    that.ListaPestanyas[prefijoExportacionesClave + '.Nombre'] = panExportacion.find('[name="Nombre"]').val(); 
-                    
+                    //that.ListaPestanyas[prefijoExportacionesClave + '.Nombre'] = panExportacion.find('[name="Nombre"]').val(); 
+                    var idExp = panExportacion.find('input.inputNombreExportacion').attr('id');
+                    var nombreExpMultiidioma = "";
+                    var inputsExp = panExportacion.find("input");
+
+                    $.each(operativaMultiIdioma.listaIdiomas, function () {
+                        const idioma = this.key;
+
+                        for (var i = 0; i < inputsExp.length; i++) {
+                            if (inputsExp[i].getAttribute("id") != null && inputsExp[i].getAttribute("id") != undefined && inputsExp[i].getAttribute("id").includes(idExp + "_" + idioma)) {
+                                nombreExpMultiidioma += inputsExp[i].value + "@" + idioma + "|||";
+                            }
+                        }
+                    });
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Nombre'] = nombreExpMultiidioma; 
+
                     // Obtener los grupos de la exportación
                     const privacidadGruposExport = panExportacion.find('[name="TabValoresPrivacidadGrupos"]').val().split(',');
                     for (let i = 0; i < privacidadGruposExport.length; i++) {
@@ -4548,16 +4745,30 @@ const operativaGestionPaginas = {
                         // Establecer datos de la exportación
                         that.ListaPestanyas[prefijoPropExportacionesClave + '.Orden'] = numPropExport;
                         that.ListaPestanyas[prefijoPropExportacionesClave + '.Deleted'] = panPropExportacion.find('[name="TabEliminada"]').val();
-                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Nombre'] = panPropExportacion.find('[name="Nombre"]').val();
+                        //that.ListaPestanyas[prefijoPropExportacionesClave + '.Nombre'] = panPropExportacion.find('[name="Nombre"]').val();
                         that.ListaPestanyas[prefijoPropExportacionesClave + '.Ontologia'] = panPropExportacion.find('[name="Ontologia"]').val();
                         that.ListaPestanyas[prefijoPropExportacionesClave + '.Propiedad'] = panPropExportacion.find('[name="Propiedad"]').val();
                         that.ListaPestanyas[prefijoPropExportacionesClave + '.DatoExtraPropiedad'] = panPropExportacion.find('[name="DatoExtraPropiedad"]').val();
 
+                        var nombreMultiidioma = "";
+                        var inputs = panPropExportacion.find("input");                      
+                        
+                        $.each(operativaMultiIdioma.listaIdiomas, function () {
+                            // Obtención del Key del idioma
+                            const idioma = this.key;
+
+                            var i = 0;
+                            for (var i = 0; i < inputs.length; i++) {
+                                if (inputs[i].getAttribute("id") != null && inputs[i].getAttribute("id") != undefined && inputs[i].getAttribute("id").includes("_" + idioma)) {
+                                    nombreMultiidioma += inputs[i].value + "@" + idioma + "|||";
+                                }
+                            }                          
+                        });
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Nombre'] = nombreMultiidioma;
                         numPropExport++;
                     });
                     numExport++;  
-                }); 
-                              
+                });                       
             }
             
             // Devolvería false ya que no hay errores durante obtención de datos de las páginas
@@ -4597,13 +4808,15 @@ const operativaGestionPaginas = {
             true
         ).done(function (data) {
             // OK - Mostrar el mensaje de guardado correcto
-            mostrarNotificacion("success","Los cambios se han guardado correctamente");                        
+            mostrarNotificacion("success","Los cambios se han guardado correctamente");
+            // Actualizar posibles nuevas páginas en el Select para moverlas desde el Modal
+            that.handleUpdatePageListInModal();
             completion != undefined && completion(false);             
         }).fail(function (data) {
             // KO - Mostrar el error del guardado de páginas realizado
             let error = data.split('|||');
             if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-                that.mostrarErrorGuardado();
+                that.mostrarErrorGuardado(data);
                 if (error[0] == "RUTA REPETIDA") {
                     that.mostrarErrorUrlRepetida($('#' + error[1]));
                     completion != undefined && completion(true);
@@ -4639,7 +4852,7 @@ const operativaGestionPaginas = {
      * Método para mostrar posibles errores durante el proceso del guardado de páginas. Estos errores son devueltos por el servidor
      * una vez el método "savePages" ha sido ejecutado
      */
-    mostrarErrorGuardado: function () {
+    mostrarErrorGuardado: function (data = "") {
         let esPre = "False";
         let entornoBloqueado = "False";
 
@@ -4650,7 +4863,7 @@ const operativaGestionPaginas = {
                 mostrarNotificacion("error", "El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios");
             }
             else {
-                mostrarNotificacion("error", "Ha habido errores en el guardado de las pesta&#xF1;as, revisa los errores marcados");                
+                mostrarNotificacion("error", data);                
             }
     },  
 
@@ -4660,15 +4873,442 @@ const operativaGestionPaginas = {
      * una vez el método "savePages" ha sido ejecutado
      * @param {jqueryObject} fila 
      */
-    mostrarErrorPoyectoOrigenBusquedaPrivado: function (fila) {
-        const that = this;
-        const inputUrl = $('input[name = "TabName"]', fila).first();
+    mostrarErrorPoyectoOrigenBusquedaPrivado: function (fila) {        
         mostrarNotificacion("error", "El proyecto no puede ser privado");        
+    }, 
+}
+
+
+/**
+ * Operativa para la creación de filtros en un página de tipo "Búsqueda semántica" mediante un asistente. Se incluirá en "operativaGestionPaginas"
+ */
+const operativaAsistenteFiltros = {
+
+    /**
+     * Inicializar operativa
+     */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.triggerEvents();     
+    },
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {
+                
+        // Descripción del párrafo de No hay filtros
+        this.searchAssistantNoFiltersAvailableClassName = "searchAssistant__noFiltersAvailable"; 
+        // Botón para edición de un filtro
+        this.btnEditFilterItemClassName = "btnEditFilterItem";
+        // Botón para eliminación de un filtro
+        this.btnDeleteFilterItemClassName = "btnDeleteFilterItem";
+
+        // Lista de elementos/filtros
+        this.filterListClassName = "filterList";
+
+        // Fila que contiene toda la información del filtro
+        this.filterRowClassName = "filter-row";
+        // Nombre de la clase del panel que contiene todos los detalles del filtro
+        this.panelElementDetailClassName = "panelElementDetail";
+
+        // Panel de filtros para no usar el asistente
+        this.panelUseFilterAssistantNoClassName = "panelUseFilterAssistant__no";
+        this.panelUseFilterAssistantYesClassName = "panelUseFilterAssistant__yes";
+        // Panel que contiene la opción de aplicar filtro para seleccionar si se desea el filtrado de todos los objetos de conocimiento
+        this.panelApplyFilterAllObjectsClassName = "panelApplyFilterAllObjects";
+        // Panel que contiene el select con las propiedades de todo el grafo cargadas para iniciar su selección
+        this.panelAllPropertyFromGraphClassName = "panelAllPropertyFromGraph"
+        // Panel que contiene los paneles para la seleccion de un objeto de conocimiento y si se desea el listado de todas sus propiedades o realizar el filtrado
+        this.panelMainKnowledgeObjectClassName = "panelMainKnowledgeObject"
+        // Panel que contiene las propiedades iniciales para la selección del objeto de conocimiento principal
+        this.panelFirstPropertyMainObjectClassName = "panelFirstPropertyMainObject" 
+        // Panel que contiene los paneles para la selección de todas las propiedades existentes en el grafo
+        this.panelAllPropertyObjectClassName = "panelAllPropertyObject"
+        // Panel que contiene un combo con la selección del objeto de conocimiento principal
+        this.panelSelectMainKnowledgeObjectClassName = "panelSelectMainKnowledgeObject";
+        // Panel que contiene la opción de visualizar todos los elementos del objeto o aplicar filtros a sus propiedades
+        this.panelSelectAllObjectsClassName = "panelSelectAllObjects"; 
+
+        // Panel que continene Select para la selección de propiedades de los items que se vayan seleccionando
+        this.panelSelectPropertyClassName = "panelSelectProperty";
+        // Panel que contiene los criterios para realizar el filtro de resultados
+        this.panelCriterialListClassName = "panelCriterialList";
+
+        // Panel contenedor de un select de propiedades
+        this.panelPropertyObjectClassName = "panelPropertyObject";
+        // Contendor donde estaránlas propiedades tanto de un objeto como sin objeto principal
+        this.propertiesContainerClassName = "propertiesContainer";
+
+        // Clase radioButton para Uso de Asistente de filtros
+        this.rbUseFilterAssistantClassName = "rbUseFilterAssistant";
+        // Clase de radioButton para que el filtro aplique a todos los objetos de conocimiento y no a uno en particular
+        this.rbApplyFilterAllObjectsClassName = "rbApplyFilterAllObjects";
+        // Select/ComboBox de selección del objeto de conocimiento principal (Ej: Película)
+        this.cmbMainKnowledgeObjectClassName = "cmbMainKnowledgeObject"; 
+        // Nombre de radioButton para visualizar todos los elementos del objeto o aplicar filtros a sus propiedades
+        this.rbSelectAllObjectsClassName = "rbSelectAllObjects"; 
+        // Select/ComboBox de selección de la propiedad (Ej: schema:name)
+        this.cmbPropertyFromObjectClassName = "cmbPropertyFromObject";                    
+        
+        /* Criterios para búsquedas */                                    
+        // Nombre clase contenedor de cada uno de los Criterios de una búsqueda 
+        this.panelCriterialListItemContainerClassName = "panelCriterialListItemContainer";        
+        // Contenedor de tipo Fila de un filtrado con su criterio a definir para la búsqueda (Tipo de filtrado, Condición)
+        this.panelCriterialClassName = "panelCriterial" 
+        // Select/ComboBox para selección del tipo de filtrado una Propiedad (Mayor, Menor, Contiene)
+        this.cmbCriterialFilterClassName = "cmbCriterialFilter";
+        // InputText de la condición del filtrado
+        this.txtCriterialClassName = "txtCriterial";
+        // Botón de acción de Añadir/Eliminar criterio
+        this.btnCriterialListItemActionsAddClassName = "btnCriterialListItemActions.add";
+        this.btnCriterialListItemActionsRemoveClassName = "btnCriterialListItemActions.remove";
+    },
+
+    /**
+     * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
+     */
+    triggerEvents: function(){
+        const that = this;
+
+        // Establecer la visualización inicial de los paneles según los datos iniciales
+        that.setupVisibilityPanels();
+    },
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+        // Configurar aparición de filtros
+        configEventByClassName(`${that.filterRowClassName}`, function(element){
+            const filterItem = $(element);            
+            if (filterItem.length > 0){
+                that.checkEmptyFilterRows(filterItem);                
+            }            
+        });
+           
+        // Botón de eliminar un filtro
+        configEventByClassName(`${that.btnDeleteFilterItemClassName}`, function(element){
+            const deleteButton = $(element);
+            if (deleteButton.length > 0) {
+                // Fila elemento que está siendo editada. Contenedor de todo                
+                const pElementRow = deleteButton.closest(`.${that.filterRowClassName}`);                                           
+                // Pasar la función como parámetro al plugin
+                const pluginOptions = {
+                    onConfirmDeleteMessage: () => that.handleDeleteFilterElement(pElementRow)
+                }               
+                deleteButton.confirmDeleteItemInModal(pluginOptions);
+            }                         
+        }); 
+                
+        // RadioButton para la selección de uso o no de Asistente
+        configEventByClassName(`${that.rbUseFilterAssistantClassName}`, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){                                                                                                         
+                that.handleUseFilterAssistantChanged($jqueryElement);
+            });	                                 
+        });   
+
+        // RadioButton para la selección de que el filtro aplique a todos los objetos de conocimiento y no uno en particular        
+        configEventByClassName(`${that.rbApplyFilterAllObjectsClassName}`, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){                                                                                                         
+                that.handleApplyfilterAllObjectsChanged($jqueryElement);
+            });	                                 
+        });  
+
+        // RadioButton para la selección de visualizar todos los elementos del objeto o aplicar filtros a sus propiedades
+        configEventByClassName(`${that.rbSelectAllObjectsClassName}`, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){                                                                                                         
+                that.handleSelectAllPropertiesForSearch($jqueryElement);
+            });	                                 
+        });   
+                
+        // Select de propiedades para su eliminación y recarga con nuevas propiedades según las opciones marcadas
+        configEventByClassName(`${that.cmbPropertyFromObjectClassName}`, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("change", function(){                                                                                                         
+                that.handleDeleteSelectProperties($jqueryElement);
+            });	                                 
+        }); 
+
+        // Botón para añadir un nuevo Criterio de búsquedas        
+        configEventByClassName(`${that.btnCriterialListItemActionsAddClassName}`, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){                                                                                                         
+                that.handleAddNewCriterial($jqueryElement);
+            });	                                 
+        });
+
+        // Botón para eliminar un criterio o fila de criterio para el buscador
+        configEventByClassName(`${that.btnCriterialListItemActionsRemoveClassName}`, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){                                                                                                         
+                that.handleRemoveCriterial($jqueryElement);
+            });	                                 
+        });                  
+    },
+
+
+    /**
+     * Método que comprobará si hay filtros activos o no. En caso de no haber, se mostrará un mensaje informativo
+     */
+    checkEmptyFilterRows: function(filterItem){
+        const that = this;
+
+        // Página a actualizar   
+        const pageRow = filterItem.closest(`.${operativaGestionPaginas.pageRowClassName}`);      
+        // Contenedor de todos los filtros
+        const filterList = filterItem.closest(`.${that.filterListClassName}`);
+        // Panel informativo de filtros a partir de la página
+        const filterListItems = filterList.children().length;
+              
+        if (filterListItems > 0){
+            // Ocultar párrafo de que no hay filtros
+            pageRow.find(`.${that.searchAssistantNoFiltersAvailableClassName}`).addClass("d-none");            
+        }else{
+            // Mostrar párrafo de que no hay filtros
+            pageRow.find(`.${that.searchAssistantNoFiltersAvailableClassName}`).removeClass("d-none");
+        }
+    },
+    
+    /**
+     * Método para eliminar el filtro de la sección de "Filtros de búsqueda" 
+     * @param {*} pElementRow Fila que se procederá a eliminar
+     */
+    handleDeleteFilterElement: function(pElementRow){
+        const that = this;        
+        deleteJqueryObjectSmooth(pElementRow, (parentElement)=> that.checkEmptyFilterRows(parentElement));             
+    },
+
+    /**
+     * Método para ocultar o establecer la visibilidad de inicial de los paneles de los asistentes de filtros 
+     * según los valores de los radioButtons que están activos
+     */
+    setupVisibilityPanels: function(){
+        const that = this;
+
+        // RadioButtons para la selección de uso o no de Asistente        
+        let $rbChequed = $(`.${that.rbUseFilterAssistantClassName}`).filter(":checked");
+        $.each($rbChequed, function(){            
+            that.handleUseFilterAssistantChanged($(this));            
+        });
+                                         
+        // RadioButton para la selección de que el filtro aplique a todos los objetos de conocimiento y no uno en particular        
+        $rbChequed = $(`.${that.rbApplyFilterAllObjectsClassName}`).filter(":checked");
+        $.each($rbChequed, function(){            
+            that.handleApplyfilterAllObjectsChanged($(this));            
+        });
+                                
+        // RadioButton para la selección de visualizar todos los elementos del objeto o aplicar filtros a sus propiedades        
+        $rbChequed = $(`.${that.rbSelectAllObjectsClassName}`).filter(":checked");
+        $.each($rbChequed, function(){            
+            that.handleSelectAllPropertiesForSearch($(this));            
+        });                             
+    },
+
+    /**
+     * Método para cambiar la visualización a usar el asistente o usar el modo manual para la creación de filtros en página de búsqueda
+     * @param {*} rButton RadioButton seleccionado o analizado
+     */
+    handleUseFilterAssistantChanged: function(rButton){
+        const that = this;
+
+        // Página a actualizar 
+        //const pageRow = rbutton.closest(`.${operativaGestionPaginas.pageRowClassName}`);
+        // Obtener valor del elemento (Sí /No)
+        const inputValue = rButton.data("value");
+        // Fila del filtro que está siendo modificada
+        const filterRow = rButton.closest(`.${that.filterRowClassName}`);
+        // Paneles a utilizar para usar o no el asistente
+        const panelUseFilterAssistantYes = filterRow.find(`.${that.panelUseFilterAssistantYesClassName}`);
+        const panelUseFilterAssistantNo = filterRow.find(`.${that.panelUseFilterAssistantNoClassName}`);
+
+        if (stringToBoolean(inputValue)){
+            // Usar el asistente
+            panelUseFilterAssistantYes.removeClass("d-none");
+            panelUseFilterAssistantNo.addClass("d-none");
+        }else{
+            // No usar el asistente
+            panelUseFilterAssistantYes.addClass("d-none");
+            panelUseFilterAssistantNo.removeClass("d-none");
+        }        
+    },
+
+    /**
+     * Método para cambiar la visualización a aplicar todos los objetos de conocimiento y no uno en particular
+     * @param {*} rButton RadioButton seleccionado o analizado
+     */
+    handleApplyfilterAllObjectsChanged: function(rButton){
+        const that = this;
+        // Página a actualizar 
+        //const pageRow = rbutton.closest(`.${operativaGestionPaginas.pageRowClassName}`);
+        // Obtener valor del elemento (Sí /No)
+        const inputValue = rButton.data("value");
+        // Fila del filtro que está siendo modificada
+        const filterRow = rButton.closest(`.${that.filterRowClassName}`);
+        // Panel de Asistente
+        const panelUseFilterAssistantYes = filterRow.find(`.${that.panelUseFilterAssistantYesClassName}`);
+        const panelMainKnowledgeObject = panelUseFilterAssistantYes.find(`.${that.panelMainKnowledgeObjectClassName}`);
+        const panelFirstPropertyMainObject = panelUseFilterAssistantYes.find(`.${that.panelFirstPropertyMainObjectClassName}`);
+        const panelAllPropertyFromGraph = panelUseFilterAssistantYes.find(`.${that.panelAllPropertyFromGraphClassName}`);    
+        if (stringToBoolean(inputValue)){
+            // Aplicar o empezar por propiedades (Ej: Peliculas, Series según el nombre)
+            panelMainKnowledgeObject.addClass("d-none");            
+            panelFirstPropertyMainObject.addClass("d-none");
+            panelAllPropertyFromGraph.removeClass("d-none");
+        }else{
+            // No aplicar a todos los objetos. Aplicar a un objeto principal
+            panelMainKnowledgeObject.removeClass("d-none");  
+            panelFirstPropertyMainObject.removeClass("d-none");
+            panelAllPropertyFromGraph.addClass("d-none"); 
+        } 
     },    
+    
+    /**
+     * Método para mostrar la visualización de todos los elementos del objeto principal o aplicar filtros a sus propiedades
+     * @param {*} rButton RadioButton seleccionado o analizado
+     */    
+    handleSelectAllPropertiesForSearch: function(rButton){
+        const that = this;
 
+        // Página a actualizar 
+        //const pageRow = rbutton.closest(`.${operativaGestionPaginas.pageRowClassName}`);
+        // Obtener valor del elemento (Sí /No)
+        const inputValue = rButton.data("value");
+        // Fila del filtro que está siendo modificada
+        const filterRow = rButton.closest(`.${that.filterRowClassName}`);
+        // Panel de Asistente
+        const panelUseFilterAssistantYes = filterRow.find(`.${that.panelUseFilterAssistantYesClassName}`);
+        const panelFirstPropertyMainObject = panelUseFilterAssistantYes.find(`.${that.panelFirstPropertyMainObjectClassName}`); 
+        const panelCriterialList = filterRow.find(`.${that.panelCriterialListClassName}`);
 
+        if (stringToBoolean(inputValue)){
+            // Si. Mostrar todos los elementos sin aplicar filtros         
+            panelFirstPropertyMainObject.addClass("d-none");
+            // Ocultar los posibles criterios si es que los hay            
+            panelCriterialList.addClass("d-none");
+        }else{
+            // No. Deseo aplicar filtros en propiedades del objeto principal
+            panelFirstPropertyMainObject.removeClass("d-none");
+            panelCriterialList.removeClass("d-none");
+        }    
+    },
 
+    /**
+     * Eliminación de los select de propiedades que preceden al elemento seleccionado
+     */
+    handleDeleteSelectProperties(selectedCombo){
+        const that = this;
 
+        // Fila del filtro que está siendo modificada
+        const filterRow = selectedCombo.closest(`.${that.filterRowClassName}`);
+        // Contenedor o padre del select seleccionado
+        const parentSelectedCombo = selectedCombo.closest(`.${that.panelPropertyObjectClassName}`);
+        // Contenedor de la posibles múltiples propiedadades
+        const propertiesContainer = filterRow.find(selectedCombo.closest(`.${that.propertiesContainerClassName}`));
+        // Cada uno de los contenedores de las posibles propiedades
+        const propertiesParentSelectedCombo = propertiesContainer.find(`.${that.panelPropertyObjectClassName}`);
+        // Encuentra su índice en la lista de combos/selects
+        const selectedIndex = propertiesParentSelectedCombo.index(parentSelectedCombo);
+        
+        // Elimina todos los selects (contenedores select) después del combo seleccionado
+        const selectsToDelete = propertiesParentSelectedCombo.slice(selectedIndex + 1);
+        $.each(selectsToDelete, function(){
+            $(this).remove();
+        });             
+    },
+
+    
+    /**
+     * Método para añadir una fila o criterio para el buscador. Se realizará una petición para traer una nueva vista que añada la fila al contenedor
+     * de filtros
+     * @param {jqueryObject} btnAddFilterPressed Objeto jquery sobre el que se ha pulsado para añadir un nuevo filtro
+     */
+    handleAddNewCriterial(btnAddFilterPressed){
+        const that = this;
+
+        // Fila del filtro que está siendo modificada
+        const filterRow = btnAddFilterPressed.closest(`.${that.filterRowClassName}`);
+        // Contenedor de filtros
+        const panelCriterialListItemContainer = filterRow.find(`.${that.panelCriterialListItemContainerClassName}`);
+
+        loadingMostrar(panelCriterialListItemContainer);
+        // Petición para añadir un nuevo filtro
+
+        setTimeout(function(){
+            const criterialListItemContainerNew = that.handleGetFakeCriterial();            
+            // Agrega el elemento al elemento con el ID "container"
+            panelCriterialListItemContainer.append(criterialListItemContainerNew);
+            // Iniciar selects2 recién añadidos            
+            comportamientoInicial.iniciarSelects2();
+            loadingOcultar();
+        },3000);
+    },
+
+    /**
+     * Método para eliminar un determinado filtro
+     */
+    handleRemoveCriterial(btnRemoveFilterPressed){
+        const that = this;
+
+        // Fila del filtro que está siendo modificada
+        //const filterRow = btnRemoveFilterPressed.closest(`.${that.filterRowClassName}`);
+        // Contenedor/Fila del filtro a eliminar        
+        const panelCriterialListItem = btnRemoveFilterPressed.closest((`.${that.panelCriterialClassName}`));  
+        deleteJqueryObjectSmooth(panelCriterialListItem);        
+    },
+
+    /**
+     * Método fake que devuelve los datos o línea de un criterio para su posterior "append". Esto será sustituido por petición a BackEnd
+     * @returns 
+     */
+    handleGetFakeCriterial: function(){
+        var $panelCriterialListItemContainer = $(
+            `   
+            <div class="panelCriterial mb-3">    
+                <div class="panelCriterialListItem">            
+                    <div class="panelCriterialListItemInfo">                    
+                        <span class="panelCriterialListItemInfo__orLabel">OR</span>                    
+                        <div class="form-group">
+                            <label class="control-label d-block">Tipo de filtrado</label>                        
+                            <select class="cmbCriterialFilter js-select2"
+                                    name="CriterialFilter_445566">
+                                <option value="igualA" data-property-value="igualA" data-property-id="==">igual que</option>
+                                <option value="contiene" data-property-value="contiene" data-property-id="==">contiene</option>
+                                <option value="diferente" data-property-value="diferente" data-property-id="!=">diferente a </option>                                     
+                                <option value="mayorque" data-property-value="mayorque" data-property-id="<">mayor que</option>
+                                <option value="mayorIgualQue" data-property-value="mayorIgualQue" data-property-id="<=">mayor o igual que</option>
+                                <option value="menorQue" data-property-value="menorQue" data-property-id=">">menor que</option>
+                                <option value="menorIgualQue" data-property-value="menorQueIgualQue" data-property-id=">=">menor o igual que</option>                           
+                            </select>
+                        </div>                    
+                        <div class="form-group">
+                            <label class="control-label d-block">Condición</label>
+                            <input type="text" class="form-control txtCriterial" name="txtCriterial_445566">
+                        </div>
+                    </div>
+                        
+                    <div class="panelCriterialListItemActions">                    
+                        <button class="btn btnCriterialListItemActions add">
+                            <span class="material-icons">add</span>
+                        </button>                    
+                        <button class="btn btnCriterialListItemActions remove">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>            
+                <small class="form-text text-muted mt-n2 mb-3">Selecciona las condiciones de filtrado para aplicar a la propiedad elegida.</small>             
+            </div>
+            `
+            );        
+        return $panelCriterialListItemContainer;
+    },
 }
 
 var tamFijo = 0;
@@ -5716,7 +6356,6 @@ const operativaGestionMultimediaCMS = {
 /**
  * Operativa de funcionamiento de Editar Componentes CMS  
  */
-
 const operativaGestionComponentsCMS = {
 
     /**
@@ -5818,6 +6457,15 @@ const operativaGestionComponentsCMS = {
         // RadioButton para seleccionar un componente de tipo privado o no. Mostrará u ocultará el panel de selección de perfiles/grupos        
         this.rbPrivacyComponentClassName = 'chkEditarPrivacidad';
 
+        // Checkbox para controlar los idiomas disponibles del componente
+        this.chkSelectIdiomaId = "chkSelectIdioma";
+        // Contendor donde se mostrarán los idiomas disponibles del componente
+        this.divSelectIdiomaId = "divSelectIdioma";
+        // Check con la opción de "Todos los idiomas"
+        this.chkIdiomaId = "chkIdioma";
+        // Clase de los diferentes checkbox en los diferentes idiomas disponibles
+        this.chkIdiomaClassName = "idioma";
+
         // Input de privacidad de perfiles para componentes añadir
         this.inputPrivacidadPerfilesComponentesIdName = 'privacidadPerfiles';
         this.inputPrivacidadPerfilesComponentes = $(`#${this.inputPrivacidadPerfilesComponentesIdName}`);
@@ -5869,6 +6517,8 @@ const operativaGestionComponentsCMS = {
         // Botón para eliminar un input del componente CMS de tipo "Envío de correo"
         this.btnDeleteFormInputClassName = `btnDeleteFormInput`;
         this.btnDeleteFormInput = $(`.${this.btnDeleteFormInputClassName}`);
+
+
 
         // Contenedor modal de contenido dinámico
         this.modalContainer = $("#modal-container");
@@ -6078,6 +6728,25 @@ const operativaGestionComponentsCMS = {
                 that.handleSearchComponentItemAndCheckIfNotExist(input);                
             });	
         }); 
+
+        // Checkbox para mostrar u ocultar idiomas disponibles en los que se desea un componente    
+        configEventById(this.chkSelectIdiomaId, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("change", function(e){                 
+                const checkbox = $(this);                                                                                                
+                that.handleShowHideAvailableLanguagesForCMSComponent();                
+            });	
+        }); 
+
+        // Checkbox para seleccionar o no todos los idiomas disponibles        
+        configEventById(this.chkIdiomaId, function(element){
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("change", function(e){                                                                                                                                
+                that.handleSelectDeselectAllLanguagesForCMSComponent();                
+            });	
+        });         
+
+
 
         // RadioButton para cambiar la privacidad del componente
         configEventByClassName(this.rbPrivacyComponentClassName, function(element){
@@ -6774,6 +7443,41 @@ const operativaGestionComponentsCMS = {
     }, 
 
     /**
+     * Método para mostrar u ocultar el panel de los idiomas disponibles de un componente   
+     */
+    handleShowHideAvailableLanguagesForCMSComponent: function(){
+        const that = this;
+        // Panel de privacidad a mostrar u ocultar        
+        const panelLanguages = $(`#${this.divSelectIdiomaId}`);
+                
+        // Verificar si el checkbox está marcado
+        if ($(`#${that.chkSelectIdiomaId}`).is(':checked')) {
+            panelLanguages.removeClass('d-none');
+        } else {
+            // El checkbox no está marcado, ocultar el contenedor
+            panelLanguages.addClass('d-none');
+        }
+    },  
+
+    /**     
+     * Método para marcar/desmarcar los checkbox de los idiomas de un componente CMS.                   
+     */
+    handleSelectDeselectAllLanguagesForCMSComponent: function(){
+        const that = this;
+        // Panel de privacidad a mostrar u ocultar        
+        const panelLanguages = $(`#${this.divSelectIdioma}`);
+
+        // Obtener el estado del checkbox principal
+        const isChecked = $(`#${that.chkIdiomaId}`).is(':checked');
+
+        // Seleccionar todos los checkboxes de idiomas
+        panelLanguages.find($(`.${this.chkIdiomaClassName }`)).each(function() {
+            // Revisar checkboxes y habilitarlos para su selección             
+            $(this).prop('disabled', isChecked);
+        });
+    },     
+        
+    /**
      * Método para mostrar u ocultar el panel de privacidad de un componente     
      */
     handleShowHidePrivacyPanelForComponent: function(){
@@ -6939,17 +7643,25 @@ const operativaGestionComponentsCMS = {
         if (input != undefined && input.val().trim() !=""){
             loadingMostrar();
             // Listado de componentes id a revisar
-            let listaIDs = {};
+            let parametros = {};
             const newComponentIdToAdd = input.val().trim();
             // Construyo la petición para averiguar información del id componente escrito
-            listaIDs['listaIDs[' + 0 + ']'] = newComponentIdToAdd;
+            parametros['listaIDs[0]'] = newComponentIdToAdd;
+
+            // Identificador del proyecto
+            that.proyectoID = $('.inpt_proyID').val();
+            that.args = '';
+
+            if (that.proyectoID != undefined) {
+                parametros['proyectoID'] = that.proyectoID;
+            }
 
             // Construir la url a partir del botón de editar pulsado para abrir el modal +"check". Dependerá de si está siendo editado o creado de nuevo.
             let urlCheckComponentName = '';     
 
             if (stringToBoolean(that.pParams.isEdited) == true){
                 // El componente está siendo editado
-                urlCheckComponentName = `${that.urlEditComponent.replace("load-modal","").trim()}check`;                                        
+                urlCheckComponentName = `${that.urlEditComponent.replace("load-modal", "").trim()}check`;                                        
             }else{
                 // El componente es nuevo
                 urlCheckComponentName = `${that.urlSaveComponent}`.replace("save","check");
@@ -6958,7 +7670,7 @@ const operativaGestionComponentsCMS = {
             // Realizar la petición
             GnossPeticionAjax(
                 urlCheckComponentName,
-                listaIDs,
+                parametros,
                 true
             ).done(function (data) {
                 loadingOcultar();
@@ -6998,6 +7710,15 @@ const operativaGestionComponentsCMS = {
         // InputHack donde se añadirá el nuevo componente
         const inputHackProperty = $(`#${inputHackPropertyId}`);        
 
+        var spanNombre = '';
+        if (componentData.TextoEnlace != null && componentData.TextoEnlace != '') {
+            spanNombre = `
+            <span class="component-real-name">
+                ${componentData.TextoEnlace}
+            </span>	
+            `
+        }
+
         // Plantilla de la fila del componente a añadir
         const templateComponentRow = `
         <li class="component-wrap component-row" data-componentid="${componentData.Identificador}" draggable="false">
@@ -7006,20 +7727,18 @@ const operativaGestionComponentsCMS = {
                     <div class="component-header">            
                         <div class="component-sortable js-component-sortable-component">
                             <span class="material-icons-outlined sortable-icon">drag_handle</span>
-                        </div>            
+                        </div>
                         <div class="component-header-content">
-                            <div class="component-header-left">                                    
-                                <div class="component-name-wrap">                            
+                            <div class="component-header-left">
+                                <div class="component-name-wrap">
                                     <span class="component-name">							
-                                        <span class="component-real-name">
-                                            ${componentData.TextoEnlace}
-                                        </span>							                                        
+						                ${spanNombre}                        
                                         <span class="component-name-id">
                                             ${componentData.Identificador}
                                         </span>
                                     </span>
                                 </div>
-                            </div>                            
+                            </div>
                             <div class="component-header-right">
                                 <div class="component-actions-wrap">
                                     <ul class="no-list-style component-actions">                                
@@ -7076,6 +7795,13 @@ const operativaGestionComponentsCMS = {
                 listaIDs['listaIDs[' + i + ']'] = $(this).data("componentid");
                 i++;
             });
+
+            // Identificador del proyecto
+            that.proyectoID = $('.inpt_proyID').val();
+
+            if (that.proyectoID != undefined) {
+                listaIDs['proyectoID'] = that.proyectoID;
+            }
 
             // Construir la url a partir del botón de editar pulsado para abrir el modal +"check". Eliminar posibles "load-modal" si viene de Builder-CMS            
             const urlCheckComponentName = `${that.urlEditComponent.replace("load-modal","").trim()}check`;
@@ -7199,12 +7925,12 @@ const operativaGestionComponentsCMS = {
         }
         
         // Disponibilidad del componente en los idiomas (PENDIENTE - CUANDO SE HAN DE VISUALIZAR LOS IDIOMAS DISPONIBLES )
-        if ($('#chkSelectIdioma').is(':checked') && $('input.idiomaMulti').length > 0)
+        if ($(`#${this.chkSelectIdiomaId}`).is(':checked') && $(`#${this.chkIdiomaId}`).length > 0)
         {
             var prefijoIdiomasDisponibles = prefijoClave + '.ListaIdiomasDisponibles';
-            var todosIdiomas = $('input.idiomaMulti').is(':checked');
+            var todosIdiomas = $(`#${this.chkIdiomaId}`).is(':checked');
             if (!todosIdiomas) {
-                var items = $('input.idioma');
+                var items = $(`#${that.divSelectIdiomaId}`).find($(`.${that.chkIdiomaClassName}`));
                 var i = 0;
                 items.each(function () {
                     var item = $(this);
@@ -7317,6 +8043,12 @@ const operativaGestionComponentsCMS = {
             }
         });
 
+        // Identificador del proyecto
+        that.proyectoID = $('.inpt_proyID').val();        
+
+        if (that.proyectoID != undefined) {
+            datosComponente['proyectoID'] = that.proyectoID;
+        }
 
         // Realización de la petición del guardado
         GnossPeticionAjax(
@@ -7409,15 +8141,14 @@ const operativaGestionComponentsCMS = {
                 }
             });        
                        
-            // Input obligatorio (Activo -> Sí / No)            
-            const checkName = $(elemento.find('.esCampoObligatorio input')[0]).prop('name');
-            const isInputRequired = $(`input[name="${checkName}_SI"]`).is('checked');
-            const valorChk = isInputRequired;
+            // Input obligatorio (Activo -> Sí / No)                        
+            const inputElement = elemento.find('.esCampoObligatorio input[data-value="si"]');
+            const isInputRequired = inputElement.is(':checked');            
             // Tipo de Input (Corto/Largo)                    
             const valorSelect = elemento.find(`select[name="tipoCampo"]`).val(); 
 
             // Asignar los nuevos datos/editados al inputHack
-            $('#propiedad25').val($('#propiedad25').val() + valorTxt + '&&&' + valorChk + '&&&' + valorSelect + '###');
+            $('#propiedad25').val($('#propiedad25').val() + valorTxt + '&&&' + isInputRequired + '&&&' + valorSelect + '###');
         });
     },
 
@@ -7428,61 +8159,48 @@ const operativaGestionComponentsCMS = {
      Propiedad30_RecalcularListaCampos: function() {
         const that = this;
 
-        const elementos = $('.elementos_propiedad30_' + that.listaIdiomas[0]);
-        let nuevosElementos = '';
+        const elementos = $('.elementos_propiedad30_' + that.listaIdiomas[0]);        
         let idiomaPorDefecto = $("#idiomaDefecto").val(); 
+
         // Reseteamos el campo para guardar nuevos
         $('#propiedad30').val('');
-        let nuevaPosicion = 0;
+
         elementos.each(function(indice){
             const elemento = $(this);
             let valorTxtNombre='';
             let valorTxtEnlace='';
-            let valorTxtOriginalPosition = '';
 
-            // Nuevo nivel e índice de la propiedad del menú
-            const newNivel = elemento.first().data("nivel");          
-            const newIndice = elemento.first().data("indice");          
+            // Posición original para obtener el dato del span a partir de su position                      
+            const originalPosition = elemento.data("originalposition");                                    
+            const newPosition = indice;
 
+                       
             for (let i=0; i< that.listaIdiomas.length; i++) {
                 const valueidioma = that.listaIdiomas[i];
-        
-                if (valueidioma != idiomaPorDefecto && elemento.find($('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre')).val() == undefined){
-                    // Si no hay valores para los demás idiomas, generarlo a partir del idioma por defecto
-                    //valorTxtNombre += $('#propiedad30_' + idiomaPorDefecto + '_' + indice + '_txt_nombre').val() + '@' + valueidioma + '|||';
-                    valorTxtNombre += elemento.find(".inputNombreMenuItem").val() + '@' + valueidioma + '|||'; //elemento.find($('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre')).val() + '@' + valueidioma + '|||';
-                    //valorTxtEnlace += $('#propiedad30_' + idiomaPorDefecto + '_' + indice + '_txt_enlace').val() + '@' + valueidioma + '|||';
-                    valorTxtEnlace += elemento.find(".inputEnlaceMenuItem").val() + '@' + valueidioma + '|||'; //elemento.find($('#propiedad30_' + valueidioma + '_' + indice + '_txt_enlace')).val() + '@' + valueidioma + '|||';                     
-                    //elemento.find($('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre')).val()
-                }else{
-                    //valorTxtNombre += $('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre').val() + '@' + valueidioma + '|||';
-                    valorTxtNombre += elemento.find(".inputNombreMenuItem").val() + '@' + valueidioma + '|||'; // elemento.find($('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre')).val() + '@' + valueidioma + '|||';                
-                    //valorTxtEnlace += $('#propiedad30_' + valueidioma + '_' + indice + '_txt_enlace').val() + '@' + valueidioma + '|||';
-                    valorTxtEnlace += elemento.find(".inputEnlaceMenuItem").val() + '@' + valueidioma + '|||'; // elemento.find($('#propiedad30_' + valueidioma + '_' + indice + '_txt_enlace')).val() + '@' + valueidioma + '|||';
+
+                if ($('#propiedad30_' + valueidioma + '_' + originalPosition + '_txt_nombre').val() != undefined) {                    
+                    valorTxtNombre += $('#propiedad30_' + valueidioma + '_' + originalPosition + '_txt_nombre').val() + '@' + valueidioma + '|||'; 
+                    valorTxtEnlace += $('#propiedad30_' + valueidioma + '_' + originalPosition + '_txt_enlace').val() + '@' + valueidioma + '|||';
+                }
+                else if (valueidioma != idiomaPorDefecto && elemento.find($('#propiedad30_' + valueidioma + '_' + originalPosition + '_txt_nombre')).val() == undefined){
+                    // Si no hay valores para los demás idiomas, generarlo a partir del idioma por defecto                    
+                    valorTxtNombre += elemento.find(".inputNombreMenuItem").val() + '@' + valueidioma + '|||';                    
+                    valorTxtEnlace += elemento.find(".inputEnlaceMenuItem").val() + '@' + valueidioma + '|||';                    
+                }
+                else {                    
+                    valorTxtNombre += elemento.find(".inputNombreMenuItem").val() + '@' + valueidioma + '|||';
+                    valorTxtEnlace += elemento.find(".inputEnlaceMenuItem").val() + '@' + valueidioma + '|||';
                 }                
             }
 
-            /*
-            $.each(that.listaIdiomas, function (keyidioma, valueidioma) {
-                if (valueidioma != idiomaPorDefecto && $('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre').val() == undefined){
-                    // Si no hay valores para los demás idiomas, generarlo a partir del idioma por defecto
-                    valorTxtNombre += $('#propiedad30_' + idiomaPorDefecto + '_' + indice + '_txt_nombre').val() + '@' + valueidioma + '|||';
-                    valorTxtEnlace += $('#propiedad30_' + idiomaPorDefecto + '_' + indice + '_txt_enlace').val() + '@' + valueidioma + '|||';                     
-                }else{
-                    valorTxtNombre += $('#propiedad30_' + valueidioma + '_' + indice + '_txt_nombre').val() + '@' + valueidioma + '|||';
-                    valorTxtEnlace += $('#propiedad30_' + valueidioma + '_' + indice + '_txt_enlace').val() + '@' + valueidioma + '|||';
-                }
-            });
-            */
             // Nivel del enlace en el menú
             let nivel = parseInt(elemento.data("nivel"));
 
-            valorTxtOriginalPosition = elemento.data("originalposition") != undefined ? parseInt(elemento.data("originalposition")) : nuevaPosicion; // parseInt(elemento.data("originalposition"));
             // Establecer los datos de los items del menú
-            $('#propiedad30').val($('#propiedad30').val() + nivel + '&&&' + valorTxtNombre + '&&&' + valorTxtEnlace + '&&&' + valorTxtOriginalPosition + '&&&' + '###');
+            const itemMenuDetail = nivel + '&&&' + valorTxtNombre + '&&&' + valorTxtEnlace + '&&&' + newPosition + '&&&' + '###';
+            $('#propiedad30').val($('#propiedad30').val() + itemMenuDetail);
             // Cambiar la posición del menú a la nueva posición por si ha cambiado algo
-            elemento.data("originalposition",nuevaPosicion);
-            nuevaPosicion++
+            elemento.data("originalposition", newPosition);
         });
     },
 
@@ -7522,8 +8240,16 @@ const operativaGestionComponentsCMS = {
         // Mostrar loading
         loadingMostrar();
 
+        // Identificador del proyecto
+        that.proyectoID = $('.inpt_proyID').val();
+        that.args = '';
+
+        if (that.proyectoID != undefined) {
+            that.args = 'proyectoID=' + that.proyectoID;
+        }
+
         // Hacer petición y cargar el contenido del modal dentro de "modal-dinamic-content"
-        getVistaFromUrl(urlLoadModalComponent, 'modal-dinamic-content', '', function(result, data){
+        getVistaFromUrl(urlLoadModalComponent, 'modal-dinamic-content', that.args, function(result, data){
             if (result != requestFinishResult.ok){
                 loadingOcultar();
                 // KO al cargar la vista
@@ -7553,7 +8279,9 @@ const operativaGestionComponentsCMS = {
         // that.modalContainer y vista donde se ha de añadir pViewData: modal-dinamic-content
 
         // Botón para navegación 
-        const btnBackModal = $(`.${that.backModalNavigationClassName}`).length == 0 ? `<span style="cursor:pointer" class="material-icons ${that.backModalNavigationClassName}" alt="Volver" title="Volver" aria-label="Close">arrow_back</span>` : $(".backNavigation").length;
+        // const btnBackModal = $(`.${that.backModalNavigationClassName}`).length == 0 ? `<span style="cursor:pointer" class="material-icons ${that.backModalNavigationClassName}" alt="Volver" title="Volver" aria-label="Close">arrow_back</span>` : $(".backNavigation").length;
+        const btnBackModal = `<span style="cursor:pointer" class="material-icons ${that.backModalNavigationClassName}" alt="Volver" title="Volver" aria-label="Close">arrow_back</span>`
+        
         // Botón para cerrar el modal cuando se cargue
         let btnCloseModal = undefined;
         // Obtener el área donde se posicionará la vista
@@ -7575,23 +8303,25 @@ const operativaGestionComponentsCMS = {
             // Añadir la vista actual al modal-dinamic-content para la visualización del hijo
             modalDinamicContent.html(pViewData);
             // Localizar el botón de cerrar el modal
-            btnCloseModal = that.modalContainer.find(".cerrar");
+            btnCloseModal = modalDinamicContent.find(".cerrar");
             // Ocultar el botón de Cerrar para que no esté disponible
             btnCloseModal.addClass("d-none");
-            // Añadir el botón de la navegación
-            that.modalContainer.find(".modal-header").append(btnBackModal);
+            // Añadir el botón de la navegación        
+            //that.modalContainer.find(".modal-header").append(btnBackModal);
+            modalDinamicContent.find(".modal-header").append(btnBackModal);
         }else{
             // Obtener la vista padre del componente del array para realizar la navegación al "padre"
             const parentModalView = that.listComponentArray.at(-1);
             // Quitar la vista modal actual del modalContainer y del array 
             that.listComponentArray.pop();
             // Añadir la vista actual al modal-dinamic-content para la visualización del padre
-            modalDinamicContent.html(parentModalView.currentModalView);
+            const previousModalView = $(parentModalView.currentModalView)[0].innerHTML;
+            modalDinamicContent.html(previousModalView);
             btnCloseModal = that.modalContainer.find(".cerrar");
             // Ocultar el botón de Cerrar para que no esté disponible sólo si no hay más hijos pendientes en la jerarquía para la navegación           
             that.listComponentArray.length > 0 && btnCloseModal.addClass("d-none");
             // Añadir el botón de la navegación si hay más hijos pendientes
-            that.listComponentArray.length > 0 && that.modalContainer.find(".modal-header").append(btnBackModal);
+            //that.listComponentArray.length > 0 && that.modalContainer.find(".modal-header").append(btnBackModal);
             // Añadir la URL del guardado del componente que se está mostrando en ese momento
             that.urlSaveComponent = parentModalView.currentModalViewUrlSave;
             // Evitar comportamientos extraños con los select2 al volver hacia atrás (Eliminarlos e inicializar los select2)
@@ -8920,7 +9650,6 @@ const operativaGestionRedirecciones = {
             },
         };
     }, 
-
  };
 
 
@@ -9030,28 +9759,23 @@ const operativaPaginasNestedSortable = {
             var data = new FormData();
             var files = plugin.input.get(0).files;
             if (files.length > 0) {
-              // Mostrar Loading
-              loadingMostrar();              
-              data.append(defaults.urlUploadImageType, files[0]);
-              $.ajax({
-                url: plugin.settings.urlUploadImage,
-                type: "POST",
-                processData: false,
-                contentType: false,
-                data: data,
-                success: function (response) {
-                  // Subida de imagen correcta
-                  //hideError();
-                  onSuccesResponse(response);
-                },
-                error: function (er) {
-                    // Error en la subida de la imagen
+                // Mostrar Loading
+                loadingMostrar();              
+                data.append(defaults.urlUploadImageType, files[0]);                      
+                // Realizar la petición de la página a crear
+                GnossPeticionAjax(                
+                    plugin.settings.urlUploadImage,
+                    data,
+                    true
+                ).done(function (data) {
+                    // OK
+                    onSuccesResponse(data);                
+                }).fail(function (data) {
+                    // KO
+                    mostrarNotificacion("error", data);              
+                }).always(function () {
                     loadingOcultar();
-                    mostrarNotificacion("error", er);
-                    //displayError(er.statusText);
-                    //loadingOcultar();        
-                },
-              });
+                }); 
             }            
           });
         };

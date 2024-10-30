@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.Documentacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -32,6 +33,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -48,8 +50,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class CMSAdminComponenteEditarController : ControllerBaseWeb
     {
-        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -126,6 +128,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult Guardar(CMSAdminComponenteEditarViewModel Componente)
         {
+            GuardarLogAuditoria();
             string error = "";
 
             try
@@ -251,7 +254,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             {
 
                                 string valorPropiedad = HttpUtility.UrlDecode(propiedad.Value);
-                                foreach (string idioma in mConfigService.ObtenerListaIdiomasDictionary().Keys)
+								ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+								foreach (string idioma in paramCL.ObtenerListaIdiomasDictionary().Keys)
                                 {
                                     string imagenIdioma = UtilCadenas.ObtenerTextoDeIdioma(valorPropiedad, idioma, null, true);
 
@@ -388,7 +392,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             foreach (string id in listaIDs)
             {
                 Guid idRecurso = Guid.Empty;
-                string error = errorNoExiste;
+                string error = string.Empty;
 
                 if (string.IsNullOrEmpty(id))
                 {
@@ -401,12 +405,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         if (TipoComponenteCMSActual == TipoComponenteCMS.ListadoProyectos)
                         {
                             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            idRecurso = proyCN.ObtenerProyectoIDPorNombre(id);
+
+                            if (Guid.TryParse(id, out idRecurso))
+                            {
+                                if (!proyCN.ExisteProyectoConID(idRecurso))
+                                {
+                                    idRecurso = Guid.Empty;
+                                }
+                            }
+                            else
+                            {
+                                idRecurso = proyCN.ObtenerProyectoIDPorNombre(id);
+                            }
+                            
                             proyCN.Dispose();
 
                             if (idRecurso.Equals(Guid.Empty))
                             {
-                                throw new Exception();
+                                mLoggingService.GuardarLogError($"El proyecto {id} no existe.");
+                                throw new Exception($"El proyecto {id} no existe.");
                             }
                         }
                         else
@@ -422,11 +439,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             listaIdentificadores.Add(idRecurso);
                         }
-
                     }
                     catch (Exception)
                     {
                         error = errorNoExiste;
+                        mLoggingService.GuardarLogError($"{error}. ID: {id}");
                     }
                 }
 
@@ -435,13 +452,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 datosResultado.Identificador = idRecurso;
                 datosResultado.Error = error;
                 resultadoComprobacion.Add(datosResultado);
-
             }
 
             if (TipoComponenteCMSActual == TipoComponenteCMS.GrupoComponentes)
             {
                 CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionCMS gestionCMS = new GestionCMS(cmsCN.ObtenerComponentePorListaID(listaIdentificadores, ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                GestionCMS gestionCMS = new GestionCMS(cmsCN.ObtenerComponentePorListaID(listaIdentificadores, ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext);
                 cmsCN.Dispose();
 
                 foreach (Guid componenteID in gestionCMS.ListaComponentes.Keys)
@@ -451,10 +467,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     var resultados = resultadoComprobacion.Where(resultado => resultado.Identificador == componenteID);
                     if(resultados.Any())
                     {
-                        string enlace = mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + componente.Clave.ToString();
+                        string enlace = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/{componente.Clave}";
                         resultados.First().UrlEnlace = enlace;
                         resultados.First().TextoEnlace = componente.Nombre;
-                        resultados.First().Error = "";
+                        resultados.First().Error = string.Empty;
                     }
                 }
             }
@@ -474,7 +490,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         string enlace = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, proy.NombreCorto);
                         resultados.First().UrlEnlace = enlace;
                         resultados.First().TextoEnlace = proy.Nombre;
-                        resultados.First().Error = "";
+                        resultados.First().Error = string.Empty;
                     }
                 }
             }
@@ -495,7 +511,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         string enlace = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, doc, false);
                         resultados.First().UrlEnlace = enlace;
                         resultados.First().TextoEnlace = UtilCadenas.ObtenerTextoDeIdioma(doc.Titulo, UtilIdiomas.LanguageCode, null);
-                        resultados.First().Error = "";
+                        resultados.First().Error = string.Empty;
                     }
                 }
             }
@@ -516,6 +532,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
         public ActionResult Delete(string idComponente)
         {
+            GuardarLogAuditoria();
             Guid ComponenteID = Guid.Empty;
 
             if (Guid.TryParse(idComponente, out ComponenteID) && !ComponenteID.Equals(Guid.Empty))
@@ -523,7 +540,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 try
                 {
                     using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication))
-                    using (GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponenteID, ProyectoSeleccionado.Clave), mLoggingService, mEntityContext))
+                    using (GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponenteID, ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext))
                     {
                         ControladorComponenteCMS contrCMS = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
                         contrCMS.BorrarComponenteCrearFilasIntegracionContinua(ComponenteID, cmsCN, gestorCMS);
@@ -674,15 +691,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             }
                         }
                     }
-
-                    if (ParametrosGeneralesRow.IdiomasDisponibles)
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					if (ParametrosGeneralesRow.IdiomasDisponibles)
                     {
-                        mPaginaModel.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                     }
                     else
                     {
                         mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
-                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
                     }
 
                     if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma) || (ParametroProyecto.ContainsKey(ParametroAD.PropiedadCMSMultiIdioma) && ParametroProyecto[ParametroAD.PropiedadCMSMultiIdioma] == "1"))
@@ -690,9 +707,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         mPaginaModel.ContenidoMultiIdioma = true;
                         mPaginaModel.ListaIdiomasDisponibles = new List<string>();
 
-                        if (CMSComponente != null && !string.IsNullOrEmpty(CMSComponente.FilaComponente.IdiomasDisponibles))
+                        if (!string.IsNullOrEmpty(CMSComponente?.FilaComponente?.IdiomasDisponibles))
                         {
-                            mPaginaModel.ListaIdiomasDisponibles = mConfigService.ObtenerListaIdiomas();
+                            string[] idiomasDisponibles = CMSComponente.FilaComponente.IdiomasDisponibles.Split("|||", StringSplitOptions.RemoveEmptyEntries);
+                            foreach (string idioma in idiomasDisponibles)
+                            {
+                                string[] configuracionIdioma = idioma.Split("@");
+                                string estadoIdioma = configuracionIdioma[0];
+                                string claveIdioma = configuracionIdioma[1];
+                                if (estadoIdioma?.ToLower() == "true" && !mPaginaModel.ListaIdiomasDisponibles.Contains(claveIdioma))
+                                {
+                                    mPaginaModel.ListaIdiomasDisponibles.Add(claveIdioma);
+                                }
+							}
+                            
                         }
                     }
 

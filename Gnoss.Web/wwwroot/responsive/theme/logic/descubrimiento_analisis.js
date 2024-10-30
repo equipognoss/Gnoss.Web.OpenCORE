@@ -173,6 +173,22 @@ const operativaGestionFacetas = {
         this.conditionListClassName = "panListadoCondiciones";
         this.auxCondicionesSeleccionadasClassName = "auxCondicionesSeleccionadas";
         this.chkInmutableClassName = "chkInmutable";
+
+        // Modal para mover una faceta
+        this.modalMoveFacetaId = "modal-move-faceta";
+        this.modalMoveFaceta = $(`#${this.modalMoveFacetaId}`);
+        // Select de la faceta a elegir para mover
+        this.cmbListaFacetasClassName = "cmbListaFacetas";
+        this.cmbListaFacetas = $(`.${this.cmbListaFacetasClassName}`);
+        // Título de la faceta del modal que se desea mover
+        this.modalTitleMoveFacetaClassName = `move-faceta-title`;
+        this.modalTitleMoveFaceta = $(`.${this.modalTitleMoveFacetaClassName}`);
+        // Botón para guardar movimiento de la faceta
+        this.btnSaveFacetaMoveClassName = "btnSaveFacetaMove";
+        this.btnSaveFacetaMove = $(`.${this.btnSaveFacetaMoveClassName}`);
+        this.btnMoveFacetaClassName = "btnMoveFaceta";   
+        // Backup de los items ordenados en caso de que no se proceda al guardado correcto
+        this.backupArraySortableListItems = undefined;     
        
         // Fila de la faceta que está siendo editada
         this.filaFaceta = undefined;
@@ -281,6 +297,11 @@ const operativaGestionFacetas = {
             that.handleLoadCreateFacetaPropuesta(id, url);
         });
 
+        // Botón del modal para poder mover una faceta de forma "manual" justo debajo de la elegida
+        this.btnSaveFacetaMove.on("click", function () {
+            that.handleMoveFacetManually();
+        });        
+
         // Botón para eliminar una faceta
         configEventByClassName(`${that.btnDeleteFacetaClassName}`, function(element){
             const $btnDelete = $(element);
@@ -381,8 +402,7 @@ const operativaGestionFacetas = {
         configEventByClassName(`${that.btnSaveFacetaClassName}`, function(element){
             const $saveButton = $(element);
             $saveButton.on("click", function(){   
-                that.handleSaveFacetas();                                              
-                
+                that.handleSaveFacetas();                                                              
             });	                        
         });
 
@@ -402,7 +422,6 @@ const operativaGestionFacetas = {
                 that.handleFacetaInputChanged($input);
             });	                        
         });
-
 
         // Botón (X) para poder eliminar condiciones                           
         configEventByClassName(`${that.btnRemoveConditionItemClassName}`, function(element){
@@ -436,15 +455,149 @@ const operativaGestionFacetas = {
             });
         });
 
-        
-
-
+        // Botón para añadir la condición a la faceta
+        configEventByClassName(`${that.btnMoveFacetaClassName}`, function(element){                        
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function(){
+                that.filaFaceta = $(this).closest(`.${that.facetaListItemClassName}`);                                                                
+                that.handleSetFacetTitleInModal();
+            });	 
+        });
+            
     },
     /**
      ****************************************************************************************************************************
      * Acciones a realizar, funciones sobre las facetas
      * **************************************************************************************************************************
      */ 
+
+    /**
+     * Método para asignar el nombre de la faceta al modal de "Mover" si se desea establecer un nombre     
+     */
+     handleSetFacetTitleInModal: function(){
+        const that = this;
+
+        // Resetear posibles options que se han ocultado previamente
+        // Obtén todas las opciones dentro del select
+        that.cmbListaFacetas.find('option').prop("disabled", false);        
+        
+        if (that.filaFaceta == undefined){
+            return;
+        }
+        // Nombre de la faceta seleccionada
+        const facetName = that.filaFaceta.find(`.${that.componentFacetaNameClassName}:not(.d-none)`).text().trim();
+        that.modalTitleMoveFaceta.text(facetName);
+        const facetSelectedKey = that.filaFaceta.prop("id");
+        const facetSelectedOption = that.cmbListaFacetas.find(`option[name="${facetSelectedKey}"]`);                
+        // Deshabilita la opción (opcional, puedes comentar esta línea si solo quieres ocultarla visualmente)
+        facetSelectedOption.prop('disabled', true);        
+
+        // Actualiza el select2 después de modificar las opciones
+        that.cmbListaFacetas.trigger('change');        
+     },
+
+     
+     /**
+      * Método para comprobar y ejecutar la ordenación o movimiento de una faceta debajo de la seleccionada. Si ha habido un error, revertirá el movimiento realizado
+      * @returns 
+      */
+     handleMoveFacetManually: function(){     
+        const that = this;
+        // En that.filaFaceta se guarda la faceta que se ha seleccionado y se desesa mover
+        if (that.filaFaceta == undefined){
+            return;
+        }
+
+        const facetSelectedId = that.filaFaceta.prop("id");
+        // Faceta seleccionada para posicionar justo debajo la filaFaceta
+        const facetMoveBelowId = that.cmbListaFacetas.find(':selected').attr("name");
+
+        // Comprobar que la faceta seleccionada y la faceta destino son diferentes
+        if (facetSelectedId === facetMoveBelowId){
+            mostrarNotificacion("error", "No es posible mover la faceta debajo de sí misma. Por favor, selecciona otra faceta.");
+            return;
+        }
+                
+        // Obtén la instancia de Sortable para la lista
+        const sortableList = Sortable.get(document.getElementById(`${that.facetaListContainerId}`));           
+                       
+        // Buscar los índices
+        const sortableListItems = document.getElementsByClassName(`${that.facetaListItemClassName}`);
+
+        let indexToMove = -1;
+        let newIndex = -1;
+        
+        for (let i = 0; i < sortableListItems.length; i++) {
+          const currentId = sortableListItems[i].id;
+        
+          if (currentId === facetSelectedId) {
+            indexToMove = i;
+          }
+        
+          if (currentId === facetMoveBelowId) {
+            newIndex = i;
+          }
+        
+          if (indexToMove !== -1 && newIndex !== -1) {
+            // Ambos índices han sido encontrados, puedes salir del bucle
+            break;
+          }
+        }
+         
+        const arraySortableListItems = sortableList.toArray();
+        // Copia de los items sin mover por si se produce un error
+        that.backupArraySortableListItems = arraySortableListItems;
+        // Remueve el elemento de la posición original
+        const itemToMove = arraySortableListItems.splice(indexToMove, 1)[0];
+
+        // Inserta el elemento en la nueva posición
+        arraySortableListItems.splice(newIndex, 0, itemToMove);
+
+        // Actualiza la representación visual de la lista
+        sortableList.sort(arraySortableListItems);        
+
+        // Proceder al guardado
+        that.handleSaveFacetasSorted(function(isOk, data){                        
+            if (isOk == requestFinishResult.ok){                
+                // Datos guardados correctamente al haber ordenado los items. Cerrar modal de mover items   
+                dismissVistaModal(that.modalMoveFaceta);   
+                // Actualizar el select del modal
+                that.handeleUpdateFacetListInModal();
+            }else{
+                // Error al guardar items, restaurar el orden previo de los items
+                const errorMessage = data != undefined ? data : "Se ha producido un error al mover la faceta. Por favor, inténtalo de nuevo más tarde.";
+                mostrarNotificacion("error", errorMessage);
+                // Restaurar el movimiento de la faceta por el error
+                sortableList.sort(that.backupArraySortableListItems);                                
+            }
+        });        
+     },
+
+     /**
+      * Método para actualizar la lista de facetas en base al actual listado
+      */
+     handeleUpdateFacetListInModal: function(){
+        const that = this;
+        // Html de los optionItems que se actualizará cuando haya cambios
+        let facetOptionHtml = '';
+
+
+        $(`.${that.facetaListItemClassName}`).each(function() {
+            const id = $(this).prop('id');
+            const dataName = $(this).data('name');
+            const dataValue = $(this).data('value');        
+            facetOptionHtml += `
+                <option class="faceta-item"
+                    value="${id}"
+                    name="${dataValue}">
+                    ${dataName}                                        
+                </option>`;                    
+        });
+        
+        // Agrega las opciones generadas dinámicamente al select        
+        this.cmbListaFacetas.html(facetOptionHtml)        
+        comportamientoInicial.iniciarSelects2();
+     },
 
     /**
      * Método que se ejecuta al influir en el input faceta. Genera una lista de valores de autocompletado
@@ -609,14 +762,21 @@ const operativaGestionFacetas = {
     /**
      * Método para guardar las facetas sólo cuando se ha procedido a su ordenación.
      */
-    handleSaveFacetasSorted: function(){
+    handleSaveFacetasSorted: function(completion = undefined){
         const that = operativaGestionFacetas;
 
         that.handleSaveFacetas(function(isOk, data){
-            if (isOk == requestFinishResult.ok){                
-                // Datos guardados al haber ordenado los items. No hacer ndda                         
+            if (isOk != requestFinishResult.ok){                
+                // Datos guardados al haber ordenado los items. No hacer nada                
+            }            
+            if (typeof completion === 'function') {
+                completion(isOk, data)
             }
+
         });
+
+        
+
     },
     
 
@@ -1220,7 +1380,7 @@ const operativaGestionFacetas = {
         // Prefijo para guardado de la pestaña/página
         const prefijoClave = 'ListaFacetas[' + num + ']';
         // Nombre de la faceta
-        that.ListaFacetas[prefijoClave + '.Name'] = panelEdicion.find('[name="TabName"]').val();
+        that.ListaFacetas[prefijoClave + '.Name'] = panelEdicion.find('[name="TabName"]').val().trim();
         // Id de la faceta
         that.ListaFacetas[prefijoClave + '.AgrupacionID'] = fila.attr("id");  
         // Obtener valor de los objetos de conocimiento (hidden input)
@@ -1241,7 +1401,7 @@ const operativaGestionFacetas = {
             // Tipo de la faceta
             that.ListaFacetas[prefijoClave + '.Type'] = panelEdicion.find(`[name="${that.txtFacetaTypeClassName}"]`).val();
             // Clave de la faceta
-            that.ListaFacetas[prefijoClave + '.ClaveFaceta'] = panelEdicion.find(`[name="${that.txtClaveFaceta}"]`).val();
+            that.ListaFacetas[prefijoClave + '.ClaveFaceta'] = panelEdicion.find(`[name="${that.txtClaveFaceta}"]`).val().trim();
             // Reciprocidad de la faceta
             let reciprocidad = "";                 
             // Obtener la reciprocidad de la faceta si está activada
@@ -2370,7 +2530,7 @@ const operativaGestionFacetas = {
             }        
 
         }).fail(function (data) {
-            mostrarNotificacion("error", "Se ha producido un error al tratar de guardar los datos. Por favor, contacta con el administrador.");                              
+            mostrarNotificacion("error", data);                              
         }).always(function () {
             // Ocultar el loading
             loadingOcultar();
@@ -2972,7 +3132,6 @@ const operativaGestionSugerenciasDeBusqueda = {
     },
 }
 
-
 /**
   * Operativa para la gestión de Mapa de la comunidad desde "Mapa"
   */
@@ -3078,3 +3237,2019 @@ const operativaGestionSugerenciasDeBusqueda = {
         });                        
      },
  }
+
+
+ /** Operativa para la gestión de Gráficos o Charts que se utilizaban en la versión anterior. Es accesible 
+  * desde la url: http://depuracion.net/comunidad/testing-publica/administrar-charts
+  */
+const operativaGestionCharts = {
+
+    /**
+     * Inicializar operativa
+     */
+     init: function (pParams) {
+        this.pParams = pParams;
+        // Permitir o no guardar datos (CI/CD -> Pasado desde la vista)
+        if (this.allowSaveData == undefined){
+            this.allowSaveData = pParams.allowSaveData;
+        }        
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas(); 
+        this.triggerEvents();                    
+    },
+
+    /**
+     * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
+     */
+    configRutas: function (pParams) {
+        // Url de la página actual donde se encuentra el listado de páginas        
+        this.urlGraph = refineURL();
+        // Url para crear un gráfico
+        this.urlAddNewGraph = `${this.urlGraph}/new-fila`;
+        // Url para guardar todos los gráficos        
+        this.urlSaveGraphs = `${this.urlGraph}/save-charts`; 
+        this.urlDeleteGraph = `${this.urlGraph}/delete-chart`; 
+
+        // Variable que contendrá la fila o página activa. Por defecto "undefined"
+        this.filaGrafico = this.filaGrafico != undefined ? this.filaGrafico : undefined;
+    },     
+    
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {
+            
+        /* Idiomas Tabs */
+        // Tab de idioma de la página para cambiar la visualización en el idioma deseado de las páginas
+        this.tabIdiomaItem = $(".tabIdiomaItem ");
+        // Cada una de las labels (Nombre y Url) en los diferentes idiomas (por `data-languageitem`) que contiene el valor en el idioma correspondiente
+        this.labelLanguageComponentClassName = "language-component";
+        // Clase de cada una fila de las páginas existentes
+        this.graphRowClassName = "graph-row";
+        // Clase del icono para permitir la ordenación de gráficos
+        this.sortableGraphIconClassName = "js-component-sortable-graph";        
+        // Botón para guardado de todas la estructura de las páginas
+        this.btnGuardarEstructuraPaginas = $('#btnGuardarPaginas');
+        // Botón para guardado de un gráfico
+        this.btnSaveGraphClassName = "btnGuardarGrafico";
+        // Input para buscar gráficos
+        this.inputTxtBuscarGrafico = $('#txtBuscarGrafico');
+        // Contenedor de todas los gráficos
+        this.graphListContainerId = "id-added-graphs-list";
+        this.graphListContainer = $(`#${this.graphListContainerId}`);
+
+        // Botones para añadir páginas: Tipo de páginas según su data-pagetype*/
+        this.btnAddGraph = $("#btnCrearGrafico");
+        // Botón para editar el gráfico. Ejecutará el mostrado del modal para su edición        
+        this.btnEditGraphClassName = "btnEditGraph";
+        // Botón para eliminar el gráfico
+        this.btnDeleteGraphClassName = "btnDeleteGraph";
+        // Botón para confirmar el borrado del gráfico (Modal)
+        this.btnConfirmDeleteGraph = $(".btnConfirmDeleteGraph");
+        // Botón de no confirmar el borrado de la página (Modal)
+        this.btnNotConfirmDeleteGraph = $(".btnNotConfirmDeleteGraph");        
+        
+       
+        // Modal container dinámico
+        this.modalContainer = $('#modal-container');
+        // Modal de cada una de los gráficos
+        this.modalGraphClassName = "modal-graph";
+        // Modal de eliminación de gráficos
+        this.modalDeleteGraphClassName = "modal-confirmDelete";
+        
+        // Flag para detectar error en el nombre del input vacío
+        this.errorNombreVacio = false;
+        this.errorDuranteObtenerDatosGraph = false;
+
+        /* Flags para confirmar la eliminación de una página */
+        this.confirmDeleteGraph = false;
+        // Flag para indicar el item a borrar para ser eliminado una vez se guarde
+        this.pendingToBeRemovedClassName = "pendingToBeRemoved";
+
+        // Contador de páginas
+        this.numGraficos = $("#numGraficos");
+
+    }, 
+
+    /**
+     * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
+     */
+     triggerEvents: function(){
+        const that = this;
+        
+        // Operativa multiIdiomas
+        // Parámetros para la operativa multiIdioma (helpers.js)
+        this.operativaMultiIdiomaParams = {
+            // Nº máximo de pestañas con idiomas a mostrar. Los demás quedarán ocultos
+            numIdiomasVisibles: 3,
+            // Establecer 1 tab por cada input (true, false) - False es la forma vieja
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
+            // No permitir padding bottom y si padding top
+            allowPaddingBottom: false,            
+        };  
+
+        // Inicializar operativa multiIdioma
+        operativaMultiIdioma.init(this.operativaMultiIdiomaParams);  
+        
+        // Setup de sortable tabla para los gráficos        
+        setupBasicSortableList(that.graphListContainerId, that.sortableGraphIconClassName, undefined, undefined, undefined, () => {that.setCurrentDraggedGraphToSave(event)});
+
+    },     
+    
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+     configEvents: function (pParams) {
+        const that = this;
+                       
+        this.modalContainer.on('show.bs.modal', (e) => {
+            // Aparición del modal
+            that.triggerModalContainer = $(e.relatedTarget);
+        })
+        .on('hide.bs.modal', (e) => {
+            // Acción de ocultar el modal
+        })
+        .on('hidden.bs.modal', (e) => {
+            // Vaciar el modal
+            resetearModalContainer();            
+        });
+
+        // Comportamientos del modal de editar/crear
+        configEventByClassName(`${that.modalGraphClassName}`, function(element){
+            const $modal = $(element);
+            $modal
+            .on('show.bs.modal', (e) => {
+                // Aparición del modal
+                that.triggerModalContainer = $(e.relatedTarget);
+            })
+            .on('hide.bs.modal', (e) => {
+                // Acción de ocultar el modal
+                // El modal que se va a ocultar/cerrar
+                const currentModal = $(e.currentTarget);                                
+                that.handleCloseGraphModal(currentModal);
+            }); 
+        });        
+
+        // Comportamientos del modal que son individuales para el borrado de gráficos
+        $(`.${this.modalDeleteGraphClassName}`).on('show.bs.modal', (e) => {
+            // Aparición del modal
+        })
+        .on('hide.bs.modal', (e) => {
+            // Acción de ocultar el modal
+            // Si el modal se cierra sin confirmar borrado, desactiva el borrado
+            if (that.confirmDeleteGraph == false){
+                that.handleSetDeleteGraph(false);                
+            }            
+        });        
+
+        // Tab de cada uno de los idiomas disponibles para cambiar la visualización y poder ver el nombre y url del idioma elegido en la página principal
+        this.tabIdiomaItem.off().on("click", function(){
+            that.handleViewGraphLanguageInfo();
+        });
+
+        // Botón/es para añadir un gráfico a la comunidad
+        this.btnAddGraph.off().on("click", function(){
+            that.handleAddNewGraph();            
+        });
+
+        // Input para realizar búsquedas de páginas
+        this.inputTxtBuscarGrafico.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {                                  
+                that.handleSearchGraphByTitle();
+            }, 500);
+        });
+        
+        // Botón/es para eliminar una determinado gráfico al pulsar en el botón de papelera
+        configEventByClassName(`${that.btnDeleteGraphClassName}`, function(element){
+            const $btnDelete = $(element);
+            $btnDelete.off().on("click", function(){                
+                // Fila correspondiente
+                that.filaGrafico = $btnDelete.closest(`.${that.graphRowClassName}`);                
+                // Marcar el parámetro como "Eliminar" a modo informativo al usuario
+                that.handleSetDeleteGraph(true);
+            });	                        
+        });        
+
+        // Botón/es para confirmar la eliminación de un gráfico (Modal -> Sí)
+        this.btnConfirmDeleteGraph.off().on("click", function(){
+            that.confirmDeleteGraph = true;
+            that.handleDeleteGraph();
+        });
+
+        // Botón para editar un determinado gráfico
+        configEventByClassName(`${that.btnEditGraphClassName}`, function(element){
+            const $editButton = $(element);
+            $editButton.off().on("click", function(){                
+                // Establecer la clase de "modified" a la fila
+                that.filaGrafico = $(this).closest(`.${that.graphRowClassName}`);
+                that.filaGrafico.addClass("modified");                
+            });	                        
+        });  
+
+        // Botón para guardar un determinado gráfico
+        configEventByClassName(`${that.btnSaveGraphClassName}`, function(element){
+            const $saveButton = $(element);
+            $saveButton.off().on("click", function(){                
+                // Establecer la clase de "modified" a la fila
+                that.filaGrafico = $(this).closest(`.${that.graphRowClassName}`);
+                that.handleSaveCurrentGraph(true);               
+            });	                        
+        });  
+    }, 
+
+
+    /**
+     * Método que se ejecuta al cambiar el valor de un input. Esta función está enlazada desde la vista, pero enlazada desde el helpers.js ya que 
+     * se utiliza para ejecutar un comportamiento sobre inputs dinámicos generados de forma dinámica mediante la operativaMultiIdioma.
+     * @param {*} event 
+     */
+    handleOnInputTabNameChanged: function(event){
+        const that = this;
+        // Input que ha sido actualizado
+        const input = $(event.currentTarget);
+        // Idioma del input que ha sido actualizado
+        const language = input.data("language");
+        // Valor actual del input
+        const value = input.val().trim();
+
+        // Página a actualizar
+        const pageRow = input.closest(`.${that.graphRowClassName}`);
+        // Nombre a actualizar en el listado de páginas        
+        let componentPageName = undefined ;
+        
+        if (language != undefined){
+            componentPageName = pageRow.find(`.${that.componentPageNameClassName}`).filter(`[data-languageitem='${language}']`);
+        }else{
+            componentPageName = pageRow.find(`.${that.componentPageNameClassName}`);
+        }
+                
+        // Actualizar el contenido de la faceta
+        componentPageName.html(value);
+    },
+
+    /**
+     * Método que se ejecutará cuando se cierre el modal de detalles de una página
+     * @param {jqueryObject} currentModal Modal que se va a cerrar
+     */
+    handleCloseGraphModal: function(currentModal){
+        const that = this;
+
+        // Hacer scroll top cuando se cierre el modal
+        scrollInModalViewToTop(currentModal);
+        // Colapsar todos los menús desplegables del modal para que no se queden abiertos
+        const collapsePanels = currentModal.find('.collapse');
+        collapsePanels.collapse("hide");
+        // Quitar la opción de guardar cambios si no se pulsa en "Guardar". Si se pulsa en guardar se procederá al guardado
+        that.filaGrafico.removeClass("modified");
+
+        // Tener en cuenta si el gráfico es de reciente creación y por tanto no se desea guardar
+        if (that.filaGrafico.hasClass("newGraph")){
+            // Eliminar la fila que se acaba de eliminar                                
+            that.filaGrafico.remove();
+            // Actualizar el contador de nº de gráficos           
+            that.updateNumGraphs();
+        }
+    },
+    
+    /**
+     * Método para realizar búsquedas de gráficos
+     */
+    handleSearchGraphByTitle: function(){
+        const that = this;
+        let cadena = this.inputTxtBuscarGrafico.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        
+        // Cada una de las filas que muestran la página
+        const rowGraphs = that.graphListContainer.find(".component-wrap.graph-row");        
+
+        // Buscar dentro de cada fila       
+        $.each(rowGraphs, function(index){
+            const rowGraph = $(this);
+            // Seleccionamos el nombre de la página y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const pageName = $(this).find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();            
+            if (pageName.includes(cadena)){
+                // Mostrar fila resultado y sus respectivos padres
+                rowGraph.removeClass("d-none");
+            }else{
+                // Ocultar fila resultado
+                rowGraph.addClass("d-none");
+            }            
+        });
+    },
+
+    /**
+     * Método para poder cambiar entre idiomas y poder visualizar los datos de los gráficos en el idioma deseado sin tener que acceder al modal de cada gráfico.
+     * Gestionará el click en el tab de idiomas principal del gráfico
+     */
+    handleViewGraphLanguageInfo: function(){
+        const that = this;
+        // Comprobar el item que está activo en el tab obteniendo el data-language de la opción "active"
+        setTimeout(function(){             
+            // Detectar el tab item activo para conocer el idioma en el que se desean mostrar las páginas
+            const tabLanguageActive = that.tabIdiomaItem.filter(".active");
+            // Obtener el idioma del tabLanguageActivo
+            const languageActive = tabLanguageActive.data("language");
+            // Ocultar todas las labels y mostrar únicamente las del idioma seleccionado
+            $(`.${that.labelLanguageComponentClassName}`).addClass("d-none");
+            // Mostrar sólo las labelsLanguageComponent del idioma seleccionado
+            $(`.${that.labelLanguageComponentClassName}`).filter(function () {
+                return $(this).data("languageitem") == languageActive;
+            }).removeClass("d-none");
+
+        },250);
+    },
+
+    
+    /**
+     * Método para añadir una nuevo gráfico
+     */
+    handleAddNewGraph: function(){
+        const that = this;
+
+        // Mostrar loading hasta que finalice la petición para crear una nueva página
+        loadingMostrar();    
+        // Construir el objeto/modelo para petición
+        /*const dataPost = {
+            TipoPestanya: pageType,
+            nameonto: nameonto
+        }*/
+
+        // Realizar la petición de la página a crear
+        GnossPeticionAjax(                
+            that.urlAddNewGraph,
+            null,
+            true
+        ).done(function (data) {                   
+            // Añadir la nueva fila al listado
+            that.graphListContainer.append(data);
+            // Referencia a la nueva página añadida
+            const newGraph = that.graphListContainer.children().last();
+            // Iniciar operativa de multiIdioma (Desde "triggerEvents" Para nombre del gráfico)            
+            operativaGestionCharts.triggerEvents()
+            // Abrir el modal para poder editar/gestionar la nueva página añadida                     
+            newGraph.find(`.${that.btnEditGraphClassName}`).trigger("click"); 
+            // Guardar la fila del gráfico activo para detectar su borrado si hiciera falta
+            that.filaGrafico = newGraph;                              
+            // Aumentar el nº del contador de gráficos
+            that.updateNumGraphs();                            
+        }).fail(function (data) {
+            // Mostrar error al tratar de crear una nueva página
+            mostrarNotificacion("error", data);                
+        }).always(function () {
+            // Ocultar loading de la petición
+            loadingOcultar();
+        });                    
+    },
+
+
+    /**
+     * Método para marcar o desmarcar el gráfico como "Eliminada" dependiendo de la elección vía Modal
+     * @param {Bool} deleteItem que indicará si se desea eliminar o no el gráfico
+     */
+    handleSetDeleteGraph: function(deleteItem){
+        const that = this;
+
+        if (deleteItem){
+            // Realizar el "borrado" del gráfico
+            // 1 - Marcar la opción "TabEliminada" a true
+            that.filaGrafico.find('[name="TabEliminada"]').val("true");           
+            // 2 - Añadir la clase de "deleted" a la fila
+            that.filaGrafico.addClass("deleted");
+        }else{
+            // 1 - Marcar la opción "TabEliminada" a false
+            that.filaGrafico.find('[name="TabEliminada"]').val("false");            
+            // 2 - Eliminar la clase de "deleted" a la fila
+            that.filaGrafico.removeClass("deleted");
+        }
+    },  
+    
+    /**
+     * Método para eliminar un gráfico previa confirmación realizada desde el modal     
+     */
+    handleDeleteGraph: function(){
+        // Mostrar loading
+        loadingMostrar();
+
+        const that = this;     
+
+        that.elementoDelete = $(".deleted");
+        that.ChartID = that.elementoDelete.data("graphkey");
+
+        const dataPost = {
+            ChartID: that.ChartID
+        }
+
+        GnossPeticionAjax(                
+            that.urlDeleteGraph,
+            dataPost,
+            true
+        ).done(function (data) {                   
+           // Resetear el estado de borrado del gráfico
+           that.confirmDeleteGraph = false;                
+           // 2 - Ocultar el modal de eliminación de la página
+           //const modalDeletePage = $(that.filaPagina).find(`.${that.modalDeletePageClassName}`);                                          
+           const modalDeleteGraph = $(`.${that.modalDeleteGraphClassName}`);                                          
+           dismissVistaModal(modalDeleteGraph);
+           // 3 - Ocultar loading
+           loadingOcultar();                
+           // 4 - Ocultar la fila que se desea eliminar
+           that.filaGrafico.addClass("d-none");
+           // 5 - Eliminar la fila que se acaba de eliminar                                
+           that.filaGrafico.remove();
+           // 6 - Actualizar el contador de nº de páginas            
+            that.updateNumGraphs(); 
+
+            mostrarNotificacion("succes", "Se ha eliminado el gráfico correctamente.");
+        }).fail(function (data) {
+            mostrarNotificacion("error", "Se ha producido un error al tratar de eliminar el gráfico. Contacta con el administrador de la comunidad.");
+        }).always(function () {
+            // Ocultar loading de la petición
+            loadingOcultar();
+        });                      
+    }, 
+    
+    /**
+     * Método para actualizar el nº de gráficos existentes (Añadir, Eliminar...)      
+     */
+    updateNumGraphs: function(){
+        const that = this;
+
+        const graphNumber = this.graphListContainer.find($(`.${that.graphRowClassName}`)).length;
+        // Mostrar el nº de items                
+        that.numGraficos.html(graphNumber);
+
+        // No mostrar el item si no hay resultados
+        graphNumber == 0 ? that.numGraficos.addClass("d-none") : that.numGraficos.removeClass("d-none");
+    },
+
+
+    /* Guardado de items */
+    /************************************************************/
+    
+    /**
+     * Método para el guardado del gráfico del gráfico en el que se encuentra el usuario
+     * @param {bool} reloadPage Indicar si se desea recargar la página actual. Por defecto true.
+     */
+    handleSaveCurrentGraph: function(reloadPage = false){
+        const that = this;
+
+        that.handleSaveGraphs(function(error){
+            if (error == false){
+                // 2 - Ocultar el modal
+                const modalGraph = $(that.filaGrafico).find(`.${that.modalGraphClassName}`);                                          
+                mostrarNotificacion("success","Los cambios se han guardado correctamente");
+                dismissVistaModal(modalGraph);
+                // Resetear la fila que se ha guardado
+                that.filaGrafico = undefined;  
+                if (reloadPage == true){                    
+                    location.reload();
+                }                                             
+            }
+        });
+    },
+
+    /**
+     * Método que construirá un objeto para conocer la lista de gráficos y su orden
+     * @returns 
+     */
+    handleGetListGraphWithCurrentOrder: function(){
+        const that = this;
+        // Lista de los gráficos con su orden
+        const graphListWithOrder = [];
+        const currentGraphList = $(`.${that.graphRowClassName}`);
+
+        // Construir la lista con el orden y el id
+        $.each(currentGraphList, function () {
+            const graphListItem = $(this);
+            const graphListItemId = graphListItem.prop("id");
+            const graphListItemOrden = graphListItem.index();
+            const currentGraphListInfo = {
+                chartId: graphListItemId,
+                orden: graphListItemOrden,
+            }            
+            graphListWithOrder.push(currentGraphListInfo);
+        }); 
+
+        return graphListWithOrder;        
+    },
+    
+    
+    /**
+     * Método que establecerá la fila que está siendo movida para proceder al guardado correcto.
+     */
+    setCurrentDraggedGraphToSave: function(event){
+        const that = this;
+
+        // Obtener la fila que está siendo movida o "dragged"                
+        const iconFromDraggedRow = $(event.target);        
+        that.filaGrafico = iconFromDraggedRow.closest(`.${that.graphRowClassName}`);  
+        // Proceder al guardado de la fila del gráfico
+        that.handleSaveCurrentGraph();
+    },
+
+
+    /**
+     * Método que se ejecutará cuando se pulse en el botón de "Guardar" para proceder al guardado de la información     
+     * @param {*} completion : Acciones a realizar una vez finalice el procesado de guardardo
+     */
+    handleSaveGraphs: function ( completion ) {
+        var that = this;
+        // Mostrar loading
+        loadingMostrar();
+        
+        // Lista de items
+        const rowGraphs = that.graphListContainer.find(".component-wrap.graph-row");
+
+        // Se desean guardar los gráficos  -> Quitar clase de "newPage" para NO eliminar la página de reciente creación
+        // $(".newGraph").removeClass("newGraph");
+
+        // Resetear los errores globales previos (Flags urlRepetidos, urlVacíos,)
+        that.errorInputVacio = false;
+        
+        // Comprobar que no hay errores antes de proceder con el guardado
+        if (!that.comprobarErroresGuardado()) {
+            // Listado de items donde se irán añadiendo para su posterior guardado
+            that.ListaGraficos = {};
+            let cont = 0;    
+            
+            // Guardado de Santi            
+            that.Name = that.filaGrafico.find('[name="TabName"]').val();
+            that.Select = that.filaGrafico.find('[name="TextoSelect"]').val();
+            that.Where = that.filaGrafico.find('[name="TextoWhere"]').val();
+            that.Javascript = that.filaGrafico.find('[name="TextoJavascript"]').val();
+            that.FuncionJS = that.filaGrafico.find('[name="NombreFuncionJS"]').val();
+            that.Eliminada = that.filaGrafico.find('[name="TabEliminada"]').val();
+            that.ChartID = that.filaGrafico.find('[name="TabChartID"]').val();
+            // Obtener el orden real
+            that.Orden = that.filaGrafico.index();// that.filaGrafico.find('[name="TabOrden"]').val();
+            const listGraphItemWithCurrentOrder = that.handleGetListGraphWithCurrentOrder();                 
+            
+            const dataPost = {
+                Where: that.Where,
+                Nombre: that.Name,
+                Select: that.Select,
+                Javascript: that.Javascript,
+                FuncionJS: that.FuncionJS,
+                ChartID: that.ChartID,
+                Orden: that.Orden,
+                Eliminada: that.Eliminada,
+                ChartViewInfoOrderList: listGraphItemWithCurrentOrder,
+            };
+
+            GnossPeticionAjax(
+                that.urlSaveGraphs,
+                dataPost,
+                true
+            ).done(function (data) {    
+                // Establecer el orden en el input correspondiente
+                const newOrden = that.filaGrafico.index();
+                that.filaGrafico.find('[name="TabOrden"]').val(newOrden);                
+                completion != undefined && completion(false);        
+            }).fail(function (data) {
+                mostrarNotificacion("error",data);
+                completion != undefined && completion(true);        
+            }).always(function () {
+                // Ocultar loading de la petición
+                loadingOcultar();
+                that.filaGrafico.removeClass("modified");
+            });  
+            //*************/
+
+            // Recorrer cada página para obtener los datos y guardarlos            
+            /*rowGraphs.each(function () {
+                if (that.errorDuranteObtenerDatosPestaya == false){
+                    that.obtenerDatosPestanya($(this), cont++);
+                }                
+            });
+
+            // Realizar Guardado de páginas si no se han producido errores
+            if (!that.errorDuranteObtenerDatosPestaya){
+                that.savePages( function(savePagesError){
+                    error = savePagesError;
+                    // Resetear flag de confirmar eliminación de página
+                    if (error == true){that.confirmDeleteGraph = false;} 
+                    loadingOcultar();
+                    // Eliminar los items pendientes de ser eliminados y no mostrados una vez se ha guardado la página
+                    $(`.${that.pendingToBeRemovedClassName}`).remove();
+                    completion != undefined && completion(error);
+                });                
+            }else{
+                // Se ha producido algún error durante el guardado
+                completion != undefined && completion(true);
+                loadingOcultar();
+            }
+            */
+        }
+        else {
+            loadingOcultar();
+        }
+
+    },
+
+    /**
+     * Método que mostrará un mensaje si se ha producido un error durante el proceso de guardado.
+     */
+    mostrarErrorGuardado: function(){
+        var esPre = "False";
+        var entornoBloqueado = "False";
+
+            if (esPre == "True") {
+                $('input.guardarTodo').before('<div class="error general">No se permite guardar porque estás en el entorno de preproducción</div > ');
+            }
+            else if (entornoBloqueado == "True") {
+                $('input.guardarTodo').before('<div class="error general">El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios</div>');
+            }
+            else {
+                $('input.guardarTodo').before('<div class="error general">Ha habido errores en el guardado de las pesta&#xF1;as, revisa los errores marcados</div > ');
+            }
+    },
+
+    /**
+     * Método que comprobará si hay algún error antes de proceder con el guardado de las páginas. Se ejecuta desde 'handleSavePages'.
+     * @returns bool: Devolverá un valor booleano indicando si hay algún error o no.
+     */
+    comprobarErroresGuardado: function(){
+        const that = this;
+        let error = false;
+
+        // Comprobación del nombre de las páginas (Vacíos)
+        if (that.comprobarNombresVacios()) {
+            error = true;
+        }
+
+        // Comprobar que hay datos en los diferentes valores de los gráficos
+        /*
+        if (!error && that.comprobarInputsGraficoVacios()) {
+            error = true;
+        }
+        */       
+               
+        return error;
+    },
+
+    /**
+     * Método para comprobar que no inputs vacíos para hacer el guardado
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarInputsGraficoVacios: function(){        
+        const that = this;              
+        // Inputs con las rutas de páginas que hayan sido modificadas y no borradas (Más velocidad)
+        const inputsRutas = $('.graph-row:not(".deleted").modified input[name="TabUrl"]:not(":disabled")');
+        inputsRutas.each(function () {
+            // Comprobar las rutas de las páginas para que no estén repetidas
+            if (that.errorRutaRepetida == false && that.errorRutaVacia == false){
+                that.comprobarUrlRepetida($(this))
+            }            
+        });
+        return that.errorRutaRepetida || that.errorRutaVacia;
+    },
+
+    /**
+     * Método para comprobar que no hay Nombres vacíos en las páginas creadas/editadas
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarNombresVacios: function(){
+        const that = this;        
+        // Inputs con los nombres de todas las páginas que hayan sido modificadas y no borradas (Más velocidad)        
+        const inputsNombre = $('.graph-row:not(".deleted").modified .inputsMultiIdioma.basicInfo input[name="TabName"]');
+        inputsNombre.each(function () {
+            if (that.errorNombreVacio == false){                
+                that.comprobarNombreVacio($(this));
+            }  
+        });
+        return that.errorNombreVacio;
+    },
+
+    /**
+     * Método para comprobar que el nombre de una página no está vacío.
+     * @param {*} inputName: Input a comprobar
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarNombreVacio: function (inputName) {
+        const that = this
+        
+        //const panMultiIdioma = $('#edicion_multiidioma', inputName.parent());
+        // Panel multiIdioma donde se encuentra el input
+        // Contiene los tabs en idiomas y el div con los inputs en idiomas completo
+        const formularioEdicion = inputName.closest(".formulario-edicion");
+        const panInputsMultiIdioma = inputName.closest(".inputsMultiIdioma");
+        // Contenedor donde se encuentran datos básicos de la página (Nombre, Url/Ruta, MetaDescripción )
+        const panMultiIdioma = formularioEdicion.find(".panContenidoMultiIdioma.basicInfo");
+
+        // Id del input a tratar
+        const inputId = inputName.attr("id");
+
+        const listaTextos = [];
+        
+        if (operativaMultiIdioma.listaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+            let textoMultiIdioma = "";
+            // Comprobar que hay al menos un texto por defecto para el nombre
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val(); //panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+            
+            if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+                const fila = inputName.closest(".component-wrap.graph-row");
+                that.mostrarErrorNombreVacio(fila, panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`));
+                that.errorNombreVacio = true;
+                return true;
+            }
+            // Recorrer todos los idiomas para detectar posibles problemas con el nombre                
+            $.each(operativaMultiIdioma.listaIdiomas, function () {
+                // Obtención del Key del idioma
+                const idioma = this.key;
+                // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para Nombre
+                let textoIdioma = $(`#input_${inputId}_${idioma}`).val();
+                if (textoIdioma == null || textoIdioma == "") {
+                    textoIdioma = textoIdiomaDefecto;
+                    $(`#input_${inputId}_${idioma}`).val(textoIdioma);
+                }
+                // Escribir el nombre del multiIdioma en el campo Hidden
+                textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
+                
+                listaTextos.push({ "key": idioma, "value": textoIdioma });
+            });            
+            inputName.val(textoMultiIdioma);
+        }else{
+            // Sin multiIdioma.
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            // Establecer el nombre en el input correspondiente
+            inputName.val(textoIdiomaDefecto);
+        }
+        return false;
+    },  
+    
+    /**
+     * Método para mostrar el error del nombre vacío encontrado en una página. Se muestra cuando el nombre de una página en el idioma por defecto no existe.
+     * @param {jqueryObject} fila : Elemento jquery de la fila correspondiente a donde se ha encontrado el error.
+     * @param {jqueryObject} input : Elemento jquery del input donde se ha producido el error. Puede que ser undefined
+     */
+    mostrarErrorNombreVacio: function(fila, input){        
+        /*var inputUrl = $('input[name = "TabName"]', fila).first();*/                
+        const btnEditPage = $(".btnEditPage", fila);
+        // Abrir el modal para acceder a modificar el nombre de la página
+        btnEditPage.trigger( "click" );
+
+        if (input != undefined){
+            comprobarInputNoVacio(input, true, false, "El nombre de la página no puede estar vacío.", 0);
+        }
+
+        setTimeout(function(){  
+            mostrarNotificacion("error", "El nombre de la página no puede estar vacío.");
+        },1000);  
+    },
+
+
+    // ELIMINAR POSIBLES MÉTODOS 
+
+    /**
+     * Método para comprobar y recoger los textos por defecto para el buscador de una página semántica
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */    
+    comprobarTextosBuscadorPorDefecto: function(){
+        const that = this;        
+        // Inputs con los nombres de todas las páginas que hayan sido modificadas y no borradas (Más velocidad)        
+        const inputsTextoBuscadorPorDefecto = $('.page-row:not(".deleted").modified .inputsMultiIdioma.basicInfo input[name="TabFiltroTextoDefectoBuscador"]:not(":disabled")');
+        inputsTextoBuscadorPorDefecto.each(function () {            
+            that.comprobarTextoBuscadorPorDefecto($(this));              
+        });
+        // Nunca habrá error ya que el texto puede ser vacío
+        return false;
+    },
+
+     /**
+     * Método para comprobar que el nombre de una página no está vacío.
+     * @param {*} inputTextoDefecto: Input a comprobar
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarTextoBuscadorPorDefecto: function(inputTextoDefecto){
+        const that = this
+        
+        // Panel multiIdioma donde se encuentra el input
+        // Contiene los tabs en idiomas y el div con los inputs en idiomas completo
+        const formularioEdicion = inputTextoDefecto.closest(".formulario-edicion");
+        const panInputsMultiIdioma = inputTextoDefecto.closest(".inputsMultiIdioma");
+        // Contenedor donde se encuentran datos básicos de la página (Nombre, Url/Ruta, MetaDescripción )
+        const panMultiIdioma = formularioEdicion.find(".panContenidoMultiIdioma.basicInfo");
+
+        // Id del input a tratar
+        const inputId = inputTextoDefecto.attr("id");
+
+        const listaTextos = [];
+        
+        if (operativaMultiIdioma.listaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+            let textoMultiIdioma = "";
+            // Comprobar que hay al menos un texto por defecto para el texto
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val(); //panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
+
+            // Recorrer todos los idiomas para detectar posibles problemas con el text                
+            $.each(operativaMultiIdioma.listaIdiomas, function () {
+                // Obtención del Key del idioma
+                const idioma = this.key;
+                // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para texto
+                let textoIdioma = $(`#input_${inputId}_${idioma}`).val();
+                if (textoIdioma == null || textoIdioma == "") {
+                    textoIdioma = textoIdiomaDefecto;
+                    $(`#input_${inputId}_${idioma}`).val(textoIdioma);
+                }
+                // Escribir el texto del multiIdioma en el campo Hidden
+                textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
+                
+                listaTextos.push({ "key": idioma, "value": textoIdioma });
+            });            
+            inputTextoDefecto.val(textoMultiIdioma);
+        }else{
+            // Sin multiIdioma.
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            // Establecer el nombre en el input correspondiente
+            inputTextoDefecto.val(textoIdiomaDefecto);
+        }
+        return false;
+    },
+
+
+    /**
+     * Método para comprobar que el corto de una página no está repetido.
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarNombresCortosRepetidos: function(){
+        const that = this;
+        let errorRepetido = false;
+        
+        // var inputsNombresCortos = $('.row.pestanya:not(".ui-state-disabled") .modified input[name = "TabShortName"]');
+        //const inputsNombresCortos = $('.page-row:not(".deleted") input[name="TabShortName"]:not(":disabled")');
+        // Inputs con nombres cortos de páginas que hayan sido modificadas y no borradas (Más velocidad)        
+        const inputsNombresCortos = $('.page-row:not(".deleted").modified input[name="TabShortName"]:not(":disabled")');
+        
+        inputsNombresCortos.each(function () {
+            if (that.comprobarNombreCortoRepetido($(this))) {
+                errorRepetido = true;
+            }
+        });
+        return errorRepetido;        
+    },
+
+    /**
+     * Método para comprobar el corto de una determinada página no está repetido.
+     * @param {jqueryObject} inputNombreCorto : Input a comprobar
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarNombreCortoRepetido: function (inputNombreCorto) {
+        var that = this;
+        $('.error', inputNombreCorto.parent()).remove();
+
+        var fila = inputNombreCorto.closest('.row');
+
+        var inputsNombresCortos = $('.row.pestanya:not(".ui-state-disabled") input[name = "TabShortName"]');
+        var nombreCorto = inputNombreCorto.val();
+        var errorRepetido = false;
+        var inputRepetido = null;
+
+        if (nombreCorto != "") {
+            inputsNombresCortos.each(function () {
+                var inputCompare = $(this);
+                if (inputCompare.closest('.row').attr('id') != fila.attr('id')) {
+                    if (inputCompare.val() == nombreCorto) {
+                        errorRepetido = true;
+                        inputRepetido = inputCompare;
+                    }
+                }
+            });
+        }
+        if (errorRepetido) {
+            that.mostrarErrorNombreCortoRepetido(fila);
+            if (inputRepetido != null) {
+                var filaRepetidp = inputRepetido.closest('.row');
+                that.mostrarErrorUrlRepetida(filaRepetida);
+            }
+        }
+        return errorRepetido;
+    },   
+    
+    /**
+     * Método para mostrar el error debido a que el nombre corto de la página está repetido
+     * @param {*} fila 
+     */
+    mostrarErrorNombreCortoRepetido: function (fila) {
+        var inputNombreCorto = $('input[name = "TabShortName"]', fila).first();
+        inputNombreCorto.after("<span class=\"error\">El Nombre Corto no puede estar repetido</span>");
+        $('.panEdicion', fila).addClass('edit');
+        $('.panEdicion', fila).addClass('modified');
+    },  
+
+    /**
+     * Método para comprobar que la URL de una página no esté repetida. Recorrerá todas las filas buscando los campos URL de los idiomas, y los comparará con 
+     * los idiomas del inputUrl.
+     * @param {*} inputUrl : Input a comprobar
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarUrlRepetida: function(inputUrl){
+        const that = this;
+        // Panel multiIdioma donde se encuentra el input
+        // Contiene los tabs en idiomas y el div con los inputs en idiomas completo
+        const formularioEdicion = inputUrl.closest(".formulario-edicion");
+        const panInputsMultiIdioma = inputUrl.closest(".inputsMultiIdioma");
+        // Contenedor donde se encuentran datos básicos de la página (Nombre, Url/Ruta, MetaDescripción )
+        const panMultiIdioma = formularioEdicion.find(".panContenidoMultiIdioma.basicInfo");
+
+        // Id del input a tratar
+        const inputId = inputUrl.attr("id");
+
+        const listaTextos = [];
+
+        // Comprobar que hay múltiples idiomas para edición de páginas
+        if (operativaMultiIdioma.listaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+            let rutaPorDefecto = formularioEdicion.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val(); //panMultiIdioma.find('.edicion_' + that.IdiomaPorDefecto + ' input').val();
+            if (rutaPorDefecto == "") {
+                that.errorRutaVacia = true;
+            }
+            else {
+                // Input oculto donde se crearán los idiomas asignados para una determinada página
+                let textoMultiIdioma = "";
+                $.each(operativaMultiIdioma.listaIdiomas, function () {
+                    // Obtención del Key del idioma
+                    const idioma = this.key;
+                    // Acceso al valor del input del idioma analizado
+                    //let textoIdioma = panMultiIdioma.find('#edicion_' + idioma + ' input').val();
+                    let textoIdioma = $(`#input_${inputId}_${idioma}`).val();
+                    // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para URL
+                    if (textoIdioma == null || textoIdioma == "") {
+                        textoIdioma = rutaPorDefecto;                        
+                        $(`#input_${inputId}_${idioma}`).val(textoIdioma);
+                    }
+                    // Escribir el nombre del multiIdioma en el campo Hidden
+                    textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
+                
+                    listaTextos.push({ "key": idioma, "value": textoIdioma });
+                });
+                inputUrl.val(textoMultiIdioma);
+            }
+        }else{
+            // Sin multiIdioma.
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            // Establecer el nombre en el input correspondiente
+            inputUrl.val(textoIdiomaDefecto);
+        }
+        // Fila correspondiente a la página cuyo valor URL está siendo analizada
+        const fila = inputUrl.closest('.component-wrap.page-row');
+
+        // Comprobar si hay error por ruta vacía
+        if (that.errorRutaVacia) {
+            that.mostrarErrorUrlVacia(fila, formularioEdicion.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`));
+            return that.errorRutaVacia;
+        }
+
+        // Comprobación de que las Rutas existentes de que no estárán repetidas
+        //const inputsRutas = $('.page-row:not(".deleted") input[name="TabUrl"]'); // $('.row.pestanya:not(".ui-state-disabled") input[name = "TabUrl"]');
+        // const inputsRutas = $('.page-row:not(".deleted") input[name="TabUrl"]'); // $('.row.pestanya:not(".ui-state-disabled") input[name = "TabUrl"]');
+        // Obtener los inputs de las rutas de las páginas menos las disabled (Página Home)
+        const inputsRutas = $('.page-row:not(".deleted") input[name="TabUrl"]:not(":disabled")');
+        // Obtención de la ruta
+        const ruta = inputUrl.val();
+        const tipoRuta = $("input[name='TabType']", fila).val();
+        let errorRepetida = false;
+        let inputRepetida = null;
+
+        // Comprobación del tipo de Enlace
+        if (tipoRuta != "EnlaceInterno" && tipoRuta != "EnlaceExterno") {
+            if (that.errorRutaRepetida == false){
+                inputsRutas.each(function () {
+                    // Input a comparar
+                    const inputCompare = $(this);
+                    // Id del input a comparar
+                    const inputCompareId = $(this).attr("id");
+                    // Fila que se comparará
+                    const filaCompare = inputCompare.closest('.component-wrap.page-row');
+                    // Tipo de ruta a comparar
+                    const tipoRutaCompare = $("input[name='TabType']", filaCompare).val();
+    
+                    if (filaCompare.attr('id') != fila.attr('id') && tipoRutaCompare != "EnlaceExterno" && tipoRutaCompare != "EnlaceInterno") {
+                        // Panel donde se muestran los datos en los diferentes idiomas de cada página
+                        //const panCompareMultiIdioma = $('.inputsMultiIdioma', inputCompare.parent().parent());
+                        const panCompareMultiIdioma = inputCompare.parent().parent();
+                        
+                        if (operativaMultiIdioma.listaIdiomas.length > 1 && panCompareMultiIdioma.length > 0) {
+                            // Revisar el input en cada idioma para que no estén repetidas    
+                            $.each(operativaMultiIdioma.listaIdiomas, function () {
+                                const idioma = this.key;                             
+                                // Acceder a los inputs en todos los idiomas
+                                const formularioEdicion = inputUrl.closest(".formulario-edicion");
+                                const panMultiIdioma = formularioEdicion.find(".panContenidoMultiIdioma.basicInfo");
+                                // Contenido del idioma a revisar
+                                let textoIdioma = "";
+                                // Obtener campos URL diferentes a pagina de tipo Home -> Home no puede cambiar la url
+                                if (inputCompareId != undefined){
+                                    textoIdioma = $(`#input_${inputCompareId}_${idioma}`).val();
+                                    // Establecer en el idioma la url con el idioma por defecto
+                                    if (textoIdioma == null || textoIdioma == "") {
+                                        // Establecer el valor del idioma por defecto en el idioma que no contiene un valor URL
+                                        textoIdioma = $(`#input_${inputCompareId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+                                        $(`#input_${inputCompareId}_${idioma}`).val(textoIdioma);
+                                    }
+                                    // Buscar si ya existe la url insertada
+                                    if (listaTextos.findValueByKey(idioma) == textoIdioma) {
+                                        errorRepetida = true;
+                                        inputRepetida = inputCompare;
+                                        return;
+                                    }
+                                }
+                            });
+                        }
+                        else if (operativaMultiIdioma.listaIdiomas.length > 1) {
+                            if (inputCompare.val() == "") {
+                                $.each(operativaMultiIdioma.listaIdiomas, function () {
+                                    let idioma = this.key
+                                    if (listaTextos.findValueByKey(idioma) == "") {
+                                        errorRepetida = true;
+                                        inputRepetida = inputCompare;
+                                    }
+                                });
+                            }
+                            else {
+                                let textoMultiIdioma = inputCompare.val().split('|||');
+    
+                                $.each(textoMultiIdioma, function () {
+                                    if (this != "") {
+                                        /*var objetoIdioma = that.obtenerTextoYClaveDeIdioma(this);
+                                        */
+                                        if (listaTextos.findValueByKey(objetoIdioma.key) == objetoIdioma.value) {
+                                            errorRepetida = true;
+                                            inputRepetida = inputCompare;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        else {
+                            if (inputCompare.val() == ruta) {
+                                errorRepetida = true;
+                                inputRepetida = inputCompare;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        if (errorRepetida) {
+            that.errorRutaRepetida = true;
+            that.mostrarErrorUrlRepetida(fila);
+            /* Abrir la página con la que está repetida
+                if (inputRepetida != null) {
+                var filaRepetida = inputRepetida.closest('.component-wrap.page-row');
+                that.mostrarErrorUrlRepetida(filaRepetida);
+            }*/
+        }
+        return errorRepetida;
+    },
+
+    /**
+     * Método para mostrar el error debido a que la URL de una página está repetida
+     * @param {jqueryObject} fila : Fila correspondiente al input donde se ha encontrado el error
+     */
+    mostrarErrorUrlRepetida: function (fila) {
+        // var inputUrl = $('input[name = "TabUrl"]', fila).first();
+        // inputUrl.after("<span class=\"error\">La Ruta no puede estar repetida</span>");
+        // Botón de la página para editar detalles
+        const btnEditPage = $(".btnEditPage", fila);
+        // Abrir el modal para acceder a modificar la URL de la página
+        // btnEditPage.trigger( "click" );
+        setTimeout(function(){
+            mostrarNotificacion("error", "La ruta de la página no puede estar repetida.");
+        },1000);        
+    },  
+    
+    /**
+     * Método para mostrar el error debido a que la URL de una página está vacía.
+     * @param {*} fila 
+     * @param {*} input: Input correspondiente donde se ha encontrado error por estar vacío.
+     */
+    mostrarErrorUrlVacia: function (fila, input) {
+        const btnEditPage = $(".btnEditPage", fila);
+        // Abrir el modal para acceder a modificar la URL de la página
+        // btnEditPage.trigger( "click" );
+
+        if (input != undefined){
+            comprobarInputNoVacio(input, true, false, "La ruta de la página no puede estar vacía.", 0);
+        }
+
+        setTimeout(function(){
+            mostrarNotificacion("error", "La ruta de la página no puede estar vacía.");
+        },1000);          
+    },    
+    
+    /**
+     * Método para comprobar el orden de los filtros de orden de las páginas
+     * @returns
+     */
+    comprobarFiltrosOrden: function(){
+        const that = this;
+                
+        //const filtros = $('.page-row:not(".deleted") .filter-row:not(".deleted")'); // $('.row.pestanya:not(".ui-state-disabled") .modified ol.filtrosOrdenSortable li.row.filtroOrden:not(".ui-state-disabled")');
+        // Filtro de orden de todas las páginas a revisar que hayan sido modificadas y no borradas (Más velocidad)
+        const filtros = $('.page-row:not(".deleted").modified .filter-row:not(".deleted")');
+
+        filtros.each(function () {
+            if (that.errorFiltrosOrden == false){
+                that.comprobarFiltroOrden($(this));                
+            }
+        });
+        return that.errorFiltrosOrden;
+    },
+
+
+    /**
+     * Método para comprobar el orden del filtro de una determinada página.
+     * @param {jqueryObject} filaFiltroOrden : Objeto jquery que corresponde con la fila donde se encuentra el filtro
+     * @returns : bool: Devuelve un valor que indica si se puede proceder al guardado de las páginas.
+     */
+    comprobarFiltroOrden: function(filaFiltroOrden){
+        const that = this
+        
+        // Panel donde se podrá localizar el input que almacena el valor del input para el filtroOrden
+        const panelOrderFilterInfo = filaFiltroOrden.find('.filter-order-info');
+        // Filas de páginas
+        const filasPaginas = $("#id-added-pages-list").find(".component-wrap.page-row");
+        // Fila de la página cuyos filtros de orden están siendo revisados
+        const filaPagina = panelOrderFilterInfo.closest(filasPaginas);
+
+        // Inputs que contendrá todos los idiomas del filtro en concreto y el nombre del filtro
+        const inputFilterValueLanguages = panelOrderFilterInfo.find('[name="TabName"]');
+        const inputId = inputFilterValueLanguages.attr('id');
+        const inputFilterName = panelOrderFilterInfo.find('[name="Filtro"]');
+
+
+        let textoMultiIdioma = "";
+        // Comprobar que hay al menos un texto por defecto para el nombre del filtro
+        let textoIdiomaDefecto = $(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+        if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
+            const fila = filaFiltroOrden.closest(".component-wrap.page-row");
+            that.mostrarErrorCampoFiltroOrdenVacio(filaFiltroOrden, filaPagina, $(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`));
+            that.errorFiltrosOrden = true;
+            return that.errorFiltrosOrden;
+        }
+        
+        // Recorrer el contenido de los inputs en los diferentes idiomas al input correspondiente
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            // Obtención del Key del idioma
+            const idioma = this.key;
+            // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para el Nombre del filtro
+            let textoIdioma = $(`#input_${inputId}_${idioma}`).val();
+            if (textoIdioma == null || textoIdioma == "") {
+                textoIdioma = textoIdiomaDefecto;
+                $(`#input_${inputId}_${idioma}`).val(textoIdioma);
+            }
+            // Escribir el nombre del multiIdioma en el campo Hidden
+            textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
+        });            
+        inputFilterValueLanguages.val(textoMultiIdioma);
+
+
+        // Comprobar que el filtro orden tiene asignado nombre y valor
+        if (inputFilterValueLanguages.val().trim() == "" || inputFilterName.val().trim() == "") {
+            that.mostrarErrorCampoFiltroOrdenVacio(filaFiltroOrden, filaPagina, $(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`));
+            that.errorFiltrosOrden = true;
+            return that.errorFiltrosOrden;
+        }
+        return that.errorFiltrosOrden;
+    },
+
+    /**
+     * Método para mostrar el error de que una página tiene un filtro de orden no tiene valor o no tiene nombre asignado.
+     * @param {jqueryObject} filaFiltroOrden : Fila del Filtro orden que no tiene valor
+     * @param {jqueryObject} filaPagina : Fila de la página que está siendo revisada
+     */
+    mostrarErrorCampoFiltroOrdenVacio: function (filaFiltroOrden, filaPagina, input){
+
+        // Obtener el identificador de la página con error
+        const pageId = filaPagina.attr("id");
+        // Construcción del identificador del modal
+        const modalId = `modal-configuracion-pagina_${pageId}`;
+
+        // Botón para editar la página
+        const btnEditPage = $(".btnEditPage", filaPagina);
+        // Botón para editar el filtroOrden
+        const btnEditFilter = $(".btnEditFilter", filaFiltroOrden);
+
+        // Abrir el modal y el la fila del filtro que tiene errores para ser editados
+        btnEditPage.trigger( "click" );       
+       
+        // Mostrar el mensaje del error en el input correspondiente
+        if (input != undefined){
+            comprobarInputNoVacio(input, true, false, "El nombre y el filtro no pueden estar vacios.", 0);
+        }          
+
+        setTimeout(function(){ 
+            // Realizar scroll hasta el elemento indicado
+            scrollInModalView(btnEditFilter, modalId, function(){                
+                btnEditFilter.trigger( "click" );
+                mostrarNotificacion("error", "El nombre y el filtro no pueden estar vacios.");
+            });            
+        },1000);  
+  
+    },
+
+    /**
+     * Método para mostrar el error de que una página (de tipo búsqueda semántica) el campo filtro está vacío.
+     * @param {String} pageId : Id de la página que está siendo tratada
+     * @param {jqueryObject} input : Input donde que ha producido el error.
+     */
+     mostrarErrorCampoFiltroVacio: function (pageId, input){
+
+        // Obtener el identificador de la página con error
+        const filaPagina = $(`.page-row#${pageId}`);
+        // Construcción del identificador del modal
+        const modalId = `modal-configuracion-pagina_${pageId}`;
+
+        // Botón para editar la página
+        const btnEditPage = $(".btnEditPage", filaPagina);
+
+        // Abrir el modal y el la fila del filtro que tiene errores para ser editados
+        btnEditPage.trigger( "click" );  
+
+        // Mostrar el mensaje del error en el input correspondiente
+        if (input != undefined){            
+            comprobarInputNoVacio(input, true, false, "El Campo Filtro de la página no puede estar vacío", 0);
+        }          
+
+        setTimeout(function(){ 
+            // Realizar scroll hasta el elemento indicado
+            scrollInModalView(input, modalId, function(){                                
+                mostrarNotificacion("error", "El Campo Filtro de la página no puede estar vacío.");
+            });            
+        },1000);  
+
+    },    
+
+    /**
+     * Método para comprobar las exportaciones existentes en las páginas
+     * @returns bool: Devuelve valor que indica si se puede proceder al guardado de páginas
+     */
+    comprobarExportaciones: function(){
+        const that = this;
+
+        // Exportaciones de todas las páginas a revisar que hayan sido modificadas y no borradas (Más velocidad)
+        const exportaciones = $('.page-row:not(".deleted").modified .exportation-row:not(".deleted")');
+        
+        exportaciones.each(function () {
+            if (that.errorExportaciones == false){
+                that.comprobarExportacion($(this))
+            }
+        });
+        return that.errorExportaciones;
+    },
+
+
+    /**
+    * Método para comprobar las exportaciones creadas de las páginas
+    * @param {jqueryObject} filaExportacion : Objeto jquery que corresponde con la fila donde se encuentra el la exportación a revisar
+    * @returns : bool: Devuelve un valor que indica si se puede proceder al guardado de las páginas.
+    */
+    comprobarExportacion: function(filaExportacion){
+        const that = this
+        
+        // Panel donde se podrá localizar el nombre de la exportación a revisar
+        const panelExportationInfo = filaExportacion.find('.exportation-info');
+        // Filas de páginas
+        const filasPaginas = $("#id-added-pages-list").find(".component-wrap.page-row");
+        // Fila de la página cuyos filtros de orden están siendo revisados
+        const filaPagina = panelExportationInfo.closest(filasPaginas);
+
+        // Input del nombre de la exportación
+        const inputExportationName = panelExportationInfo.find('[name="Nombre"]').first();                
+
+        // Comprobar que el Nombre de la exportación NO está vacío
+        if (inputExportationName.val().trim() == "") {
+            that.mostrarErrorNombreExportacionVacio(filaPagina, filaExportacion, inputExportationName);
+            that.errorExportaciones = true;
+            return true;
+        }
+        
+        // Comprobación de que hay al menos 1 propiedad asociada a la fila exportación que se está revisando
+        const propiedades = filaExportacion.find(".exportation-info").find('.property-row:not(".deleted")');
+                
+        if (propiedades.length == 0) {
+            that.mostrarErrorExportacionSinPropiedades(filaPagina, filaExportacion);
+            that.errorExportaciones = true;
+            return true;
+        }
+
+        // Comprobación de que si hay propiedades, estás contiene datos válidos
+        propiedades.each(function () {
+            if (that.comprobarPropiedadExportacion($(this))) {
+                that.errorExportaciones = true;
+                return;
+            }
+        });
+        return that.errorExportaciones;
+    },
+
+    /**
+     * Método para mostrar el error cuando el nombre de una exportación está vacío. La comprobación se hace al pulsar en "Guardar" las páginas
+     * @param {jqueryObject} filaPagina : Fila de la página que está siendo revisada
+     * @param {jqueryObject} filaExportacion : Fila de la exportación que ha dado el error
+     * @param {*} inputExportationName : Input que se ha encontrado con valor vacío
+     */
+    mostrarErrorNombreExportacionVacio: function(filaPagina, filaExportacion, inputExportationName){
+        // Filas de páginas
+        const filasPaginas = $("#id-added-pages-list").find(".component-wrap.page-row");
+
+        // Obtener el identificador de la página con error
+        const pageId = filaPagina.attr("id");
+        // Construcción del identificador del modal
+        const modalId = `modal-configuracion-pagina_${pageId}`
+
+        // Botón para editar la página
+        const btnEditPage = $(".btnEditPage", filaPagina);
+        // Botón para editar la exportación
+        const btnEditExportation = $(".btnEditExportation", filaExportacion);  
+        
+        // Abrir el modal y los paneles donde se encuentra el error
+        btnEditPage.trigger( "click" );
+        btnEditExportation.trigger("click");        
+
+        // Mostrar el mensaje del error en el input correspondiente
+        if (inputExportationName != undefined){
+            comprobarInputNoVacio(inputExportationName, true, false, "Los nombres de las exportaciones no pueden estar vacíos.", 0);
+        }
+
+        setTimeout(function(){ 
+           
+            // Realizar scroll hasta el elemento indicado
+            scrollInModalView(btnEditExportation, modalId, function(){                
+                mostrarNotificacion("error", "Los nombres de las exportaciones no pueden estar vacíos.");
+            });            
+        },1000);  
+    },
+
+    /**
+     * Método para mostrar el error cuando una exportació no tiene asigandas propiedades
+     * @param {jqueryObject} filaPagina : Fila de la página que está siendo revisada
+     * @param {jqueryObject} filaExportacion : Fila de la exportación que ha dado el error
+     */
+    mostrarErrorExportacionSinPropiedades: function(filaPagina, filaExportacion){
+
+        // Filas de páginas
+        const filasPaginas = $("#id-added-pages-list").find(".component-wrap.page-row");
+
+        // Obtener el identificador de la página con error
+        const pageId = filaPagina.attr("id");
+        // Construcción del identificador del modal
+        const modalId = `modal-configuracion-pagina_${pageId}`
+
+        // Botón para editar la página
+        const btnEditPage = $(".btnEditPage", filaPagina);
+        // Botón para editar la exportación
+        const btnEditExportation = $(".btnEditExportation", filaExportacion);  
+        
+        // Abrir el modal y los paneles donde se encuentra el error
+        btnEditPage.trigger( "click" );
+        btnEditExportation.trigger("click");        
+
+        setTimeout(function(){ 
+            // Realizar scroll hasta el elemento indicado
+            scrollInModalView(btnEditExportation, modalId, function(){                
+                mostrarNotificacion("error", "Las exportaciones deben tener por lo menos una propiedad.");
+            });            
+        },1000);  
+
+    },
+
+    /**
+     * Método para comprobar que la propiedad asignada a una exportación es válida (Dispone de Nombre y de propiedad)
+     * @param {jqueryObject} filaPropiedad : Fila de la propiedad que va a ser revisada
+     */
+    comprobarPropiedadExportacion: function(filaPropiedad){
+        const that = this
+        // Fila de exportación que está siendo revisada donde se contiene toda la información
+        const panelExportationInfo = filaPropiedad.find('.property-info');
+
+        // Inputs de información de la exportación        
+        // Input del nombre de la exportación
+        const inputPropertyName = panelExportationInfo.find('[name="Nombre"]');
+        // Input con el nombre de la propiedad asociada a dicha propiedad
+        const inputPropertyPropertyName = panelExportationInfo.find('[name="Propiedad"]');
+        
+        if (inputPropertyName.val().trim() == "" || inputPropertyPropertyName.val().trim() == "") {
+            that.mostrarErrorCampoPropiedadVacio(filaPropiedad, inputPropertyPropertyName);
+            return true;
+        }
+
+        return false;        
+    },
+    
+    /**
+     * Método para mostrar el error de que el campo de una propiedad no puede estar vacío.
+     * @param {*} filaPropiedad 
+     * @param {*} input 
+     */
+    mostrarErrorCampoPropiedadVacio: function(filaPropiedad, input){
+        // Filas de páginas
+        const filasPaginas = $("#id-added-pages-list").find(".component-wrap.page-row");
+        // Fila de la página cuyas propiedades están con el error
+        const filaPagina = filaPropiedad.closest(filasPaginas);
+        const filaExportation = filaPropiedad.closest(".exportation-row");
+        // Obtener el identificador de la página con error
+        const pageId = filaPagina.attr("id");
+        // Construcción del identificador del modal
+        const modalId = `modal-configuracion-pagina_${pageId}`
+        
+        // Botón para editar la página
+        const btnEditPage = $(".btnEditPage", filaPagina);
+        // Botón para editar la exportación
+        const btnEditExportation = $(".btnEditExportation", filaExportation);        
+        // Botón para editar la propiedad de la exportación
+        const btnEditProperty = $(".btnEditProperty", filaPropiedad);
+        
+        // Abrir el modal y los paneles donde se encuentra el error
+        btnEditPage.trigger( "click" );
+        btnEditExportation.trigger("click");
+        btnEditProperty.trigger( "click" );
+
+        if (input != undefined){
+            comprobarInputNoVacio(input, true, false, "Los campos de las propiedades no pueden estar vacios.", 0);
+        }
+
+        setTimeout(function(){ 
+            // Realizar scroll hasta el elemento indicado
+            scrollInModalView(btnEditExportation, modalId, function(){                
+                mostrarNotificacion("error", "Los campos de las propiedades no pueden estar vacios.");
+            });            
+        },1000);         
+    },
+
+    /**
+     * Método para comprobar que no hay Metadescripciones vacíos en las páginas creadas/editadas     
+     */
+    comprobarMetadescripciones: function(){
+        const that = this;        
+        // Inputs con las metadescripciones de todas las páginas
+        // const inputsMetadescripcion = $('.page-row:not(".deleted") .inputsMultiIdioma.basicInfo input[name="TabMetaDescription"]:not(":disabled")');
+        // Textareas con las metadescripciones 
+        const inputsMetadescripcion = $('.page-row:not(".deleted") .inputsMultiIdioma.basicInfo [name="TabMetaDescription"]:not(":disabled")');
+        inputsMetadescripcion.each(function () {
+            that.comprobarMetadescripcion($(this));            
+        });        
+    },
+
+    /**
+     * Método para validar la metadescripción de una página. Se aplicará la metadescripción del idioma por defecto para todos los idiomas si no hay una establecida.
+     * @param {*} inputMetadescription: Input a comprobar
+     * @returns bool: Devuelve un valor booleano indicando si todo está OK para proceder con el guardado de las páginas.
+     */
+    comprobarMetadescripcion: function(inputMetadescription){  
+        const that = this
+
+        // Contiene los tabs en idiomas y el div con los inputs en idiomas completo
+        const formularioEdicion = inputMetadescription.closest(".formulario-edicion");
+        const panInputsMultiIdioma = inputMetadescription.closest(".inputsMultiIdioma");
+        // Contenedor donde se encuentran datos básicos de la página (Nombre, Url/Ruta, MetaDescripción )
+        const panMultiIdioma = formularioEdicion.find(".panContenidoMultiIdioma.basicInfo");
+
+        // Id del input a tratar
+        const inputId = inputMetadescription.attr("id");
+
+        const listaTextos = [];
+        
+        if (operativaMultiIdioma.listaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+            let textoMultiIdioma = "";
+            // Seleccionar el texto del idioma por defecto para la metadescripción
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            
+            // Recorrer todos los idiomas para asignarlos al input correspondiente. Si algún idioma no tiene metadescripción, asignarle la del idioma por defecto
+            $.each(operativaMultiIdioma.listaIdiomas, function () {
+                // Obtención del Key del idioma
+                const idioma = this.key;
+                // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para Nombre
+                let textoIdioma = $(`#input_${inputId}_${idioma}`).val();
+                if (textoIdioma == null || textoIdioma == "") {
+                    textoIdioma = textoIdiomaDefecto;
+                    $(`#input_${inputId}_${idioma}`).val(textoIdioma);
+                }
+                // Escribir el nombre del multiIdioma en el campo Hidden
+                textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
+                
+                listaTextos.push({ "key": idioma, "value": textoIdioma });
+            });            
+            inputMetadescription.val(textoMultiIdioma);
+        }else{
+            // Sin multiIdioma.
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            // Establecer el nombre en el input correspondiente
+            inputMetadescription.val(textoIdiomaDefecto);
+        }
+        return false;
+    },
+    
+
+    /**
+     * 
+     */
+
+    /**
+     * Método para obtener los datos de cada página para proceder a su guardado. Se ejecuta desde 'handleSavePages'
+     * @param {*} fila : Fila de la que hay que recoger los datos
+     * @param {*} num : Nº de la página que se está analizando     
+     */
+    obtenerDatosPestanya: function(fila, num){        
+        const that = this;
+        // Id de la página
+        const id = fila.attr('id');
+        // Contenido o datos de la página dentro del modal
+        // const panelEdicion = fila.find('.modal-page').last();
+        const panelEdicion = fila.find(`#modal-configuracion-pagina_${id}`);
+        // Prefijo para guardado de la pestaña/página
+        const prefijoClave = 'ListaPestanyas[' + num + ']';
+
+        // Recogida de datos principales de la página 
+        that.ListaPestanyas[prefijoClave + '.Key'] = fila.attr('id');
+        that.ListaPestanyas[prefijoClave + '.Url'] = panelEdicion.find('[name="TabUrl"]').val();
+        that.ListaPestanyas[prefijoClave + '.EsUrlPorDefecto'] = panelEdicion.find('[name="TabUrl"]').is(':disabled');
+        that.ListaPestanyas[prefijoClave + '.ShortName'] = panelEdicion.find('[name="TabShortName"]').val();
+        that.ListaPestanyas[prefijoClave + '.Type'] = panelEdicion.find('[name="TabType"]').val();
+        that.ListaPestanyas[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
+        that.ListaPestanyas[prefijoClave + '.ParentTabKey'] = panelEdicion.find('[name="ParentTabKey"]').val();
+        that.ListaPestanyas[prefijoClave + '.Order'] = num; //panelEdicion.find('[name="TabOrden"]').val();
+        that.ListaPestanyas[prefijoClave + '.FechaModificacion'] = panelEdicion.find('[name="TabFechaModificacion"]').val();
+
+        // Indicador de si la página ha sido editada / recién creada
+        const modified = fila.hasClass("modified");
+        that.ListaPestanyas[prefijoClave + '.Modified'] = modified;
+
+        // Recoger los datos de la página que haya podido sufrir cambios
+        if (modified)
+        {
+            // Recoger datos básicos de la página
+            that.ListaPestanyas[prefijoClave + '.Name'] = panelEdicion.find('[name="TabName"]').val();
+            that.ListaPestanyas[prefijoClave + '.EsNombrePorDefecto'] = panelEdicion.find('[name="TabName"]').is(':disabled');
+            that.ListaPestanyas[prefijoClave + '.OpenInNewWindow'] = panelEdicion.find(`#TabOpenInNewWindow_SI_${fila.attr('id')}`).is(':checked'); // panelEdicion.find('[name="TabOpenInNewWindow"]').is(':checked');
+            that.ListaPestanyas[prefijoClave + '.ClassCSSBody'] = panelEdicion.find('[name="TabClassCSSBody"]').val();
+            that.ListaPestanyas[prefijoClave + '.MetaDescription'] = panelEdicion.find('[name="TabMetaDescription"]').val();
+            
+            that.ListaPestanyas[prefijoClave + '.Active'] = panelEdicion.find(`#TabActive_SI_${fila.attr('id')}`).is(':checked'); // panelEdicion.find('[name="TabActive"]').is(':checked');
+            that.ListaPestanyas[prefijoClave + '.Visible'] = panelEdicion.find(`#TabVisible_SI_${fila.attr('id')}`).is(':checked'); // panelEdicion.find('[name="TabVisible"]').is(':checked');
+
+            // Comprobación del tipo de Privacidad
+            that.ListaPestanyas[prefijoClave + '.Privacidad'] = panelEdicion.find('[name="TabPrivacidad"]').val();
+
+            // Comprobación de detalles de Privacidad (¿Existe Panel de privacidad?)
+            let visibleSinAcceso = undefined;
+            if (panelEdicion.find('.edit-privacy').length > 0){
+                // Input 'Html alternativo'
+                that.ListaPestanyas[prefijoClave + '.HtmlAlternativoPrivacidad'] = encodeURIComponent(panelEdicion.find('[name="TabHtmlAlternativoPrivacidad"]').val().replace(/\n/g, ''));
+                const tabVisibleSinAccesoFila = `TabVisibleSinAcceso_${fila.attr('id')}`;
+                // Input 'Visible en el menú para usuarios sin acceso'
+                visibleSinAcceso = $("input[name="+tabVisibleSinAccesoFila+"]:checked").data("value") == "si" ? true : false;                                        
+
+                // Comprobación de Perfiles/Grupos para la Privacidad de la página
+                if (panelEdicion.find('[name="TabPrivacidad"]').val() == '2') {
+
+                    // Añadir perfiles de usuarios privacidad de la página
+                    const privacidadPerfiles = panelEdicion.find('[name="TabValoresPrivacidadPerfiles"]').val().split(',');
+                    for (let i = 0; i < privacidadPerfiles.length; i++) {
+                        if (privacidadPerfiles[i] != "") {
+                            const prefijoPrivacidadPerfiles = prefijoClave + '.PrivacidadPerfiles[' + i + ']';
+                            that.ListaPestanyas[prefijoPrivacidadPerfiles + '.Key'] = privacidadPerfiles[i];
+                            that.ListaPestanyas[prefijoPrivacidadPerfiles + '.Value'] = "";
+                        }
+                    }
+
+                    // Añadir perfiles de grupos de usuarios para la privacidad de la página
+                    const privacidadGrupos = panelEdicion.find('[name="TabValoresPrivacidadGrupos"]').val().split(',');
+                    for (let i = 0; i < privacidadGrupos.length; i++) {
+                        if (privacidadGrupos[i].trim() != "") {
+                            var prefijoPrivacidadGrupos = prefijoClave + '.PrivacidadGrupos[' + i + ']';
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Key'] = privacidadGrupos[i].substr(2);
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Value'] = "";
+                        }
+                    }
+                }
+            }
+
+            // Establecer valor de 'Visible en el menú para usuarios sin acceso'
+            that.ListaPestanyas[prefijoClave + '.VisibleSinAcceso'] = visibleSinAcceso;
+
+            // Input TabHomeCMS para "Editar la Home con el CMS" 
+            const tabHomeCMSName = `TabHomeCMS_${fila.attr('id')}`; 
+            const tabHomeCheckBox = $("input[name="+tabHomeCMSName+"]");
+            
+            if (tabHomeCheckBox.length > 0){
+                const homeCMS = $("input[name="+tabHomeCMSName+"]:checked").data("value") == "si" ? true : false;
+
+                let homeTodosUsuarios = false,
+                    homeMiembros = false,
+                    homeNoMiembros = false;
+                // Controlar si la página se desea para todos los usuarios
+                if (homeCMS == true) {
+                    const tipoHomeCMSName = `TabTypeHomeCMS_${fila.attr('id')}`;
+
+                    const tipoHomeCMS = panelEdicion.find("[name="+ tipoHomeCMSName +"]:checked").data("value");
+                    if (tipoHomeCMS == 'Unica') {
+                        homeTodosUsuarios = true;
+                    }
+                    else {                                            
+                        homeMiembros = panelEdicion.find(`[name="${that.checkboxTabHomeMiembrosCMSClassName}"]`).is(':checked');
+                        homeNoMiembros = panelEdicion.find(`[name="${that.checkboxTabHomeNoMiembrosCMSClassName}"]`).is(':checked');
+                    }
+                }
+
+                // Establecer valores para editar Home con CMS
+                const prefijoHomeCMSClave = prefijoClave + '.HomeCMS';
+                that.ListaPestanyas[prefijoHomeCMSClave + '.HomeTodosUsuarios'] = homeTodosUsuarios;
+                that.ListaPestanyas[prefijoHomeCMSClave + '.HomeMiembros'] = homeMiembros;
+                that.ListaPestanyas[prefijoHomeCMSClave + '.HomeNoMiembros'] = homeNoMiembros;
+            }
+
+            // Panel para editar opciones de búsqueda de la página (si dispone de la opción)
+            const panelEditarBusqueda = panelEdicion.find('.editarOpcionesBusqueda');
+            if (panelEditarBusqueda.length > 0) {
+                // Prefijo para guardado en BD
+                const prefijoBusquedaClave = prefijoClave + '.OpcionesBusqueda';
+
+                that.ListaPestanyas[prefijoBusquedaClave + '.ValoresPorDefecto'] = 'true';
+                // Seleccionar el campo Filtro de búsqueda
+                if (panelEditarBusqueda.find('.auxFiltrosSeleccionados').val().trim() == ""){
+                    that.errorDuranteObtenerDatosPestaya = true;
+                    // Mostrar el error
+                    const inputTabCampoFiltroError = panelEditarBusqueda.find('.auxFiltrosSeleccionados');
+                    that.mostrarErrorCampoFiltroVacio(id, inputTabCampoFiltroError);
+                    return;
+                }
+                
+                that.ListaPestanyas[prefijoBusquedaClave + '.CampoFiltro'] = panelEditarBusqueda.find('.auxFiltrosSeleccionados').val();
+
+                // Panel que contiene el orden de los filtros
+                const panelFiltrosOrden = panelEdicion.find('.id-added-filter-list');
+                // Comprobar si hay filtros de orden
+                if (panelFiltrosOrden.length > 0) {
+                    // Prefijo para guardado en BD
+                    const prefijoFiltrosOrden = prefijoBusquedaClave + '.FiltrosOrden';
+                    // Nº del filtro
+                    let numFiltro = 0;                    
+                    // Recorrer cada filtro para la obtención de sus datos
+                    $('.filter-row', panelFiltrosOrden).each(function () {
+                        // Panel de detalles del filtro
+                        const panFiltro = $(this).find(".filter-order-info"); // $(this).children('.panEdicion');
+                        // Prefijo para guardado en BD
+                        const prefijoFiltroOrdenClave = prefijoFiltrosOrden + '[' + numFiltro + ']';
+                        // Obtención de los datos del Filtro
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Orden'] = numFiltro;
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Deleted'] = panFiltro.find('[name="TabEliminada"]').val();
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Nombre'] = panFiltro.find('[name="TabName"]').val();
+                        that.ListaPestanyas[prefijoFiltroOrdenClave + '.Filtro'] = panFiltro.find('[name="Filtro"]').val();
+
+                        numFiltro++;
+                    });                    
+
+                }
+
+                // Establecer valores para búsquedas y Filtros de página
+                that.ListaPestanyas[prefijoBusquedaClave + '.NumeroResultados'] = panelEditarBusqueda.find('[name="TabNumeroResultados"]').val();                                        
+                // Input 'Mostrar facetas"
+                const tabMostrarFacetasName = `TabMostrarFacetas_${fila.attr('id')}`;                
+                that.ListaPestanyas[prefijoBusquedaClave + '.MostrarFacetas'] = $("input[name="+tabMostrarFacetasName+"]:checked").data("value") == "si" ? true : false; 
+                // Input 'Agrupar facetas por tipo'
+                const tabMostrarFacetasPorTipoName = `TabAgruparFacetasPorTipo_${fila.attr('id')}`;                
+                that.ListaPestanyas[prefijoBusquedaClave + '.AgruparFacetasPorTipo'] = $("input[name="+tabMostrarFacetasPorTipoName+"]:checked").data("value") == "si" ? true : false; 
+                // Input 'Mostrar página en el buscador de la cabecera' - Deprecado CORE-4941 - De momento lo pongo como true para el CICD
+                const tabMostrarEnBusquedaCabeceraName = `TabMostrarEnBusquedaCabecera_${fila.attr('id')}`;                
+                //that.ListaPestanyas[prefijoBusquedaClave + '.MostrarEnBusquedaCabecera'] = $("input[name="+tabMostrarEnBusquedaCabeceraName+"]:checked").data("value") == "si" ? true : false;                
+                that.ListaPestanyas[prefijoBusquedaClave + '.MostrarEnBusquedaCabecera'] = true;                
+                // Input 'Mostrar caja de busqueda' - Deprecado CORE-4941 - De momento lo pongo como true para el CICD
+                const tabMostrarCajaBusquedaName = `TabMostrarCajaBusqueda_${fila.attr('id')}`;                
+                // that.ListaPestanyas[prefijoBusquedaClave + '.MostrarCajaBusqueda'] = $("input[name="+tabMostrarCajaBusquedaName+"]:checked").data("value") == "si" ? true : false;                
+                that.ListaPestanyas[prefijoBusquedaClave + '.MostrarCajaBusqueda'] = true;                
+                
+                // Input 'Proyecto origen de búsqueda'
+                that.ListaPestanyas[prefijoBusquedaClave + '.ProyectoOrigenBusqueda'] = panelEditarBusqueda.find('[name="TabProyectoOrigenBusqueda"]').val();
+                // Input 'Ocultar resultados sin filtros'
+                const tabOcultarResultadosSinFiltrosName = `TabOcultarResultadosSinFiltros_${fila.attr('id')}`;                
+                that.ListaPestanyas[prefijoBusquedaClave + '.OcultarResultadosSinFiltros'] = $("input[name="+tabOcultarResultadosSinFiltrosName+"]:checked").data("value") == "si" ? true : false;
+                // Input 'Texto de busqueda sin resultados'
+                that.ListaPestanyas[prefijoBusquedaClave + '.TextoBusquedaSinResultados'] = panelEditarBusqueda.find('[name="TabTextoBusquedaSinResultados"]').val();
+                // Input 'Ignorar la privacidad en búsqueda'
+                const tabIgnorarPrivacidadEnBusquedaName = `TabIgnorarPrivacidadEnBusqueda_${fila.attr('id')}`;                
+                that.ListaPestanyas[prefijoBusquedaClave + '.IgnorarPrivacidadEnBusqueda'] = $("input[name="+tabIgnorarPrivacidadEnBusquedaName+"]:checked").data("value") == "si" ? true : false;
+                // Input 'Omitir la carga inicial de facetas y resultados'
+                const tabOmitirCargaInicialFacetasResultadosName = `TabOmitirCargaInicialFacetasResultados_${fila.attr('id')}`;                
+                that.ListaPestanyas[prefijoBusquedaClave + '.OmitirCargaInicialFacetasResultados'] = $("input[name="+tabOmitirCargaInicialFacetasResultadosName+"]:checked").data("value") == "si" ? true : false;
+                // Input 'Filtro de RelacionMandatory'
+                that.ListaPestanyas[prefijoBusquedaClave + '.RelacionMandatory'] = panelEditarBusqueda.find('[name="TabFiltroRelacionMandatory"]').val();
+                // Input 'Filtro de TextoDefectoBuscador'                
+                that.ListaPestanyas[prefijoBusquedaClave + '.TextoDefectoBuscador'] = panelEdicion.find('[name="TabFiltroTextoDefectoBuscador"]').length > 0 ? panelEdicion.find('[name="TabFiltroTextoDefectoBuscador"]').val() : "";
+                // Opciones de "Vistas disponibles" de resultados (Listado, Mosaico, Mapa...)
+                // Prefijo para guardado en BD
+                const prefijoBusquedaOpcionesVistasClave = prefijoBusquedaClave + '.OpcionesVistas';
+
+                // Input de cual será la vista por defecto para visualizar los resultados
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaPorDefecto'] = panelEditarBusqueda.find('[name="' + id + '_VistaPorDefecto"]:checked').val();
+                // Input 'Vista Listado'
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaListado'] = panelEditarBusqueda.find('[name="TabVistaListado"]').is(':checked');
+                // Input 'Vista Mosaico'
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaMosaico'] = panelEditarBusqueda.find('[name="TabVistaMosaico"]').is(':checked');
+                // Input 'Vista Mapa'
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaMapa'] = panelEditarBusqueda.find('[name="TabVistaMapa"]').is(':checked');
+                // Input 'Vista Gráfico'
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.VistaGrafico'] = panelEditarBusqueda.find('[name="TabVistaGrafico"]').is(':checked');
+                // Input datos de la vista "Mapa"
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.PosicionCentralMapa'] = panelEditarBusqueda.find('[name="TabPosicionCentralMapa"]').val();
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.PropiedadLatitud'] = ''; // No existe -> Manda undefined panelEditarBusqueda.find('[name="TabPropiedadLatitud"]').val();
+                that.ListaPestanyas[prefijoBusquedaOpcionesVistasClave + '.PropiedadLongitud'] = ''; // No existe -> Manda undefined panelEditarBusqueda.find('[name="TabPropiedadLongitud"]').val();
+            }  
+
+            //TFG FRAN
+            var panelOpcionesDashboard = panelEdicion.find('.editarOpcionesDashboard');
+            if (panelOpcionesDashboard.length > 0) {
+                var prefijoDashboardClave = prefijoClave + '.OpcionesDashboard';
+
+                var panelAsistentes = panelEdicion.find('.editarAsistentes');
+                if (panelAsistentes.length > 0) {
+                    //Obtenemos los id de los ejemplos de los gráficos
+                    var divGraficos = panelEdicion.find('.ejemplosGraficos');
+                    var graficos = divGraficos.find('.generados');
+                    var idGraficos = [];
+                    var numAsistente = 0;
+                    for (var i = 0; i < graficos.length; i++) {
+                        idGraficos.push(graficos[i].id);
+                    }
+
+                    //Recorremos los asistentes que hayan sido añadidos
+                    $('.asistente-row.asisAnyadido', panelAsistentes).each(function () {
+                        var panAsistente = $(this).children('.panEdicion');
+                        numAsistente = idGraficos.indexOf($(this).attr('id') + 'GrafPreview');
+                        var prefijoAsistenteClave = prefijoDashboardClave + '[' + numAsistente + ']';
+
+                        that.ListaPestanyas[prefijoAsistenteClave + '.AsisID'] = panAsistente.closest('.asistente-row').attr('id');
+                        that.ListaPestanyas[prefijoAsistenteClave + '.Orden'] = numAsistente;
+                        that.ListaPestanyas[prefijoAsistenteClave + '.Nombre'] = panAsistente.find('[name="nGrafico"]').val();
+                        that.ListaPestanyas[prefijoAsistenteClave + '.Select'] = panAsistente.find('[name="selectGrafico"]').val();
+                        var where = "";
+                        where = panAsistente.find('[name="whereGrafico"]')[0].value;
+                        where = where + "|||" + panAsistente.find('[name="groupbyGrafico"]').val();
+                        where = where + "|||" + panAsistente.find('[name="orderbyGrafico"]').val();
+                        where = where + "|||" + panAsistente.find('[name="limitGrafico"]').val();
+                        that.ListaPestanyas[prefijoAsistenteClave + '.Where'] = where;
+                        that.ListaPestanyas[prefijoAsistenteClave + '.Titulo'] = panAsistente.find('[name="mtGrafico"]').prop('checked');
+                        that.ListaPestanyas[prefijoAsistenteClave + '.Tamano'] = panAsistente.find('[name="tamGrafico"]').val();
+
+                        var tipo = panAsistente.find('[name="tGrafico"]').val();
+                        that.ListaPestanyas[prefijoAsistenteClave + '.Tipo'] = tipo;
+                        var prefijoDatasets = prefijoAsistenteClave + '.OpcionesDatasets';
+                        if (tipo == '1') {
+                            var divBarras = panAsistente.find('.opcionesBarras');
+                            that.ListaPestanyas[prefijoAsistenteClave + '.PropExtra'] = divBarras.find('[name="horizontal"]').prop('checked');
+                            that.ListaPestanyas[prefijoAsistenteClave + '.Labels'] = panAsistente.find('[name="labelsGrafico"]').val();
+                            var panelDatasets = divBarras.find('.datasets');
+                            var numDataset = 0;
+                            //Recorremos datasets
+                            $('.dataset', panelDatasets).each(function () {
+                                var prefijoDatasetClave = prefijoDatasets + '[' + numDataset + ']';
+                                that.ListaPestanyas[prefijoDatasetClave + '.DatasetID'] = $(this).attr('id');
+                                that.ListaPestanyas[prefijoDatasetClave + '.Datos'] = $(this).find('[name="datosDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Nombre'] = $(this).find('[name="nombreDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Color'] = $(this).find('[name="colorDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Orden'] = numDataset;
+                                numDataset++;
+                            });
+                        }
+                        if (tipo == '2') {
+                            var divLineas = panAsistente.find('.opcionesLineas');
+                            that.ListaPestanyas[prefijoAsistenteClave + '.PropExtra'] = divLineas.find('[name="area"]').prop('checked');
+                            that.ListaPestanyas[prefijoAsistenteClave + '.Labels'] = panAsistente.find('[name="labelsGrafico"]').val();
+                            var panelDatasets = divLineas.find('.datasets');
+                            var numDataset = 0;
+                            //Recorremos datasets
+                            $('.dataset', panelDatasets).each(function () {
+                                var prefijoDatasetClave = prefijoDatasets + '[' + numDataset + ']';
+                                that.ListaPestanyas[prefijoDatasetClave + '.DatasetID'] = $(this).attr('id');
+                                that.ListaPestanyas[prefijoDatasetClave + '.Datos'] = $(this).find('[name="datosDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Nombre'] = $(this).find('[name="nombreDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Color'] = $(this).find('[name="colorDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Orden'] = numDataset;
+                                numDataset++;
+                            });
+                        }
+                        if (tipo == '3') {
+                            var divCirculos = panAsistente.find('.opcionesCirculos');
+                            that.ListaPestanyas[prefijoAsistenteClave + '.Labels'] = panAsistente.find('[name="labelsGrafico"]').val();
+                            var prefijoDatasetClave = prefijoDatasets + '[0]';
+                            that.ListaPestanyas[prefijoDatasetClave + '.DatasetID'] = divCirculos.find('.dataset').attr('id');
+                            that.ListaPestanyas[prefijoDatasetClave + '.Datos'] = divCirculos.find('[name="datosDataset"]').val();
+                            that.ListaPestanyas[prefijoDatasetClave + '.Nombre'] = 'Dataset';
+                            that.ListaPestanyas[prefijoDatasetClave + '.Color'] = 'Aleatorio';
+                            that.ListaPestanyas[prefijoDatasetClave + '.Orden'] = 0;
+                        }
+                        if (tipo == '4') {
+                            var divTabla = panAsistente.find('.opcionesTabla');
+                            that.ListaPestanyas[prefijoAsistenteClave + '.Labels'] = '';
+                            var panelDatasets = divTabla.find('.datasets');
+                            var numDataset = 0;
+                            //Recorremos datasets
+                            $('.dataset', panelDatasets).each(function () {
+                                var prefijoDatasetClave = prefijoDatasets + '[' + numDataset + ']';
+                                that.ListaPestanyas[prefijoDatasetClave + '.DatasetID'] = $(this).attr('id');
+                                that.ListaPestanyas[prefijoDatasetClave + '.Datos'] = $(this).find('[name="datosDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Nombre'] = $(this).find('[name="nombreDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Color'] = 'Aleatorio';
+                                that.ListaPestanyas[prefijoDatasetClave + '.Orden'] = numDataset;
+                                numDataset++;
+                            });
+                        }
+                        if (tipo == '5') {
+                            var divHeat = panAsistente.find('.opcionesHeatMap');
+                            that.ListaPestanyas[prefijoAsistenteClave + '.Labels'] = '';
+                            var panelDatasets = divHeat.find('.datasets');
+                            var numDataset = 0;
+                            //Recorremos datasets
+                            $('.dataset', panelDatasets).each(function () {
+                                var prefijoDatasetClave = prefijoDatasets + '[' + numDataset + ']';
+                                that.ListaPestanyas[prefijoDatasetClave + '.DatasetID'] = $(this).attr('id');
+                                that.ListaPestanyas[prefijoDatasetClave + '.Datos'] = $(this).find('[name="datosDataset"]').val();
+                                that.ListaPestanyas[prefijoDatasetClave + '.Nombre'] = $(this).find('[name="nombreDataset"]').val();
+                                if (numDataset < 2) {
+                                    that.ListaPestanyas[prefijoDatasetClave + '.Color'] = 'Aleatorio';
+                                } else {
+                                    that.ListaPestanyas[prefijoDatasetClave + '.Color'] = $(this).find('[name="colorDataset"]').val();
+                                }
+                                that.ListaPestanyas[prefijoDatasetClave + '.Orden'] = numDataset;
+                                numDataset++;
+                            });
+                        }
+                    });
+                }
+
+            }
+
+            
+            // Comprobación de facetas de la página (Si hay facetas asociadas)
+            const panelEdicionFacetas = panelEdicion.find('.id-added-facet-list');
+            if (panelEdicionFacetas.length > 0) {
+                // Nº de la faceta
+                let numFaceta = 0;
+                // Recorrer cada faceta para la obtención de sus datos
+                $('.facet-row', panelEdicionFacetas).each(function () {
+                    // Prefijo para guardado en BD
+                    const prefijoFacetasClave = prefijoClave + '.ListaFacetas[' + numFaceta + ']';
+
+                    // Panel de detalles de la faceta
+                    const panFaceta = $(this).find(".facet-info");
+                    // Select / ComboBox de facetas
+                    const selectorFacetas = panFaceta.find('.cmbListaFacetas');
+                    // Select / ComboBox de Objetos de conocimiento
+                    const selectorOC = panFaceta.find('.selectObjetosConocimiento');                    
+
+                    that.ListaPestanyas[prefijoFacetasClave + '.Faceta'] = selectorFacetas.children('option:selected').val();
+                    that.ListaPestanyas[prefijoFacetasClave + '.ObjetoConocimiento'] = selectorOC.children('option:selected').text();
+                    that.ListaPestanyas[prefijoFacetasClave + '.Deleted'] = panFaceta.find('[name="TabEliminada"]').val();
+                    that.ListaPestanyas[prefijoFacetasClave + '.ClavePestanya'] = fila.attr('id');
+                    //that.ListaPestanyas[prefijoFacetasClave + '.Key'] = selectorFacetas.children('option:selected').val();
+                    //that.ListaPestanyas[prefijoFacetasClave + '.Value'] = selectorOC.children('option:selected').text();
+                    numFaceta++;                        
+                });                
+            }
+
+            // Comprobación de las exportaciones de la página (Si hay exportaciones asociadas)
+            const panelEditarExportaciones = panelEdicion.find('.id-added-exportation-list');
+            if (panelEditarExportaciones.length > 0){
+                // Nº de la exportación
+                let numExport = 0;
+                // Recorrer cada exportación para la obtención de sus datos
+                $('.exportation-row', panelEditarExportaciones).each(function () {
+                    // Prefijo para guardado en BD
+                    const prefijoExportacionesClave = prefijoClave + '.ListaExportaciones[' + numExport + ']';
+
+                    // Panel de detalles de la exportacion
+                    const panExportacion = $(this).find(".exportation-info");
+                    
+                    // Establecer datos de la exportación
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Key'] = $(this).attr('id');
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Orden'] = numExport;
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Deleted'] = panExportacion.find('[name="TabEliminada"]').val();
+                    that.ListaPestanyas[prefijoExportacionesClave + '.Nombre'] = panExportacion.find('[name="Nombre"]').val(); 
+                    
+                    // Obtener los grupos de la exportación
+                    const privacidadGruposExport = panExportacion.find('[name="TabValoresPrivacidadGrupos"]').val().split(',');
+                    for (let i = 0; i < privacidadGruposExport.length; i++) {
+                        if (privacidadGruposExport[i].trim() != "") {
+                            const prefijoPrivacidadGrupos = prefijoExportacionesClave + '.GruposPermiso[' + i + ']';
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Key'] = privacidadGruposExport[i].substr(2);
+                            that.ListaPestanyas[prefijoPrivacidadGrupos + '.Value'] = "";
+                        }
+                    }  
+                    
+                    // Obtener las propiedades de la exportación
+                    let numPropExport = 0;
+                    // Recorrer cada propiedad de exportación para la obtención de sus datos
+                    $('.property-row', panExportacion).each(function () {
+                        // Panel de detalles de la propiedad
+                        const panPropExportacion = $(this).find(".property-info");
+                        // Prefijo para guardado en BD
+                        const prefijoPropExportacionesClave = prefijoExportacionesClave + '.ListaPropiedades[' + numPropExport + ']';
+                        
+                        // Establecer datos de la exportación
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Orden'] = numPropExport;
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Deleted'] = panPropExportacion.find('[name="TabEliminada"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Nombre'] = panPropExportacion.find('[name="Nombre"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Ontologia'] = panPropExportacion.find('[name="Ontologia"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.Propiedad'] = panPropExportacion.find('[name="Propiedad"]').val();
+                        that.ListaPestanyas[prefijoPropExportacionesClave + '.DatoExtraPropiedad'] = panPropExportacion.find('[name="DatoExtraPropiedad"]').val();
+
+                        numPropExport++;
+                    });
+                    numExport++;  
+                }); 
+                              
+            }
+            
+            // Devolvería false ya que no hay errores durante obtención de datos de las páginas
+            return that.errorDuranteObtenerDatosPestaya;         
+        }
+    },
+
+    /**
+     * Método para proceder al guardado de las páginas en BD.
+     * El guardado se realiza una vez se ha comprobado que no hay errores (comprobarErroresGuardado) y que se han obtenidos los datos de las páginas modificadas (obtenerDatosPestanya)
+     * Se envían las páginas que se han modificado
+     * @param {*} completion: Cuando finalice de procesar la tarea, conjunto de acciones que se desean realizar
+     */
+    savePages: function(completion){
+        const that = this;
+
+        // Realizar la petición para el guardado de páginas
+        GnossPeticionAjax(
+            that.urlSavePages,
+            that.ListaPestanyas,
+            true
+        ).done(function (data) {
+            // OK - Mostrar el mensaje de guardado correcto
+            mostrarNotificacion("success","Los cambios se han guardado correctamente");                        
+            completion != undefined && completion(false);             
+        }).fail(function (data) {
+            // KO - Mostrar el error del guardado de páginas realizado
+            let error = data.split('|||');
+            if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
+                that.mostrarErrorGuardado();
+                if (error[0] == "RUTA REPETIDA") {
+                    that.mostrarErrorUrlRepetida($('#' + error[1]));
+                    completion != undefined && completion(true);
+                }
+                else if (error[0] == "NOMBRE VACIO") {
+                    that.mostrarErrorNombreVacio($('#' + error[1]));
+                    completion != undefined && completion(true);
+                }
+                else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
+                    that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
+                    completion != undefined && completion(true);
+                } else if (error[0] == "invitado") {
+                    mostrarNotificacion("error", "La sesión de usuario ha caducado. Accede con tu usuario y credenciales para poder continuar.")
+                    completion != undefined && completion(true);
+                } else if (error[0] == "ERROR CONCURRENCIA") {
+                    mostrarNotificacion("error", error[1])
+                    completion != undefined && completion(true);
+                }
+            }
+            else
+            {
+                that.mostrarErrorGuardadoFallo(data);
+                completion != undefined && completion(true);
+            }
+
+        }).always(function () {
+            // Ocultar el loading
+            loadingOcultar();
+        });
+    },
+
+    /**
+     * Método para mostrar posibles errores durante el proceso del guardado de páginas. Estos errores son devueltos por el servidor
+     * una vez el método "savePages" ha sido ejecutado
+     */
+    mostrarErrorGuardado: function () {
+        let esPre = "False";
+        let entornoBloqueado = "False";
+
+            if (esPre == "True") {
+                mostrarNotificacion("error", "No se permite guardar porque estás en el entorno de preproducción");                
+            }
+            else if (entornoBloqueado == "True") {                
+                mostrarNotificacion("error", "El entorno actual esta bloqueado. Hay que desplegar la versión de preproducción antes de hacer cambios");
+            }
+            else {
+                mostrarNotificacion("error", "Ha habido errores en el guardado de las pesta&#xF1;as, revisa los errores marcados");                
+            }
+    },  
+
+
+    /**
+     * Método para mostrar posibles errores durante el proceso del guardado de páginas. Estos errores son devueltos por el servidor
+     * una vez el método "savePages" ha sido ejecutado
+     * @param {jqueryObject} fila 
+     */
+    mostrarErrorPoyectoOrigenBusquedaPrivado: function (fila) {
+        const that = this;
+        const inputUrl = $('input[name = "TabName"]', fila).first();
+        mostrarNotificacion("error", "El proyecto no puede ser privado");        
+    },    
+}

@@ -1,4 +1,5 @@
-﻿using Es.Riam.AbstractsOpen;
+﻿using DotNetOpenAuth.Messaging;
+using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Virtuoso;
@@ -25,6 +26,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -36,8 +38,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
     public class CMSAdminMultimediaController : ControllerBaseWeb
     {
-        public CMSAdminMultimediaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public CMSAdminMultimediaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -92,7 +94,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (Request.Method.Equals("POST") && Request.Form.Files.Count > 0)
             {
-                CargarFichero();
+                bool subidaCorrecta = CargarFichero();     
+                if (!subidaCorrecta)
+                {
+                    return GnossResultERROR(ViewBag.TextoSubida);
+                }
             }
 
             int paginaInt = 1;
@@ -131,39 +137,35 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         public ActionResult CargarEliminarMultimediaItem()
         {
-            ActionResult partialView = View();
-
-            // Construir el modelo y comprobar
-            partialView = GnossResultHtml("_modal-views/_delete-multimedia-item", null);
-
             // Devolver la vista modal
-            return partialView;
+            return GnossResultHtml("_modal-views/_delete-multimedia-item", null);
         }
 
 
-        public void CargarFichero()
+        public bool CargarFichero()
         {
-            bool error = false;
+            bool cargado = true;
             IFormFileCollection hfc = Request.Form.Files;
             for (int i = 0; i < hfc.Count; i++)
             {
                 IFormFile fichero = hfc[i];
-
+                
                 if (fichero != null && !string.IsNullOrEmpty(fichero.FileName) && fichero.Length > 0)
                 {
                     byte[] buffer1;
                     FileInfo file = new FileInfo(fichero.FileName);
                     string extensionArchivo = Path.GetExtension(file.Name).ToLower();
-
+                                        
                     if ((ExtensionesImagenesPermitidas.Contains(extensionArchivo)) || (ExtensionesDocumentosPermitidos.Contains(extensionArchivo)))
                     {
                         string nombre = Path.GetFileNameWithoutExtension(file.Name).ToLower();
                         BinaryReader reader = new BinaryReader(fichero.OpenReadStream());
                         buffer1 = reader.ReadBytes((int)fichero.Length);
                         string ruta = $"{UtilArchivos.ContentImagenesProyectos}/personalizacion/{ProyectoSeleccionado.Clave.ToString().ToLower()}/cms/";
-
+                        
                         if (ExtensionesImagenesPermitidas.Contains(extensionArchivo))
                         {
+                            
                             ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                             servicioImagenes.Url = UrlIntragnossServicios;
 
@@ -177,37 +179,33 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         }
                         else if (ExtensionesDocumentosPermitidos.Contains(extensionArchivo))
                         {
-                            bool exito = false;
                             try
                             {
                                 string rutaFichero = $"{UtilArchivos.ContentImagenes}/{ruta}";
                                 ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
                                 servicioImagenes.Url = UrlIntragnossServicios;
-                                exito = servicioImagenes.AgregarFichero(buffer1.ToArray(), nombre, extensionArchivo, rutaFichero);
+                                cargado = servicioImagenes.AgregarFichero(buffer1.ToArray(), nombre, extensionArchivo, rutaFichero);
                                 InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(buffer1), fichero.FileName);
                             }
                             catch (Exception ex)
                             {
+                                cargado = false;
                                 GuardarLogError($"{ex.Message} \r\nPila: {ex.StackTrace}");
                             }
-
-                            error = !exito;
                         }
                     }
                     else
                     {
-                        error = true;
+                        HashSet<string> extensionesPermitidas = ExtensionesImagenesPermitidas.ToHashSet();
+                        extensionesPermitidas.AddRange(ExtensionesDocumentosPermitidos.ToList());
+                        
+                        ViewBag.TextoSubida = $"La extensión {extensionArchivo} no está incluida entre las extensiones permitidas: {string.Join(", ", extensionesPermitidas)}. Revisa las extensiones configuradas desde la administración.";
+                        cargado = false;
                     }
                 }
             }
-            if (error)
-            {
-                ViewBag.TextoSubida = "Las extensiones admitidas son .jpg .jpeg .png y .gif";
-            }
-            else
-            {
-                ViewBag.TextoSubida = "Subida correcta";
-            }
+
+            return cargado;
         }
 
         public void CargarModelo(int pPagina, string pSearch, string pExtension, string pNumusos)
@@ -218,10 +216,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             List<FileInfoModel> datosFicheros = servicioImagenes.ObtenerDatosFicherosDeCarpeta(ruta);
 
             List<MultimediaFileInfoModel> listaResultados = new List<MultimediaFileInfoModel>();
-            SortedDictionary<string, List<CMSComponente>> listaComponentesItem = new SortedDictionary<string, List<CMSComponente>>();
-            var listaPropiedadesImagen = gestorCMS.CMSDW.ListaCMSPropiedadComponente.Where(item => item.TipoPropiedadComponente.Equals((short)TipoPropiedadCMS.Imagen));
-            var listaPropiedadesHtml = gestorCMS.CMSDW.ListaCMSPropiedadComponente.Where(item => item.TipoPropiedadComponente.Equals((short)TipoPropiedadCMS.HTML));
+            SortedDictionary<string, List<CMSComponente>> listaComponentesItem = new SortedDictionary<string, List<CMSComponente>>();                      
             SortedDictionary<string, List<short>> listaPaginasItem = new SortedDictionary<string, List<short>>();
+
             if (datosFicheros != null)
             {
                 foreach (FileInfoModel datos in datosFicheros)
@@ -234,113 +231,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         if (pSearch == null || (pSearch != null && datos.file_name.Contains(pSearch,StringComparison.InvariantCultureIgnoreCase)))
                         {
                             listaResultados.Add(multimediaFileInfoModel);
-                            /*
-                            listaComponentesItem.Add(multimediaFileInfoModel.FileInfo.file_name, new List<CMSComponente>());
-                            var propiedadesDeImagen = listaPropiedadesImagen.Where(item => item.ValorPropiedad.Contains(multimediaFileInfoModel.Path));
-                            foreach (var propiedad in propiedadesDeImagen)
-                            {
-                                var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
-                                if (!listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Contains(componente))
-                                {
-                                    listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Add(componente);
-                                }
-                            }
-
-                            var propiedadesHtml = listaPropiedadesHtml.Where(item => item.ValorPropiedad.Contains(multimediaFileInfoModel.Path));
-                            foreach (var propiedad in propiedadesHtml)
-                            {
-                                var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
-                                if (!listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Contains(componente))
-                                {
-                                    listaComponentesItem[multimediaFileInfoModel.FileInfo.file_name].Add(componente);
-                                }
-                            }
-
-                            listaPaginasItem.Add(multimediaFileInfoModel.FileInfo.file_name, new List<short>());
-
-                            foreach (CMSBloque bloque in gestorCMS.ListaBloques.Values)
-                            {
-                                foreach (string atributo in bloque.Atributos.Keys)
-                                {
-                                    if (bloque.Atributos[atributo].ToLower() == multimediaFileInfoModel.Path.ToLower())
-                                    {
-                                        if (!listaPaginasItem[multimediaFileInfoModel.FileInfo.file_name].Contains(bloque.TipoUbicacion))
-                                        {
-                                            listaPaginasItem[multimediaFileInfoModel.FileInfo.file_name].Add(bloque.TipoUbicacion);
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            */
                         }
                     }
                 }
             }
-
-            
-            /*
-            foreach (MultimediaFileInfoModel multimediaFileInfo in listaResultados)
-            {
-                listaComponentesItem.Add(multimediaFileInfo.FileInfo.file_name, new List<CMSComponente>());
-                var propiedadesDeImagen = listaPropiedadesImagen.Where(item => item.ValorPropiedad.Contains(multimediaFileInfo.Path));
-                foreach (var propiedad in propiedadesDeImagen)
-                {
-                    var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
-                    if (!listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Contains(componente))
-                    {
-                        listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Add(componente);
-                    }
-                }
-
-                var propiedadesHtml = listaPropiedadesHtml.Where(item => item.ValorPropiedad.Contains(multimediaFileInfo.Path));
-                foreach (var propiedad in propiedadesHtml)
-                {
-                    var componente = gestorCMS.ListaComponentes[propiedad.ComponenteID];
-                    if (!listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Contains(componente))
-                    {
-                        listaComponentesItem[multimediaFileInfo.FileInfo.file_name].Add(componente);
-                    }
-                }
-            }
-            */
-
-            /*
-            foreach (MultimediaFileInfoModel multimediaFileInfo in listaResultados)
-            {
-                listaPaginasItem.Add(multimediaFileInfo.FileInfo.file_name, new List<short>());
-
-                foreach (CMSBloque bloque in gestorCMS.ListaBloques.Values)
-                {
-                    foreach (string atributo in bloque.Atributos.Keys)
-                    {
-                        if (bloque.Atributos[atributo].ToLower() == multimediaFileInfo.Path.ToLower())
-                        {
-                            if (!listaPaginasItem[multimediaFileInfo.FileInfo.file_name].Contains(bloque.TipoUbicacion))
-                            {
-                                listaPaginasItem[multimediaFileInfo.FileInfo.file_name].Add(bloque.TipoUbicacion);
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            
-
-            foreach (string fileName in listaComponentesItem.Keys)
-            {
-                if (!string.IsNullOrEmpty(pNumusos))
-                {
-                    if ((listaComponentesItem[fileName].Count + listaPaginasItem[fileName].Count).ToString() != pNumusos)
-                    {
-                        MultimediaFileInfoModel multimediaFileInfo = listaResultados.Where(item => item.FileInfo.file_name.Equals(fileName)).FirstOrDefault();
-                        listaResultados.Remove(multimediaFileInfo);
-                    }
-                }
-            }
-            */
-
 
             ResultadoModel resultado = CargarResultado(listaResultados, pPagina);
             List<FacetModel> facetas = CargarFacetas(listaResultados, pExtension, pNumusos, listaComponentesItem, listaPaginasItem);
@@ -663,7 +557,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             return new EmptyResult();
         }
-
+         
         #endregion
 
     }

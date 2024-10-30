@@ -8,11 +8,11 @@
         switch (Model.PresentatioType)
         {
             case CMSComponentFacet.CMSComponentFacetPresentation.Normal:
-                @Html.PartialView("../CMSPagina/_PintarFaceta", Model)
+                @Html.PartialView("../CMSPagina/Faceta/_PintarFaceta", Model)
                 break;
             case CMSComponentFacet.CMSComponentFacetPresentation.Bars:
                 <div class="componenteFaceta graficoBarras">
-                    @Html.PartialView("../CMSPagina/_PintarFaceta", Model)
+                    @Html.PartialView("../CMSPagina/Faceta/_PintarFaceta", Model)
                     <script>
                         FormatearFacetasGraficas();
                     </script>
@@ -20,7 +20,7 @@
                 break;
             case CMSComponentFacet.CMSComponentFacetPresentation.Sectors:
                 <div class="componenteFaceta graficoSectores">
-                    @Html.PartialView("../CMSPagina/_PintarFaceta", Model)
+                    @Html.PartialView("../CMSPagina/Faceta/_PintarFaceta", Model)
                     <script>
                         FormatearFacetasGraficas();
                     </script>

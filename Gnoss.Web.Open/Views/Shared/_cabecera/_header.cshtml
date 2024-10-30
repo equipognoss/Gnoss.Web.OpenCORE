@@ -109,7 +109,7 @@ bool containsUrlFoto = true;
                             @* Mostrar el estado de la Comunidad si es diferente a "Abierto" *@
                             @if (Comunidad.ProjectState != CommunityModel.StateProject.Open)
                             {
-                                <span style="display:block;">@Html.GetText("COMADMINCATEGORIAS", "COMUNIDAD") @Html.GetText("COMUNIDADES", "ENestadoComunidad") @Html.getCommunityStateType(Comunidad)</span>
+                                <span style="display:block;">@Html.GetText("COMADMINCATEGORIAS", "COMUNIDAD") @Html.getCommunityStateType(Comunidad)</span>
 
                                 if (Comunidad.ProjectState == CommunityModel.StateProject.CloseTemporaly)
                                 {
@@ -192,11 +192,9 @@ bool containsUrlFoto = true;
                                     }
                                 }
                                 @*Fin Cargar fotografía del usuario*@
-                                <span id="menuLateralUsuarioTrigger"
-                                      class="texto-blanco">
+                                <button class="btn pr-0 pl-0" id="menuLateralUsuarioTrigger" aria-label="@Html.GetText("COMMON","ABRIRPANELLATERALDEUSUARIO")">
                                     <div class="user-miniatura">
                                         <div class="imagen-usuario-wrap">
-                                            <a href="javascript: void(0);">
                                                 <div class="imagen @( (containsUrlFoto == false) ? "sinImagen" : null) ">
                                                     @if (containsUrlFoto == false)
                                                     {
@@ -207,19 +205,18 @@ bool containsUrlFoto = true;
                                                         <span id="user-panel-trigger" style="background-image: url(@Html.GetBaseUrlContent()@urlFoto);"></span>
                                                     }
 
-                                                </div>
-                                            </a>
+                                                </div>                                            
                                         </div>
                                         <div class="nombre-usuario-wrap">
-                                            <a href="javascript: void(0);">
+                                            <span>
                                                 <p class="nombre">@Html.AcortarTexto((string)perfil.Name, 10)</p>
                                                 @*<p class="nombre-completo">
                                                         @Html.AcortarTexto((string)perfil.Name, 10)
                                                     </p>*@
-                                            </a>
+                                            </span>
                                         </div>
                                     </div>
-                                </span>
+                                </button>
                             </li>
                         }
                         @* Metabuscador lateral (Permitir incluso para usuarios no logueados) *@

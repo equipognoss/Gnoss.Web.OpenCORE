@@ -16,6 +16,7 @@ Variables
     Dictionary<string, string> listaFiltrosOrden = Model.FilterOrderList;
     // Filtro por defecto para obtener los resultados de los recursos
     string FiltroOrdenSeleccionado = Model.FilterOrderSelected;
+    string idioma = Html.GetUtilIdiomas().LanguageCode;
 }
 
 @*
@@ -32,7 +33,7 @@ Variables
         @* Botón de descargar el listado *@
         @if (Model.ListExportation != null && Model.ListExportation.Count == 1 && Model.ListExportation[0].ExportationFormats.Count == 1)
         {
-            string nombreExportacion = Model.ListExportation[0].ExportationName;
+            string nombreExportacion = UtilCadenas.ObtenerTextoDeIdioma(Model.ListExportation[0].ExportationName, idioma, null);
             Guid exportacionID = Model.ListExportation[0].Key;
             string formatoExportacion = Model.ListExportation[0].ExportationFormats[0];
             string id = "liDescarga" + formatoExportacion.ToUpper();
@@ -61,7 +62,7 @@ Variables
                    data-toggle="dropdown"
                    aria-expanded="false">
                         <span class="material-icons">download</span>
-                        <span class="texto">Descargar</span>
+                        <span class="texto">@Html.GetText("HISTORIALVERSIONES","DESCARGAR")</span>
                     </a>
                     <input class="activo" type="hidden" id="ParametrosExportacion" name="ParametrosExportacion" />
                     @* Lista de opciones para descargar/exportar *@
@@ -70,11 +71,12 @@ Variables
                      style="will-change: transform">
                         @foreach (SearchViewModel.ExportationModel fila in Model.ListExportation)
                         {
+                            string nombreExp = UtilCadenas.ObtenerTextoDeIdioma(fila.ExportationName, idioma, null);
                             foreach (string formato in fila.ExportationFormats)
                             {
-                                <a id="@fila.ExportationName @formato"
-                       class="item-dropdown"
-                       onclick="ExportarBusqueda('@fila.Key','@fila.ExportationName','@formato');">@fila.ExportationName @formato.ToUpper()</a>
+                                <a id="@nombreExp @formato"
+                                    class="item-dropdown"
+                                    onclick="ExportarBusqueda('@fila.Key','@nombreExp','@formato');">@nombreExp @formato.ToUpper()</a>
                             }
                         }
                     </div>
@@ -93,8 +95,8 @@ Variables
             <span class="texto">@Html.GetText("BANDEJAENTRADA", "ORDENADOPOR")</span>
             </a>
             *@
-                @* Coger por defecto la primera opción*@
-                <a class="dropdown-toggle active" data-toggle="dropdown" aria-expanded="false">
+                @* Coger por defecto la primera opción *@
+                <a class="dropdown-toggle active" data-toggle="dropdown" aria-expanded="false" aria-label="@Html.GetText("COMMON","SELECCIONARORDEN")">
                     <span class="material-icons">swap_vert</span>
                     <span class="texto">@FiltroOrdenSeleccionado @Html.GetText("COMMON", "DESCENDENTE").ToLower()</span>
                 </a>
@@ -102,14 +104,12 @@ Variables
                 <div class="dropdown-menu basic-dropdown dropdown-menu-right" style="will-change: transform;">
                     @foreach (string filtro in listaFiltrosOrden.Keys)
                     {
-                        string activo = (@FiltroOrdenSeleccionado == filtro ? "activeView" : "");
-                        // Ascendente
-                        <a class="item-dropdown @activo" data-orderBy="@listaFiltrosOrden[filtro]" data-order="orden|desc">
+                        string activo = (@FiltroOrdenSeleccionado == filtro ? "activeView" : "");                        
+                        <a class="item-dropdown @activo" data-orderBy="@listaFiltrosOrden[filtro]" data-order="orden|desc" aria-label="@Html.GetText("COMMON","SELECCIONARORDENDESCENDENTE")">
                             <span class="material-icons">swap_vert</span>
                             <span class="texto">@filtro @Html.GetText("COMMON", "DESCENDENTE").ToLower()</span>
                         </a>
-                        // Descendente
-                        <a class="item-dropdown" data-orderBy="@listaFiltrosOrden[filtro]" data-order="orden|asc">
+                        <a class="item-dropdown" data-orderBy="@listaFiltrosOrden[filtro]" data-order="orden|asc" aria-label="@Html.GetText("COMMON","SELECCIONARORDENASCENDENTE")">
                             <span class="material-icons">swap_vert</span>
                             <span class="texto">@filtro @Html.GetText("COMMON", "ASCENDENTE").ToLower()</span>
                         </a>
@@ -163,19 +163,19 @@ Variables
                 @switch (tipoVistaActiva)
                 {
                     case SearchViewModel.ViewTypeModel.ViewTypeSearch.List:
-                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown">
+                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")">
                             <span class="material-icons">view_agenda</span>
                             <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")</span>
                         </a>
                         break;
                     case SearchViewModel.ViewTypeModel.ViewTypeSearch.Grid:
-                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown">
+                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")">
                             <span class="material-icons">reorder</span>
                             <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")</span>
                         </a>
                         break;
                     case SearchViewModel.ViewTypeModel.ViewTypeSearch.Map:
-                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown">
+                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "MAPA")">
                             <span class="material-icons">location_on</span>
                             <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "MAPA")</span>
                         </a>
@@ -183,7 +183,7 @@ Variables
                     default:
                         <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown">
                             <span class="material-icons">view_agenda</span>
-                            <span class="texto">Visualizar</span>
+                            <span class="texto">@Html.GetText("DEVTOOLS","VISUALIZAR")</span>
                         </a>
                         break;
                 }
@@ -205,13 +205,13 @@ Variables
 
                             @* Visualización LISTA *@
                             case SearchViewModel.ViewTypeModel.ViewTypeSearch.List:
-                                <a class="item-dropdown aListView @activo" data-class-resource-list="listView">
+                                <a class="item-dropdown aListView @activo" data-class-resource-list="listView" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")">
                                     <span class="material-icons">view_agenda</span>
                                     <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")</span>
                                 </a>
 
                                 @* Añadir la vista compactada para recursos si está Lista activada *@
-                                <a class="item-dropdown aCompacView @activo" data-class-resource-list="compacView">
+                                <a class="item-dropdown aCompacView @activo" data-class-resource-list="compacView" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("CORREO", "COMPACTADA")">
                                     <span class="material-icons">reorder</span>
                                     <span class="texto">@Html.GetText("CORREO", "COMPACTADA")</span>
                                 </a>
@@ -219,14 +219,14 @@ Variables
                                 break;
                             @* Visualización GRID - MOSAICO*@
                             case SearchViewModel.ViewTypeModel.ViewTypeSearch.Grid:
-                                <a class="item-dropdown aMosaicView @activo" data-class-resource-list="mosaicView">
+                                <a class="item-dropdown aMosaicView @activo" data-class-resource-list="mosaicView" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")">
                                     <span class="material-icons">view_comfy</span>
                                     <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")</span>
                                 </a>
                                 break;
                             @* Visualización MAPA *@
                             case SearchViewModel.ViewTypeModel.ViewTypeSearch.Map:
-                                <a class="item-dropdown aMapView @activo" data-class-resource-list="mapView">
+                                <a class="item-dropdown aMapView @activo" data-class-resource-list="mapView" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "MAPA")">
                                     <span class="material-icons">location_on</span>
                                     <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "MAPA")</span>
                                 </a>
@@ -235,22 +235,18 @@ Variables
                             case SearchViewModel.ViewTypeModel.ViewTypeSearch.Chart:
                                 @* Pintar las subopciones de Gráfico si los hay*@
                                 @*<a class="item-dropdown aGraphView @activo" data-class-resource-list="graphView">
-                <span class="material-icons">leaderboard</span>
-                <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "GRAFICOS")</span>
-                </a>
-                *@
+                                    <span class="material-icons">leaderboard</span>
+                                    <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "GRAFICOS")</span>
+                                </a>*@
+
                                 @* Subopciones de gráficos *@
-                                @*foreach (SearchViewModel.ChartViewModel grafico in Model.ChartList)
-                {
-                <a id="liOpcChart_@grafico.Key" class="item-dropdown aGraphView" data-class-resource-list="graphView">
-                <span class="material-icons">leaderboard</span>
-                <span class="texto" onclick="SeleccionarChart('@grafico.Key', '@grafico.JS');">@grafico.Name</span>
-                </a>
-                }
-                *@
-
-
-
+                                foreach (SearchViewModel.ChartViewModel grafico in Model.ChartList)
+                                {
+                                    <a id="liOpcChart_@grafico.Key" class="item-dropdown aGraphView chartView" data-class-resource-list="graphView">
+                                        <span class="material-icons">leaderboard</span>
+                                        <span class="texto" onclick="SeleccionarChart('@grafico.Key', '@grafico.JS');">@grafico.Name</span>
+                                    </a>
+                                }
 
                                 break;
                         }

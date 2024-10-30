@@ -10,6 +10,31 @@ Variables
 ----------------------------------------------------------------
 *@
 @{    
+    void PintarCategoria(CategoryModel categoria, CategoryModel categoriaPadre = null)
+    {
+        if (!Model.Thesaurus.SharedCategories.Contains(categoria.Key) && (!Model.pExcluirSeleccionadas || !Model.Thesaurus.SelectedCategories.Contains(categoria.Key)))
+        {
+            if (categoriaPadre == null)
+            {
+                <option value="@categoria.Key">@categoria.Name</option>
+            }
+            else
+            {
+                <option value="@categoria.Key">@categoriaPadre.Name - @categoria.Name</option>
+            }
+            PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
+            pintar.Thesaurus = Model.Thesaurus;
+            pintar.pCategoria = categoria;
+            pintar.pExcluirSeleccionadas = Model.pExcluirSeleccionadas;
+            @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategoriasHijas", pintar)
+
+            foreach (CategoryModel categoriaHija in categoria.Subcategories)
+            {
+                PintarCategoria(categoriaHija, categoria);
+            }
+
+        }
+    }
 }
 @*
 ----------------------------------------------------------------
@@ -25,10 +50,10 @@ Variables
 @* Contenido central del modal *@
 <div class="modal-body">
     <div class="formulario-edicion">
-		@* Información acerca del borrado de la categoría *@
+        @* Información acerca del borrado de la categoría *@
         <div class="form-group mb-1">
-            <label class="control-label">@Html.GetText("DEVTOOLS","HAYRECURSOSQUEESTANUTILIZANDOLACATEGORIAQUESEDESEAELIMINAR")</label>
-            <label class="control-label">@Html.GetText("DEVTOOLS","PARAPODERELIMINARLACORRECTAMENTE,SELECCIONAUNANUEVACATEGORIA")</label>                                                               
+            <label class="control-label">@Html.GetText("DEVTOOLS", "HAYRECURSOSQUEESTANUTILIZANDOLACATEGORIAQUESEDESEAELIMINAR")</label>
+            <label class="control-label">@Html.GetText("DEVTOOLS", "PARAPODERELIMINARLACORRECTAMENTE,SELECCIONAUNANUEVACATEGORIA")</label>
         </div>
 
         @* Tener en cuenta si los recursos quedarían huérfanos o no al borrar la categoría *@
@@ -36,53 +61,44 @@ Variables
         {
             <div class="form-group mb-1">
                 <label class="control-label">
-                    @Html.GetText("DEVTOOLS","QUEDESEASHACERCONLOSRECURSOSQUEESTANENOTRASCATEGORIAS")
+                    @Html.GetText("DEVTOOLS", "QUEDESEASHACERCONLOSRECURSOSQUEESTANENOTRASCATEGORIAS")
                 </label>
             </div>
             <div class="form-group mb-4">
                 @* Select para elementos huérfanos *@
-                <select id="cmbMoverElementosTrasBorrar" name="cmbMoverElementosTrasBorrar" class="js-select2 form-control pmd-select2">                
+                <select id="cmbMoverElementosTrasBorrar" name="cmbMoverElementosTrasBorrar" class="js-select2 form-control pmd-select2">
                     <option value="HUERFANOS">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINHUERFANOSA")</option>
-                    <option value="TODOS">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINA")</option>                
+                    <option value="TODOS">@Html.GetText("COMADMINCATEGORIAS", "YMOVERELEMENTOSVINA")</option>
                 </select>
             </div>
         }
 
-		@* Sección bloque de la categoría padre a elegir *@
-		<div class="form-group mb-4">
-			@* Select + opciones de posibles categorías hijas *@
+        @* Sección bloque de la categoría padre a elegir *@
+        <div class="form-group mb-4">
+            @* Select + opciones de posibles categorías hijas *@
             <select id="@Model.nombreCombo" name="@("cmb" + Model.nombreCombo)" class="js-select2 form-control pmd-select2">
                 <option value="@Guid.Empty.ToString()">@Html.GetText("PERFILBASE", "SELECCIONACAT")</option>
                 <option value="@Guid.Empty.ToString()">@Html.GetText("COMADMINCATEGORIAS", "CATEGORIARAIZ")</option>
                 @foreach (CategoryModel categoria in Model.Thesaurus.ThesaurusCategories.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
                 {
-                    if (Model.Thesaurus.SharedCategories.Contains(categoria.Key) || (Model.pExcluirSeleccionadas && Model.Thesaurus.SelectedCategories.Contains(categoria.Key)))
-                    {
-                        continue;
-                    }
-                    <option value="@categoria.Key">@categoria.Name</option>
-                    PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
-                    pintar.Thesaurus = Model.Thesaurus;
-                    pintar.pCategoria = categoria;
-                    pintar.pExcluirSeleccionadas = Model.pExcluirSeleccionadas;
-                    @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategoriasHijas", pintar)
+                    PintarCategoria(categoria);
                 }
             </select>
-		</div>
+        </div>
 
 
-		@* Sección botón de guardado y cierre del modal *@
-		<div class="panelBotonera">
-			<a id="btnGuardarBorrarCategory" class="btn btn-primary uppercase">@Html.GetText("COMMON","GUARDAR")</a>
-		</div>
-	</div>    
+        @* Sección botón de guardado y cierre del modal *@
+        <div class="panelBotonera">
+            <a id="btnGuardarBorrarCategory" class="btn btn-primary uppercase">@Html.GetText("COMMON", "GUARDAR")</a>
+        </div>
+    </div>
 </div>
 
 @* Carga de operativa *@
 <script>
-        (function ($) {
-            // Operativa funcionamiento de Eliminación de categoría
-			operativaGestionCategorias.operativaModalDeleteCategory();
-        })();
+    (function ($) {
+        // Operativa funcionamiento de Eliminación de categoría
+        operativaGestionCategorias.operativaModalDeleteCategory();
+    })();
 </script>
 

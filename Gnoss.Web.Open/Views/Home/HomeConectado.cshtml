@@ -76,7 +76,7 @@ int numCommunitiesToShow = 5;
             {
                 <div>
                     <div class="group content">
-                        <p>
+                        <p aria-label="@Html.GetText("COMMON","ENLACEPARAIRAAÑADIRRECURSOS")">
                             @Html.Raw(Html.GetText("CONTROLESLIVE", "ACTIVIDADRECIENTEVACIOCOM", (string)Comunidad.Url + "/" + Html.GetText("URLSEM", "SUBIRRECURSO")))
                         </p>
                     </div>
@@ -98,7 +98,7 @@ int numCommunitiesToShow = 5;
                     {
                         if (contadorComunidadesPerfil == numCommunitiesToShow) {
                             if (perfil.Communities.Count > numCommunitiesToShow) {
-                                <a href="@perfil.Url@Html.GetText("URLSEM", "MISCOMUNIDADES")">@Html.GetText("INICIO", "VERTODOS")</a>
+                                <a class="withUnderline" aria-label="@Html.GetText("COMMON","ENLACEPARAVERTODASLASCOMUNIDADES")" href="@perfil.Url@Html.GetText("URLSEM", "MISCOMUNIDADES")">@Html.GetText("INICIO", "VERTODOS")</a>
                             }
                             break;
                         }
@@ -128,8 +128,10 @@ int numCommunitiesToShow = 5;
                 <h2 class="section-title">Crear comunidad</h2>
                 <div class="resource-list mgOrganizaciones">
                     <article class="resource">
-                        <p>                            
-                            <a href="@perfil.Url@Html.GetText("URLSEM", "SOLICITARCOMUNIDAD")">Crea una comunidad, una red social donde podrás compartir información e invitar a personas que desees</a>
+                        <p>
+                            <a class="withUnderline" href="@perfil.Url@Html.GetText("URLSEM", "SOLICITARCOMUNIDAD")" aria-label="@Html.GetText("COMMON","ENLACEPARAIRACREAUNACOMUNIDAD")">
+                                @Html.GetText("COMMON","CREAUNACOMUNIDADUNAREDSOCIALDONDEPODRASCOMPARTIRINFORMACION")
+                            </a>
                         </p>
                     </article>
                 </div>                                      
@@ -140,7 +142,7 @@ int numCommunitiesToShow = 5;
             <div class="resource-list mgOrganizaciones">
                 <article class="resource ">
                     <p>
-                        <a href="@perfil.Url@Html.GetText("URLSEM", "MISRECURSOS")">@Html.GetText("HOMEUSU", "TEXTOESPACIOPERSONAL", Html.GetNombreProyectoEcosistema())</a>
+                        <a aria-label="@Html.GetText("COMMON","ENLACEPARAIRALESPACIOPERSONAL")" class="withUnderline withDarker" href="@perfil.Url@Html.GetText("URLSEM", "MISRECURSOS")">@Html.GetText("HOMEUSU", "TEXTOESPACIOPERSONAL", Html.GetNombreProyectoEcosistema())</a>
                     </p>
                 </article>
             </div>

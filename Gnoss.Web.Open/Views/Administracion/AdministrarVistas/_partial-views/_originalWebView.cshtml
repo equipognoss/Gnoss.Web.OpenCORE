@@ -111,10 +111,10 @@ Variables
 												</a>
 											</li>
 
-											@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+											@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 											{
 												@* Deshabilitado *@
-												<li>
+												<li title="@Html.GetComunidad().MensajeAvisoAdministracionIC">
 													<a class="item-dropdown js-action-edit-component btnNoUploadOriginalVista">
 														<span class="material-icons">upload</span>
 														<span class="texto">@Html.GetText("DEVTOOLS","SOBREESCRIBIRELORIGINAL")</span>

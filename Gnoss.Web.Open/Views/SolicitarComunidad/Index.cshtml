@@ -105,10 +105,10 @@
                             <option value="0" selected="selected">@Html.GetText("COMADMIN", "PUBLICO")</option>
                             <option value="1">@Html.GetText("COMADMIN", "PRIVADO")</option>
                             <option value="2">@Html.GetText("COMADMIN", "RESTRINGIDO")</option>
-                            @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
+                           @* @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
                             {
                                 <option value="3">@Html.GetText("COMADMIN", "RESERVADO")</option>
-                            }
+                            }*@
                         </select>
                     </div>
 
@@ -190,7 +190,7 @@
                     </div>
 
 
-                    @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
+                   @* @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
                     {
                         <!-- Descripción reservada  -->
                         <div style="display: none" id="@idPanParrafoAcceso3">
@@ -214,9 +214,8 @@
                                 </li>
                             </ul>
                         </div>
-                    }
+                    }*@
 
-                    <p class="box"><label><strong>Nota</strong>: El tipo de la comunidad sólo podrá modificarse mediante petición por correo electrónico a <a href="mailo:"></a>.</label></p>
                     <div class="ko" id="panError">
                         <p>
                             <span id="lblCamposIncompletos"></span>

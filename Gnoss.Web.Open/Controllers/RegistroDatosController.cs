@@ -40,6 +40,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
@@ -52,8 +53,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class RegistroDatosController : ControllerBaseWeb
     {
-        public RegistroDatosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public RegistroDatosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -1239,6 +1240,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     campoExtra.Title = UtilCadenas.ObtenerTextoDeIdioma(fila.Titulo, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                     campoExtra.FieldName = fila.InputID;
                     campoExtra.Required = fila.Obligatorio;
+                    campoExtra.Visible = fila.VisibilidadFichaPerfil;
                     if (fila.InputID.Equals("ddlPais"))
                     {
                         Dictionary<Guid, string> listaOpciones = new Dictionary<Guid, string>();
@@ -1271,6 +1273,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     campoExtra.Title = UtilCadenas.ObtenerTextoDeIdioma(fila.Titulo, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                     campoExtra.FieldName = fila.InputID;
                     campoExtra.Required = fila.Obligatorio;
+                    campoExtra.Visible = fila.VisibilidadFichaPerfil;
                     if (!string.IsNullOrEmpty(fila.QueryVirtuoso))
                     {
                         campoExtra.DependencyFields = fila.InputsSuperiores;

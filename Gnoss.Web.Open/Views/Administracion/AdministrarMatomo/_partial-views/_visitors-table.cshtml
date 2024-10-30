@@ -1,0 +1,59 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista parcial que contiene una tabla donde se muestran los usuarios o visitantes de la comunidad a partir de datos de Matomo
+
+Variables
+----------------------------------------------------------------
+*@
+
+<div class="table-responsive matomoContainer__table">
+    <h3 class="matomoContainer__header">Resumen de visitas</h3>
+    <hr />
+    <table id="table_visitors" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Tiempo</th>
+                <th>Usuarios</th>
+                <th>Visitas</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Hoy</td>
+                <td id="todayThUsers"></td>
+                <td id="todayThVisits"></td>
+            </tr>
+            <tr>
+                <td>Ayer</td>
+                <td id="yesterdayThUsers"></td>
+                <td id="yesterdayThVisits"></td>
+            </tr>
+            <tr>
+                <td>Últimos 7 días</td>
+                <td id="last7ThUsers"></td>
+                <td id="last7ThVisits"></td>
+            </tr>
+            <tr>
+                <td>Último mes</td>
+                <td id="lastMonthThUsers"></td>
+                <td id="lastMonthThVisits"></td>
+            </tr>
+            <tr>
+                <td>Últimos 2 meses</td>
+                <td id="last2MonthThUsers"></td>
+                <td id="last2MonthThVisits"></td>
+            </tr>
+            <tr>
+                <td>Últimos 3 meses</td>
+                <td id="last3MonthThUsers"></td>
+                <td id="last3MonthThVisits"></td>
+            </tr>
+            <tr>
+                <td>Último año</td>
+                <td id="lastYearThUsers"></td>
+                <td id="lastYearThVisits"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

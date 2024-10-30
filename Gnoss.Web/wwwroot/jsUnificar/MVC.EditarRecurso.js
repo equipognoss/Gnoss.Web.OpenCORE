@@ -581,7 +581,7 @@ function InicioCargarNewsletter() {
 
             GnossPeticionAjax(urlPaginaActual + '/attachfile', data, true).done(function (data) {
                 $("#iframeNewsletter").css('background-color', 'lime');
-                $('#iframeNewsletter').attr('src', $('.inpt_baseURL').val() + '/objetonewsletter.aspx?docid=' + documentoID + '&temp=true');
+                $('#iframeNewsletter').attr('src', $('.inpt_baseURL').val() + '/objetonewsletter?docid=' + documentoID + '&temp=true');
                 document.getElementById('txtHackModosNewsletter').value = 'archivo';
                 OcultarUpdateProgress();
             }).fail(function (data) {
@@ -636,16 +636,22 @@ function AjustarPrivacidadRecurso(pRbSelecc) {
 }
 
 function InicializarModificarRecurso(editandoFormSem) {
-    if (CKEDITOR.instances.txtDescripcion == null) {
-        RecargarTodosCKEditor();
-    }
+    // Configurar etiquetado automático para Descripción cuando se cree el TinyMCE
+    observarClaseTinyLoaded(function () {
+        const editors = tinymce.get();
+        const relatedTinyMCEId = $("#txtDescripcion").data("editorrelated");
 
-    if ($('#txtDescripcion').length > 0) {
-        CKEDITOR.instances.txtDescripcion.on('blur', function () {
-            var descripcion = $('#txtDescripcion').val();
-            EtiquetadoAutomaticoDeRecursos($('#txtTitulo').val(), descripcion, $('#txtHackTagsDescripcion'), true);
+        // Iterar sobre las instancias para buscar la que coincide con el ID 'txtDescripcion'
+        editors.forEach(function (editor) {
+            if (editor.id === relatedTinyMCEId) {
+                // Adjuntar un controlador de eventos para el evento blur
+                editor.on('blur', function (e) {
+                    var descripcion = $('#txtDescripcion').val();
+                    EtiquetadoAutomaticoDeRecursos($('#txtTitulo').val(), descripcion, $('#txtHackTagsDescripcion'), true);
+                });
+            }
         });
-    }
+    });
 
     $('#txtTitulo').on('blur', function () {
         EtiquetadoAutomaticoDeRecursos(this.value, $('#txtDescripcion').val(), $('#txtHackTagsTitulo'), editandoFormSem);
@@ -1060,10 +1066,6 @@ function EliminarRespuestaEncuesta(boton) {
 function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, editandoFormSem) {
     $(document.body).prop('onBeforeUnload', 'ComprobarCambios();');
 
-    if (CKEDITOR.instances.txtDescripcion == null) {
-        RecargarTodosCKEditor();
-    }
-
     if (txtsTitulos == '') {
         txtsTitulos = 'txtTitulo';
     }
@@ -1074,8 +1076,12 @@ function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, ed
 
     TxtTitulosSem = txtsTitulos;
 
-    EnlazarEtiquetadoAutoFormSem(txtsTitulos, txtsDescripciones, 'txtHackTagsTitulo', 'txtHackTagsDescripcion', 'txtTags', editandoFormSem);
-    AgregarOnBlurCKEditors();
+   
+    // Configurar etiquetado automático para Descripción cuando se cree el TinyMCE
+    setTimeout(function(){        
+        EnlazarEtiquetadoAutoFormSem(txtsTitulos, txtsDescripciones, 'txtHackTagsTitulo', 'txtHackTagsDescripcion', 'txtTags', editandoFormSem);        
+        AgregarOnBlurCKEditors();
+    },6000)        
 
     ConfigurarSelectoresEditores();
 
@@ -1086,18 +1092,25 @@ function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, ed
 
     if (typeof ($('.calenFormSem').datepicker) != 'undefined') {
         // Preparar el .datePicker para que esté disponible en la web
-        const oldYear = moment().format('YYYY') - 110;
-        const currentYear = moment().format('YYYY');
+        const oldYear = moment().format('YYYY') - 110;        
+        const currentYear = moment().add(1, 'year').format('YYYY');
+        const maxYear = moment().add(100, 'year').format('YYYY');
         $('.calenFormSem').datepicker({
             changeMonth: true,
             changeYear: true,
-            yearRange: `${oldYear}:${currentYear}`,
+            yearRange: `${oldYear}:${maxYear}`,
         });
     }
     if (typeof ($('.calenTimeFormSem').datetimepicker) != 'undefined') {
+        // Preparar el .datePicker para que esté disponible en la web
+        const oldYear = moment().format('YYYY') - 110;                
+        const currentYear = moment().format('YYYY');   
+        const maxYear = moment().add(100, 'year').format('YYYY');
         $('.calenTimeFormSem').datetimepicker({
             format: 'd/m/Y H:i:s',
-            defaultTime: '12:00',
+            defaultTime: '12:00',            
+            yearStart: oldYear,
+            yearEnd: maxYear,            
             onSelectDate: AjustarHoraCalendario,
             onSelectTime: AjustarHoraCalendario,
             lang: $('#inpt_Idioma').val(),
@@ -1148,14 +1161,29 @@ function EnlazarEtiquetadoAutoFormSem(pTitulos, pDescripciones, pHackTit, pHackD
             });
         }
 
-        //RecargarTodosCKEditor();
         var descrp = pDescripciones.split(',');
         for (var i = 0; i < descrp.length; i++) {
             if (descrp[i] != '' && $('#' + descrp[i]).length > 0) {
+                /* Cambiado para TinyMCE
                 CKEDITOR.instances[descrp[i]].on('blur', function () {
                     var descripcion = $('#' + this.name).val();
                     EtiquetadoAutomaticoDeRecursos('', descripcion, $('#' + txtHackTagsDescripcionID), false);
                 });
+                */
+                // Modificación para tinyMCE
+                // ID de la instancia de TinyMCE
+                const editors = tinymce.get();
+                const relatedTinyMCEId = $(`#${descrp[i]}`).data("editorrelated");
+
+                editors.forEach(function (editor) {
+                    if (editor.id === relatedTinyMCEId) {
+                        // Adjuntar un controlador de eventos para el evento blur
+                        editor.on('blur', function (e) {
+                            var descripcion = $('#txtDescripcion').val();
+                            EtiquetadoAutomaticoDeRecursos('', descripcion, $('#' + txtHackTagsDescripcionID), false);
+                        });
+                    }
+                });                                
             }
 
         }
@@ -1412,7 +1440,8 @@ function InicializarEspacioPersonal() {
 function EditarCategoriasRecsBRPersonal(urlPeticion) {
     const recs = ObtenerRecursosSeleccionadosPorCheckBox("ListaRecursosCheckBox");
 
-    if (recs == '') {
+    if (recs == '') {        
+        mostrarNotificacion("warning", espacioPersonal.avisoEditarOrganizarEnCategorias);
         return false;
     } else {
         // Abrir modal para proceder a la carga dinámica del mismo

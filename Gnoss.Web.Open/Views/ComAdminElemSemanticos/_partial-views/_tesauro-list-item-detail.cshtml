@@ -122,10 +122,10 @@ Variables
 					@* Input del nombre para un único idioma *@
 					@if (comAdminSemanticElemModel.SemanticThesaurus.SemThesaurusLanguajes == null || comAdminSemanticElemModel.SemanticThesaurus.SemThesaurusLanguajes.Count == 0)
 					{
-						<label class="control-label d-block">Nombre</label>
+						<label class="control-label d-block">@Html.GetText("COMMON","NOMBRE")</label>
 						<input id="txtNuevoNombre"
 							   type="text"
- 						       class="form-control txtNuevoNombre"/>
+ 						       class="form-control txtNuevoNombre" value="@Model.categoryModel.Name"/>
 								
 					}
 					else
@@ -137,7 +137,7 @@ Variables
 							<input 
 								   type="text"
 								   data-language="@idioma"
-								   class="form-control txtNuevoNombre @idioma"/>
+								   class="form-control txtNuevoNombre @idioma" value="@UtilCadenas.ObtenerTextoDeIdioma(Model.categoryModel.Name, idioma, null)"/>
 						}
 					}
 					<small class="form-text text-muted">Establece el nuevo nombre para la categoría del tesauro.</small>

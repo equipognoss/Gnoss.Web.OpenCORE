@@ -28,6 +28,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Recursos;
+using Es.Riam.Gnoss.CL.Cookie;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Microsoft.Extensions.Hosting;
+using Es.Riam.Gnoss.AD.Cookie;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -165,18 +170,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private UtilIdiomas utilIdiomasEuskera = null;
         private UtilIdiomas utilIdiomasPortugues = null;
 
-        public AdministrarCookiesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarCookiesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
-            utilIdiomasEspanyol = new UtilIdiomas("es", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasCatalan = new UtilIdiomas("ca", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasIngles = new UtilIdiomas("en", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasAleman = new UtilIdiomas("de", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasItaliano = new UtilIdiomas("it", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasFrances = new UtilIdiomas("fr", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasGallego = new UtilIdiomas("gl", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasEuskera = new UtilIdiomas("eu", mLoggingService, mEntityContext, mConfigService);
-            utilIdiomasPortugues = new UtilIdiomas("pt", mLoggingService, mEntityContext, mConfigService);
+            utilIdiomasEspanyol = new UtilIdiomas("es", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasCatalan = new UtilIdiomas("ca", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasIngles = new UtilIdiomas("en", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasAleman = new UtilIdiomas("de", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasItaliano = new UtilIdiomas("it", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasFrances = new UtilIdiomas("fr", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasGallego = new UtilIdiomas("gl", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasEuskera = new UtilIdiomas("eu", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            utilIdiomasPortugues = new UtilIdiomas("pt", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
         }
 
         /// <summary>
@@ -408,11 +413,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     proyectoCookie.CookieID = Guid.NewGuid();
                     proyectoCookie.Descripcion = cookieProyecto.Descripcion;
                     proyectoCookie.Nombre = cookieProyecto.Nombre;
+                    proyectoCookie.NombreCorto = cookieProyecto.Nombre;
                     proyectoCookie.ProyectoID = ProyectoSeleccionado.Clave;
                     proyectoCookie.EsEditable = !EsCookieTecnica(cookieProyecto.Nombre);
                     proyectoCookie.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(proyectoCookie.ProyectoID);
                     proyectoCookie.Tipo = ObtenerTipoPorNombre(cookieProyecto.Tipo);
                     mEntityContext.ProyectoCookie.Add(proyectoCookie);
+                    cookieProyecto.CookieID = proyectoCookie.CookieID.ToString();
                 }
                 else if (esEditada)
                 {
@@ -453,10 +460,67 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
             }
+
             if (iniciado)
             {
-                List<CookiesModel> listaCookiesSinTecnicas = OmitirCookiesTecnicas(lista);
-                HttpResponseMessage resultado = InformarCambioAdministracion("Cookies", JsonConvert.SerializeObject(listaCookiesSinTecnicas, Formatting.Indented));
+                CategoriasCookiesModel categoriasYCookies = new CategoriasCookiesModel();
+                categoriasYCookies.Categorias = new List<CategoriaProyectoCookieModel>();
+                categoriasYCookies.Cookies = new List<ProyectoCookieModel>();
+
+                foreach (CookieEditModel cookie in ListaCookies)
+                {
+                    bool esEliminada = false;
+                    if (cookie.Deleted != null && bool.Parse(cookie.Deleted))
+                    {
+                        esEliminada = bool.Parse(cookie.Deleted);
+                    }
+
+                    bool esEditada = false;
+                    if (cookie.EsModificada != null && bool.Parse(cookie.EsModificada))
+                    {
+                        esEditada = bool.Parse(cookie.EsModificada);
+                    }
+
+                    ProyectoCookieModel cookieModel = new ProyectoCookieModel();
+                    cookieModel.ProyectoID = ProyectoSeleccionado.Clave;
+                    cookieModel.EsEditable = !EsCookieTecnica(cookie.Nombre);
+                    cookieModel.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(cookieModel.ProyectoID);
+                    cookieModel.Tipo = ObtenerTipoPorNombre(cookie.Tipo);
+                    cookieModel.Nombre = cookie.Nombre;
+                    cookieModel.NombreCorto = cookie.Nombre;
+                    cookieModel.CookieID = new Guid(cookie.CookieID);
+                    cookieModel.CategoriaID = new Guid(cookie.Categoria);
+                    cookieModel.Deleted = esEliminada;
+                    cookieModel.EsModificada = esEditada;
+                    cookieModel.Descripcion = cookie.Descripcion;
+
+                    if (!categoriasYCookies.Cookies.Contains(cookieModel))
+                    {
+                        categoriasYCookies.Cookies.Add(cookieModel);
+                    }   
+                }
+
+                List<CategoriaProyectoCookie> listaCategoriaProyectoCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
+                foreach (CategoriaProyectoCookie cat in listaCategoriaProyectoCookie)
+                {
+                    CategoriaProyectoCookieModel categoria = new CategoriaProyectoCookieModel();
+                    categoria.ProyectoID = cat.ProyectoID;
+                    categoria.OrganizacionID = cat.OrganizacionID;
+                    categoria.EsModificada = false;
+                    categoria.Deleted = false;
+                    categoria.EsCategoriaTecnica = cat.EsCategoriaTecnica;
+                    categoria.Descripcion = cat.Descripcion;
+                    categoria.Nombre = cat.Nombre;
+                    categoria.NombreCorto = cat.NombreCorto;
+                    categoria.CategoriaID = cat.CategoriaID;
+
+                    if (!categoriasYCookies.Categorias.Contains(categoria))
+                    {
+                        categoriasYCookies.Categorias.Add(categoria);
+                    }
+                }
+
+                HttpResponseMessage resultado = InformarCambioAdministracion("Cookies", JsonConvert.SerializeObject(categoriasYCookies, Formatting.Indented));
                 if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                 {
                     throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -495,11 +559,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     categoriaProyectoCookie.Nombre = categoriaCookie.Nombre;
                     categoriaProyectoCookie.NombreCorto = categoriaCookie.NombreCorto;
                     categoriaProyectoCookie.CategoriaID = Guid.NewGuid();
-                    categoriaProyectoCookie.EsCategoriaTecnica = false;
                     categoriaProyectoCookie.ProyectoID = ProyectoSeleccionado.Clave;
                     categoriaProyectoCookie.EsCategoriaTecnica = categoriaProyectoCookie.NombreCorto.Equals("Tecnica");
                     categoriaProyectoCookie.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoriaProyectoCookie.ProyectoID);
                     mEntityContext.CategoriaProyectoCookie.Add(categoriaProyectoCookie);
+                    categoriaCookie.CategoriaID = categoriaProyectoCookie.CategoriaID.ToString();
                 }
                 else if (esEditada)
                 {
@@ -520,9 +584,89 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         throw new Exception(mensajeError);
                     }
                 }
-            }
+            }         
 
             mEntityContext.SaveChanges();
+
+            CookieCL cookieCL = new CookieCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            cookieCL.InvalidarCategoriaProyectoCookie(ProyectoSeleccionado.Clave);
+
+            // TODO: IC
+            bool iniciado = false;
+            try
+            {
+                iniciado = HayIntegracionContinua;
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
+            }
+
+            if (iniciado)
+            {
+                CategoriasCookiesModel categoriasYCookies = new CategoriasCookiesModel();
+                categoriasYCookies.Categorias = new List<CategoriaProyectoCookieModel>();
+                categoriasYCookies.Cookies = new List<ProyectoCookieModel>();
+
+                foreach (CategoryEditModel cat in ListaCategorias)
+                {
+                    bool esEliminada = false;
+                    if (cat.Deleted != null && bool.Parse(cat.Deleted))
+                    {
+                        esEliminada = bool.Parse(cat.Deleted);
+                    }
+
+                    bool esEditada = false;
+                    if (cat.EsModificada != null && bool.Parse(cat.EsModificada))
+                    {
+                        esEditada = bool.Parse(cat.EsModificada);
+                    }
+                    CategoriaProyectoCookieModel categoria = new CategoriaProyectoCookieModel();
+                    categoria.CategoriaID = new Guid(cat.CategoriaID);
+                    categoria.EsModificada = esEditada;
+                    categoria.Deleted = esEliminada;
+                    categoria.ProyectoID = ProyectoSeleccionado.Clave;
+                    categoria.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoria.ProyectoID);
+                    categoria.EsCategoriaTecnica = cat.NombreCorto.Equals("Tecnica");
+                    categoria.Descripcion = cat.Descripcion;
+                    categoria.Nombre = cat.Nombre;
+                    categoria.NombreCorto = cat.NombreCorto;
+
+                    if (!categoriasYCookies.Categorias.Contains(categoria))
+                    {
+                        categoriasYCookies.Categorias.Add(categoria);
+                    }
+                    
+
+                    List<ProyectoCookie> cookiesDeCategoria = cookieCN.ObtenerCookiesDeCategoria(categoria.CategoriaID);
+                    foreach (ProyectoCookie cookie in cookiesDeCategoria)
+                    {
+                        ProyectoCookieModel cookieModel = new ProyectoCookieModel();
+                        cookieModel.CategoriaID = cookie.CategoriaID;
+                        cookieModel.CookieID = cookie.CookieID;
+                        cookieModel.EsEditable= cookie.EsEditable;
+                        cookieModel.NombreCorto= cookie.NombreCorto;
+                        cookieModel.Nombre = cookie.Nombre;
+                        cookieModel.Descripcion = cookie.Descripcion;
+                        cookieModel.Deleted = false;
+                        cookieModel.ProyectoID = cookie.ProyectoID;
+                        cookieModel.OrganizacionID = cookie.OrganizacionID;
+                        cookieModel.EsModificada = false;
+                        cookieModel.Tipo = cookie.Tipo;
+
+                        if (!categoriasYCookies.Cookies.Contains(cookieModel))
+                        {
+                            categoriasYCookies.Cookies.Add(cookieModel);
+                        }       
+                    }
+                }
+
+                HttpResponseMessage response = InformarCambioAdministracion("Cookies", JsonConvert.SerializeObject(categoriasYCookies, Formatting.Indented));
+                if (!response.StatusCode.Equals(HttpStatusCode.OK))
+                {
+                    throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                }
+            }
         }
 
         /// <summary>
@@ -530,7 +674,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult AddCategory()
+        public ActionResult AddCategory() 
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             CategoriaProyectoCookie categoriaProyectoCookie = new CategoriaProyectoCookie();
@@ -707,8 +851,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarCookiesViewModel();
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-                    mPaginaModel.EsAdministracionEcosistema = EsAdministracionEcosistema;
+					mPaginaModel.EsAdministracionEcosistema = EsAdministracionEcosistema;
 
                     if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma))
                     {
@@ -717,12 +862,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     if (ParametrosGeneralesRow.IdiomasDisponibles)
                     {
-                        mPaginaModel.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                     }
                     else
                     {
                         mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
-                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
                     }
 
                     mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;

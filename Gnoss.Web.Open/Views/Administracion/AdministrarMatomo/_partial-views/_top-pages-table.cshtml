@@ -1,0 +1,59 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista parcial que contiene una tabla donde se muestran la lista de las páginas top visitadas de la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+<div class="table-responsive matomoContainer__table">    
+    <div class="d-flex align-items-center justify-content-between">
+        <h3 class="matomoContainer__header">Páginas destacadas</h3>
+        <button id="parellelBtPages" class="parellelBtIndex btn btn-outline-primary matomoContainer__downloadButton">Descargar en CSV</button>
+    </div>
+    <hr />
+
+    <table id="table_top_pages" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Top</th>
+                <th>Página</th>
+                <th>Nº de visitas</th>
+                <th>Duración media</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td id="top1Name"></td>
+                <td id="top1Visits"></td>
+                <td id="top1VisitsTime"></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td id="top2Name"></td>
+                <td id="top2Visits"></td>
+                <td id="top2VisitsTime"></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td id="top3Name"></td>
+                <td id="top3Visits"></td>
+                <td id="top3VisitsTime"></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td id="top4Name"></td>
+                <td id="top4Visits"></td>
+                <td id="top4VisitsTime"></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td id="top5Name"></td>
+                <td id="top5Visits"></td>
+                <td id="top5VisitsTime"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

@@ -100,11 +100,11 @@ Variables
 									@* Panel dropdown con las acciones disponibles Controlar CI-CD *@
 									<div class="dropdown-menu dropdown-menu-left basic-dropdown">
 										<ul class="no-list-style">
-											@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+											@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 											{
 												@* Deshabilitado *@
 												@* Descargar *@
-												<li>
+												<li title="@Html.GetComunidad().MensajeAvisoAdministracionIC">
 													<a class="item-dropdown js-action-edit-component btnDownloadEditedVista"
 													   data-action="@((short)ManageViewsViewModel.Action.Download)"												
 													   data-url="@ViewBag.UrlActionWeb"

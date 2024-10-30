@@ -13,19 +13,20 @@ Variables
 	// Id temporal de la faceta por si no tiene
 	Guid idTemp = Guid.NewGuid();
 	@* Controlar el id de la Faceta *@
-    if (Model.AgrupacionID.HasValue)
-    {
-        idTemp = Model.AgrupacionID.Value;
-    }  
+	if (Model.AgrupacionID.HasValue)
+	{
+		idTemp = Model.AgrupacionID.Value;
+	}  
 
 	// Nombre del tipo de faceta
 	string nombreTipoFaceta = "";
-    // Cabecera para obtención de idiomas de la Comunidad
-    HeaderModel cabecera = Html.GetCabecera();
-    // Diccionario de nombre de la faceta para multiIdiomas
-    Dictionary<string, string> pageNameDictionary = new Dictionary<string, string>();
-    // Id para la llamada al modal para edición de la faceta
-    string idModalFaceta = "modal-configuracion-faceta_" + idTemp;	
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	// Diccionario de nombre de la faceta para multiIdiomas
+	Dictionary<string, string> pageNameDictionary = new Dictionary<string, string>();
+	// Id para la llamada al modal para edición de la faceta
+	string idModalFaceta = "modal-configuracion-faceta_" + idTemp;
+	string idModalMoveFaceta = "modal-move-faceta";
 	// Idioma por defecto de la comunidad
 	string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
 	// Id autogenerado o correspondiente a AgrupacionID
@@ -51,6 +52,9 @@ Variables
         case TipoFaceta.TextoInvariable:
             nombreTipoFaceta = @Html.GetText("DEVTOOLS","TEXTOINVARIABLE");
             break;
+		case TipoFaceta.Siglo:
+			nombreTipoFaceta = @Html.GetText("DEVTOOLS", "SIGLO");
+			break;
     }
 }
 
@@ -60,8 +64,7 @@ Variables
 	pageNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Name);	
 }
 
-
-<li class="component-wrap faceta-row" data-facetkey="@idTemp" id="@idTemp">
+<li class="component-wrap faceta-row" data-facetkey="@idTemp" id="@idTemp" data-name="@Html.ObtenerTextoDeIdioma(Model.Name)" data-value="@Model.ClaveFaceta">
 	<div class="component">
 		<div class="component-header-wrap">
 			<div class="component-header">
@@ -155,6 +158,18 @@ Variables
 											   data-target="#@idModalFaceta">
 												<span class="material-icons">create</span>
 												<span class="texto">Editar faceta</span>
+											</a>
+										</li>
+
+										@* Mover faceta *@
+										<li>
+											<a class="item-dropdown js-action-edit-component btnMoveFaceta"
+											   data-toggle="modal"
+											   data-target="#@idModalMoveFaceta">
+												<span class="material-icons">move_up</span>
+												<span class="texto">
+													@Html.GetText("DEVTOOLS","MOVERFACETA")
+												</span>
 											</a>
 										</li>
 

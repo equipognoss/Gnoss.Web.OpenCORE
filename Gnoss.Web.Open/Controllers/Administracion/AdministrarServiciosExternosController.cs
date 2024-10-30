@@ -17,8 +17,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -27,10 +29,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class AdministrarServiciosExternosController : ControllerBaseWeb
     {
-        public AdministrarServiciosExternosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarServiciosExternosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
+
+        #region Constantes
+
+        private const string URL_BASE_SERVICE = "UrlBaseService";
+        private const string SERVICE_NAME = "{ServiceName}";
+
+        #endregion
 
         #region Miembros
 
@@ -45,7 +54,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
@@ -91,17 +99,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult GuardarUrl(AdministrarServiciosExternosViewModel pOptions)
         {
+            GuardarLogAuditoria();
             try
             {
                 string serviceName = pOptions.ServiceName;
                 ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                if (serviceName.Contains("{ServiceName}"))
+                if (serviceName.Contains(SERVICE_NAME))
                 {
-                    proyCN.GuardarParamentroAplicacion("UrlBaseService", serviceName);
+                    proyCN.ActualizarParametroAplicacion(URL_BASE_SERVICE, serviceName);
                 }
                 else
                 {
-                    throw new Exception("No se ha podido guardar la Url, falta {ServiceName}");
+                    //throw new Exception($"No se ha podido guardar la Url, falta {SERVICE_NAME}");
+                    throw new Exception(UtilIdiomas.GetText("DEVTOOLS", "NOSEHAPODIDOGUARDARLAURL", SERVICE_NAME));
                 }
                 return GnossResultOK();
             }
@@ -122,56 +132,90 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             try
             {
                 ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                foreach(ServiceNameModel pestanya in listaPestanyas)
+                if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
                 {
-                    if (pestanya.Nueva && !pestanya.Deleted)
-                    {
-                        if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
-                        {
-                            EcosistemaServicioExterno eco = new EcosistemaServicioExterno();
-                            eco.NombreServicio = pestanya.NombreServicio;
-                            eco.UrlServicio = pestanya.UrlServicio;
-                            proyCN.ActualizarServiceNameEcosistema(eco);
-                        }
-                        else
-                        {
-                            ProyectoServicioExterno proy = new ProyectoServicioExterno();
-                            proy.OrganizacionID = proyCN.ObtenerOrganizacionIDAPartirDeProyectoID(ProyectoSeleccionado.Clave);
-                            proy.ProyectoID = ProyectoSeleccionado.Clave;
-                            proy.NombreServicio = pestanya.NombreServicio;
-                            proy.UrlServicio = pestanya.UrlServicio;
-                            proyCN.ActualizarServiceNameProyecto(proy);
-                        }
-                    }
-                    if (pestanya.Deleted)
-                    {
-                        if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
-                        {
-                            EcosistemaServicioExterno eco = new EcosistemaServicioExterno();
-                            eco.NombreServicio = pestanya.NombreServicio;
-                            eco.UrlServicio = pestanya.UrlServicio;
-                            proyCN.EliminarEcosistemaServicioExterno(eco);
-                        }
-                        else
-                        {
-                            ProyectoServicioExterno proy = new ProyectoServicioExterno();
-                            proy.NombreServicio = pestanya.NombreServicio;
-                            proy.UrlServicio = pestanya.UrlServicio;
-                            proy.ProyectoID = ProyectoSeleccionado.Clave;
-                            proy.OrganizacionID = proyCN.ObtenerOrganizacionIDAPartirDeProyectoID(ProyectoSeleccionado.Clave);
-                            proyCN.EliminarProyectoServicioExterno(proy);
-                        }
-                    }
+                    ActualizarServiciosExternosEcosistema(listaPestanyas, proyCN);
                 }
+                else
+                {
+                    ActualizarServiciosExternosProyecto(listaPestanyas, proyCN);
+                }
+
                 return GnossResultOK();
             }
             catch (Exception)
             {
                 return GnossResultERROR();
             }
-
         }
-        
+
+        /// <summary>
+        /// Actualizamos los servicios externos configurados en el proyecto en relación al modelo enviado por la vista
+        /// </summary>
+        /// <param name="pListaServiciosExternos">Lista de servicios definidos en la vista</param>
+        /// <param name="pProyCN">ProyectoCN para acceder a la base de datos</param>
+        private void ActualizarServiciosExternosProyecto(List<ServiceNameModel> pListaServiciosExternos, ProyectoCN pProyCN)
+        {
+            List<ProyectoServicioExterno> listaProyectoServicioExterno = pProyCN.ObtenerProyectoServicioExterno(ProyectoSeleccionado.Clave);
+            IEnumerable<ServiceNameModel> serviciosAgregar = pListaServiciosExternos.Where(item => !listaProyectoServicioExterno.Any(servicio => servicio.NombreServicio == item.NombreServicio) && !item.Deleted);
+
+            //Obtenemos los servicios que no estan entre los guardados, servicios con el nombre viejo (esto s ehace porque no hay una clave que los identifique)
+            List<ProyectoServicioExterno> serviciosEliminar = listaProyectoServicioExterno.Where(item => !pListaServiciosExternos.Any(servicio => servicio.NombreServicio == item.NombreServicio)).ToList();
+
+            // Añadimos los que si existen pero se han marcado para eliminar
+            serviciosEliminar.AddRange(listaProyectoServicioExterno.Where(item => pListaServiciosExternos.Any(servicio => servicio.NombreServicio == item.NombreServicio && servicio.Deleted)));
+
+            foreach (ServiceNameModel servicio in serviciosAgregar)
+            {
+                ProyectoServicioExterno proyectoServicioExterno = new ProyectoServicioExterno();
+                proyectoServicioExterno.NombreServicio = servicio.NombreServicio;
+                proyectoServicioExterno.UrlServicio = servicio.UrlServicio;
+                proyectoServicioExterno.OrganizacionID = ProyectoAD.MetaOrganizacion;
+                proyectoServicioExterno.ProyectoID = ProyectoSeleccionado.Clave;
+                pProyCN.AgregarProyectoServicioExterno(proyectoServicioExterno);
+            }
+
+            foreach (ProyectoServicioExterno servicio in serviciosEliminar)
+            {
+                pProyCN.EliminarProyectoServicioExterno(servicio);
+            }
+
+            pProyCN.Actualizar();
+        }
+
+        /// <summary>
+        /// Actualizamos los servicios externos configurados en el ecosistema en relación al modelo enviado por la vista
+        /// </summary>
+        /// <param name="pListaServiciosExternos">Lista de servicios definidos en la vista</param>
+        /// <param name="pProyCN">ProyectoCN para acceder a la base de datos</param>
+        private void ActualizarServiciosExternosEcosistema(List<ServiceNameModel> pListaServiciosExternos, ProyectoCN pProyCN)
+        {
+            List<EcosistemaServicioExterno> listaEcosistemaServicioExterno = pProyCN.ObtenerEcosistemaServicioExterno();
+            IEnumerable<ServiceNameModel> serviciosAgregar
+                = pListaServiciosExternos.Where(item => !listaEcosistemaServicioExterno.Any(servicio => servicio.NombreServicio == item.NombreServicio) && !item.Deleted);
+
+            ///Obtenemos los servicios que no estan entre los guardados, servicios con el nombre viejo (esto s ehace porque no hay una clave que los identifique)
+            List<EcosistemaServicioExterno> serviciosEliminar = listaEcosistemaServicioExterno.Where(item => !pListaServiciosExternos.Any(servicio => servicio.NombreServicio == item.NombreServicio)).ToList();
+            
+            /// Añadimos los que si existen pero se han marcado para eliminar
+            serviciosEliminar.AddRange(listaEcosistemaServicioExterno.Where(item => pListaServiciosExternos.Any(servicio => servicio.NombreServicio == item.NombreServicio && servicio.Deleted)));
+
+            foreach (ServiceNameModel servicio in serviciosAgregar)
+            {
+                EcosistemaServicioExterno eco = new EcosistemaServicioExterno();
+                eco.NombreServicio = servicio.NombreServicio;
+                eco.UrlServicio = servicio.UrlServicio;                
+                pProyCN.AgregarServicioExternoEcosistema(eco);                
+            }
+
+            foreach (EcosistemaServicioExterno servicio in serviciosEliminar)
+            {
+                pProyCN.EliminarEcosistemaServicioExterno(servicio);
+            }
+
+            pProyCN.Actualizar();
+        }
+
         #endregion
 
         #region Métodos

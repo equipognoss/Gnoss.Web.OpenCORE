@@ -1,25 +1,16 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
-using Es.Riam.Gnoss.AD.EntityModel.Models.VistaVirtualDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
-using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
-using Es.Riam.Gnoss.CL.ParametrosProyecto;
-using Es.Riam.Gnoss.Elementos.ParametroGeneralDSEspacio;
-using Es.Riam.Gnoss.Logica.ParametrosProyecto;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
-using Es.Riam.Gnoss.Web.Controles.ParametroGeneralDSName;
 using Es.Riam.Gnoss.Web.MVC.Filters;
-using Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -31,20 +22,19 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
-using System.IO.Pipelines;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Microsoft.Extensions.Hosting;
 
 namespace Gnoss.Web.Open.Controllers.Administracion
 {
     public class AdministrarDatosExtraController : ControllerBaseWeb
     {
-        public AdministrarDatosExtraController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarDatosExtraController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -52,7 +42,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
         private DataWrapperProyecto mDatosExtraProyectoDataWrapperProyecto = null;
 
-		public IActionResult Index()
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public IActionResult Index()
         {
 			EliminarPersonalizacionVistas();
 			CargarPermisosAdministracionComunidadEnViewBag();
@@ -73,9 +64,10 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return View(PaginaModel);
         }
 
-		public IActionResult Guardar(string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF)
+		public IActionResult Guardar(string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
-			string error = ComprobarErrores(pNombre, pTipo, pOpciones, EsAdministracionEcosistema);
+			GuardarLogAuditoria();
+			string error = ComprobarErrores(pNombre, pTipo, pOpciones, pNombreCorto);
 
             bool iniciado = false;
             try
@@ -122,7 +114,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 					}
 					else
 					{
-						controladorDE.GuardarNuevoDatoExtraVirtuosoEcosistema(datoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF);
+						controladorDE.GuardarNuevoDatoExtraVirtuosoEcosistema(datoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF, pVisible, pNombreCorto);
 					}
 				}
 				else
@@ -131,11 +123,11 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 					{
 						string[] opciones = pOpciones.Split(',');
 
-						controladorDE.GuardarNuevoDatoExtraProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, datoExtraID, pNombre, pObligatorio, pOpciones, pOrden, pPredicadoRDF);
+						controladorDE.GuardarNuevoDatoExtraProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, datoExtraID, pNombre, pObligatorio, pOpciones, pOrden, pPredicadoRDF, pNombreCorto, pVisible);
 					}
 					else
 					{
-						controladorDE.GuardarNuevoDatoExtraVirtuosoProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, datoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF);
+						controladorDE.GuardarNuevoDatoExtraVirtuosoProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, datoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF, pVisible, pNombreCorto);
 					}
 				}
 
@@ -155,6 +147,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 					datoExtraModel.PredicadoRDF = pPredicadoRDF;
                     datoExtraModel.Nombre = pNombre;
                     datoExtraModel.ProyectoID = ProyectoSeleccionado.Clave;
+					datoExtraModel.VisibleEnPerfil = pVisible;
+					datoExtraModel.NombreCorto = pNombreCorto;
 
                     HttpResponseMessage resultado = InformarCambioAdministracion("DatosExtra", JsonConvert.SerializeObject(datoExtraModel, Formatting.Indented));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
@@ -172,9 +166,9 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return GnossResultOK("El dato extra ha sido creado correctamente");
 		}
 
-		public IActionResult Editar(Guid pDatoExtraID, string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF)
+		public IActionResult Editar(Guid pDatoExtraID, string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
-            string error = ComprobarErrores(pNombre, pTipo, pOpciones, EsAdministracionEcosistema);
+            string error = ComprobarErrores(pNombre, pTipo, pOpciones, pNombreCorto);
 
             bool iniciado = false;
             try
@@ -216,7 +210,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 					if (!datoExtra.Tipo.Equals(tipo))
 					{
 						Eliminar(pDatoExtraID);
-						Guardar(pNombre, pTipo, pOpciones, pObligatorio, pOrden, pPredicadoRDF);
+						Guardar(pNombre, pTipo, pOpciones, pObligatorio, pOrden, pPredicadoRDF, pVisible, pNombreCorto);
 
                         return GnossResultOK("El dato extra ha sido modificado correctamente");
                     }
@@ -229,7 +223,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 						if (!datoExtraVirtuoso.Tipo.Equals(tipo))
 						{
 							Eliminar(pDatoExtraID);
-							Guardar(pNombre, pTipo, pOpciones, pObligatorio, pOrden, pPredicadoRDF);
+							Guardar(pNombre, pTipo, pOpciones, pObligatorio, pOrden, pPredicadoRDF, pVisible, pNombreCorto);
 
                             return GnossResultOK("El dato extra ha sido modificado correctamente");
                         }
@@ -246,7 +240,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                     }
                     else
                     {
-                        controladorDE.ModificarDatoExtraVirtuosoEcosistema(pDatoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF);
+                        controladorDE.ModificarDatoExtraVirtuosoEcosistema(pDatoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF, pVisible, pNombreCorto);
                     }
                 }
                 else
@@ -255,11 +249,11 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                     {
                         string[] opciones = pOpciones.Split(',');
 
-                        controladorDE.ModificarDatoExtraProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, pDatoExtraID, pNombre, pObligatorio, pOpciones, pOrden, pPredicadoRDF);
+                        controladorDE.ModificarDatoExtraProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, pDatoExtraID, pNombre, pObligatorio, pOpciones, pOrden, pPredicadoRDF, pNombreCorto, pVisible);
                     }
                     else
                     {
-                        controladorDE.ModificarDatoExtraVirtuosoProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, pDatoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF);
+                        controladorDE.ModificarDatoExtraVirtuosoProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, pDatoExtraID, pNombre, pObligatorio, pOrden, pPredicadoRDF, pVisible, pNombreCorto);
                     }
                 }
 
@@ -279,6 +273,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                     datoExtraModel.Tipo = tipo;
 					datoExtraModel.ProyectoID = ProyectoSeleccionado.Clave;
 					datoExtraModel.Nombre = pNombre;
+					datoExtraModel.NombreCorto = pNombreCorto;
+					datoExtraModel.VisibleEnPerfil = pVisible;
 
                     HttpResponseMessage resultado = InformarCambioAdministracion("DatosExtra", JsonConvert.SerializeObject(datoExtraModel, Formatting.Indented));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
@@ -298,7 +294,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
 		public IActionResult Eliminar(Guid pDatoExtraID)
 		{
-            bool iniciado = false;
+			GuardarLogAuditoria();
+			bool iniciado = false;
             try
             {
                 iniciado = HayIntegracionContinua;
@@ -366,22 +363,26 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 				}
 
 				model.Nombre = datoExtraLibre.Nombre;
-				model.Obligatorio = datoExtraLibre.Obligatorio;
+                model.NombreCorto = datoExtraLibre.NombreCorto;
+                model.Obligatorio = datoExtraLibre.Obligatorio;
 				model.DatoExtraID = pDatoID;
 				model.Opciones = new List<DatoExtraOpcionModel>();
 				model.Tipo = datoExtraLibre.Tipo;
 				model.Orden = datoExtraLibre.Orden;
 				model.PredicadoRDF = datoExtraLibre.PredicadoRDF;
+				model.VisibleEnPerfil = datoExtraLibre.VisibleEnPerfil;
 			}
 			else
 			{
                 model.Nombre = datoExtraOpcion.Nombre;
+				model.NombreCorto = datoExtraOpcion.NombreCorto;
                 model.Obligatorio = datoExtraOpcion.Obligatorio;
                 model.DatoExtraID = pDatoID;
 				model.Opciones = datoExtraOpcion.Opciones;
                 model.Tipo = datoExtraOpcion.Tipo;
 				model.Orden = datoExtraOpcion.Orden;
 				model.PredicadoRDF = datoExtraOpcion.PredicadoRDF;
+				model.VisibleEnPerfil = datoExtraOpcion.VisibleEnPerfil;
             }			
 
 			return GnossResultHtml("../AdministrarDatosExtra/_modal-views/_edit-extra-data", model);
@@ -400,7 +401,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
 			return listaOpciones;
         }
-		private string ComprobarErrores(string pNombre, string pTipo, string pOpciones, bool pEcosistema)
+		private string ComprobarErrores(string pNombre, string pTipo, string pOpciones, string pNombreCorto)
 		{
 			TipoDatoExtra tipo;
 			bool tipoCorrecto = Enum.TryParse(pTipo, out tipo);
@@ -409,6 +410,11 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			if (string.IsNullOrEmpty(pTipo) || !tipoCorrecto)
 			{
 				return "El dato extra debe tener un tipo";
+			}
+
+			if (string.IsNullOrEmpty(pNombreCorto))
+			{
+				return "El dato extra debe tener un nombre corto";
 			}
 
 			//Opciones
@@ -433,7 +439,10 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarDatosExtraViewModel();
-                    mPaginaModel.ListaDatosExtraVirtuoso = new List<DatoExtraVirtuosoModel>();
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+					mPaginaModel.IdiomaDefecto = IdiomaPorDefecto;
+					mPaginaModel.ListaDatosExtraVirtuoso = new List<DatoExtraVirtuosoModel>();
                     mPaginaModel.ListaDatosExtraProyecto = new List<DatoExtraModel>();
 
                     if (EsAdministracionEcosistema)
@@ -450,7 +459,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                             datoExtraModel.Orden = datoExtraEcosistema.Orden;
 							datoExtraModel.Tipo = TipoDatoExtra.Opcion;
 							datoExtraModel.Opciones = new List<DatoExtraOpcionModel>();
-
+							
 							foreach (DatoExtraEcosistemaOpcion opcion in DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraEcosistemaOpcion.Where(x => x.DatoExtraID.Equals(datoExtraModel.DatoExtraID)).ToList())
                             {
                                 DatoExtraOpcionModel opcionModel = new DatoExtraOpcionModel();
@@ -479,6 +488,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                             datoExtraModel.NombreInput = datoExtraEcosistemaVirtuoso.InputID;
                             datoExtraModel.QueryVirtuoso = datoExtraEcosistemaVirtuoso.QueryVirtuoso;
 							datoExtraModel.Tipo = TipoDatoExtra.TextoLibre;
+							datoExtraModel.NombreCorto = datoExtraEcosistemaVirtuoso.NombreCampo;
+							datoExtraModel.VisibleEnPerfil = datoExtraEcosistemaVirtuoso.VisibilidadFichaPerfil;
 
 							mPaginaModel.ListaDatosExtraVirtuoso.Add(datoExtraModel);
 						}
@@ -498,8 +509,10 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 							datoExtraModel.OrganizacionID = datoExtraProyecto.OrganizacionID;
 							datoExtraModel.ProyectoID = datoExtraProyecto.ProyectoID;
 							datoExtraModel.Tipo = TipoDatoExtra.Opcion;
+							datoExtraModel.VisibleEnPerfil = datoExtraProyecto.VisiblePerfil;
+							datoExtraModel.NombreCorto = datoExtraProyecto.NombreCorto;
 							datoExtraModel.Opciones = new List<DatoExtraOpcionModel>();
-
+							
 							foreach (DatoExtraProyectoOpcion opcion in DatosExtraProyectoDataWrapperProyecto.ListaDatoExtraProyectoOpcion.Where(x => x.DatoExtraID.Equals(datoExtraModel.DatoExtraID)).ToList())
 							{
 								DatoExtraOpcionModel opcionModel = new DatoExtraOpcionModel();
@@ -530,6 +543,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 							datoExtraModel.NombreInput = datoExtraProyectoVirtuoso.InputID;
 							datoExtraModel.QueryVirtuoso = datoExtraProyectoVirtuoso.QueryVirtuoso;
 							datoExtraModel.Tipo = TipoDatoExtra.TextoLibre;
+							datoExtraModel.NombreCorto = datoExtraProyectoVirtuoso.NombreCampo;
+							datoExtraModel.VisibleEnPerfil = datoExtraProyectoVirtuoso.VisibilidadFichaPerfil;
 
 							mPaginaModel.ListaDatosExtraVirtuoso.Add(datoExtraModel);
 						}

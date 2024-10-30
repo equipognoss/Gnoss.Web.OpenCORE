@@ -1,18 +1,27 @@
 ﻿@*
-    Descripción
-    -----------------------------------------------
-    Vista donde se muestra la configuración asociada a Matomo para la Comunidad.
+Descripción
+-----------------------------------------------
+Vista donde se muestra las estadísticas de navegación de los usuarios de la navegación haciendo uso de la librería Matomo.
 
-    Variables
-    ----------------------------------------------------------------
+Variables
+----------------------------------------------------------------
 *@
 
 @{
-    CommunityModel Comunidad = Html.GetComunidad();
-    HeaderModel cabecera = Html.GetCabecera();
-    // Layout DevTools
-    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+CommunityModel Comunidad = Html.GetComunidad();
+HeaderModel cabecera = Html.GetCabecera();
+// Layout DevTools
+Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+
+// Fecha por defecto
+DateTime fechaHoy = DateTime.Now;
+DateTime fechaHaceUnMes = fechaHoy.AddMonths(-1);
+string fechaHoyString = fechaHoy.ToString("yyyy-MM-dd");
+string fechaHaceUnMesString = fechaHaceUnMes.ToString("yyyy-MM-dd");
 }
+
+<link rel="stylesheet" href="\responsive\theme\matomo.css">
+
 
 
 @* Migas de Pan *@
@@ -25,40 +34,130 @@
             <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
         </li>
         <li>
-            Administrar estadísticas de la comunidad
+            @Html.GetText("DEVTOOLS", "ESTADISTICASDELACOMUNIDAD")
         </li>
     </ul>
 </div>
 
 @* Contenido Central *@
-<div class="formulario-edicion background-blanco">
-    <h2>Administrar estadísticas de la comunidad</h2>
-    <p>
-        Restablece tu usuario y contraseña para acceder a matomo.
-    </p>
+<div id="analyticsPage" class="formulario-edicion background-blanco">        
+     
+    @* Contenido de las diferentes cookies *@
+    <div id="panelListadoAnalytics"
+         class="tab-pane fade show active"
+         role="tabpanel"
+         aria-labelledby="panelListadoAnalytics">
+    
+        @* Contenedor del Título de la Sección + Buscador *@
+        <div class="row">
+            @* Título de la sección *@
+            <div class="col col-12 header-listado">
+                <div class="h1-container">
+                    <h1>
+                        @Html.GetText("DEVTOOLS", "ESTADISTICASDELACOMUNIDAD")
+                    </h1>
+                </div>
+    
+                @* Botón para "Ver Categorías" y "Crear cookie" *@
+                <div class="acciones d-flex align-items-center">
+                    <input type="date" id="fechaInicio" class="form-control mr-2" name="Fecha de inicio" value="@fechaHaceUnMesString" title="@Html.GetText("DEVTOOLS","INDICARLAFECHAINICIAL")">
+                    <input type="date" id="fechaFinal" class="form-control" name="Fecha de fin" value="@fechaHoyString" title="@Html.GetText("DEVTOOLS","INDICARLAFECHAFINAL")">
+                </div>
+            </div>
 
-    @* Botón para restablecer tu usuario en Matomo*@
-    <input id="btnRestoreCurrentUser" type="button" class="btn btn-primary uppercase btnRestoreCurrentUser" data-toggle="modal" data-target="#modal-change-matomo-password" value="Restablecer tu ususario">
+            @* Buscador de usuarios *@
+            <div class="col col-12 header-buscador">
+                <div class="wrapCol">
+                    <div class="col-buscador" style="width: 100%">
+                        @* Formulario para búsquedas de usuarios *@
+                        <form id="formBuscadorPaginas" onsubmit="return false;">
+                            <div class="finderUtils" id="divCajaBusqueda">
+                                <div class="group finderSection">
+                                    @* Input para realizar la búsqueda de usuarios *@
+                                    <input type="text"
+                                           id="txtBuscarUsuarios"
+                                           class="not-outline finderSectionText"
+                                           autocomplete="off"
+                                           placeholder="Buscar por usuario" />                                    
+                                    @* Botón para realizar la búsqueda *@
+                                    <input title="Buscar"
+                                           type="button"
+                                           class="findAction"
+                                           id="inputLupa" />
+                                    @* Botón para Facetas de la búsqueda *@
+                                    <a href="javascript: void(0);" class="btn-filtrar-movil">
+                                        <span class="material-icons">filter_list</span>
+                                        <span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>
+                                    </a>
+                                    <input type="hidden" id="txtBuscarUsuarios_Hack" class="valores txtBuscarUsuarios" name="txtValoresBuscarUsuarios" value="" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                @* Panel con Tags usados *@
+                <div class="etiquetas mt-2 d-none" id="panFiltros">
+                    <div class="group filterSpace">
+                        <ul class="facetedSearch tags" id="panListadoFiltros"></ul>                        
+                    </div>
+                </div>
+            </div>
 
-    @* Botón para restablecer la contraseña del usuario administrador de Matomo*@
-    <input id="btnRestoreMatomoAdminPassword" type="button" class="btn btn-primary uppercase btnRestoreMatomoAdminPassword" data-toggle="modal" data-target="#modal-change-matomo-admin-password" value="Restablecer ususario Matomo">
+        </div>
+    
+        @* Contenedor de todos los gráficos *@
+        <div class="row">
+            <div class="col-12 col-md-5">
+                @* Estadísticas en tabla *@
+                @Html.PartialView("_partial-views/_visitors-table")               
+                @Html.PartialView("_partial-views/_last-users-table")
+                @Html.PartialView("_partial-views/_top-referred-websites-table")
+                @Html.PartialView("_partial-views/_top-search-table")                
+                @Html.PartialView("_partial-views/_top-pages-table")
+                @Html.PartialView("_partial-views/_top-resources-downloaded-table")
+                @Html.PartialView("_partial-views/_most-voted-resources-table")
+                @Html.PartialView("_partial-views/_top-resources-commented-table")
+                @Html.PartialView("_partial-views/_visitors-detail-info-table")
+                @Html.PartialView("_partial-views/_recent-visitors-table")
+            </div>
+            <div class="col-12 col-md-7">
+                @* Estadísticas en gráficos *@
+                @Html.PartialView("_partial-views/_matomo-graphLine")
+                @Html.PartialView("_partial-views/_top-browsers-pie")                
+                @Html.PartialView("_partial-views/_top-platforms-pie")
+                @Html.PartialView("_partial-views/_top-devices-pie")
+                @Html.PartialView("_partial-views/_all-visitors-countries-pie")
 
+                <div class="d-none">
+                    @* Filtrado de usuarios en modal *@              
+                    <div class="input-wrap filtroRapido position-static">
+                        <input type="text"
+                               id="txtFiltro"
+                               class="filtroFaceta ac_input form-control"
+                               placeholder="@Html.GetText("METABUSCADOR","BUSCAR")"
+                               autocomplete="off" />
+                        <span class="searchButton"></span>
+                    </div>
+                    <div class="form-group">
+                        <div style="display: none" class="contactos" id="selector">
+                            <div id="panContactos"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
 </div>
 
-@* Modal para restablecer tu usaurio en Matomo*@
-@Html.PartialView("_modal-views/_reset-matomo-password")
-
-
-@* Modal para restablecer el usuario Matomo*@
-@Html.PartialView("_modal-views/_reset-matomo-administrator-password")
 
 @* Carga de operativa *@
 @section operativaScript{
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    @*<script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>*@
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/matomo_administracion.js?v=@Html.GetVersion()"></script>    
     <script type="text/javascript">
         (function ($) {
             // Operativa funcionamiento de Gestión Matomo
             operativaGestionMatomo.init();
         })();
-    </script>
+    </script>    
 }

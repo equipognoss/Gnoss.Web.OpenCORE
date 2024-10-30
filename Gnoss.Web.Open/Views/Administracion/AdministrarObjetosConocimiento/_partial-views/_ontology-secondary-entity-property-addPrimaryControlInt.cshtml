@@ -387,7 +387,7 @@ Variables
                 onchange = "onchange=\"" + metodoComprValCampos + "\"";
             }
 
-            <input type="@tipoInput" id="@idControl" class="@classInput" value="@valorPropTexto" @Html.Raw(disabledControl) @Html.Raw(onblurControl) @Html.Raw(onchange) />
+            <input type="@tipoInput" id="@idControl" class="@classInput" value="@valorPropTexto" @Html.Raw(disabledControl) @Html.Raw(onblurControl) @Html.Raw(onchange) data-property-name-represent-ontology-title-value="@mPropiedad.Nombre" data-property-name-represent-ontology-title-entity="@mPropiedad.ElementoOntologia.TipoEntidad" />
         }
         else if (mPropiedad.EspecifPropiedad.GrafoDependiente != null && Model.semanticPropertyModel.OntologyPropInfo.UniqueValue)
         {
@@ -423,7 +423,7 @@ Variables
 
             if (!mPropiedad.EspecifPropiedad.NoPermitirNuevosValores)
             {
-                <input type="text" id="@idControl" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onfocus="autocompletarGenericoFormSem(this, '@mPropiedad.EspecifPropiedad.GrafoAutocompletar', '@tipoResultado');" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" />
+                <input type="text" id="@idControl" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onfocus="autocompletarGenericoFormSem(this, '@mPropiedad.EspecifPropiedad.GrafoAutocompletar', '@tipoResultado');" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" data-property-name-represent-ontology-title-value="@mPropiedad.Nombre" data-property-name-represent-ontology-title-entity="@mPropiedad.ElementoOntologia.TipoEntidad" />
             }
             else
             {
@@ -431,13 +431,13 @@ Variables
                 tipoResultado = idControl;
 
                 <input type="hidden" id="@idControl" value="@valorPropTexto" />
-                <input type="text" id="@idControAux" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onfocus="autocompletarGenericoFormSem(this, '@mPropiedad.EspecifPropiedad.GrafoAutocompletar', '@tipoResultado');" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" onchange="if (this.value == ''){$('#@idControl').val('');}" />
+                <input type="text" id="@idControAux" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onfocus="autocompletarGenericoFormSem(this, '@mPropiedad.EspecifPropiedad.GrafoAutocompletar', '@tipoResultado');" onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" onchange="if (this.value == ''){$('#@idControl').val('');}" data-property-name-represent-ontology-title-value="@mPropiedad.Nombre" data-property-name-represent-ontology-title-entity="@mPropiedad.ElementoOntologia.TipoEntidad" />
             }
         }
         else
         {
             string claseTxt = classControl + " text big";
-            <input type="text" id="@idControl" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" />
+            <input type="text" id="@idControl" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" data-property-name-represent-ontology-title-value="@mPropiedad.Nombre" data-property-name-represent-ontology-title-entity="@mPropiedad.ElementoOntologia.TipoEntidad" />
         }
     }
     else

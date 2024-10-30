@@ -12,10 +12,12 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.CMS;
 using Es.Riam.Gnoss.CL.Facetado;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.CMS;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Logica.Identidad;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -36,6 +38,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -49,8 +52,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     public class HomeComunidadController : ControllerPestanyaBase
     {
 
-        public HomeComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public HomeComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -102,7 +105,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (!string.IsNullOrEmpty(RouteConfig.NombreProyectoSinNombreCorto))
             {
-                Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+				Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 
                 string idioma = UtilIdiomas.LanguageCode;
                 bool emptyPath = string.IsNullOrEmpty(Request.Path) || Request.Path.Equals("/");
@@ -121,7 +125,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             idioma = idiomaNavegador;
                             if (UtilIdiomas.LanguageCode != idioma)
                             {
-                                UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+                                UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                                 redirigirAIdioma = true;
                             }
                             break;
@@ -158,7 +162,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 parametroadicional = "proyectoOrigenID=" + ProyectoOrigenBusquedaID.ToString().ToLower() + "|";
             }
 
-            insertarScriptBuscador("", "", "", "", "", "", ProyectoSeleccionado.Clave.ToString(), "", "MontarFacetas('', true, 8, '#panFacetas', null);", "", parametroadicional, "", "", "", "primeraCargaDeFacetas = false;", Guid.Empty, ProyectoSeleccionado.Clave, "homeCatalogoParticular", 0, null, null);
+            insertarScriptBuscador("", "", "", "", "", "", ProyectoSeleccionado.Clave.ToString(), "", "", "", parametroadicional, "", "", "", "primeraCargaDeFacetas = false;", Guid.Empty, ProyectoSeleccionado.Clave, "homeCatalogoParticular", 0, null, null);
 
             if (ProyectoSeleccionado.EsCatalogo)
             {
@@ -205,7 +209,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (mostrarCMS)
             {
                 ViewBag.CargandoPaginaCMS = true;
-                ControladorCMS controladorCMS = new ControladorCMS(this, null, (short)tipoUbicacion, Comunidad, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+                ControladorCMS controladorCMS = new ControladorCMS(this, null, (short)tipoUbicacion, Comunidad, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, true);
                 List<CMSBlock> listaBloquesHome = controladorCMS.CargarBloquesPaginaCMS();
                 if (listaBloquesHome != null)
                 {
@@ -508,7 +512,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 paginaModel.LastUsers.Add(usuario);
             }
 
-            ActividadReciente actividadReciente = new ActividadReciente(mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+            ActividadReciente actividadReciente = new ActividadReciente(mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
             paginaModel.RecentActivity = actividadReciente.ObtenerActividadReciente(1, 10, TipoActividadReciente.HomeProyecto, null, false);
 
             GadgetController gadgetController = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);

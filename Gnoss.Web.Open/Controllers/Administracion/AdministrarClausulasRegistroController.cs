@@ -25,6 +25,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -35,8 +38,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     public class AdministrarClausulasRegistroController : ControllerBaseWeb
     {
 
-        public AdministrarClausulasRegistroController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarClausulasRegistroController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -81,6 +84,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult NuevaClausula(ManageRegisterClausesViewModel.ClauseType TipoClausula)
         {
+            GuardarLogAuditoria();
             EliminarPersonalizacionVistas();
 
             ManageRegisterClausesViewModel.RegisterClauseModel clause = new ManageRegisterClausesViewModel.RegisterClauseModel();
@@ -143,7 +147,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(List<ManageRegisterClausesViewModel.RegisterClauseModel> ListaClausulas)
         {
-
+            GuardarLogAuditoria();
             GuardarClausulas(ListaClausulas);
 
             InvalidarCaches();
@@ -430,7 +434,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void EliminarClausula(AD.EntityModel.Models.UsuarioDS.ClausulaRegistro pFilaClausula)
         {
-            if (pFilaClausula.Tipo.Equals(ManageRegisterClausesViewModel.ClauseType.CondicionesUso))
+            string textoClausula = string.Empty;
+
+            if (pFilaClausula.Tipo.Equals((int)ManageRegisterClausesViewModel.ClauseType.CondicionesUso))
             {
                 AD.EntityModel.Models.UsuarioDS.ClausulaRegistro tituloCondUso = UsuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoSeleccionado.Clave) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.TituloCondicionesUso)).FirstOrDefault();
 
@@ -438,19 +444,24 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 AD.EntityModel.Models.UsuarioDS.ClausulaRegistro clausulaObligatoria = UsuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoSeleccionado.Clave) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.Obligatoria)).FirstOrDefault();
 
-                if (clausulaObligatoria.Texto.Contains("##CONDICIONES_USO_COM##"))
+                textoClausula = clausulaObligatoria.Texto;
+
+                if (textoClausula.Contains("##CONDICIONES_USO_COM##"))
                 {
-                    clausulaObligatoria.Texto = clausulaObligatoria.Texto.Replace("##CONDICIONES_USO_COM##", "");
+                    textoClausula = textoClausula.Replace("##CONDICIONES_USO_COM##", string.Empty);
                 }
 
-                if (string.IsNullOrEmpty(clausulaObligatoria.Texto))
+                if (string.IsNullOrEmpty(textoClausula))
                 {
                     EliminarEntrada(clausulaObligatoria);
                 }
-
+                else
+                {
+                    clausulaObligatoria.Texto = textoClausula;
+                }
             }
 
-            if (pFilaClausula.Tipo.Equals(ManageRegisterClausesViewModel.ClauseType.ClausulasTexo))
+            if (pFilaClausula.Tipo.Equals((int)ManageRegisterClausesViewModel.ClauseType.ClausulasTexo))
             {
                 AD.EntityModel.Models.UsuarioDS.ClausulaRegistro tituloPolPriv = UsuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoSeleccionado.Clave) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.TituloClausulasTexo)).FirstOrDefault();
 
@@ -458,20 +469,24 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 AD.EntityModel.Models.UsuarioDS.ClausulaRegistro clausulaObligatoria = UsuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoSeleccionado.Clave) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.Obligatoria)).FirstOrDefault();
 
+                textoClausula = clausulaObligatoria.Texto;
 
-                if (clausulaObligatoria.Texto.Contains("##POLITICA_PRIVACIDAD_COM##"))
+                if (textoClausula.Contains("##POLITICA_PRIVACIDAD_COM##"))
                 {
-                    clausulaObligatoria.Texto = clausulaObligatoria.Texto.Replace("##POLITICA_PRIVACIDAD_COM##", "");
+                    textoClausula = textoClausula.Replace("##POLITICA_PRIVACIDAD_COM##", "");
                 }
 
-                if (string.IsNullOrEmpty(clausulaObligatoria.Texto))
+                if (string.IsNullOrEmpty(textoClausula))
                 {
                     EliminarEntrada(clausulaObligatoria);
                 }
-
+                else
+                {
+                    clausulaObligatoria.Texto = textoClausula;
+                }
             }
 
-            if (pFilaClausula.Tipo.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina))
+            if (pFilaClausula.Tipo.Equals((int)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina))
             {
                 AD.EntityModel.Models.UsuarioDS.ClausulaRegistro cabecera = UsuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoSeleccionado.Clave) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesCabecera)).FirstOrDefault();
 
@@ -501,12 +516,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private ManageRegisterClausesViewModel PaginaModel
         {
+
             get
             {
                 if (mPaginaModel == null)
                 {
-                    mPaginaModel = new ManageRegisterClausesViewModel();
-                    mPaginaModel.LanguagesList = mConfigService.ObtenerListaIdiomasDictionary();
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					mPaginaModel = new ManageRegisterClausesViewModel();
+                    mPaginaModel.LanguagesList = paramCL.ObtenerListaIdiomasDictionary();
                     mPaginaModel.DefaultLanguage = !(ParametrosGeneralesRow.IdiomaDefecto == null) && mPaginaModel.LanguagesList.ContainsKey(ParametrosGeneralesRow.IdiomaDefecto) ? ParametrosGeneralesRow.IdiomaDefecto : mPaginaModel.LanguagesList.Keys.First();
                     mPaginaModel.ClausesList = new List<ManageRegisterClausesViewModel.RegisterClauseModel>();
 

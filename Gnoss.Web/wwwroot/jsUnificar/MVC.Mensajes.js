@@ -723,10 +723,7 @@ const operativaGestionEmailsGuardadoSeguridad = {
         this.checkLocalStorage();
         setTimeout(function () {
             that.initBackupSaved();
-        },1500);   
-                
-        // Recargar los ckEditors
-        RecargarTodosCKEditor();
+        },1500);                   
     },
 
     /**
@@ -746,17 +743,27 @@ const operativaGestionEmailsGuardadoSeguridad = {
     initBackupSaved: function(){
         const that = this;
 
-        that.checkBackupContentAvailableForEmail();
+        observarClaseTinyLoaded(function () {
+            const editors = tinymce.get();
+            const relatedTinyMCEId = $("#txtMensaje").data("editorrelated");
+            // Iterar sobre las instancias para buscar la que coincide con el ID 'txtMensaje'
+            editors.forEach(function (editor) {
+                if (editor.id === relatedTinyMCEId) {
+                    that.editorTinyMCE = editor;
+                    that.checkBackupContentAvailableForEmail();
+                    if (that.isBackupContentAvailableForEmail) {
+                        // Preguntar si se desea restaurar el contenido actual almacenado          
+                        that.modalBackupEmailContent.modal("show");
+                    } else {
+                        if (that.isLocalStorageAvailable == true) {
+                            // Ejecutar copiado de backup de forma planificada
+                            that.initScheduleBackupCopy();
+                        }
+                    }                    
+                }
+            });
+        });
 
-        if (that.isBackupContentAvailableForEmail){
-            // Preguntar si se desea restaurar el contenido actual almacenado          
-            that.modalBackupEmailContent.modal("show");
-        }else{
-            if (that.isLocalStorageAvailable == true){
-                // Ejecutar copiado de backup de forma planificada
-                that.initScheduleBackupCopy();
-            }
-        }
     },
 
     /**
@@ -821,8 +828,9 @@ const operativaGestionEmailsGuardadoSeguridad = {
         setTimeout(function(){
             // Contenido de la página del localStorage
             const htmlContent = decodeURIComponent(localStorage.getItem(that.keyEmailContent));
-            // Establecer el contenido en ckeEditor para el cuerpo del mensaje            
-            CKEDITOR.instances.txtMensaje.setData(htmlContent);            
+            // Establecer el contenido en ckeEditor para el cuerpo del mensaje
+            // CKEDITOR.instances.txtMensaje.setData(htmlContent);            
+            that.editorTinyMCE.setContent(htmlContent);
             // Eliminar el item restaurado
             that.deleteEmailDetailInfoInLocalStorage();
             // Iniciar de nuevo la operativa
@@ -838,11 +846,9 @@ const operativaGestionEmailsGuardadoSeguridad = {
         const that = this;
         // Eliminar el item restaurado
         that.deleteEmailDetailInfoInLocalStorage();
-        // Ocultar el modal de restauración 
-        dismissVistaModal(that.modalBackupEmailContent);
         // Iniciar de nuevo la operativa
         that.triggerEvents();
-    }, 
+    },
 
     /**
      * Método para comprobar si está disponible el local storage del navegador

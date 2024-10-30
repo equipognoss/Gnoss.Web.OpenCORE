@@ -41,8 +41,8 @@ String rutaAcercaDe = @Perfil.Url + @Html.GetText("URLSEM", "ACERCADE");
                             @Comunidad.Copyright<text> </text>@DateTime.Now.Year.ToString();
                         }
                         else
-                        {
-                            <text>© RIAM I+L Lab </text> @DateTime.Now.Year.ToString() <text> myGNOSS - Todos los derechos reservados</text>;
+                        {                            
+                            <text>© RIAM I+L Lab </text>@DateTime.Now.Year.ToString()<text> myGNOSS - @Html.GetText("COMMON","TODOSLOSDERECHOSRESERVADOS")</text>
                         }
 
                     </p>

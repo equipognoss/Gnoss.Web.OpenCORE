@@ -10,8 +10,10 @@ using Es.Riam.Gnoss.AD.Facetado;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos.Facetado;
 using Es.Riam.Gnoss.Logica.Documentacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -32,6 +34,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Exchange.WebServices.Data;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using OntologiaAClase;
 using System;
@@ -78,8 +81,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     public class AdministrarFacetasController : ControllerBaseWeb
     {
 
-        public AdministrarFacetasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarFacetasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -191,7 +194,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             FacetaModel.FiltrosFacetas filtro = new FacetaModel.FiltrosFacetas();
             string filtroID = Guid.NewGuid().ToString();
             filtro.Key = filtroID;
-            //LE pongo el valor deleted true para que se sepa que es un filtro nuevo en la vista.
+            //Le pongo el valor deleted true para que se sepa que es un filtro nuevo en la vista.
             filtro.Deleted = true;
 
             return PartialView("_FichaFiltro", filtro);
@@ -206,6 +209,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
         public ActionResult Guardar(List<FacetaModel> ListaFacetas)
         {
+            GuardarLogAuditoria();
             bool iniciado = false;
             try
             {
@@ -397,7 +401,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             if (!string.IsNullOrEmpty(relacionHastaPrincipal))
                             {
                                 var ontologiaDestinoCompl = ListaOntologiasCompletas.FirstOrDefault(item => item.Enlace.Equals(element.SelectorEntidad.Grafo));
-                                if (ontologiaDestinoCompl != null)
+                                if (ontologiaDestinoCompl != null && propiedad != null)
                                 {
                                     FacetaModel facetaPropuesta = CrearFacetaPropuesta(propiedad, element, ontologiaDestinoCompl);
                                     facetaPropuesta.ClaveFaceta = $"{relacionHastaPrincipal}{facetaPropuesta.ClaveFaceta}";
@@ -506,12 +510,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			facetaPropuesta.Condicion = "";
 			facetaPropuesta.Filtros = "";
 			facetaPropuesta.NumElementosVisibles = 10;
-            if (!pXmlProp.NoMultiIdioma)
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+
+			if (((pOntologiaCompleta.Ontologia.ConfiguracionPlantilla.ListaIdiomas != null && pOntologiaCompleta.Ontologia.ConfiguracionPlantilla.ListaIdiomas.Count > 1) || pOntologiaCompleta.Ontologia.ConfiguracionPlantilla.MultiIdioma) && !pXmlProp.NoMultiIdioma)
             {
 				facetaPropuesta.AlgoritmoTransformacion = (short)TiposAlgoritmoTransformacion.MultiIdioma;
 			}
-            
-			foreach (string idioma in mConfigService.ObtenerListaIdiomas())
+
+			foreach (string idioma in paramCL.ObtenerListaIdiomas())
 			{				            
 				string nombre = UtilCadenas.SplitCamelCase(pPropiedad.NombreGeneracionClases);
                 nombre = UtilCadenas.PrimerCaracterAMayuscula(nombre);
@@ -610,8 +616,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     ListaFacetasPropuestasCache = new Dictionary<Guid, FacetaModel>();                    
                     mPaginaModel = new AdministrarFacetasViewModel();
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-                    mPaginaModel.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+					mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 
                     mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
 

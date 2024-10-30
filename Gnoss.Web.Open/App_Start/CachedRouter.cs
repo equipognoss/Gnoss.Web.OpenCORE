@@ -1,5 +1,10 @@
-﻿using Es.Riam.Gnoss.AD.EntityModel;
+﻿using Es.Riam.AbstractsOpen;
+using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
+using Es.Riam.Gnoss.AD.Virtuoso;
+using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -22,6 +27,9 @@ namespace Gnoss.Web.App_Start
         public static bool RECALCULAR_RUTAS = false;
         private IApplicationBuilder _applicationBuilder;
         private ConfigService _configService;
+        private LoggingService mLoggingService;
+        private EntityContext mEntityContext;
+
         public CachedRouter(IRouter innerRouter, IApplicationBuilder applicationBuilder, ConfigService configService)
         {
             _applicationBuilder = applicationBuilder;
@@ -52,9 +60,11 @@ namespace Gnoss.Web.App_Start
                 {
                     EntityContext entityContext = serviceScope.ServiceProvider.GetRequiredService<EntityContext>();
                     LoggingService loggingService = serviceScope.ServiceProvider.GetRequiredService<LoggingService>();
-                    UtilIdiomasFactory utilIdiomasFactory = new UtilIdiomasFactory(loggingService, entityContext, _configService);
+					RedisCacheWrapper redisCacheWrapper = serviceScope.ServiceProvider.GetRequiredService<RedisCacheWrapper>();
+					UtilIdiomasFactory utilIdiomasFactory = new UtilIdiomasFactory(loggingService, entityContext, _configService, redisCacheWrapper);
                     UtilIdiomas utilIdiomas = utilIdiomasFactory.ObtenerUtilIdiomas(idioma);
-                    if (_configService.ObtenerListaIdiomas().Contains(argsPagina[0]))
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, null, _configService, null);
+                    if (paramCL.ObtenerListaIdiomas().Contains(argsPagina[0]))
                     {
                         idioma = argsPagina[0];
                         rutaPestanya = string.Join("",argsPagina.Skip(1));

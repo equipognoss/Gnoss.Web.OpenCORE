@@ -26,7 +26,7 @@
     <div class="buscador-categorias">
         <div class="form-group">
             <input class="filtroRapido form-control not-outline"
-                   placeholder="Busca una categoría"
+                   placeholder="@Html.GetText("COMMON","BUSCAR")"
                    type="text"
                    onkeydown="javascript:if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}"
                    onkeyup="javascript:MVCFiltrarListaSelCatArbol(this, 'despAccionRec_@fichaRecurso.Key');" />

@@ -172,10 +172,10 @@ Variables
 
 						@* Botón para guardar la página *@
 						<div class="panelBotonera">
-							@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+							@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 							{
 								@* No permitir guardar *@
-								<input type="button" disabled class="btn btn-primary uppercase btnNoGuardarClausula" value="@Html.GetText("COMMON","GUARDAR")"/>								
+								<input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase btnNoGuardarClausula" value="@Html.GetText("COMMON","GUARDAR")" />
 							}
 							else
 							{		

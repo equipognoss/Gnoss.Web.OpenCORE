@@ -15,6 +15,11 @@ Variables
 	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 	@* Idiomas disponibles de la plataforma *@
 	string[] idiomas = Model.Idiomas.Split("&&&");
+	@* Idiomas personalizados disponibles de la plataforma *@
+	string[] idiomasPersonalizados = null;
+	if(!string.IsNullOrEmpty(Model.IdiomasPersonalizados)){
+		idiomasPersonalizados = Model.IdiomasPersonalizados.Split("&&&");
+	}
 	@* Extensiones válidas para imágenes CMS - Controlar que si no hay ninguna añadir las de por defecto *@
 	string[] imageExtensions = Model.ExtensionesImagenesCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesImagenesCMSMultimedia) ? ".jpg&&&.jpeg&&&.png&&&.gif".Split("&&&") : Model.ExtensionesImagenesCMSMultimedia.Split("&&&") ;	
 	@* Extensiones válidas para documentos - Controlar que si no hay ninguna añadir las de por defecto *@
@@ -383,6 +388,17 @@ Variables
 						<small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS","INDICASISEDESEAUTILIZARLAMISMAURLPARAPROYECTOSPUBLICOS/RESTR")</small>
 					</div>
 
+					@*URL de aplicaciones web externas (Wordpress, Liferay, etc.) que usan por AJAX los servicios de búsqueda de esta plataforma: *@
+					<div class="form-group mb-3">
+						<label class="control-label d-block">@Html.GetText("DEVTOOLS", "URLDEAPLICACIONESWEBEXTERNAS(WORDPRESS,LIFERAY,ETC)QUEUSANP")</label>
+						<input id="DominiosPermitidosCORS"
+							   type="text"
+							   value="@Model.DominiosPermitidosCORS"
+							   placeholder=""
+							   class="form-control not-outline" />
+						<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "SIVANAEXISTIRPAGINASWEBAJENASAESTEDESPLIEGUE(WORDPRESS,LIFER")</small>
+					</div>
+
 					@* Web de Proyectos / Web de proyectos privados *@
 					<div id="panelUrlPrivateProjects" class="form-group mb-3 d-none">
 						<label class="control-label d-block">@Html.GetText("DEVTOOLS","DIRECCIONWEBDEPROYECTOSPRIVADOS")</label>
@@ -437,7 +453,7 @@ Variables
 					*@
 
 					<div class="form-group mb-3">
-						<label class="control-label d-block">Lista de idiomas disponibles en la plataforma.</label>				
+						<label class="control-label d-block">@Html.GetText("DEVTOOLS", "LISTADEIDIOMASDISPONIBLESENLAPLATAFORMA")</label>
 						@* Lista de Checkbox de idiomas de la plataforma *@
 						<form>
 							<div class="form-row align-items-center">
@@ -538,8 +554,44 @@ Variables
 									</div>            
 								</div>
 							</div>
+							@* Botón para añadir un idioma *@
+							<div class="d-flex align-items-center justify-content-between mb-3">
+								<label class="control-label">Lista de idiomas personalizados en la plataforma.</label>
+								<button id="btnAddLanguage" type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-add-language" style="height:30px">
+									Añadir idioma
+								</button>
+							</div>
+							<ul id="customLanguageList" class="component-list no-list-style">
+								@{
+									if (idiomasPersonalizados != null){
+										foreach(string idioma in idiomasPersonalizados){
+											@Html.PartialView("_partial-views/_custom-language-row", idioma);
+										}
+									}
+								}
+							</ul>
 						</form>
 					</div>
+
+
+					@* Panel de alerta de reinicio de la aplicación en la plataforma*@
+					<div id="panelAvisoReinicioAplicacionPlataforma" class="alert alert-warning flex-column pt-2 d-none" role="alert">
+						<span class="title mb-2" style="font-weight: 700">Reinicio necesario</span>
+						<span class="title mb-2" style="font-weight: 700">¡¡¡IMPORTANTE!!!</span>
+						<div class="custom-control custom-checkbox">
+    						<input 
+								type="checkbox" 
+								class="custom-control-input" 
+								id="ReiniciarAplicacion" 
+								checked="checked">
+							<label class="custom-control-label description" style="font-weight: 300" for="ReiniciarAplicacion">Se va a reiniciar la aplicación para aplicar los cambios. Si desmarcas esta casilla, los cambios no surtirán efecto hasta que se reinice la aplicación.</label>
+						</div>
+					</div>
+
+					@*<div class="alert alert-warning" role="alert">
+						A simple warning alert—check it out!
+					</div>*@
+
 					@* Desaparece Extensiones por checkbox
 					<div class="form-group mb-3">
 						<label class="control-label d-block">Lista de extensiones de imágenes permitidas en la plataforma para la edición de componentes multimedia.</label>
@@ -960,6 +1012,9 @@ Variables
 	@* Botón de guardado *@
 	<a id="btnSave" href="javascript: void(0);" class="btn btn-primary uppercase mt-4">@Html.GetText("COMMON","GUARDAR")</a>
 </div>
+
+@* Modal para editar/crear un nuevo idioma *@
+@Html.PartialView("_modal-views/_add-language")
 
 
 @* Carga de operativa *@

@@ -107,7 +107,20 @@ Variables
 					class="form-control inputFiltroValue"
 					value="@filtroOrden.Filtro">
 				<small class="form-text text-muted mb-2">Filtro de resultados que se utilizará para realizar la búsqueda personalizada.</small>
-			</div>			
+			</div>		
+			<div class="form-group mb-2">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "CONSULTA")</label>
+				<textarea name="TabConsulta">@filtroOrden.Consulta</textarea>
+				<small class="form-text text-muted mb-2">Cláusula SPARQL que se utilizará para ordenar los resultados de la búsqueda.</small>
+			</div>
+			<div class="form-group mb-2">
+				<label class="control-label d-block">Order by</label>
+				<input type="text"
+					   name="TabOrderBy"
+					   class="form-control inputFiltroValue"
+					   value="@filtroOrden.OrderBy">
+				<small class="form-text text-muted mb-2">Campos que formarán parte de la cláusula "Order by" de la búsqueda. Formato: ?col1 ?col2</small>
+			</div>
 		</div>
 	</div>	
 </li>

@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,8 +38,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private bool mScriptDeParametroGeneral = false;
         private string mMetaRobots = "all";
 
-        public AdministrarSeoGoogleController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarSeoGoogleController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -72,10 +73,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarSeoGoogleViewModel pParametros)
         {
+            GuardarLogAuditoria();
             ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
 
             pParametros.CodigoGoogleAnalytics = HttpUtility.UrlDecode(pParametros.CodigoGoogleAnalytics);
-            pParametros.ScriptGoogleAnalyticsPropio = HttpUtility.UrlDecode(pParametros.ScriptGoogleAnalytics);
+            pParametros.ScriptGoogleAnalyticsPropio = HttpUtility.UrlDecode(pParametros.ScriptGoogleAnalyticsPropio);
             
             ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
             bool transaccionIniciada = false;
@@ -120,7 +122,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mPaginaModel.CodigoGoogleAnalytics = CodigoGoogleAnalytics;
                     mPaginaModel.ScriptGoogleAnalyticsPlataforma = ScriptGoogleAnalyticsPlataforma;
                     mPaginaModel.ScriptGoogleAnalyticsPropio = ScriptGoogleAnalyticsPropio;
-                    mPaginaModel.GooglaAnalitycsScriptEnParametroGeneral = mScriptDeParametroGeneral;
+                    mPaginaModel.EsScriptGoogleAnalitycsPropio = string.IsNullOrEmpty(mPaginaModel.CodigoGoogleAnalytics);
                     mPaginaModel.ScriptPorDefecto = ScriptPorDefecto;
                 }
                 return mPaginaModel;
@@ -156,14 +158,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                //comprobar si esta en ParametroProyecto
-                //string valorScript = ControladorProyecto.ObtenerParametroString(ParametroProyecto, "ScriptGoogleAnalytics");
-                string valorScript = contrSeoGoogle.FilaParametrosGenerales.ScriptGoogleAnalytics;
-                if (!string.IsNullOrEmpty(valorScript))
-                {
-                    return valorScript;
-                }
                 //comprobar si esta en ParametroAplicacion
                 ParametroAplicacion busqueda = GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals("ScriptGoogleAnalytics")).FirstOrDefault();
                 if (busqueda != null)

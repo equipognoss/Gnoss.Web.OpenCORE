@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Es.Riam.InterfacesOpen;
 using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// Descripción breve de ParametrosConfiguracion
@@ -31,8 +32,8 @@ using Gnoss.Web.Open.Filters;
 public class ParametrosConfiguracionController : ControllerBaseWeb
 {
 
-    public ParametrosConfiguracionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-    : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+    public ParametrosConfiguracionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+    : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
     {
     }
 
@@ -70,7 +71,7 @@ public class ParametrosConfiguracionController : ControllerBaseWeb
 
             if (dominioActual == pNombreCorto)
             {
-                listaproyID = proyectoCN.ObtenerProyectoIDOrganizacionIDPorNombreCorto(new RouteConfig(mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD).NombreProyectoSinNombreCorto);
+                listaproyID = proyectoCN.ObtenerProyectoIDOrganizacionIDPorNombreCorto(new RouteConfig(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor).NombreProyectoSinNombreCorto);
                 if (listaproyID != null && listaproyID.Any())
                 {
                     proyectoID = listaproyID[1];

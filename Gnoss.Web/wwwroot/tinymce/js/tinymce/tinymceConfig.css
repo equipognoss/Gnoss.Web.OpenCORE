@@ -1,0 +1,3 @@
+.tox-shadowhost.tox-fullscreen, .tox.tox-tinymce.tox-fullscreen{z-index: 9999 !important;}
+/* Menú de edición para que no quede debajo cuando esté en fullscreen*/
+.tox-fullscreen .tox-tinymce-aux{z-index: 9999 !important;}

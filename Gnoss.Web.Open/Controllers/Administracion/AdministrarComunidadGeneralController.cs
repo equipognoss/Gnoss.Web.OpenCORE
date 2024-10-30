@@ -43,12 +43,18 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Es.Riam.Gnoss.AD.EncapsuladoDatos;
+using static Es.Riam.Gnoss.Util.Seguridad.Capacidad;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
     /// <summary>
     /// Modelo de la página de administrar comunidad general
     /// </summary>
+    [Serializable]
     public class AdministrarComunidadGeneralModel
     {
         /// <summary>
@@ -75,6 +81,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// 
         /// </summary>
         public string Desciption { get; set; }
+        public string Url { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -106,6 +113,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <summary>
         /// 
         /// </summary>
+        [Serializable]
         public class StateCommunity
         {
             /// <summary>
@@ -133,6 +141,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <summary>
         /// 
         /// </summary>
+        [Serializable]
         public class ImageCoordenadas
         {
             /// <summary>
@@ -172,7 +181,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     public class AdministarComunidadGeneralCommunityShortNameModel
     {
         // Nombre de corto de la comunidad
-        public string shortName { get; set; }        
+        public string shortName { get; set; }
     }
 
     /// <summary>
@@ -207,6 +216,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public short AccessType { get; set; }
     }
 
+    /// <summary>
+    /// Model of the parameter to modify the short name of the current community
+    /// </summary>    
+    public class GuardarNuevaUrlDominioModel
+    {
+        /// <summary>
+        /// New community short name 
+        /// </summary>
+        public string NewDomainUrl { get; set; }
+
+        /// <summary>
+        /// Old community short name
+        /// </summary>
+        public string OldDomainUrl { get; set; }
+    }
+
     public class AdministrarComunidadGeneralListadoViewModel
     {
         /// <summary>
@@ -221,8 +246,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public partial class AdministrarComunidadGeneralController : ControllerBaseWeb
     {
-        public AdministrarComunidadGeneralController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarComunidadGeneralController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -277,8 +302,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_InformacionGeneral;
             // Establecer el título para el header de DevTools                       
-            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");        
-            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONBASICA", "INFORMACIONGENERAL");            
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONBASICA", "INFORMACIONGENERAL");
 
             // Activar la visualización del icono de la documentación de la sección
             ViewBag.showDocumentationByDefault = "true";
@@ -298,7 +323,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult SaveNewCommunityShortName(GuardarNuevoNombreCortoComunidadModel pModel)
         {
+            GuardarLogAuditoria();
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
 
             if (!proyectoCN.ExisteNombreCortoProyecto(pModel.NewShortName))
             {
@@ -306,13 +333,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 proyecto.NombreCorto = pModel.NewShortName.ToLower();
 
                 proyectoCN.Actualizar();
-
-                return GnossResultOK();
+                proyectoCL.InvalidarFilaProyecto(proyecto.ProyectoID);
+                proyectoCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
+                //string.Concat("UltimoProyecto", "_", pUsuarioID, "_", pDominio);
+                //return RedirectToAction("Index");
+                return Ok();
             }
             else
             {
                 return GnossResultERROR($"Ya existe un proyecto con este nombre corto: {pModel.NewShortName}");
-            }            
+            }
         }
 
         /// <summary>
@@ -323,19 +353,53 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult SaveNewCommunityType(GuardarTipoAccesoComunidadModel pModel)
-        {            
+        {
+            GuardarLogAuditoria();
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             Guid proyectoID = ProyectoSeleccionado.Clave;
             AD.EntityModel.Models.ProyectoDS.Proyecto proyecto = proyectoCN.ObtenerProyectoPorNombreCorto(pModel.CommunityShortName);
             proyecto.TipoAcceso = pModel.AccessType;
-            
+
             proyectoCN.Actualizar();
 
             ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             proyectoCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
             proyectoCL.InvalidarFilaProyecto(proyectoID);
 
-			return GnossResultOK();            
+            return GnossResultOK();
+        }
+
+        /// <summary>
+        /// Modifica la url de dominio de la comunidad por la nueva asignada
+        /// </summary>
+        /// <param name="pModel"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult SaveNewDomainUrl(GuardarNuevaUrlDominioModel pModel)
+        {
+            GuardarLogAuditoria();
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            AD.EntityModel.Models.ProyectoDS.Proyecto proyecto = proyectoCN.ObtenerProyectoPorNombreCorto(ProyectoSeleccionado.NombreCorto);
+            
+            string urlPropiaVieja = proyecto.URLPropia;
+            string urlPropieaNueva = pModel.NewDomainUrl.TrimEnd('/');
+
+            if (urlPropiaVieja != urlPropieaNueva)
+            {               
+                proyecto.URLPropia = urlPropieaNueva;
+                proyectoCN.Actualizar();
+
+                ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                proyectoCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
+                proyectoCL.InvalidarFilaProyecto(proyecto.ProyectoID);
+
+                return GnossResultOK();
+            }
+            else
+            {
+                return GnossResultERROR($"Este proyecto ya esta configurado con la url: {pModel.NewDomainUrl}");
+            }
         }
 
         /// <summary>
@@ -385,6 +449,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarComunidadGeneralModel Options)
         {
+            GuardarLogAuditoria();
             string error = ComprobarErrores(Options);
 
             if (!string.IsNullOrEmpty(error))
@@ -746,7 +811,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     pServicioImagenes.AgregarImagen(ms.ToArray(), ruta, ".png");
 
                     // Guardar coordenadas
-                    FilaParametrosGenerales.CoordenadasSup = $"[ { pImagenCabecera.Pos_X_0 }, { pImagenCabecera.Pos_Y_0 }, { pImagenCabecera.Pos_X_1 }, { pImagenCabecera.Pos_Y_1 } ]";
+                    FilaParametrosGenerales.CoordenadasSup = $"[ {pImagenCabecera.Pos_X_0}, {pImagenCabecera.Pos_Y_0}, {pImagenCabecera.Pos_X_1}, {pImagenCabecera.Pos_Y_1} ]";
 
                     if (FilaParametrosGenerales.VersionFotoImagenSupGrande == null)
                     {
@@ -779,7 +844,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string rutaAux = UtilArchivos.ContentImagenesProyectos + "/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "_mosaico_grande_temp2";
             //string rutaAux = $"{UtilArchivos.ContentImagenesProyectos}/{ProyectoSeleccionado.Clave.ToString().ToLower()}_sup_grande_temp";
             string rutaCompletaAux = BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + rutaAux + ".png";
-           
+
             if (rutaCompletaAux.Equals(pImagenLogo.Ruta))
             {
                 //Guardar imagen temporal nueva si ha cambiado
@@ -816,7 +881,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     pServicioImagenes.AgregarImagen(ms.ToArray(), ruta, ".png");
 
                     // Guardar coordenadas
-                    FilaParametrosGenerales.CoordenadasMosaico = $"[ { pImagenLogo.Pos_X_0 }, { pImagenLogo.Pos_Y_0 }, { pImagenLogo.Pos_X_1}, {pImagenLogo.Pos_Y_1} ]";
+                    FilaParametrosGenerales.CoordenadasMosaico = $"[ {pImagenLogo.Pos_X_0}, {pImagenLogo.Pos_Y_0}, {pImagenLogo.Pos_X_1}, {pImagenLogo.Pos_Y_1} ]";
 
                     if (FilaParametrosGenerales.VersionFotoImagenMosaicoGrande == null)
                     {
@@ -826,7 +891,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         FilaParametrosGenerales.VersionFotoImagenMosaicoGrande++;
                     }
-                    FilaParametrosGenerales.NombreImagenPeque = $"{ FilaParametrosGenerales.ProyectoID.ToString() }_peque.png?v={ FilaParametrosGenerales.VersionFotoImagenMosaicoGrande }";
+                    FilaParametrosGenerales.NombreImagenPeque = $"{FilaParametrosGenerales.ProyectoID.ToString()}_peque.png?v={FilaParametrosGenerales.VersionFotoImagenMosaicoGrande}";
                 }
             }
             else
@@ -846,11 +911,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         private string ComprobarErrores(AdministrarComunidadGeneralModel Options)
         {
-            if (!mConfigService.ObtenerListaIdiomasDictionary().ContainsKey(Options.IdiomaPorDefecto))
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            if (!paramCL.ObtenerListaIdiomasDictionary().ContainsKey(Options.IdiomaPorDefecto))
             {
                 return "El idioma seleccionado no existe";
             }
-            
+
             Options.Desciption = HttpUtility.UrlDecode(Options.Desciption);
 
             if (!string.IsNullOrEmpty(Options.ImageHead.Ruta) && Options.ImageHead.Ruta.IndexOf("?") > 0)
@@ -1110,47 +1176,57 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     mPaginaModel = new AdministrarComunidadGeneralModel();
 
+                    Guid proyectoID = ProyectoSeleccionado.Clave;
+
+                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DataWrapperProyecto dataWrapperProyecto = proyectoCN.ObtenerProyectoPorID(proyectoID);
+                    AD.EntityModel.Models.ProyectoDS.Proyecto proyecto = dataWrapperProyecto.ListaProyecto.FirstOrDefault();
+                    ProyectoCerradoTmp proyectoCerradoTmp = dataWrapperProyecto.ListaProyectoCerradoTmp.FirstOrDefault();
+                    ProyectoCerrandose proyectoCerrandse = dataWrapperProyecto.ListaProyectoCerrandose.FirstOrDefault();
+                    List<ProyectoAgCatTesauro> listaProyectoAgCatTesauro = dataWrapperProyecto.ListaProyectoAgCatTesauro.ToList();
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+
                     if (ParametrosGeneralesRow.IdiomasDisponibles)
                     {
-                        mPaginaModel.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                     }
                     else
                     {
                         mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
-                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
                     }
 
                     mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
-                    mPaginaModel.ListaIdiomasPlataforma = mConfigService.ObtenerListaIdiomasDictionary();
+                    mPaginaModel.ListaIdiomasPlataforma = paramCL.ObtenerListaIdiomasDictionary();
 
                     mPaginaModel.State = new AdministrarComunidadGeneralModel.StateCommunity();
-                    mPaginaModel.State.State = ProyectoSeleccionado.Estado;
+                    mPaginaModel.State.State = proyecto.Estado;
                     mPaginaModel.State.DaysOfGrace = 15;
                     mPaginaModel.State.CanBeOpened = Comunidad.Categories.Count > 0;
 
-                    if (ProyectoSeleccionado.Estado.Equals((short)EstadoProyecto.CerradoTemporalmente))
+                    if (proyecto.Estado.Equals((short)EstadoProyecto.CerradoTemporalmente) && proyectoCerradoTmp != null)
                     {
-                        mPaginaModel.State.ReOpenDate = ProyectoSeleccionado.FilaProyecto.ProyectoCerradoTmp.FechaReapertura;
-                        mPaginaModel.State.CauseOfClose = HttpUtility.UrlDecode(ProyectoSeleccionado.FilaProyecto.ProyectoCerradoTmp.Motivo);
+                        mPaginaModel.State.ReOpenDate = proyectoCerradoTmp.FechaReapertura;
+                        mPaginaModel.State.CauseOfClose = HttpUtility.UrlDecode(proyectoCerradoTmp.Motivo);
                     }
-                    else if (ProyectoSeleccionado.Estado.Equals((short)EstadoProyecto.Cerrandose))
+                    else if (proyecto.Estado.Equals((short)EstadoProyecto.Cerrandose) && proyectoCerrandse != null)
                     {
-                        ProyectoCerrandose filaProyectoCerrandose = ProyectoSeleccionado.FilaProyecto.ProyectoCerrandose;
-                        TimeSpan diferencia = filaProyectoCerrandose.FechaCierre.Date.AddDays(filaProyectoCerrandose.PeriodoDeGracia).Subtract(DateTime.Now.Date);
+                        TimeSpan diferencia = proyectoCerrandse.FechaCierre.Date.AddDays(proyectoCerrandse.PeriodoDeGracia).Subtract(DateTime.Now.Date);
                         mPaginaModel.State.DaysOfGrace = diferencia.Days;
                     }
 
-                    mPaginaModel.Name = ProyectoSeleccionado.Nombre;
-                    mPaginaModel.Desciption = ProyectoSeleccionado.FilaProyecto.Descripcion;
-                    mPaginaModel.Tags = ProyectoSeleccionado.FilaProyecto.Tags;
+                    mPaginaModel.Name = proyecto.Nombre;
+                    mPaginaModel.Desciption = proyecto.Descripcion;
+                    mPaginaModel.Url = proyecto.URLPropia;
+                    mPaginaModel.Tags = proyecto.Tags;
 
                     mPaginaModel.ImageHead = CargarImagenSup();
                     mPaginaModel.ImageLogo = CargarImagenLogo();
 
                     mPaginaModel.EcosistemaCategories = CargarTesauro(ProyectoAD.MetaProyecto);
                     mPaginaModel.SelectedCategories = new List<Guid>();
-                    
-                    foreach (ProyectoAgCatTesauro filaProyectoAgCatTesauro in ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoAgCatTesauro)
+
+                    foreach (ProyectoAgCatTesauro filaProyectoAgCatTesauro in listaProyectoAgCatTesauro)
                     {
                         mPaginaModel.SelectedCategories.Add(filaProyectoAgCatTesauro.CategoriaTesauroID);
                     }
@@ -1168,13 +1244,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             {
                                 subcat.Selected = true;
                             }
-                        }                      
+                        }
                     }
 
                     mPaginaModel.HasMultiLanguageObjects = TieneObjetosMultiIdioma();
-
                     mPaginaModel.MultiLanguage = ParametrosGeneralesRow.IdiomasDisponibles || mPaginaModel.HasMultiLanguageObjects;
-
                 }
 
                 return mPaginaModel;

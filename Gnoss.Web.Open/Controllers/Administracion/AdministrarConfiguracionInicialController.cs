@@ -31,6 +31,7 @@ using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -45,8 +46,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public partial class AdministrarConfiguracionInicialController : ControllerBaseWeb
     {
-        public AdministrarConfiguracionInicialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarConfiguracionInicialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -82,6 +83,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         public ActionResult Guardar(string UserName, string UserEmail, string UserPassword, string UrlProyectosPublicos, string UrlProyectosPrivados, bool UseSameUrlForPrivateProjects, string UrlIntraGnoss, string Name, string ShortName, short Type)
         {
+            GuardarLogAuditoria();
             if (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(ShortName) && !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(UserEmail) && !string.IsNullOrEmpty(UserPassword) && !string.IsNullOrEmpty(UrlProyectosPublicos))
             {
                 #region Actualizar los parámetros de UrlIntragnoss y UrlsPropiasProyecto
@@ -109,7 +111,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 string error = ComprobarErrores(Name, ShortName, Type);
                 if (!string.IsNullOrEmpty(error))
                 {
-                    return GnossResultERROR(UtilIdiomas.GetText("SOLICITARCOMUNIDAD", "ERRORENVIO"));
+                    return GnossResultERROR(error);
                 }
 
                 CrearComunidad(Name, ShortName, Type, urlPropia);

@@ -1,4 +1,5 @@
-﻿using Es.Riam.AbstractsOpen;
+﻿using DocumentFormat.OpenXml.Office.CustomUI;
+using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.Amigos.Model;
 using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.Documentacion;
@@ -7,6 +8,7 @@ using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.OrganizacionDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.PersonaDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
+using Es.Riam.Gnoss.AD.EntityModel.Models.UsuarioDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.RDF.Model;
@@ -51,6 +53,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
@@ -80,8 +83,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public EditarPerfilComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public EditarPerfilComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -322,7 +325,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (paginaModel.ProfilePersonal != null)
             {
-                UtilIdiomas utilIdiomasProfilePersonal = new Recursos.UtilIdiomas(paginaModel.ProfilePersonal.Lang, mLoggingService, mEntityContext, mConfigService);
+                UtilIdiomas utilIdiomasProfilePersonal = new Recursos.UtilIdiomas(paginaModel.ProfilePersonal.Lang, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                 urlRedirect = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma.Replace("http://", "https://"), "/", utilIdiomasProfilePersonal, ProyectoSeleccionado.NombreCorto);
 
 
@@ -365,6 +368,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
+            identidadCL.EliminarPerfilMVC(IdentidadActual.PerfilID);
             identidadCL.Dispose();
 
             if (errores.Count > 0)
@@ -388,10 +392,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 
         [HttpPost]
-        public ActionResult GuardarDatosUsuarioFormulario(EditProfileViewModel.DataEditProfile dataEditProfile)
+        public ActionResult GuardarDatosUsuarioFormulario(DataEditProfile dataEditProfile)
         {
-
-            //GuardarPerfilPersonalNulo(EditProfileViewModel.ProfilePersonalViewModel pPerfilPersonal)
             IFormFile pFicheroImagen = dataEditProfile.FicheroImagen;
             string imagen = Request.Form["FicheroImagen"];
             EditProfileViewModel.ProfilePersonalViewModel perfilPersonal = dataEditProfile.ProfilePersonal;
@@ -479,18 +481,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                string erroresString = "";
-                string separador = "";
+                string erroresString = string.Empty;
+                string separador = string.Empty;
                 foreach (string error in errores.Keys)
                 {
-                    erroresString += separador + error + "&&" + errores[error];
+                    erroresString += $"{separador}{error}&&{errores[error]}";
                     separador = "||";
                 }
                 return GnossResultERROR(erroresString);
             }
-
-
-
         }
 
 
@@ -506,18 +505,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            string error = "";
+            string error = string.Empty;
             if (string.IsNullOrEmpty(pEmail))
             {
-                error = "email&&" + UtilIdiomas.GetText("COMADMINCMS", "ERRORCAMPOVACIO", UtilIdiomas.GetText("REGISTROUSUARIOORGANIZACION", "EMAIL").Replace(" *", ""));
+                error = $"email&&{UtilIdiomas.GetText("COMADMINCMS", "ERRORCAMPOVACIO", UtilIdiomas.GetText("REGISTROUSUARIOORGANIZACION", "EMAIL").Replace(" *", ""))}";
             }
             else if (personaCN.ExisteEmail(pEmail, IdentidadActual.Persona.Clave))
             {
-                error = "email&&" + UtilIdiomas.GetText("PERFIL", "ERRORMAIL");
+                error = $"email&&{UtilIdiomas.GetText("PERFIL", "ERRORMAIL")}";
             }
             else if (!UtilCadenas.ValidarEmail(pEmail))
             {
-                error = "formatoEmail&&" + UtilIdiomas.GetText("REGISTRO", "ERRORFORMATOEMAIL");
+                error = $"formatoEmail&&{UtilIdiomas.GetText("REGISTRO", "ERRORFORMATOEMAIL")}";
             }
 
             if (string.IsNullOrEmpty(error))
@@ -527,9 +526,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 personaCN.ActualizarPersonas();
                 personaCN.Dispose();
 
-
                 IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
                 identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
+                identidadCL.EliminarPerfilMVC(IdentidadActual.PerfilID);
                 identidadCL.Dispose();
 
                 ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", "", ProyectoSeleccionado.Clave);
@@ -607,14 +606,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             servicioImagenes.Url = UrlIntragnossServicios;
 
             //Si se sube un fichero nuevo se borra la foto temporal
-            servicioImagenes.BorrarImagen(urlFicheroImagen + "_temp" + ".png");
-            servicioImagenes.BorrarImagen(urlFicheroImagen + "_temp2" + ".png");
+            servicioImagenes.BorrarImagen($"{urlFicheroImagen}_temp.png");
+            servicioImagenes.BorrarImagen($"{urlFicheroImagen}_temp2.png");
 
             //Límite de 10 MB
             if (FicheroImagen.Length <= 10 * 1024 * 1024)
             {
                 byte[] bytesFichero = new byte[FicheroImagen.Length];
-                ((System.IO.Stream)FicheroImagen.OpenReadStream()).Read(bytesFichero, 0, (int)FicheroImagen.Length);
+                FicheroImagen.OpenReadStream().Read(bytesFichero, 0, (int)FicheroImagen.Length);
 
                 Image imagePerfilOriginal = UtilImages.ConvertirArrayBytesEnImagen(bytesFichero);
 
@@ -683,7 +682,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         servicioImagenes.AgregarImagen(msMini.ToArray(), urlFicheroImagen + "_peque", ".png");
 
-                        string coordenadasFoto = "[ " + x.ToString() + ", " + y.ToString() + ", " + (x + w).ToString() + ", " + (y + h).ToString() + " ]";
+                        string coordenadasFoto = $"[ {x}, {y}, {x + w}, {y + h} ]";
                         versionFoto = versionFoto + 1;
 
                         if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
@@ -698,7 +697,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             mEntityContext.SaveChanges();
 
                             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            //identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
                             identidadCN.ActualizarFotoIdentidadesOrganizacion(IdentidadActual.OrganizacionID.Value, false);
                             identidadCN.Dispose();
                         }
@@ -717,7 +715,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                             identidadCN.ActualizarFotoIdentidadesDePersonaDeOrganizacion(IdentidadActual.PersonaID.Value, filaPersona.OrganizacionID, false, false);
-                            //identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
                             identidadCN.Dispose();
                         }
                         else if (IdentidadActual.ModoPersonal)
@@ -754,14 +751,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (error.Equals(string.Empty))
             {
                 EliminarCaches();
-
-                //return Content(UtilArchivos.ContentImagenes + "/" + urlFicheroImagen.ToLower() + "_grande.png?" + Guid.NewGuid().ToString());
-
                 return GnossResultOK(UtilArchivos.ContentImagenes + "/" + urlFicheroImagen/*.ToLower()*/ + "_grande.png?" + Guid.NewGuid().ToString());
             }
             else
             {
-                //return new StatusCodeResult(400, error);
                 return GnossResultERROR(error);
             }
         }
@@ -930,8 +923,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 filaPerfilRedesSoc.NombreRedSocial = nombreRedSocial;
             }
-            IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Add(filaPerfilRedesSoc);
-            mEntityContext.PerfilRedesSociales.Add(filaPerfilRedesSoc);
+            if (!mEntityContext.PerfilRedesSociales.Any(redes => redes.PerfilID.Equals(filaPerfilRedesSoc.PerfilID) && redes.NombreRedSocial.Equals(nombreRedSocial)))
+            {
+                IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Add(filaPerfilRedesSoc);
+                mEntityContext.PerfilRedesSociales.Add(filaPerfilRedesSoc);
+            }
 
             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCN.ActualizaIdentidades();
@@ -948,10 +944,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             try
             {
-                //OrganizacionCN organizacionCN = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService);
-                //IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDS.Merge(organizacionCN.ObtenerOrganizacionPorID(IdentidadActual.OrganizacionPerfil.Clave));
-                //organizacionCN.Dispose();
-
                 Elementos.ServiciosGenerales.Organizacion organizacion = ObtenerOrganizacionEditar(pPerfilOrganizacion.NameOrganization);
 
                 bool cambiadoNombre = (organizacion.FilaOrganizacion.Nombre != pPerfilOrganizacion.NameOrganization);
@@ -1022,7 +1014,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 List<Guid> listaProyectos = proyCN.ObtenerListaProyectoIDDeOrganizacion(organizacion.Clave, false);
                 if (cambiadoNombre)
                 {
-                    List<Es.Riam.Gnoss.AD.EntityModel.Models.IdentidadDS.Perfil> listaPerfiles = identidadCN.ObtenerPerfilesDeUnaOrganizacion(organizacion.FilaOrganizacion.OrganizacionID);
+                    List<AD.EntityModel.Models.IdentidadDS.Perfil> listaPerfiles = identidadCN.ObtenerPerfilesDeUnaOrganizacion(organizacion.FilaOrganizacion.OrganizacionID);
                     foreach(AD.EntityModel.Models.IdentidadDS.Perfil perfil in listaPerfiles)
                     {
                         perfil.NombreOrganizacion = organizacion.FilaOrganizacion.Nombre;
@@ -1042,9 +1034,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return listaErrores;
         }
 
-        private Es.Riam.Gnoss.Elementos.ServiciosGenerales.Organizacion ObtenerOrganizacionEditar(string pNombreOrganizacion)
+        private Elementos.ServiciosGenerales.Organizacion ObtenerOrganizacionEditar(string pNombreOrganizacion)
         {
-            Es.Riam.Gnoss.Elementos.ServiciosGenerales.Organizacion org = IdentidadActual.OrganizacionPerfil;
+            Elementos.ServiciosGenerales.Organizacion org = IdentidadActual.OrganizacionPerfil;
             if (org == null && IdentidadActual.GestorIdentidades.GestorOrganizaciones.OrganizacionDW.ListaOrganizacion.Any(item => item.Nombre.Equals(pNombreOrganizacion)))
             {
                 Guid organizacionID = (IdentidadActual.GestorIdentidades.GestorOrganizaciones.OrganizacionDW.ListaOrganizacion.FirstOrDefault(item => item.Nombre.Equals(pNombreOrganizacion))).OrganizacionID;
@@ -1096,6 +1088,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     bool CambiadoNombre = false;
                     bool CambiadoApellidos = false;
+
                     if (!string.IsNullOrEmpty(pPerfilPersonal.Name))
                     {
                         CambiadoNombre = (IdentidadActual.Persona.FilaPersona.Nombre != pPerfilPersonal.Name);
@@ -1389,6 +1382,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     bool CambiadoNombre = (IdentidadActual.Persona.FilaPersona.Nombre != pPerfilPersonal.Name);
                     bool CambiadoApellidos = (IdentidadActual.Persona.FilaPersona.Apellidos != pPerfilPersonal.LastName);
+                    
 
                     if ((IdentidadActual.Persona.FilaPersona.EstadoCorreccion == (short)EstadoCorreccion.NotificadoNoCambiado || IdentidadActual.Persona.FilaPersona.EstadoCorreccion == (short)EstadoCorreccion.NotificadoNoCambiado3Dias) && (CambiadoNombre || CambiadoApellidos))
                     {
@@ -1398,6 +1392,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     IdentidadActual.Persona.FilaPersona.Nombre = pPerfilPersonal.Name.Trim();
                     IdentidadActual.Persona.FilaPersona.Apellidos = pPerfilPersonal.LastName.Trim();
                     IdentidadActual.Persona.FilaPersona.LocalidadPersonal = pPerfilPersonal.Location;
+
+
+                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    AD.EntityModel.Models.UsuarioDS.Usuario usuario = usuarioCN.ObtenerFilaUsuarioPorLoginOEmail(IdentidadActual.Persona.FilaPersona.Email);
+
+                    //BEA
+                    if (usuario.TwoFactorAuthentication!= pPerfilPersonal.TwoFactorAuthentication)
+                    {
+                        usuario.TwoFactorAuthentication = pPerfilPersonal.TwoFactorAuthentication;
+                    }
+
 
                     string antiguoEmail = IdentidadActual.Persona.FilaPersona.Email;
                     if (!string.IsNullOrEmpty(pPerfilPersonal.Email))
@@ -1453,20 +1458,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         string profesorSexo = "";
                         if (IdentidadActual.Persona.Sexo.Equals("H"))
                         {
-                            profesorSexo = UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESOR") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ";
+                            profesorSexo = $"{UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESOR")} {ConstantesDeSeparacion.SEPARACION_CONCATENADOR} ";
                         }
                         else
                         {
-                            profesorSexo = UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESORA") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ";
+                            profesorSexo = $"{UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESORA")} {ConstantesDeSeparacion.SEPARACION_CONCATENADOR} ";
                         }
 
-                        foreach (AD.EntityModel.Models.IdentidadDS.Perfil filaPerfil in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaPerfil.Where(perfil => perfil.PersonaID.Equals(mControladorBase.UsuarioActual.PersonaID)).ToList())
+                        foreach (AD.EntityModel.Models.IdentidadDS.Perfil filaPerfil2 in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaPerfil.Where(perfil => perfil.PersonaID.Equals(mControladorBase.UsuarioActual.PersonaID)).ToList())
                         {
+                            AD.EntityModel.Models.IdentidadDS.Perfil filaPerfil = filaPerfil2;
                             IdentidadCN idenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                             string profesor = "";
                             if (IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaProfesor.Any(teacher => teacher.PerfilID.Equals(filaPerfil.PerfilID)))
                             {
                                 profesor = profesorSexo;
+                            }
+                            if(mEntityContext.Entry(filaPerfil).State.Equals(EntityState.Detached))
+                            {
+                                filaPerfil = mEntityContext.Perfil.First(item => item.PerfilID.Equals(filaPerfil.PerfilID));
                             }
                             filaPerfil.NombrePerfil = profesor + IdentidadActual.Persona.NombreConApellidos;
 
@@ -1524,9 +1534,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (!MostrarDatosDemograficosPerfil)
                     {
                         IdentidadActual.Persona.PaisID = Guid.Empty;
-                        IdentidadActual.Persona.Provincia = "";
-                        IdentidadActual.Persona.Localidad = "";
-                        IdentidadActual.Persona.CodPostal = "";
+                        IdentidadActual.Persona.Provincia = string.Empty;
+                        IdentidadActual.Persona.Localidad = string.Empty;
+                        IdentidadActual.Persona.CodPostal = string.Empty;
                     }
                     personaCN.Actualizar();
 
@@ -1593,7 +1603,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return listaErrores;
         }
 
-        private Dictionary<string, string> GuardarPerfilProfesional(EditProfileViewModel.ProfileProfesionalViewModel pPerfilProfesional)
+        private Dictionary<string, string> GuardarPerfilProfesional(ProfileProfesionalViewModel pPerfilProfesional)
         {
             PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
 
@@ -1623,7 +1633,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return listaErrores;
         }
 
-        private Dictionary<string, string> GuardarPerfilProfesor(EditProfileViewModel.ProfileTeacherViewModel pPerfilProfesor)
+        private Dictionary<string, string> GuardarPerfilProfesor(ProfileTeacherViewModel pPerfilProfesor)
         {
             Dictionary<string, string> listaErrores = new Dictionary<string, string>();
 
@@ -1653,7 +1663,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return listaErrores;
         }
 
-        private void GuardarDatosExtra(EditProfileViewModel.ProfilePersonalViewModel pPerfilPersonal, Dictionary<int, string> pDicDatosExtraProyectoVirtuoso, Dictionary<int, string> pDicDatosExtraEcosistemaVirtuoso)
+        private void GuardarDatosExtra(ProfilePersonalViewModel pPerfilPersonal, Dictionary<int, string> pDicDatosExtraProyectoVirtuoso, Dictionary<int, string> pDicDatosExtraEcosistemaVirtuoso)
         {
             DataWrapperIdentidad dataWrapperIdentidad = IdentidadActual.GestorIdentidades.DataWrapperIdentidad;
             //cargar el gestor
@@ -1707,12 +1717,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             Dictionary<Guid, Guid> dicDatosExtraEcosistema = new Dictionary<Guid, Guid>();
             List<Guid> listaClausulasRegistro = new List<Guid>();
 
-            //if(paginaModel.ProfilePersonal != null)
-            // { 
             if (paginaModel.ProfilePersonal != null)
             {
 
-                foreach (EditProfileViewModel.AdditionalClause clausulaAdicional in paginaModel.ProfilePersonal.AdditionalClauses)
+                foreach (AdditionalClause clausulaAdicional in paginaModel.ProfilePersonal.AdditionalClauses)
                 {
                     AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg fila = usuarioDW.ListaProyRolUsuClausulaReg.Where(item => item.ClausulaID.Equals(clausulaAdicional.Id) && item.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OrganizacionGnossID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID)).FirstOrDefault();
 
@@ -2427,13 +2435,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             foreach (Guid perfilID in IdentidadActual.GestorIdentidades.ListaPerfiles.Keys)
             {
-                string rawKey = string.Concat("IdentidadActual_", IdentidadActual.PersonaID, "_", perfilID);
                 string rawKeyCache = identidadCL.ObtenerClaveCache(string.Concat("IdentidadActual_", IdentidadActual.PersonaID, "_", perfilID));
-                string rawKey2Cache = identidadCL.ObtenerClaveCache("PerfilMVC_" + perfilID);
-                string rawKey2 = "PerfilMVC_" + perfilID;
+                string rawKey2Cache = identidadCL.ObtenerClaveCache("PerfilMVC_" + perfilID);              
+
                 listaClavesInvalidar.Add(rawKeyCache.ToLower());
-                listaClavesInvalidar.Add(rawKey2Cache.ToLower());
+                listaClavesInvalidar.Add(rawKey2Cache.ToLower());            
             }
+            
+            string rawKey3Cache = identidadCL.ObtenerClaveCache($"IdentidadActual_{IdentidadActual.PersonaID}_{IdentidadActual.Clave}");
+            listaClavesInvalidar.Add(rawKey3Cache.ToLower());
             identidadCL.InvalidarCachesMultiples(listaClavesInvalidar);
 
             List<Guid> listaIdentidadesInvalidar = new List<Guid>();
@@ -2442,8 +2452,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 listaIdentidadesInvalidar.Add(identidadID);
             }
             identidadCL.InvalidarFichasIdentidadesMVC(listaIdentidadesInvalidar);
-
-
+            identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
+            identidadCL.EliminarCacheGestorTodasIdentidadesUsuario(mControladorBase.UsuarioActual.UsuarioID, IdentidadActual.PersonaID.Value);
+            identidadCL.EliminarCacheIdentidadActualUsuario(mControladorBase.UsuarioActual.UsuarioID);
             identidadCL.Dispose();
         }
 
@@ -2497,6 +2508,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 paginaModel.ProfilePersonal.PostalCode = IdentidadActual.Persona.FilaPersona.CPPersonal;
                 paginaModel.ProfilePersonal.Location = IdentidadActual.Persona.FilaPersona.LocalidadPersonal;
                 paginaModel.ProfilePersonal.Email = IdentidadActual.Persona.FilaPersona.Email;
+
+                //paginaModel.ProfilePersonal.TwoFactorAuthentication = IdentidadActual.Usuario.FilaUsuario.TwoFactorAuthentication;
+                //BEA                
+                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                AD.EntityModel.Models.UsuarioDS.Usuario usuario = usuarioCN.ObtenerFilaUsuarioPorLoginOEmail(IdentidadActual.Persona.FilaPersona.Email);
+                paginaModel.ProfilePersonal.TwoFactorAuthentication = usuario.TwoFactorAuthentication;
+                
+
                 if (!string.IsNullOrEmpty(IdentidadActual.Persona.FilaPersona.EmailTutor))
                 {
                     paginaModel.ProfilePersonal.EmailTutor = IdentidadActual.Persona.FilaPersona.EmailTutor;
@@ -2741,6 +2760,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     campoExtra.Required = fila.Obligatorio;
                     campoExtra.Options = listaOpciones;
                     campoExtra.FieldValue = opcionSeleccionada.ToString();
+                    campoExtra.Visible = fila.VisiblePerfil;
 
                     CamposExtra.Add(campoExtra);
                 }
@@ -2761,6 +2781,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     campoExtra.Title = UtilCadenas.ObtenerTextoDeIdioma(fila.Titulo, UtilIdiomas.LanguageCode, "es");
                     campoExtra.FieldName = fila.InputID;
                     campoExtra.Required = fila.Obligatorio;
+                    campoExtra.Visible = fila.VisibilidadFichaPerfil;
+
                     if (fila.InputID.Equals("ddlPais"))
                     {
                         Dictionary<Guid, string> listaOpciones = new Dictionary<Guid, string>();
@@ -2802,6 +2824,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     campoExtra.Title = UtilCadenas.ObtenerTextoDeIdioma(fila.Titulo, UtilIdiomas.LanguageCode, "es");
                     campoExtra.FieldName = fila.InputID;
                     campoExtra.Required = fila.Obligatorio;
+                    campoExtra.Visible = fila.VisibilidadFichaPerfil;
+
                     if (!string.IsNullOrEmpty(fila.QueryVirtuoso))
                     {
                         campoExtra.DependencyFields = fila.InputsSuperiores;

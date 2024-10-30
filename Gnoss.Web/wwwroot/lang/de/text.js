@@ -372,3 +372,18 @@ var accionesUsuarioAdminComunidad = {
     supervisor: 'Supervisor',
     usuario: 'User'
 };
+
+var espacioPersonal = {
+    avisoEditarOrganizarEnCategorias: 'Bitte wählen Sie eine Ressource aus, bevor Sie versuchen, deren Kategorie zu bearbeiten',
+};
+
+var facetas = {
+    siguientes: "Nächste",
+    anteriores: "Vorherige",
+};
+
+var accionesUsuarios = {
+    seguir: "Folgen",
+    dejarDeSeguir: "Nicht mehr folgen",
+    sinSeguimiento: "Ohne Verfolgung"
+};

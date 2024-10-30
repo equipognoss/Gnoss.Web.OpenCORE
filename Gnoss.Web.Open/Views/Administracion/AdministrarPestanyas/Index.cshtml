@@ -31,11 +31,11 @@ Variables
     @* Carga de idiomas *@
     foreach (string idiomaKey in Model.ListaIdiomas.Keys)
     {
-        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+        idiomas += $"{idiomaKey}|{Model.ListaIdiomas[idiomaKey]}&&&";
     }     
 
 	@* Controlar la posibilidad de guardar datos (CI/CD) *@
-	if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+	if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 	{
 		allowSaveData = false;
 	}
@@ -48,8 +48,6 @@ Variables
 
 <input type="hidden" id="idiomasComunidad" value="@idiomas" />
 <input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
-
-
 
     @* Migas de Pan *@
     <div class="col col-12 col-breadcrumb">
@@ -72,16 +70,17 @@ Variables
 		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
 			@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
 				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
-					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
-						<li class="nav-item">
-							<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
-								id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
-								data-language = "@idioma.Key"
-								role="tab" aria-controls="@("litVer" + idioma.Key)"
-								aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+					{
+						<li class="nav-item" role="presentation">
+							<a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+							   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+							   data-language="@idioma.Key"
+							   role="tab"
+							   aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
 						</li>
 						contNumPestañasVisibles += 1;
-					}				
+					}
 				}
 				@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
 				@if (contNumPestañasVisibles < cabecera.Languajes.Count){
@@ -107,7 +106,7 @@ Variables
 										var itemValue = item.Value;
 
 										@* Cada item del dropdown *@
-										<li>
+										<li role="presentation">
 											<a id="@("ver_paginas_" + itemKey)" 
 											   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
 											   data-toggle="tab"
@@ -244,21 +243,7 @@ Variables
 									pintar.ListaPestanyas = Model.ListaPestanyas;
 									@Html.PartialView("../Administracion/AdministrarPestanyas/_PintarPestanya", pintar)																						
 								}
-							</ul>
-
-							@* Botón para guardado de datos *@
-							@* Controlar la integración contínua
-							@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-							{
-								//<input type="button" style="background-color: gray;" disabled class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
-								<input disabled id="btnGuardarPaginas" type="button" class="btn btn-outline-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" /> 
-							}
-							else
-							{
-								//<input type="button" class="guardarTodo" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />
-								<input disabled id="btnGuardarPaginas" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />        
-							} 
-							*@
+							</ul>							
 						</div>
 					</div>
 				</div>
@@ -269,8 +254,7 @@ Variables
 		@Html.PartialView("_modal-views/_delete-page")
     </div>
 
-
-
+@Html.PartialView("_modal-views/_page-item-move")
 
 
 @* Carga de operativa *@
@@ -296,6 +280,8 @@ Variables
 
             // Operativa funcionamiento de Páginas
             operativaGestionPaginas.init(pParams);
+			// Operativa funcionamiento de filtros
+			operativaAsistenteFiltros.init();
         })();
     </script>
 }

@@ -102,6 +102,11 @@ $.Autocompleter = function(input, options) {
 	var select = $.Autocompleter.Select(options, input, selectCurrent, pintarSeleccionado, config);
 	
 	var blockSubmit;
+
+	// Temporizador de espera
+	var typingTimer;
+	// Intervalo de espera en milisegundos
+	var doneTypingInterval = 500; 	
 	
 	// prevent form submit in opera when selecting with return key
 //	$.browser.opera && $(input.form).bind("submit.autocomplete", function() {
@@ -114,77 +119,81 @@ $.Autocompleter = function(input, options) {
 	 // only opera doesn't trigger keydown multiple times while pressed, others don't work with keypress at all
 	$input.bind((/*$.browser.opera ? "keypress" : */"keyup") + ".autocomplete", function(event) {
 		// a keypress means the input has focus
-		// avoids issue where input had focus before the autocomplete was applied
-		hasFocus = 1;
-		// track last key pressed
-		lastKeyPressCode = event.keyCode;
-		switch(event.keyCode) {
-		
-			case KEY.UP:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.prev();
-				} else {
-					onChange(0, true);
-				}
-				break;
-				
-			case KEY.DOWN:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.next();
-				} else {
-					onChange(0, true);
-				}
-				break;
-				
-			case KEY.PAGEUP:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.pageUp();
-				} else {
-					onChange(0, true);
-				}
-				break;
-				
-			case KEY.PAGEDOWN:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.pageDown();
-				} else {
-					onChange(0, true);
-				}
-				break;
-			// matches also semicolon
-			case options.multiple && $.trim(options.multipleSeparator) == "," && KEY.COMMA:
-				select.hide();
-				PintarTags($input);
-				break;
-			case KEY.TAB:
-			case KEY.RETURN:
-			    cancelEvent(event);
-				if( selectCurrent() ) {
-					// stop default to prevent a form submit, Opera needs special handling
+		// avoids issue where input had focus before the autocomplete was applied		
+		clearTimeout(typingTimer);
+
+		typingTimer = setTimeout(function () {                
+			hasFocus = 1;
+			// track last key pressed
+			lastKeyPressCode = event.keyCode;
+			switch(event.keyCode) {
+			
+				case KEY.UP:
 					event.preventDefault();
-					blockSubmit = true;
-					return false;
-				}
-				select.hide();
-				// Evitar pintar tags si el input tiene propiedad data-avoid-autocomplete-with-enter-button
-				if (!$(this).data("avoid-autocomplete-with-enter-button")){
-					PintarTags($input);				
-				}				
-				break;
-			case KEY.LEFT:
-			case KEY.RIGHT:
-			case KEY.ESC:
-				select.hide();
-				break;
-			default:
-				clearTimeout(timeout);
-				timeout = setTimeout(onChange, options.delay);
-				break;
-		}
+					if ( select.visible() ) {
+						select.prev();
+					} else {
+						onChange(0, true);
+					}
+					break;
+					
+				case KEY.DOWN:
+					event.preventDefault();
+					if ( select.visible() ) {
+						select.next();
+					} else {
+						onChange(0, true);
+					}
+					break;
+					
+				case KEY.PAGEUP:
+					event.preventDefault();
+					if ( select.visible() ) {
+						select.pageUp();
+					} else {
+						onChange(0, true);
+					}
+					break;
+					
+				case KEY.PAGEDOWN:
+					event.preventDefault();
+					if ( select.visible() ) {
+						select.pageDown();
+					} else {
+						onChange(0, true);
+					}
+					break;
+				// matches also semicolon
+				case options.multiple && $.trim(options.multipleSeparator) == "," && KEY.COMMA:
+					select.hide();
+					PintarTags($input);
+					break;
+				case KEY.TAB:
+				case KEY.RETURN:
+					cancelEvent(event);
+					if( selectCurrent() ) {
+						// stop default to prevent a form submit, Opera needs special handling
+						event.preventDefault();
+						blockSubmit = true;
+						return false;
+					}
+					select.hide();
+					// Evitar pintar tags si el input tiene propiedad data-avoid-autocomplete-with-enter-button
+					if (!$($input).data("avoid-autocomplete-with-enter-button")){
+						PintarTags($input);				
+					}				
+					break;
+				case KEY.LEFT:
+				case KEY.RIGHT:
+				case KEY.ESC:
+					select.hide();
+					break;
+				default:
+					clearTimeout(timeout);
+					timeout = setTimeout(onChange, options.delay);
+					break;
+			}			
+		}, doneTypingInterval);			
 	}).focus(function(){
 		// track whether the field has focus, we shouldn't process any
 		// results if the field no longer has focus
@@ -230,7 +239,6 @@ $.Autocompleter = function(input, options) {
 		$input.unbind();
 		$(input.form).unbind(".autocomplete");
 	});
-	
 	
 	function selectCurrent() {
 		var selected = select.selected();
@@ -410,6 +418,9 @@ $.Autocompleter = function(input, options) {
 		}
 		
 		var currentValue = $input.val();
+
+		if (currentValue == undefined)
+			return;
 		
 		if ( !skipPrevCheck && currentValue == previousValue )
 			return;
@@ -1199,12 +1210,17 @@ function PintarTags(textBox, allowCapitalLetters = false)
         {
             for(var i=0; i<tags.length; i++)
             {
+				// Convertirla a minúsculas. No se permitirán TAGS repetidas (Tags guardadas en minúsculas)
                 var tagNombre = tags[i].trim();
-                var tagNombreEncode = Encoder.htmlEncode(tagNombre);
-                
-                var estaYaAgregada = textBoxHack.val().trim().indexOf(',' + tagNombre + ',') != -1;
-                estaYaAgregada = estaYaAgregada || textBoxHack.val().trim().substring(0, tagNombre.length + 1) == tagNombre + ',';
-                
+                var tagNombreEncode = Encoder.htmlEncode(tagNombre);                
+                //var estaYaAgregada = textBoxHack.val().trim().indexOf(',' + tagNombre + ',') != -1;
+				//estaYaAgregada = estaYaAgregada || textBoxHack.val().trim().substring(0, tagNombre.length + 1) == tagNombre + ',';
+				// Dividir la cadena en un array usando la coma como separador
+				//const elementos = textBoxHack.val().split(',');
+				// Dividir la cadena en un array usando la coma como separador y convertir todos los elementos a minúsculas
+				const elementos = textBoxHack.val().split(',').map(elemento => elemento.trim().toLowerCase());
+				// Verificar si la cadena está presente en el array
+				const estaYaAgregada = elementos.includes(tagNombre.toLocaleLowerCase());                
                 if(tagNombre != '' && (!estaYaAgregada || textBox.parents('.tag').length > 0))
                 {
                     //var html = "<div class=\"tag\" title=\"" + tagNombreEncode + "\"><div>" + tagNombre + "<a class=\"remove\" ></a></div><input type=\"text\" value=\"" + tagNombreEncode + "\"></div>";
@@ -1230,9 +1246,13 @@ function PintarTags(textBox, allowCapitalLetters = false)
 						$(contenedor).append(html);  
                     }
                     
+					/*
 					allowCapitalLetters == true 
 					? textBoxHack.val(textBoxHack.val() + tagNombre + ',')
 					: textBoxHack.val(textBoxHack.val() + tagNombre.toLowerCase() + ',')                    
+					*/
+					// Meter el dato que ha introducido el usuario tal cual
+					textBoxHack.val(textBoxHack.val() + tagNombre + ',');
                 }
             }
             

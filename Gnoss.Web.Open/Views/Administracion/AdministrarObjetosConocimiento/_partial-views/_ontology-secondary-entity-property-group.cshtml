@@ -25,7 +25,7 @@ Variables
 
     if (Model.Element.ClaseGrupoLectura != null)
     {
-        claseGrupo = " class=\" panelPropiedadesEntityGroup " + Model.Element.ClaseGrupoLectura + "\"";
+        claseGrupo = " panelPropiedadesEntityGroup " + Model.Element.ClaseGrupoLectura;
     }
 
     string display = "";
@@ -51,12 +51,12 @@ Variables
             claseProOntoData = "cont cont_" + Model.Properties[0].Element.Propiedad.NombreGeneracionClases;
         }
 
-        claseGrupo = " class=\"" + claseProOntoData + "\"";
+        claseGrupo = " " + claseProOntoData;
     }
 
     if (Model.Element.TipoGrupo == "subtitulo")
     {
-        <h2 @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
+        <h2 @Html.Raw(idGrupo) class="@Html.Raw(claseGrupo)" @Html.Raw(display)>
             @AddChildren()
             
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
@@ -68,7 +68,7 @@ Variables
     }
     else if (Model.Element.TipoGrupo == "titulo")
     {
-        <h1 @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
+        <h1 @Html.Raw(idGrupo) class="@Html.Raw(claseGrupo)" @Html.Raw(display)>
             @AddChildren()
             
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
@@ -101,7 +101,7 @@ Variables
     }
     else if (Model.Element.TipoGrupo == "dl")
     {
-        <dl @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
+        <dl @Html.Raw(idGrupo) class="@Html.Raw(claseGrupo)" @Html.Raw(display)>
             @AddChildren()
             
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)
@@ -129,7 +129,7 @@ Variables
 }
 else
 {
-    <div @Html.Raw(idGrupo) @Html.Raw(claseGrupo) @Html.Raw(display)>
+    <div @Html.Raw(idGrupo) class="@Html.Raw(claseGrupo)" @Html.Raw(display)>
         @AddChildren()
         
         @foreach (SemanticPropertyModel semPropMod in Model.Properties)

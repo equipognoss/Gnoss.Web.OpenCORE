@@ -123,25 +123,24 @@ Variables
                 @* Acción - Enviar Newsletter *@
                 @if (acciones.SendNewsletter)
                 {
-                    <a class="item-dropdown">
-                        <span class="material-icons">email</span>
-                        <span id="@idBotonEnviarNewsletter"
-                          class="item-dropdown"
-                          data-value="@Html.GetText("COMMON", "NO")"
-                          data-toggle="modal"
-                          data-target="#modal-container"
-                          onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "ENVIAR")',
+                    <a class="item-dropdown" data-value="@Html.GetText("COMMON", "NO")"
+           data-toggle="modal"
+           data-target="#modal-container"
+           onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "ENVIAR")',
                                                        '@Html.GetText("COMMON", "SI")',
                                                        '@Html.GetText("COMMON", "NO")',
                                                        '@Html.GetText("COMADMIN", "CONFIRMACIONENVIARNEWSLETTER", nombre, Html.GetNombreProyectoEcosistema())',
                                                        '@Model.Key',
-                                                        function () {                                                                                                                
+                                                        function () {
                                                             operativaGestionMiembros.enviarNewsletter('@Model.Url');
                                                             operativaGestionMiembros.cambiarTextoAndEliminarAtributos('@idBotonEnviarNewsletter', '@Html.GetText("COMADMIN", "RECIBENEWSLETTER")', ['onclick','data-target','data-toggle']);
                                                         },
                                                         '@Model.NamePerson',
                                                     '');
                                     ">
+                        <span class="material-icons">email</span>
+                        <span id="@idBotonEnviarNewsletter"
+                          class="item-dropdown">
                           @Html.GetText("COMADMIN", "ENVIAR")
                         </span>
                     </a>                 
@@ -149,11 +148,7 @@ Variables
                 @* Acción - No Enviar Newsletter *@
                 @if (acciones.NotSendNewsletter)
                 {
-                    <a class="item-dropdown">
-                            <span class="material-icons">unsubscribe</span>
-                            <span id="@idBotonEnviarNewsletter"
-                                  class="item-dropdown"
-                                  data-toggle="modal"
+                    <a class="item-dropdown" data-toggle="modal"
                                   data-target="#modal-container"
                                   data-value="@Html.GetText("COMMON", "SI")"
                                   onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "NOENVIAR")',
@@ -168,6 +163,9 @@ Variables
                                                                 '@Model.NamePerson',
                                                             '');
                                             ">
+                            <span class="material-icons">unsubscribe</span>
+                            <span id="@idBotonEnviarNewsletter"
+                                  class="item-dropdown">
                                 @Html.GetText("COMADMIN", "NOENVIAR")
                             </span>
                     </a>
@@ -181,14 +179,10 @@ Variables
                     @* Acción - Expulsar miembro *@
                     @if (acciones.ExpelMember)
                     {
-                        <a class="item-dropdown">                
-                            <span class="material-icons">person_remove</span>
-                            <span id="@idBotonExpulsar"
-                                  class="item-dropdown"
-                                  data-toggle="modal"
-                                  data-target="#modal-container"
-                                  data-value="@Html.GetText("COMMON", "NO")"
-                                  onclick="operativaGestionMiembros.expulsarMiembro('@Model.Url',
+                    <a class="item-dropdown" data-toggle="modal"
+           data-target="#modal-container"
+           data-value="@Html.GetText("COMMON", "NO")"
+           onclick="operativaGestionMiembros.expulsarMiembro('@Model.Url',
                                                                                     '@Model.Key',
                                                                                     '@Html.GetText("COMADMIN", "EXPULSAR")',
                                                                                     '@Html.GetText("COMMON", "SI")',
@@ -200,6 +194,9 @@ Variables
                                                                                      '@Model.NamePerson'
                                                                 )
                                               ">
+                        <span class="material-icons">person_remove</span>
+                            <span id="@idBotonExpulsar"
+                                  class="item-dropdown">
                                 @Html.GetText("COMADMIN", "EXPULSAR")
                             </span>
                         </a>
@@ -208,25 +205,24 @@ Variables
                     @* Acción - Readmitir miembro *@
                     @if (Model.Actions.ReadmitMember)
                     {
-                        <a class="item-dropdown">
-                            <span class="material-icons">person_add</span>
-                            <span id="@idBotonExpulsar"
-                                  class="item-dropdown"
-                                  data-toggle="modal"
-                                  data-target="#modal-container"
-                                  data-value="@Html.GetText("COMMON", "SI")"
-                                  onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "READMITIR")',
+                    <a class="item-dropdown" data-toggle="modal"
+           data-target="#modal-container"
+           data-value="@Html.GetText("COMMON", "SI")"
+           onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "READMITIR")',
                                                                            '@Html.GetText("COMMON", "SI")',
                                                                            '@Html.GetText("COMMON", "NO")',
                                                                            '@Html.GetText("COMADMIN", "CONFIRMACIONREADMITIRUSUARIO", nombre, Html.GetNombreProyectoEcosistema())',
                                                                            '@Model.Key',
-                                                                            function () {                                                                            
+                                                                            function () {
                                                                                 operativaGestionMiembros.readmitirMiembro('@Model.Url');
                                                                                 operativaGestionMiembros.cambiarTextoAndEliminarAtributos('@idBotonExpulsar','@Html.GetText("COMADMIN", "USUARIOREADMITIDO")', ['onclick','data-target','data-toggle']);
                                                                             },
                                                                             '@Model.NamePerson',
                                                                         '');
                                                         ">
+                            <span class="material-icons">person_add</span>
+                            <span id="@idBotonExpulsar"
+                                  class="item-dropdown">
                                 @Html.GetText("COMADMIN", "READMITIR")
                             </span>
                         </a>
@@ -239,25 +235,24 @@ Variables
                 @* Accion - Bloquear usuario *@
                 @if (acciones.BlockUser)
                 {
-                    <a class="item-dropdown">
-                        <span class="material-icons">no_accounts</span>
-                        <span id="@idBotonBloquear"
-                              class="item-dropdown"
-                              data-toggle="modal"
-                              data-target="#modal-container"
-                              data-value="@Html.GetText("COMMON", "NO")"
-                              onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "BLOQUEAR")',
+                    <a class="item-dropdown" data-toggle="modal"
+           data-target="#modal-container"
+           data-value="@Html.GetText("COMMON", "NO")"
+           onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "BLOQUEAR")',
                                                            '@Html.GetText("COMMON", "SI")',
                                                            '@Html.GetText("COMMON", "NO")',
                                                            '@Html.GetText("COMADMIN", "CONFIRMACIONBLOQUEARUSUARIO", nombre, Html.GetNombreProyectoEcosistema())',
                                                            '@Model.Key',
-                                                            function () {                                                            
+                                                            function () {
                                                                 operativaGestionMiembros.bloquearMiembro('@Model.Url');
                                                                 operativaGestionMiembros.cambiarTextoAndEliminarAtributos('@idBotonBloquear', '@Html.GetText("COMADMIN", "USUARIOBLOQUEADO")', ['onclick','data-target','data-toggle']);
                                                             },
                                                             '@Model.NamePerson',
                                                         '');
                                         ">
+                        <span class="material-icons">no_accounts</span>
+                        <span id="@idBotonBloquear"
+                              class="item-dropdown">
                             @Html.GetText("COMADMIN", "BLOQUEAR")
                             @*TODO Victor: @Model.KeyPerson*@
                         </span>
@@ -267,11 +262,7 @@ Variables
                 @* Accion - Desbloquear usuario *@
                 @if (acciones.UnblockUser)
                 {
-                    <a class="item-dropdown">
-                        <span class="material-icons">account_circle</span>
-                        <span id="@idBotonBloquear"
-                              class="item-dropdown"
-                              data-toggle="modal"
+                    <a class="item-dropdown" data-toggle="modal"
                               data-target="#modal-container"
                               data-value="@Html.GetText("COMMON", "SI")"
                               onclick="MostrarAccionSiNoEnModal('@Html.GetText("COMADMIN", "BLOQUEAR")',
@@ -286,6 +277,9 @@ Variables
                                                             '@Model.NamePerson',
                                                         '');
                                         ">
+                        <span class="material-icons">account_circle</span>
+                        <span id="@idBotonBloquear"
+                              class="item-dropdown">
                             @Html.GetText("COMADMIN", "DESBLOQUEAR")
                         </span>
                     </a>
@@ -294,20 +288,19 @@ Variables
 
             @* Acción -> Cambiar rol a un miembro *@
             @if (accionCambiarRolDisponible)
-            {   
-                <a class="item-dropdown">
-                    <span class="material-icons">supervisor_account</span>
-                    <span id="@idBotonCambiarRol"
-                              class="item-dropdown"
-                              data-toggle="modal"                         
-                              data-target="#modal-container"
-                              data-value="@userRol"
-                          onclick="operativaGestionMiembros.cambiarRolMiembro('@Model.Key',
+            {
+                <a class="item-dropdown" data-toggle="modal"
+           data-target="#modal-container"
+           data-value="@userRol"
+           onclick="operativaGestionMiembros.cambiarRolMiembro('@Model.Key',
                                                   '@((short)Model.Rol)',
                                                   '@Model.Url',
                                                   '@Model.NamePerson',
                                                   );
                                         ">
+                    <span class="material-icons">supervisor_account</span>
+                    <span id="@idBotonCambiarRol"
+                              class="item-dropdown">
                             @Html.GetText("USUARIOS", "CAMBIARROL")
                     </span>
                 </a>
@@ -316,17 +309,16 @@ Variables
             @* Acción -> Cambiar la contraseña de un miembro *@
             @if (acciones.ResetPassword)
             {
-                <a class="item-dropdown">
-                    <span class="material-icons">edit</span>
-                    <span id="@idBotonCambiarPass"
-                          class="item-dropdown"
-                          data-toggle="modal"
-                          data-target="#modal-container"
-                          data-value="@userRol"
-                          onclick="operativaGestionMiembros.cambiarPassword('@Model.UrlPerson',              
+                <a class="item-dropdown" data-toggle="modal"
+           data-target="#modal-container"
+           data-value="@userRol"
+           onclick="operativaGestionMiembros.cambiarPassword('@Model.UrlPerson',
                                                   '@Model.NamePerson',
                                                   );
                                         ">
+                    <span class="material-icons">edit</span>
+                    <span id="@idBotonCambiarPass"
+                          class="item-dropdown">
                         @Html.GetText("MENU", "CAMBIOCONTRAS")
                     </span>
                 </a>
@@ -335,12 +327,11 @@ Variables
             @* Acción para editar administrar páginas de la comunidad *@
             @if (!isAdministratorRol)
             {
-                <a class="item-dropdown">
+                <a class="item-dropdown btnLoadManagePagePermissions" data-toggle="modal"
+           data-target="#modal-container"
+           data-user-id="@Model.Key">
                     <span class="material-icons">manage_accounts</span>
-                    <span class="item-dropdown btnLoadManagePagePermissions"
-                          data-toggle="modal"
-                          data-target="#modal-container"
-                          data-user-id="@Model.Key">
+                    <span class="item-dropdown">
                         @Html.GetText("DEVTOOLS","ADMINISTRARPERMISOSDEPAGINAS")
                     </span>
                 </a>

@@ -58,7 +58,22 @@ const operativaGestionObjetosConocimientoOntologias = {
         // Reiniciar funcionamiento de ckEditor
         ckEditorRecargarTodos();
     },  
-    
+
+    /**
+     * Método que se ejecuta al cambiar el valor de un input que se ha generado dinámicamente por los idiomas desde operativaMultiIdioma       
+     * @param {*} event Evento que se ha disparado cuando el input ha cambiado su valor
+     */
+    handleOnInputChanged: function (event) {
+        const that = this;
+        // Input que ha sido actualizado
+        const input = $(event.currentTarget);
+        
+        //Buscamos el panel de aviso dentro del modal que estamos modificando
+        const panelAvisoFromCurrentRow = input.closest(`.${that.objetoConocimientoListItemClassName}`).find(`.${this.panelAvisoNecesarioReinicioClassName}`);
+        //panelAvisoFromCurrentRow.removeClass("d-flex");
+        panelAvisoFromCurrentRow.removeClass("d-none");            
+    },
+
     /**
      * Inicializar y configurar los paneles de dragAndDrop para ficheros de ontologías
      */
@@ -109,6 +124,8 @@ const operativaGestionObjetosConocimientoOntologias = {
         // Url para cargar los ficheros históricos de un objeto de conocimiento
         this.urlLoadHistoryFiles = `${this.urlBase}/load-history-file-items`;
 
+        // Panel con el mensaje indicando que es necesario reiniciar
+        this.panelAvisoNecesarioReinicioClassName = "panelAvisoNecesarioReinicio";
         
         // Objeto donde se guardarán las opciones para su guardado
         this.ListaObjetosConocimiento = {};
@@ -337,6 +354,11 @@ const operativaGestionObjetosConocimientoOntologias = {
         this.btnEditGroupValueClassName = "btnEditGroupValue";
 
         this.btnDeleteObjectNoFuncionalPropClassName = "btnDeleteObjectNoFuncionalProp";
+        // Botón para el borrado de una ontología secundaria dentro de otra ontología secundaria
+        this.btnDeleteObjectSecondaryFromSecondaryObjectClassName = "_ontology-secondary-AddDeleteButon";
+        // Nombr ede la clase de la fila donde se van mostrando las ontologías secundarias existentes en una ontología secundaria (dentro del modal)
+        this.ontologySecondaryAddEditionAddedValuesClassName = "ontology-secondary-addEditionAddedValues";
+
 
         
         // Botón para guardar un objeto
@@ -673,13 +695,35 @@ const operativaGestionObjetosConocimientoOntologias = {
                 // Mostrar información de que se está editando
                 const labelElementExtraInfo = pElementRow.find(`.${that.labelElementExtraInfoClassName}`);
                 labelElementExtraInfo.removeClass("d-none");                 
-                // Detectar cuál será el primer input que determinará el título del panel
-                const firstInput = pPanelDetail.find("input[type=text]").first();
-                if ($(this)[0] == $(firstInput)[0]){
-                    // Actualizar el nombre en la fila
-                    const labelElementName = pElementRow.find(`.${that.labelElementNameClassName}`);
-                    labelElementName.html($(this).val());           
-                }            
+                // Detectar si hay que cambiar el título de la propiedad secundaria (Sólo hacerlo para el idioma Español si hay multiIdioma)
+                let changeLabelTitle = true;
+                const containerInput = $(this).parent("div");            
+                const languageNavigation = containerInput.find('.nav-tabs');
+                if (languageNavigation.length > 0){
+                    // Comprobar si el idioma es español                    
+                    const langActualValue = languageNavigation.find(".nav-item.active").attr('rel');
+                    if (langActualValue.indexOf('es') == -1) {
+                        // Idioma España no activado
+                        changeLabelTitle = false;                                       
+                    }
+                }
+                if (changeLabelTitle){
+                    // Hacer la comprobación para saber si hace falta modificar el título
+                    const cardBody = pPanelDetail.find(".card-body");
+                    // Identificadores del bloque
+                    const cardBodyPropertyNameRepresentOntologyTitleValue = cardBody.data("property-name-represent-ontology-title-value");
+                    const cardBodyPropertyNameRepresentOntologyTitleEntity = cardBody.data("property-name-represent-ontology-title-entity");
+                    // Indetificadores del input
+                    const inputBodyPropertyNameRepresentOntologyTitleValue = $(this).data("property-name-represent-ontology-title-value");
+                    const inputBodyPropertyNameRepresentOntologyTitleEntity = $(this).data("property-name-represent-ontology-title-entity");
+
+                    if ((cardBodyPropertyNameRepresentOntologyTitleValue == inputBodyPropertyNameRepresentOntologyTitleValue) 
+                    && (cardBodyPropertyNameRepresentOntologyTitleEntity == inputBodyPropertyNameRepresentOntologyTitleEntity)){                        
+                        // Actualizar el nombre en la fila
+                        const labelElementName = pElementRow.find(`.${that.labelElementNameClassName}`);
+                        labelElementName.html($(this).val());      
+                    }
+                }          
             });	 
         });
         
@@ -766,11 +810,14 @@ const operativaGestionObjetosConocimientoOntologias = {
                 // Fila elemento que está siendo editada. Contenedor de todo
                 const pElementRow = btnDeleteGroup.closest(`.${that.elementRowClassName}`);
                 const deleteFunction = btnDeleteGroup.data("handleclick");
-                // Pasar la función como parámetro al plugin
-                const pluginOptions = {                    
-                    onConfirmDeleteMessage: () => eval(deleteFunction)
-                }               
-                btnDeleteGroup.confirmDeleteItemInModal(pluginOptions);
+                // Aplicar el filtro si dispone de "hadleClick"
+                if (deleteFunction) {
+                    // Pasar la función como parámetro al plugin
+                    const pluginOptions = {                    
+                        onConfirmDeleteMessage: () => eval(deleteFunction)
+                    }               
+                    btnDeleteGroup.confirmDeleteItemInModal(pluginOptions);                 
+                }
             }                                                                                             
         });  
         
@@ -783,11 +830,14 @@ const operativaGestionObjetosConocimientoOntologias = {
                 // Fila elemento que está siendo editada. Contenedor de todo
                 const pElementRow = btnDeleteObjectNoFuncionalProp.closest(`.${that.elementRowClassName}`);
                 const deleteFunction = btnDeleteObjectNoFuncionalProp.data("handleclick");
-                // Pasar la función como parámetro al plugin
-                const pluginOptions = {                    
-                    onConfirmDeleteMessage: () => eval(deleteFunction)
-                }               
-                btnDeleteObjectNoFuncionalProp.confirmDeleteItemInModal(pluginOptions);
+                // Aplicar el filtro si dispone de "hadleClick"
+                if (deleteFunction) {
+                    // Pasar la función como parámetro al plugin
+                    const pluginOptions = {                    
+                        onConfirmDeleteMessage: () => eval(deleteFunction)
+                    }               
+                    btnDeleteObjectNoFuncionalProp.confirmDeleteItemInModal(pluginOptions);                    
+                }
             }                                                                                             
         });
     },
@@ -822,6 +872,309 @@ const operativaGestionObjetosConocimientoOntologias = {
         // Habilitar el botón de guardado
         that.handleEnableOrDisableApplyButton(true);        
     },
+
+
+
+
+
+    /**
+     * Método para eliminar un objeto o entidad secundaria dentro de otra entidad secundaria desde el modal de edición de una entidad secundaria del modal de las devTools
+     * @param {*} pNumElem 
+     * @param {*} pEntidad 
+     * @param {*} pPropiedad 
+     * @param {*} pControlContValores 
+     */
+    EliminarObjectNoFuncionalSeleccEnt: function (pNumElem, pEntidad, pPropiedad, pControlContValores, TxtValorRdf, TxtRegistroIDs, TxtCaracteristicasElem, TxtElemEditados, buttonPressed)
+    {
+        const that = this;        
+        TxtHackHayCambios = true;
+        that.MarcarElementoEditado(pEntidad, pPropiedad, pNumElem, TxtElemEditados, TxtCaracteristicasElem);
+            
+        var valorAntiguo = that.GetValorElementoGuardado(pEntidad + '&ULT', pPropiedad, TxtValorRdf, TxtElemEditados, pNumElem);
+        
+        if (valorAntiguo != null && valorAntiguo != '') {            
+            that.DeleteElementoEditadoGuardado(pEntidad + '&ULT', pPropiedad, TxtValorRdf, TxtElemEditados);
+        }
+        else {            
+            valorAntiguo = that.GetValorElementoGuardado(pEntidad, pPropiedad, TxtValorRdf, TxtElemEditados, pNumElem);            
+            that.DeleteElementoEditadoGuardado(pEntidad, pPropiedad, TxtValorRdf, TxtElemEditados);
+        }        
+        that.DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, '');        
+        that.GuardarValorEnContenedorGrupoValores(pControlContValores, '', pEntidad, pPropiedad, TxtValorRdf, TxtRegistroIDs, TxtCaracteristicasElem, TxtElemEditados, $(buttonPressed));        
+        that.MarcarElementoEditado(pEntidad, pPropiedad, -1, TxtElemEditados, TxtCaracteristicasElem);
+    
+        var idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
+    
+        if (idControlCampo.indexOf('selEnt_') != -1 && document.getElementById(idControlCampo.replace('selEnt_', 'bkHtmlSelEnt_')) != null) {
+            $('#' + idControlCampo.replace('selEnt_', 'divContControlTes_')).css('display', '');
+            $('#' + idControlCampo.replace('selEnt_', 'contEntSelec_')).css('display', 'none');
+        }
+        else if (document.getElementById(idControlCampo.replace('selEnt_', 'hack_')) == null) {
+            document.getElementById(idControlCampo.replace('selEnt_', 'lbCrear_')).style.display = '';
+            document.getElementById(idControlCampo.replace('selEnt_', 'lbGuardar_')).style.display = 'none';
+        }
+    
+        if (typeof document.getElementById(idControlCampo).options != 'undefined') {
+            for (var i = 0; i < document.getElementById(idControlCampo).options.length; i++) {
+                if (document.getElementById(idControlCampo).options[i].value == valorAntiguo) {
+                    document.getElementById(idControlCampo).options[i].disabled = false;
+                    break;
+                }
+            }
+        }
+    
+        if (that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, TxtCaracteristicasElem, 'propSelectEntDep') == 'true') {            
+            that.ObtenerSelectoresDependientes(pPropiedad, pEntidad, true);
+        }
+    
+        // Habilitar el botón de guardado del objeto secundario una vez se haya decidido eliminar
+        that.handleEnableOrDisableApplyButton(true);
+    }, 
+    
+    /**
+     * Método para agregar un objeto no funcional de una entidad secundaria una vez se ha seleccionado la opción de autocomplete del modal de las devtools
+     * @param {*} pEntidad 
+     * @param {*} pPropiedad 
+     * @param {*} pControlContValores 
+     * @returns 
+     */
+    AgregarObjectNoFuncionalSeleccEnt: function(pEntidad, pPropiedad, pControlContValores, TxtValorRdf, TxtRegistroIDs,TxtCaracteristicasElem,TxtElemEditados,buttonPressed)
+    {
+        const that = this;
+        TxtHackHayCambios = true;
+        var valor = that.ObtenerValorEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem);
+        if (valor != '')
+        {
+            var perteneceEntAGrupoPanel = that.PerteneceEntidadAAlgunGrupoPanelSinEditar(pEntidad, TxtCaracteristicasElem, TxtElemEditados);
+            if (!perteneceEntAGrupoPanel)
+            {
+                
+                if (that.ValorPropiedadRepetido(pEntidad, pPropiedad, that.GetValorEncode(valor), TxtValorRdf, TxtElemEditados)) {
+                    that.DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, '');
+                    return false;
+                }
+    
+                that.PutElementoGuardado(pEntidad, pPropiedad, that.GetValorEncode(valor), TxtValorRdf, TxtElemEditados);
+            }
+            else
+            {
+                if (that.ValorPropiedadRepetido(pEntidad + '&ULT', pPropiedad, that.GetValorEncode(valor),TxtValorRdf, TxtElemEditados)) {
+                    that.DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, '');
+                    return false;
+                }
+    
+                var elemAgregado = that.PutElementoGuardado(pEntidad + '&ULT', pPropiedad, that.GetValorEncode(valor), TxtValorRdf, TxtElemEditados);
+    
+                if (elemAgregado) {
+                    that.AgregarPropsEntidadObligatoriasEdicion(pEntidad, pPropiedad, '&ULT');
+                }
+            }
+    
+            var idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
+    
+            var textoInfo = '';
+    
+            if (typeof document.getElementById(idControlCampo).selectedIndex != "undefined") {
+                document.getElementById(idControlCampo).options[document.getElementById(idControlCampo).selectedIndex].disabled = true;
+                textoInfo = document.getElementById(idControlCampo).options[document.getElementById(idControlCampo).selectedIndex].text;
+            }
+            else if (document.getElementById(idControlCampo.replace("selEnt_", "hack_")) != null) {
+                textoInfo = document.getElementById(idControlCampo.replace("selEnt_", "hack_")).value;
+                document.getElementById(idControlCampo.replace("selEnt_", "hack_")).value = '';
+    
+                if (textoInfo == '') {
+                    var count = 0;
+                    var trozoID = 'extra_' + count + '_hack_';
+    
+                    while (textoInfo == '' && document.getElementById(idControlCampo.replace("selEnt_", trozoID)) != null) {
+                        textoInfo = document.getElementById(idControlCampo.replace("selEnt_", trozoID)).value;
+                        document.getElementById(idControlCampo.replace("selEnt_", trozoID)).value = '';
+                        count++;
+                        trozoID = 'extra_' + count + '_hack_';
+                    }
+                }
+            }
+            else if (document.getElementById(idControlCampo.replace("selEnt_", "hackTesNameSelEnt_")) != null) {
+                textoInfo = document.getElementById(idControlCampo.replace("selEnt_", "hackTesNameSelEnt_")).value;
+    
+                if (textoInfo != '' && textoInfo.lastIndexOf(',') == textoInfo.length - 1) {
+                    textoInfo = textoInfo.substring(0, textoInfo.length - 1);
+                }
+    
+                if (textoInfo != '' && textoInfo.lastIndexOf('|') == textoInfo.length - 1) {
+                    textoInfo = textoInfo.substring(0, textoInfo.length - 1);
+                }
+    
+                textoInfo = textoInfo.replace(/\,/g, ' > ');
+            }
+            else {
+                textoInfo = document.getElementById(idControlCampo).value;
+                document.getElementById(idControlCampo).value = '';
+            }
+            
+            that.DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, '');
+            that.AgregarValorAContenedorGrupoValores(pControlContValores, textoInfo, pEntidad, pPropiedad, TxtValorRdf, TxtRegistroIDs, TxtCaracteristicasElem, TxtElemEditados);
+    
+            if (pControlContValores != null && pControlContValores.indexOf('contEntSelec_') != -1 && document.getElementById(pControlContValores.replace('contEntSelec_', 'bkHtmlSelEnt_')) != null)
+            {
+                that.ResetearSeleccTesSem(pControlContValores.replace('contEntSelec_', 'selEnt_'));
+            }
+            
+            if (that.ExcedeCardinalidadMaxima(pEntidad, pPropiedad, TxtValorRdf, TxtCaracteristicasElem, TxtElemEditados))
+            {
+                document.getElementById(idControlCampo.replace('selEnt_','lbCrear_')).style.display = 'none';
+            }
+    
+            if (that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, TxtCaracteristicasElem, 'propSelectEntDep') == 'true') {
+                that.ObtenerSelectoresDependientes(pPropiedad, pEntidad, true);
+            }
+        }
+    },
+
+    /**
+     * Método para guardar un objeto no funcional de una entidad secundaria una vez se ha seleccionado la opción de autocomplete y se ha pulsado en "Guardar"
+     */
+    GuardarObjectNoFuncionalSeleccEnt: function(pEntidad, pPropiedad, pControlContValores, TxtValorRdf, TxtRegistroIDs,TxtCaracteristicasElem,TxtElemEditados,buttonPressed)
+    {
+        const that = this;
+        var valor = that.ObtenerValorEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem);
+        
+        if (valor != '')
+        {            
+            that.SetValorElementoEditadoGuardado(pEntidad, pPropiedad, GetValorEncode(valor), TxtValorRdf, TxtElemEditados);
+    
+            var idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
+    
+            var textoInfo = '';
+    
+            if (typeof document.getElementById(idControlCampo).selectedIndex != "undefined") {
+                document.getElementById(idControlCampo).options[document.getElementById(idControlCampo).selectedIndex].disabled = true;
+                textoInfo = document.getElementById(idControlCampo).options[document.getElementById(idControlCampo).selectedIndex].text;
+            }
+            else {
+                textoInfo = document.getElementById(idControlCampo).value;
+                document.getElementById(idControlCampo).value = '';
+            }
+            
+            that.DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, '');
+            that.GuardarValorEnContenedorGrupoValores(pControlContValores, textoInfo, pEntidad, pPropiedad, TxtValorRdf, TxtRegistroIDs, TxtCaracteristicasElem, TxtElemEditados);            
+            that.MarcarElementoEditado(pEntidad, pPropiedad, -1, TxtElemEditados, TxtCaracteristicasElem);                        
+            that.EstablecerBotonesObjectNoFuncionalSeleccEnt(pEntidad, pPropiedad, TxtRegistroIDs);
+            
+            if (that.ExcedeCardinalidadMaxima(pEntidad, pPropiedad, TxtValorRdf, TxtCaracteristicasElem, TxtElemEditados))
+            {
+                document.getElementById(idControlCampo.replace('selEnt_','lbCrear_')).style.display = 'none';
+            }
+    
+            if (that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, TxtCaracteristicasElem, 'propSelectEntDep') == 'true') {                
+                that.ObtenerSelectoresDependientes(pPropiedad, pEntidad, true);
+            }
+        }
+    },
+
+    EstablecerBotonesObjectNoFuncionalSeleccEnt: function (pEntidad, pPropiedad, TxtRegistroIDs){
+        const that = this;
+        var idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
+        document.getElementById(idControlCampo.replace('selEnt_','lbCrear_')).style.display = '';
+        document.getElementById(idControlCampo.replace('selEnt_','lbGuardar_')).style.display = 'none';
+    },    
+
+
+    ValorPropiedadRepetido: function(pEntidad, pPropiedad, valor, TxtValorRdf, TxtElemEditados) {
+        const that =  this;
+        var i = 0;
+        var valorAntiguo = that.GetValorElementoGuardado(pEntidad, pPropiedad, TxtValorRdf, TxtElemEditados, i);
+    
+        while (valorAntiguo != null && valorAntiguo != '') {
+            if (valorAntiguo == valor) {
+                return true;
+            }
+    
+            i++;
+            valorAntiguo = that.GetValorElementoGuardado(pEntidad, pPropiedad, TxtValorRdf, TxtElemEditados, i);
+        }
+    
+        return false;
+    },
+
+    ObtenerSelectoresDependientes: function(pPropiedad, pEntidad, pMultiple) {
+        const that = this;
+        var valorProp = '';
+    
+        if (!pMultiple) {
+            valorProp = that.ObtenerValorEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem);
+        }
+        else {            
+            var valores = that.GetTodosValoresElementoGuardado(pEntidad, pPropiedad);
+    
+            for (var i = 0; i < valores.length; i++) {
+                valorProp += valores[i] + ',';
+            }
+        }
+    
+        if (valorProp == '' || pMultiple) {
+            
+            that.DeshabilitarSelectoresDependientes(pPropiedad, pEntidad);
+    
+            if (valorProp == '') {
+                return;
+            }
+        }
+    
+        var arg = {};
+        arg.PropertyName = pPropiedad;
+        arg.EntityType = pEntidad;
+        arg.PropertyValue = valorProp;        
+        loadingMostrar();
+    
+        GnossPeticionAjax(urlPaginaActual + '/getdependentselectorsentities', arg, true).done(function (data) {
+            var selectores = data.split('[[|||]]');
+            for (var i = 0; i < selectores.length - 1; i++) {
+                var datosSelector = selectores[i].split('[[|]]');
+                var idControl = that.ObtenerControlEntidadProp(datosSelector[1] + ',' + datosSelector[0], TxtRegistroIDs);
+                var htmlCombo = '<option value="">' + $('#' + idControl)[0].options[0].innerText + '</option>';
+                
+                for (var j=2;j<datosSelector.length - 1;j=j+2)
+                {
+                    htmlCombo += '<option value="'+datosSelector[j]+'">'+datosSelector[j+1]+'</option>';
+                }
+    
+                $('#' + idControl).html(htmlCombo);
+                $('#' + idControl).removeAttr('disabled');
+    
+                if (that.GetCaracteristicaPropiedad(datosSelector[1], datosSelector[0], TxtCaracteristicasElem, 'propSelectEntDep') == 'true') {
+                    that.DeshabilitarSelectoresDependientes(datosSelector[0], datosSelector[1])
+                }
+            }
+        }).fail(function (data) {
+            MostrarErrorPropiedad(pEntidad, pPropiedad, data, TxtRegistroIDs);
+        }).always(function () {
+            loadingOcultar();
+        });
+    }, 
+    
+    DeshabilitarSelectoresDependientes: function(pPropiedad, pEntidad) {
+        const that = this;
+        var propsDepen = that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, TxtCaracteristicasElem, 'propSelectEntDependiente');
+    
+        if (propsDepen != null && propsDepen != '') {
+            var props = propsDepen.split(';;');
+            for (var i = 0; i < props.length - 1; i++) {
+                var entHija = props[i].split(';')[1];
+                var propHija = props[i].split(';')[0];
+                that.LimpiarControlesPropiedadDeEntidad(entHija, propHija, TxtValorRdf, TxtRegistroIDs, TxtCaracteristicasElem, TxtElemEditados);                
+                var idControl = that.ObtenerControlEntidadProp(entHija + ',' + propHija, TxtRegistroIDs);
+                if (idControl != '')
+                {
+                    $('#' + idControl).attr('disabled', 'disabled');
+                }    
+                if (that.GetCaracteristicaPropiedad(entHija, propHija, TxtCaracteristicasElem, 'propSelectEntDep') == 'true') {
+                    that.DeshabilitarSelectoresDependientes(propHija, entHija);
+                }
+            }
+        }
+    },
+
 
     GuardarObjectNoFuncionalProp: function(pEntidad, pPropiedad, pEntidadHija, pControlContValores, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados){
         const that = this;
@@ -1127,6 +1480,12 @@ const operativaGestionObjetosConocimientoOntologias = {
                 entidadNueva = tipoEntidad;
             }
         }
+
+        // Controlar la ejecución desde la vista sin existir aun TxtCaracteristicasElem ni TxtElemEditados
+        if (typeof TxtCaracteristicasElem === 'undefined') {
+            TxtCaracteristicasElem = $(`#mTxtCaracteristicasElem`);
+            TxtElemEditados = $(`#mTxtElemEditados`);        
+        }        
     
         //Todo: Ajustar valor RDF para que desaparezca la entidad anterior y sus propiedades y se ponga la nueva 
         //solo si hay que hacerlo, si la propiedad no es funcional no.
@@ -1146,6 +1505,11 @@ const operativaGestionObjetosConocimientoOntologias = {
             tipoEntAnt = pClaseEnt;
         }
     
+        // Controlar la ejecución desde la vista
+        if (typeof TxtValorRdf === 'undefined') {
+            TxtValorRdf = "mTxtValorRdf";
+        }    
+
         var rdf = document.getElementById(TxtValorRdf).value;
         var indiceEntidad = rdf.indexOf('<' + tipoEntAnt + '>');
     
@@ -1154,6 +1518,14 @@ const operativaGestionObjetosConocimientoOntologias = {
             var trozo2 = rdf.substring(rdf.indexOf('</' + tipoEntAnt + '>') + tipoEntAnt.length + 3);
             document.getElementById(TxtValorRdf).value = trozo1 + rdfEntHer + trozo2;
         }
+
+        // Controlar la ejecución desde la vista
+        if (typeof TxtRegistroIDs === 'undefined' || TxtCaracteristicasElem === 'undefined' || TxtElemEditados==='undefined') {
+            TxtValorRdf = "mTxtValorRdf"
+            TxtRegistroIDs = "mTxtRegistroIDs"
+            TxtCaracteristicasElem = "mTxtCaracteristicasElem" 
+            TxtElemEditados = "mTxtElemEditados"
+        }          
     
         that.LimpiarControlesEntidad(tipoEntAnt, TxtValorRdf, TxtRegistroIDs, TxtCaracteristicasElem, TxtElemEditados);
     },
@@ -1164,6 +1536,11 @@ const operativaGestionObjetosConocimientoOntologias = {
         if(pTipoEntidadHija == null){
             return "";
         }
+
+        if (typeof TxtValorRdfHerencias === 'undefined') {
+            TxtValorRdfHerencias = "mTxtValorRdfHerencias";
+        }
+
         var rdfHerencia = document.getElementById(TxtValorRdfHerencias).value;
         rdfHerencia = rdfHerencia.substring(rdfHerencia.indexOf('<||>' + pTipoSuperClase));
         rdfHerencia = rdfHerencia.substring(rdfHerencia.indexOf('<|>' + pTipoEntidadHija + ',') + pTipoEntidadHija.length + 4);
@@ -1760,9 +2137,10 @@ const operativaGestionObjetosConocimientoOntologias = {
         that.handleEnableOrDisableApplyButton(true);
     },
 
-    GuardarValorEnContenedorGrupoValores: function(pControlCont, pValor, pEntidad, pPropiedad, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados)
+    GuardarValorEnContenedorGrupoValores: function(pControlCont, pValor, pEntidad, pPropiedad, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados, buttonPressed = undefined)
     {
         const that = this;
+        let tableHtmlOutput = undefined;
 
         let $pTxtElemEditados = "";        
         
@@ -1784,9 +2162,16 @@ const operativaGestionObjetosConocimientoOntologias = {
             document.getElementById(pControlCont).children[0].children[numElem].innerHTML = that.ObtenerFilaValorContenedorGrupoValores(pControlCont, pValor, numElem, false, pEntidad, pPropiedad, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados);
         }
         else //Hay que eliminarlo
-        {            
+        {                        
             //var hijos = document.getElementById(pControlCont).children[0].children[0].children;
-            const hijos = document.getElementById(pControlCont).children[0].children;
+            let hijos = document.getElementById(pControlCont).children[0].children;
+            tableHtmlOutput = document.getElementById(pControlCont).children[0];
+            if (buttonPressed != undefined && buttonPressed.length > 0){
+                // Buscar el contenedor de items para saber qué children borrar ya que puede haber múltiples tablas mostrándose según se haya mostrado el item en el modal
+                const panelControl = buttonPressed.closest(`#${pControlCont}`)[0];
+                hijos = panelControl.querySelector(':scope > :first-child').children;
+                tableHtmlOutput = panelControl.querySelector(':scope > :first-child');                    
+            }
 
             let htmlFinal = '';
             
@@ -1810,7 +2195,8 @@ const operativaGestionObjetosConocimientoOntologias = {
                 }                                 
             }
             
-            document.getElementById(pControlCont).children[0].innerHTML = htmlFinal;
+            //document.getElementById(pControlCont).children[0].innerHTML = htmlFinal;
+            tableHtmlOutput.innerHTML = htmlFinal;
         }
     },    
 
@@ -2090,6 +2476,11 @@ const operativaGestionObjetosConocimientoOntologias = {
      */
     handleEnableOrDisableApplyButton: function(enable){
         const that = this;
+
+        if (!that.filaElementoObjetoConocimientoSecundario){
+            return;
+        }
+
         // Habilitar el botón Guardar Elemento ya que se desea "Guardar"
         const btnAplicar = that.filaElementoObjetoConocimientoSecundario.find(`.${that.btnSaveInstanciaEntidadClassName}`);                                  
         if (!enable){
@@ -2281,8 +2672,20 @@ const operativaGestionObjetosConocimientoOntologias = {
             ).done(function (view) {
                 // Indicador de que ya se han descargado los items para no volver a pintarlas
                 pElementRow.data("download-items","true");
+
+                // Obtener el id de la propiedad
+                const itemId = pElementRow.data("sujeto-entidad");                    
+                const sujetoId = itemId.split('items/')[1];
+
+                // Convertir la vista en un elemento jQuery
+                const $view = $(view);                
+                                                   
                 // Panel donde se añadirá la vista                                
-                panelElementDetail.prepend(view)
+                panelElementDetail.prepend(view);
+                // Asignar el sujetoId correspondiente si sujetoId existe (no es reciente creación)
+                sujetoId.length > 0 && panelElementDetail.find('.sujEntidadSec').val(sujetoId)
+                
+
             }).fail(function (data) {            
                 mostrarNotificacion("error", data);
             }).always(function () {
@@ -3478,7 +3881,7 @@ const operativaGestionObjetosConocimientoOntologias = {
                     that.errorsBeforeSaving = true; 
                     return;
                 }  
-                that.dataPostPlantillasObjetoConocimiento.append(`${prefijo}{this.inputFileJsFile.attr('name')}`, jsFile);
+                that.dataPostPlantillasObjetoConocimiento.append(`${prefijo}${this.inputFileJsFile.attr('name')}`, jsFile);
             }
         }
         
@@ -4184,8 +4587,9 @@ const operativaGestionObjetosConocimientoOntologias = {
     },
 
     GetNumElementosPropiedad: function(pPadre, pElemento, pTxtValores, pTxtElemEditados){  
-        const that = this;      
-        var valorRdf = pTxtValores.val();// document.getElementById(pTxtValores).value;
+        const that = this;                      
+        //var valorRdf =     pTxtValores.val();// document.getElementById(pTxtValores).value;
+        var valorRdf = isJqueryObject(pTxtValores) ? pTxtValores.val() : document.getElementById(pTxtValores).value;
         
         var indicesIniFinPadre = that.GetIndiceInicioFinElementoEditado(pPadre, valorRdf, pTxtElemEditados);
         var inicio = parseInt(indicesIniFinPadre.split(',')[0]);
@@ -5664,8 +6068,7 @@ const operativaGestionObjetosConocimientoOntologias = {
 
         //let caract = that.txtCaracteristicasElem.val(); // document.getElementById(TxtCaracteristicasElem).value;
 
-
-        const claveRango = 'rango=' + pEntidad + ',';
+        let claveRango = 'rango=' + pEntidad + ',';
         let indiceSigRango = caract.indexOf(claveRango);
     
         if (indiceSigRango == -1) {
@@ -6644,7 +7047,7 @@ const operativaGestionObjetosConocimientoOntologias = {
                 `;*/ 
 
                 fila += `
-                <li class="component-wrap containerConfirmDeleteItemInModal">
+                <li class="component-wrap">
                     <div class="component">
                         <div class="component-header-wrap">
                             <div class="component-header">
@@ -7270,17 +7673,43 @@ const operativaGestionObjetosConocimientoOntologias = {
             }
         }
 
+        // Asegurarse de crear el botón jquery (pTxtValores)
+        let pTxtValoresInput = "";
+        let pTxtIDsInput = "";
+        let pTxtCaractInput = "";
+        let pTxtElemEditadosInput = "";
+        
+        // Asegurarse de crear el botón jquery (pTxtValores)
+        isJqueryObject(pTxtValores) 
+        ? pTxtValoresInput = pTxtValores
+        : pTxtValoresInput = $(`#${pTxtValores}`);
+        // Asegurarse de crear el botón jquery (pTxtIDs)
+        isJqueryObject(pTxtIDs) 
+        ? pTxtIDsInput = pTxtIDs
+        : pTxtIDsInput = $(`#${pTxtIDs}`);  
+        // Asegurarse de crear el botón jquery (pTxtCaract)
+        isJqueryObject(pTxtCaract) 
+        ? pTxtCaractInput = pTxtCaract
+        : pTxtCaractInput = $(`#${pTxtCaract}`); 
+        // Asegurarse de crear el botón jquery (pTxtElemEditados)
+        isJqueryObject(pTxtElemEditados) 
+        ? pTxtElemEditadosInput = pTxtCaract
+        : pTxtElemEditadosInput = $(`#${pTxtElemEditados}`);          
+   
+
         if (funcionSel != '') {
             // Establecer la función de seleccionar
-            metodoSeleccionar = `${funcionSel}('${pEntidad}', '${pPropiedad}', '${pNumElem}', '${pTxtValores.prop("id")}', '${pTxtIDs.prop("id")}', '${pTxtCaract.prop("id")}', '${pTxtElemEditados.prop("id")}')`;            
+            // metodoSeleccionar = `${funcionSel}('${pEntidad}', '${pPropiedad}', '${pNumElem}', '${pTxtValores.prop("id")}', '${pTxtIDs.prop("id")}', '${pTxtCaract.prop("id")}', '${pTxtElemEditados.prop("id")}')`; 
+            metodoSeleccionar = `${funcionSel}('${pEntidad}', '${pPropiedad}', '${pNumElem}', '${pTxtValoresInput.prop("id")}', '${pTxtIDsInput.prop("id")}', '${pTxtCaractInput.prop("id")}', '${pTxtElemEditadosInput.prop("id")}')`;            
         }
 
-        /* Obtener la función Eliminar */
-        const metodoEliminar = `${funcionEli}('${pNumElem}', '${pEntidad}', '${pPropiedad}', '${pControlCont}', '${pTxtValores.prop("id")}', '${pTxtIDs.prop("id")}', '${pTxtCaract.prop("id")}', '${pTxtElemEditados.prop("id")}')`;
+        /* Obtener la función Eliminar */        
+        // const metodoEliminar = `${funcionEli}('${pNumElem}', '${pEntidad}', '${pPropiedad}', '${pControlCont}', '${pTxtValores.prop("id")}', '${pTxtIDs.prop("id")}', '${pTxtCaract.prop("id")}', '${pTxtElemEditados.prop("id")}')`;                        
+        const metodoEliminar = `${funcionEli}('${pNumElem}', '${pEntidad}', '${pPropiedad}', '${pControlCont}', '${pTxtValoresInput.prop("id")}', '${pTxtIDsInput.prop("id")}', '${pTxtCaractInput.prop("id")}', '${pTxtElemEditadosInput.prop("id")}')`;
         
         // Encabezado de la fila
         fila += `
-        <li class="component-wrap containerConfirmDeleteItemInModal">
+        <li class="component-wrap">
             <div class="component">
                 <div class="component-header-wrap">
                     <div class="component-header">
@@ -7297,18 +7726,18 @@ const operativaGestionObjetosConocimientoOntologias = {
                                 <div class="component-actions-wrap">
                                     <ul class="no-list-style component-actions">
                                     `;
-                                        if (funcionEli != '') {
+                                        if (metodoSeleccionar != '') {
                                             fila +=`
                                             <li>
-                                                <a class="action-edit round-icon-button js-action-edit-component btnEditGroupValue" href="javascript: void(0);" onclick="${metodoSeleccionar}">
+                                                <a class="action-edit round-icon-button js-action-edit-component btnEditGroupValue" href="javascript: void(0);" onClick="${metodoSeleccionar}">
                                                     <span class="material-icons">edit</span>
                                                 </a>
                                             </li>`;                  
                                         }  
-                                        if (metodoSeleccionar !=""){
+                                        if (funcionEli !=""){
                                             fila +=`
                                             <li>                                            
-                                                <a class="action-delete round-icon-button js-action-delete btnDeleteGroupValue" href="javascript: void(0);" data-handleclick="${metodoEliminar}">
+                                                <a class="action-delete round-icon-button js-action-delete btnDeleteGroupValue" href="javascript: void(0);" onClick="${metodoEliminar}">
                                                     <span class="material-icons">delete</span>
                                                 </a>
                                             </li>
@@ -7415,6 +7844,8 @@ const operativaGestionObjetosConocimientoOntologias = {
             extraParams: {
                 pGrafo: grafo,
                 pEntContenedora: entContenedora,
+                identidad: $('input.inpt_identidadID').val(),
+                pProyectoID: $('.inpt_proyID').val(),
                 pPropiedad: propiedad,
                 pTipoEntidadSolicitada: tipoEntidadSolicitada,
                 pPropSolicitadas: propSolicitadas,
@@ -7503,6 +7934,8 @@ const operativaGestionObjetosConocimientoOntologias = {
         }
     
         that.AgregarNombresCatTesSem(pData[2] + '|' + pData[0]);
+        // Habilitar el botón de guardado del objeto secundario una vez se haya decidido eliminar
+        that.handleEnableOrDisableApplyButton(true);        
     },
 
     AgregarNombresCatTesSem: function(pNombres){
@@ -7574,7 +8007,7 @@ const operativaGestionSparql = {
         // Url para editar un certificado
         this.urlBase = refineURL();
         this.urlSave = `${this.urlBase}/save`;
-
+        this.urlNewQuerySheet = `${this.urlBase}/new-query-sheet`;
     },  
 
     /*
@@ -7595,15 +8028,21 @@ const operativaGestionSparql = {
         this.infoGraphSelected = $("#infoGraphSelected");         
         // Botón para seleccionar los grafos seleccionados desde el modal para consulta Sparql
         this.btnSelectGraph = $("#btnSelectGraph");
+        // Checbox para seleccionar todos los grafos        
+        this.checkBoxSelectAllGraph = $("#selectAllGraphs");
 
         // Select, Where
         this.txtSelect = $("#txtSelect");
-        this.txtWhere = $("#txtWhere");
+        this.txtWhereId = "txtWhere";
+        this.txtWhere = $(`#${this.txtWhereId}`);
         // Buscador de resultdos de consulta Sparql
-        this.txtBusquedaGraphQuery = $("#txtBusquedaGraphQuery");
-        // Textarea donde aparecerán los resultados de la consulta sparql
-        this.graphResultsArea = $("#graphResultsArea");
-        this.graphResultsNumber = $("#graphResultsNumber");
+        this.txtBusquedaGraphQueryClassName = "txtBusquedaGraphQuery";        
+        // Área donde aparecerán los resultados de la consulta sparql
+        this.graphResultsArea = $("#graphResults");
+        // Nombre de la clase de la tabla donde se muestran los resultados 
+        this.tableGraphResultsClassName = "tableGraphResults";
+        this.tableGraphResultsContainerClassName = "tableGraphResultsContainer";
+        this.graphResultsNumberClassName = "graphResultsNumber";
         // Botón para ver más prefijos de sparql
         this.btnShowMorePrefix = $("#btnShowMorePrefix");
         // Clase que indica que la fila del prefijo es adicional (Ya se han pintdo más de tres, por lo que es adicional)
@@ -7619,12 +8058,53 @@ const operativaGestionSparql = {
         this.graphRowClassName = "graph-row";
         // Cada checkbox del modal para la selección de un grafo para la consulta sparql
         this.ckGraphItemClassName = "ckGraphItem";
+        this.ckGraphItems = $(`.${this.ckGraphItemClassName}`);
         // Nombre de la clase del botón para eliminar un grafo de la selección
         this.btnDeleteGraphClassName = 'btnDeleteGraph';
         // Botón para copiar el grafo seleccionado
         this.btnCopyClassName = "btnCopy";
         // Url anterior del navegador almacenado a modo "backup" para habilitar/deshabilitar el botón
         this.historyUrlBrowser = document.referrer;        
+        // Panel de mensajes de error
+        this.panelResultError = $("#panelResultError"); 
+        // Botones para la exportación de resultados de consultas SPARQL
+        this.btnExportCSVClassName = "btnExportCSV";
+        this.btnExportXMLClassName = "btnExportXML";
+        this.btnExportJSONClassName = "btnExportJSON";
+        // Contenedor de cada una de las Tabs de las Consultas SPARQL
+        this.graphTabsId = "graphTabs";
+        this.graphTabs = $(`#${this.graphTabsId}`);
+        // Contenedor de cada una de las pestañas de las Consultas SPARQL
+        this.graphResultsId = "graphResults";
+        this.graphResults = $(`#${this.graphResultsId}`);
+        // Conteneder del QueryText en el modal para cada Query
+        this.txtQueryModalClassName = "txtQueryModal"; 
+        // Botón/es de ejecutar consulta desde el Modal para cada pestaña del Query
+        this.btnExecuteSparqlQueryModalClassName = "btnExecuteSparqlQueryModal";   
+        // Panel de mensajes de error del modal para cada pestaña del Query
+        this.panelResultErrorModalClassName = "modalPanelResultError";   
+        // Pestaña activa de consultas SPARQL
+        this.currentActiveSparqlSheet = undefined;
+        // Nombre de la clase del SparlSheet
+        this.tabSparqlSheetClassName = "tabSparqlSheet";
+        // Nombre de la clase de la pestaña o header de cada una de las consultas SPARQL
+        this.sparqlHeaderItemClassName = "sparqlHeaderItem";
+        // Icono de cerrar la consulta del header
+        this.sparqlHeaderItemCloseClassName = "sparqlHeaderItemClose";
+        // Botón para crear una nueva consulta (Nueva Sheet de consulta sparql)
+        this.btnNewSparqlQueryClassName = "btnNewSparqlQuery";
+        // Botón para mostrar grafos
+        this.btnShowGraphListClassName = "btnShowGraphList";
+        // Input para buscar grafos de la comunidad en el modal de Sparql
+        this.findGraphItemClassName = "findGraphItem";
+        // Cada item de los grafos mostrados (Contenedor padre)
+        this.graphListItemClassName = "graphListItem";        
+        // Cada uno de los items o grafos mostrados dentro del modal para poder ser copiados
+        this.graphListItemWrapperClassName = "graphListItemWrapper";
+        // Item del grafo de la comunidad que contiene el nombre dentro del modal para realizar búsquedas/copiados
+        this.graphListItemTextClassName = "graphListItemText";
+        // Icono de copiar/pegar un grafo en el portapapeles de la comunidad para ser usado a posteriori
+        this.graphListItemCopyIconClassName = "graphListItemCopyIcon";
     },   
 
     /**
@@ -7662,7 +8142,6 @@ const operativaGestionSparql = {
             that.handleSelectGraphs();
         });         
 
-
         // Comportamientos del modal de resultados 
         this.modalResultsGraphQuery.on('show.bs.modal', (e) => {
             // Aparición del modal
@@ -7674,14 +8153,18 @@ const operativaGestionSparql = {
             // Acción de ocultar el modal
         })
         .on('hidden.bs.modal', (e) => {
-            // Vaciar el campo de resultados de la consulta sparql
-            this.graphResultsArea.html();
+            // Vaciar el campo de resultados de la consulta sparql            
             that.handleEnableBrowserBackButton(true);
         });  
         
         // Botón para seleccionar grafos para la consulta Sparql
         this.btnSelectGraph.on("click", function(){
             that.handleSelectGraphs();
+        });
+
+        // Botón para seleccionar todos los grafos para la consulta Sparql
+        this.checkBoxSelectAllGraph.on('click', function() {
+            that.handleSelectAllGraphs();
         });
 
         // Botón para confirmar la eliminación de un objeto de conocimiento desde el modal
@@ -7706,15 +8189,17 @@ const operativaGestionSparql = {
             that.handleExecuteSparql();
         });
 
-        // Buscar resultados SparQL en la tabla
-        this.txtBusquedaGraphQuery.off().on("keyup", function (event) {
-            const input = $(this);
-            clearTimeout(that.timer);
-            that.timer = setTimeout(function () {                                                                        
-                // Acción de buscar / filtrar
-                that.handleSearchSparqlResults(input);                                         
-            }, 500);
-        }); 
+        // Buscar resultados SparQL en la tabla        
+        configEventByClassName(`${that.txtBusquedaGraphQueryClassName}`, function(element){            
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("keyup", function(){
+                clearTimeout(that.timer);                           
+                that.timer = setTimeout(function () {                                                                                                                
+                    // Acción de buscar / filtrar
+                    that.handleSearchSparqlResults($jqueryElement);                                         
+                }, 500);                              
+            });	                        
+        });  
         
         // Botón para mostrar u ocultar más prefijos de Sparql
         this.btnShowMorePrefix.off().on("click", function(){
@@ -7739,7 +8224,305 @@ const operativaGestionSparql = {
                 that.handleBuscarGrafo();                                                         
             }, 500);
         });
-    },  
+
+        // Botón para exportar en CSV resultados SPARQL
+        configEventByClassName(this.btnExportCSVClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(){                                                                                  
+                that.handleExportSparqlResults(true, false, false);
+            });	             
+        });
+
+        // Botón para exportar en JSON resultados SPARQL
+        configEventByClassName(this.btnExportJSONClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(){                                                                                  
+                that.handleExportSparqlResults(false, true, false);
+            });	             
+        });        
+      
+        // Botón para exportar en XML resultados SPARQL
+        configEventByClassName(this.btnExportXMLClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(){                                                                                  
+                that.handleExportSparqlResults(false, false, true);
+            });	             
+        }); 
+
+        // Input Where de la Query: Ctrl + Enter ejecute la consulta
+        configEventById(this.txtWhereId, function(element){
+            const input = $(element);
+            input.off().on("keydown", function(event){    
+                if (event.ctrlKey && event.key == "Enter") { 
+                    that.handleExecuteSparql();              
+                }                                                                              
+            });	             
+        });
+
+        // Input  de la Query desde el modal: Al hacer Ctrl + Enter ejecute la consulta desde el modal
+        configEventByClassName(this.txtQueryModalClassName, function(element){
+            const input = $(element);
+            input.off().on("keydown", function(event){    
+                if (event.ctrlKey && event.key == "Enter") {
+                    that.handleExecuteSparqlModal();              
+                }                                                                              
+            });	             
+        });  
+        
+        // Botón para ejecutar la consulta desde el modal
+        configEventByClassName(this.btnExecuteSparqlQueryModalClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(){    
+                that.handleExecuteSparqlModal();                                                                                           
+            });	             
+        });
+
+        // Botón para seleccionar un tab o pestaña de resultados SPARQL
+        configEventById(this.sparqlHeaderItemClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(){   
+                that.handleSetCurrentActiveSparqlSheet(button);                                  
+            });	             
+        }); 
+
+        // Botón para eliminar el tab y su correspondiente Sheet de consulta SPARQL
+        configEventByClassName(this.sparqlHeaderItemCloseClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(event){                       
+                event.stopPropagation();
+                that.handlerRemoveQuerySheet(button);                                                                                         
+            });	             
+        });
+
+        // Botón para crear una nueva sheet para crear una nueva consulta
+        configEventByClassName(this.btnNewSparqlQueryClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(event){                                       
+                that.handleNewSparlQuerySheet(button);                                                                                         
+            });	             
+        });
+
+        // Botón para mostrar y ocultar los grafos existentes en la comunidad
+        configEventByClassName(this.btnShowGraphListClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(event){                                                       
+                if (button.data("show-all") == true){
+                    // Ocultar                                     
+                    button.data("show-all", false);
+                    button.html("Ver grafos");
+                }else{
+                    // Mostrar todas                    
+                    button.data("show-all", true);
+                    button.html("Ocultar grafos");                    
+                }                                                                                                                                      
+            });	             
+        });
+        
+        // Input para buscar grafos existentes en la comunidad
+        configEventByClassName(this.findGraphItemClassName, function(element){
+            const input = $(element);
+            input.off().on("keyup", function(event){                                                       
+                clearTimeout(that.timer);
+                that.timer = setTimeout(function () {                
+                    that.handleSearchGraphItem(input);                                                         
+                }, 500);                                                                                                                                               
+            });	          
+        });
+
+        // Botón para copiar al portapapeles el grafo seleccionado
+        configEventByClassName(this.graphListItemCopyIconClassName, function(element){
+            const button = $(element);
+            button.off().on("click", function(event){                                                       
+                that.handleCopyGraphItem(button);                                                                                                                                            
+            });	             
+        });        
+    }, 
+
+    /**
+     * Método para copiar al portapapeles el enlace del item pulsado.     
+     * @param {jqueryObject} button : Botón seleccionado para copiar su contenido al portapapeles
+     */
+    handleCopyGraphItem(button){           
+        const that = this;
+
+        const graphListItem = button.closest(`.${that.graphListItemClassName}`);
+        const graphName = graphListItem.find(`.${that.graphListItemTextClassName}`).html().trim();
+        copyTextToClipBoard(graphName, `${graphName} copiado al portapapeles`);
+    },
+
+
+    /**
+     * Método para buscar grafos de la comunidad desde el modal de Query Sparql. Ocultará los items que no corresponda con la búsqueda
+     * @param {*} input 
+     */
+    handleSearchGraphItem: function(input){
+        const that = this;
+        
+        let cadena = input.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        
+        // Cada una de las filas que muestran la página        
+        const graphListItems = that.currentActiveSparqlSheet.find(`.${that.graphListItemWrapperClassName}`);        
+
+        // Buscar dentro de cada fila       
+        $.each(graphListItems, function(index){
+            const graphListItem = $(this);
+            // Seleccionamos el nombre de la página y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda            
+            const graphName = $(this).find(`.${that.graphListItemTextClassName}`).html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();            
+            if (graphName.includes(cadena)){                
+                graphListItem.removeClass("d-none");                
+            }else{
+                // Ocultar fila resultado
+                graphListItem.addClass("d-none");
+            }            
+        });
+    },
+
+    /**
+     * Método que obtendrá una vista a modo de Sheet para poder realizar una nueva petición SPARQL
+     * @param {*} button Botón de la nueva consulta que se ha pulsado para crear una nueva Sheet de SparqlQuery
+     */
+    handleNewSparlQuerySheet: function(button){
+        const that = this;
+        const loadingIconButton = button.find(".spinner-border");
+        // Deshabilitamos el botón y mostrado loading en botón
+        button.prop('disabled', true);
+        loadingIconButton.removeClass("d-none");
+
+        // Obtener la consulta de la hoja activa para ser clonada a la nueva Sheet
+        const sparqlQueryFromCurrentActiveSheet = that.currentActiveSparqlSheet.find(`.${that.txtQueryModalClassName}`).val();
+
+        GnossPeticionAjax(
+            that.urlNewQuerySheet,
+            null,
+            true
+        ).done(function (data) {
+            // OK - Mostrar la información obtenida de la consulta                                
+            that.loadSparqlResults(data, false, sparqlQueryFromCurrentActiveSheet);            
+        }).fail(function (data) {
+            // KO
+            mostrarNotificacion("Error al crear una nueva pestaña para una consulta SPARQL. Actualice la página o pruebe de nuevo más tarde.");
+        }).always(function () {
+            // Habilitar el botón
+            button.prop('disabled', false);
+            loadingIconButton.addClass("d-none");
+        });        
+    },
+
+
+
+    /**
+     * Método que eliminará o quitará de pantalla la consulta sobre la cual se ha pulsado el icono de (x)
+     * @param {*} button Botón o icono (X) que ha sido presionado
+     */
+    handlerRemoveQuerySheet: function(button){
+        const that = this;
+
+        const sparqlHeaderItemToDelete = button.closest(`.${that.sparqlHeaderItemClassName}`);
+        // Indice del item a eliminar de los Tabs
+        const sparqlHeaderItemToDeleteIndex = sparqlHeaderItemToDelete.index();
+        const sparqlHeaderItemToDeleteTabId = sparqlHeaderItemToDelete.find(".nav-link").data("target").replace("#","");
+
+
+        // Obtener el item en la posición derecha si existe
+        let nextHeaderItemToShow = $(`.${that.sparqlHeaderItemClassName}`).eq(sparqlHeaderItemToDeleteIndex + 1);
+        
+        // Si no existe HeaderItem en la derecha obtener el anterior
+        if (nextHeaderItemToShow.length === 0) {
+            const sparlHeaderItemToDeleteIndexPrevious = sparqlHeaderItemToDeleteIndex - 1;
+            if (sparlHeaderItemToDeleteIndexPrevious >= 0){
+                nextHeaderItemToShow = $(`.${that.sparqlHeaderItemClassName}`).eq(sparqlHeaderItemToDeleteIndex - 1);
+            }            
+        }
+        
+        // Eliminar el item si existe
+        if (nextHeaderItemToShow.length > 0) {
+            const tabHeaderId = nextHeaderItemToShow.find(".nav-link").prop("id");
+            $(`#${tabHeaderId}`).trigger('click');  
+            // Mostrar el panel    
+            const tabId = tabHeaderId.replace("-tab","");
+            $(`#${tabId}`).addClass('active show');                              
+        }else{
+            // Cerrar el modal si no hay Queries activas
+            that.modalResultsGraphQuery.modal('toggle');
+        }
+
+        // Sabiendo el ID del tab podremos borrar el tab y el botón
+        $(`#${sparqlHeaderItemToDeleteTabId}`).remove();
+        sparqlHeaderItemToDelete.remove();
+    },
+    
+    /**
+     * Método para establecer cuál es la pestaña activa de la consulta SPARQL y almacenarla en la variable 'that.currentActiveSparqlSheet'.
+     * @param {*} button 
+     */
+    handleSetCurrentActiveSparqlSheet: function(button){
+        const that = this;
+                       
+        // Pestaña a mostrar y por ende la curentActive
+        const dataTargetId = button.find(`.nav-link`).data("target").replace("#","");
+        const sparqlSheets = $(`.${this.tabSparqlSheetClassName}`);
+
+        // Filtrar las hojas para encontrar la que tiene el mismo id que dataTargetId
+        that.currentActiveSparqlSheet = sparqlSheets.filter(function() {
+            return $(this).attr("id") === dataTargetId;
+        }); 
+    },
+
+    /**
+     * Método que devuelve un objeto jquery que contiene la última hoja o sheet de SPARQL.
+     * @returns Devuelve cuál es la última hoja o sheet que se está mostrando o se ha cargado en la hoja de resultados
+     */
+    handleSelectLastSparqlSheet: function(){
+        const that = this;        
+        const lastSparqlSheet = this.graphResultsArea.find(`.${that.tabSparqlSheetClassName}`).last();                
+        return lastSparqlSheet;
+    },
+
+    /**
+     * Método que creará una pestaña de tipo "Header" con una "X" para poder proceder a cerrar la consulta si fuera necesario
+     * Este método se ejecutaría cuando se cree una nueva consulta si no existe su pestaña
+     */
+    handleCreateHeaderSheet: function(){
+        const that = this;
+        // Obtener la última pestaña creada/añadida
+        const newSparqlSheet = that.handleSelectLastSparqlSheet();
+        const id = newSparqlSheet.prop("id");
+        
+        // Desactivar por defecto cualquier Tab. Quedará seleccionada la nueva pestaña creada
+        $(`.${this.sparqlHeaderItemClassName}`).find("nav-link").removeClass("active");
+
+        const headerSheet = `
+        <li class="nav-item ${this.sparqlHeaderItemClassName}" role="presentation">
+            <button class="nav-link d-flex align-items-center mr-1" id="${id}-tab" data-toggle="tab" data-target="#${id}" type="button" role="tab" aria-controls="sparqlQuery" aria-selected="true">
+                <span class="text">Query</span>
+                <span title="Cerrar" class="material-icons ml-2 sparqlHeaderItemClose" style="font-size:20px">close</span>
+            </button>
+        </li>
+        `;
+        // Añadida el navTab de la consulta SPARQL al listado del header
+        that.graphTabs.append(headerSheet);
+
+        // Simular un clic en el nav-link recién agregado para activarlo        
+        setTimeout(function(){
+            $(`#${id}-tab`).trigger('click');
+        },200);
+        
+        // Estilizar los elementos de la tabla recién creada con los resultados
+        that.handleDisplayResultsAndTableWithResults();                 
+    },
+
+    /**
+     * Método que configurará la tabla recién añadida a partir de la pestaña que está activa, estilizando los URI Elementos (azul) y mostrando el nº real de resultados encontrados
+     */
+    handleDisplayResultsAndTableWithResults: function(){
+        const that = this;
+        setTimeout(function(){
+            that.styleURIElementFromTable();
+            that.updateSparkResultsNumber();            
+        },1200);        
+    },
 
     /**
      * Método para permitir o no que el botón de "Volver" del navegador funcione o no para no perder las consultas SparQL.
@@ -7774,8 +8557,8 @@ const operativaGestionSparql = {
         // Eliminamos posibles tildes para búsqueda ampliada
         cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-        // Listado de resultados donde se buscará (Evitar la fila Header)
-        const sparqlResults = that.graphResultsArea.find("tr:gt(0)");
+        // Listado de resultados donde se buscará (Evitar la fila Header)    
+        const sparqlResults = this.currentActiveSparqlSheet.find(`.${this.tableGraphResultsContainerClassName}`).find("tr:gt(0)");
                                     
         // Recorrer los items para realizar la búsqueda de palabras clave
         $.each(sparqlResults, function(index){
@@ -7799,11 +8582,11 @@ const operativaGestionSparql = {
     },
 
     /**
-     * Método que mostrará el número de resultados de SparQL
+     * Método que mostrará el número de resultados de SparQL de la pestaña de la query que está activa
      */
     updateSparkResultsNumber: function(){
         const that = this;
-        let numberOfResults = that.graphResultsArea.find("tr:gt(0)").not('.d-none').length;
+        let numberOfResults = that.currentActiveSparqlSheet.find(`.${that.tableGraphResultsClassName}`).find("tr:gt(0)").not('.d-none').length;
         let resultWord = "resultado"
         if (numberOfResults>1){
             resultWord += "s";
@@ -7812,7 +8595,8 @@ const operativaGestionSparql = {
             resultWord = "No hay resultados";
         }
         // Mostrar el nº de resultados
-        that.graphResultsNumber.html(`${numberOfResults} ${resultWord}`);
+        const graphResultsNumber = that.currentActiveSparqlSheet.find(`.${that.graphResultsNumberClassName}`);
+        graphResultsNumber.html(`${numberOfResults} ${resultWord}`);
     },
 
     /**
@@ -7831,6 +8615,7 @@ const operativaGestionSparql = {
         const ckBoxGraphSelected = $(`[data-prefix='${prefixGraph}']`);
         ckBoxGraphSelected.prop( "checked", false );
     },
+    //AQUI
     
     /**
      * Método para seleccionar grafos para búsqueda Sparql
@@ -7881,6 +8666,15 @@ const operativaGestionSparql = {
         graphsCheckBoxListSelected.length > 0 && this.tablaGrafosContent.append(templateGraphSelected);
     },
 
+    /**      
+     * Marca o desmarca todos los checkbox de los grafos en funcion de si se pulsa el boton seleccionar todos o no
+     */
+    handleSelectAllGraphs: function(){
+        const that = this;
+        const isChecked = this.checkBoxSelectAllGraph.prop("checked");
+        this.ckGraphItems.prop("checked",isChecked);             
+    },
+
     /**
      * Método para copiar al portapapeles el enlace del item pulsado.     
      * @param {String} urlString : Url o cadena que se mostrará al usuario y que se copiará al portapapeles
@@ -7921,6 +8715,13 @@ const operativaGestionSparql = {
      */
     handleExecuteSparql: function(){
         const that = this;
+        const expresionesABuscarYReemplazar = [
+            [/order by/gi, "\n \r ORDER BY"],
+            [/limit/gi, "\n \r LIMIT"],
+            [/group by/gi, "\n \r GROUP BY"],
+            [/offset/gi, "\n \r OFFSET"],
+            [/having/gi, "\n \r HAVING"]
+        ];
 
         that.Options = {};
         // Información de valores FROM
@@ -7931,21 +8732,27 @@ const operativaGestionSparql = {
             valoresFrom += $(element).data("fuente") + ",";
         });        
 
-
         // Quitar el último separador
         if (valoresFrom != ""){
             valoresFrom = (valoresFrom.substring(0, valoresFrom.length - 1));
         }else{
-            mostrarNotificacion("error", "Elige un valor para el campo FROM");
+            that.handleShowErrorPanel("Elige un valor para el campo FROM", true);
             return;
         }
 
         // Comprobación del valor SELECT
         const valorSelect = this.txtSelect.val().trim();
         if (valorSelect.length == 0) {            
-            mostrarNotificacion("error", "El campo SELECT no puede estar vacío");
+            that.handleShowErrorPanel("El campo SELECT no puede estar vacío", true);
             return;
         }
+
+        //Comprobación del valor WHERE
+        const valorWhere = this.txtWhere.val().trim();
+        if(valorWhere.length ==0){
+            that.handleShowErrorPanel("El campo WHERE no puede estar vacío", true);
+            return;
+        }   
 
         // Construir objeto para petición Sparql
         that.Options['pSelect'] = valorSelect;
@@ -7955,19 +8762,30 @@ const operativaGestionSparql = {
         // Mostrar loading
         loadingMostrar();
 
+        // Limpiar errores anteriores
+        that.handleShowErrorPanel("", false);
+
         GnossPeticionAjax(
-        that.urlSave,
-        that.Options,
-        true
+            that.urlSave,
+            that.Options,
+            true
         ).done(function (data) {
             // OK - Mostrar la información obtenida de la consulta                                
-            that.loadSparqlResults(data);
+            that.loadSparqlResults(data, false, undefined);
         }).fail(function (data) {
             // KO
-            if (data) {
-                mostrarNotificacion("error", data);
-            } else {
-                mostrarNotificacion("error", "Error al ejecutar la consulta");                
+            if (data) {              
+                let errorMessageWithoutPrefix = that.quitarPrefixHastaSelect(data);
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/SPARQL query:([\s\S]*?):/g, "\n \r SPARQL query:$1 ");
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/Select/ig, "\n \r SELECT");
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/From/ig, "\n \r FROM");
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/Where/ig, "\n \r WHERE");
+
+                let errorMessage = that.reemplazarPalabras(errorMessageWithoutPrefix, expresionesABuscarYReemplazar);
+                errorMessage = that.mascaraURIs(errorMessage);
+                that.handleShowErrorPanel(errorMessage, true);
+            } else {            
+                that.handleShowErrorPanel("Error al ejecutar la consulta", true);
             }
         }).always(function () {
             // Ocultar loading
@@ -7976,20 +8794,367 @@ const operativaGestionSparql = {
     },
 
     /**
-     * Método para mostrar los resultados obtenidos de la consulta Sparql 
-     * @param {*} data Datos obtenidos de la consulta sparql
-     */
-    loadSparqlResults: function(data){        
-        // Cargar datos en la sección del modal
-        this.graphResultsArea.html(data);
-        // Mostrar el modal        
-        this.modalResultsGraphQuery.modal('show');
-        // Resetear y estilizar el contenido 
-        const containerFluid = this.graphResultsArea.find(".container-fluid");
-        containerFluid.removeClass("container-fluid");  
-        // Mostrar el nº de resultados de sparql
-        this.updateSparkResultsNumber();
+     * Método para ejecutar una consultar Sparql desde el modal
+     */    
+    handleExecuteSparqlModal: function(){
+        const that = this;
+        const expresionesABuscarYReemplazar = [
+            [/order by/gi, "\n \r ORDER BY"],
+            [/limit/gi, "\n \r LIMIT"],
+            [/group by/gi, "\n \r GROUP BY"],
+            [/offset/gi, "\n \r OFFSET"],
+            [/having/gi, "\n \r HAVING"]
+        ];
+
+        that.Options = {};
+
+        // Información de la consulta de la pestaña activa
+        let txtQuery = that.currentActiveSparqlSheet.find($(`.${this.txtQueryModalClassName}`)).val();
+
+        if (!txtQuery.toLowerCase().includes("select")){
+            that.handleShowErrorPanelModal("Falta el campo SELECT", true);
+            return;
+        }
+        else if (!txtQuery.toLowerCase().includes("from")){
+            that.handleShowErrorPanelModal("Falta el campo FROM", true);
+            return;
+        }
+        else if(!txtQuery.toLowerCase().includes("where")){
+            that.handleShowErrorPanelModal("Falta el campo WHERE", true);
+            return;
+        }
+        // SELECT
+        const valorSelect =  txtQuery.substring(txtQuery.toLowerCase().indexOf("select"), txtQuery.toLowerCase().indexOf("from", txtQuery.toLowerCase().indexOf("select"))).trim();
+        // FROM
+        // Utilizamos una expresión regular para extraer los elementos después de "from"
+        let matches = txtQuery.match(/from\s+(.*?)(?=\n|where)/gi);
+
+        // Verificar si hay coincidencias y extraer los elementos
+        let fromItems = [];
+        if (matches) {
+            matches.forEach(match => {
+                // Eliminar "from" y luego dividir por saltos de línea                
+                let elements = match.replace(/from/i, '').trim();
+                // Agregar los elementos al array
+                fromItems.push(elements);
+            });
+        }
+        const valorFrom = fromItems.join(',');
+        // WHERE
+        const valorWhere = txtQuery.toLowerCase().substring(txtQuery.toLowerCase().indexOf("where")).trim();
+       
+        // Construir objeto para petición Sparql
+        that.Options['pSelect'] = valorSelect;
+        that.Options['pFrom'] = valorFrom;
+        that.Options['pWhere'] = valorWhere;
+        // Indicar que la petición se realiza desde el modal
+        that.Options['pExecutedFromModal'] = true;
+        
+        // Mostrar loading
+        loadingMostrar();
+
+        // Limpiar errores anteriores
+        that.handleShowErrorPanelModal("", false);
+
+        GnossPeticionAjax(
+            that.urlSave,
+            that.Options,
+            true
+        ).done(function (data) {
+            // OK - Mostrar la información obtenida de la consulta     
+            that.loadSparqlResults(data, true, undefined);
+        }).fail(function (data) {
+            // KO
+            if (data) {              
+                let errorMessageWithoutPrefix = that.quitarPrefixHastaSelect(data);
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/SPARQL query:([\s\S]*?):/g, "\n \r SPARQL query:$1 ");
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/Select/ig, "\n \r SELECT");
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/From/ig, "\n \r FROM");
+                errorMessageWithoutPrefix = errorMessageWithoutPrefix.replace(/Where/ig, "\n \r WHERE");
+
+                let errorMessage = that.reemplazarPalabras(errorMessageWithoutPrefix, expresionesABuscarYReemplazar);
+                errorMessage = that.mascaraURIs(errorMessage);
+                that.handleShowErrorPanelModal(errorMessage, true);
+            } else {            
+                that.handleShowErrorPanelModal("Se ha producido un error al ejecutar la consulta", true);
+            }
+        }).always(function () {
+            // Ocultar loading
+            loadingOcultar();
+        });
     },
+
+    /**
+    * Método para ocultar el mensaje de error o mostrarlo en caso de error o no
+     * @param {string} errorMessage Texto que se mostrará al haber un error
+     * @param {bool} showMessage Indica si se desea mostrar u ocultar el error
+     */
+    handleShowErrorPanel: function(errorMessage, showMessage){
+        const that = this;
+        if(showMessage==true){
+            this.panelResultError.html(errorMessage).removeClass("d-none");
+        }
+        else{
+            this.panelResultError.html("").addClass("d-none");
+        }
+    },
+
+    /**
+    * Método para ocultar el mensaje de error o mostrarlo en caso de error o no en el modal
+     * @param {string} errorMessage Texto que se mostrará al haber un error en la consulta del modal
+     * @param {bool} showMessage Indica si se desea mostrar u ocultar el error en el modal
+     */
+    handleShowErrorPanelModal: function(errorMessage, showMessage){
+        const that = this;
+        const panelError = that.currentActiveSparqlSheet.find(`.${this.panelResultErrorModalClassName}`);
+        if(showMessage == true){
+            panelError.html(errorMessage).removeClass("d-none");
+        }
+        else{
+            panelError.html("").addClass("d-none");
+        }
+    },    
+
+    /**
+        * Función para escapar URIs dentro de un fragmento de HTML.
+        * Esta función toma un texto HTML que puede contener URIs y las enmascara para que no sean interpretadas como HTML y puedan pintarse en el DOM
+        * @param {string} htmlText - El texto HTML que puede contener URIs a escapar y etiquetas HTML
+        * @returns {string} - El texto HTML con las URIs falsas escapadas.
+    */
+    mascaraURIs: function(htmlText) {
+        // Reemplazar los saltos de línea con '<br></br>' para mantener el formato.
+        let formattedText = htmlText.replace(/\n\s*\r/g, "<br>");
+        // Escapar las URIs (criterio: empiezen por http)
+        formattedText = formattedText.replace(/<http[^>]*>/g, function(match) {
+        return match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        });
+        // Devolver el texto formateado y escapado.
+        return formattedText;
+    },
+    
+    /**
+     * Función para quitar los prefix.
+     * @param {string} texto - El texto que puede tener prefix
+     * @returns {string} - El texto sin prefix
+     */
+    quitarPrefixHastaSelect: function(texto) {
+        // Utilizamos una expresión regular para encontrar la primera aparición de "prefix" seguido de cualquier cosa hasta "select"
+        // Utilizamos el modificador 'i' para que la búsqueda sea insensible a mayúsculas y minúsculas
+        let regex = /\s*prefix[\s\S]*?(?=select)/i;
+        // Reemplazamos la primera aparición encontrada por una cadena vacía
+        return texto.replace(regex, '');
+    }, 
+
+    /**
+     * Función que en caso de encontrar alguna expresión de las expresionesABuscar, las reemplaza 
+     * @param {string} texto - Texto que puede contenter palabras a reemplazar
+     * @param {string} expresionesABuscarYReemplazar - Palabras a comprobar si están contenidas en el texto o no
+     * @returns Texto con las palabras reemplazadas en caso de encontrarlas
+     */
+    reemplazarPalabras: function(texto, expresionesABuscarYReemplazar) {
+        expresionesABuscarYReemplazar.forEach(function(expresionRegularYReemplazo) {
+            let expresionRegular = new RegExp(expresionRegularYReemplazo[0], "ig");
+            let palabraReemplazo = expresionRegularYReemplazo[1];
+            texto = texto.replace(expresionRegular, palabraReemplazo);
+        });
+        return texto;
+    },   
+    
+    /**
+     * Método para mostrar los resultados obtenidos de la consulta Sparql una vez se haga una consulta desde fuera del modal      
+     * @param {*} data 
+     * @param {bool} requestFromModal Indica si la petición se ha realizado desde el modal, lo que implica que no es necesario añadir una nueva pestaña sino cargar la tabla de resultados
+     */
+    loadSparqlResults: function(data, requestFromModal = false, sparqlQueryText = undefined){        
+        const that = this;
+
+        // Cargar datos en la sección del modal
+        if (!requestFromModal){
+            this.graphResultsArea.append(data);        
+            // Añadir el navTabItem de la consulta al Header de peticiones
+            this.handleCreateHeaderSheet();         
+            // Mostrar el modal si no se está viendo
+            if (!this.modalResultsGraphQuery.hasClass('show')) {                                            
+                this.modalResultsGraphQuery.modal('show');
+                // Resetear y estilizar el contenido 
+                const containerFluid = this.graphResultsArea.find(".container-fluid");
+                containerFluid.removeClass("container-fluid");                
+            }                                
+            if (sparqlQueryText != undefined){
+                // Añadir el queryText en la nueva sheet
+                setTimeout(() => {
+                    this.currentActiveSparqlSheet.find(`.${that.txtQueryModalClassName}`).val(sparqlQueryText);    
+                }, 500);                
+            }
+        }else{
+            // Mostrar sólo la tabla con los resultados
+            this.currentActiveSparqlSheet.find(`.${this.tableGraphResultsContainerClassName}`).html(data);              
+            // Estilizar los elementos de la tabla recién creada con los resultados
+            that.handleDisplayResultsAndTableWithResults();           
+        }        
+    },
+
+    /**
+     * Método para pintar los elementos de la tabla en azul siempre y cuando sean URI.
+     */
+    styleURIElementFromTable: function(){
+        const that = this;
+        const tableTd = that.currentActiveSparqlSheet.find(`.${that.tableGraphResultsClassName} tr td`);
+        // Recorrer los items/componentes para realizar la búsqueda
+        $.each(tableTd, function(){            
+            const tdItem = $(this);
+            const tdItemText = tdItem.text().trim();  
+            const isUriElement = tdItemText.includes("http");
+            if(isUriElement){
+                tdItem.addClass("uriElement");                
+            }            
+        }); 
+    },
+
+    /**
+     * Método para exportar los resultados obtenidos en formato CSV (CSV, XML, JSON)
+     * @param {bool} exportInCSV Indica si se desean exportar en CSV
+     * @param {bool} exportInJSON Indica si se desean exportar en JSON
+     * @param {bool} exportInXML Indica si se desean exportar en XML     
+     */
+    handleExportSparqlResults: function(exportInCSV, exportInJSON, exportInXML){
+        const that = this;
+        let content = "";  
+
+        // Origen o tabla donde se analizarán los datos a exportar
+        
+        const graphResultTable = that.currentActiveSparqlSheet.find(`.${that.tableGraphResultsClassName}`);
+        const graphResultsTableRows = graphResultTable.find('tr');        
+        
+        if (exportInCSV) {
+            // Obtener datos para CSV
+            content = that.getCSVContent(graphResultsTableRows);
+            that.handleDownloadFile(content, 'datos.csv', 'text/csv;charset=utf-8');
+        } else if (exportInJSON) {
+            // Obtener datos para JSON
+            content = that.getJSONContent(graphResultsTableRows);
+            that.handleDownloadFile(content, 'datos.json', 'application/json;charset=utf-8');
+        } else if (exportInXML) {
+            // Obtener datos para XML
+            content = that.getXMLContent(graphResultsTableRows);
+            that.handleDownloadFile(content, 'datos.xml', 'text/xml;charset=utf-8');        
+        }                     
+    },
+
+    /**
+     * Método para obtener los datos de los resultados para construir el fichero CSV
+     * @param {jqueryElement} graphResultsTableRows Filas de la tabla u objeto jquery donde se encuentran los datos a analizar
+     * @returns Devuelve los datos que se meterán en el fichero para su posterior descarga/exportación
+     */
+    getCSVContent: function(graphResultsTableRows){
+        let csv = [];
+        // Iterar sobre las filas de la tabla
+        graphResultsTableRows.each(function(index, row) {
+            // Datos de cada una de las filas a recorrer
+            const rowData = [];
+            // Si es la primera fila (encabezados), agregar los títulos
+            if (index === 0) {
+                $(row).find('th').each(function(index, column) {
+                    rowData.push($(column).text());
+                });
+            } else {
+                // Si no es la primera fila, agregar los datos de la fila
+                $(row).find('td').each(function(index, column) {
+                    rowData.push($(column).text());
+                });
+            }
+            // Añadir la fila con los datos de cada columna y se separan por ","
+            csv.push(rowData.join(','));
+        });
+        
+        // Crear el contenido del archivo CSV separado por saltos de línea
+        content = csv.join('\n'); 
+        
+        return content;
+    },
+    
+    /**
+     * Método para obtener los datos de los resultados para construir el fichero XML
+     * @param {jqueryElement} graphResultsTableRows Filas de la tabla u objeto jquery donde se encuentran los datos a analizar
+     * @returns Devuelve los datos que se meterán en el fichero para su posterior descarga/exportación
+     */
+    getXMLContent: function(graphResultsTableRows) {    
+        // Crear documento XML
+        let xmlString = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xmlString += '<table>\n';
+    
+        // Iterar sobre las filas de la tabla
+        graphResultsTableRows.each(function(index, row) {
+            if (index != 0) {
+                xmlString += '  <row>\n';
+                // Datos de cada una de las filas a recorrer
+                $(row).find('td').each(function(index, column) {
+                    xmlString += '    <column>' + $(column).text() + '</column>\n';
+                });
+                xmlString += '  </row>\n';               
+            }
+        });
+    
+        xmlString += '</table>';
+    
+        return xmlString;
+    },
+
+
+    /**
+     * Método para obtener los datos de los resultados para construir el fichero JSON
+     * @param {jqueryElement} graphResultsTableRows Filas de la tabla u objeto jquery donde se encuentran los datos a analizar
+     * @returns Devuelve los datos que se meterán en el fichero para su posterior descarga/exportación
+     */    
+    getJSONContent: function(graphResultsTableRows) {
+        // Crear un array para almacenar los datos en formato JSON
+        let jsonData = [];
+        // Encabezado de la tabla para construir el JSON
+        const rowHeaders = [];
+                            
+        // Iterar sobre las filas de la tabla
+        graphResultsTableRows.each(function(index, row) {
+            const rowData = {};
+
+            if (index == 0){
+                // Datos de cada una de las filas del header
+                $(row).find('th').each(function(index, column) {
+                    rowHeaders.push($(column).text());
+                });                
+            }else{
+                // Datos de cada una de las filas a recorrer
+                $(row).find('td').each(function(index, column) {
+                    rowData[rowHeaders[index]] = $(column).text();
+                });
+                // Agregar los datos de la fila al array o al encabezado si es la primera fila
+                jsonData.push(rowData);         
+            }
+               
+        });
+    
+        // Convertir el arreglo de datos a formato JSON. El segundo argumento es para la indentación
+        return JSON.stringify(jsonData, null, 2);
+    },    
+
+    /**
+     * Método que permitirá la descarga del fichero una vez se haya exportado en el formato deseado
+     * @param {*} content Contenido que tendrá el fichero a exportar
+     * @param {*} fileName Nombre del fichero a exportar
+     * @param {*} fileType Tipo del fichero a exportar
+     */
+    handleDownloadFile: function(content, fileName, fileType) {
+        // Crear un elemento "a" temporal para descargar el archivo
+        const link = document.createElement('a');
+        link.setAttribute('href', 'data:' + fileType + ',' + encodeURIComponent(content));
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        
+        // Simular clic en el enlace para descargar el archivo
+        link.click();
+    
+        // Eliminar el elemento "a" temporal
+        document.body.removeChild(link);
+    }    
 
 }
 

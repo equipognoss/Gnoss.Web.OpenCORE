@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Documentacion;
 using Es.Riam.Gnoss.CL.Identidad;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosProyecto;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Tesauro;
@@ -31,6 +32,8 @@ using Es.Riam.Gnoss.ExportarImportar;
 using Es.Riam.Gnoss.ExportarImportar.ElementosOntologia;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.MVC;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.Logica.ParametrosProyecto;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Tesauro;
 using Es.Riam.Gnoss.Logica.Usuarios;
@@ -46,16 +49,18 @@ using Es.Riam.Gnoss.Web.Controles.Amigos;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.Organizador.Correo;
 using Es.Riam.Gnoss.Web.Controles.Proyectos;
+using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.Controles.Suscripcion;
+using Es.Riam.Gnoss.Web.MVC;
 using Es.Riam.Gnoss.Web.MVC.Controles;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
-using Es.Riam.Gnoss.Web.MVC;
 using Es.Riam.Interfaces;
 using Es.Riam.Interfaces.InterfacesOpen;
+using Es.Riam.InterfacesOpen;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Util;
 using Es.Riam.Web.Util;
@@ -74,27 +79,27 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
-using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
-using Es.Riam.InterfacesOpen;
-using Es.Riam.Gnoss.Logica.ParametrosProyecto;
-using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Universal.Common.Extensions;
+using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -114,9 +119,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private ControladorTraducciones mControladorTraducciones;
         private UtilServiciosFacetas mUtilServiciosFacetas;
         private ControladorMapasCharts mControladorMapasCharts;
+        protected IHostApplicationLifetime _appLifetime;
         private Web.Controles.Administracion.ControladorAdministrarVistas mControladorAdministrarVistas;
         private UtilGeneral mUtilGeneral;
-        protected IHostingEnvironment mEnv;
+        protected Microsoft.AspNetCore.Hosting.IHostingEnvironment mEnv;
         protected IActionContextAccessor mActionContextAccessor;
         protected IServiceScopeFactory mServiceScopeFactory;
         protected IOAuth mOAuth;
@@ -128,21 +134,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private bool mPaginaVisibleEnPrivada = false;
 
-        protected ControllerBaseWeb(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(httpContextAccessor, entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD, gnossCache, viewEngine, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication)
+        protected ControllerBaseWeb(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(httpContextAccessor, entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD, gnossCache, viewEngine, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, env, entityContextBASE)
         {
             mActionContextAccessor = actionContextAccessor;
             mEnv = env;
             mEntityContextBASE = entityContextBASE;
             mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
             mOAuth = oAuth;
-            mRouteConfig = new RouteConfig(entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD);
+            mRouteConfig = new RouteConfig(entityContext, loggingService, configService, servicesUtilVirtuosoAndReplication, redisCacheWrapper, virtuosoAD, mHttpContextAccessor);
+            _appLifetime = appLifetime;
         }
 
         #region Miembros
 
         private static readonly HttpClient mHttpClient = new HttpClient();
-
+                
         /// <summary>
         /// Devueve o establece el tipo de doc sem en el que estamos
         /// </summary>
@@ -281,6 +288,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             IniciarTraza();
 
+            ComprobarReinicioAplicacion();
+
             if (filterContext.Controller.ToString().StartsWith("Es.Riam.Gnoss.Web.MVC.Controllers.Administracion."))
             {
                 TipoPagina = TiposPagina.Administacion;
@@ -325,7 +334,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     //La sesión ya estaba iniciada, recupero el usuario
                     mControladorBase.RecuperarUsuarioDeSesion(UsuarioActual);
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     filterContext.Result = NotFound();
                     return;
@@ -348,7 +358,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return;
             }
 
-            
+
 
             mLoggingService.AgregarEntrada("TiemposMVC_OnActionExecuting_Inicio");
             if (ProyectoSeleccionado == null)
@@ -360,7 +370,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return;
             }
 
-            UtilServicios.ComprobacionCambiosCachesLocales(ProyectoAD.MetaProyecto);
+            if (UtilServicios.ComprobacionCambiosCachesLocales(ProyectoAD.MetaProyecto))
+            {
+                mControladorBase.LimpiarListaOntologiasPermitidasPorIdentidad();
+            }
             UtilServicios.ComprobacionCambiosCachesLocales(ProyectoSeleccionado.Clave);
 
             //Cambio con las comprobaciones en caché con el Proyecto Padre de Ecosistema.
@@ -494,9 +507,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             AsignarMetaRobots(MetaRobots);
 
+            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+
+            Guid? proyectoID = mConfigService.ObtenerProyectoConexion();
+            if (proyectoID == null || proyectoID.Equals(Guid.Empty))
+            {
+                string valor = paramCN.ObtenerParametroAplicacion(ProyectoSeleccionado.UrlPropia(IdiomaUsuario));
+
+                if (!string.IsNullOrEmpty(valor))
+                {
+                    proyectoID = new Guid(valor);
+                }
+            }
+
             ViewBag.TituloPagina = TituloPagina;
             ViewBag.GeneradorURLs = GnossUrlsSemanticas;
-            ViewBag.ProyectoConexion = mConfigService.ObtenerProyectoConexion();
+            ViewBag.ProyectoConexion = proyectoID;
             ViewBag.TokenLoginUsuario = TokenLoginUsuario;
             ViewBag.UrlServicioLogin = mControladorBase.UrlServicioLogin;
             ViewBag.LoggingService = mLoggingService;
@@ -809,6 +835,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return parametrosLogin;
         }
 
+        /// <summary>
+        /// Comprueba si es necesario reiniciar la aplicación y si lo es la reinicia
+        /// </summary>
+        private void ComprobarReinicioAplicacion()
+        {
+            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            if (proyectoCL.EsNecesarioReiniciarAplicacion())
+            {
+                _appLifetime.StopApplication();
+            }
+        }
+
         private void ComprobarRedirecciones(ActionExecutingContext pFilterContext)
         {
             string urlPropiaProyecto = "";
@@ -848,12 +886,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (pFilterContext.Result == null)
             {
                 ComprobarRedireccionesUsuario(pFilterContext);
-            }           
+            }
             if (pFilterContext.Result == null && this.Request.Path.ToString().EndsWith("/login") && Request.Headers.ContainsKey("Referer"))
             {
                 // Si redirige a una página de login, agrega al final el redirect a la página de la que viene.
                 string urlRefferer = new Uri(Request.Headers["Referer"].ToString()).AbsolutePath;
-                if (!string.IsNullOrEmpty(urlRefferer) && !string.IsNullOrEmpty(urlRefferer.TrimEnd('/')) && !urlRefferer.EndsWith("/login") && !urlRefferer.Contains("redirect") && !urlRefferer.EndsWith("/home") && !Request.Headers["Referer"].Equals(Comunidad.Url))
+                if (!string.IsNullOrEmpty(urlRefferer) && !string.IsNullOrEmpty(urlRefferer.TrimEnd('/')) && !urlRefferer.EndsWith("/login") && !urlRefferer.Contains("redirect") && !urlRefferer.EndsWith("/home") && !Request.Headers["Referer"].Equals(Comunidad.Url) && !urlRefferer.Contains(UtilIdiomas.GetText("URLSEM", "AUTENTICACIONDOBLEFACTOR")))
                 {
                     string redirect = ObtenerUrlRedirect(ref urlRefferer);
                     pFilterContext.Result = Redirect(this.Request.Path.ToString() + redirect);
@@ -872,7 +910,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mRouteConfig == null)
                 {
-                    mRouteConfig = new RouteConfig(mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD);
+                    mRouteConfig = new RouteConfig(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor);
                 }
                 return mRouteConfig;
             }
@@ -1134,7 +1172,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                                         if (url.Equals("/") && !string.IsNullOrEmpty(RouteConfig.NombreProyectoSinNombreCorto))
                                         {
-                                            Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+											ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+											Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 
                                             string idioma = UtilIdiomas.LanguageCode;
                                             bool emptyPath = string.IsNullOrEmpty(Request.Path) || Request.Path.Equals("/");
@@ -1153,7 +1192,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                                         idioma = idiomaNavegador;
                                                         if (UtilIdiomas.LanguageCode != idioma)
                                                         {
-                                                            UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+                                                            UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                                                         }
                                                         break;
                                                     }
@@ -1163,13 +1202,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                         }
 
                                         string urlComunidadLogin = BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "LOGIN");
+                                        string autenticacionDobleFactor = UtilIdiomas.GetText("URLSEM", "AUTENTICACIONDOBLEFACTOR");
+                                        string urlComunidadDobleAutenticacion = $"{BaseURLIdioma}/{autenticacionDobleFactor}";
+
                                         if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
                                         {
-                                            urlComunidadLogin = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
+                                            string urlComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
+                                            urlComunidadLogin = urlComunidad;
+                                            urlComunidadDobleAutenticacion = urlComunidad;
 
                                             if (mControladorBase.UsuarioActual.EsUsuarioInvitado || !ProyectoSeleccionado.EsPublico || !ParametrosGeneralesRow.HomeVisible)
                                             {
                                                 urlComunidadLogin += "/" + UtilIdiomas.GetText("URLSEM", "LOGIN");
+                                                urlComunidadDobleAutenticacion += $"/{autenticacionDobleFactor}";
                                             }
                                             else
                                             {
@@ -1178,7 +1223,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                         }
 
                                         //Si el redirect ya contiene esta cadena, significa que ya se le ha redireccionado a login (ya estamos en esa página, no hay que volver a redireccionar)
-                                        if (!redirect.Contains(urlComunidadLogin) && (!redirect.Contains("/login/redirect")) && (!redirect.EndsWith("/login")))
+                                        if (!redirect.Contains(urlComunidadLogin) && (!redirect.Contains("/login/redirect")) && (!redirect.EndsWith("/login")) && !redirect.Contains(urlComunidadDobleAutenticacion) && (!redirect.Contains($"/{autenticacionDobleFactor}/redirect")) && (!redirect.EndsWith($"/{autenticacionDobleFactor}")))
                                         {
                                             if (this.GetType().Name.Equals("LogoutController") && this.GetType().Name.Equals("LoadingController"))
                                             {
@@ -1207,7 +1252,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             bool permisoProyCerrado = (ProyectoSeleccionado.Estado == (short)EstadoProyecto.CerradoTemporalmente && !ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID));
             bool permisoProyDefinicion = mControladorBase.UsuarioActual != null && mControladorBase.UsuarioActual.EsIdentidadInvitada && ProyectoSeleccionado.Estado == (short)EstadoProyecto.Definicion && string.IsNullOrEmpty(mControladorBase.RequestParams("peticionComID"));
             bool permisoProyPrivado = mControladorBase.UsuarioActual != null && mControladorBase.UsuarioActual.EsIdentidadInvitada && !ProyectoSeleccionado.EsPublico && string.IsNullOrEmpty(mControladorBase.RequestParams("peticionComID"));
-            bool paginaPermitidaInvitado = requestUrl.Contains("/login") || requestUrl.Contains("/registro-tutor") || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "OLVIDEPASSWORD")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "COMPLETARREGISTRO")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "ESTABLECERPASSWORD")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "ACEPTARCOOKIES")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "POLITICACOOKIES")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "CONDICIONESUSO")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "POLITICAPRIVACIDAD")) || requestUrl.Contains("&token") || PaginaVisibleEnPrivada;
+            bool paginaPermitidaInvitado = requestUrl.Contains("/login") || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "AUTENTICACIONDOBLEFACTOR")) || requestUrl.Contains("/registro-tutor") || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "OLVIDEPASSWORD")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "COMPLETARREGISTRO")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "CAMBIARPASSWORD")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "ESTABLECERPASSWORD")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "ACEPTARCOOKIES")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "POLITICACOOKIES")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "CONDICIONESUSO")) || requestUrl.Contains(mControladorBase.UtilIdiomas.GetText("URLSEM", "POLITICAPRIVACIDAD")) || requestUrl.Contains("&token") || PaginaVisibleEnPrivada;
 
             //Si 
             if ((permisoProyCerrado || permisoProyDefinicion || permisoProyPrivado) && !paginaPermitidaInvitado)
@@ -1317,7 +1362,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private void ComprobarRedireccionProyectoConUrlPropia(string pUrlPropiaProyecto, ActionExecutingContext pFilterContext)
         {
 
-            if (!string.IsNullOrEmpty(pUrlPropiaProyecto) && mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Equals(ControladorBase.ObtenerDominioUrl(new Uri(pUrlPropiaProyecto), false)))
+            if (!string.IsNullOrEmpty(pUrlPropiaProyecto) && mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Equals(ControladorBase.ObtenerDominioUrl(new Uri(pUrlPropiaProyecto), false)) && (!mConfigService.ObtenerProyectoConexion().HasValue || (mConfigService.ObtenerProyectoConexion().HasValue && !ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))))
             {
                 //Obtengo la URL a la que el usuario intenta acceder
                 string url = this.Request.Path.ToString();
@@ -1361,7 +1406,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 //Comprobamos si el dominio al que vamos corresponde a un dominio diferente
                 bool esUnDominioDiferente = (!string.IsNullOrEmpty(pUrlPropiaProyecto) && mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Equals(ControladorBase.ObtenerDominioUrl(new Uri(pUrlPropiaProyecto), false)));
-                if ((ProyectoSeleccionado != null) && (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto)) && esUnDominioDiferente && !(this.GetType().Name.Equals("LoadingController")) && !(this.GetType().Name.Equals("CkeditorController")) && !(this.GetType().Name.Equals("AceptarCookieController")) && !(this.GetType().Name.Equals("CrearCookieController")) && !(this.GetType().Name.Equals("EliminarCookieController")))
+                if ((ProyectoSeleccionado != null) && (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto)) && esUnDominioDiferente && !(this.GetType().Name.Equals("LoadingController")) && !(this.GetType().Name.Equals("CkeditorController")) && !(this.GetType().Name.Equals("AceptarCookieController")) && !(this.GetType().Name.Equals("CrearCookieController")) && !(this.GetType().Name.Equals("EliminarCookieController")) && (!mConfigService.ObtenerProyectoConexion().HasValue || (mConfigService.ObtenerProyectoConexion().HasValue && !ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))))
                 {
                     mLoggingService.AgregarEntrada("Entra en ComprobarRedireccionAMyGnoss");
 
@@ -1391,12 +1436,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mLoggingService.GuardarLogError($"Error al comprobar la redirección a la configuracion inicial. {ex.Message}");
                 throw;
             }
-        }          
+        }
         /// <summary>
         /// Método que comprueba si el usuario es o no metaAdministrador. En DevTools se utiliza vía PermisosPaginas.
         /// </summary>
         /// <returns></returns>
-        private bool EsMetaAdministrador() {            
+        private bool EsMetaAdministrador()
+        {
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             return proyCN.EsUsuarioAdministradorProyecto(mControladorBase.UsuarioActual.UsuarioID, ProyectoAD.MetaProyecto);
         }
@@ -1713,15 +1759,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         urlIdent = "/" + UtilIdiomas.GetText("URLSEM", "IDENTIDAD") + "/" + filaPerfil.NombreCortoUsu + "/";
                     }
-                    
-                    if (!mConfigService.ObtenerProyectoConexion().HasValue)
+
+                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    Guid? idProyecto = mConfigService.ObtenerProyectoConexion();
+                    if (idProyecto == null || idProyecto.Equals(Guid.Empty))
+                    {
+                        string valor = paramCN.ObtenerParametroAplicacion(ProyectoSeleccionado.UrlPropia(IdiomaUsuario));
+
+                        if (!string.IsNullOrEmpty(valor))
+                        {
+                            idProyecto = new Guid(valor);
+                        }
+                    }
+
+                    if (!idProyecto.HasValue)
                     {
                         perfilExt.Url = $"{BaseURLIdioma}{urlIdent}{UtilIdiomas.GetText("URLSEM", "HOME")}";
                     }
                     else
                     {
                         perfilExt.Url = $"{BaseURLIdioma}{urlIdent}{UtilIdiomas.GetText("URLSEM", "MENSAJES")}";
-                    }                  
+                    }
 
                     if (IdentidadActual.IdentidadPersonalMyGNOSS != null && IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID == filaPerfil.PerfilID && !IdentidadActual.IdentidadPersonalMyGNOSS.TrabajaConOrganizacion)
                     {
@@ -1749,7 +1807,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
                 registro = (AutenticationModel)proyCL.ObtenerFormularioRegistroMVC(ProyectoSeleccionado.Clave);
-                RegistroController registroController = new RegistroController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
+                RegistroController registroController = new RegistroController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
                 if (registro == null)
                 {
                     registro = new AutenticationModel();
@@ -1812,9 +1870,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (mControladorBase.PersonalizacionDominio != Guid.Empty)
                 {
-					VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-					DataWrapperVistaVirtual vistaVirtualDw2 = vistaVirtualCN.ObtenerVistasVirtualPorPersonalizacionID(mControladorBase.PersonalizacionDominio);
-					foreach (VistaVirtual filaVistaVirtual in vistaVirtualDw2.ListaVistaVirtual.Where(item => item.PersonalizacionID.Equals(mControladorBase.PersonalizacionDominio.ToString())))
+                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DataWrapperVistaVirtual vistaVirtualDw2 = vistaVirtualCN.ObtenerVistasVirtualPorPersonalizacionID(mControladorBase.PersonalizacionDominio);
+                    foreach (VistaVirtual filaVistaVirtual in vistaVirtualDw2.ListaVistaVirtual.Where(item => item.PersonalizacionID.Equals(mControladorBase.PersonalizacionDominio.ToString())))
                     {
                         comunidad.ListaPersonalizacionesDominio.Add(filaVistaVirtual.TipoPagina);
                     }
@@ -1865,7 +1923,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         protected virtual void CargarEnlacesMultiIdioma()
         {
-            Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
             Dictionary<string, KeyValuePair<bool, string>> listaEnlacesMultiIdioma = new Dictionary<string, KeyValuePair<bool, string>>();
             string urlMultiIdiomaPaginaActualAux = UrlMultiIdiomaPaginaActual;
             string[] parametros = urlMultiIdiomaPaginaActualAux.Split(new string[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
@@ -1883,7 +1942,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             foreach (string idioma in listaIdiomas.Keys)
             {
-                Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+                Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService,mRedisCacheWrapper);
 
                 string rutaActual = BaseURL;
                 bool obtenerIdioma = true;
@@ -1935,7 +1994,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return url;
         }
 
-		protected virtual void CargarTituloPagina()
+        protected virtual void CargarTituloPagina()
         {
             if (!ProyectoVirtual.Clave.Equals(ProyectoAD.MetaProyecto))
             {
@@ -1951,14 +2010,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     mTituloPagina = mTituloPagina + UtilCadenas.ObtenerTextoDeIdioma(ProyectoVirtual.Nombre, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                 }
-            }
-            if (BaseURL.Contains("gnoss."))
-            {
-                if (!string.IsNullOrEmpty(mTituloPagina))
-                {
-                    mTituloPagina = mTituloPagina + " - ";
-                }
-                mTituloPagina = mTituloPagina + "GNOSS";
             }
         }
 
@@ -2219,7 +2270,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<CommunityModel.PestaniaModelMetabusqueda> listaPestanyas = new List<CommunityModel.PestaniaModelMetabusqueda>();
             foreach (AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaBusqueda filaPestanyaBusqueda in ProyectoVirtual.GestorProyectos.DataWrapperProyectos.ListaProyectoPestanyaBusqueda.Where(proyectoPestanyaMenu => proyectoPestanyaMenu.ProyectoPestanyaMenu.ProyectoID.Equals(ProyectoSeleccionado.FilaProyecto.ProyectoID) && !listasTipoPorDefecto.Contains((int)proyectoPestanyaMenu.ProyectoPestanyaMenu.TipoPestanya)).ToList())
             {
-                if (filaPestanyaBusqueda.ProyectoPestanyaMenu.Visible && filaPestanyaBusqueda.ProyectoPestanyaMenu.Activa)
+                if (filaPestanyaBusqueda.ProyectoPestanyaMenu.Activa)
                 {
                     CommunityModel.PestaniaModelMetabusqueda pestaniaModel = new CommunityModel.PestaniaModelMetabusqueda();
                     pestaniaModel.Nombre = UtilCadenas.ObtenerTextoDeIdioma(filaPestanyaBusqueda.ProyectoPestanyaMenu.Nombre, UtilIdiomas.LanguageCode, "es");
@@ -2538,7 +2589,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma))
                     {
-                        if (!pestanyaActual.ListaIdiomasDisponibles(mConfigService.ObtenerListaIdiomasDictionary()).Contains(UtilIdiomas.LanguageCode))
+						ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+						if (!pestanyaActual.ListaIdiomasDisponibles(paramCL.ObtenerListaIdiomasDictionary()).Contains(UtilIdiomas.LanguageCode))
                         {
                             pestanyasAEliminar.Add(pestanya);
                         }
@@ -2623,8 +2675,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             permisosComunidad.DocumentPermissions = new List<ResourceModel.DocumentType>();
 
             permisosComunidad.OntologyPermissionsNameUrls = new SortedDictionary<string, KeyValuePair<string, string>>();
-            ;
-
+            
             if (ParticipaUsuarioEnProyecto())
             {
                 if (ProyectoVirtual.TipoAcceso != TipoAcceso.Privado && ProyectoVirtual.TipoAcceso != TipoAcceso.Reservado)
@@ -2706,13 +2757,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     IdentidadOrganizacion = IdentidadActual.IdentidadOrganizacion;
                                 }
 
-                                if (listaPropiedades.ContainsKey(PropiedadesOntologia.cargasmultiples.ToString()) && listaPropiedades[PropiedadesOntologia.cargasmultiples.ToString()] == "true")
+                                if (!permisosComunidad.OntologyPermissionsNameUrls.ContainsKey(tituloOntologia))
                                 {
-                                    permisosComunidad.OntologyPermissionsNameUrls.Add(tituloOntologia, new KeyValuePair<string, string>(mControladorBase.UrlsSemanticas.GetURLBaseRecursosCrearDocumento(BaseURLIdioma, UtilIdiomas, ProyectoVirtual.NombreCorto, UrlPerfil, Guid.NewGuid(), filaDoc.DocumentoID.ToString(), (IdentidadOrganizacion != null), documentoVirtual), mControladorBase.UrlsSemanticas.GetURLBaseRecursosCrearDocumentoMultiple(BaseURLIdioma, UtilIdiomas, ProyectoVirtual.NombreCorto, UrlPerfil, Guid.NewGuid(), filaDoc.DocumentoID.ToString(), (IdentidadOrganizacion != null))));
-                                }
-                                else
-                                {
-                                    permisosComunidad.OntologyPermissionsNameUrls.Add(tituloOntologia, new KeyValuePair<string, string>(mControladorBase.UrlsSemanticas.GetURLBaseRecursosCrearDocumento(BaseURLIdioma, UtilIdiomas, ProyectoVirtual.NombreCorto, UrlPerfil, Guid.NewGuid(), filaDoc.DocumentoID.ToString(), (IdentidadOrganizacion != null), documentoVirtual), null));
+                                    if (listaPropiedades.ContainsKey(PropiedadesOntologia.cargasmultiples.ToString()) && listaPropiedades[PropiedadesOntologia.cargasmultiples.ToString()] == "true")
+                                    {
+                                        permisosComunidad.OntologyPermissionsNameUrls.Add(tituloOntologia, new KeyValuePair<string, string>(mControladorBase.UrlsSemanticas.GetURLBaseRecursosCrearDocumento(BaseURLIdioma, UtilIdiomas, ProyectoVirtual.NombreCorto, UrlPerfil, Guid.NewGuid(), filaDoc.DocumentoID.ToString(), (IdentidadOrganizacion != null), documentoVirtual), mControladorBase.UrlsSemanticas.GetURLBaseRecursosCrearDocumentoMultiple(BaseURLIdioma, UtilIdiomas, ProyectoVirtual.NombreCorto, UrlPerfil, Guid.NewGuid(), filaDoc.DocumentoID.ToString(), (IdentidadOrganizacion != null))));
+                                    }
+                                    else
+                                    {
+                                        permisosComunidad.OntologyPermissionsNameUrls.Add(tituloOntologia, new KeyValuePair<string, string>(mControladorBase.UrlsSemanticas.GetURLBaseRecursosCrearDocumento(BaseURLIdioma, UtilIdiomas, ProyectoVirtual.NombreCorto, UrlPerfil, Guid.NewGuid(), filaDoc.DocumentoID.ToString(), (IdentidadOrganizacion != null), documentoVirtual), null));
+                                    }
                                 }
                             }
                         }
@@ -2722,7 +2776,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     bool tienePermisoRecursoNoSemantico = permisosComunidad.DocumentPermissions.Count == 1 && !permisosComunidad.DocumentPermissions[0].Equals(ResourceModel.DocumentType.Semantico);
                     bool tienePermisoOntologias = permisosComunidad.DocumentPermissions.Count == 1 && permisosComunidad.DocumentPermissions[0].Equals(ResourceModel.DocumentType.Semantico) && permisosComunidad.OntologyPermissionsNameUrls.Count > 0;
                     permisosComunidad.CreateResource = (tienePermisoVariosTiposRecursos || tienePermisoRecursoNoSemantico || tienePermisoOntologias);
-                    //permisosComunidad.CreateResource = (permisosComunidad.DocumentPermissions.Count > 0 || tienePermisoOntologias);
                 }
 
                 if (ParametrosGeneralesVirtualRow.InvitacionesDisponibles || ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
@@ -3044,7 +3097,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 //HttpContext.Server.TransferRequest(urlTransfer, true);
 
                 //return View("~/Views/Error/Error404.cshtml", ErrorController.Error404(this, false));                
-                return ViewError404(new ErrorController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth).Error404(this, false));
+                return ViewError404(new ErrorController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime).Error404(this, false));
             }
             return new EmptyResult();
         }
@@ -3289,7 +3342,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             ViewBag.Personalizacion = string.Empty;
             ViewBag.PersonalizacionDominio = string.Empty;
             ViewBag.PersonalizacionEcosistema = string.Empty;
-            ViewBag.PersonalizacionLayout = string.Empty;            
+            ViewBag.PersonalizacionLayout = string.Empty;
             //RouteValueTransformer.RecalcularRutasProyecto(ProyectoSeleccionado.FilaProyecto.ProyectoID, mEntityContext);
         }
 
@@ -3300,19 +3353,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (string.IsNullOrEmpty(RequestParams("new-community-wizard")))
             {
-                // El parámetro new-community-wizard indica que está en el asistente de creación de comunidad
-                // En ese caso, no sacamos el menú de adminstración para que sigua los pasos del asistente. 
                 ViewBag.PermisosPaginas = PermisosPaginasAdministracion;
             }
-            //TODO FRAN: No se debe hacer en el controllerBase.
-            Comunidad.IntegracionContinuaActivada = false;
-            Comunidad.IntContActivadaSinRamaEnUso = false;
-            Comunidad.UsuarioDadoAltaIntCont = true;
-            Comunidad.EntornoEsPre = false;
-            Comunidad.EntornoBloqueado = false;
-            Comunidad.EntornoEsPro = false;
 
-            //TODO FRAN: No se debe hacer en el controllerBase.
             if (HayIntegracionContinua)
             {
                 Comunidad.IntegracionContinuaActivada = true;
@@ -3330,10 +3373,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         Comunidad.IntContActivadaSinRamaEnUso = true;
                     }
                 }
+
                 if (!UsuarioEstaDadoDeAltaEnIntCont)
                 {
                     Comunidad.UsuarioDadoAltaIntCont = false;
                 }
+                else
+                {
+                    Comunidad.UsuarioDadoAltaIntCont = true;
+                }
+
                 if (EntornoActualEsPreproduccion)
                 {
                     Comunidad.EntornoEsPre = true;
@@ -3348,7 +3397,72 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     Comunidad.EntornoBloqueado = true;
                 }
+
+                Comunidad.DeshabilitarGuardarAdministracionIC = Comunidad.IntContActivadaSinRamaEnUso || !Comunidad.UsuarioDadoAltaIntCont || Comunidad.EntornoBloqueado || Comunidad.EntornoEsPre;
+
+                ObtenerInformacionBannerAvisoIC();
             }
+            else
+            {
+                if (mEnv.IsProduction())
+                {
+                    Comunidad.EntornoEsPro = true;
+                }
+                else if (mEnv.IsStaging())
+                {
+                    Comunidad.EntornoEsPre = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene el mensaje para mostrar en el banner que indica el estado de la integración continua y las variables
+        /// que indican a la vista que botones pintar en el banner
+        /// </summary>
+        private void ObtenerInformacionBannerAvisoIC()
+        {
+
+            if (HayRamaOVersionActiva(Comunidad.RamaActualGit))
+            {
+                if (Comunidad.EntornoEsPre)
+                {
+                    Comunidad.MensajeAvisoAdministracionIC = UtilIdiomas.GetText("DEVTOOLS", "ESTASENPRERAMAACTIVANOPUEDESHACERCAMBIOS", Comunidad.RamaActualGit);
+                }
+                else if (EsVersion(Comunidad.RamaActualGit))
+                {
+                    Comunidad.MensajeAvisoAdministracionIC = UtilIdiomas.GetText("DEVTOOLS", "ESTASENLARAMARELEASE(VERSION@1@)PUEDESHACERCAMBIOSENLAADMIN", Comunidad.VersionRamaRelease);
+                    Comunidad.MostrarBotonAdministrarDespliegues = true;
+                }
+                else
+                {
+                    //Es Rama
+                    Comunidad.MensajeAvisoAdministracionIC = UtilIdiomas.GetText("DEVTOOLS", "ESTASENLA@1@,SOLOSETEPERMITEHACERCAMBIOSENADMINISTRACIONYCER", Comunidad.RamaActualGit);
+                    Comunidad.MostrarBotonAdministrarRamas = true;
+                }
+            }
+            else
+            {
+                if (Comunidad.EntornoBloqueado)
+                {
+                    Comunidad.MensajeAvisoAdministracionIC = UtilIdiomas.GetText("DEVTOOLS", "ELENTORNOACTUALESTABLOQUEADOPORQUESEHAVALIDADOUNAVERSIONDEB");
+                }
+                else
+                {
+                    Comunidad.MensajeAvisoAdministracionIC = UtilIdiomas.GetText("DEVTOOLS", "NOTIENESUNARAMAACTIVA,DEBESCREARUNARAMAPARAPODERSUBIRLOSCAMB");
+                    Comunidad.MostrarBotonAdministrarDespliegues = true;
+                    Comunidad.MostrarBotonAdministrarRamas = true;
+                }
+            }
+        }
+
+        private bool HayRamaOVersionActiva(string ramaActualGit)
+        {
+            return !string.Equals(ramaActualGit, string.Empty) && !string.Equals(ramaActualGit, "develop") && !ramaActualGit.StartsWith("release_");
+        }
+
+        private bool EsVersion(string ramaActualGit)
+        {
+            return ramaActualGit.StartsWith("release_");
         }
 
         private PermisosPaginasAdministracionViewModel CargarPermisosAdministracionComunidad()
@@ -3968,7 +4082,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ParametroAplicacion busqueda = GestorParametroAplicacion.ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro == "copyright");
                 ParametroAplicacion busqueda2 = GestorParametroAplicacion.ParametroAplicacion.FirstOrDefault(parametro => parametro.Parametro == TiposParametrosAplicacion.Copyright);
                 string textoCopyright = "";
-                
+
                 if (!string.IsNullOrEmpty(ParametrosGeneralesVirtualRow.Copyright) || (busqueda != null && !string.IsNullOrEmpty(((GestorParametroAplicacion.ParametroAplicacion.Where(parametro => parametro.Parametro == TiposParametrosAplicacion.Copyright).FirstOrDefault())).Valor)))
                 {
                     if ((busqueda != null && busqueda2 != null && !string.IsNullOrEmpty(busqueda2.Valor)))
@@ -4121,7 +4235,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             get
             {
                 string url = "";
-                
+
                 url = Request.Path;
                 //A la hora de coger los enlaces multidioma no funciona correctamente por eso se ha comentado, ya que sacan enlaces como
                 //https://redprivada.gnoss.com/en/https:///comunidad/hercules-asio/login
@@ -4180,10 +4294,99 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         url = url.Substring(0, url.Length - 1);
                     }
                 }
-                return (url + Request.QueryString);
+                return (url + ComprobarQueryString(Request.QueryString.ToString()));
             }
         }
 
+        /// <summary>
+        /// Devuelve la query con el parametro redirect verificado
+        /// </summary>
+        /// <param name="pQueryString">Query de una url a verificar</param>
+        [NonAction]
+        public string ComprobarQueryString(string pQueryString)
+        {
+            string queryString = pQueryString;
+            if (!string.IsNullOrEmpty(queryString))
+            {
+                NameValueCollection queryParams = HttpUtility.ParseQueryString(pQueryString);
+                string redirect = "";
+                string query = "";
+                //Comprobarmos el parametro redirect de la query del referer
+                if (queryParams["redirect"] != null)
+                {
+                    redirect = HttpUtility.UrlDecode(queryParams["redirect"]);
+                    if (!redirect.Equals(ComprobarRedirectValido(redirect)))
+                    {
+                        redirect = ComprobarRedirectValido(redirect);
+                    }
+                }
+                if (queryParams.Count > 0)
+                {
+                    foreach (string clave in queryParams.Keys)
+                    {
+                        string valor = queryParams[clave];
+                        if (valor.Equals(UtilCadenas.LimpiarInyeccionCodigo(valor)))
+                        {
+                            if (clave!= null && clave.Equals("redirect"))
+                            {
+                                valor = redirect;
+                            }
+                            if (!string.IsNullOrEmpty(valor))
+                            {
+                                //Cambio hecho para que funcionen páginas como mensajes?nuevo
+                                string claveQuery = clave;
+                                if (!string.IsNullOrEmpty(claveQuery))
+                                {
+                                    claveQuery = $"{claveQuery}=";
+                                }
+                                query = $"{query}{claveQuery}{valor}&";
+                            }
+                        }
+                    }
+                }
+                queryString = query;
+                if (!string.IsNullOrEmpty(queryString))
+                {
+                    queryString = queryString.Substring(0, queryString.Length - 1);
+                    queryString = $"?{queryString}";
+                }
+            }
+            return queryString;
+        }
+        [NonAction]
+        /// <summary>
+        /// Comprueba si la URL dada es valida para poder redirigir a ella
+        /// </summary>
+        /// <param name="pUrlRedirect">Url a la que dirigir</param>
+        public string ComprobarRedirectValido(string pUrlRedirect)
+        {
+            string redirect = "";
+            if (!string.IsNullOrEmpty(pUrlRedirect))
+            {
+                try
+                {
+                    if (!mEnv.IsDevelopment() || (mEnv.IsDevelopment() && !pUrlRedirect.Contains("depuracion.net")))
+                    {
+                        mLoggingService.GuardarLog($"1. COMPROBAR REDIRECT VALIDO - pUrlRedirect: {pUrlRedirect}");
+                        string hostRedirect = new Uri(pUrlRedirect).Host;
+                        mLoggingService.GuardarLog($"\t1.1 hostRedirect: {hostRedirect}");
+                        string hostProyecto = new Uri(ProyectoSeleccionado.UrlPropia(IdiomaUsuario)).Host;
+                        mLoggingService.GuardarLog($"\t1.2 hostProyecto: {hostProyecto} - ProyectoSeleccionado: {ProyectoSeleccionado.Clave}");
+                        string urlRedirectLimpio = UtilCadenas.LimpiarInyeccionCodigo(pUrlRedirect);
+                        mLoggingService.GuardarLog($"\t1.3 urlRedirectLimpio: {urlRedirectLimpio}");
+                        if (!hostRedirect.Equals(hostProyecto) || !urlRedirectLimpio.Equals(pUrlRedirect))
+                        {
+                            pUrlRedirect = "";
+                        }
+                    }
+                }catch(Exception ex)
+                {
+                    pUrlRedirect = "";
+                }
+            }
+            redirect = pUrlRedirect;
+            return redirect;
+        }
         /// <summary>
         /// Obtiene o establece si la petición actual ha sido transferida a la página 404
         /// </summary>
@@ -4265,15 +4468,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             get
             {
-                if (Request.Host.ToString().Contains("depuracion.net") && Request.QueryString.ToString().EndsWith("?rdfDepuracion"))
+                if (Request.Host.ToString().Contains("depuracion.net") && Request.Query.ContainsKey("rdfDepuracion"))
                 {
                     return true;
                 }
-                if (Request.ContentType == "application/rdf+xml")
+                if (Request.ContentType == "application/rdf+xml" || Request.Headers.Accept.Contains("application/rdf+xml"))
                 {
                     return true;
                 }
-                else if (Request.QueryString.ToString().EndsWith("?rdf") || Request.QueryString.ToString().EndsWith("&rdf") || Request.QueryString.ToString().Contains("?rdf&") || Request.QueryString.ToString().Contains("&rdf&"))
+                else if (Request.Query.ContainsKey("rdf"))
                 {
                     if (EsBot)
                     {
@@ -4896,7 +5099,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (cookieAviso != null && !cookieAviso.ContainsKey("aceptada"))
                     {
-                        Response.Cookies.Append(nombreCookie, "", new CookieOptions { Expires = DateTime.Now.AddDays(-1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = true });
+                        if (mConfigService.PeticionHttps())
+                        {
+                            Response.Cookies.Append(nombreCookie, "", new CookieOptions { Expires = DateTime.Now.AddDays(-1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = true });
+                        }
+                        else
+                        {
+                            Response.Cookies.Append(nombreCookie, "", new CookieOptions { Expires = DateTime.Now.AddDays(-1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = false });
+                        }                     
                     }
                     else
                     {
@@ -4946,7 +5156,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (actualizarCookie && pFilterContext.Result != null)
                 {
-                    Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(cookieAviso, mEntityContext), new CookieOptions { Expires = DateTime.Now.AddYears(1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = true });
+                    if (mConfigService.PeticionHttps())
+                    {
+                        Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(cookieAviso, mEntityContext), new CookieOptions { Expires = DateTime.Now.AddYears(1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = true });
+                    }
+                    else
+                    {
+                        Response.Cookies.Append(nombreCookie, UtilCookies.ToLegacyCookieString(cookieAviso, mEntityContext), new CookieOptions { Expires = DateTime.Now.AddYears(1), Domain = mControladorBase.DominoAplicacion, HttpOnly = true, Secure = false });
+                    }
+                    
                 }
             }
         }
@@ -4957,7 +5175,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             DataWrapperUsuario usuarioDW = usuarioCN.ObtenerPoliticaCookiesProyecto(ProyectoSeleccionado.Clave);
             usuarioCN.Dispose();
             List<AD.EntityModel.Models.UsuarioDS.ClausulaRegistro> filasCabecera = usuarioDW.ListaClausulaRegistro.Where(c => c.ProyectoID.Equals(ProyectoSeleccionado.Clave) && c.Tipo.Equals((short)ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesCabecera)).ToList();
-            
+
             if (filasCabecera.Count > 0)
             {
                 ViewBag.TextoPoliticaCookies = UtilCadenas.ObtenerTextoDeIdioma(filasCabecera[0].Texto, UtilIdiomas.LanguageCode, null);
@@ -5021,9 +5239,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         pObjeto = EncapsularRutas(pObjeto);
                     }
                     string peticion = UrlApiIntegracionContinua + "/integracion/upload-changes";
-                    GuardarLogError("LA peticion es: " + peticion);
+                    GuardarLogError("La peticion es: " + peticion);
                     string requestParameters = $"User={mControladorBase.UsuarioActual.UsuarioID}&Project={ProyectoSeleccionado.Clave}&Environment={EntornoIntegracionContinua}&Type={pTipoCambio}&Content={WebUtility.UrlEncode(pObjeto)}";
                     StringContent content = new StringContent(requestParameters, Encoding.UTF8, "application/x-www-form-urlencoded");
+                    content.Headers.Add("UserAgent", UtilWeb.GenerarUserAgent());
                     var response = mHttpClient.PostAsync(peticion, content);
                     return response.Result;
                 }
@@ -5058,6 +5277,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     string peticion = UrlApiIntegracionContinua + "/integracion/upload-changes";
                     string requestParameters = $"User={mControladorBase.UsuarioActual.UsuarioID}&Project={ProyectoSeleccionado.Clave}&Environment={EntornoIntegracionContinua}&Type={pTipoCambio}&Content={HttpUtility.UrlEncode(objeto)}";
                     StringContent content = new StringContent(requestParameters, Encoding.UTF8, "application/x-www-form-urlencoded");
+                    content.Headers.Add("UserAgent", UtilWeb.GenerarUserAgent());
                     var response = mHttpClient.PostAsync(peticion, content);
                     return response.Result;
                 }
@@ -5087,6 +5307,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     string peticion = UrlApiIntegracionContinua + "/integracion/upload-changes";
                     string requestParameters = $"User={mControladorBase.UsuarioActual.UsuarioID}&Project={ProyectoSeleccionado.Clave}&Environment={EntornoIntegracionContinua}&Type={pTipoCambio}&RelativePath={pNombreArchivo}&Content={System.Net.WebUtility.UrlEncode(pObjeto)}";
                     StringContent content = new StringContent(requestParameters, Encoding.UTF8, "application/x-www-form-urlencoded");
+                    content.Headers.Add("UserAgent", UtilWeb.GenerarUserAgent());
                     var response = mHttpClient.PostAsync(peticion, content);
                     return response.Result;
                 }
@@ -5105,7 +5326,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mUtilIdiomasFactory == null)
                 {
-                    mUtilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService);
+                    mUtilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                 }
                 return mUtilIdiomasFactory;
             }
@@ -5120,8 +5341,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         protected string EncapsularRutas(string contenido)
         {
             Dictionary<string, string> replaces = new Dictionary<string, string>();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            foreach (string idioma in mConfigService.ObtenerListaIdiomas())
+			foreach (string idioma in paramCL.ObtenerListaIdiomas())
             {
                 string baseUrlIdioma = ProyectoSeleccionado.UrlPropia(IdiomaUsuario);
 
@@ -5168,8 +5390,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         protected string DesencapsularRutas(string contenido)
         {
             Dictionary<string, string> replaces = new Dictionary<string, string>();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            foreach (string idioma in mConfigService.ObtenerListaIdiomas())
+			foreach (string idioma in paramCL.ObtenerListaIdiomas())
             {
                 string baseUrlIdioma = ProyectoSeleccionado.FilaProyecto.URLPropia;
 
@@ -5347,6 +5570,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return redirect;
         }
 
+        protected void GuardarLogAuditoria([CallerMemberName] string pMemberName = "",
+        [CallerFilePath] string pSourceFilePath = "")
+        {
+            string clase = "";
+            if (!string.IsNullOrEmpty(pSourceFilePath))
+            {
+                clase = new FileInfo(pSourceFilePath).Name;
+            }
+
+            mLoggingService.GuardarLog($"{UsuarioActual.UsuarioID} - {ProyectoSeleccionado.NombreCorto} - {clase} - {pMemberName} - ({Request.GetDisplayUrl()})", $"admin-audit_{DateTime.Now.ToString("yyyy-MM-dd")}.log");
+        }
+
         /// <summary>
         /// Indica si deben mostrar los datos demograficos del perfil
         /// </summary>
@@ -5395,6 +5630,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             get
             {
                 return BaseURLFormulariosSem + "/Ontologia/Curriculum.owl#";
+            }
+        }
+
+        public string DominioConfigurado
+        {
+            get
+            {
+                string dominio = mConfigService.ObtenerDominio();
+                if (!string.IsNullOrEmpty(dominio))
+                {
+                    if (mConfigService.PeticionHttps() && !mConfigService.ObtenerDominio().Contains("http"))
+                    {
+                        dominio = $"https://{mConfigService.ObtenerDominio()}";
+                    }
+                    else if (!mConfigService.PeticionHttps() && !mConfigService.ObtenerDominio().Contains("http"))
+                    {
+                        dominio = $"http://{mConfigService.ObtenerDominio()}";
+                    }
+
+                }
+
+                return dominio;
             }
         }
 

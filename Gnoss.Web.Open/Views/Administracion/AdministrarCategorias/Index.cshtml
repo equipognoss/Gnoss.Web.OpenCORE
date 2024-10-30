@@ -18,77 +18,77 @@ Variables
 ----------------------------------------------------------------
 -------------------- Vista para Administrar las categorías de la comunidad --------------------
 *@
-    @* Migas de Pan *@
-    <div class="col col-12 col-breadcrumb">
-        <ul>
-            <li>
-                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-            </li>
-            <li>                
-                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")</a>
-            </li>
-            <li>
-                @Html.GetText("ADMINISTRACIONBASICA","CATEGORIAS")
-            </li>
-        </ul>
-        @* Botón de documentación *@
-        <div class="col-breadcrumb__documentation" style="display: flex; align-items: center;">    
-            <button type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" data-toggle="modal" data-target="#right_modal_lg">
-                <span class="material-icons texto-primario documentation__icon" data-toggle="modal" data-target="#right_modal_lg" style="cursor:pointer">description</span>
-                <span class="documentation__text" style="font-weight: 300;">Documentación</span>
-            </button>
-        </div>
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD")</a>
+        </li>
+        <li>
+            @Html.GetText("ADMINISTRACIONBASICA", "CATEGORIAS")
+        </li>
+    </ul>
+    @* Botón de documentación *@
+    <div class="col-breadcrumb__documentation" style="display: flex; align-items: center;">
+        <button type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" data-toggle="modal" data-target="#right_modal_lg">
+            <span class="material-icons texto-primario documentation__icon" data-toggle="modal" data-target="#right_modal_lg" style="cursor:pointer">description</span>
+            <span class="documentation__text" style="font-weight: 300;">Documentación</span>
+        </button>
+    </div>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+    @* Título de la sección *@
+    <h2>@Html.GetText("ADMINISTRACIONBASICA", "CATEGORIAS")</h2>
+    <p>
+        @Html.GetText("DEVTOOLS", "EDICIONYCREACIONDECATEGORIASPARALACLASIFICACIONDELOSRECURSOS")
+    </p>
+
+    @* Permitir multilenguaje de categorías *@
+    <div class="custom-control custom-checkbox mr-sm-2 mb-2">
+        <input type="checkbox" id="chkMultiIdioma"
+               name="chkMultiIdioma"
+               class="custom-control-input"
+        @Html.Raw(Model.MultiLanguaje ? "checked=\"checked\"" : "")>
+        <label class="custom-control-label" for="chkMultiIdioma">@Html.GetText("COMADMINCATEGORIAS", "ACTIVAREDICIONMULTIIDIOMA")</label>
     </div>
 
-    @* Contenido Central *@
-	<div class="formulario-edicion background-blanco">
-		@* Título de la sección *@
-		<h2>@Html.GetText("ADMINISTRACIONBASICA","CATEGORIAS")</h2>
-		<p>			            
-            @Html.GetText("DEVTOOLS","EDICIONYCREACIONDECATEGORIASPARALACLASIFICACIONDELOSRECURSOS")
-		</p>        
+    @* Contenido central de Tesauro de Categorías + Tabs de idiomas *@
+    <div id="panTesauro">
+        @Html.PartialView("_Tesauro", Model)
+    </div>
 
-        @* Permitir multilenguaje de categorías *@
-        <div class="custom-control custom-checkbox mr-sm-2 mb-2">
-            <input type="checkbox" id="chkMultiIdioma" 
-                   name="chkMultiIdioma" 
-                   class="custom-control-input" 
-                   @Html.Raw(Model.MultiLanguaje?"checked=\"checked\"":"")>
-            <label class="custom-control-label" for="chkMultiIdioma">@Html.GetText("COMADMINCATEGORIAS", "ACTIVAREDICIONMULTIIDIOMA")</label>
-        </div>
-		
-		@* Contenido central de Tesauro de Categorías + Tabs de idiomas *@
-		<div id="panTesauro">	
-            @Html.PartialView("_Tesauro", Model)
-		</div>
-	
-		@* Botón para guardado de datos *@
-		@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-		{
-			@* No permitir guardar *@
-			<input type="button" disabled class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/>								
-		}
-		else
-		{		
-			@* Permitir guardar *@
-			<input id="btnGuardarCategorias" type="button" @(Model.PasosRealizados != "" ? "disabled": "") class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/>								
-		}		
-	</div>
+    @* Botón para guardado de datos *@
+    @if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+    {
+        @* No permitir guardar *@
+        <input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")" />
+    }
+    else
+    {
+        @* Permitir guardar *@
+        <input id="btnGuardarCategorias" type="button" @(Model.PasosRealizados != "" ? "disabled" : "") class="btn btn-primary uppercase" value="@Html.GetText("COMMON", "GUARDAR")" />
+    }
+</div>
 
-    @* Modal de documentación de la sección *@
-    @Html.PartialView("_modal-views/_documentation-section")   
-    @* Modal de confirmación de eliminación de la categoría *@
-    @Html.PartialView("_modal-views/_delete-category")
+@* Modal de documentación de la sección *@
+@Html.PartialView("_modal-views/_documentation-section")
+@* Modal de confirmación de eliminación de la categoría *@
+@Html.PartialView("_modal-views/_delete-category")
 
 
 @* Carga de operativa *@
-@section operativaScript{
+@section operativaScript {
     <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Html.GetVersion()"></script>
     <script type="text/javascript">
 
         (function ($) {
             // Operativa funcionamiento de Gestión de Categorías
-			operativaGestionCategorias.init();
+            operativaGestionCategorias.init();
         })();
     </script>
 }

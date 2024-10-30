@@ -1,0 +1,65 @@
+﻿table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+table{
+     margin: 0 auto;
+}
+
+.tableCentrada {
+    table-layout: fixed;
+    width: 100%
+}
+
+th, td {
+    padding-top: 5px;
+    padding-bottom: 10px;
+    padding-left: 15px;
+    padding-right: 20px;
+}
+
+
+
+.center {
+    margin: auto;
+    width: 50%;
+    padding: 10px;
+}
+
+
+h2 {
+    text-align: center;
+}
+
+#chartdiv {
+    width: 100%;
+    height: 600px
+}
+
+.matomo-container {
+    display: flex;
+    width: 50%;
+}
+.matomoLado{
+  flex: 1;
+  margin: 5px;
+}
+
+.matomoLado:first-child {
+    margin-right: 10px;
+}
+.containerParallel {
+    overflow: hidden;
+}
+
+.parallelTexth3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+.parellelBtIndex{
+    float: right;
+}

@@ -1,5 +1,10 @@
-﻿using Es.Riam.Gnoss.AD.EntityModel;
+﻿using Es.Riam.AbstractsOpen;
+using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.Virtuoso;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Elementos.Notificacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -19,6 +24,7 @@ using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using System.Web;
+using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 
 namespace Gnoss.Web.Middlewares
 {
@@ -27,6 +33,7 @@ namespace Gnoss.Web.Middlewares
         private readonly RequestDelegate _next;
         private readonly IHostingEnvironment _env;
         private ConfigService _configService;
+
         public ErrorMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService)
         { 
             _next = next;
@@ -34,7 +41,7 @@ namespace Gnoss.Web.Middlewares
             _configService = configService;
         }
 
-        public async Task Invoke(HttpContext context, LoggingService loggingService, EntityContext entityContext)
+        public async Task Invoke(HttpContext context, LoggingService loggingService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper)
         {
             try
             {
@@ -43,7 +50,7 @@ namespace Gnoss.Web.Middlewares
                 {
                     string originalPath = context.Request.Path.Value;
                     context.Items["originalPath"] = originalPath;
-                    context.Request.Path = ComprobarRutaPestanya(context, entityContext);
+                    context.Request.Path = ComprobarRutaPestanya(context, entityContext, loggingService, redisCacheWrapper);
                     await _next(context);
                 }
             }
@@ -105,23 +112,28 @@ namespace Gnoss.Web.Middlewares
             context.Request.Body = stream;
         }
 
-        public string ComprobarRutaPestanya(HttpContext context, EntityContext entityContext)
+        public string ComprobarRutaPestanya(HttpContext context, EntityContext entityContext, LoggingService loggingService, RedisCacheWrapper redisCacheWrapper)
         {
             string[] segmentos = context.Items["originalPath"].ToString().Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             if (segmentos.Length > 0)
             {
                 string rutaPedida = "";
-                string idioma = "";
-                UtilIdiomas utilIdiomas = new UtilIdiomas(idioma, null, null, _configService);
-                string comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
                 string nombreCortoComunidad = "";
-                if (segmentos[0].Length == 2)
-                {
-                    if (_configService.ObtenerListaIdiomasDictionary().ContainsKey(segmentos[0]))
+                ProyectoCN proyectoCN = new ProyectoCN(entityContext, loggingService, _configService, null);
+                string dominio = _configService.ObtenerDominio();
+                string idioma = proyectoCN.ObtenerIdiomaPrincipalDominio(dominio);
+                UtilIdiomas utilIdiomas = new UtilIdiomas(idioma, loggingService, entityContext, _configService, redisCacheWrapper);
+                string comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
+                
+				if (segmentos[0].Length == 2)
+				{
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, _configService, null);
+                    if (paramCL.ObtenerListaIdiomasDictionary().ContainsKey(segmentos[0]))
                     {
                         idioma = segmentos[0];
                     }
-
+                    utilIdiomas = new UtilIdiomas(idioma, loggingService, entityContext, _configService, redisCacheWrapper);
+                    comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
                     if (!string.IsNullOrEmpty(segmentos[2]))
                     {
                         string comunidadSegmento = segmentos[1].ToLower();
@@ -217,6 +229,11 @@ namespace Gnoss.Web.Middlewares
                         else
                         {
                             context.Items["statusCode"] = 404;
+                            if (segmentos[0].Length == 2)
+                            {
+                                return $"/{idioma}/{comunidadTxt}/{nombreCortoComunidad}/error";
+                            }
+
                             return $"/{comunidadTxt}/{nombreCortoComunidad}/error";
                         }
                     }

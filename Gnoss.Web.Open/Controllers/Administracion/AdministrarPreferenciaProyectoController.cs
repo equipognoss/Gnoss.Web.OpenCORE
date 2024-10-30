@@ -6,9 +6,11 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Facetado;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Tesauro;
 using Es.Riam.Gnoss.Elementos.Tesauro;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Tesauro;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -23,6 +25,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,8 +37,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class AdministrarPreferenciaProyectoController : ControllerBaseWeb
     {
-        public AdministrarPreferenciaProyectoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarPreferenciaProyectoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -289,6 +292,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { Models.ViewModels.TipoPaginaAdministracion.Tesauro })]
         public ActionResult Guardar()
         {
+            GuardarLogAuditoria();
             try
             {
                 if (!PaginaModel.MultiLanguaje)
@@ -763,7 +767,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     //mPaginaModel.Thesaurus.SuggestedThesaurusCategories = CategoriasSugeridas;
 
                     ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    mPaginaModel.Thesaurus.ExpandedCategories = CategoriasExpandidasIDs;
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					mPaginaModel.Thesaurus.ExpandedCategories = CategoriasExpandidasIDs;
                     mPaginaModel.Thesaurus.SelectedCategories = proyCN.ObtenerCategoriasSeleccionadas(ProyectoSeleccionado.Clave);
                     mPaginaModel.Thesaurus.SharedCategories = CategoriasCompartidasIDs;
 
@@ -779,7 +784,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         foreach (CategoriaTesauro cat in GestorTesauro.ListaCategoriasTesauro.Values)
                         {
                             
-                            foreach (string idioma in mConfigService.ObtenerListaIdiomas())
+                            foreach (string idioma in paramCL.ObtenerListaIdiomas())
                             {
                                 if (cat.FilaCategoria.Nombre.Contains("@" + idioma.ToString()))
                                 {

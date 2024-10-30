@@ -11,6 +11,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Facetado;
 using Es.Riam.Gnoss.Elementos.Documentacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
@@ -41,6 +42,8 @@ using System.Web;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using static Es.Riam.Gnoss.Web.MVC.Models.Tesauro.TesauroModels;
 using AngleSharp.Text;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -130,8 +133,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public ComAdminElemSemanticosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public ComAdminElemSemanticosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -157,16 +160,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             CargarPermisosAdministracionComunidadEnViewBag();
 
             mModelAdmin = new ComAdminSemanticElemModel();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
 			// Carga los idiomas disponibles y el idioma por defecto
 			if (ParametrosGeneralesRow.IdiomasDisponibles)
 			{
-				mModelAdmin.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+				mModelAdmin.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 			}
 			else
 			{
 				mModelAdmin.ListaIdiomas = new Dictionary<string, string>();
-				mModelAdmin.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+				mModelAdmin.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
 			}
 			mModelAdmin.IdiomaPorDefecto = IdiomaPorDefecto;
 
@@ -1215,8 +1219,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             ProyectoConfigExtraSem filaConfig = ObtenerFilaConfigExtraSemActual();
             mModelAdmin.SemanticThesaurus.SemThesaurusLanguajes = new Dictionary<string, string>();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            Dictionary<string, string> idiomasEntorno = mConfigService.ObtenerListaIdiomasDictionary();
+			Dictionary<string, string> idiomasEntorno = paramCL.ObtenerListaIdiomasDictionary();
 
             if (!string.IsNullOrEmpty(filaConfig.Idiomas))
             {
@@ -1716,11 +1721,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             mSemController = new SemCmsController(mModelAdmin.SecondaryEntities.SemanticResourceModel, mOntologia, Guid.Empty, instanciaPinc, ProyectoSeleccionado, IdentidadActual, UtilIdiomas, BaseURL, BaseURLIdioma, BaseURLContent, BaseURLStatic, UrlIntragnoss, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            if (mOntologia.ConfiguracionPlantilla.MultiIdioma && !(ParametrosGeneralesRow.IdiomaDefecto == null) && !string.IsNullOrEmpty(ParametrosGeneralesRow.IdiomaDefecto))
+			if (mOntologia.ConfiguracionPlantilla.MultiIdioma && !(ParametrosGeneralesRow.IdiomaDefecto == null) && !string.IsNullOrEmpty(ParametrosGeneralesRow.IdiomaDefecto))
             {//Es multiidioma:
                 mSemController.IdiomaDefecto = ParametrosGeneralesRow.IdiomaDefecto;
-                mSemController.IdiomasDisponibles = mConfigService.ObtenerListaIdiomasDictionary();
+                mSemController.IdiomasDisponibles = paramCL.ObtenerListaIdiomasDictionary();
             }
 
             try
@@ -1761,7 +1767,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             GestionOWL gestorOWL = new GestionOWL();
-            gestorOWL.UrlOntologia = BaseURLFormulariosSem + "/Ontologia/" + mEditEntSecModel.OntologyUrl + "#"; ;
+            gestorOWL.UrlOntologia = BaseURLFormulariosSem + "/Ontologia/" + mEditEntSecModel.OntologyUrl + "#";
             gestorOWL.NamespaceOntologia = GestionOWL.NAMESPACE_ONTO_GNOSS;
 
             byte[] rdfVirtuoso = ControladorDocumentacion.ObtenerRDFDeVirtuoso(idHasEntidadPrincipal, mEditEntSecModel.OntologyUrl, UrlIntragnoss, mEditEntSecModel.OntologyUrl, gestorOWL.NamespaceOntologia, mOntologia, null, false);

@@ -30,6 +30,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -43,8 +44,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class SolicitarComunidadController : ControllerBaseWeb
     {
-        public SolicitarComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public SolicitarComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
         private Peticion mSolicitudComunidad;
@@ -74,21 +75,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             Description = HttpUtility.HtmlDecode(Description);
             Description = HttpUtility.UrlDecode(Description);
+            
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            bool esUsuarioMetaadministrador = proyectoCN.EsUsuarioAdministradorProyecto(mControladorBase.UsuarioActual.UsuarioID, ProyectoAD.MetaProyecto);
 
-            if (Name != "" && ShortName != "" && Description != "")
+            if (Name != string.Empty && ShortName != string.Empty && Description != string.Empty)
             {
                 string error = GenerarSolicitud(Name, ShortName, Description, Type, CommunityParent);
                 if (!string.IsNullOrEmpty(error))
                 {
                     return GnossResultERROR(UtilIdiomas.GetText("SOLICITARCOMUNIDAD", "ERRORENVIO"));
                 }
-                else if (string.IsNullOrEmpty(error) && !string.IsNullOrEmpty(RequestParams("automaticAccept")) && AceptarComunidadAutomaticamente)
+                else if (string.IsNullOrEmpty(error) && !string.IsNullOrEmpty(RequestParams("automaticAccept")) && AceptarComunidadAutomaticamente && esUsuarioMetaadministrador)
                 {
                     AceptarComunidad();
 
                     string urlComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ShortName);
-                    //ParametroAplicacionDS.ParametroAplicacionRow filaParametroPasos = ParametrosAplicacionDS.ParametroAplicacion.FindByParametro(TiposParametrosAplicacion.PasosAsistenteCreacionComunidad);
-                    AD.EntityModel.ParametroAplicacion filaParametroPasos = ParametrosAplicacionDS.FirstOrDefault(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.PasosAsistenteCreacionComunidad));
+                    ParametroAplicacion filaParametroPasos = ParametrosAplicacionDS.FirstOrDefault(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.PasosAsistenteCreacionComunidad));
 
                     if (filaParametroPasos == null || string.IsNullOrEmpty(filaParametroPasos.Valor))
                     {
@@ -97,7 +100,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     else
                     {
                         string[] pasos = filaParametroPasos.Valor.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
-                        return GnossResultUrl(urlComunidad + "/" + UtilIdiomas.GetText("URLSEM", pasos[0]) + "?new-community-wizard=1");
+                        return GnossResultUrl($"{urlComunidad}/{UtilIdiomas.GetText("URLSEM", pasos[0])}?new-community-wizard=1");
                     }
                 }
             }
@@ -215,7 +218,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             DataWrapperUsuario dataWrapperUsuario = null;
             DataWrapperIdentidad dataWrapperIdentidad = null;
 
-            Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, null, out orgDW, out proyDWP, out paramDS, out tesauroDW, out documentacionDW, out dataWrapperUsuario, out dataWrapperIdentidad);
+            Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, null, out orgDW, out proyDWP, out paramDS, out tesauroDW, out documentacionDW, out dataWrapperUsuario, out dataWrapperIdentidad, null, DominioConfigurado);
             peticion.Peticion.Estado = (short)EstadoPeticion.Aceptada;
             peticion.Peticion.FechaProcesado = DateTime.Now;
 

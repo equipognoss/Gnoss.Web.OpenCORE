@@ -1,0 +1,4 @@
+FROM nginx
+
+COPY Nginx/gnoss_services_5001.conf.template /etc/nginx/conf.d/gnoss_services.conf.template
+COPY Nginx/nginx.conf /etc/nginx/nginx.conf

@@ -1,0 +1,21 @@
+﻿@model TabModel
+@*
+Descripción
+-----------------------------------------------
+Vista que presenta el panel de criterios o filtros disponibles para aplicar a una búsqueda específica. 
+Estos filtros solo estarán disponibles si se ha seleccionado previamente la opción de utilizar el asistente de búsquedas 
+y se ha expresado el deseo de realizar un filtrado basado en propiedades
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    string randomId = Guid.NewGuid().ToString().Substring(0, 5);
+}
+
+<div class="panelCriterialList mb-3" id="panelCriterialItemList_@(randomId)">
+    <div class="panelCriterialListItemContainer">
+        @Html.PartialView("_partial-views/_searchFilterCriterialListItem")
+    </div>
+
+</div>

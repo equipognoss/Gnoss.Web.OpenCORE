@@ -18,11 +18,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -31,8 +33,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class AdministrarSearchController : ControllerBaseWeb
     {
-        public AdministrarSearchController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarSearchController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -73,6 +75,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarSearchViewModel pOptions)
         {
+            GuardarLogAuditoria();
             bool iniciado = false;
             try
             {
@@ -87,7 +90,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             List<string> listaAutocompletar = new List<string>();
             if (!string.IsNullOrEmpty(autocompletar))
             {
-                string[] trozosAuto = autocompletar.Split(',');
+                string[] trozosAuto = autocompletar.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < trozosAuto.Length; i++)
                 {
                     listaAutocompletar.Add(trozosAuto[i]);
@@ -99,7 +102,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             List<string> listaTxtLibre = new List<string>();
             if (!string.IsNullOrEmpty(txtLibre))
             {
-                string[] trozosTxt = txtLibre.Split(',');
+                string[] trozosTxt = txtLibre.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < trozosTxt.Length; i++)
                 {
                     listaTxtLibre.Add(trozosTxt[i]);
@@ -180,12 +183,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             adSearch.TagsTxtLibre = string.Empty;
 
             ParametroCN paramCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            List<string> listaConfigAutocompletar = new List<string>();
-            List<string> listaConfigSearch = new List<string>();
-
-            listaConfigAutocompletar = paramCN.ObtenerConfigAutocompletar(ProyectoSeleccionado.Clave);
-
-            listaConfigSearch = paramCN.ObtenerConfigSearch(ProyectoSeleccionado.Clave);
+            List<string> listaConfigAutocompletar = paramCN.ObtenerConfigAutocompletar(ProyectoSeleccionado.Clave);
+            List<string> listaConfigSearch = paramCN.ObtenerConfigSearch(ProyectoSeleccionado.Clave);
 
             for (int i = 0; i < listaConfigAutocompletar.Count; i++)
             {
@@ -198,22 +197,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
 
-            string valoresInicialesAuto = string.Empty;
+            StringBuilder valoresInicialesAuto = new StringBuilder();
             foreach (string valor in listaConfigAutocompletar)
             {
-                valoresInicialesAuto = valoresInicialesAuto + "," + valor;
+                valoresInicialesAuto.Append($"{valor},");
             }
-            adSearch.TagsAutocompletar = valoresInicialesAuto;
+            adSearch.TagsAutocompletar = valoresInicialesAuto.ToString();
 
-            string valoresInicialesSearch = string.Empty;
+            StringBuilder valoresInicialesSearch = new StringBuilder();
             foreach (string valor in listaConfigSearch)
             {
-                valoresInicialesSearch = valoresInicialesSearch + "," + valor;
+                valoresInicialesSearch.Append($"{valor},");
             }
-            adSearch.TagsTxtLibre = valoresInicialesSearch;
+            adSearch.TagsTxtLibre = valoresInicialesSearch.ToString();
 
             return adSearch;
         }
+
         /// <summary>
         /// Inserta en la cola de Rabbit los tags de las comunidades
         /// </summary>

@@ -36,6 +36,9 @@ string inputLastName = "ProfilePersonal.Name";
 @* ID del input Email *@    
 string idEmail = "ProfilePersonal_Email";
 string inputEmail = "ProfilePersonal.Email";
+@* ID del input Authentication *@ 
+string idTwoFactorAuthentication = "ProfilePersonal_TwoFactorAuthentication";
+string inputTwoFactorAuthentication = "ProfilePersonal.TwoFactorAuthentication";
 @* ID del input FechaNacimiento *@     
 string idBornDate = "ProfilePersonal_BornDate";
 string inputBornDate = "ProfilePersonal.BornDate";
@@ -257,7 +260,7 @@ string nombreTabDatos = "";
                                 <div class="image-uploader__drop-area">
                                     <div class="image-uploader__preview" style="display: block; border:1px solid #ccc; position: relative">
                                         @* Image Preview - Por defecto mostrar "Anónimo"*@
-                                        <img class="image-uploader__img d-block" alt="Imagen Usuario" src="@urlFoto" />
+                                        <img class="image-uploader__img d-block" alt="@Html.GetText("COMMON","IMAGENDELUSUARIO")" src="@urlFoto" />
                                         @* Botón eliminar foto de perfil *@
                                         <div class="image-uploader-delete @( string.IsNullOrEmpty(Model.UrlFoto) ? "d-none" : null)">
                                             <a id="@idDeleteProfileImage" class="btn btn-outline-grey w-100">
@@ -350,6 +353,7 @@ string nombreTabDatos = "";
                 idEmail: "@idEmail",
                 idEmailProfesional: "@idEmailProfesional",
                 idBornDate: "@idBornDate",
+                idTwoFactorAuthentication: "@idTwoFactorAuthentication",
                 idCountry: "@idCountry",
                 idRegion: "@idRegion",
                 idLocation: "@idLocation",
