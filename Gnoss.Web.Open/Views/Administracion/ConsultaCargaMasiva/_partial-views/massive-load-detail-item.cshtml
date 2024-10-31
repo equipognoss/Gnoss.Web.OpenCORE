@@ -15,6 +15,12 @@ Variables
     string massiveLoadIcon = "";
     string massiveDetails = "-";
 
+    string numPaquetesCarga = Model.NumPaquetes.ToString();
+    if (Model.NumPaquetes == -1)
+    {
+        numPaquetesCarga = "n";
+    }
+
     // Variable control si hay error de carga
     bool isError = false;
     // Color asociado a la carga masiva
@@ -84,7 +90,7 @@ Variables
                         </div>                      
                         @* Paquetes procesados *@
                         <div class="component-procesados-wrap">																											
-                            <span class="component-procesados" alt="@Model.NumParquetesProcesados de @Model.NumPaquetes" title="@Model.NumParquetesProcesados de @Model.NumPaquetes">@Model.NumParquetesProcesados de @Model.NumPaquetes</span>							
+                            <span class="component-procesados" alt="@Model.NumParquetesProcesados de @numPaquetesCarga" title="@Model.NumParquetesProcesados de @numPaquetesCarga">@Model.NumParquetesProcesados de @Model.NumPaquetes</span>
                         </div> 
                         @* Paquetes con error *@
                         <div class="component-no-procesados-wrap">																											

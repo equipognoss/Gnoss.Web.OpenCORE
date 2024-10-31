@@ -1,0 +1,72 @@
+﻿@*
+Descripción
+-----------------------------------------------
+
+Vista que muestra los detalles específicos en la fila de un filtro durante una búsqueda de recursos semánticos.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+    // Permisos para administrar aspectos relacionados con el diseño de páginas
+    bool administrarPaginas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)));
+
+    // Id aleatorio para el collapse y el panel
+    string randomId = Guid.NewGuid().ToString().Substring(0, 5);
+    string panelId = $"panel_collapse_{randomId}";
+
+}
+
+
+@* Datos del filtro *@
+<li class="component-wrap filter-row containerConfirmDeleteItemInModal">
+    <div class="component">
+        <div class="component-header-wrap">
+            <div class="component-header">
+                <div class="component-no-sortable">
+                    <span class="material-icons-outlined sortable-icon">filter_alt</span>
+                </div>
+                <div class="component-header-content">
+                    @* Bloque izquierdo (Nombre del filtro) *@
+                    <div class="component-header-left">
+                        @* Nombre del Filtro *@
+                        <div class="component-name-wrap">
+                            <span class="component-elementName labelFilterElementName">rdf:type=pelicula.owl | schema:datePublished > 19/05/2000</span>
+                        </div>
+                    </div>
+                    @* Bloque derecho (Acciones)*@
+                    <div class="component-header-right">
+                        <div class="component-actions-wrap">
+                            <ul class="no-list-style component-actions">
+                                @* Acción: Editar filtro *@
+                                <li>
+                                    <a class="action-edit round-icon-button js-action-edit-component btnEditFilterItem"
+                                       data-toggle="collapse"
+                                       data-target="#@(panelId)"
+                                       role="button"
+                                       aria-expanded="true"
+                                       aria-controls="@panelId">
+                                        <span class="material-icons">edit</span>
+                                    </a>
+                                </li>
+                                @* Acción: Eliminar filtro *@
+                                <li>
+                                    <a class="action-delete round-icon-button js-action-delete btnDeleteFilterItem"
+                                       href="javascript: void(0);">
+                                        <span class="material-icons">delete</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* Panel collapse para detalles del filtro *@
+    <div class="panelElementDetail collapse" id="@panelId">
+        @Html.PartialView("_partial-views/_searchFilterListItemDetail")
+    </div>
+</li>

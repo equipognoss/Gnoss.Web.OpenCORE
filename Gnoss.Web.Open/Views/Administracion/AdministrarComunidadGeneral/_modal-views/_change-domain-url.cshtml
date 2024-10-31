@@ -1,0 +1,82 @@
+﻿@model AdministrarComunidadGeneralModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal para poder cambiar la url de dominio.
+
+
+@*
+Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    // Nombre de la comunidad
+    var communityDictionaryName = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Name);
+    var communityName = "";
+    // Url para cambiar el tipo de comunidad
+    string urlChangeDomainUrl = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL") + "/change-domain-url";
+    Uri uri = new Uri(Comunidad.Url);
+    string url = uri.Scheme + "://" + uri.Host;
+}
+
+@* Control de nombre de la comunidad *@
+@{
+    if (communityDictionaryName.Count == 0)
+    {
+        communityName = Model.Name;
+    }
+    else
+    {
+        communityName = communityDictionaryName[Model.IdiomaPorDefecto];
+    }
+}
+
+
+<div id="modal-change-domain-url"
+     class="modal modal-top fade modal-edicion"
+     role="dialog">
+    <div class="modal-dialog" role="document">
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">edit</span>
+                    Cambiar url dominio
+                </p>
+                <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+            </div>
+            @* Contenido central del modal *@
+            <div class="modal-body">
+
+                <div class="formulario-edicion no-min-height">
+                    <p>@Html.GetText("DEVTOOLS", "INTRODUCELANUEVAURLDEDOMINIO")</p>
+
+                    @* Input de la nueva url de dominio *@
+                    <div class="form-group mb-3 edit-domain-url">
+                        <div class="form-group mb-3">
+                            <label class="control-label d-block">Url de dominio</label>
+                            <input type="text" class="form-control" id="txtDomainUrl" value="@url">
+                        </div>
+                    </div>
+
+                    @* Cuadro de confirmación control de seguridad para cambio de la url de dominio *@
+                    <div id="securityChangeDomainUrl">
+                        <div class="form-group mb-3">
+                            @* Aviso de cambio de la url de dominio *@
+                            <div id="alertConfirmChangeDomainUrl" role="alert" class="alert alert-warning pb-3 d-none">
+                                <span class="material-icons mr-3">edit</span>
+                                <span>@Html.GetText("DEVTOOLS", "PARACONFIRMARLAURLDEDOMINIO,PULSAENGUARDAR")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Sección botón de guardado y cierre del modal *@
+                    <button id="btnGuardarUrlDominio" data-domainurl="@url" data-url="@urlChangeDomainUrl" class="btn btn-primary uppercase" disabled>@Html.GetText("COMMON", "GUARDAR")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

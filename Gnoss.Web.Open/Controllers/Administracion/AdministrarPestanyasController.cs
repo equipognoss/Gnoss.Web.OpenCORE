@@ -10,9 +10,11 @@ using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.Seguridad;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Documentacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
@@ -33,6 +35,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -80,8 +83,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     {
         IServiceScopeFactory mScopedFactory;
 
-        public AdministrarPestanyasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IServiceScopeFactory serviceProvider, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarPestanyasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IServiceScopeFactory serviceProvider, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
             mScopedFactory = serviceProvider;
         }
@@ -138,7 +141,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 
-            ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mEntityContextBASE);
 
             bool existePestanyaDelMismoTipo = contrPest.ExistePestanyaDelMismoTipo(TipoPestanya);
 
@@ -221,15 +224,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             ViewBag.ContenidoMultiIdioma = (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma));
             pestanya.ListaIdiomasDisponibles = new List<string>();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            if (ParametrosGeneralesRow.IdiomasDisponibles)
+			if (ParametrosGeneralesRow.IdiomasDisponibles)
             {
-                ViewBag.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+                ViewBag.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
             }
             else
             {
                 ViewBag.ListaIdiomas = new Dictionary<string, string>();
-                ViewBag.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                ViewBag.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
             }
 
             return PartialView("_NuevaPestanya", pestanya);
@@ -281,7 +285,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ControladorFacetas conFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, ListaOntologias, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             List<FacetaModel> listaFacetas = conFacetas.CargarListadoFacetas();
             AdministrarFacetasPestanyasModel model = new AdministrarFacetasPestanyasModel();
-            ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, false);
+            ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mEntityContextBASE, false);
             model.ListadoFacetas = listaFacetas;
 
             List<FacetaObjetoConocimientoProyectoPestanya> facetasPestanya = contrPest.ObtenerFacetaObjetoConocimientoProyectoPestanya(pPestanyaID);
@@ -330,6 +334,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             TabModel.SearchTabModel.FiltroOrden filtroOrden = new TabModel.SearchTabModel.FiltroOrden();
             filtroOrden.Nombre = UtilIdiomas.GetText("COMADMINPESTANYAS", "NUEVOFILTRO");
             filtroOrden.Filtro = "";
+            filtroOrden.Consulta = "";
+            filtroOrden.OrderBy = "";
 
             return PartialView("_FichaFiltroOrden", filtroOrden);
         }
@@ -452,6 +458,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult Guardar(List<TabModel> ListaPestanyas)
         {
+            GuardarLogAuditoria();
             bool iniciado = false;
             try
             {
@@ -462,7 +469,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
-            ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, iniciado);
+            ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mEntityContextBASE, iniciado);
             string errores = contrPest.ComprobarErrores(ListaPestanyas);
             if (string.IsNullOrEmpty(errores))
             {
@@ -598,20 +605,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarPestanyasViewModel();
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-                    if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma))
+					if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma))
                     {
                         mPaginaModel.ContenidoMultiIdioma = true;
                     }
 
                     if (ParametrosGeneralesRow.IdiomasDisponibles)
                     {
-                        mPaginaModel.ListaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                     }
                     else
                     {
                         mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
-                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, mConfigService.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
                     }
 
                     mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
@@ -624,7 +632,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     mPaginaModel.ListaPestanyas = new List<TabModel>();
 
-                    ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mEntityContextBASE);
 
                     foreach (AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu filaPestanya in GestionProyectos.DataWrapperProyectos.ListaProyectoPestanyaMenu)
                     {

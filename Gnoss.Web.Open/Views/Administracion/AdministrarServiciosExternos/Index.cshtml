@@ -19,18 +19,21 @@ Variables
 	bool allowSaveData = true;
 }
 
-@{
-	@* Controlar la posibilidad de guardar datos (CI/CD) *@
-	if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-	{
-		allowSaveData = false;
-	}
-}
-
 @*
 ----------------------------------------------------------------
 -------------------- Vista para Administrar los servicios externos --------------------
 *@
+	@*Aviso de que esta configuración por el momento no se despliega con IC*@
+	@if (Comunidad.IntegracionContinuaActivada)
+	{
+		<div class="alert alert-warning alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert">&times;</button>
+		<span class="material-icons" alt="warning" title="warning" aria-label="warning">
+			warning
+		</span>
+			<strong>@Html.GetText("DEVTOOLS", "NOGUARDAINTEGRACIONCONTINUA")</strong>
+		</div>
+	}
 
     @* Migas de Pan *@
     <div class="col col-12 col-breadcrumb">

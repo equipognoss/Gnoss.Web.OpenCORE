@@ -61,12 +61,12 @@ Variables
 		@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
 			@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
 				if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
-					<li class="nav-item">
+					<li class="nav-item" role="presentation">
 						<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
 							id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
 							data-language = "@idioma.Key"
-							role="tab" aria-controls="@("litVer" + idioma.Key)"
-							aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+							role="tab"
+							aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
 					</li>
 					contNumPestañasVisibles += 1;
 				}				
@@ -213,7 +213,7 @@ Variables
 							@* Pintado de cada faceta *@
 							@foreach (FacetaModel faceta in Model.ListaFacetas.OrderBy(p2 => p2.Orden))
 							{
-								@Html.PartialView("_EdicionFaceta", faceta);
+								@Html.PartialView("_EdicionFaceta", faceta)
 							}
 						</ul>
 					</div>
@@ -316,6 +316,9 @@ Variables
 		</div>	
 	</div>        
 </div>
+
+@* Modal para mover una faceta*@
+@Html.PartialView("_modal-views/_faceta-item-move", Model)
 
 @* Modal para eliminación de una faceta *@
 @Html.PartialView("_modal-views/_delete-faceta")

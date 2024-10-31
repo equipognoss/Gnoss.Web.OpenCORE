@@ -1,0 +1,69 @@
+﻿@model SharedSemCms
+
+@*
+Vista parcial utilizada para mostrar el botón de eliminar una propiedad una vez se muestra la lista de items dentro del modal del objeto de conocimiento de las Devtools.
+*@
+
+@{
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
+    string idControl = Model.semanticPropertyModel.OntologyPropInfo.ControlID;
+    string metodoEliminar = null;
+
+    if (!Model.pTesauroSemSimple)
+    {
+        metodoEliminar = "operativaGestionObjetosConocimientoOntologias.EliminarObjectNoFuncionalSeleccEnt('" + Model.pNumValor + "','" + mPropiedad.ElementoOntologia.TipoEntidad + "','" + mPropiedad.Nombre + "','" + idControl.Replace("selEnt_", "contEntSelec_") + "','mTxtValorRdf','mTxtRegistroIDs','mTxtCaracteristicasElem','mTxtElemEditados',this);";
+    }
+    else
+    {
+        metodoEliminar = "$('#" + idControl + "').val('');$('#" + idControl.Replace("selEnt_", "divContControlTes_") + "').css('display','');$('#" + idControl.Replace("selEnt_", "contEntSelec_") + "').css('display','none');";
+    }
+
+    // metodoEliminar = metodoEliminar.Replace("'", "\\'");
+
+    /* Cambiar por nuevo Front */
+    /*
+    string metodoOnclick = "MostrarPanelConfirmacionEvento(event, '" + Html.GetText("CONTROLESCVSEM", "CONFIRMARELIMINAR", pValor).Replace("'", "\\'") + "', '" + metodoEliminar + "')";
+    <a class="remove" onclick="@metodoOnclick"></a>
+    */
+    // string metodoOnclick = "MostrarPanelConfirmacionEvento(event, '" + Html.GetText("CONTROLESCVSEM", "CONFIRMARELIMINAR", Model.pValor).Replace("'", "\\'") + "', '" + metodoEliminar + "')";
+
+
+    @* Cambiar esto por el container para borrar
+    <a class="removeButton _ontology-secondary-AddDeleteButon" style="cursor: pointer;"
+       onclick="@metodoEliminar">
+       <span class="material-icons pr-0">delete</span>
+    </a>*@
+    <li>
+        @if (!Model.pTesauroSemSimple)
+        {
+        @*metodoEliminar = "operativaGestionObjetosConocimientoOntologias.EliminarObjectNoFuncionalSeleccEnt('" + Model.pNumValor + "','" + mPropiedad.ElementoOntologia.TipoEntidad + "','" + mPropiedad.Nombre + "','" + idControl.Replace("selEnt_", "contEntSelec_") + "','mTxtValorRdf','mTxtRegistroIDs','mTxtCaracteristicasElem','mTxtElemEditados',this);";*@
+            @* CON PLUGIN DE BORRADO -> this no lo coge correctamente
+            <a class="action-delete _ontology-secondary-AddDeleteButon round-icon-button js-action-delete"
+               href="javascript:void(0);"
+               data-handleclick='operativaGestionObjetosConocimientoOntologias.EliminarObjectNoFuncionalSeleccEnt("@Model.pNumValor","@mPropiedad.ElementoOntologia.TipoEntidad","@mPropiedad.Nombre","@(idControl.Replace("selEnt_", "contEntSelec_"))","mTxtValorRdf","mTxtRegistroIDs","mTxtCaracteristicasElem","mTxtElemEditados",this);'>
+                <span class="material-icons pr-0">delete</span>
+            </a>
+            *@
+            @* SIN PLUGIN DE BORRADO *@
+            <a class="action-delete _ontology-secondary-AddDeleteButon round-icon-button js-action-delete"
+               href="javascript:void(0);"
+               onClick='operativaGestionObjetosConocimientoOntologias.EliminarObjectNoFuncionalSeleccEnt("@Model.pNumValor","@mPropiedad.ElementoOntologia.TipoEntidad","@mPropiedad.Nombre","@(idControl.Replace("selEnt_", "contEntSelec_"))","mTxtValorRdf","mTxtRegistroIDs","mTxtCaracteristicasElem","mTxtElemEditados",this);'>
+                <span class="material-icons pr-0">delete</span>
+            </a>
+        }
+        else
+        {
+        @* CON PLUGIN DE BORRADO -> this no lo coge correctamente
+         metodoEliminar = "$('#" + idControl + "').val('');$('#" + idControl.Replace("selEnt_", "divContControlTes_") + "').css('display','');$('#" + idControl.Replace("selEnt_", "contEntSelec_") + "').css('display','none');";
+            <a class="action-delete _ontology-secondary-AddDeleteButon round-icon-button js-action-delete" href="javascript: void(0);" data-handleclick="@metodoEliminar">
+                <span class="material-icons pr-0">delete</span>
+            </a>
+        *@
+            metodoEliminar = "$('#" + idControl + "').val('');$('#" + idControl.Replace("selEnt_", "divContControlTes_") + "').css('display','');$('#" + idControl.Replace("selEnt_", "contEntSelec_") + "').css('display','none');";
+            <a class="action-delete _ontology-secondary-AddDeleteButon round-icon-button js-action-delete" href="javascript: void(0);" onClick="@metodoEliminar">
+                <span class="material-icons pr-0">delete</span>
+            </a>
+        }
+    </li>
+
+}

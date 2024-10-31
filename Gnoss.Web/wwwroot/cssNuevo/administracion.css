@@ -251,7 +251,7 @@ ol.table ol {
         display: none;
     }
 
-input.guardar,
+/*input.guardar,
 input.guardarTodo {
     background: #8186bd none repeat scroll 0 0;
     border: medium none;
@@ -260,7 +260,7 @@ input.guardarTodo {
     float: right;
     padding: 5px;
     cursor: pointer;
-}
+}*/
 
 ol.table li.row.ui-state-disabled {
     opacity: 1;

@@ -25,14 +25,15 @@ using Gnoss.Web.Open.Filters;
 using System.Buffers;
 using System.Net.Http;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class ServicioExternoController : ControllerBaseWeb
     {
-        public ServicioExternoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public ServicioExternoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -44,9 +45,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             proyCN.Dispose();
             if (!string.IsNullOrEmpty(urlServicio))
             {
+                if (!urlServicio.EndsWith("/"))
+                {
+                    urlServicio = $"{urlServicio}/";
+                }
 
-
-                urlServicio = urlServicio + "/" + pNombreAccion;
+                urlServicio = urlServicio + pNombreAccion;
                 Dictionary<string, string> parametros = new Dictionary<string, string>();
                 if (Request != null && Request.Query != null && Request.Query.Count > 0)
                 {
@@ -128,9 +132,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch(WebException ex)
                     {
-                        GuardarLogError(ex, $"Error al enviar una petición al servicio {urlServicio} con los parámetros {string.Join(",", parametros.Select(item => $"{item.Key}:{item.Value}"))}");
-                        Response.StatusCode = 502;
-                        return Content($"Error in request {urlServicio}: {ex.Message}");
+                        //Response.StatusCode = (int)((HttpWebResponse)ex.Response).StatusCode;
+                        //Response.ContentType = ((HttpWebResponse)ex.Response).ContentType;
+                        string response = new StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
+                        string error = $"Error {Response.StatusCode} al enviar una petición al servicio {urlServicio} con los parámetros: {string.Join("\n", parametros.Select(item => $"{item.Key} -> {item.Value}"))} Error: {response}";
+                        GuardarLogError(ex, error);
+
+                        return new ContentResult() { Content = response, ContentType = ((HttpWebResponse)ex.Response).ContentType, StatusCode = (int)((HttpWebResponse)ex.Response).StatusCode };
+                        //return GnossResultERROR(mensajeRespuesta);
                     }
                 }
             }

@@ -16,6 +16,7 @@ Variables
     string iconoModal = "create_new_folder";
     // Detectar si se ha creado un certificado pero aun no se ha guardado y por lo tanto está siendo editado.
     bool isRecentlyCreated = false;
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
 }
 
 @{
@@ -50,22 +51,26 @@ Variables
 <div class="modal-body">
     <div class="formulario-edicion">
         <p>@subtituloModal</p>
-
-        @* Contenedor del nombre de la certificación *@
-        <div class="form-group mb-5">
-	        <div class="autocompletar-tags form-group">
-		        <label class="control-label d-block">Nombre</label>
-		        <input
-                    id="txtNombreCertificacion"	
-                    class="form-control"			        
-			        type="text"                    
-			        placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREPARALACERTIFICACION")"
-                    value = "@Model.name"
-			        autocomplete="off"/>
-                <small id="nombreAyuda" class="form-text text-muted"></small>
-	        </div>
-
+        <div class="panContenidoMultiIdioma basicInfo">
         </div>
+        <div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+            <div class="form-group mb-3">
+                @* Contenedor del nombre de la certificación *@
+                <div class="form-group mb-5">
+	                <div class="autocompletar-tags form-group">
+		                <input
+                            id="txtNombreCertificacion"
+                               class="form-control multiIdioma"
+                               type="text"                    
+			                placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREPARALACERTIFICACION")"
+                            value = "@Model.name"
+			                autocomplete="off"
+                            data-labeltext="Nombre" />
+	                </div>
+                </div>
+            </div>
+        </div>
+        
 
         <div class="panelBotonera">
             <a id="btnGuardarCertificacion" 
@@ -80,8 +85,22 @@ Variables
 
 @* Carga de operativa *@
 <script>
-        (function ($) {            
-            // Inicializar operativa de crear/editar certificado            
-            operativaGestionCertificacion.operativaModalCreacionEdicionCertificados();
-        })();
+    (function ($) {            
+        // Inicializar operativa de crear/editar certificado            
+        operativaGestionCertificacion.operativaModalCreacionEdicionCertificados();
+    })();
+
+    var multiIdiomaParams = {
+        // Nº máximo de pestañas con idiomas a mostrar. Los demás quedarán ocultos
+        numIdiomasVisibles: 3,
+        // Establecer 1 tab por cada input (true, false) - False es la forma vieja
+        useOnlyOneTab: true,
+        panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
+        // No permitir padding bottom y si padding top
+        allowPaddingBottom: false,
+        allowPaddingTop: true,
+    };
+
+    // Inicializar operativa multiIdioma
+    operativaMultiIdioma.init(multiIdiomaParams);
 </script>

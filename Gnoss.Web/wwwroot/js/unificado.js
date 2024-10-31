@@ -8,12 +8,15 @@
 // Permitir envío de Cookies a otro dominio
 $(document).ready(function () {
     operativaCrossDomainCookies.init();
+
+    // Inicializar operativa de TinyCME
+    operativaTinyMceConfig.init();
 });
 
 
 const operativaCrossDomainCookies = {
     init: function () {
-        if (location.protocol == 'https:')
+        //if (location.protocol == 'https:')
             $.ajaxSetup({
                 crossDomain: true,
                 xhrFields: {
@@ -21,6 +24,37 @@ const operativaCrossDomainCookies = {
                 }
             });
     }
+}
+
+/**
+ * Método para escapar caracteres extraños para evitar inyección de código
+ * @param {*} text Texto a escapar
+ * @returns Devuelve el texto limpio para evitar inyección de código, por ejemplo, en buscadores
+ */
+function escapeHTML(text) {
+	var map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		//'"': '&quot;',
+		"'": '&#039;'
+	};
+	return text.replace(/[&<>']/g, function(m) { return map[m]; });
+}
+
+/**
+ * Método que devuelve si el texto contiene caracteres HTML a escapar
+ * @param {*} text Texto a analizar
+ * @return {*} Indica si contiene caracteres HTML que es necesario "escapar"
+ */
+function containsEscapeHTML(text) {
+	const specialCharacters = ['&amp;', '&lt;', '&gt;', '&quot;', '&#039;'];
+	for (let i = 0; i < specialCharacters.length; i++) {
+	  if (text.includes(specialCharacters[i])) {
+		return true;
+	  }
+	}
+	return false;
 }
 
 /**
@@ -481,82 +515,20 @@ $(document).ready(function() {
 var RecargarCKEditorInicio = true;
 
 function RecargarTodosCKEditor() {
-    RecargarCKEditorInicio = false;
-
-    if (typeof (ckeCompletoComentarios) != 'undefined' && ckeCompletoComentarios == true) {
-        $('textarea.cke.comentarios').removeClass('comentarios').addClass('recursos');
-    }
-
-    var textAreas = $('textarea.cke');
-
-    DestruirTodosCKEditor();
-
-    if (textAreas.length > 0) {
-		var urlbase = $('input.inpt_baseURL').val();
-
-		if (document.URL.indexOf('https://') == 0) {
-			if (urlbase.indexOf('https://') == -1) {
-				urlbase = urlbase.replace('http', 'https');
-			}
-		}
-        var BasePath = CKEDITOR.basePath;
-        var ImageBrowseUrl = urlbase + "/conector-ckeditor?v=0";
-        var ImageUploadUrl = urlbase + "/conector-ckeditor?v=0";
-		//var ImageBrowseUrl = urlbase + "/ConectorCKEditor.aspx";
-		//var ImageUploadUrl = urlbase + "/ConectorCKEditor.aspx";
-        //var ImageBrowseUrl = BasePath + "filemanager/browser/default/browser.html?Type=Image&Connector=" + BasePath + "filemanager/connectors/aspx/connector.aspx";
-        //var ImageUploadUrl = BasePath + "filemanager/connectors/aspx/upload.aspx?Type=Image";
-        var lang = $('#inpt_Idioma').val();
-
-        $('textarea.cke.mensajes').ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Mensajes', filebrowserImageBrowseUrl: ImageBrowseUrl, filebrowserImageUploadUrl: ImageUploadUrl });
-        $('textarea.cke.recursos').ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Recursos', filebrowserImageBrowseUrl: ImageBrowseUrl, filebrowserImageUploadUrl: ImageUploadUrl });
-        $('textarea.cke.blogs').ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Blogs', filebrowserImageBrowseUrl: ImageBrowseUrl, filebrowserImageUploadUrl: ImageUploadUrl });
-        $('textarea.cke.comentarios').ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Comentario' });
-    }
+    return;    
 }
 
 
 function DestruirTodosCKEditor() {
-    var textAreas = $('textarea.cke'),
-        instanceName = "",
-        i = 0;
-
-    for (i = 0; i < textAreas.length; i++) {
-        instanceName = textAreas[i].id;
-
-        if (CKEDITOR.instances[instanceName] != null) {
-            try {
-                //El remove no funciona...
-                //CKEDITOR.remove(CKEDITOR.instances[instanceName]);
-                CKEDITOR.instances[instanceName].destroy();
-            }
-            catch (error) {
-            }
-        }
-    }
+    return;
 }
 
 function RecargarCKEditor(id) {
-    var textArea = $('textarea.cke#' + id);
-
-    DestruirCKEditor(id);
-
-	var BasePath = CKEDITOR.basePath;
-	var ImageBrowseUrl = BasePath + "filemanager/browser/default/browser.html?Type=Image&Connector=" + BasePath + "filemanager/connectors/aspx/connector.aspx";
-	var ImageUploadUrl = BasePath + "filemanager/connectors/aspx/upload.aspx?Type=Image";
-	var lang = $('#inpt_Idioma').val();
-
-	$('textarea.cke.mensajes#' + id).ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Mensajes' });
-	$('textarea.cke.recursos#' + id).ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Recursos', filebrowserImageBrowseUrl: ImageBrowseUrl, filebrowserImageUploadUrl: ImageUploadUrl });
-	$('textarea.cke.blogs#' + id).ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Blogs', filebrowserImageBrowseUrl: ImageBrowseUrl, filebrowserImageUploadUrl: ImageUploadUrl });
-	$('textarea.cke.comentarios#' + id).ckeditor(function () { }, { language: lang, toolbar: 'Gnoss-Comentario' });
-
+    return; 
 }
 
 function DestruirCKEditor(id) {
-	if(CKEDITOR.instances[id] != null){
-		CKEDITOR.instances[id].destroy();
-	}
+    return;
 }
 
 /*
@@ -653,75 +625,6 @@ function esURL(sURL)
 		return false;
 	}
 }
-
-/*
-..........................................................................
-:: Plugin de jQuery para cambiar PNG's para IE6 dentro de un elemento   ::
-:: Ej. uso: $('div.fulanito img').pngIE6()                              ::
-:: El parametro 'blank' debe ser la ruta de un GIF transparente de 1x1  ::
-:: --------------------------------------                               ::
-:: Despues, plugin para agitar cosas molonamente con una sola orden     ::
-:: --------------------------------------                               ::
-:: Ademas, plugin para hacer fadeOut y despues destruir un elemento     ::
-..........................................................................
-*/
-//jQuery.fn.extend({
-////    pngIE6: function(blank) {
-////        if (!($.browser.msie && $.browser.version < 7)) return this;
-////        if (!blank) blank = 'img/blank.gif';
-////        return this.each( function() {
-////            this.style.filter = 'progid:DXImageTransform.Microsoft.AlphaImageLoader(src='+ this.src +',sizingMethod=image)';
-////            this.src = blank;
-////        });
-////    },
-//    shakeIt: function(o) {
-//    	return this.each( function(){
-//		    /* Almacenaremos en un atributo del objeto del DOM a mover los valores originales que poseia 
-//		     * la primera que se llama a la funcion para evitar que al llamarla dos veces seguidas se
-//		     * produzcan animaciones desde una posicion incorrecta del margen.
-//		     * El objeto 'o' que se puede pasar como parametro esta destinado a la configuracion de la
-//		     * animacion. Por ejemplo $('#idCualquiera').shakeit({velocidad: 200, amplitud: 40, veces: 5})
-//		     */
-//    		var $this = $(this),
-//    		    o     = o || {},
-//    		    mL    = this.mLCache || parseInt($this.css('marginLeft')),
-//    		    mR    = this.mRCache || parseInt($this.css('marginRight')),
-//    		    vel   = parseInt(o.velocidad) || 120,
-//    		    ampl  = parseInt(o.amplitud) || 15,
-//    		    veces = parseInt(o.veces) || 2;
-//    		this.wCache = $this.css('width');
-//    		$this.css('width', $this.width()+'px');
-//    		this.mLCache = mL;
-//    		this.mRCache = mR;
-//    		for (var i = 0; i < veces; ++i) {
-//    			$this.animate({
-//    				marginLeft: (mL + ampl) + 'px',
-//    				marginRight: (mR - ampl) + 'px'
-//				}, vel).animate({
-//					marginLeft: (mL - ampl) + 'px',
-//					marginRight: (mR + ampl) + 'px'
-//				}, vel);
-//    		}
-//    		// volvemos al estado primigenio
-//    		$this.animate({
-//    			marginLeft: mL + 'px',
-//    			marginRight: mR + 'px'
-//    		}, vel, function() {
-//    			$this.css('width', this.wCache);
-//    		});
-//    	});
-//    },
-//    fundidoANada: function(o) {
-//    	var o = o || {};
-//    	o.velocidad = o.velocidad || 600;
-//    	return this.each( function() {
-//    		$(this).fadeOut(o.velocidad, function() {
-//    			$(this).remove();
-//    		});
-//    	});
-//    }
-//});
-
 /*
 ..........................................................................
 :: Arreglo de PNG's pasado a filter:progid:... para elementos puntuales ::
@@ -1575,23 +1478,6 @@ $( function() {
 			}
         }
      );
-
-	//Pone el estilo a los CKEDITOR que lo hayan perdido
-    $( 
-        function()
-        {
-			try
-			{
-			    if (RecargarCKEditorInicio) {
-			        RecargarTodosCKEditor();
-			    }
-			}
-			catch(error)
-			{
-			}
-        }
-     );
-
 }
 
 function DesplegarDescripcionMasNueva(imagen, panelId, alturaMin)
@@ -5743,12 +5629,10 @@ function AccionCrearComentario(clientID, id, pCKECompleto) {
 
     var $confirmar = $(['<fieldset class="mediumLabels"><legend>', comentarios.publicarcomentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_', id, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="text medium"></p></fieldset>'].join(''));
     $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	
-
-    RecargarTodosCKEditor();
+    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
+        $c.parents('.stateShowForm').css({ display: 'none' });
+        $confirmar.css({ display: 'none' });
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	
 }
 
 function CrearComentario(clientID, id) {
@@ -5789,12 +5673,10 @@ function AccionResponderComentario(clientID, id, pCKECompleto) {
 
     var $confirmar = $(['<fieldset class="mediumLabels"><legend>', comentarios.responderComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_', id, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="text medium"></p></fieldset>'].join(''));
     $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	
-
-    RecargarTodosCKEditor();
+    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
+        $c.parents('.stateShowForm').css({ display: 'none' });
+        $confirmar.css({ display: 'none' });
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	    
 }
 
 function ResponderComentario(clientID, id) {
@@ -5842,12 +5724,10 @@ function AccionEditarComentario(clientID, id, pCKECompleto) {
 
     var $confirmar = $(['<fieldset class="mediumLabels"><legend>', comentarios.editarComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_', id, '" rows="2" cols="20">' + mensajeAntiguo + '</textarea><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.guardar, '" class="text medium"></p></fieldset>'].join(''));
     $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	
-
-    RecargarTodosCKEditor();
+    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
+        $c.parents('.stateShowForm').css({ display: 'none' });
+        $confirmar.css({ display: 'none' });
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	    
 }
 
 function EditarComentario(clientID, id) {
@@ -5884,13 +5764,12 @@ function AccionEnviarMensajeGrupo(clientID, id) {
     //$confirmar.find('div').filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
     // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
     $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
+    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
+        $c.parents('.stateShowForm').css({ display: 'none' });
+        $confirmar.css({ display: 'none' });
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
 
-    MostrarPanelAccionDesp(clientID + "_desplegable_" + id, null);
-    RecargarTodosCKEditor();
+        MostrarPanelAccionDesp(clientID + "_desplegable_" + id, null);    
 }
 
 
@@ -5914,18 +5793,17 @@ function AccionEnviarMensaje(clientID, id) {
     //$confirmar.find('div').filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
     // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
     $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
+    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
+        $c.parents('.stateShowForm').css({ display: 'none' });
+        $confirmar.css({ display: 'none' });
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
 
     if ($('#divContMensajesPerf').length > 0 && $('#divContMensajesPerf').html() == '') {
         $('#divContMensajesPerf').html($('#' + clientID + "_desplegable_" + id).parent().html());
         $('#' + clientID + "_desplegable_" + id).parent().html('');
     }
 
-    MostrarPanelAccionDesp(clientID + "_desplegable_" + id, null);
-    RecargarTodosCKEditor();
+    MostrarPanelAccionDesp(clientID + "_desplegable_" + id, null);    
 }
 
 
@@ -5942,8 +5820,7 @@ function AccionRechazarDesplegandoMensaje(clientID, textoRechazarConMensaje, tex
 
     var html = '<fieldset class="mediumLabels"><legend>' + mensajes.enviarMensaje + '</legend><p><label for="txtDescripcion' + id + '">' + mensajes.descripcion + '</label></p><p><textarea class="cke mensajes" id="txtDescripcion' + id + '" rows="2" cols="20"></textarea></p><p><label class="error" id="error' + id + '"></label></p><input type="button" onclick="' + accionConMensaje + '" value="' + textoRechazarConMensaje + '" class="text medium"><input type="button" onclick="' + accionSinMensaje + '" value="' + textoRechazarSinMensaje + '" class="text medium"></p></fieldset>';
 
-    MostrarPanelAccionDesp(clientID, html);
-    RecargarTodosCKEditor();
+    MostrarPanelAccionDesp(clientID, html);    
 }
 
 function RechazarSinMensaje() {
@@ -7321,6 +7198,7 @@ null,
     max: limite,
     extraParams: {
         identidad: $('input.inpt_identidadID').val(),
+        pProyectoID: $('.inpt_proyID').val(),
         pGrafo: grafo,
         pEntContenedora: entContenedora,
         pPropiedad: propiedad,
@@ -7905,6 +7783,186 @@ function MostrarUpdateProgressTime(time) {
     }
 }
 
+/**
+ * Método para observar la posible aparición de un editor TinyMCE
+ * @param {Array} classNames - Lista de clases a observar
+ * @param {Function} callback - Función a ejecutar cuando se detecta una clase
+ */
+function setupObserverForTinyMCE(classNames, callback) {
+    // Función recursiva para buscar elementos con las clases deseadas
+    function buscarElementos(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            classNames.forEach(function (className) {
+                if ($(node).hasClass(className)) {
+                    callback($(node));
+                }
+            });
+        }
+        node.childNodes.forEach(buscarElementos);
+    }
+
+    // Ejecutar la búsqueda en el documento completo
+    buscarElementos(document.body);
+
+    // Configurar el MutationObserver para observar cambios en el DOM
+    let observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            mutation.addedNodes.forEach(function (node) {
+                buscarElementos(node);
+            });
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+/**
+ * Método para observar la posible aparición de un editor TinyMCE basado en su ID
+ * @param {string} id - ID a observar
+ * @param {Function} callback - Función a ejecutar cuando se detecta el ID
+ */
+function setupObserverForTinyMCEById(id, callback) {
+    // Función recursiva para buscar elementos con el ID deseado
+    function buscarElementos(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.id === id) {
+                callback(node);
+            }
+        }
+        node.childNodes.forEach(buscarElementos);
+    }
+
+    // Ejecutar la búsqueda en el documento completo
+    buscarElementos(document.body);
+
+    // Configurar el MutationObserver para observar cambios en el DOM
+    let observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            mutation.addedNodes.forEach(function (node) {
+                buscarElementos(node);
+            });
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Función para observar la aparición de una determinada clase y ejecutar un callback
+function observarClaseTinyLoaded(callback) {
+    // Crear un MutationObserver para observar cambios en el DOM
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            // Verificar si se ha agregado la clase  a algún input o textarea
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                var target = mutation.target;
+                // Verificar si el elemento es un input o textarea y si su clase contiene "tinyLoaded"
+                if ((target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && target.classList.contains(operativaTinyMceConfig.tinyLoadedFinishedClassName)) {
+                    // Ejecutar el callback
+                    callback(target);
+                }
+            }
+        });
+    });
+
+    // Observar cambios en el DOM, enfocándose en el atributo class de los nodos
+    observer.observe(document.body, { attributes: true, subtree: true });
+}
+
+
+/**
+ * Método para crear un elemento HTML a partir de un string de HTML
+ * @param {*} htmlString 
+ * @returns 
+ */
+function createElementFromHTML(htmlString) {
+	const div = document.createElement('div');
+	div.innerHTML = htmlString.trim();
+  
+	// Change this to div.childNodes to support multiple top-level nodes.
+	return div.firstChild;
+}
+
+/* Funciones nuevas para uso de loading con librería busyLoad */
+/**
+ * [loadingMostrar]
+ * Muestra una máscara de loading ya sea en pantalla completa o dentro de un elemento html deseado.
+ * Requiere librería busy-load.
+ * @param  {jQueryObject} pJqueryHtmlElemento: Elemento jQuery - Html. Por defecto el loading se mostrará en toda la pantalla.
+ * @param  {jQueryObject} loadingText: Texto que se desea mostrar junto con el loading. Por defecto no se muestra.
+ * Si se desea mostrar el loading dentro de un elemento html (Ej: div), proporcionar en pJqueryHtmlElemento el elemento html.
+ * Ejemplo de uso
+ * https://github.com/piccard21/busy-load
+ */
+const loadingMostrar = function (pJqueryHtmlElemento = undefined, loadingText = undefined) {
+	// Mostrar/ocultar loading por defecto en fullScreen
+	let isFullScreenElement = true;
+
+	if (pJqueryHtmlElemento != undefined) {
+		isFullScreenElement = false;
+	}
+
+	// Custom spinner
+	const customSpinner = `
+		<div class="spinner-border" style="color:#006eff" role="status">
+			<span class="sr-only">Loading ...</span>
+		</div>
+	`;
+
+	// Configuración de parámetros para mostrar el efecto de loading
+	const busyParams = {
+		// spinner: "accordion", -> Por defecto será un loading normal		
+		background: "rgba(255, 255, 255, 0.8)", // --> Color del fondo del loading
+		color: "#006eff", // --> Color del loading
+		animation: "fade", // -> Animación de aparición del Loading
+		containerClass: "mascara-loading", // -> Nombre de la clase para el contenedor del loading
+		containerItemClass: "mi-item-contenedor-mascara-loading",
+		custom: $(customSpinner), // --> Custom spinner de bootstrap		
+		text: loadingText != undefined ? loadingText : "",
+		textPosition: "bottom",
+	};
+
+	// Mostrar loading
+	if (!isFullScreenElement) {
+		// Mostrar loading dentro del elemento jquery
+		// Loading con spinner por defecto
+		pJqueryHtmlElemento.busyLoad("show", busyParams);
+	} else {
+		// Mostrar loading de pantalla completa
+		// Loading con spinner por defecto
+		$.busyLoadFull("show", busyParams);		
+	}
+}
+
+/**
+ * [loadingOcultar]
+ * Requiere librería busy-load.
+ * Ocultar cualquier loading que se muestre en pantalla (independientemente de que sea fullScreen o no )
+ * Ejemplo de uso
+ * https://github.com/piccard21/busy-load
+ */
+const loadingOcultar = function () {
+	// Configuración de parámetros para mostrar el efecto de loading
+	const busyParams = {
+		animation: "fade", // -> Animación de desaparición del Loading
+	};
+
+	// Identificador de la clase "loading"
+	const mascaraLoadingClass = "mascara-loading";
+	const mascara = $(`.${mascaraLoadingClass}`);
+
+	const loadingParent = mascara.parent();
+	if (loadingParent.length > 0){
+		// Permitir hacer scroll (Añadía la librería un no-scroll)
+		loadingParent.removeClass("no-scroll");
+		loadingParent.busyLoad("hide", busyParams);
+	}else{		
+		// El loading está dentro de un elemento del dom
+		const loadingContainer = $('.busy-load-active');
+		loadingContainer.busyLoad("hide", busyParams);
+	}
+};
+
+
+
+
 function OcultarUpdateProgress() {
     if ($('#mascaraBlanca').length > 0) {
         $('.popup').hide();
@@ -7994,10 +8052,13 @@ const comportamientoFacetasPopUpPlegado = {
             // Faceta seleccionada
             that.facetaActual = $(e.relatedTarget).data('facetkey');
             that.facetaActualName = $(e.relatedTarget).data('facetname');
-
+        
             // Registrar el id del modal abierto (para cargar los datos en el modal correspondiente)
             that.$modalLoaded = $(`#${e.target.id}`);
             that.facetaTesauroSemantico = $(e.relatedTarget).data('facetissemantic');
+
+            // Establecer el título en el modal correspondiente
+            that.$modalLoaded.find(".loading-modal-facet-title").text(that.facetaActualName);              
 
             if (that.facetaTesauroSemantico == "True") {
                 that.obtenerFacetaTesuaroSemantico();
@@ -12081,7 +12142,12 @@ function enlazarFacetasBusqueda() {
 
 	    if (event.which || event.keyCode) {
 	        if ((event.which == 13) || (event.keyCode == 13)) {
-	            return false;
+	            //return false;
+                // Iniciar la búsqueda                        
+                const inputContainer = $(this).closest('div');                
+                const searchButton = inputContainer.find('.searchButton');                
+                searchButton.click();                
+                event.preventDefault();
 	        }
 	    } else {
 	        return true;
@@ -12915,7 +12981,7 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
 
     // Montar resultados obtenidos por al hacer clic Facetas
     var vistaChart = (params['pParametros_adiccionales'].indexOf('busquedaTipoChart=') != -1);
-    if (vistaChart) {
+    if (vistaChart && $('.chartView').length == 0) {
         //datosChartActivo = arraydatos;
         //$(pPanelID).html('<div id="divContChart"></div>');
         //eval(jsChartActivo);
@@ -12951,7 +13017,22 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
                     panelListado.append(panel.find('.resource-list').html())
                     panel.find('.resource-list').html('');
                 } else if (!vistaMapa && !vistaChart) {
-                    $(pPanelID).html(descripcion);
+                    // Montar resultados en el contenedor correcto
+                    const contenedor = $(document).find(`${pPanelID}.resource-list`).length > 0
+                        ? $(document).find(`${pPanelID}.resource-list`)
+                        : $(document).find("#panelResultados.resource-list");
+
+                    // Tener en cuenta la posible existencia de un div adicional de clase ".resource-list-wrap"
+                    let contenedorPrincipal = contenedor.find(".resource-list-wrap").length > 0
+                        ? $(contenedor.find(".resource-list-wrap")[0])
+                        : contenedor;
+
+                    // Si no se ha encontrado ningún contenedor para datos, hacerlo directamente
+                    if (contenedorPrincipal.length == 0) {
+                        contenedorPrincipal = $(".resource-list-wrap");
+                    }
+                    contenedorPrincipal.html(descripcion);
+
                 }
                 else {
                     var arraydatos = descripcion.split('|||');
@@ -12965,9 +13046,9 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
                     }
 
                     if (vistaChart) {
-                        //datosChartActivo = arraydatos;
-                        //$(pPanelID).html('<div id="divContChart"></div>');
-                        //eval(jsChartActivo);
+                        datosChartActivo = arraydatos;
+                        $(pPanelID).html('<div id="divContChart"></div>');
+                        eval(jsChartActivo);
                         //PintarGrafico(datosChartActivo);
                     }
                     else {
@@ -12977,8 +13058,8 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
                 FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados, pPanelID);
             }
             if (MontarResultadosScroll.pagActual != null) {
-                MontarResultadosScroll.pagActual = 1;
-                MontarResultadosScroll.cargarScroll();
+                MontarResultadosScroll.pagActual = 1;                
+                MontarResultadosScroll.setupCargarScroll();
             }
         }, "json");
     }
@@ -13290,7 +13371,7 @@ const scrollingListadoRecursos = {
             that.config();
             $(htmlRespuesta)
                 // Buscar cada resultado item
-                .find("article")
+                .find('.resource')
                 .each(function () {
                     var resource = $(this);
                     // Añadir cada item encontrado a la lista de resultados                  
@@ -13326,8 +13407,11 @@ const scrollingListadoRecursos = {
 
 /**
  * Comportamiento de mostrado de Resultados cuando se hace Scrolling. Funcionamiento junto con scrollingListadoRecursos
+ * Sólo funcionará si existe un div con id "footer".
  * */
 var MontarResultadosScroll = {
+    // Umbral de desplazamiento para cargar más resultados (90% de la página)
+    threshold: 0.95,
     footer: null,
     item: null,
     pagActual: null,
@@ -13337,10 +13421,27 @@ var MontarResultadosScroll = {
         this.footer = $(idFooterJQuery);
         this.item = idItemJQuery;
         // Controlar que solo haga una petición cada vez
-        this.isLoadingData = false;
-        this.cargarScroll();
+        this.isLoadingData = false;        
+        // Configurar carga mediante scroll
+        this.footer.length > 0 && this.setupCargarScroll();        
         return;
     },
+
+    /**
+     * Método que configurará el método mediante el cual se traerán los resultados al hacer scroll.
+     * Si el #footer tiene la propiedad de "fixed", se implementará la lógica con cargarScrollForFixedFooter. En caso contrario se lanzará con cargarScroll
+     */
+    setupCargarScroll: function(){
+        const that = this;
+
+        // Verifica si el elemento con clase "footer" tiene la posición "fixed"
+        if (that.footer.css('position') === 'fixed') {
+          that.cargarScrollForFixedFooter();            
+        } else {
+          that.cargarScroll();
+        }
+    },
+
     cargarScroll: function () {
         var that = this;
         this.waypointMoreResults = new Waypoint({
@@ -13349,41 +13450,8 @@ var MontarResultadosScroll = {
                 // Esperar a realizar la petición
                 setTimeout(function() {
                     if (direction == "down" && that.isLoadingData == false) {
-                        // Indicar que se va a tramitar una petición de datos para que no haga varias
-                        that.isLoadingData = true;
-                        /* Antes de hacer petición visualizar el "Loading" */
-                        scrollingListadoRecursos.crearCargando();
-                        /* Realizar petición al servidor */                        
-                        const peticionScrollResultadosPromise = that.peticionScrollResultados();
-                        peticionScrollResultadosPromise
-                        .then(function(data) {                                                        
-                            let htmlRespuesta = document.createElement("div");
-                            htmlRespuesta.innerHTML = data;
-                            if ($(htmlRespuesta).find(that.item).length > 0) {
-                                that.CargarResultadosScroll(data);
-                            } else {
-                                that.CargarResultadosScroll('');
-                                // No se traen más datos -> Eliminar scrolling
-                                // that.destroyScroll();
-                                // La petición ha terminado. Permitir hacer más peticiones
-                                that.isLoadingData = false;
-                            }
-                            if ((typeof CompletadaCargaRecursos != 'undefined')) {
-                                CompletadaCargaRecursos();
-                            }
-                            if (typeof (urlCargarAccionesRecursos) != 'undefined') {
-                                ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
-                            }                                                        
-                        })
-                        // Manejar errores
-                        .catch(function(error) {
-                            console.error("Error al traer resultados vía scroll:", error);                            
-                        })
-                        .always(function(){
-                            that.isLoadingData = false;
-                            // Fin de petición -> Ocultar loading
-                            scrollingListadoRecursos.cargandoScrolling();
-                        });                       
+                        // Gestionar la petición de los datos
+                        that.handleLoadDataFromScroll();
                     }              
                 }, 500); 
             },
@@ -13391,9 +13459,63 @@ var MontarResultadosScroll = {
             // Cambiado debido a que listado de recursos, al pulsar en "Ctrol + Fin" no detectaba ese comportamiento
             offset: '100%', // Disparar petición cuando se visualice el footer
         })
-
         return;
     },
+
+    /* Cargar Infinite Scroll para cuando el footer está fixed */
+	cargarScrollForFixedFooter: function(){
+        var that = this;
+        window.addEventListener('scroll', function() {
+            if (!that.isLoadingData) {
+                var scrollPercentage = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
+                if (scrollPercentage >= that.threshold) {
+                    that.isLoadingData = true;
+                    // Gestionar la petición de los datos
+                    that.handleLoadDataFromScroll();
+                }
+            }
+        });
+	},
+
+    /**
+     * Método que realizará la lógica de petición de los datos y la gestión de estos en el contenedor de resultados.
+     * Es llamado cargarScrollForFixedFooter o desde cargarScroll dependiendo de si hay o no footer "fixed"
+     */
+    handleLoadDataFromScroll: function(){
+        const that = this;
+        
+        that.isLoadingData = true;
+        /* Antes de hacer petición visualizar el "Loading" */
+        scrollingListadoRecursos.crearCargando();
+        /* Realizar petición al servidor */
+        const peticionScrollResultadosPromise = that.peticionScrollResultados();
+        peticionScrollResultadosPromise.then(function(data) {
+            let htmlRespuesta = document.createElement("div");
+            htmlRespuesta.innerHTML = data;
+            if ($(htmlRespuesta).find(that.item).length > 0) {
+                that.CargarResultadosScroll(data);
+            } else {
+                that.CargarResultadosScroll('');
+                // No se traen más datos -> Eliminar scrolling
+                // that.destroyScroll();
+                // La petición ha terminado. Permitir hacer más peticiones
+                that.isLoadingData = false;
+            }
+            if ((typeof CompletadaCargaRecursos != 'undefined')) {
+                CompletadaCargaRecursos();
+            }
+            if (typeof (urlCargarAccionesRecursos) != 'undefined') {
+                ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
+            }
+            }).catch(function(error) {
+                console.error("Error al traer resultados vía scroll:", error);
+            }).always(function(){
+                that.isLoadingData = false;
+                // Fin de petición -> Ocultar loading
+                scrollingListadoRecursos.cargandoScrolling();
+            });
+    },
+
     destroyScroll: function () {        
         this.waypointMoreResults.destroy();
         return;
@@ -14419,13 +14541,27 @@ $(document).ready(function () {
 });
 
 
-
 $(document).ready(function () {
+    PreparaAutoCompletarComunidad();
+    PrepararInputBuscador();
+});
+
+/**
+ * Prepara el input de búsqueda en la sección de "Recursos" u otras páginas similares.
+ *
+ * Este método se encarga de configurar el comportamiento del input de búsqueda
+ * y del botón de búsqueda asociado. Si el campo de entrada `#finderSection` está presente
+ * en la página, añade manejadores de eventos para realizar búsquedas cuando el usuario
+ * hace clic en el botón de búsqueda o presiona la tecla Enter.
+ */
+function PrepararInputBuscador() {
     if ($('#finderSection').length > 0) {
         var urlPaginaActual = $('.inpt_urlPaginaActual').val();
         if (typeof (urlPaginaActual) != 'undefined') {
             $('#inputLupa').click(function (event) {
-                window.location.href = urlPaginaActual + "?search=" + encodeURIComponent($('#finderSection').val()); 
+                // Ejecución de búsqueda
+                const searchString = escapeHTML($('#finderSection').val());
+                window.location.href = urlPaginaActual + "?search=" + encodeURIComponent(searchString);
             });
         }
 
@@ -14442,108 +14578,8 @@ $(document).ready(function () {
                 return true;
             };
         });
-
-        if (typeof (origenAutoCompletar) == 'undefined') {
-            origenAutoCompletar = ObtenerOrigenAutoCompletarBusqueda($('input.inpt_tipoBusquedaAutoCompl').val());
-            if (origenAutoCompletar == '') {
-                var pathName = window.location.pathname;
-
-                pathName = pathName.substr(pathName.lastIndexOf('/') + 1);
-                if (pathName.indexOf('?') > 0) {
-                    pathName = pathName.substr(0, pathName.indexOf('?'));
-                }
-
-                origenAutoCompletar = pathName;
-            }
-        }
-
-        //var tablaPropiaAutoCompletar = $('input.inpt_tablaPropiaAutoCompletar').val().toLowerCase() == 'true';
-        var urlServicioAutocompletar = $('.inpt_urlServicioAutocompletar').val();
-        if (urlServicioAutocompletar.indexOf('autocompletarEtiquetas') > 0) {
-            var proyID = $('.inpt_proyID').val();
-            var facetasBusqPag = $('.inpt_facetasBusqPag').val();
-            var identidadID = $('.inpt_identidadID').val();
-
-            $('#finderSection').autocomplete(
-			null,
-			{
-			    servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
-                metodo: 'AutoCompletarTipado',
-                //url: urlServicioAutocompletar + "/AutoCompletarTipado",
-                //type: "POST",
-			    delay: 0,
-			    scroll: false,
-			    selectFirst: false,
-			    minChars: 1,
-			    width: 'auto',
-			    max: 25,
-			    cacheLength: 0,
-			    extraParams: {
-			        pProyecto: proyID,
-			        //pTablaPropia: tablaPropiaAutoCompletar,
-			        pFacetas: facetasBusqPag,
-			        pOrigen: origenAutoCompletar,
-			        pIdentidad: $('input.inpt_identidadID').val(),
-			        pIdioma: $('input.inpt_Idioma').val(),
-			        maxwidth: '420px',
-			        botonBuscar: 'inputLupa'
-			    }
-			}
-			);
-        } else {
-            var proyID = $('.inpt_proyID').val();
-            var facetasBusqPag = $('.inpt_facetasBusqPag').val();
-            var identidadID = $('.inpt_identidadID').val();
-            var bool_esMyGnoss = $('.inpt_bool_esMyGnoss').val() == 'True';
-            var bool_estaEnProyecto = $('.inpt_bool_estaEnProyecto').val() == 'True';
-            var bool_esUsuarioInvitado = $('input.inpt_bool_esUsuarioInvitado').val() == 'True';
-            var orgID = $('input.inpt_organizacionID').val();
-            var perfilID = $('input#inpt_perfilID').val();
-            var parametros = $('.inpt_parametros').val();
-            var tipo = $('.inpt_tipoBusquedaAutoCompl').val();
-            var facetasBusqPag = $('.inpt_facetasBusqPag').val();
-            $('#finderSection').autocomplete(
-				null,
-				{
-				    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
-				    //metodo: 'AutoCompletarFacetas',
-                    url: urlServicioAutocompletar + "/AutoCompletarFacetas",
-                    type: "POST",
-				    delay: 0,
-				    minLength: 4,
-				    scroll: false,
-				    selectFirst: false,
-				    minChars: 4,
-				    width: 190,
-				    cacheLength: 0,
-				    extraParams: {
-				        proyecto: proyID,
-				        bool_esMyGnoss: bool_esMyGnoss == true,
-				        bool_estaEnProyecto: bool_estaEnProyecto == true,
-				        bool_esUsuarioInvitado: bool_esUsuarioInvitado == true,
-				        identidad: identidadID,
-				        organizacion: orgID,
-				        filtrosContexto: '',
-				        languageCode: $('input.inpt_Idioma').val(),
-				        perfil: perfilID,
-				        //pTablaPropia: tablaPropiaAutoCompletar,
-				        pFacetas: facetasBusqPag,
-				        pOrigen: origenAutoCompletar,
-				        nombreFaceta: 'search',
-				        orden: '',
-				        parametros: parametros,
-				        tipo: tipo,
-				        botonBuscar: 'inputLupa'
-				    }
-				}
-			);
-        }
     }
-});
-
-$(document).ready(function () {
-    PreparaAutoCompletarComunidad();
-});
+}
 
 function PreparaAutoCompletarComunidad() {
     $('input.autocompletar').each(function () {
@@ -14583,6 +14619,11 @@ function PreparaAutoCompletarComunidad() {
         var urlServicioAutocompletarEtiquetas = $('input.inpt_urlServicioAutocompletarEtiquetas').val();
 
         var identidadID = $('input.inpt_identidadID').val();
+        var limitAutocomplete = 25; 
+        if ($(this).attr('gnoss-autocomplete-limit') != undefined)
+        {
+            limitAutocomplete = parseInt($(this).attr('gnoss-autocomplete-limit'));
+        }
         var proyID = $('input.inpt_proyID').val();
         var organizacionID = $('input.inpt_organizacionID').val();
         var perfilID = $('input#inpt_perfilID').val();
@@ -14621,7 +14662,7 @@ function PreparaAutoCompletarComunidad() {
                     selectFirst: false,
                     minChars: 1,
                     width: 'auto',
-                    max: 25,
+                    max: limitAutocomplete,
                     cacheLength: 0,
                     extraParams: {
                         pProyecto: proyID,
@@ -14756,10 +14797,12 @@ function MontarNumResultados() {
             // Nº total de resultados obtenidos
             const numResultados = parseInt($('#numResultadosRemover').text());
             // Cadena utilizada para búsqueda
-            const queryString = findGetParameter("search");
-
+            var queryString = findGetParameter("search");
+            
             // No se han encontrado resultados - Mostrar aviso siempre que se realice alguna búsqueda
             if (numResultados == 0 && queryString != undefined) {
+                queryString = queryString.replace('<', '&lt;');
+                queryString = queryString.replace('>', '&gt;');
                 // Si existe el buscador, introducir la cadena que ha usado el usuario para realizar la búsqueda con resultados 0.
                 if (finderSection.length > 0) {
                     finderSection.val(queryString);
@@ -15586,23 +15629,8 @@ WS.prototype = {
         };
     } ();
 })(jQuery);
-/**/ 
-/*jquery.gnoss.utils.js*/ 
-/*!
- * jQuery JavaScript Library v1.6.1
- * http://jquery.com/
- *
- * Copyright 2011, John Resig
- * Dual licensed under the MIT or GPL Version 2 licenses.
- * http://jquery.org/license
- *
- * Includes Sizzle.js
- * http://sizzlejs.com/
- * Copyright 2011, The Dojo Foundation
- * Released under the MIT, BSD, and GPL Licenses.
- *
- * Date: 20.02.2014.11.30 
- */
+
+
 function CompletadaCargaActividadReciente() {
     if (typeof (window.CompletadaCargaActividadRecienteComunidad) == 'function') {
         CompletadaCargaActividadRecienteComunidad();
@@ -16583,7 +16611,7 @@ var mostrarNumeroCategorias = {
             var verMas = ul.find('a.verTodasCategoriasEtiquetas');
             if (verMas.length == 0) {
                 var lis = $('li', ul);
-                if (lis.size() <= 3) return;
+                if (lis.length <= 3) return;
                 lis.each(function (indice) {
                     if (indice > 2) $(this).hide();
                 })
@@ -17695,8 +17723,11 @@ var operativaLoginEmergente = {
         this.loginPanelErrorTwice = $(this.form).find(this.idLoginPanelErrorTwice);
         this.idLoginErrorAutenticacionExterna = '#loginErrorAutenticacionExterna .ko';
         this.loginErrorAutenticacionExterna = $(this.form).find(this.idLoginErrorAutenticacionExterna);
-        this.loginErrorAutenticacionExternaClassName = "loginErrorAutenticacionExternaKo"
-        this.panelesError = [this.loginPanelError, this.loginPanelErrorTwice, this.loginErrorAutenticacionExterna];
+        this.loginErrorAutenticacionExternaClassName = "loginErrorAutenticacionExternaKo";
+        this.idLoginErrorBloqueado = '#loginErrorBloqueado .ko';
+        this.loginErrorBloqueado = $(this.form).find(this.idLoginErrorBloqueado);
+        this.loginErrorBloqueadoClassName = "loginErrorBloqueadoKo";
+        this.panelesError = [this.loginPanelError, this.loginPanelErrorTwice, this.loginErrorAutenticacionExterna, this.loginErrorBloqueado];
         this.panelesErrorWithClassName = $(".ko");
 
         // Flag Indicador de que el botón Login se ha configurado
@@ -17801,17 +17832,20 @@ var operativaLoginEmergente = {
         let loginPanelError = undefined;
         let loginPanelErrorTwice = undefined;
         let loginPanelErrorAutenticacionExterna = undefined;
+        let loginPanelErrorBloqueado = undefined;
 
         // Paneles de error según clase
         if (that.isButtonLoginIsConfigured){
             loginPanelError = $(`.${that.loginPanelErrorClassName}`);
             loginPanelErrorTwice = $(`.${that.loginPanelErrortwiceKoClassName}`);
             loginPanelErrorAutenticacionExterna = $(`.${that.loginErrorAutenticacionExternaClassName}`);
+            loginPanelErrorBloqueado = $(`.${that.loginErrorBloqueadoClassName}`);
         }else{
             // Coger los paneles según ID
             loginPanelError = this.loginPanelError;
             loginPanelErrorTwice = this.loginPanelErrorTwice;
             loginPanelErrorAutenticacionExterna = this.loginErrorAutenticacionExterna;
+            loginPanelErrorBloqueado = this.loginErrorBloqueado;
         }
                                
         if (this.isLoginCurrentPage()) {
@@ -17831,6 +17865,9 @@ var operativaLoginEmergente = {
             }
             if (ObtenerHash() == '#errorAutenticacionExterna') {
                 loginPanelErrorAutenticacionExterna.show();
+            }
+            if (ObtenerHash() == '#UsuarioBloqueado') {                              
+                loginPanelErrorBloqueado.show();
             }
         }        
     },
@@ -17868,6 +17905,87 @@ function isCapsLock(e) {
     }
 
     return false;
+};
+
+const operativaGestionDobleFactor = {
+
+    /**
+     * Inicializar operativa
+     */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas();
+    },
+
+    /**
+     * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
+     */
+    configRutas: function () {
+        // Url base
+
+        //this.urlBase = pParams.urlBase; //refineURL()
+        this.urlBase = window.location.href.split("?")[0];  
+        this.urlError = `${this.urlBase}?error=true`;
+        this.urlAceptarToken = `${this.urlBase}/aceptar-token`;
+    },
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {
+
+        // Contenedor modal de contenido dinámico
+        this.btnSubmit = $("#btnSubmit");
+        this.inputTokenAutenticacion = $("#token_autenticacion");
+        this.formAutenticacionDobleFactor = $("#formAutenticacionDobleFactor");
+    },
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+        that.btnSubmit.on("click", function (e) {
+            that.validarToken();
+        }); 
+    },
+    
+    /**
+     * Valida que el token pasado cumpla con el formato
+     */
+    validarToken: function (pParams) {
+        const that = this;
+        const inputToken = that.inputTokenAutenticacion.val().trim();
+        var regexToken = /^([A-Za-z0-9]{6})$/;
+
+        if (!inputToken.match(regexToken)) {
+            Redirigir(that.urlError);
+            return;
+        }
+
+        that.handleCreateSubmitUrl();
+
+        MostrarUpdateProgress();
+        that.formAutenticacionDobleFactor.submit();
+        
+    },
+
+    /**
+     * Añade al form action el valor del token introducido en el input
+     */
+    handleCreateSubmitUrl: function () {
+        const that = this;
+        // URL
+        const urlAction = that.formAutenticacionDobleFactor.prop("action");
+        const token = that.inputTokenAutenticacion.val().trim();
+        newUrlAction = `${urlAction}&tokenDobleAutenticacion=${token}`;
+
+        // Asignación de nueva URL
+        this.formAutenticacionDobleFactor.prop("action", newUrlAction);
+    },
 };
 
 /**
@@ -18146,6 +18264,7 @@ const operativaEditarPerfilUsuario = {
         this.email = $(`#${pParams.perfilPersonal.idEmail}`);
         this.emailProfesional = $(`#${pParams.perfilPersonal.idEmailProfesional}`);
         this.bornDate = $(`#${pParams.perfilPersonal.idBornDate}`);
+        this.twofactorauthentication = $(`#${pParams.perfilPersonal.idTwoFactorAuthentication}`);
         this.country = $(`#${pParams.perfilPersonal.idCountry}`);
         this.region = $(`#${pParams.perfilPersonal.idRegion}`);
         this.location= $(`#${pParams.perfilPersonal.idLocation}`);
@@ -18378,6 +18497,30 @@ const operativaEditarPerfilUsuario = {
             that.setUsePersonalImage();
         });
 
+        this.twofactorauthentication.on("click", function () {
+            that.changeTwoFactorAuthentication();
+        });
+
+    },
+
+    /**
+     * Acción para indicar que se desea utilizar la autenticacion de doble factor
+     * */
+    changeTwoFactorAuthentication: function () {
+        const that = this;
+
+        if (this.twofactorauthentication.is(':checked')) {
+            // Ocultar la sección de imágen ya que se desea utiliza la misma que la del perfil personal
+            $(`#idTwoFactorAuthentication`).hide();
+        }
+        else {
+            $(`#idTwoFactorAuthentication`).show();
+        }
+        GnossPeticionAjax(
+            `${that.urlPersonalProfileSaveProfile}`,
+            dataPost,
+            true
+        );
     },
 
     /**
@@ -18428,7 +18571,7 @@ const operativaEditarPerfilUsuario = {
         });
 
         // Realizar petición de guardado de datos personales del perfil del usuario        
-        GnossPeticionAjax(this.urlPersonalProfileSaveProfile, dataPost, true, false)
+        GnossPeticionAjax(that.urlPersonalProfileSaveProfile, dataPost, true, false)
             .done(function (data) {
                 //GuardadoCVRapido('OK'); 
                 // Guardar las redes sociales y urls que están en la tabla de Redes sociales
@@ -18769,7 +18912,7 @@ const operativaSolicitarCambiarContrasenia = {
             ConfirmedPassword: that.txtConfirmedPassword.val(),
         };
         // Realizar la petición de cambio de password
-        GnossPeticionAjax(that.urlPasswordRequest, params, false)
+        GnossPeticionAjax(that.urlPasswordRequest, params, true)
             .done(function () {
                 // Ocultar posibles paneles de error
                 that.hideErrorPanels();
@@ -20949,1383 +21092,17 @@ $(function(){
  * Revision: $Id: jquery.autocomplete.js 15 2009-08-22 10:30:27Z joern.zaefferer $
  */
 
-; (function($) {
-	
-$.fn.extend({
-	autocomplete: function(urlOrData, options) {
-		var isUrl = typeof urlOrData == "string";
-		options = $.extend({}, $.Autocompleter.defaults, {
-			url: isUrl ? urlOrData : null,
-			data: isUrl ? null : urlOrData,
-			delay: isUrl ? $.Autocompleter.defaults.delay : 10,
-			max: options && !options.scroll ? 10 : 150,
-            urlmultiple: null,
-            urlActual: 0,
-            urlParteAsmx: null,
-            urlServicio: function() {
-					if (this.urlmultiple != null)
-                    {
-                        var urlServ = this.urlmultiple[this.urlActual] + this.urlParteAsmx;
-                        this.urlActual++;
-                        if (this.urlActual == this.urlmultiple.length){this.urlActual = 0}
-                        return urlServ;
-                    }
-					if (this.servicio != null) {
-					    return this.servicio.service;
-					}
-					else {
-					    return this.url;
-					}
-				}
-		}, options);
-		
-		// if highlight is set to false, replace it with a do-nothing function
-		options.highlight = options.highlight || function(value) { return value; };
-		
-		// if the formatMatch option is not specified, then use formatItem for backwards compatibility
-		options.formatMatch = options.formatMatch || options.formatItem;
-
-        //Cargo las urls multiples en caso de haberlas:
-        ObtenerUrlMultiple(options);
-		
-		return this.each(function() {
-			new $.Autocompleter(this, options);
-		});
-	},
-	result: function(handler) {
-		return this.bind("result", handler);
-	},
-	search: function(handler) {
-		return this.trigger("search", [handler]);
-	},
-	flushCache: function() {
-		return this.trigger("flushCache");
-	},
-	setOptions: function(options){
-		return this.trigger("setOptions", [options]);
-	},
-	unautocomplete: function() {
-		return this.trigger("unautocomplete");
-	}
-});
-
-$.Autocompleter = function(input, options) {
-
-	var KEY = {
-        LEFT: 37,
-		UP: 38,
-        RIGHT: 39,
-		DOWN: 40,
-		DEL: 46,
-		TAB: 9,
-		RETURN: 13,
-		ESC: 27,
-		COMMA: 188,
-		PAGEUP: 33,
-		PAGEDOWN: 34,
-		BACKSPACE: 8
-	};
-
-	// Create $ object for input element
-	var $input = $(input).attr("autocomplete", "off").addClass(options.inputClass);
-
-    var cont = 0;
-	var timeout;
-	var previousValue = "";
-	var cache = $.Autocompleter.Cache(options);
-	var hasFocus = 0;
-	var lastKeyPressCode;
-	var config = {
-		mouseDownOnSelect: false
-	};
-	var select = $.Autocompleter.Select(options, input, selectCurrent, pintarSeleccionado, config);
-	
-	var blockSubmit;
-	
-	// prevent form submit in opera when selecting with return key
-//	$.browser.opera && $(input.form).bind("submit.autocomplete", function() {
-//		if (blockSubmit) {
-//			blockSubmit = false;
-//			return false;
-//		}
-//	});
-	
-	 // only opera doesn't trigger keydown multiple times while pressed, others don't work with keypress at all
-	$input.bind((/*$.browser.opera ? "keypress" : */"keyup") + ".autocomplete", function(event) {
-		// a keypress means the input has focus
-		// avoids issue where input had focus before the autocomplete was applied
-		hasFocus = 1;
-		// track last key pressed
-		lastKeyPressCode = event.keyCode;
-		switch(event.keyCode) {
-		
-			case KEY.UP:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.prev();
-				} else {
-					onChange(0, true);
-				}
-				break;
-				
-			case KEY.DOWN:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.next();
-				} else {
-					onChange(0, true);
-				}
-				break;
-				
-			case KEY.PAGEUP:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.pageUp();
-				} else {
-					onChange(0, true);
-				}
-				break;
-				
-			case KEY.PAGEDOWN:
-				event.preventDefault();
-				if ( select.visible() ) {
-					select.pageDown();
-				} else {
-					onChange(0, true);
-				}
-				break;
-			// matches also semicolon
-			case options.multiple && $.trim(options.multipleSeparator) == "," && KEY.COMMA:
-				select.hide();
-				PintarTags($input);
-				break;
-			case KEY.TAB:
-			case KEY.RETURN:
-			    cancelEvent(event);
-				if( selectCurrent() ) {
-					// stop default to prevent a form submit, Opera needs special handling
-					event.preventDefault();
-					blockSubmit = true;
-					return false;
-				}
-				select.hide();
-				PintarTags($input);
-				break;
-			case KEY.LEFT:
-			case KEY.RIGHT:
-			case KEY.ESC:
-				select.hide();
-				break;
-			default:
-				clearTimeout(timeout);
-				timeout = setTimeout(onChange, options.delay);
-				break;
-		}
-	}).focus(function(){
-		// track whether the field has focus, we shouldn't process any
-		// results if the field no longer has focus
-		hasFocus++;
-	}).blur(function() {
-		hasFocus = 0;
-		if (!config.mouseDownOnSelect) {
-			hideResults();
-		}
-	}).click(function() {
-		// show select when clicking in a focused field
-		if ( hasFocus++ > 1 && !select.visible() ) {
-			onChange(0, true);
-		}
-	}).bind("search", function() {
-		// TODO why not just specifying both arguments?
-		var fn = (arguments.length > 1) ? arguments[1] : null;
-		function findValueCallback(q, data) {
-			var result;
-			if( data && data.length ) {
-				for (var i=0; i < data.length; i++) {
-					if( data[i].result.toLowerCase() == q.toLowerCase() ) {
-						result = data[i];
-						break;
-					}
-				}
-			}
-			if( typeof fn == "function" ) fn(result);
-			else $input.trigger("result", result && [result.data, result.value]);
-		}
-		$.each(trimWords($input.val()), function(i, value) {
-			request(value, findValueCallback, findValueCallback);
-		});
-	}).bind("flushCache", function() {
-		cache.flush();
-	}).bind("setOptions", function() {
-		$.extend(options, arguments[1]);
-		// if we've updated the data, repopulate
-		if ( "data" in arguments[1] )
-			cache.populate();
-	}).bind("unautocomplete", function() {
-		select.unbind();
-		$input.unbind();
-		$(input.form).unbind(".autocomplete");
-	});
-	
-	
-	function selectCurrent() {
-		var selected = select.selected();
-		if( !selected )
-		{
-            forzarClickBoton('', '');
-			return false;
-		}
-        
-        pintarSeleccionado($input, selected.result);
-		
-		hideResultsNow();
-		$input.trigger("result", [selected.data, selected.value]);
-			
-        var faceta = '';
-		
-		if (selected.data.length > 2 /*&& selected.data[2] != ''*/)
-		{
-//		    var url = selected.data[2];
-//		    url = url.substring(url.indexOf('url=') + 4);
-//		    
-//		    if (url.indexOf('|||') != -1)
-//		    {
-//		        url = url.substring(0, url.indexOf('|||'));
-//		    }
-		    
-//		    if (selected.data[1] == 'foaf:firstName')
-//		    {
-//		        window.location.href = baseUrlBusqueda + '/' + urlRecursosBusqueda + '/' + url;
-//		    }
-//		    else if (selected.data[1] == 'gnoss:hasnombrecompleto')
-//		    {
-//		        url = url.replace('[perfil]',urlPerfilBusqueda).replace('[organizacion]',urlOrganizacionBusqueda).replace('[clase]',urlClaseBusqueda);
-//		        window.location.href = baseUrlBusqueda + '/' + url;
-//		    }
-//          else if (selected.data[1] == 'formSem')
-            if (selected.data[1] == 'formSem')
-            {
-                AgregarEntidadSeleccAutocompletar(selected.data);
-            }
-            else if (selected.data[1] == 'formSemGrafoDependiente')
-            {
-                AgregarValorGrafoDependienteAutocompletar(selected.data);
-            }
-            else if (selected.data[1] == 'formSemGrafoAutocompletar')
-            {
-                AgregarValorGrafoAutocompletar(selected.data);
-            }
-            else if (selected.data[1] == 'idioma' || selected.data[1].indexOf('[MultiIdioma]') != -1)
-            {
-                $input.val($input.val() + '@' + $('input.inpt_Idioma').val());
-            }            
-            else if (selected.data[1] == 'datoextraproyectovirtuoso')
-            {
-                $input.val($input.val());
-                $input.attr('aux',$input.val());
-                var inputHidden = $input.parent().find($('#'+$input.attr('id') + 'hack'));
-                if(typeof(inputHidden.attr('id')) != 'undefined')
-                {
-                    inputHidden.val(selected.data[2]);
-                    inputHidden.attr('aux',selected.data[2]);
-                }
-            }
-            else if (typeof (facetasCMS) != 'undefined' && facetasCMS)
-            {
-                var botonBuscar = document.getElementById(options.extraParams.botonBuscar);
-                if (botonBuscar.attributes['href'] != null)
-                {
-                    var urlRedirect = botonBuscar.attributes['href'].value;
-
-                    if (urlRedirect.indexOf('?') != -1)
-                    {
-                        urlRedirect = urlRedirect.substring(0, rlRedirect.indexOf('?'));
-                    }
-
-                    window.location =  urlRedirect + '?' + selected.data[1] + '=' + $input.val();
-                    return true;
-                }
-            }
-            else
-            {
-                forzarClickBoton('', selected.result);
-		        return true;
-            }
-		}
-		else if (selected.data.length > 1)
-		{
-//		    faceta = selected.data[1];
-		}
-			
-		forzarClickBoton(faceta, selected.result);
-        
-		return true;
-	}
-	
-    function pintarSeleccionado(textbox, resultado)
-    {
-        if (!options.pintarConcatenadores)
-        {
-            resultado = QuitarContadores(resultado);
-        }
-
-        if (textbox.attr('id') == 'finderSection' || textbox.attr('id') == 'txtBusquedaPrincipal')
-        {
-            /*Si es el buscador de una página de busqueda o el metabuscador superior, autocompleta con "" */
-            resultado='"'+resultado+'"';
-        }   
-
-
-        var v = resultado;
-        previousValue = v;
-		var cursorAt = textbox.selection().start;
-		if(cursorAt < 0)
-		{
-		    cursorAt = textbox.val().indexOf(v) + resultado.length;
-		}
-        
-	    if ( options.multiple ) {
-		    var words = trimWords(textbox.val());
-		    if ( words.length > 1 ) 
-		    {
-			    var seperator = options.multipleSeparator.length;
-			    var wordAt, progress = 0;
-			    $.each(words, function(i, word) {
-				    progress += word.length;
-				    if (cursorAt <= progress) {
-					    wordAt = i;
-					    return false;
-				    }
-				    progress += seperator;
-			    });
-			    words[wordAt] = v;
-			    v = words.join( options.multipleSeparator );
-		    }
-	    }
-	    
-	    if (options.NoPintarSeleccionado == null || !options.NoPintarSeleccionado)
-	    {
-	        textbox.val(v);
-	        PintarTags(textbox);
-	    }
-    }
-	
-	function forzarClickBoton(pFaceta, result)
-	{		
-	    //envia los datos al seleccionar una fila del autocompletar
-        var objecte = document.getElementById(options.extraParams.botonBuscar);
-		if(objecte != null)
-		{
-		    if (pFaceta != '') {
-		        if (objecte.attributes['onclick'].value.indexOf('= url + parametros') != -1) {
-		            eval(objecte.attributes['onclick'].value.replace('= url + parametros', '= url.replace("search=","' + pFaceta + '=") + parametros'));
-		        }
-		        else {
-		            eval(objecte.attributes['onclick'].value.replace('search=', pFaceta + '=').replace('return false;', ''));
-		        }
-		    }
-		        /*else if(document.createEvent)
-                {
-                    var evObj = document.createEvent('MouseEvents');
-                    evObj.initEvent( 'click', true, false );
-                    objecte.dispatchEvent(evObj);
-                }*/
-		    else {
-		        if ($input.val().indexOf("\"") != 0 && $input.val().lastIndexOf("\"") != $input.val().length - 1 && typeof (result) != 'undefined' && result == '' && typeof ($input[0]) != 'undefined' && typeof ($input[0].className) != 'undefined' && $input[0].className.indexOf("filtroFaceta") >= 0) {
-		            pintarSeleccionado($input, '>>' + $input.val())
-		        }
-		        objecte.click();
-		    }
-        }
-	}
-	
-	function onChange(crap, skipPrevCheck) {
-		if( lastKeyPressCode == KEY.DEL ) {
-			select.hide();
-			return;
-		}
-		
-		var currentValue = $input.val();
-		
-		if ( !skipPrevCheck && currentValue == previousValue )
-			return;
-		
-		previousValue = currentValue;
-		
-		currentValue = lastWord(currentValue);
-		if ( currentValue.length >= options.minChars) {
-			$input.addClass(options.loadingClass);
-			if (!options.matchCase)
-				currentValue = currentValue.toLowerCase();
-			request(currentValue, receiveData, hideResultsNow);
-		} else {
-			stopLoading();
-			select.hide();
-		}
-	};
-	
-	function trimWords(value) {
-		if (!value)
-			return [""];
-		if (!options.multiple)
-			return [$.trim(value)];
-		return $.map(value.split(options.multipleSeparator), function(word) {
-			return $.trim(value).length ? $.trim(word) : null;
-		});
-	}
-	
-	function lastWord(value) {
-		if ( !options.multiple )
-			return value;
-		var words = trimWords(value);
-		if (words.length == 1) 
-			return words[0];
-		var cursorAt = $(input).selection().start;
-		if (cursorAt == value.length) {
-			words = trimWords(value)
-		} else {
-			words = trimWords(value.replace(value.substring(cursorAt), ""));
-		}
-		return words[words.length - 1];
-	}
-	
-	// fills in the input box w/the first match (assumed to be the best match)
-	// q: the term entered
-	// sValue: the first matching result
-	function autoFill(q, sValue){
-		// autofill in the complete box w/the first match as long as the user hasn't entered in more data
-		// if the last user key pressed was backspace, don't autofill
-		if( options.autoFill && (lastWord($input.val()).toLowerCase() == q.toLowerCase()) && lastKeyPressCode != KEY.BACKSPACE ) {
-			// fill in the value (keep the case the user has typed)
-			$input.val($input.val() + sValue.substring(lastWord(previousValue).length));
-			// select the portion of the value not typed by the user (so the next character will erase)
-			$(input).selection(previousValue.length, previousValue.length + sValue.length);
-		}
-	};
-
-	function hideResults() {
-		clearTimeout(timeout);
-		timeout = setTimeout(hideResultsNow, 200);
-	};
-
-	function hideResultsNow() {
-		var wasVisible = select.visible();
-		select.hide();
-		clearTimeout(timeout);
-		stopLoading();
-		if (options.mustMatch) {
-			// call search and run callback
-			$input.search(
-				function (result){
-					// if no value found, clear the input box
-					if( !result ) {
-						if (options.multiple) {
-							var words = trimWords($input.val()).slice(0, -1);
-							$input.val( words.join(options.multipleSeparator) + (words.length ? options.multipleSeparator : "") );
-						}
-						else {
-							$input.val( "" );
-							$input.trigger("result", null);
-						}
-					}
-				}
-			);
-		}
-	};
-
-	function receiveData(q, data) {
-		if ( data && data.length && hasFocus ) {
-			stopLoading();
-			select.display(data, q);
-			autoFill(q, data[0].value);
-
-			if (typeof (completadaCargaAutocompletar) != "undefined") {
-			    completadaCargaAutocompletar();
-			}
-
-			select.show();
-		} else {
-			hideResultsNow();
-		}
-	};
-
-	function request(term, success, failure) {
-		if (typeof(requestAutocompletarPersonalizado) != 'undefined'){
-			return requestAutocompletarPersonalizado(term, success, failure, options, cache, cont, lastWord, parse, normalize);
-		}
-	
-	    term = replaceAll(replaceAll(replaceAll(term, '%', '%25'), '#', '%23'), '+', "%2B");
-		if (!options.matchCase)
-			term = term.toLowerCase();
-		var data = null;
-		
-		if (options.data == null){
-			data = cache.load(term);
-		}
-
-		cont = cont + 1;
-		var extraParams = {
-		    q: lastWord(term),
-		    limit: options.max,
-		    cont: cont,
-            lista: '',
-            organizacion: $("#inpt_organizacionID").val(),
-		    callback: 'autocomplete'
-		};
-		if (options.multiple) {
-		    if (options.classTxtValoresSelecc != null) {
-		        var valorLista = '';
-
-		        $('.' + options.classTxtValoresSelecc).each(function () {
-		            valorLista += $(this).val().replace(/&/g, ',');
-		        });
-
-		        extraParams["lista"] = valorLista;
-		    }
-		    else if (options.txtValoresSeleccID == null) {
-		        extraParams["lista"] = $('#' + input.id + '_Hack').val().trim() + $input.val().trim();
-		        //extraParams["lista"] = previousValue.trim();
-		    }
-		    else {
-		        if (options.txtValoresSeleccID.indexOf('|') != -1) {
-		            var idtxthacks = options.txtValoresSeleccID.split('|');
-		            var valorLista = '';
-		            for (var i = 0; i < idtxthacks.length; i++) {
-		                valorLista += document.getElementById(idtxthacks[i]).value.replace(/&/g, ',');
-		            }
-		            extraParams["lista"] = valorLista;
-		        }
-		        else {
-		            extraParams["lista"] = document.getElementById(options.txtValoresSeleccID).value.replace(/&/g, ',');
-		        }
-		    }
-		}
-		$.each(options.extraParams, function (key, param) {
-		    extraParams[key] = typeof param == "function" ? param() : param;
-		});
-
-		// recieve the cached data
-		if (data && data.length) {
-			success(term, data);
-		// if an AJAX url has been supplied, try loading the data now
-		} else if ((typeof options.url == "string") && (options.url.length > 0)) {
-		    var urlPost = options.urlServicio(options);
-
-			$.ajax({
-			    type: "POST",
-			    url: urlPost,
-			    data: extraParams,
-			    cache: false
-			}).done(function (response) {
-			    var data = response;
-			    if (response.d != null) {
-			        data = response.d;
-			    }
-
-                var parsed = options.parse && options.parse(data) || parse(data);
-                cache.add(term, parsed);
-                success(term, parsed);
-            }).fail(function (data) {
-
-		    });
-		    //$.post(options.url, extraParams, function (response) {
-		    //    var parsed = options.parse && options.parse(response) || parse(response);
-		    //    cache.add(term, parsed);
-		    //    success(term, parsed);
-		    //}, "json");
-		}
-		else if (options.servicio != null) {
-		    
-
-            options.servicio.service = options.urlServicio(options);
-
-		    options.servicio.call(options.metodo, extraParams, function(data) {
-	            if(extraParams.cont == cont && $('#' + extraParams.botonBuscar).prev().parent().css('display') != 'none')
-	            {
-				    var parsed = options.parse && options.parse(data) || parse(data);
-				    cache.add(term, parsed);
-				    success(term, parsed);
-				}
-			});	
-		}
-		else if (options.data != null && options.data.length > 0){
-			var parsed = [];
-			var termNorm = normalize(term.toLowerCase());
-			
-			for (var i=0;i<options.data.length;i++){
-				var nombreBuscar = normalize(options.data[i][0].toLowerCase());
-				if (nombreBuscar.indexOf(termNorm) == 0 || nombreBuscar.indexOf(' ' + termNorm) != -1){
-					parsed.push({'data':options.data[i], 'value':options.data[i][0], 'result':options.data[i][0]});
-				}
-			}
-		
-			success(term, parsed);
-		}
-		else {
-			// if we have a failure, we need to empty the list -- this prevents the the [TAB] key from selecting the last successful match
-			select.emptyList();
-			failure(term);
-		}
-	};
-	
-	
-	var normalize = (function() {
-	  var from = "ÃÀÁÄÂÈÉËÊÌÍÏÎÒÓÖÔÙÚÜÛãàáäâèéëêìíïîòóöôùúüûÑñÇç", 
-		  to   = "AAAAAEEEEIIIIOOOOUUUUaaaaaeeeeiiiioooouuuunncc",
-		  mapping = {};
-	 
-	  for(var i = 0, j = from.length; i < j; i++ )
-		  mapping[ from.charAt( i ) ] = to.charAt( i );
-	 
-	  return function( str ) {
-		  var ret = [];
-		  for( var i = 0, j = str.length; i < j; i++ ) {
-			  var c = str.charAt( i );
-			  if( mapping.hasOwnProperty( str.charAt( i ) ) )
-				  ret.push( mapping[ c ] );
-			  else
-				  ret.push( c );
-		  }      
-		  return ret.join( '' );
-	  }
-	 
-	})();
-	
-	function parse(data) {
-		var parsed = [];
-		try
-		{
-			var rows = data.split("\n");
-			for (var i=0; i < rows.length; i++) {
-				var row = $.trim(rows[i]);
-				if (row) {
-				    if (row.indexOf('|||') != -1)
-					{
-					    row = row.split("|||");
-					}
-					else if (row.indexOf('|') != -1)
-					{
-					    var valor = row.substring(0, row.lastIndexOf('|'));
-					    var attControl = row.substring(row.lastIndexOf('|') + 1);
-					    row = [valor, attControl];
-					}
-					else
-					{
-					    row = row.split("|");//Para que cree un array de un elemento.
-					}
-					
-					parsed[parsed.length] = {
-						data: row,
-						value: row[0],
-						result: options.formatResult && options.formatResult(row, row[0]) || row[0]
-					};
-				}
-			}
-		}
-		catch(ex)
-		{}
-		return parsed;
-	};
-
-	function stopLoading() {
-		$input.removeClass(options.loadingClass);
-	};
-};
-
-function QuitarContadores(cadena)
-{
-    var resultado = cadena;
-
-    // Obtener la cadena entre paréntesis
-    var contenidoParentesis = resultado.substring(resultado.lastIndexOf('(') + 1);
-    contenidoParentesis = contenidoParentesis.substring(0, contenidoParentesis.lastIndexOf(')'));
-
-    // Si es un entero, quitamos los paréntesis
-    if (contenidoParentesis == parseInt(contenidoParentesis)) {
-        if (cadena.lastIndexOf('(') > -1) {
-            if (cadena.lastIndexOf(')') > -1 && cadena.lastIndexOf(')') > cadena.lastIndexOf('(')) {
-                resultado = cadena.substring(0, cadena.lastIndexOf('(') - 1);
-            }
-        }
-    }
-
-    return resultado;
-}
-
-$.Autocompleter.defaults = {
-	inputClass: "ac_input",
-	resultsClass: "ac_results",
-	loadingClass: "ac_loading",
-	minChars: 1,
-	delay: 400,
-	matchCase: false,
-	matchSubset: true,
-	matchContains: false,
-	cacheLength: 10,
-	max: 100,
-	mustMatch: false,
-	extraParams: {},
-	selectFirst: true,
-	formatItem: function(row) { return row[0]; },
-	formatMatch: null,
-	autoFill: false,
-	width: 0,
-	multiple: false,
-	multipleSeparator: ", ",
-	/*highlight: function(value, term) {
-		return value.replace(new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + term.replace(/([\^\$\(\)\[\]\{\}\*\.\+\?\|\\])/gi, "\\$1") + ")(?![^<>]*>)(?![^&;]+;)", "gi"), "<strong>$1</strong>");
-	},*/
-    scroll: true,
-    scrollHeight: 180
-};
-
-$.Autocompleter.Cache = function(options) {
-
-	var data = {};
-	var length = 0;
-	
-	function matchSubset(s, sub) {
-		if (!options.matchCase) 
-			s = s.toLowerCase();
-		var i = s.indexOf(sub);
-		if (options.matchContains == "word"){
-			i = s.toLowerCase().search("\\b" + sub.toLowerCase());
-		}
-		if (i == -1) return false;
-		return i == 0 || options.matchContains;
-	};
-	
-	function add(q, value) {
-		if (length > options.cacheLength){
-			flush();
-		}
-		if (!data[q]){ 
-			length++;
-		}
-		data[q] = value;
-	}
-	
-	function populate(){
-		if( !options.data ) return false;
-		// track the matches
-		var stMatchSets = {},
-			nullData = 0;
-
-		// no url was specified, we need to adjust the cache length to make sure it fits the local data store
-		if( !options.url ) options.cacheLength = 1;
-		
-		// track all options for minChars = 0
-		stMatchSets[""] = [];
-		
-		// loop through the array and create a lookup structure
-		for ( var i = 0, ol = options.data.length; i < ol; i++ ) {
-			var rawValue = options.data[i];
-			// if rawValue is a string, make an array otherwise just reference the array
-			rawValue = (typeof rawValue == "string") ? [rawValue] : rawValue;
-			
-			var value = options.formatMatch(rawValue, i+1, options.data.length);
-			if ( value === false )
-				continue;
-				
-			var firstChar = value.charAt(0).toLowerCase();
-			// if no lookup array for this character exists, look it up now
-			if( !stMatchSets[firstChar] ) 
-				stMatchSets[firstChar] = [];
-
-			// if the match is a string
-			var row = {
-				value: value,
-				data: rawValue,
-				result: options.formatResult && options.formatResult(rawValue) || value
-			};
-			
-			// push the current match into the set list
-			stMatchSets[firstChar].push(row);
-
-			// keep track of minChars zero items
-			if ( nullData++ < options.max ) {
-				stMatchSets[""].push(row);
-			}
-		};
-
-		// add the data items to the cache
-		$.each(stMatchSets, function(i, value) {
-			// increase the cache size
-			options.cacheLength++;
-			// add to the cache
-			add(i, value);
-		});
-	}
-	
-	// populate any existing data
-	setTimeout(populate, 25);
-	
-	function flush(){
-		data = {};
-		length = 0;
-	}
-	
-	return {
-		flush: flush,
-		add: add,
-		populate: populate,
-		load: function(q) {
-			if (!options.cacheLength || !length)
-				return null;
-			/* 
-			 * if dealing w/local data and matchContains than we must make sure
-			 * to loop through all the data collections looking for matches
-			 */
-			if( !options.url && options.matchContains ){
-				// track all matches
-				var csub = [];
-				// loop through all the data grids for matches
-				for( var k in data ){
-					// don't search through the stMatchSets[""] (minChars: 0) cache
-					// this prevents duplicates
-					if( k.length > 0 ){
-						var c = data[k];
-						$.each(c, function(i, x) {
-							// if we've got a match, add it to the array
-							if (matchSubset(x.value, q)) {
-								csub.push(x);
-							}
-						});
-					}
-				}				
-				return csub;
-			} else 
-			// if the exact item exists, use it
-			if (data[q]){
-				return data[q];
-			} else
-			if (options.matchSubset) {
-				for (var i = q.length - 1; i >= options.minChars; i--) {
-					var c = data[q.substr(0, i)];
-					if (c) {
-						var csub = [];
-						$.each(c, function(i, x) {
-							if (matchSubset(x.value, q)) {
-								csub[csub.length] = x;
-							}
-						});
-						return csub;
-					}
-				}
-			}
-			return null;
-		}
-	};
-};
-
-$.Autocompleter.Select = function (options, input, select, pintar, config) {
-	var CLASSES = {
-		ACTIVE: "ac_over"
-	};
-	
-	var listItems,
-		active = -1,
-		data,
-		term = "",
-		needsInit = true,
-		element,
-		list;
-	
-	// Create results
-	function init() {
-		if (!needsInit)
-			return;
-		element = $("<div/>")
-		.hide()
-		.addClass(options.resultsClass)
-		.css("position", "absolute")
-		//.appendTo(document.body);
-
-        if (typeof panelContAutoComplet != 'undefined') {
-            element.appendTo($("#" + panelContAutoComplet));
-        }
-        else
-        {
-            element.appendTo(document.body);
-        }
-	
-		list = $("<ul/>").appendTo(element).mouseover( function(event) {
-			if(target(event).nodeName && target(event).nodeName.toUpperCase() == 'LI') {
-	            active = $("li", list).removeClass(CLASSES.ACTIVE).index(target(event));
-			    $(target(event)).addClass(CLASSES.ACTIVE);
-	        }
-		}).click(function(event) {
-			$(target(event)).addClass(CLASSES.ACTIVE);
-			select();
-			// TODO provide option to avoid setting focus again after selection? useful for cleanup-on-focus
-			input.focus();
-			return false;
-		}).mousedown(function(event) {
-            cancelEvent(event);
-			config.mouseDownOnSelect = true;
-		}).mouseup(function() {
-			config.mouseDownOnSelect = false;
-		});
-		
-		if( options.width > 0 )
-			element.css("width", options.width);
-			
-		if (options.extraParams.maxwidth)
-		    element.css("max-width", options.extraParams.maxwidth);
-			
-		needsInit = false;
-	} 
-	
-	function target(event) {
-		var element = event.target;
-		while(element && element.tagName != "LI")
-			element = element.parentNode;
-		// more fun with IE, sometimes event.target is empty, just ignore it then
-		if(!element)
-			return [];
-		return element;
-	}
-
-	function moveSelect(step) {
-		listItems.slice(active, active + 1).removeClass(CLASSES.ACTIVE);
-		movePosition(step);
-        var activeItem = listItems.slice(active, active + 1).addClass(CLASSES.ACTIVE);
-        if(options.scroll) {
-            var offset = 0;
-            listItems.slice(0, active).each(function() {
-				offset += this.offsetHeight;
-			});
-            if((offset + activeItem[0].offsetHeight - list.scrollTop()) > list[0].clientHeight) {
-                list.scrollTop(offset + activeItem[0].offsetHeight - list.innerHeight());
-            } else if(offset < list.scrollTop()) {
-                list.scrollTop(offset);
-            }
-        } 
-
-//	    try
-//	    {
-//            pintar($(input), activeItem.html());
-//        }
-//        catch(ex)
-//        {}
-		//$(input).val($(input).val().replace(lastWord($(input).val()), QuitarContadores(activeItem.html())));
-		//$(input).val(QuitarContadores(activeItem.html()));     
-	};
-	
-	function movePosition(step) {
-		active += step;
-		if (active < 0) {
-			active = listItems.size() - 1;
-		} else if (active >= listItems.size()) {
-			active = 0;
-		}
-	}
-	
-	function limitNumberOfItems(available) {
-		return options.max && options.max < available
-			? options.max
-			: available;
-	}
-	
-	function fillList() {
-		list.empty();
-		var max = limitNumberOfItems(data.length);
-		for (var i=0; i < max; i++) {
-			if (!data[i])
-				continue;
-			var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term);
-			if ( formatted === false )
-				continue;
-			var li = $("<li/>").html( options.highlight(formatted, term) ).addClass(i%2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
-			$.data(li, "ac_data", data[i]);
-		}
-		listItems = list.find("li");
-		if ( options.selectFirst ) {
-			listItems.slice(0, 1).addClass(CLASSES.ACTIVE);
-			active = 0;
-		}
-		// apply bgiframe if available
-		if ( $.fn.bgiframe )
-			list.bgiframe();
-	}
-	
-	return {
-		display: function(d, q) {
-			init();
-			data = d;
-			term = q;
-			fillList();
-		},
-		next: function() {
-			moveSelect(1);
-		},
-		prev: function() {
-			moveSelect(-1);
-		},
-		pageUp: function() {
-			if (active != 0 && active - 8 < 0) {
-				moveSelect( -active );
-			} else {
-				moveSelect(-8);
-			}
-		},
-		pageDown: function() {
-			if (active != listItems.size() - 1 && active + 8 > listItems.size()) {
-				moveSelect( listItems.size() - 1 - active );
-			} else {
-				moveSelect(8);
-			}
-		},
-		hide: function() {
-			element && element.hide();
-			listItems && listItems.removeClass(CLASSES.ACTIVE);
-			active = -1;
-		},
-		visible : function() {
-			return element && element.is(":visible");
-		},
-		current: function() {
-			return this.visible() && (listItems.filter("." + CLASSES.ACTIVE)[0] || options.selectFirst && listItems[0]);
-		},
-		show: function() {
-            if (typeof panelContAutoComplet != 'undefined') {
-                element.css('display','block');
-            }
-            else
-            {
-			    var offset = $(input).offset();
-			    element.css({
-				    width: typeof options.width == "string" || options.width > 0 ? options.width : $(input).width(),
-				    top: offset.top + input.offsetHeight,
-				    left: offset.left
-			    }).show();
-            }
-            if(options.scroll) {
-                list.scrollTop(0);
-                list.css({
-					maxHeight: options.scrollHeight,
-					overflow: 'auto'
-				});
-				
-//                if($.browser.msie && typeof document.body.style.maxHeight === "undefined") {
-//					var listHeight = 0;
-//					listItems.each(function() {
-//						listHeight += this.offsetHeight;
-//					});
-//					var scrollbarsVisible = listHeight > options.scrollHeight;
-//                    list.css('height', scrollbarsVisible ? options.scrollHeight : listHeight );
-//					if (!scrollbarsVisible) {
-//						// IE doesn't recalculate width when scrollbar disappears
-//						listItems.width( list.width() - parseInt(listItems.css("padding-left")) - parseInt(listItems.css("padding-right")) );
-//					}
-//                }
-                
-            }
-		},
-		selected: function() {
-			var selected = listItems && listItems.filter("." + CLASSES.ACTIVE).removeClass(CLASSES.ACTIVE);
-			return selected && selected.length && $.data(selected[0], "ac_data");
-		},
-		emptyList: function (){
-			list && list.empty();
-		},
-		unbind: function() {
-			element && element.remove();
-		}
-	};
-};
-
-$.fn.selection = function(start, end) {
-	if (start !== undefined) {
-		return this.each(function() {
-			if( this.createTextRange ){
-				var selRange = this.createTextRange();
-				if (end === undefined || start == end) {
-					selRange.move("character", start);
-					selRange.select();
-				} else {
-					selRange.collapse(true);
-					selRange.moveStart("character", start);
-					selRange.moveEnd("character", end);
-					selRange.select();
-				}
-			} else if( this.setSelectionRange ){
-				this.setSelectionRange(start, end);
-			} else if( this.selectionStart ){
-				this.selectionStart = start;
-				this.selectionEnd = end;
-			}
-		});
-	}
-	var field = this[0];
-	if ( field.createTextRange && document.selection && document.selection.createRange ) {
-		var range = document.selection.createRange(),
-			orig = field.value,
-			teststring = "<->",
-			textLength = range.text.length;
-		range.text = teststring;
-		var caretAt = field.value.indexOf(teststring);
-		field.value = orig;
-		this.selection(caretAt, caretAt + textLength);
-		return {
-			start: caretAt,
-			end: caretAt + textLength
-		}
-	} else if( field.selectionStart !== undefined ){
-		return {
-			start: field.selectionStart,
-			end: field.selectionEnd
-		}
-	}
-};
-})(jQuery);
-
-
-function PintarTags(textBox, txtLibre)
-{
-    if (txtLibre == undefined) {
-        txtLibre = false;
-    }
-    if (textBox.val().trim() != "")
-    {
-        var tags = textBox.val().replace(';', ',').split(',');
-        
-        var contenedor = textBox.parents('.autocompletar').find('.contenedor');
-        if (txtLibre == true) {
-            var textBoxHack = textBox.parents('.autocompletar').find('#valoresAutoBDTxtLibre');
-        } else {
-            var textBoxHack = textBox.parents('.autocompletar').find('input').last();
-        }
-         
-        if(textBoxHack.length > 0)
-        {
-            for (var i = 0; i < tags.length; i++) {
-                var tagNombre = tags[i].trim();
-                //Esto es para los mensajes
-                indexEscape = tagNombre.indexOf("|||");
-                let boolEstamosMensajes = indexEscape != -1;
-                var textoEtiquetaMostramos = boolEstamosMensajes ? tagNombre.substr(0, indexEscape):tagNombre;
-                var tagNombreEncode = Encoder.htmlEncode(textoEtiquetaMostramos);
-                var estaYaAgregada = textBoxHack.val().trim().indexOf(","+textoEtiquetaMostramos+",") != -1;
-               
-                if (textoEtiquetaMostramos != '' && (!estaYaAgregada || textBox.parents('.tag').length > 0)) {
-                    if (txtLibre == true) {
-                        var html = "<div class=\"tag\" title=\"" + tagNombreEncode + "\"><div>" + textoEtiquetaMostramos + "</div><input type=\"text\" value=\"" + tagNombreEncode + "\"></div>";
-                    }
-                    else {
-                        var html = "<div class=\"tag\" title=\"" + tagNombreEncode + "\"><div>" + textoEtiquetaMostramos + "<a class=\"remove\" ></a></div><input type=\"text\" value=\"" + tagNombreEncode + "\"></div>";
-                    }
-                    if (textBox.parents('.tag').length > 0) {
-                        textBox.parents('.tag').before(html);
-                    }
-                    else {
-                        contenedor.append(html);
-                    }
-
-                    textBoxHack.val(textBoxHack.val() + tagNombre.toLowerCase() + ',')
-                }
-            }
-            
-            textBox.val('');
-            
-            if(textBox.parents('.tag').length == 0)
-            {
-                PosicionarTextBox(textBoxHack.prev());
-            }
-            if(!textBoxHack.prev().hasClass("no-edit"))
-            {
-                textBox.parents('.autocompletar').find('.tag').each(function(){
-                    $(this).bind('click', function(evento){
-                        cancelEvent(evento);
-                         
-                        var divTag = $(this).children('div');
-                        var textBox = divTag.parent().find('input');
-                        if(textBox.css('display') == 'none')
-                        {
-                            textBox.width(textBox.parent().width());
-                            divTag.css('display', 'none');
-                            textBox.css('display', 'block');
-                            textBox.focus();
-                            posicionarCursor(textBox,textBox.val().length);
-                            textBox.blur(function(){ActualizarTag(textBox, divTag, textBoxHack)});
-                            textBox.keydown(function(evento){
-                                $(this).attr('size',$(this).val().length + 5);
-                                if(evento.which || evento.keyCode){
-                                    if ((evento.which == 13) || (evento.keyCode == 13)) {
-                                        ActualizarTag(textBox, divTag, textBoxHack);
-                                        return false;
-                                    }
-                                }
-                            });
-                            textBox.keyup(function(evento){
-                                if(evento.which || evento.keyCode){
-                                    if ((evento.which == 188) || (evento.keyCode == 188)) {
-                                        ActualizarTag(textBox, divTag, textBoxHack);
-                                    }
-                                }
-                            });
-                        }
-                    });
-                });  
-            }
-            
-             textBox.parents('.autocompletar').find('.tag .remove').each(function(){
-                if($(this).data("events") == null)
-                {
-                    $(this).bind('click', function(evento){
-                        cancelEvent(evento);
-                        EliminarTag($(this).parents('.tag'), evento)
-                    });
-                }
-            });
-        }
-    }
-    tagYaPintado = true;
-}
-function PosicionarTextBox(textBox)
-{
-    textBox.width(150);
-    textBox.css('top', '0px');
-    textBox.css('left', '0px');
-
-    if (textBox.parent().find('.tag').length == 0 || textBox.position().top > textBox.parent().find('.tag').last().position().top)
-    {
-        textBox.css('width', '100%');
-    }
-    else
-    {
-        var tbLeft = textBox.parent().find('.tag').last().position().left + textBox.parent().find('.tag').last().width() + 5;
-        textBox.width(textBox.parent().width() - (tbLeft - textBox.parent().position().left));
-    }
-}
-
-function LimpiarTags(textBox)
-{
-    $('#' + txtTagsID + '_Hack').val('');
-    $('#' + txtTagsID).parent().find('.tag').remove();
-}
-
-function ActualizarTag(textBox, divTag, textBoxHack)
-{
-    var ultimoElemento = textBoxHack.parent();
-    if(ultimoElemento.next().hasClass('propuestos'))
-    {
-        ultimoElemento = ultimoElemento.next();
-    }
-    descartarTag(textBox.parents('.tag'), ultimoElemento);
-    
-    textBox.css('display', '');
-    PintarTags(textBox);
-    
-    var valorAnterior = textBox.parents('.tag').attr('title').toLowerCase();
-    var hack = textBoxHack.val().trim();
-    
-    if(hack.indexOf(',' + valorAnterior + ',') != -1)
-    {
-        hack = hack.replace(',' + valorAnterior + ',', ',');
-    }
-    else if(hack.substring(0, valorAnterior.length + 1) == valorAnterior + ',')
-    {
-        hack = hack.replace(valorAnterior + ',', '');
-    }
-                
-    textBoxHack.val(hack.trim());
-    textBox.parent().remove();
-    PosicionarTextBox(textBoxHack.prev());
-}
-
-function EliminarTag(elemento, evento)
-{
-    var divAutocompletar = elemento.parents('.autocompletar');
-    var contTxtLibre = document.querySelector('#contTagsTxtLibre');
-
-    if (contTxtLibre != undefined) {
-        var divsDentroSpan = contTxtLibre.querySelectorAll("div.tag");
-
-        for (var div of divsDentroSpan) {
-            if (elemento[0].innerText == div.innerText) {               
-                div.remove();
-            }
-        }
-    }
-
-    if(divAutocompletar.find('input').length > 0)
-    {
-        var valorAnterior = elemento.attr('title');
-        var textBoxHack = divAutocompletar.find('input').last();
-        var valorTextHack = textBoxHack.val();
-        var indexInicioHack = valorTextHack.indexOf(valorAnterior.toLowerCase());
-        var indexFinal = valorTextHack.indexOf(",", indexInicioHack)+1;
-        var textoConTagEliminado = valorTextHack.replace(valorTextHack.substring(indexInicioHack, indexFinal), '');
-        textBoxHack.val(textoConTagEliminado);
-        var ultimoElemento = divAutocompletar;
-        if(divAutocompletar.next().hasClass('propuestos'))
-        {
-            var listaPropuestos = divAutocompletar.next().find('.tag');
-
-            for(var i=0;i<listaPropuestos.length;i++)
-            {
-                if($(listaPropuestos[i]).attr('title') == valorAnterior)
-                {
-                    $(listaPropuestos[i]).css('display', '');
-                }
-            }
-            ultimoElemento = divAutocompletar.next();
-        }
-        
-        descartarTag(elemento, ultimoElemento);
-        
-        elemento.remove();
-        PosicionarTextBox(textBoxHack.prev());
-    }
-}
-function EliminarTagTxtLibre(elemento, evento) {
-
-}
-
-function descartarTag(elemento, ultimoElemento)
-{
-    if(!ultimoElemento.next().hasClass('descartados'))
-    {
-        ultimoElemento.after("<div class='descartados' style='display:none;'><input id='txtHackDescartados' type='text'/></div>");
-        ultimoElemento.next().find('#txtHackDescartados').val(elemento.attr('title').toLowerCase() + ',');
-    }
-    else
-    {
-        var descartados = ultimoElemento.next().find('#txtHackDescartados').val();
-        
-        var estaYaAgregada = descartados.indexOf(',' + elemento.attr('title') + ',') != -1;
-        estaYaAgregada = estaYaAgregada || descartados.substring(0, elemento.attr('title').length + 1) == elemento.attr('title') + ',';
-        
-        if(!estaYaAgregada)
-        {
-            descartados += elemento.attr('title').toLowerCase() + ','
-            ultimoElemento.next().find('#txtHackDescartados').val(descartados);
-        }
-    }
-}
-
-function posicionarCursor(textbox, pos) {
-    if (textbox.get(0).setSelectionRange) {
-        textbox.get(0).setSelectionRange(pos, pos);
-    } else if (textbox.get(0).createTextRange) {
-        var range = textbox.get(0).createTextRange();
-        range.collapse(true);
-        range.moveEnd('character', pos);
-        range.moveStart('character', pos);
-        range.select();
-    }
-}
 
 $(document).ready(function() {	    
     // Preparar el .datePicker para que esté disponible en la web
     const oldYear = moment().format('YYYY') - 100;
     const currentYear = moment().format('YYYY');
+    const maxYear = moment().add(100, 'year').format('YYYY');
     // DatePicker normales
     $('.datepicker').datepicker({
         changeMonth: true,
         changeYear: true,
-        yearRange: `${oldYear}:${currentYear}`,
+        yearRange: `${oldYear}:${maxYear}`,
     });
     // DatePicker con límite en Fecha
     $('.datepicker-minToday').datepicker({
@@ -22357,18 +21134,11 @@ $(document).ready(function() {
         }               
     });
 
-    // Permitir carga de imagenes / zoom en pantalla completa al hacer click sobre ellas. Activarlo sólo si existe el plugin instalado
-    if (typeof $().fullscreenimage != "undefined"){
-        $('img.fullScreen').fullscreenimage({
-            scale: 2 // magnify by 2 times when mouse moves over full screen image (set to 1 to disable)
-        });
-    }
-    
-
-
     // Comportamiento de navegación back button del navegador
-    operativaDetectarNavegacionBackButton.init();
-      
+    operativaDetectarNavegacionBackButton.init(); 
+
+    // Comportamiento para hacer zoom en imágenes
+    operativaImagesZooming.init();
 });
 
 /* Evitar ocultamiento de faceta cuando se utiliza el datepicker para seleccionar meses */
@@ -22376,92 +21146,6 @@ $(document).on('click', '#ui-datepicker-div, .ui-datepicker-prev, .ui-datepicker
     e.stopPropagation();
 });
 
-function pintarTagsInicio()
-{
-    $('.autocompletar').each(function(){
-        $(this).bind('click', function(evento){
-            cancelEvent(evento);
-            $(this).find('input.txtAutocomplete').focus();
-        });
-    });
-    
-    $('.autocompletar input.txtAutocomplete').each(function(){
-        PosicionarTextBox($(this));
-        $(this).bind('keydown', function(evento){
-            if ((evento.which == 8) || (evento.keyCode == 8)) {
-                if($(this).val() == "")
-                {
-                    if($(this).parent().find('.tag').last().hasClass("selected"))
-                    {
-                        EliminarTag($(this).parent().find('.tag').last(), evento);
-                    }
-                    else
-                    {
-                        $(this).parent().find('.tag').last().addClass("selected");
-                    }
-                    return false;
-                }
-            }
-            else if ((evento.which == 9) || (evento.keyCode == 9) || (evento.which == 13) || (evento.keyCode == 13)) {
-                //Tabulador o Intro
-                return false;
-            }
-            else
-            {
-                if($(this).parent().find('.tag').last().hasClass("selected"))
-                {
-                    $(this).parent().find('.tag').last().removeClass("selected");
-                }
-            }
-        });
-        $(this).bind('blur', function (evento) {
-            PintarTags($(this));
-        });
-        $(this).bind('click', function(evento){
-            cancelEvent(evento);
-        });
-        PintarTags($(this));
-    });
-}
-
-
-function cancelEvent(e) {
-    if (!e) e = window.event;
-    if (e.preventDefault) {
-        e.preventDefault();
-    } else {
-        e.returnValue = false;
-    }
-        
-    if (!e) e = window.event;
-    if (e.stopPropagation) {
-        e.stopPropagation();
-    } else {
-        e.cancelBubble = true;
-    }
-}
-
-function ObtenerUrlMultiple(pOptions){
-    if (pOptions.servicio != null && pOptions.servicio.service.indexOf(',') != -1)
-    {
-        pOptions.urlParteAsmx = pOptions.servicio.service.substring(pOptions.servicio.service.lastIndexOf(',') + 1);
-        pOptions.urlmultiple = pOptions.servicio.service.substring(0, pOptions.servicio.service.lastIndexOf(',')).split(',');
-        pOptions.urlActual = aleatorio(0, pOptions.urlmultiple.length - 1);
-    }
-    else if (pOptions.url != null && pOptions.url.indexOf(',') != -1) {
-        pOptions.urlParteAsmx = pOptions.url.substring(pOptions.url.lastIndexOf(',') + 1);
-        pOptions.urlmultiple = pOptions.url.substring(0, pOptions.url.lastIndexOf(',')).split(',');
-        pOptions.urlActual = aleatorio(0, pOptions.urlmultiple.length - 1);
-    }
-}
-
-function aleatorio(inferior,superior){ 
-    numPosibilidades = superior - inferior;
-    aleat = Math.random() * numPosibilidades;
-    aleat = Math.round(aleat);
-    return parseInt(inferior) + aleat;
-}
-/**/ 
 /*jquery.gnoss.header.js*/ 
 var globalIsContrayendo = false;
 var confirmacionEliminacionMultiple = {
@@ -23169,10 +21853,6 @@ function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
         accionHistorial.montarTabla();
         // Llamar a inicializar los despliegues para acción "Categorizar" en Recurso        
         accionDesplegarCategorias.init();
-
-        // Recargar CKEditor si hubiera algún Input con clase de CKEditor
-        if ($(panelContent).find('.cke').length > 0) RecargarTodosCKEditor(); 
-
     }).fail(function (data) {
         if (data == 'invitado') {
             operativaLoginEmergente.init();
@@ -23474,8 +22154,20 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
     $(that).removeClass(claseMaterialIcons);    
     // Muestrar loading hasta que se complete la petición de "Votar"
     $(that).addClass(loadingClass);
-
     if (urlVotarRecurso != "") {
+
+        //Evento matomo 
+ 
+        var matomoConfigurado = $('#inpt_matomoConfigurado').val();
+        
+        if (matomoConfigurado != undefined && matomoConfigurado == 'True') {
+            var recursoUrl = urlVotarRecurso.replace("/vote-positive", "");
+            var matomoConfigurado = $('#inpt_matomoConfigurado').val();
+            _paq.push(['setCustomDimension', 4, recursoUrl]);
+          
+            _paq.push(['trackEvent', 'Evento recurso', 'Voto', 'Me gusta']); 
+        }
+        
         GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {
             AccionRecurso_PintarVotos(data);
             EnviarAccGogAnac('Acciones sociales', 'Votar', urlVotarRecurso);
@@ -23779,7 +22471,7 @@ function AccionRecurso_DesVincular_Aceptar(urlDesvincularRecurso, urlCargarVincu
     MostrarUpdateProgress();
 
     var datosPost = {
-        ResourceUnLinkKey: documentoDesVincID
+        ResourceUnLinkKey: documentoID
     }
 
     GnossPeticionAjax(urlDesvincularRecurso, datosPost, true).done(function () {
@@ -24575,7 +23267,17 @@ function Comentario_CrearComentario(urlCrearComentario, documentoID) {
         };
         GnossPeticionAjax(urlCrearComentario, datosPost, true).done(function (data) {
             $('span#numComentarios').text(parseInt($('span#numComentarios').text()) + 1);
-            $('#txtNuevoComentario_' + documentoID).val('');
+            // Vaciar el contenido del comentario realizado
+            const editors = tinymce.get();
+            const relatedTinyMCEId = $('#txtNuevoComentario_' + documentoID).data("editorrelated");
+            // Iterar sobre las instancias para buscar la que coincide con el ID 'txtMensaje'
+            editors.forEach(function (editor) {
+                if (editor.id === relatedTinyMCEId) {                    
+                    $('#txtNuevoComentario_' + documentoID).val("");
+                    editor.setContent("");
+                }
+            });
+
             var html = "";
             // Comprobar si es un objeto o array (La versión 5 devuelve un objeto de arrays)             
             if (!Array.isArray(data)) {
@@ -24599,6 +23301,14 @@ function Comentario_CrearComentario(urlCrearComentario, documentoID) {
             if (typeof commentsAnalitics != 'undefined') {
                 var comentarioID = $('#panComentarios .comment').first().attr('id');
                 commentsAnalitics.commentCreated(comentarioID);
+            }
+
+            //Evento matomo 
+
+            var matomoConfigurado = $('#inpt_matomoConfigurado').val();
+
+            if (matomoConfigurado != undefined && matomoConfigurado == 'True') {
+                _paq.push(['trackEvent', 'Evento recurso', 'Comentar', 'Comentar']);
             }
 
             OcultarUpdateProgress();
@@ -24792,8 +23502,6 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
 
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
-    // Recargar editor CKE
-    RecargarTodosCKEditor();
 
     // Asignación de la función al botón "Sí" o de acción
     $(botones[0]).on("click", function () {
@@ -24838,8 +23546,6 @@ function Comentario_Editar_JIRA(urlEditar, comentarioID) {
     $btnGuardar.parent().toggleClass('d-none');
     $btnGuardarMobile.parent().toggleClass('d-none');
 
-    // Recargar editor CKE
-    RecargarTodosCKEditor();
 }
 
 /**
@@ -24891,9 +23597,7 @@ function Comentario_EditarComentarioAnterior(urlEditar, comentarioID) {
 
     var confirmar = $(['<div class="comment-enviar"><fieldset class="mediumLabels"><legend>', comentarios.editarComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_Editar_', comentarioID, '" rows="2" cols="20">' + mensajeAntiguo + '</textarea><p><label class="error" id="error_', comentarioID, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.guardar, '" class="btn btn-primary text medium sendComment"></p></fieldset></div>'].join(''));
 
-    panTextoComentario.after(confirmar);
-
-    RecargarTodosCKEditor();
+    panTextoComentario.after(confirmar);    
 }
 
 /**
@@ -25038,8 +23742,6 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
 
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
-    // Recargar editor CKE
-    RecargarTodosCKEditor();
 
     // Asignación de la función al botón "Sí" o de acción
     $(botones[0]).on("click", function () {
@@ -25062,9 +23764,7 @@ function Comentario_ResponderComentarioAnterior(urlResponder, comentarioID) {
 
     var confirmar = $(['<div class="comment-responder"><fieldset class="mediumLabels"><legend>', comentarios.responderComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_Responder_', comentarioID, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', comentarioID, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="text medium sendComment"></p></fieldset></div>'].join(''));
 
-    panTextoComentario.after(confirmar);
-
-    RecargarTodosCKEditor();
+    panTextoComentario.after(confirmar);    
 }
 
 function Comentario_ResponderComentario_V2(urlResponder, comentarioID) {
@@ -25080,9 +23780,7 @@ function Comentario_ResponderComentario_V2(urlResponder, comentarioID) {
 
     var confirmar = $(['<div class="escribir-comentario"><div class="publicador"></div><div class="escribe"><fieldset class="mediumLabels"><p><textarea class="' + claseCK + '" id="txtComentario_Responder_', comentarioID, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', comentarioID, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="btn btn-primary text medium sendComment"></p></fieldset></div></div>'].join(''));
 
-    panTextoComentario.after(confirmar);
-
-    RecargarTodosCKEditor();
+    panTextoComentario.after(confirmar);    
 }
 
 /**
@@ -25426,11 +24124,11 @@ function AccionPerfil_Seguir(that, urlSeguirPerfil) {
     const followJsAction = $(that).attr('onclick');
     if (followJsAction.indexOf("unfollow") >= 0) {
         // Se desea NO seguir el perfil
-        newTextButton = "Seguir";
+        newTextButton = accionesUsuarios.seguir;
         newIconButton = "person_add_alt_1";
     } else {
         // Se desea seguir el perfil
-        newTextButton = "Dejar de seguir";
+        newTextButton = accionesUsuarios.dejarDeSeguir;
         newIconButton = "person_remove_alt_1";
     }   
 
@@ -25479,7 +24177,7 @@ function AccionPerfil_NoSeguir(that, urlNoSeguirPerfil) {
     // Texto del botón
     var textButton = $(buttonIcon).siblings();
     // Textos e iconos una vez pulsado el botón
-    var newTextButton = "Sin seguimiento";
+    var newTextButton = accionesUsuarios.sinSeguimiento;
     var newIconButton = "person_outline";
     
     GnossPeticionAjax(urlNoSeguirPerfil, null, true).fail(function (data) {
@@ -25487,9 +24185,6 @@ function AccionPerfil_NoSeguir(that, urlNoSeguirPerfil) {
             operativaLoginEmergente.init();
         }
     });
-    // Nuevo Front
-    //$(that).parent().remove();
-    // Cambiar el nombre e icono del botón
     ChangeButtonAndText(that, newTextButton, newIconButton, "btn-primary");
 }
 
@@ -25518,9 +24213,9 @@ function AccionPerfil_Seguir_Listado(that, urlSeguir, followUser) {
     // Acción de follow unfollow
     const followJsAction = listFollowActionText.attr('onclick');    
 
-    // Textos e iconos una vez pulsado el botón para seguir/no seguir
-    const followText = "Seguir";
-    const noFollowText = "Dejar de seguir";
+    // Textos e iconos una vez pulsado el botón para seguir/no seguir    
+    const followText = accionesUsuarios.seguir;
+    const noFollowText = accionesUsuarios.dejarDeSeguir;
     const followIcon = "person_add_alt_1";
     const noFollowIcon = "person_remove";
     const loadingClass = "spinner-border spinner-border-sm texto-primario";
@@ -25636,13 +24331,13 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
         plantillaPanelHtml += '<div class="formulario-edicion">';
             // Asunto del email - InputText
             plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<label for="txtAsunto_'+id+'">' + mensajes.enviarMensaje + '</label>';
+                plantillaPanelHtml += '<label class="control-label" for="txtAsunto_'+id+'">' + mensajes.asunto + '</label>';
                 plantillaPanelHtml += '<input type="text" class="form-control" id="txtAsunto_'+id+'" rows="3"> </textarea>' ;
             plantillaPanelHtml += '</div>';
 
             // Cuerpo del email - TextArea
             plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<label>' + mensajes.descripcion + '</label>';
+                plantillaPanelHtml += '<label class="control-label">' + mensajes.descripcion + '</label>';
                 plantillaPanelHtml += '<textarea class="form-control cke mensajes" id="txtDescripcion_'+id+'" rows="3"> </textarea>' ;
             plantillaPanelHtml += '</div>';
 
@@ -25668,8 +24363,6 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
 
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
-
-    RecargarTodosCKEditor();
 
     // Asignación de la función al botón "Sí" o de acción
     $(botones[0]).on("click", function () {
@@ -25735,18 +24428,17 @@ function AccionEnviarMensajeMVCTutor(urlPagina, id) {
     //$confirmar.find('div').filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
     // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
     $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
+    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
+        $c.parents('.stateShowForm').css({ display: 'none' });
+        $confirmar.css({ display: 'none' });
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
 
     if ($('#divContMensajesPerf').length > 0 && $('#divContMensajesPerf').html() == '') {
         $('#divContMensajesPerf').html($('#desplegable_' + id).parent().html());
         $('#desplegable_' + id).parent().html('');
     }
 
-    MostrarPanelAccionDesp("desplegable_" + id, null);
-    RecargarTodosCKEditor();
+    MostrarPanelAccionDesp("desplegable_" + id, null);    
 }
 
 
@@ -27542,7 +26234,7 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
         // Vaciar el panel de posibles errores anteriores y ocultarlo
         panelResourceFileErrorMessage.empty().hide(); 
 
-        var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%()\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
+        var regexURL = /^(http(s)?:\/\/.)[-a-zA-Z0-9@:%.\/_\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)$/i;
         if (url.value.length > 0 && url.value.match(regexURL)) {          
             let enlaceASubir = url.value;
             if (enlaceASubir.includes("riamlab.sharepoint.com") || enlaceASubir.includes("riamlab-my.sharepoint.com")) {
@@ -27791,13 +26483,16 @@ if ('serviceWorker' in navigator) {
 }
 
 function requestNotificationAccess(reg) {
-    Notification.requestPermission(function (status) {
-        if (status == "granted") {
-            getSubscription(reg);
-        } else if (status == "denied") {
-            blockSubscription();
-        }
-    });
+    var notificacionesPermitidas = $('#inpt_Notificaciones').val();
+    if(notificacionesPermitidas != ""){
+        Notification.requestPermission(function (status) {
+            if (status == "granted") {
+                getSubscription(reg);
+            } else if (status == "denied") {
+                blockSubscription();
+            }
+        });
+    }  
 }
 
 function blockSubscription() {
@@ -27852,3 +26547,87 @@ function arrayBufferToBase64(buffer) {
     return window.btoa(binary);
 }
 // FIN NOTIFICACIONES PUSH
+
+/**
+ * Operativa para hacer Zoom en las imágenes. Sólo se ejecutará si existe la librería instalada
+ */
+const operativaImagesZooming = {
+
+    /**
+     * Inicializar operativa
+     */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.triggerEvents();     
+    },
+
+    /*
+     * Inicializar elementos de la vista
+     * */
+    config: function (pParams) {                
+        // Elementos del DOM
+        
+        /* Nombre de la clase a las que se aplicará el comportamiento de imágenes en Zoom */
+        this.imageZoomingClassName = "zooming";                         
+    },    
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        
+    },
+       
+    /**
+     * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
+     */
+    triggerEvents: function(){
+        const that = this;        
+
+        // Ejecutar operativa si existe la librería zooming
+        if (typeof Zooming !== 'undefined') {            
+            that.setupZoomImagesImages();                    
+        }                     
+    },
+
+    setupObserverForImageZooming: function (classNames, callback) {
+        // Función recursiva para buscar elementos con las clases deseadas
+        function buscarElementos(node) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                classNames.forEach(function (className) {
+                    if ($(node).hasClass(className)) {
+                        callback($(node));
+                    }
+                });
+            }
+            node.childNodes.forEach(buscarElementos);
+        }
+     
+        // Ejecutar la búsqueda en el documento completo
+        buscarElementos(document.body);
+     
+        // Configurar el MutationObserver para observar cambios en el DOM
+        let observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    buscarElementos(node);
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    },        
+
+    /**
+     * Método que revisará las imágenes y las prepara para tengan la opción del "Zoom" haciendo uso de la librería "zooming"
+     */
+    setupZoomImagesImages: function(){
+        const that = this;
+
+        // Configurar el disparador para la faceta
+        that.setupObserverForImageZooming([`${that.imageZoomingClassName}`], function(element){            
+            new Zooming().listen(`.${that.imageZoomingClassName}`);
+        });          
+    },    
+}

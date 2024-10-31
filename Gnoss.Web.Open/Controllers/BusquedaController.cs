@@ -16,8 +16,8 @@ using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Facetado;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosProyecto;
-using Es.Riam.Gnoss.CL.Seguridad;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Tesauro;
 using Es.Riam.Gnoss.Elementos;
@@ -25,12 +25,8 @@ using Es.Riam.Gnoss.Elementos.Comentario;
 using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Elementos.Facetado;
 using Es.Riam.Gnoss.Elementos.Identidad;
-using Es.Riam.Gnoss.Elementos.ListaResultados;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Tesauro;
-using Es.Riam.Gnoss.ExportarImportar;
-using Es.Riam.Gnoss.ExportarImportar.ElementosOntologia;
-using Es.Riam.Gnoss.ExportarImportar.Exportadores;
 using Es.Riam.Gnoss.Logica.Comentario;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
@@ -44,35 +40,23 @@ using Es.Riam.Gnoss.Servicios;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.UtilServiciosWeb;
-using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.Exportaciones;
-using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
-using Es.Riam.Gnoss.Web.MVC.Controles;
-using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Gnoss.Web.RSS.RSS20;
-using Es.Riam.Interfaces;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
-using Es.Riam.Metagnoss.ExportarImportar.Exportadores;
-using Es.Riam.Semantica.OWL;
-using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.Exchange.WebServices.Data;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -129,8 +113,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 		#endregion
 
-		public BusquedaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth)
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+		public BusquedaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
 		{
 			mUtilWeb = new UtilWeb(httpContextAccessor);
 			mRDFSearch = rDFSearch;
@@ -206,12 +190,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 			{
 				filtros = RequestParams("searchInfo").Split('/');
 			}
-
-			List<string> listaIdiomas = mConfigService.ObtenerListaIdiomas();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
 			foreach (string idioma in listaIdiomas)
 			{
 				string enlace = ListaEnlacesMultiIdioma[idioma].Value;
-				Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+				Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
 				if (filtros != null && filtros.Length > 1 && filtros[0].ToLower() == UtilIdiomas.GetText("URLSEM", "TAG").ToLower())
 				{
 					string filtroTag = filtros[1].ToLower();
@@ -458,12 +442,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 		[TypeFilter(typeof(AccesoPestanyaAttribute))]
 		public ActionResult Index()
 		{
-			if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
-			{
-				if (!EsIdentidadActualAdministradorOrganizacion)
-				{
-					return RedireccionarAPaginaNoEncontrada();
-				}
+			if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
+			{				
+				return RedireccionarAPaginaNoEncontrada();				
 			}
 
 			SearchViewModel paginaModel = new SearchViewModel();
@@ -598,28 +579,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				rawUrl = rawUrl.Replace("---AMPERSAND---", "%26");
 
 				//Detectado que puede estar doblemente codificado al haber más de un filtro, visto en InternetExplorer 8.
-				for (int i = 0; i < rawUrl.Split('&').Length; i++)
+				if (UtilCadenas.PasarAUtf8(UtilCadenas.PasarAANSI(rawUrl)) == rawUrl)
 				{
-					if (UtilCadenas.PasarAUtf8(UtilCadenas.PasarAANSI(rawUrl)) == rawUrl)
-					{
-						rawUrl = UtilCadenas.PasarAANSI(rawUrl);
-					}
-				}
+					rawUrl = UtilCadenas.PasarAANSI(rawUrl);
+				}				
 			}
 
 			if (!string.IsNullOrEmpty(rawUrl) && rawUrl.Contains("?"))
 			{
-				//hay más parámetros, los añado a los argumentos
-				string queryString = rawUrl.Substring(rawUrl.IndexOf('?') + 1);
-				char[] separadores = { '&' };
+				Uri uri = new Uri(rawUrl);
+				string[] partesUrl = rawUrl.Split("?");
 
-				string[] filtros = queryString.Split(separadores, StringSplitOptions.RemoveEmptyEntries);
-				foreach (string filtro in filtros)
+				string urlLimpio = $"{UtilCadenas.LimpiarInyeccionCodigo(partesUrl[0])}?";                
+				string parametrosUrl = partesUrl[1];
+
+				foreach(string filtro in parametrosUrl.Split("&"))
 				{
-					argumentos += separadorArgumentos + filtro;
+					urlLimpio += $"{UtilCadenas.LimpiarInyeccionCodigo(filtro)}&";
+
+                    argumentos += separadorArgumentos + UtilCadenas.LimpiarInyeccionCodigo(filtro);
+
 					separadorArgumentos = "|";
-					hayParametrosBusqueda = true;
-				}
+                    hayParametrosBusqueda = true;
+                }
+
+				//Cuando se desea hace una busqueda por texto dentro de una faceta (usando el buscador de la faceta) se envia el filtro como =>>
+				//con la limpieza de inyecciones esto se esta convirtiendo en =&gt;&gt; lo que hace que el servicio de resultados lo ignore al entender que se le inyecta html
+				//para solucionarlo remplazamos =&gt;&gt; por =>>
+				argumentos = argumentos.Replace("=&gt;&gt;", "=>>");
+
+				rawUrl = urlLimpio.Trim('&');
 			}
 
 			string filtroPag = string.Empty;
@@ -877,7 +866,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 				if (ProyectoPestanyaActual != null && !string.IsNullOrEmpty(ProyectoPestanyaActual.MetaDescription))
 				{
-					metaTagDescription = UtilCadenas.ObtenerTextoDeIdioma(ProyectoPestanyaActual.MetaDescription, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto); ;
+					metaTagDescription = UtilCadenas.ObtenerTextoDeIdioma(ProyectoPestanyaActual.MetaDescription, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
 				}
 				else if (listafiltrosselecionados.Count > 0)
 				{
@@ -1303,7 +1292,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 				Stream stream = respuesta.GetResponseStream();
 
-				string tempFileName = pNombreExportacion;
+				string tempFileName = UtilCadenas.ObtenerTextoDeIdioma(pNombreExportacion, UtilIdiomas.LanguageCode, null);
 
 				string contentType;
 				if (pFormato.Equals(FormatosExportancion.EXCEL))
@@ -2928,7 +2917,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 					string nomCategoriaReal = gestorTesauro.ListaCategoriasTesauro[categoriaID].Nombre[UtilIdiomas.LanguageCode];
 
-					listaFiltrosURL.Add(UtilIdiomas.GetText("URLSEM", "CATEGORIA"), nomCategoriaReal);
+					listaFiltrosURL.Add(UtilIdiomas.GetText("URLSEM", "CATEGORIA"), UtilCadenas.LimpiarInyeccionCodigo(nomCategoriaReal));
 				}
 			}
 			else if (!string.IsNullOrEmpty(RequestParams("searchInfo")))
@@ -2945,7 +2934,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 					string nomCategoriaReal = gestorTesauro.ListaCategoriasTesauro[new Guid(filtro[2])].Nombre[UtilIdiomas.LanguageCode];
 
-					listaFiltrosURL.Add(filtro[0], nomCategoriaReal);
+					listaFiltrosURL.Add(filtro[0], UtilCadenas.LimpiarInyeccionCodigo(nomCategoriaReal));
 				}
 				else if (filtro[0].ToLower() == UtilIdiomas.GetText("URLSEM", "TAG").ToLower())
 				{
@@ -2953,7 +2942,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 					argumentos += separadorArgumentos + filtroPag;
 					separadorArgumentos = "|";
 
-					listaFiltrosURL.Add(filtro[0], filtro[1]);
+					listaFiltrosURL.Add(filtro[0], UtilCadenas.LimpiarInyeccionCodigo(filtro[1]));
 				}
 				else
 				{
@@ -2973,12 +2962,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 						if (filtro[0].Equals("autor"))
 						{
 							filtroPag = $"{nombreRealFaceta}={HttpUtility.UrlDecode(filtro[1])}";
-							listaFiltrosURL.Add("autor", filtro[1]);
+							listaFiltrosURL.Add("autor", UtilCadenas.LimpiarInyeccionCodigo(filtro[1]));
 						}
 						else
 						{
 							filtroPag = $"{nombreRealFaceta}={HttpUtility.UrlDecode(filtro[0])}";
-							listaFiltrosURL.Add(filtro[0], filtro[0]);
+							listaFiltrosURL.Add(filtro[0], UtilCadenas.LimpiarInyeccionCodigo(filtro[0]));
 						}
 
 						argumentos += separadorArgumentos + filtroPag;
@@ -2987,8 +2976,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				}
 			}
 			else if (!string.IsNullOrEmpty(RequestParams("search")))
-			{
-				listaFiltrosURL.Add("", RequestParams("search"));
+			{				
+				listaFiltrosURL.Add("", UtilCadenas.LimpiarInyeccionCodigo(RequestParams("search")));	
 			}
 
 			if (listaFiltrosURL.Count == 0)
@@ -3010,7 +2999,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 					if (Guid.TryParse(categoriaBusqueda, out categoriaID) && gestorTesauro.ListaCategoriasTesauro.ContainsKey(categoriaID))
 					{
 						string nomCategoriaReal = gestorTesauro.ListaCategoriasTesauro[categoriaID].Nombre[UtilIdiomas.LanguageCode];
-						listaFiltrosURL.Add(UtilIdiomas.GetText("URLSEM", "CATEGORIA").ToLower(), nomCategoriaReal);
+						listaFiltrosURL.Add(UtilIdiomas.GetText("URLSEM", "CATEGORIA").ToLower(), UtilCadenas.LimpiarInyeccionCodigo(nomCategoriaReal));
 					}
 				}
 			}
@@ -3151,12 +3140,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				// Dividir las propiedades en bloques de numPropiedadesConsulta y hacer merge de los dataset
 				List<string> listaPropiedadesTemp = new List<string>(pListaPropiedades);
 
-				// 4503 recursos, numPropiedadesConsulta = 40 ~ 1 minuto 15 segundos
-				// 4503 recursos, numPropiedadesConsulta = 30 ~ 1 minuto
-				// 4503 recursos, numPropiedadesConsulta = 20 ~ 1 minuto
-				// 4503 recursos, numPropiedadesConsulta = 15 ~ 1 minuto 20 segundos
-
-				// TODO: NO SUBIR ESTO!
 				int numPropiedadesConsulta = 5;
 				while (listaPropiedadesTemp.Count > 0)
 				{
@@ -3166,11 +3149,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 					{
 						if (pFacDSPresentacion == null)
 						{
-							pFacDSPresentacion = facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, false, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true);
+							pFacDSPresentacion = facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, true, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true);
 						}
 						else
 						{
-							pFacDSPresentacion.Merge(facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, false, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true));
+							pFacDSPresentacion.Merge(facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, true, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true));
 						}
 					}
 					catch (Exception)
@@ -3184,11 +3167,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 						if (pFacDSPresentacion == null)
 						{
-							pFacDSPresentacion = facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, false, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true);
+							pFacDSPresentacion = facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, true, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true);
 						}
 						else
 						{
-							pFacDSPresentacion.Merge(facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, false, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true));
+							pFacDSPresentacion.Merge(facCN.ObtenerValoresPropiedadesEntidadesPorDocumentoID(pProyectoSeleccionado.ToString(), new List<Guid>(), partialListaPropiedadesTemp, mControladorBase.IdiomaUsuario, true, listaFiltros, listaFiltrosExtra, esMiembroComunidad, proyectoID, semanticos, filtroContextoWhere, ProyectoSeleccionado.TipoProyecto, excluirPersonas, omitirPalabrasNoRelevantesSearch, filtrosSearchPersonalizados, estaEnMyGnoss, esInvitado, identidadID, true));
 						}
 					}
 
@@ -3866,7 +3849,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
 
 				int numeroFacetas = 1;
-				if (Request.Headers.ContainsKey("Accept") && Request.Headers["Accept"].Equals("application/json") && !Comunidad.EntornoEsPro && !Comunidad.EntornoEsPre)
+				if (Request.Headers.ContainsKey("Accept") && Request.Headers["Accept"].Equals("application/json") && (Comunidad.EntornoEsPro || Comunidad.EntornoEsPre))
 				{
 					numeroFacetas = 0;
 				}
@@ -4483,7 +4466,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 					else if (RequestParams("search") != null)
 					{
 						List<string> listaTags = new List<string>();
-						listaTags.Add(RequestParams("search"));
+						if (RequestParams("search").Contains("<script"))
+						{
+                            listaTags.Add(UtilCadenas.HtmlEncode(RequestParams("search")));
+                        }
+						else
+						{
+                            listaTags.Add(RequestParams("search"));
+                        }
+						
 						mListaFiltrosFacetas.Add("search", listaTags);
 					}
 

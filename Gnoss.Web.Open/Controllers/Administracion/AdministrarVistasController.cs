@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -69,8 +70,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private string mViews;
         private const string VIEWS_DIRECTORY = "Views";
 
-        public AdministrarVistasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarVistasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
             mViews = "Views";
             /*if (!BaseURL.Contains("depuracion.net"))
@@ -173,10 +174,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
                 {
                     string fileName = pagina;
-                    /*if (mConfigService.EstaDesplegadoEnDocker())
-                    {
-                        pagina = pagina.Replace("Views", "ViewsAdministracion");
-                    }*/
+                    
                     string htmlPagina = DescargarPagina(pagina, true, esRdfType);
                     if (!string.IsNullOrEmpty(htmlPagina))
                     {
@@ -688,7 +686,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             if (ComponentePersonalizable == pathResourceDefault || ComponentePersonalizable == pathListResourcesDefault || ComponentePersonalizable == pathGroupComponentsDefault)
                             {
-                                ComponentePersonalizable = $"{ComponentePersonalizable}_{Guid.NewGuid()}.cshtml"; ;
+                                ComponentePersonalizable = $"{ComponentePersonalizable}_{Guid.NewGuid()}.cshtml";
                             }
 
                             List<VistaVirtualCMS> vistaVirtualAnterior = VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.PersonalizacionComponenteID.Equals(idPersonalizacion)).ToList();
@@ -784,7 +782,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             if (ComponentePersonalizable == pathResourceDefault || ComponentePersonalizable == pathListResourcesDefault || ComponentePersonalizable == pathGroupComponentsDefault)
                             {
-                                ComponentePersonalizable = $"{ComponentePersonalizable}_{Guid.NewGuid()}.cshtml"; ;
+                                ComponentePersonalizable = $"{ComponentePersonalizable}_{Guid.NewGuid()}.cshtml";
                             } 
 
 
@@ -1188,7 +1186,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             paginaModel.UrlActionInvalidateViews = $"{urlPagina}/invalidateviews";
             paginaModel.UrlActionShareViews = $"{urlPagina}/compartir-vistas-en-dominio";
             paginaModel.UrlActionStopSharing = $"{urlPagina}/dejar-de-compartir";
-		}
+		} 
 
         private void CargarVistaVirtual(DataWrapperVistaVirtual pVistaVirtualDW)
         {
@@ -1248,7 +1246,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 //Insertamos las vistas que no corresponden con componentes del CMS
                 foreach (string nombreVista in listaFormularios)
                 {
-                    if (pVistaVirtualDW.ListaVistaVirtualRecursos.Any(item => item.RdfType.Equals(nombreVista)))
+                    if (pVistaVirtualDW.ListaVistaVirtualRecursos.Any(item => item.RdfType.ToLower().Equals(nombreVista.ToLower())))
                     {
                         paginaModel.ListEditedFormsViews.Add(nombreVista);
                     }

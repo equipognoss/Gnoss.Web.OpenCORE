@@ -121,6 +121,16 @@ if (IdentidadActual.IsGuestIdentity) {
                         @Html.PartialView("../Shared/_cabecera/_PintarPestanya", pintar);
                     }
                 }
+
+                    @* Pintar Ver Más en Menú si hay más items que anchura en Header *@
+                    <li class="level01 showMore con-sub-menu d-none">
+                        <a href="javascript: void(0);">
+                            @Html.GetText("COMBUSQUEDAAVANZADA","VERMAS")
+                        </a>
+                        <a class="sub-menu-toggle"></a>
+                        <ul class="sub-menu" id="submenu_showMore">
+                        </ul>
+                    </li>
             </ul>
         </div>
     </div>

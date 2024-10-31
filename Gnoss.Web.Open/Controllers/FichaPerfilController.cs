@@ -34,6 +34,7 @@ using Es.Riam.Gnoss.Logica.Organizador.Correo;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Suscripcion;
 using Es.Riam.Gnoss.Logica.Usuarios;
+using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Amigos;
@@ -54,9 +55,12 @@ using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -102,8 +106,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public FichaPerfilController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public FichaPerfilController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -501,7 +505,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     ViewBag.BodyClass = " layout01 homePerfil  comGnoss";
                 }
-                GadgetController gadgetController = new GadgetController(this, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+                GadgetController gadgetController = new GadgetController(this, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
                 paginaModel.Gadgets = gadgetController.CargarListaGadgetsFichaPerfil(IdentidadPagina.PerfilID);
 
             }
@@ -695,6 +699,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             Dictionary<Guid, ProfileModel> dicIdentidadPagina = new Dictionary<Guid, ProfileModel>();
             dicIdentidadPagina.Add(pIdentidadID, pPerfilModel);
             ControladorProyectoMVC.ObtenerInfoExtraIdentidadesPorID(dicIdentidadPagina);
+            string grafo = ProyectoSeleccionado.Clave.ToString();
+            if (IdentidadActual.TrabajaConOrganizacion)
+            {
+                grafo = IdentidadActual.OrganizacionID.Value.ToString();
+            }
+            else
+            {
+                grafo = IdentidadActual.PerfilID.ToString();
+            }
+            string urlPaginaContribuciones = $"{BaseURLIdioma}{UrlPerfil}{UtilIdiomas.GetText("URLSEM", "MISCONTRIBUCIONES")}";
+            ViewBag.UrlPaginaMisContribuciones = urlPaginaContribuciones;
+            pPerfilModel.ExtraInfo.IdentityResourceCounter.ContributionsCounter = ObtenerContadorContribuciones(ProyectoSeleccionado.Clave, true, !UsuarioActual.EsIdentidadInvitada, UsuarioActual.EsUsuarioInvitado, UsuarioActual.IdentidadID, "", true, false, TipoBusqueda.Contribuciones, urlPaginaContribuciones, grafo, "PestanyaActualID=00000000-0000-0000-0000-000000000000|gnoss:hasEstado=Publicado%20/%20Compartido|", false, "MyGnoss", UtilIdiomas.LanguageCode, UsuarioActual.UsarMasterParaLectura, Guid.NewGuid());
         }
 
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad })]
@@ -790,6 +806,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
             return GnossResultERROR();
+        }
+        private int ObtenerContadorContribuciones(Guid pProyectoID, bool pEsMyGnoss, bool pEstaEnProyecto, bool EsUsuarioInvitado, Guid pIdentidadID, string pArgumentos, bool pEsPrimeraCarga, bool pAdminQuiereVerTodasPersonas, TipoBusqueda pTipoBusqueda, string pUrlPaginaBusqueda, string pGrafo, string pParametroAdicional, bool pHayParametrosBusqueda, string pUbicacionBusqueda, string pLanguageCode, bool pUsarMasterParaLectura, Guid pTokenAfinidad)
+        {
+            int numResultados = 0;
+            try
+            {
+                mLoggingService.AgregarEntrada("Llamada a los servicios de resultados y facetas");
+                CargadorResultados cargadorResultados = new CargadorResultados();
+                cargadorResultados.Url = mConfigService.ObtenerUrlServicioResultados();
+                string jsonResultados = cargadorResultados.CargarResultados(pProyectoID, pIdentidadID, EsUsuarioInvitado, pUrlPaginaBusqueda, pUsarMasterParaLectura, pAdminQuiereVerTodasPersonas, pTipoBusqueda, pGrafo, pParametroAdicional, pArgumentos, pEsPrimeraCarga, pLanguageCode, -1, "", pTokenAfinidad, Request);
+                KeyValuePair<int, string> respuestaResultados = JsonConvert.DeserializeObject<KeyValuePair<int, string>>(jsonResultados);
+
+                numResultados = respuestaResultados.Key;
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al obtener el número de contribuciones del perfil");
+            }
+
+            mLoggingService.AgregarEntrada("Fin llamada a los servicios de resultados y facetas");
+
+            return numResultados;
         }
 
         private void CargarPersonasInteres(int pNumPersonasCarga)
@@ -1488,7 +1526,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarActividadReciente(int pNumPagina)
         {
-            ActividadReciente actividadReciente = new ActividadReciente(false, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+            ActividadReciente actividadReciente = new ActividadReciente(false, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
 
             Guid perfilIDPagina = IdentidadPagina.PerfilID;
             if (IdentidadPagina.EsOrganizacion)

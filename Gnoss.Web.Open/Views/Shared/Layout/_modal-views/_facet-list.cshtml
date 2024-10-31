@@ -26,7 +26,7 @@ Variables
             <div class="modal-header">
                 @* Mostrar el título de filtro de facetas / Loading *@
                 <p class="modal-title">                    
-                    <span class="loading-modal-facet-title"></span>
+                    <span class="loading-modal-facet-title">@Html.GetText("COMMON","CARGANDO")</span>
                 </p>
                 <span class="material-icons cerrar"
                       data-dismiss="modal"
@@ -48,11 +48,11 @@ Variables
                     <div class="action-buttons-resultados">
                         <ul class="no-list-style">
                             <li class="js-plegar-facetas-modal">
-                                <span class="texto">Plegar</span>
+                                <span class="texto">@Html.GetText("COMMON","PLEGAR")</span>
                                 <span class="material-icons">expand_less</span>
                             </li>
                             <li class="js-desplegar-facetas-modal">
-                                <span class="texto">Desplegar</span>
+                                <span class="texto">@Html.GetText("COMMON","DESPLEGAR")</span>
                                 <span class="material-icons">expand_more</span>
                             </li>
                         </ul>

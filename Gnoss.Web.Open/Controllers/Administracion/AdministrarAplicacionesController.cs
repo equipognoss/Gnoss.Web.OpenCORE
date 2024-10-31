@@ -29,6 +29,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -40,8 +41,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private OAuthCN mOAuthCN;
         private EntityContextOauth mEntityContextOauth;
 
-        public AdministrarAplicacionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, EntityContextOauth entityContextOauth, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarAplicacionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, EntityContextOauth entityContextOauth, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
             mEntityContextOauth = entityContextOauth;
             mOAuthCN = new OAuthCN(mEntityContext, mLoggingService, mConfigService, entityContextOauth, servicesUtilVirtuosoAndReplication);
@@ -73,7 +74,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public OAuthModel ObtenerOAuth()
         {
 			UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-			ConsumerModel pModelo;
+			ConsumerModel modelo;
 			ConsumerData consumerData;
 			Gnoss.Logica.Documentacion.DocumentacionCN documentoCN = new Gnoss.Logica.Documentacion.DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
 			DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
@@ -84,11 +85,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			if (mAplicaciones.Aplicaciones == null || mAplicaciones.Aplicaciones.Count == 0)
 			{
 				//Se genera un consumer model donde guardar los datos y se almacena en BD
-				pModelo = new ConsumerModel(0, "Automatico", "", "", "", "");
+				modelo = new ConsumerModel(0, "Automatico", "", "", "", "");
 
 				try
 				{
-					oauthModel = CrearTokens(pModelo.Name);
+					oauthModel = CrearTokens(modelo.Name);
 				}
 				catch (Exception ex)
 				{
@@ -97,21 +98,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
 			else
 			{
-				pModelo = mAplicaciones.Aplicaciones.FirstOrDefault();
-				tokens = mOAuthCN.ConsultarTokensPorUsuarioIDyConsumerId(mControladorBase.UsuarioActual.UsuarioID, pModelo.ConsumerId);
+				modelo = mAplicaciones.Aplicaciones.FirstOrDefault();
+				tokens = mOAuthCN.ConsultarTokensPorUsuarioIDyConsumerId(mControladorBase.UsuarioActual.UsuarioID, modelo.ConsumerId);
 
-				oauthModel.ConsumerKey = pModelo.Key;
-				oauthModel.ConsumerSecret = pModelo.Secret;
+				oauthModel.ConsumerKey = modelo.Key;
+				oauthModel.ConsumerSecret = modelo.Secret;
 				oauthModel.TokenKey = tokens.Token;
 				oauthModel.TokenSecret = tokens.TokenSecret;
 			}
 
-			consumerData = mOAuthCN.ObtenerConsumerPorConsumerId(pModelo.ConsumerId).ConsumerData.FirstOrDefault();
+			consumerData = mOAuthCN.ObtenerConsumerPorConsumerId(modelo.ConsumerId).ConsumerData.FirstOrDefault();
 			documentoCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, dataWrapperDocumentacion, false, false, false);
 
 			oauthModel.API = mConfigService.ObtenerUrlApi();
 			oauthModel.DevEmail = usuarioCN.ObtenerEmailPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID);
-			oauthModel.OntologyName = dataWrapperDocumentacion.ListaDocumento.FirstOrDefault()?.Titulo;
+			oauthModel.OntologyName = dataWrapperDocumentacion.ListaDocumento.FirstOrDefault()?.Enlace.Replace(".owl","");
 			oauthModel.ShortName = ProyectoSeleccionado.NombreCorto;
 			oauthModel.LogPath = $"{Path.DirectorySeparatorChar}log";
 			oauthModel.LogFileName = "trace.log";
@@ -283,6 +284,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
         public ActionResult Crear()
         {
+            GuardarLogAuditoria();
             return View("Editar", new ConsumerModel(0, "", "", "", "", ""));
         }
 
@@ -376,6 +378,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
         public ActionResult Editar(int id)
         {
+            GuardarLogAuditoria();
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
             OAuthToken tokens = mOAuthCN.ConsultarTokensPorUsuarioIDyConsumerId(mControladorBase.UsuarioActual.UsuarioID, id);
             if (tokens != null)
@@ -395,6 +398,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         public ActionResult Editar(ConsumerModel pModelo)
         {
+            GuardarLogAuditoria();
             if (ModelState.IsValid)
             {
                 //Guardar en BD

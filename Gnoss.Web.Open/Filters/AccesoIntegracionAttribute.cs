@@ -20,6 +20,9 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Microsoft.AspNetCore.Http;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Interfaces.InterfacesOpen;
+using Es.Riam.Gnoss.Web.MVC.Controles;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Es.Riam.AbstractsOpen;
 
 namespace Es.Riam.Gnoss.Web.MVC.Filters
 {
@@ -42,9 +45,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private EntityContextBASE mEntityContextBASE;
         private ControladorBase mControladorBase;
         private IUtilServicioIntegracionContinua mUtilIntegracionContinua;
+		private IServicesUtilVirtuosoAndReplication mServicesUtilVirtuosoAndReplication;
+		private string mProyectoConIntegracionContinua = null;
 
 
-        /*public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua)
+		/*public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
@@ -61,7 +66,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             mUtilIntegracionContinua = utilIntegracionContinua;
         }*/
 
-        public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua, FiltroAcciones pFiltro = FiltroAcciones.Todo)
+		public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, FiltroAcciones pFiltro = FiltroAcciones.Todo)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
@@ -71,7 +76,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             mGnossCache = gnossCache;
             mEntityContextBASE = entityContextBASE;
             mRedisCacheWrapper = redisCacheWrapper;
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
+            mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, servicesUtilVirtuosoAndReplication);
 
             Filtro = pFiltro;
 
@@ -92,7 +98,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                 Guid proyectoSeleccionado = mControladorBase.ProyectoSeleccionado.Clave;
                 ObtenerParametrosControllerBaseGnoss(out UrlApiIntegracionContinua, out EntornoIntegracionContinua);
                 //Si existe integracion continua y es administrador
-                if (!string.IsNullOrEmpty(UrlApiIntegracionContinua) && mControladorBase.ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                if (!string.IsNullOrEmpty(UrlApiIntegracionContinua) && mControladorBase.ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID) && !string.IsNullOrEmpty(ProyectoConIntegracionContinua))
                 {
                     string urlComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(mControladorBase.UtilIdiomas, mControladorBase.BaseURLIdioma, mControladorBase.ProyectoSeleccionado.NombreCorto);
                     if (Filtro != FiltroAcciones.SoloIntegracion)
@@ -102,44 +108,42 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     bool esPreproduccion = mUtilIntegracionContinua.EsPreproduccion(EntornoIntegracionContinua, UrlApiIntegracionContinua);
                     if (esPreproduccion)
                     {
-                        pFilterContext.Result = new RedirectResult(urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL"));
+                        pFilterContext.Result = new RedirectResult($"{urlComunidad}/{mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL")}");
                     }
 
                     bool entornoBloqueado = mUtilIntegracionContinua.EstaEntornoBloqueado(proyectoSeleccionado, EntornoIntegracionContinua, UrlApiIntegracionContinua);
                     if (pFilterContext.Result == null && entornoBloqueado)
                     {
-                        pFilterContext.Result = new RedirectResult(urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL"));
+                        pFilterContext.Result = new RedirectResult($"{urlComunidad}/{mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL")}");
                     }
 
                     bool tieneHotfix = mUtilIntegracionContinua.EsHotfix(proyectoSeleccionado, EntornoIntegracionContinua, UrlApiIntegracionContinua);
                     if (pFilterContext.Result == null && tieneHotfix)
                     {
-                        pFilterContext.Result = new RedirectResult(urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL"));
+                        pFilterContext.Result = new RedirectResult($"{urlComunidad}/{mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL")}");
                     }
 
                     if (pFilterContext.Result == null)
                     {
-                        string urlRedirectLogin = urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRACREDENCIALES");
-                        string urlRedirectramas = urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRAINTEGRACIONCONTINUA");
-                        string urlConflictos = urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARLISTACONFLICTOS");
+                        string urlRedirectLogin = $"{urlComunidad}/{mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRACREDENCIALES")}";
+                        string urlRedirectramas = $"{urlComunidad}/{mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRAINTEGRACIONCONTINUA")}";
+                        string urlConflictos = $"{urlComunidad}/{mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARLISTACONFLICTOS")}";
 
                         bool estaProcesando = mUtilIntegracionContinua.EstaProcesando(mControladorBase.UsuarioActual.UsuarioID, proyectoSeleccionado, EntornoIntegracionContinua, UrlApiIntegracionContinua);
                         if (estaProcesando)
                         {
-                            pFilterContext.Result = new RedirectResult(urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "PROCESANDOTAREAS")+ "?redirect=ADMINISTRARCOMUNIDADGENERAL");
+                            pFilterContext.Result = new RedirectResult($"{urlComunidad}/{mControladorBase.UtilIdiomas.GetText("URLSEM", "PROCESANDOTAREAS")}?redirect=ADMINISTRARCOMUNIDADGENERAL");
                         }
                         else
                         {
                             PeticionnesIntegracionContinua(pFilterContext, EntornoIntegracionContinua, UrlApiIntegracionContinua, proyectoSeleccionado, urlRedirectLogin, urlRedirectramas, urlConflictos);
-                        }
-                        
+                        }                        
                     }
-
                 }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                throw;
             }
         }
 
@@ -231,10 +235,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                                     //MODIFICACIONIC: Modificación para cuando vaya a despliegues y no este la rama creada que no le redirija a crearla.
                                     if (Filtro != FiltroAcciones.SoloDespliegues && modelRamas.EsFusionable)
                                     {
-                                        if (string.IsNullOrEmpty(modelRamas.Nombre)) { 
-                                            //Redigirimos a la pagina de creacion de ramas
-                                            pFilterContext.Result = new RedirectResult(pUrlRedirectramas);
+                                        if (string.IsNullOrEmpty(modelRamas.Nombre)) {
+                                            //Si no hay ninguna rama activa no se pueden realizar cambios.
+                                            pFilterContext.Result = new GnossResult("No se pueden realizar cambios mientras no exista ninguna rama activa.", GnossResult.GnossStatus.Error, null);
                                             return;
+
                                         }
                                     }
                                 }
@@ -264,10 +269,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     pFilterContext.Result = new RedirectResult(urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "CONFIGURARINTEGRACIONCONTINUAINCIAL"));
                 }             
             }
-            else
-            {
-                pFilterContext.Result = new RedirectResult(urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARINTEGRACIONCONTINUA")); 
-            }
+            // 
+            //else
+            //{
+            //    pFilterContext.Result = new RedirectResult(urlComunidad + "/" + mControladorBase.UtilIdiomas.GetText("URLSEM", "ADMINISTRARINTEGRACIONCONTINUA")); 
+            //}
         }
 
         private void PeticionLoginGithubBitbucketCloud(ActionExecutingContext pFilterContext, string pEntornoIntegracionContinua, string UrlApiIntegracionContinua, Guid pProyectoSeleccionado)
@@ -299,5 +305,62 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                 pEntornoIntegracionContinua = null;
             }
         }
-    }
+
+		public string ProyectoConIntegracionContinua
+		{
+			get
+			{
+				if (mProyectoConIntegracionContinua == null)
+				{
+					using (ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication))
+					{
+
+						bool? activada = proyectoCL.TieneICactivada(mControladorBase.ProyectoSeleccionado.Clave);
+						if (activada == null)
+						{
+							bool iniciado = false;
+							try
+							{
+								string EntornoIntegracionContinua, UrlApiIntegracionContinua;
+								ObtenerParametrosControllerBaseGnoss(out UrlApiIntegracionContinua, out EntornoIntegracionContinua);
+								if (!string.IsNullOrEmpty(UrlApiIntegracionContinua))
+								{
+									if (mControladorBase.ProyectoSeleccionado.NombreCorto == "")
+									{
+										iniciado = mUtilIntegracionContinua.EstaEnBD("mygnoss", UrlApiIntegracionContinua);
+									}
+									else
+									{
+										iniciado = mUtilIntegracionContinua.EstaEnBD(mControladorBase.ProyectoSeleccionado.NombreCorto, UrlApiIntegracionContinua);
+									}
+								}
+							}
+							catch (Exception ex)
+							{
+								//mLoggingService.GuardarLogError(ex, "Problema al obtener el Proyecto con IC");
+							}
+
+							if (iniciado)
+							{
+								mProyectoConIntegracionContinua = "inciado";
+								proyectoCL.AgregarIC(mControladorBase.ProyectoSeleccionado.Clave, true, false);
+							}
+						}
+						else
+						{
+							if (activada.HasValue && activada.Value)
+							{
+								mProyectoConIntegracionContinua = "inciado";
+							}
+							else
+							{
+								mProyectoConIntegracionContinua = "";
+							}
+						}
+					}
+				}
+				return mProyectoConIntegracionContinua;
+			}
+		}
+	}
 }

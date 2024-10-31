@@ -15,7 +15,7 @@ Variables
 	string modalTitle = @Html.GetText("DEVTOOLS", "NUEVODATOEXTRA");
 	string inputDisableClassName = "disabled";
 	Guid key = Guid.NewGuid();
-
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
 }
 
 @* Modal con la información *@
@@ -37,10 +37,19 @@ Variables
 					  aria-label="Close">close</span>
 			</div>
 			<div class="modal-body">
+				<div class="panContenidoMultiIdioma basicInfo">
+
+				</div>
 				@* Nombre del dato extra *@
+				<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+					<div class="form-group mb-3">
+						@*<label class="control-label d-block">Nombre</label>*@
+						<input type="text" class="form-control multiIdioma txtNombre" id="inptNombreNuevoDato" data-labeltext="Nombre">
+					</div>
+				</div>			
 				<div class="form-group mb-3">
-					<label class="control-label d-block">Nombre</label>
-					<input type="text" class="form-control txtNombre" id="inptNombreNuevoDato">
+					<label class="control-label d-block">Nombre corto</label>
+					<input type="text" class="form-control txtNombreCorto" data-labeltext="Nombre"  id="inptNombreCortoNuevoDato">
 				</div>
 				<div class="form-group mb-3">
 					<label class="control-label d-block">URI de la propiedad</label>
@@ -51,15 +60,13 @@ Variables
 					<label class="control-label d-block">Orden</label>
 					<input type="number" class="form-control txtOrden" id="inptOrdenNuevoDato">
 				</div>
-				@*<div class="form-check">
-					<input class="form-check-input" type="checkbox" value="Obligatorio" id="chkObligatorioNuevoDato">
-					<label class="form-check-label" for="chkObligatorioNuevoDato">
-						Obligatorio
-					</label>
-				</div>*@
 				<div class="custom-control custom-checkbox">
 					<input id="chkObligatorioNuevoDato" class="chkSup custom-control-input" type="checkbox" name="chkObligatorioNuevoDato">
 					<label class="custom-control-label" for="chkObligatorioNuevoDato">Obligatorio</label>
+				</div>
+				<div class="custom-control custom-checkbox">
+					<input id="chkVisibleNuevoDato" class="chkSup custom-control-input" type="checkbox" name="chkVisibleNuevoDato">
+					<label class="custom-control-label" for="chkVisibleNuevoDato">Visible en perfil</label>
 				</div>
 				<br />
 				@* Tipo: Opción o texto libre *@
@@ -85,16 +92,6 @@ Variables
 					</div>
 					
 				</div>
-				@* Si son opciones, nuevo panel para añadirlas *@
-				@*<div class="form-group mb-4 editarOpcionesDatoExtra" style="display: none">
-					<div class="filtrosFaceta-header d-flex justify-content-between align-items-center">
-						<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("DEVTOOLS","OPCIONES")</label>
-						<a href="javascript: void(0);" class="linkAddFiltroFaceta btn btn-outline-primary new" style="display: flex; text-decoration: none;">
-							<span class="material-icons">add</span>
-							<span class="texto">@Html.GetText("DEVTOOLS","CREAROPCION")</span>
-						</a>
-					</div>
-				</div>*@
 				<div class="background-gris editarOpcionesDatoExtra" style="display: none">
 					<h3>@Html.GetText("DEVTOOLS","OPCIONESDATOEXTRA")</h3>
 					@* Panel seleccíón de palabras para opciones *@

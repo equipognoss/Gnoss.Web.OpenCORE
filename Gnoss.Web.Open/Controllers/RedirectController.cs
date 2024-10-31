@@ -7,6 +7,7 @@ using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos;
 using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Elementos.Identidad;
@@ -14,6 +15,7 @@ using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Tesauro;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Identidad;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Tesauro;
 using Es.Riam.Gnoss.Recursos;
@@ -28,6 +30,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -39,8 +42,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     public class RedirectController : ControllerBaseWeb
     {
 
-        public RedirectController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public RedirectController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -110,7 +113,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarUtilIdiomasDesdeIdiomaNavegador()
         {
-            Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 
             string idioma = UtilIdiomas.LanguageCode;
 
@@ -138,7 +142,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (UtilIdiomas.LanguageCode != idioma)
             {
-                UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+                UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
             }
         }
 
@@ -184,8 +188,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 DataWrapperProyecto proyDataWrapperProyecto = proyCN.ObtenerProyectosPorIDsCargaLigera(listaProyectosDocumento);
-                proyCN.Dispose();
-
+                
                 GestionProyecto gestorProyectos = new GestionProyecto(proyDataWrapperProyecto, mLoggingService, mEntityContext);
 
                 #endregion
@@ -316,20 +319,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (permitirProyPrivados || (gestorProyectos.ListaProyectos[documentoWeb.ProyectoID].FilaProyecto.TipoAcceso != (short)TipoAcceso.Privado && gestorProyectos.ListaProyectos[documentoWeb.ProyectoID].FilaProyecto.TipoAcceso != (short)TipoAcceso.Reservado))
                     {
-                        Guid identidadLink = Guid.Empty;
-                        if (ParticipaUsuarioActualEnProyecto(documentoWeb.ProyectoID))
-                        {
-                            identidadLink = IdentidadUsuarioActualEnProyecto(documentoWeb.ProyectoID);
-                        }
-
-                        if (!identidadLink.Equals(Guid.Empty))
-                        {
-                            //Response.Redirect("perfilBaseRecursosFicha.aspx?ID=" + identidadLink + "&docID=" + documentoWeb.Clave.ToString() + "&comunidad=true");
-                            string parametrosExtra = "";
-                            if (identidadLink != mControladorBase.UsuarioActual.IdentidadID)
-                            {
-                                parametrosExtra += "?IDCambioIdentidda=" + identidadLink.ToString();
-                            }
+                        if (proyCN.ParticipaUsuarioEnProyecto(documentoWeb.ProyectoID, UsuarioActual.UsuarioID))
+                        {                          
                             string urlRedirect = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, gestorProyectos.ListaProyectos[documentoWeb.ProyectoID].NombreCorto, UrlPerfil, documentoWeb, false);
                             gestorProyectos.Dispose();
 
@@ -339,6 +330,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 #endregion
+
+                proyCN.Dispose();
 
                 //2º Mirar en la primera comunidad que tengo acceso por orden de compartición
 

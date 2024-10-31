@@ -14,6 +14,8 @@ Variables
 TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel propiedadExport = Model; 
 Guid propertyId = @Guid.NewGuid();
 string collapseId = "panel_collapse_" + propertyId.ToString().Substring(0,5);
+string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+string idioma = Html.GetUtilIdiomas().LanguageCode;
 }
 
 @*
@@ -35,7 +37,7 @@ string collapseId = "panel_collapse_" + propertyId.ToString().Substring(0,5);
 					<div class="component-header-left">						
 						@* Nombre de la propiedad *@
 						<div class="component-name-wrap">																												
-							<span class="component-exportationName">@propiedadExport.Nombre</span>
+							<span class="component-exportationName">@UtilCadenas.ObtenerTextoDeIdioma(propiedadExport.Nombre, idioma, null)</span>
 						</div>					
 					</div>
 
@@ -74,20 +76,23 @@ string collapseId = "panel_collapse_" + propertyId.ToString().Substring(0,5);
 		@* Indicación de que el filtro se ha eliminado *@
 		<input type="hidden" name="TabEliminada" value="false" />
 		<div class="card card-body">
-			
-			@* Título/Nombre de la propiedad *@
-			<div class="form-group mb-2">
-				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>
-				                        
-				<input
-					type="text"
-					name="Nombre"
-					placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
-					class="form-control inputNombrePropiedad"
-					value="@propiedadExport.Nombre">
-				<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREIDENTIFICATIVODELAPROPIEDAD")</small>
+			<div class="panContenidoMultiIdioma basicInfo">
 			</div>
+			<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+				@* Título/Nombre de la propiedad *@
+				<div class="form-group mb-2">
+					@*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>*@
 
+					<input type="text"
+						   name="Nombre"
+						   data-labeltext="Nombre"
+						   placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+						   class="form-control inputNombrePropiedad multiIdioma"
+						   value="@propiedadExport.Nombre">
+					<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREIDENTIFICATIVODELAPROPIEDAD")</small>
+				</div>
+			</div>
+			
 			@* Ontología a seleccionar para la propiedad *@ 										
 			<div class="form-group mb-2">
 				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "ONTOLOGIA")</label>				

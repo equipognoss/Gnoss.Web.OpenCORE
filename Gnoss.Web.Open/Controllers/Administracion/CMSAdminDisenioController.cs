@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,8 +28,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
     public class CMSAdminDisenioController : ControllerBaseWeb
     {
-        public CMSAdminDisenioController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public CMSAdminDisenioController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -45,24 +46,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
-        {
-            // Añadir clase para el body del Layout
-            ViewBag.BodyClassPestanya = "configuracion administrar-disenio edicion no-max-width-container ";
-            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
-            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cookies;
-            // Establecer el título para el header de DevTools
-            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
-            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONDESARROLLADORES", "COOKIES");
-
-            EliminarPersonalizacionVistas();
-            CargarPermisosAdministracionComunidadEnViewBag();
-
+        {           
             if (!ParametrosGeneralesRow.CMSDisponible)
             {
                 //Si no tenemos acceso redirigimos a la home
                 return new RedirectResult(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto));
             }
+
             CargarModeloPagina("", "", false);
+
             return View(paginaModel);
         }
 
@@ -75,6 +67,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult UploadFile(IFormFile Fichero)
         {
+            GuardarLogAuditoria();
             string mensajeOK = "";
             string mensajeKO = "";
             Stopwatch sw = null;
@@ -197,6 +190,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pCargarHistorial">True si se quiere cargar el historial de versines de los XML del CMS</param>
         private void CargarModeloPagina(string pMensajeOK, string pMensajeKO, bool pCargarHistorial)
         {
+            // Añadir clase para el body del Layout
+            ViewBag.BodyClassPestanya = "configuracion administrar-disenio edicion no-max-width-container ";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cookies;
+            // Establecer el título para el header de DevTools
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACION");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONDESARROLLADORES", "COOKIES");
+
+            EliminarPersonalizacionVistas();
+            CargarPermisosAdministracionComunidadEnViewBag();
+           
             paginaModel.UrlActionFile = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARDISENIOCMS") + "/UploadFile";
             paginaModel.UrlActionHistory = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARDISENIOCMS") + "/History";
             paginaModel.UrlActionDownloadDynamicFile = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARDISENIOCMS") + "/DownloadDynamicFile";

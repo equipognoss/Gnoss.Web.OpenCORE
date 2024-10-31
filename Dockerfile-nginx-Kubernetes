@@ -1,0 +1,7 @@
+FROM nginx
+RUN useradd -r gnoss
+RUN chown -R gnoss:gnoss /etc/nginx
+RUN chmod -R 777 /etc/nginx
+USER gnoss
+COPY Nginx/gnoss_services.conf.template /etc/nginx/conf.d/gnoss_services.conf.template
+COPY Nginx/nginx.conf /etc/nginx/nginx.conf

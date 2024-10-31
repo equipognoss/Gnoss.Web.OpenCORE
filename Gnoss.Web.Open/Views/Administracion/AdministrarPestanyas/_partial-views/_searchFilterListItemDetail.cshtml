@@ -1,0 +1,202 @@
+﻿@model TabModel
+@*
+Descripción
+-----------------------------------------------
+Vista que presenta información detallada y datos sobre un filtro específico. Se encuentran todas las opciones disponibles para seleccionar 
+el tipo de filtrado que deseas utilizar, ya sea mediante el asistente de filtros o a través de la configuración manual.
+
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+    
+    // Variables para filtros manuales    
+    List<string> listaFiltros = null;
+    // Opciones de búsqueda del tipo de página
+    TabModel.SearchTabModel opcionesBusqueda = Model.OpcionesBusqueda;       
+    // Controlar el campo filtro que no esté vacío
+    string campoFiltro = String.IsNullOrEmpty(opcionesBusqueda.CampoFiltro) ? "rdf:type=Recurso|" : opcionesBusqueda.CampoFiltro;
+
+    listaFiltros = campoFiltro.Trim().Split("|").ToList();
+    while (listaFiltros.Contains("")) { listaFiltros.Remove(""); }
+
+    string filtrosSeleccionados = "";
+    string htmlFiltros = "";
+
+
+    // Permisos para administrar aspectos relacionados con el diseño de páginas
+    bool administrarPaginas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)));
+    string randomId = Guid.NewGuid().ToString().Substring(0, 5);
+    //#@(panelId) Ejemplo de uso
+}
+
+
+@* Datos del filtro *@
+<div class="card card-body d-block searchAssistant__body mb-3" data-identification="@randomId">
+    @* Uso de Asistente de filtros *@
+    <div class="panelUseFilterAssistant mb-3" id="panelUseFilterAssistant_@(randomId)">    
+        <label class="control-label d-block">¿Deseas utilizar la herramienta de creación de filtros asistida?</label>
+        <div class="mb-2 form-inline">
+            <input type="radio"
+                   id="rbUseFilterAssistant_@(randomId)_NO"
+                   class="form-check-input rbUseFilterAssistant"
+                   name="UseFilterAssistant_@(randomId)"
+                   data-value="no"                   
+                   >
+            <label class="form-check-label" for="rbUseFilterAssistant_@(randomId)_NO">No. Prefiero crear mi filtro personalizado sin hacer uso del asistente.</label>
+        </div>
+
+        <div class="mb-2 form-inline">
+            <input type="radio"
+                   id="rbUseFilterAssistant_@(randomId)_SI"
+                   class="form-check-input rbUseFilterAssistant" 
+                   name="UseFilterAssistant_@(randomId)"
+                   data-value="si"
+                   checked>
+            <label class="form-check-label" for="rbUseFilterAssistant_@(randomId)_SI">Sí. Quiero utilizar el asistente.</label>
+        </div>
+    </div>
+
+    @* Contenedor para uso manual del filtro *@
+    <div class="panelUseFilterAssistant__no d-none">
+        @* Input para añadir manualmente el filtro *@
+        <div class="form-group mb-4 panFiltrosAuto" id="filtroAuto">
+            <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "CAMPOFILTRO")</label>
+            <div class="input-wrap autocompletar form-sticky-button">
+                <input type="text"
+                       id="autoOntologia3_@(randomId)"
+                       class="form-control inputCampoFiltro anadirFiltroAutocomplete"
+                       placeholder=""
+                       name="TabCampoFiltro"
+                       value="@opcionesBusqueda.CampoFiltro"
+                @(Model.Type == TipoPestanyaMenu.BusquedaSemantica ? "" : "disabled")>
+                <a class="btn btn-grey uppercase btnAddFilterPanFilter">@Html.GetText("PERFIL","ANYADIR")</a>
+            </div>
+            @* Ayuda *@
+            <small class="form-text text-muted">@Html.GetText("AYUDACOMADMINPESTANYAS", "CAMPOFILTRO")"</small>
+            @if (listaFiltros != null && listaFiltros.Count > 0)
+            {
+                @* Panel de condiciones*@
+
+                @* condiciones activas *@
+                @foreach (string item in listaFiltros)
+                {
+
+                    filtrosSeleccionados += item + "|";
+
+                    htmlFiltros += "<div class='tag' id='" + item + "' > ";
+                    htmlFiltros += "<div class='tag-wrap'>";
+                    htmlFiltros += "<span class='tag-text'>" + item + "</span>";
+                    htmlFiltros += "<span class='tag-remove tag-remove-filtro material-icons remove'>close</span>";
+                    htmlFiltros += "</div>";
+                    htmlFiltros += "</div>";
+
+                }
+            }
+            <span id="panListadoFiltros" class="tag-list mb-4 mt-3 panListadoFiltros">@Html.Raw(htmlFiltros)</span>
+            <input type="hidden" class="valores auxFiltrosSeleccionados" id="auxFiltrosSeleccionados" value="@filtrosSeleccionados" />
+
+        </div>
+    </div>
+
+    @* Contenedor para uso del asistente del filtro *@
+    <div class="panelUseFilterAssistant__yes d-none">
+        @* Filtro de propiedad que se aplique a todos los objetos de conocimiento *@
+        <div class="panelApplyFilterAllObjects mb-3" id="panelApplyFilterAllObjects_@(randomId)">
+            <label class="control-label d-block">¿Quieres que el filtro de propiedad se aplique a todos los objetos de conocimiento?</label>            
+            <div class="mb-2 form-inline">
+                <input type="radio"
+                       id="rbApplyFilterAllObjects_@(randomId)_NO"
+                       class="form-check-input rbApplyFilterAllObjects"
+                       name="ApplyFilterAllObjects_@(randomId)"
+                       data-value="no"
+                       checked>
+                <label class="form-check-label" for="rbApplyFilterAllObjects_@(randomId)_NO">No, prefiero que el filtro se aplique al objeto de conocimiento principal.</label>
+            </div>
+                        
+            <div class="mb-2 form-inline">
+                <input type="radio"
+                       id="rbApplyFilterAllObjects_@(randomId)_SI"
+                       class="form-check-input rbApplyFilterAllObjects"
+                       name="ApplyFilterAllObjects_@(randomId)"
+                       data-value="si">
+                <label class="form-check-label" for="rbApplyFilterAllObjects_@(randomId)_SI">Sí, deseo que el filtro aplique a todos los objetos de conocimiento.</label>
+            </div>
+        </div>
+
+        @* Panel para selección de filtro aplicable a un objeto de conocimiento *@
+        <div class="panelMainKnowledgeObject d-none propertiesContainer">
+            @* Panel selección de Objeto de conocimiento principal *@
+            <div class="panelSelectMainKnowledgeObject mb-3" id="panelSelectMainKnowledgeObject_@(randomId)">
+                <label class="control-label d-block">Nombre del objeto o clase principal</label>
+                @* Select/ComboBox para selección de un objeto principal de conocimiento *@
+                <select id="cmbMainKnowledgeObject_@(randomId)"
+                        data-select-search="true"
+                        class="cmbMainKnowledgeObject js-select2"
+                        name="MainKnowledgeObject_@(randomId)">
+                    <option value="pelicula" data-object-name="pelicula.owl" data-object-id="45da123">Película</option>
+                    <option value="persona" data-object-name="persona.owl" data-object-id="45dad123">Persona</option>
+                    <option value="premio" data-object-name="premio.owl" data-object-id="4fff5123">Premio</option>
+                    <option value="pelicula" data-object-name="peliculaBIS.owl" data-object-id="45eas123">PelículaBIS</option>
+                    <option value="persona" data-object-name="personaBIS.owl" data-object-id="4fasdf5123">PersonaBIS</option>
+                    <option value="premio" data-object-name="premioBIS.owl" data-object-id="4ffff5123">PremioBIS</option>
+                    <option value="pelicula" data-object-name="peliculaBIS2.owl" data-object-id="45ccae123">PelículaBIS_2</option>
+                    <option value="persona" data-object-name="personaBIS2.owl" data-object-id="aseae">PersonaBIS_2</option>
+                    <option value="premio" data-object-name="premioBIS2.owl" data-object-id="ffeeas">PremioBIS_2</option>
+                    <option value="pelicula" data-object-name="peliculaBIS3.owl" data-object-id="dddeeea1">PelículaBIS_3</option>
+                    <option value="persona" data-object-name="personaBIS3.owl" data-object-id="4541aa">PersonaBIS_3</option>
+                    <option value="premio" data-object-name="premioBIS3.owl" data-object-id="eeas12">PremioBIS_3</option>
+                    <option value="pelicula" data-object-name="peliculaBIS4.owl" data-object-id="eeeas21">PelículaBIS_4</option>
+                    <option value="persona" data-object-name="personaBIS4.owl" data-object-id="45123da">PersonaBIS_4</option>
+                    <option value="premio" data-object-name="premioBIS4.owl" data-object-id="aabbcc22">PremioBIS_4</option>
+                    @*<option @(pestanya.Privacidad == 2 ? "selected" : "") value="2">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADLECTORES")</option>*@
+                </select>
+            </div>
+
+            @* Filtro de visualizar todos los elementos del objeto o aplicar filtros a sus propiedades *@
+            <div class="panelSelectAllObjects mb-3" id="panelSelectAllObjects_@(randomId)">
+                <label class="control-label d-block">¿Preferirías visualizar todos los elementos del objeto o aplicar filtros a sus propiedades?</label>
+                <div class="mb-2 form-inline">
+                    <input type="radio"
+                           id="rbSelectAllObjects_@(randomId)_SI"
+                           class="form-check-input rbSelectAllObjects"
+                           name="SelectAllObjects_@(randomId)"
+                           data-value="si"
+                           checked
+                           >
+                    <label class="form-check-label" for="rbSelectAllObjects_@(randomId)_SI">Sí, deseo ver todos los elementos sin aplicar filtros adicionales.</label>
+                </div>
+
+                <div class="mb-2 form-inline">
+                    <input type="radio"
+                           id="rbSelectAllObjects_@(randomId)_NO"
+                           class="form-check-input rbSelectAllObjects"
+                           name="SelectAllObjects_@(randomId)"
+                           data-value="no">
+                    <label class="form-check-label" for="rbSelectAllObjects_@(randomId)_NO">No, prefiero aplicar filtros a sus propiedades.</label>
+                </div>
+            </div>
+
+            @* Panel para selección de filtro aplicable a los objetos de conocimiento (Listar todas las propiedades del grafo) *@
+            <div class="panelFirstPropertyMainObject d-none">
+                @* Panel para la selección de Propiedades. Se cargará cada vez que se seleccione un objeto de conocimiento o una propiedad *@
+                @Html.PartialView("_partial-views/_searchFilterSelectProperty")
+                @Html.PartialView("_partial-views/_searchFilterSelectProperty")                
+            </div>
+       </div>
+        
+        @* Panel para selección de todas las propiedades del grafo *@
+        <div class="panelAllPropertyFromGraph d-none propertiesContainer">            
+            @* Panel para la selección de Propiedades. Se cargará cada vez que se seleccione un objeto de conocimiento o una propiedad *@
+            @Html.PartialView("_partial-views/_searchFilterSelectProperty")
+        </div>
+
+        @* Panel del listado de criterios que se aplicarán en la búsqueda*@
+        @Html.PartialView("_partial-views/_searchFilterCriterialList")
+
+    </div>
+
+</div>

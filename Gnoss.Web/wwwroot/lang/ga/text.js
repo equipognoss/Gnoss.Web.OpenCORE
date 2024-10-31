@@ -350,3 +350,13 @@ var accionesUsuarioAdminComunidad = {
     supervisor: 'Supervisor',
     usuario: 'Usuario'
 };
+
+var espacioPersonal = {
+    avisoEditarOrganizarEnCategorias: 'Selecciona un recurso antes de intentar editar a súa categoría',
+};
+
+var accionesUsuarios = {
+    seguir: "Seguir",
+    dejarDeSeguir: "Deixar de seguir",
+    sinSeguimiento: "Sen seguimento"
+};

@@ -1,0 +1,23 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que despliega una lista completa de los filtros asociados a la página de recursos semánticos para su posterior selección
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+    // Permisos para administrar aspectos relacionados con el diseño de páginas
+    bool administrarPaginas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)));
+}
+
+
+@* Listado de filtros *@
+<ul class="id-added-element-list element-list filterList no-list-style"
+    style="position: relative">
+
+    @* Detalle de filtros semánticos *@
+    @Html.PartialView("_partial-views/_searchFilterListItem")
+</ul>

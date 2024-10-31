@@ -1,0 +1,621 @@
+﻿@model TabModel
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	String idModalPage = "modal-configuracion-pagina_" + Model.Key;
+	String idModalPageDelete = "modal-configuracion-pagina_delete" + Model.Key;
+	String idPanelFacetaList = "panelFacetList_" + Model.Key;
+	TabModel pestanya = Model;
+	AdministrarFacetasPestanyasModel facetaPest = new AdministrarFacetasPestanyasModel();
+	facetaPest.ListadoFacetas = ViewBag.ListadoFacetasComunidad;
+	List<TabModel.FacetasTabModel> lista = new List<TabModel.FacetasTabModel>();
+	// Tipo de página
+	String pageTypeName = Html.GetNombreTipoPaginaDevTools(pestanya);
+	// Tipo de Privacidad de la página
+	String textoPrivacidadEspecial = "";
+	// Propiedades para almacenar el tipo de Privacidad de la página (Perfiles con acceso, grupos ...)
+	String listaIDsPerfiles = "";
+	String listaIDsGrupos = "";
+	String htmlNombresPerfiles = "";
+	String htmlNombresGrupos = "";
+	// Permisos de páginas
+	PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
+	// Indica si la página de tipo Home está o no activa
+	bool homeActiva = permisosPaginas.CMSActivado && pestanya.HomeCMS != null && (pestanya.HomeCMS.HomeTodosUsuarios || pestanya.HomeCMS.HomeMiembros || pestanya.HomeCMS.HomeNoMiembros);
+	// Indica si la página permite "Opciones de búsqueda" y "Exportar búsquedas"
+	bool esPestanyaBusqueda = pestanya.Type == TipoPestanyaMenu.Recursos || pestanya.Type == TipoPestanyaMenu.Preguntas || pestanya.Type == TipoPestanyaMenu.Debates || pestanya.Type == TipoPestanyaMenu.Encuestas || pestanya.Type == TipoPestanyaMenu.PersonasYOrganizaciones || pestanya.Type == TipoPestanyaMenu.BusquedaSemantica || pestanya.Type == TipoPestanyaMenu.BusquedaAvanzada;
+	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+
+}
+@*
+Descripción
+-----------------------------------------------
+
+----------------------------------------------------------------
+*@
+<div class="formulario-edicion">
+
+	@* Tabs de los idiomas en multiIdioma *@
+	<div class="panContenidoMultiIdioma basicInfo">
+	</div>
+
+	@* Contenido de los tabs de los idiomas *@
+	<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+
+		@* Título/Nombre de la página *@
+		<div class="form-group mb-4">
+			@*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>*@
+			<input type="@(pestanya.EsNombrePorDefecto?"hidden":"text")"
+				   name="TabName"
+				   data-labeltext="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+				   data-helptext="@Html.GetText("DEVTOOLS", "NOMBRELAPAGINA")"
+				   data-on-input-function="operativaGestionPaginas.handleOnInputTabNameChanged(event)"
+				   placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREDELAPAGINA")"
+				   class="form-control multiIdioma"
+				   value="@pestanya.Name"
+			@* @(pestanya.EsNombrePorDefecto ? "disabled" : "") *@
+			@*value="@pestanya.Name"*@ />
+
+			@* Nombre por defecto *@
+			@if (pestanya.EsNombrePorDefecto)
+			{
+				<input type="text" class="tabNameAux d-none" value="@Html.ObtenerTextoIdiomaUsuario(pestanya.Name)" disabled />
+				@*<input
+			type="text"
+			class="form-control"
+			value="@Html.ObtenerTextoIdiomaUsuario(pestanya.Name)"/>
+
+			<a class="editDefaultName d-none">@Html.GetText("COMMON", "EDITAR")</a>
+			*@
+			}
+		</div>
+
+
+		@* Ruta / Url de la página *@
+		@if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+		{
+			<input type="hidden" name="TabUrl" value="" disabled />
+			<input type="checkbox" class="d-none" name="TabOpenInNewWindow" />
+		}
+		else
+		{
+			<div class="form-group mb-4">
+				@*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "RUTA")</label>*@
+				<input type="@(pestanya.EsUrlPorDefecto?"hidden":"text")"
+					   placeholder="@Html.GetText("DEVTOOLS","INTRODUCELAURL")"
+					   data-labeltext="@Html.GetText("COMADMINPESTANYAS", "RUTA")"
+					   data-helptext="@Html.GetText("DEVTOOLS", "RUTAOENLACEPARAACCEDERALAPAGINA")"
+					   data-on-input-function="operativaGestionPaginas.handleOnInputTabUrlChanged(event)"
+					   class="form-control multiIdioma"
+					   name="TabUrl"
+					   value="@pestanya.Url" />
+				@*value="@pestanya.Url" @(pestanya.EsUrlPorDefecto ? "disabled" : "")/>*@
+
+				@* EsUrl por defecto *@
+				@if (pestanya.EsUrlPorDefecto)
+				{
+					<input type="text" class="tabUrlAux form-control d-none" value="@Html.ObtenerTextoIdiomaUsuario(pestanya.Url)" disabled />
+					@*
+			<a class="editDefaultURL">@Html.GetText("COMMON", "EDITAR")</a>
+			*@
+				}
+			</div>
+		}
+
+		@* Metadescripción *@
+		<div class="form-group mb-4">
+			@*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "METADESCRIPTION")</label>
+			<input
+			type="text"
+			placeholder="@Html.GetText("COMADMINPESTANYAS", "METADESCRIPTION")"
+			data-labeltext="@Html.GetText("COMADMINPESTANYAS", "METADESCRIPTION")"
+			data-helptext = "@Html.GetText("DEVTOOLS","DESCRIPCIONDELCONTENIDODELAPAGINARECOMENDABLE155CARACTERES")"
+			class="form-control multiIdioma"
+			name="TabMetaDescription"
+			value="@pestanya.MetaDescription"/>
+			*@
+
+			<textarea class="form-control multiIdioma noCKE"
+					  rows="3"
+					  data-labeltext="@Html.GetText("COMADMINPESTANYAS", "METADESCRIPTION")"
+					  name="TabMetaDescription"
+					  data-helptext="@Html.GetText("DEVTOOLS", "DESCRIPCIONDELCONTENIDODELAPAGINARECOMENDABLE155CARACTERES")">@pestanya.MetaDescription</textarea>
+		</div>
+
+		@* Añadir TextoDefectoBuscador para páginas de tipo Búsqueda *@
+		@if (esPestanyaBusqueda)
+		{
+			@* Texto defecto buscador *@
+			<div class="form-group mb-4">
+				@* <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label> *@
+				<input type="text"
+					   name="TabFiltroTextoDefectoBuscador"
+					   data-labeltext="@Html.GetText("COMADMINPESTANYAS", "TEXTODEFECTOBUSCADOR")"
+					   placeholder="@Html.GetText("COMADMINPESTANYAS", "TEXTODEFECTOBUSCADOR")"
+					   data-helptext="@Html.GetText("AYUDACOMADMINPESTANYAS", "TEXTODEFECTOBUSCADOR")"
+					   class="form-control multiIdioma"
+					   value="@pestanya.OpcionesBusqueda.TextoDefectoBuscador" />
+			</div>
+		}
+
+	</div>
+
+	@* Contenedor de las opciones que no son multiIdioma *@
+	<div class="pageContainer tab-content pt-2">
+		@* Tipo de página *@
+		<div class="form-group mb-4 pageType">
+			<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "TIPOPESTANYA")</label>
+			<input type="text"
+				   placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELTIPO")"
+				   class="form-control"
+				   name="tipo"
+				   value="@pageTypeName"
+				   disabled />
+
+			@* Información oculta del tipo de página *@
+			<input type="hidden" name="TabType" value="@pestanya.Type" />
+		</div>
+
+		@* Abrir en nueva pestaña la página *@
+		@if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+		{
+			@* Abrir en nueva pestaña para páginas de tipo Home
+		<input type="hidden" name="TabUrl" value="" disabled />
+		*@
+
+			<div class="form-group mb-3 openInNewPage">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "ABRIRNUEVAPESTANYA")</label>
+				@* Abrir en nueva pestaña: Sí *@
+				<div class="form-check form-check-inline">
+					<input class="form-check-input TabOpenInNewWindow"
+						   type="radio"
+						   name="TabOpenInNewWindow_@pestanya.Key"
+						   checked
+						   data-value="si"
+						   id="TabOpenInNewWindow_SI_@pestanya.Key" />
+					<label class="form-check-label" for="TabOpenInNewWindow_SI_@pestanya.Key">@Html.GetText("COMMON", "SI")</label>
+				</div>
+				<div class="form-check form-check-inline">
+					@* Abrir en nueva pestaña: No *@
+					<input class="form-check-input TabOpenInNewWindow"
+						   type="radio"
+						   name="TabOpenInNewWindow_@pestanya.Key"
+						   data-value="no"
+						   id="TabOpenInNewWindow_NO_@pestanya.Key" />
+					<label class="form-check-label" for="TabOpenInNewWindow_SI_@pestanya.Key">@Html.GetText("COMMON", "NO")</label>
+				</div>
+				<small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS", "INDICASILAPAGINASEABREENLAMISMAVENTANAOENUNANUEVA")</small>
+			</div>
+		}
+		else
+		{
+			<div class="form-group mb-3 openInNewPage">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "ABRIRNUEVAPESTANYA")</label>
+				@* Abrir en nueva pestaña: Sí *@
+				<div class="form-check form-check-inline">
+					<input id="TabOpenInNewWindow_SI_@pestanya.Key"
+						   class="form-check-input TabOpenInNewWindow"
+						   data-value="si"
+						   type="radio"
+						   name="TabOpenInNewWindow_@pestanya.Key"
+					@(pestanya.OpenInNewWindow ? "checked" : "") />
+					<label class="form-check-label" for="TabOpenInNewWindow_SI_@pestanya.Key">@Html.GetText("COMMON", "SI")</label>
+				</div>
+				<div class="form-check form-check-inline">
+					@* Abrir en nueva pestaña: No *@
+					<input id="TabOpenInNewWindow_NO_@pestanya.Key"
+						   class="form-check-input TabOpenInNewWindow"
+						   type="radio"
+						   data-value="no"
+						   name="TabOpenInNewWindow_@pestanya.Key"
+					@(!pestanya.OpenInNewWindow ? "checked" : "") />
+					<label class="form-check-label" for="TabOpenInNewWindow_SI_@pestanya.Key">@Html.GetText("COMMON", "NO")</label>
+				</div>
+				<small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS", "INDICASILAPAGINASEABREENLAMISMAVENTANAOENUNANUEVA")</small>
+			</div>
+		}
+
+		@* Añadir CSS en el body de la página *@
+		@if (!pestanya.Type.Equals(TipoPestanyaMenu.EnlaceExterno) || !pestanya.Type.Equals(TipoPestanyaMenu.EnlaceExterno))
+		{
+			<div class="form-group mb-4 cssBodyPage">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "CLASECSSBODY")</label>
+				<input type="text"
+					   placeholder="@Html.GetText("COMADMINPESTANYAS", "CLASECSSBODY")"
+					   class="form-control"
+					   name="TabClassCSSBody"
+					   value="@pestanya.ClassCSSBody" />
+				<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "CLASEQUESEASIGNARAENLAETIQUETABODYDELAPAGINA")</small>
+			</div>
+		}
+
+
+		@* Visibilidad de la página en el Menú *@
+		<div class="form-group mb-3 visibilityPage">
+			<label class="control-label d-block">@Html.GetText("ADMINISTRACIONPAGINAS", "VISIBLEENELMENU")</label>
+			@* Opción Sí *@
+			<div class="form-check form-check-inline">
+				<input id="TabVisible_SI_@pestanya.Key"
+					   class="form-check-input TabVisible"
+					   data-value="si"
+					   type="radio"
+					   name="TabVisible_@pestanya.Key"
+				@(pestanya.Visible ? "checked" : "") />
+				<label class="form-check-label" for="TabVisible_SI_@pestanya.Key">@Html.GetText("COMMON", "SI")</label>
+			</div>
+			@* Opción No *@
+			<div class="form-check form-check-inline">
+				<input id="TabVisible_NO_@pestanya.Key"
+					   class="form-check-input TabVisible"
+					   type="radio"
+					   data-value="no"
+					   name="TabVisible_@pestanya.Key"
+				@(!pestanya.Visible ? "checked" : "") />
+				<label class="form-check-label" for="TabVisible_NO_@pestanya.Key">@Html.GetText("COMMON", "NO")</label>
+			</div>
+			<small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS", "INDICASILAPAGINAVAASERVISIBLEENELMENUDELACOMUNIDAD")</small>
+		</div>
+
+		@* Estado de la página / Página publicada + Privacidad -> Especial para Home *@
+		@if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+		{
+			<input type="hidden" name="TabPrivacidad" value="0" />
+			@* Opcion Si y No para páginas tipo Home *@
+			<input id="TabActive_SI_@pestanya.Key"
+				   class="form-check-input TabActive d-none"
+				   type="radio"
+				   name="TabActive_@pestanya.Key"
+				   checked
+				   disabled />
+			<input id="TabActive_NO_@pestanya.Key"
+				   class="form-check-input TabActive d-none"
+				   type="radio"
+				   name="TabActive_@pestanya.Key"
+				   disabled />
+		}
+		else
+		{
+			@* Estado de la página *@
+			<div class="form-group mb-3 statePage">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "ACTIVA")</label>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input TabActive"
+						   type="radio"
+						   name="TabActive_@pestanya.Key"
+						   data-value="si"
+						   id="TabActive_SI_@pestanya.Key"
+					@(pestanya.Active ? "checked" : "") />
+					<label class="form-check-label" for="TabActive_SI_@pestanya.Key">@Html.GetText("COMMON", "SI")</label>
+				</div>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input TabActive"
+						   type="radio"
+						   name="TabActive_@pestanya.Key"
+						   data-value="no"
+						   id="TabActive_NO_@pestanya.Key"
+					@(!pestanya.Active ? "checked" : "") />
+					<label class="form-check-label" for="TabActive_NO_@pestanya.Key">@Html.GetText("COMMON", "NO")</label>
+				</div>
+				<small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS", "INDICASILAPAGINAESTAACTIVASILAPAGINANOESTAACTIVA,NADIETIENE")</small>
+			</div>
+
+			@* Privacidad de la página *@
+			<div class="form-group mb-4 privacyPage">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDAD")</label>
+				@* Select de privacidad de la página *@
+				<select name="TabPrivacidad"
+						class="cmbEditarPrivacidad js-select2"
+						tabindex="0"
+						aria-hidden="false">
+					<option @(pestanya.Privacidad == 0 ? "selected" : "") value="0">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADNORMAL")</option>
+					<option @(pestanya.Privacidad == 1 ? "selected" : "") value="1">@textoPrivacidadEspecial</option>
+					<option @(pestanya.Privacidad == 2 ? "selected" : "") value="2">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADLECTORES")</option>
+				</select>
+				<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "PRIVACIDADDELAPAGINA,SEPUEDEELEGIRQUEUSUARIOSPUEDENTENERACCE")</small>
+			</div>
+
+			@* Panel Editar privacidad: Opción Pública *@
+			<div class="form-group mb-2 edit-privacy subPanel-sin-borde">
+				@* Carga de Perfiles y Grupos de privacidad *@
+				@if (pestanya.Privacidad == 2)
+				{
+					foreach (Guid perfilID in pestanya.PrivacidadPerfiles.Keys)
+					{
+						listaIDsPerfiles += perfilID.ToString() + ",";
+						@* htmlNombresPerfiles += "<li>" + pestanya.PrivacidadPerfiles[perfilID] + "<a aux=\"" + perfilID.ToString() + "\" class=\"remove\">eliminar</a></li>"; *@
+						htmlNombresPerfiles += "<div class='tag' id='" + perfilID.ToString() + "' title='" + pestanya.PrivacidadPerfiles[perfilID] + "'>";
+						htmlNombresPerfiles += "<div class='tag-wrap'>";
+						htmlNombresPerfiles += "<span class='tag-text'>" + pestanya.PrivacidadPerfiles[perfilID] + "</span>";
+						htmlNombresPerfiles += "<span class='tag-remove material-icons remove'>close</span>";
+						htmlNombresPerfiles += "</div>";
+						htmlNombresPerfiles += "</div>";
+					}
+
+					foreach (Guid grupoID in pestanya.PrivacidadGrupos.Keys)
+					{
+						listaIDsGrupos += "g_" + grupoID.ToString() + ",";
+						@* htmlNombresGrupos += "<li>" + pestanya.PrivacidadGrupos[grupoID] + "<a aux=\"g_" + grupoID.ToString() + "\" class=\"remove\">eliminar</a></li>"; *@
+						htmlNombresGrupos += "<div class='tag' id='g_" + grupoID.ToString() + "' title='" + pestanya.PrivacidadGrupos[grupoID] + "'>";
+						htmlNombresGrupos += "<div class='tag-wrap'>";
+						htmlNombresGrupos += "<span class='tag-text'>" + pestanya.PrivacidadGrupos[grupoID] + "</span>";
+						htmlNombresGrupos += "<span class='tag-remove material-icons remove'>close</span>";
+						htmlNombresGrupos += "</div>";
+						htmlNombresGrupos += "</div>";
+					}
+				}
+
+				@* Panel visibles para usuarios sin acceso *@
+				<div class="form-group mb-3 edit-privacy-panel-visibles-usuarios-sin-acceso @( (pestanya.Privacidad == 1 || pestanya.Privacidad == 2 ) ? "" : "d-none")">
+					<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "VISIBLEUSUARIOSSINACCESO")</label>
+					<div class="form-check form-check-inline">
+						<input class="form-check-input TabVisibleSinAcceso"
+							   type="radio"
+							   data-value="si"
+							   name="TabVisibleSinAcceso_@pestanya.Key"
+						@(pestanya.VisibleSinAcceso ? "checked" : "")
+							   id="TabVisibleSinAcceso_SI_@pestanya.Key" />
+						<label class="form-check-label" for="TabVisibleSinAcceso_SI_@pestanya.Key">@Html.GetText("COMMON", "SI")</label>
+					</div>
+
+					<div class="form-check form-check-inline">
+						<input class="form-check-input TabVisibleSinAcceso"
+							   type="radio"
+							   data-value="no"
+							   name="TabVisibleSinAcceso_@pestanya.Key"
+						@(!pestanya.VisibleSinAcceso ? "checked" : "")
+							   id="TabVisibleSinAcceso_NO_@pestanya.Key" />
+						<label class="form-check-label" for="TabVisibleSinAcceso_NO_@pestanya.Key">@Html.GetText("COMMON", "NO")</label>
+					</div>
+				</div>
+
+				@* Html Alternativo *@
+				<div class="form-group mb-3 edit-privacy-panel-html-alternativo @( (pestanya.Privacidad == 1 || pestanya.Privacidad == 2 ) ? "" : "d-none")">
+					<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "HTMLALTERNATIVO")</label>
+					<input type="text"
+						   placeholder="@Html.GetText("AYUDACOMADMINPESTANYAS", "HTMLALTERNATIVO")"
+						   class="form-control"
+						   name="TabHtmlAlternativoPrivacidad"
+						   value="@pestanya.HtmlAlternativoPrivacidad" />
+					<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "TEXTOAMOSTRARALOSUSUARIOSQUENOTENGANACCESOALAPAGINA")</small>
+				</div>
+
+				@* Selección de los perfiles y grupos para los que estará la pestaña disponible *@
+				<div class="form-group mb-3 edit-privacy-panel-privacidad-perfiles-grupos @( (pestanya.Privacidad == 2) ? "" : "d-none")">
+					@* Contenedor con input para añadir etiquetas a la comunidad *@
+					<p>
+						@Html.GetText("COMADMINPESTANYAS", "SELECCIONAPERFILES")
+					</p>
+
+					@* Panel seleccíón de perfiles *@
+					<div class="form-group mb-3 edit-privacy-panel-privacidad-perfiles ">
+						<label class="control-label d-block">
+							@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPERFILES")
+						</label>
+						@* Contenedor del input + tags *@
+						<div class="autocompletar-tags form-group">
+							<div class="input-wrap form-sticky-button autocompletar">
+								@* Input de Tags *@
+								<input type="text"
+									   name="TabPrivacidadPerfiles"
+									   placeholder="Busca un perfil y pulsa AÑADIR"
+									   id="privacidadPerfiles_@(pestanya.Key)"
+									   class="form-control txtAutocomplete"
+									   data-avoid-autocomplete-with-enter-button="true"
+									   autocomplete="off" />
+
+								@* Botón de Añadir Privacidad Perfiles *@
+								<a id="btnAddPrivacidadPerfiles_@(pestanya.Key)" class="btn btn-grey uppercase btnAddPrivacidadPerfiles">@Html.GetText("ADMINISTRACIONBASICA", "AÑADIR")</a>
+
+								@* Campo oculto _hack *@
+								<input type="hidden" id="privacidadPerfiles_@(pestanya.Key)_Hack" class="valores privacidadPerfiles" name="TabValoresPrivacidadPerfiles" value="@listaIDsPerfiles" />
+
+							</div>
+							@* Tags/Perfiles añadidas por el usuario o por auto *@
+							<span id="tagsContainer_@pestanya.Key" class="contenedor tag-list mb-4">
+								@Html.Raw(htmlNombresPerfiles)
+							</span>
+						</div>
+					</div>
+
+					@* Panel seleccíón de grupos *@
+					<div class="form-group mb-3 edit-privacy-panel-privacidad-grupos">
+						<label class="control-label d-block">
+							@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADGRUPOS")
+						</label>
+						@* Contenedor del input + tags *@
+						<div class="autocompletar-tags form-group">
+							<div class="input-wrap form-sticky-button autocompletar">
+								@* Input de Tags *@
+								<input type="text"
+									   name="TabPrivacidadGrupos"
+									   placeholder="Busca un grupo y pulsa AÑADIR"
+									   id="privacidadGrupos_@(pestanya.Key)"
+									   class="form-control txtAutocomplete"
+									   autocomplete="off" />
+
+
+								@* Botón de Añadir Privacidad Perfiles *@
+								<a id="btnAddPrivacidadGrupos_@(pestanya.Key)" class="btn btn-grey uppercase btnAddPrivacidadGrupos">@Html.GetText("ADMINISTRACIONBASICA", "AÑADIR")</a>
+
+								@* Campo oculto _hack *@
+								<input type="hidden" id="privacidadGrupos_@(pestanya.Key)_Hack" class="valores privacidadGrupos" name="TabValoresPrivacidadGrupos" value="@listaIDsGrupos" />
+
+							</div>
+							@* Tags/Perfiles añadidas por el usuario o por auto *@
+							<span id="tagsContainer_@pestanya.Key" class="contenedor tag-list mb-4">
+								@Html.Raw(htmlNombresGrupos)
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		}
+
+		@* Edición de la Home vía CMS *@
+		@if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+		{
+			@* Comprobación de si CMS está habilitado *@
+			<div class="form-group mb-3 panelTabHomeCMS  @( (permisosPaginas.CMSActivado == true ) ? "" : "d-none") ">
+				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "EDITARHOMECMS")</label>
+				@* Opción sí *@
+				<div class="form-check form-check-inline">
+					<input class="form-check-input TabHomeCMS"
+						   type="radio"
+						   name="TabHomeCMS_@pestanya.Key"
+						   data-value="si"
+						   id="TabHomeCMS_SI_@pestanya.Key"
+					@(homeActiva == true ? "checked" : "") />
+					<label class="form-check-label" for="TabActive_SI_@pestanya.Key">@Html.GetText("COMMON", "SI")</label>
+				</div>
+				@* Opción no *@
+				<div class="form-check form-check-inline">
+					<input class="form-check-input TabHomeCMS"
+						   type="radio"
+						   name="TabHomeCMS_@pestanya.Key"
+						   data-value="no"
+						   id="TabHomeCMS_NO_@pestanya.Key"
+					@(!homeActiva == true ? "checked" : "") />
+					<label class="form-check-label" for="TabActive_NO_@pestanya.Key">@Html.GetText("COMMON", "NO")</label>
+				</div>
+
+				@* Panel Edición Home vía CMS con opciones *@
+				<div class="form-group mb-3 panelTabHomeCMSUsersHomeDistintas subPanel @( (permisosPaginas.CMSActivado == true && homeActiva == true ) ? "" : "d-none")">
+					@* Opción Home para todos los usuarios *@
+					<div class="form-check form-check-inline">
+						<input class="form-check-input TabTypeHomeCMS"
+							   type="radio"
+							   name="TabTypeHomeCMS_@pestanya.Key"
+							   id="TabHomeCMS_Unica_@pestanya.Key"
+							   data-value="Unica"
+						@(!homeActiva || pestanya.HomeCMS.HomeTodosUsuarios ? "checked" : "") />
+						<label class="form-check-label" for="TabHomeCMS_Unica_@pestanya.Key">@Html.GetText("COMADMINPESTANYAS", "HOMETODOSUSUARIOS")</label>
+					</div>
+					@* Opción Home distintas para miembros y no miembros *@
+					<div class="form-check form-check-inline">
+						<input class="form-check-input TabTypeHomeCMS"
+							   type="radio"
+							   name="TabTypeHomeCMS_@pestanya.Key"
+							   id="TabHomeCMS_Distinta_@pestanya.Key"
+							   data-value="Distinta"
+						@(pestanya.HomeCMS.HomeMiembros || pestanya.HomeCMS.HomeNoMiembros ? "checked" : "") />
+						<label class="form-check-label" for="TabHomeCMS_Distinta_@pestanya.Key">@Html.GetText("COMADMINPESTANYAS", "HOMEDISTINTAS")</label>
+					</div>
+
+					@* Panel subOpciones Home Disntintas para miembros y no miembros *@
+					<div class="form-group mb-3 panelTabHomeCMSMiembrosNoMiembros subPanel-sin-borde pt-0 @( (permisosPaginas.CMSActivado == true && homeActiva == true && (pestanya.HomeCMS.HomeMiembros || pestanya.HomeCMS.HomeNoMiembros) ) ? "" : "d-none")">
+						@* Opción Home para miembros *@
+						<div class="custom-control custom-checkbox mb-2">
+							<input type="checkbox" class="custom-control-input TabHomeMiembrosCMS" id="TabHomeMiembrosCMS_@pestanya.Key" name="TabHomeMiembrosCMS" @(!homeActiva || pestanya.HomeCMS.HomeMiembros ? "checked" : "")>
+							<label class="custom-control-label" for="TabHomeMiembrosCMS_@pestanya.Key">
+								@Html.GetText("COMADMINPESTANYAS", "HOMEMIEMBROS")
+								@* Editar la página Home vía CMS
+							@if (pestanya.HomeCMS.HomeMiembros)
+							{
+							<a target="_blank" class="ml-2" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/0">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
+							}
+							*@
+							</label>
+						</div>
+
+						@* Opción Home para no miembros *@
+						<div class="custom-control custom-checkbox mb-2">
+							<input type="checkbox" class="custom-control-input TabHomeNoMiembrosCMS" id="TabHomeNoMiembrosCMS_@pestanya.Key" name="TabHomeNoMiembrosCMS" @(!homeActiva || pestanya.HomeCMS.HomeNoMiembros ? "checked" : "")>
+							<label class="custom-control-label" for="TabHomeNoMiembrosCMS_@pestanya.Key">
+								@Html.GetText("COMADMINPESTANYAS", "HOMENOMIEMBROS")
+								@* Enlace Editar página CMS HomeNoMiembros
+							@if (pestanya.HomeCMS.HomeNoMiembros)
+							{
+							<a target="_blank" class="ml-2" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/1">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
+							}
+							*@
+							</label>
+						</div>
+					</div>
+				</div>
+			</div>
+		}
+
+		@* Contenido multiIdioma para tipo de páginas CMS
+		@if (pestanya.Type.Equals(TipoPestanyaMenu.CMS) && ViewBag.ContenidoMultiIdioma && pestanya.ListaIdiomasDisponibles != null)
+		{
+		<div class="form-group mb-3 panelContenidoMultiIdioma">
+		<label class="control-label d-block">Idiomas disponibles</label>
+		@foreach (string idioma in ViewBag.ListaIdiomas.Keys)
+		{
+		<input type="checkbox"
+		class="form-check-input"
+		name="@("chkIdioma" + idioma)" id="@("chkIdioma" + idioma)"
+		@Html.Raw(pestanya.ListaIdiomasDisponibles.Contains(idioma) ? "checked=\"checked\"" : "")
+		lang="@idioma" value="@idioma" class="idioma"/>
+		<label class="form-check-label" for="exampleCheck1">
+		@ViewBag.ListaIdiomas[idioma]
+		</label>
+		}
+		</div>
+		}*@
+
+		@* Sección Opciones de búsqueda y Sección Exportar búsqueda de la página *@
+		@if (esPestanyaBusqueda)
+		{
+			@Html.PartialView("_OpcionesBusqueda", pestanya)
+
+			@Html.PartialView("_ExportarBusqueda", pestanya.ListaExportaciones)
+
+			@Html.PartialView("_OpcionesDashboard", pestanya)
+		}
+		@{
+			//TFG Fran
+			bool esPestanyaDashboard = pestanya.Type == TipoPestanyaMenu.Dashboard;
+
+			if (esPestanyaDashboard)
+			{
+				@Html.PartialView("_OpcionesDashboard", pestanya)
+			}
+		}
+
+
+		@* Sección Agregar / Listar facetas *@
+		@if (pestanya.Type.Equals(TipoPestanyaMenu.Recursos) || pestanya.Type.Equals(TipoPestanyaMenu.BusquedaSemantica) || pestanya.Type.Equals(TipoPestanyaMenu.Home))
+		{
+
+			@* Panel para las facetas *@
+			<div class="form-group mb-4 editarFacetas">
+				<div class="facet-header d-flex justify-content-between align-items-center">
+					@if (lista != null && lista.Count > 0)
+					{
+						@* Hacer petición para visualizar/cargar facetas existentes *@
+						<label class="linkLoadFacetList control-label d-block">@Html.GetText("DEVTOOLS", "VERFACETAS")</label>
+					}
+					else
+					{
+						<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("ADMINISTRACIONSEMANTICA", "FACETAS")</label>
+					}
+					@* Botón para añadir nuevos Filtros de Orden *@
+					<a href="javascript: void(0);" class="linkAddFacet btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+						<span class="material-icons">add</span>
+						<span class="texto">@Html.GetText("DEVTOOLS", "AGREGARFACETA")</span>
+					</a>
+				</div>
+
+				@* Listado/Contenedor donde se cargarán las facetas existentes + nuevas *@
+				<ul id="@idPanelFacetaList" class="id-added-facet-list component-list no-list-style">
+					@* Listado de facetas y la llamada a _VerFacetas *@
+					@Html.PartialView("_VerFacetas", facetaPest)
+				</ul>
+			</div>
+		}
+
+		@* Botón para guardar la página. Controlar CI-CD *@
+		<div class="panelBotonera">
+			@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+			{
+				<input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase btnNoGuardarPagina" value="@Html.GetText("COMMON","GUARDAR")" />
+			}
+			else
+			{
+				<input type="button" class="btn btn-primary uppercase btnGuardarPagina" value="@Html.GetText("COMMON","GUARDAR")" />
+			}
+		</div>
+	</div>
+</div>

@@ -43,7 +43,7 @@
                        data-toggle="tab"
                        href="#suscripcionComunidades"
                        role="tab"
-                       aria-controls="comunidades"
+                       aria-controls="suscripcionComunidades"
                        aria-selected="true">@Html.GetText("SUSCRIPCIONES", "SUSCRIPCIONESACOM")</a>
                 </li>
                 <li class="nav-item">
@@ -52,7 +52,7 @@
                        data-toggle="tab"
                        href="#suscripcionPersonas"
                        role="tab"
-                       aria-controls="personas"
+                       aria-controls="suscripcionPersonas"
                        aria-selected="false">@Html.GetText("SUSCRIPCIONES", "SUSCRIPCIONESAPER")</a>
                 </li>
             </ul>
@@ -92,8 +92,8 @@
 
                                         @* Nombre e información de la comunidad a la que se está suscrito *@
                                         <div class="nombre-usuario-wrap">
-                                            <a href="@comunidad.Url">
-                                                <p class="nombre">@comunidad.Name</p>
+                                            <a href="@comunidad.Url">                                                
+                                                <p class="nombre">@Html.ObtenerTextoIdiomaUsuario(comunidad.Name)</p>
                                                 @*<small class="text-muted">@Html.CleanHtmlParagraphsStringHtml(comunidad.Description.ToString())</small>*@
                                                 <small class="text-muted">@Html.Raw(Html.CleanHtmlParagraphsStringHtml(comunidad.Description.ToString()))</small>
                                             </a>

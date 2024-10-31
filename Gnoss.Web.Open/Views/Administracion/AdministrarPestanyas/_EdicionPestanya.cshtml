@@ -12,6 +12,7 @@ Variables
 	CommunityModel Comunidad = Html.GetComunidad();
 	String idModalPage = "modal-configuracion-pagina_" + Model.Key;	
 	String idModalPageDelete = "modal-configuracion-pagina_delete" + Model.Key;
+	String idPanelFacetaList = "panelFacetList_" + Model.Key;
 	TabModel pestanya = Model;
 	AdministrarFacetasPestanyasModel facetaPest = new AdministrarFacetasPestanyasModel();
 	facetaPest.ListadoFacetas = ViewBag.ListadoFacetasComunidad;
@@ -33,7 +34,6 @@ Variables
 	bool esPestanyaBusqueda = pestanya.Type == TipoPestanyaMenu.Recursos || pestanya.Type == TipoPestanyaMenu.Preguntas || pestanya.Type == TipoPestanyaMenu.Debates || pestanya.Type == TipoPestanyaMenu.Encuestas || pestanya.Type == TipoPestanyaMenu.PersonasYOrganizaciones || pestanya.Type == TipoPestanyaMenu.BusquedaSemantica || pestanya.Type == TipoPestanyaMenu.BusquedaAvanzada;
 	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
 	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
-
 }
 
 @*
@@ -476,7 +476,7 @@ Variables
 													@* Input de Tags *@
 													<input type="text"
 															name="TabPrivacidadPerfiles"
-															placeholder="Busca un perfil y pulsa AÑADIR"
+															placeholder="@Html.GetText("COMMON","BUSCAUNPERFILYPULSAAÑADIR")"
 															id="privacidadPerfiles_@(pestanya.Key)"
 															class="form-control txtAutocomplete"
 															data-avoid-autocomplete-with-enter-button="true"
@@ -507,7 +507,7 @@ Variables
 													@* Input de Tags *@
 													<input type="text"
 														   name="TabPrivacidadGrupos"
-														   placeholder="Busca un grupo y pulsa AÑADIR"
+														   placeholder="@Html.GetText("COMMON","BUSCAUNGRUPOYPULSAAÑADIR")"
 														   id="privacidadGrupos_@(pestanya.Key)"
 														   class="form-control txtAutocomplete"														
 														   autocomplete="off" />
@@ -594,7 +594,7 @@ Variables
 													@* Editar la página Home vía CMS 
 													@if (pestanya.HomeCMS.HomeMiembros)
 													{
-														<a target="_blank" class="ml-2" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/0">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
+														<a target="_blank" class="ml-2" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/0">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
 													}
 											*@
 												</label>
@@ -608,7 +608,7 @@ Variables
 													@* Enlace Editar página CMS HomeNoMiembros 
 													@if (pestanya.HomeCMS.HomeNoMiembros)
 													{
-														<a target="_blank" class="ml-2" href="@Html.GetComunidad().Url/administrar-comunidad-cms-editar-pagina/1">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
+														<a target="_blank" class="ml-2" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/1">@Html.GetText("COMADMINPESTANYAS", "EDITARPAGINACMS") </a>
 													}
 											*@
 												</label>
@@ -679,26 +679,26 @@ Variables
 											<span class="texto">@Html.GetText("DEVTOOLS","AGREGARFACETA")</span>
 										</a>
 									</div>
-
+									
 									@* Listado/Contenedor donde se cargarán las facetas existentes + nuevas *@
-									<ul class="id-added-facet-list component-list no-list-style">
+								<ul id="@idPanelFacetaList" class="id-added-facet-list component-list no-list-style">
 										@* Listado de facetas y la llamada a _VerFacetas *@
 										@Html.PartialView("_VerFacetas", facetaPest)
 									</ul>
-								</div>																
+								</div>
 							}
 
-						 @* Botón para guardar la página. Controlar CI-CD *@
-						<div class="panelBotonera">							
-							@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-							{
-								<input type="button" disabled class="btn btn-primary uppercase btnNoGuardarPagina" value="@Html.GetText("COMMON","GUARDAR")"/>								
-							}
-							else
-							{								
-								<input type="button" class="btn btn-primary uppercase btnGuardarPagina" value="@Html.GetText("COMMON","GUARDAR")"/>								
-							}
-						</div>
+								@* Botón para guardar la página. Controlar CI-CD *@
+								<div class="panelBotonera">
+									@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+									{
+										<input type="button" title="@Html.GetComunidad().MensajeAvisoAdministracionIC" disabled class="btn btn-primary uppercase btnNoGuardarPagina" value="@Html.GetText("COMMON","GUARDAR")" />
+									}
+									else
+									{
+										<input type="button" class="btn btn-primary uppercase btnGuardarPagina" value="@Html.GetText("COMMON","GUARDAR")" />
+									}
+								</div>
 					</div>
 				</div>
 			</div>

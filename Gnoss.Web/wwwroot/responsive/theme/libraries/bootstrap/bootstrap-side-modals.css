@@ -1,6 +1,6 @@
 .modal.modal-left .modal-dialog,
 .modal.modal-right .modal-dialog,
-.modal.modal-top .modal-dialog,
+/*.modal.modal-top .modal-dialog,*/
 .modal.modal-bottom .modal-dialog {
   -webkit-transform: translate3d(0%, 0, 0);
   -ms-transform: translate3d(0%, 0, 0);

@@ -171,6 +171,7 @@ const operativaInformacionGeneral = {
         this.urlAbrirComunidad = `${location.href}/open-community`; // Url de petición para realizar la subida de la imagen
         this.urlChangeCommunityShortName = `${location.href}/rename-community-short-name`; // Url para cambiar el nombre corto de la comunidad
         this.urlChangeTypeCommunity = `${location.href}/change-community-type`; // Url para cambiar el tipo de la comunidad
+        this.urlChangeUrlDomain = `${location.href}/change-domain-url`; // Url para cambiar la url de dominio
         this.dropareaImagenCabecera = $('.js-image-uploader');  // Sección para aplicar el comportamiento del plugin imageDropArea
         // Parámetros X, Y de imagen de la cabecera de la comunidad
         this.imagenHeadRuta = $("#ImageHead_src");
@@ -252,6 +253,20 @@ const operativaInformacionGeneral = {
         // Icono del tipo de la comunidad
         this.iconTipoAcceso = $("#iconTipoAcceso");
 
+
+        /* Operativa modal cambiar url de dominio */
+        // Botón para lanzar el cambio de la url de dominio
+        this.btnCambiarUrlDominio = $("#btnCambiarUrlDominio");
+        // Input donde se cambiará la url de dominio
+        this.inputUrlDominio = $("#inputUrlDominio");
+        // Botón para guardar la url de dominio
+        this.btnGuardarUrlDominio = $("#btnGuardarUrlDominio");
+        // Label de ayuda para indicar que no se permite url de dominio
+        this.urlDominioAyuda = $("#urlDominioAyuda");
+        // Label en la página principal donde se muestra la url de dominio
+        this.lblUrlDominio = $("#lblUrlDominio");
+
+
         /* Modal para el cambio de tipo de Comunidad */
         // RadioButton con el tipo de comunidad
         this.rbCommunityTypeName = 'communityType';
@@ -281,6 +296,18 @@ const operativaInformacionGeneral = {
         this.modalChangeCommunityShortName = $("#modal-rename-community");
 
 
+        /* Modal para la url de dominio */
+        // Botón para guardar la url de dominio
+        this.btnGuardarUrlDominio = $("#btnGuardarUrlDominio");
+        // Panel que alerta por el cambio de la url de dominio
+        this.alertConfirmChangeDomainUrl = $("#alertConfirmChangeDomainUrl");
+        // Url de dominio actual
+        this.txtDomainUrl = $("#txtDomainUrl");
+        // Modal para cambiar la url de dominio
+        this.modalChangeDomainUrl = $("#modal-change-domain-url");
+        
+
+
         // Parámetros para la operativa multiIdioma (helpers.js)
         this.operativaMultiIdiomaParams = {
             // Nº máximo de pestañas con idiomas a mostrar. Los demás quedarán ocultos
@@ -295,6 +322,8 @@ const operativaInformacionGeneral = {
         this.currentCommunityNameValue = this.currentCommunityName.html().trim();
         this.currentCommunityTypeValue = this.txtTipoAcceso.data("tipoaccesovalue");
         this.currentCommunityShortName = this.lblNombreCortoComunidad.data("shortname").trim();
+        this.currentDomainUrl = this.lblUrlDominio.data("domainurl").trim();
+        
 
         /// Inicializar el imageDropArea para Cabecera
         this.initImageDropArea();
@@ -313,7 +342,7 @@ const operativaInformacionGeneral = {
         const that = this;
 
 
-        // Cierre del modal de cambio tipo de Comunidad        
+        // Cierre del modal de cambio nombre corto de Comunidad        
         that.modalChangeCommunityShortName
             .on('show.bs.modal', (e) => {                                
             })
@@ -335,7 +364,18 @@ const operativaInformacionGeneral = {
                 that.txtConfirmCommunityChangeType.trigger("keyup");
                 // Dejar el radiobutton anterior pulsando                
                 $(`input[name="${this.rbCommunityTypeName}"]`).filter(`[data-value = ${that.currentCommunityTypeValue}]`).prop("checked", true);                                   
-            });         
+            });  
+
+        // Cierre del modal de cambio url dominio        
+        that.modalChangeDomainUrl
+            .on('show.bs.modal', (e) => {
+            })
+            .on('hide.bs.modal', (e) => {
+                // Acción de ocultar el modal   
+                // Vaciar el input de confirmación         
+                that.txtDomainUrl.val(this.lblUrlDominio.data("domainurl").trim());
+                that.txtDomainUrl.trigger("keyup");
+            });
 
         
         /* ImagenCabecera */
@@ -449,7 +489,7 @@ const operativaInformacionGeneral = {
         // Botón para guardar el nombre corto de la comunidad (modal)
         this.btnGuardarNombreCortoComunidad.off().on("click", function(){
             that.handleChangeCommunityShortName();
-        });        
+        });
 
 
         // RadioButton para el tipo de cambio de comunidad
@@ -467,6 +507,33 @@ const operativaInformacionGeneral = {
         this.btnGuardarTipoComunidad.off().on("click", function(){
             that.handleChangeCommunityType();
         });
+
+        // Input de la nueva url de dominio
+        this.txtDomainUrl.off().on("keyup", function () {
+            const input = $(this);
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {                
+                // Minuscula y sin espacios
+                const inputValue = input.val().toLowerCase().trim();
+                const regex = /^https?:\/\/(?:www\.)?([a-zA-Z0-9-]+\.){1,}[a-zA-Z]{2,}(\/)?$/;
+                if (regex.test(inputValue)) {
+                    // OK
+                    comprobarInputNoVacio(input, true, false, "La url de dominio debe contener al menos 1 caracteres en letras minúsculas.", 1);
+                    that.btnGuardarUrlDominio.prop("disabled", false); 
+                } else {
+                    // KO
+                    comprobarInputNoVacio(input, true, false, "La url de dominio no es un dominio válido.", 3000);
+                    that.btnGuardarUrlDominio.prop("disabled", true);
+                }
+                that.handleKeyUpDomainUrl();
+            }, 500);
+        });
+
+        // Botón para guardar la url de dominio (modal)
+        this.btnGuardarUrlDominio.off().on("click", function () {
+            that.handleChangeDomainUrl();
+        });
+
         
         /* Guardar todo */
         // Botón para guardar todos los datos de Información General        
@@ -578,8 +645,84 @@ const operativaInformacionGeneral = {
         }).always(function () {            
             loadingOcultar();
         });        
-    },    
+    },
 
+
+
+    /**
+     * Método para controlar el valor introducido de la nueva url de dominio para validar si los datos introducidos son válidos
+     */
+    handleKeyUpDomainUrl: function () {
+        const that = this;
+
+        const newDomainUrl = this.txtDomainUrl.val().trim();
+
+        if (newDomainUrl.length > 2 && newDomainUrl != this.currentDomainUrl.trim()) {
+            // Permitir el cambio de la url de dominio
+            // Mostrar el panel alerta           
+            that.alertConfirmChangeDomainUrl.fadeIn("slow", function () {
+                $(this).removeClass("d-none");
+            });
+            // Quitar la opción de "disabled" en el botón
+            /*setTimeout(function () {
+                that.btnGuardarUrlDominio.prop("disabled", false);
+            }
+                , 3000);*/
+        } else {
+            // No permitir el cambio de la url de dominio
+            // Quitar el panel de alerta            
+            that.alertConfirmChangeDomainUrl.fadeOut("slow", function () {
+                $(this).addClass("d-none");
+            });
+            // Añadir la opción de "disabled"
+            //that.btnGuardarUrlDominio.prop("disabled", true);
+        }
+    },
+
+    
+    /**
+     * Método para acometer el cambio de la url de dominio
+     */
+
+    handleChangeDomainUrl: function () {
+
+        const that = this;
+        that.urlGuardarUrlDominio = this.btnGuardarUrlDominio.data("url");
+        that.oldDomainUrl = this.currentDomainUrl.trim();
+        that.newDomainUrl = that.txtDomainUrl.val().trim();
+
+        // Realizar el cambio de la url de dominio
+        // Mostrar loading
+        loadingMostrar();
+
+        const domainModel = {
+            OldDomainUrl: that.oldDomainUrl,
+            NewDomainUrl: that.newDomainUrl,
+        };
+
+        // Proceder a cambiar la url de dominio
+        GnossPeticionAjax(
+            that.urlGuardarUrlDominio,
+            domainModel,
+            true
+        ).done(function (data) {
+            // Guardado OK
+            mostrarNotificacion("success", "Los cambios se han guardado correctamente");
+            // Asignar la nueva url de dominio
+            that.lblUrlDominio.html(that.newDomainUrl);
+            that.lblUrlDominio.data("domainurl", that.newDomainUrl);
+            setTimeout(function () {
+                dismissVistaModal(that.modalChangeDomainUrl);
+                location.reload();
+            }, 500);
+
+        }).fail(function (data) {
+            // Guardado KO            
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
 
 
     /**
@@ -626,6 +769,8 @@ const operativaInformacionGeneral = {
             loadingOcultar();
         });        
     },
+
+
 
     /**
      * Método para comprobar las teclas pulsadas que coincidan con lo deseado para habilitar o no el botón de "Guardar" el cambio de tipo de comunidad
@@ -2944,7 +3089,7 @@ const operativaGestionCertificacion = {
             const certificateRowEdited = $(that.panelListaCertificados.children()[pOrden]);
             // Cambiar parámetros para su correcta visualización
             certificateRowEdited.data("nombre", pName);
-            certificateRowEdited.find(".component-name").text(pName);
+            certificateRowEdited.find(".component-name").text(pName.substring(0, pName.indexOf('@')));
         }
 
         if (createNewRow){    
@@ -3053,13 +3198,36 @@ const operativaGestionCertificacion = {
         // Botón para guardar/editar un determinado certificado desde el modal
         $(`#${that.btnGuardarCertificacionId}`).on("click", function(){
             const txtNombreCertificacion = $(`#${that.txtNombreCertificacionId}`);
-            const isEmpty = comprobarInputNoVacio(txtNombreCertificacion, true, false, that.pParams.mensajes.errorCertificacionNombreVacio,0);
-            if (isEmpty == true){
-                return
-            }
+            //const isEmpty = comprobarInputNoVacio(txtNombreCertificacion, true, false, that.pParams.mensajes.errorCertificacionNombreVacio,0);
+            //if (isEmpty == true){
+            //    return
+            //}
 
             // Obtener el nuevo nombre
-            const nameCertificado = txtNombreCertificacion.val();
+            let textoIdiomaDefecto = $(`#input_txtNombreCertificacion_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            var nombre = "";
+            var inputsVacios = true;
+            $.each(operativaMultiIdioma.listaIdiomas, function () {
+                // Obtención del Key del idioma
+                const idioma = this.key;
+                // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para Nombre
+                let textoIdioma = $(`#input_txtNombreCertificacion_${idioma}`).val();
+                if (textoIdioma == null || textoIdioma == "") {
+                    textoIdioma = textoIdiomaDefecto;
+                    $(`#input_txtNombreCertificacion_${idioma}`).val(textoIdioma);
+                }
+                // Escribir el nombre del multiIdioma en el campo Hidden
+                if (textoIdioma != '') {
+                    inputsVacios = false;
+                }
+                nombre += textoIdioma + "@" + idioma + "|||";
+
+                //listaTextos.push({ "key": idioma, "value": textoIdioma });
+            });
+            if (inputsVacios == true) {
+                return;
+            }
+            const nameCertificado = nombre;
             const idCertificado = $(this).data("id");
             const ordenCertificado = $(this).data("orden").length == 0 ? undefined : $(this).data("orden");
             const dataCreatedRecently = $(this).data("new") == true ? true : false;
@@ -3142,7 +3310,10 @@ const operativaGestionCertificacion = {
             true
         ).done(function (data) {
             // OK            
-            mostrarNotificacion("success", "Los cambios se han guardado correctamente");        
+            mostrarNotificacion("success", "Los cambios se han guardado correctamente");    
+            setTimeout(function () {
+                window.location.reload();
+            }, 1500); 
         }).fail(function (data) {
             // KO
             var error = data.split('|||');
@@ -3321,12 +3492,15 @@ const operativaGestionMiembros = {
             loadingOcultar();
             pJqueryModalView = $("#add_member");
             dismissVistaModal(pJqueryModalView);
-            mostrarNotificacion("sucess","usuario añadido correctmente");
+            mostrarNotificacion("success", "El usuario ha sido añadido correctamente");
+            setTimeout(function () {
+                location.reload();
+            }, 1000); 
         }).fail(function (error) {
             // KO
             loadingOcultar();                        
             mostrarNotificacion("error", error);            
-        }).always(function () {            
+        }).always(function () {          
             loadingOcultar();
         });
 

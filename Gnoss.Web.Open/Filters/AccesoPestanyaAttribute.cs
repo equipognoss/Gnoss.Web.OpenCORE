@@ -1,12 +1,15 @@
 ﻿using System;
+using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Identidad;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Identidad;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
@@ -27,12 +30,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private ConfigService mConfigService;
         private ControladorBase mControladorBase;
         private EntityContext mEntityContext;
+        private RedisCacheWrapper mRedisCacheWrapper;
 
-        public AccesoPestanyaAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache)
+		public AccesoPestanyaAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
             mConfigService = configService;
+            mRedisCacheWrapper = redisCacheWrapper;
             mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
         }
 
@@ -80,11 +85,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     {
                         //Saco la página 404
                         pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
-                    }
-                }
-            }
+					}
+				}
+			}
 
-            if (pestanya != null && !pestanya.ListaIdiomasDisponibles(mConfigService.ObtenerListaIdiomasDictionary()).Contains(mControladorBase.IdiomaUsuario))
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, null);
+			if (pestanya != null && !pestanya.ListaIdiomasDisponibles(paramCL.ObtenerListaIdiomasDictionary()).Contains(mControladorBase.IdiomaUsuario))
             {
                 pFilterContext.Result = Controlador(pFilterContext).DevolverVista("../Shared/IndexNoIdioma", ((HeaderModel)(Controlador(pFilterContext).ViewBag.Cabecera)).MultiLingualLinks);
             }

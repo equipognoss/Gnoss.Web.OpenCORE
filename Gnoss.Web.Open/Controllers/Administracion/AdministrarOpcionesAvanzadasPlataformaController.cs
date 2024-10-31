@@ -1,11 +1,14 @@
 ﻿using Es.Riam.AbstractsOpen;
+using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Proyectos;
@@ -18,9 +21,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -30,26 +37,31 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class AdministrarOpcionesAvanzadasPlataformaController : ControllerBaseWeb
     {
-        public AdministrarOpcionesAvanzadasPlataformaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarOpcionesAvanzadasPlataformaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
-        }
+			_appLifetime = appLifetime;
+		}
+
+        private static string[] LISTA_IDIOMAS = {"es", "en", "pt", "ca", "eu", "gl", "fr", "de", "it"};
 
         #region Miembros
 
         private List<ParametroAplicacion> mParametroAplicacion;
         private AdministrarOpcionesAvanzadasPlataformaViewModel mPaginaModel;
         private Dictionary<string, string> mListaParametrosAplicacion;
+		private IHostApplicationLifetime _appLifetime;
 
-        #endregion
 
-        #region Métodos Web
+		#endregion
 
-        /// <summary>
-        /// Index
-        /// </summary>
-        /// <returns>ActionResult</returns>
-        [HttpGet]
+		#region Métodos Web
+
+		/// <summary>
+		/// Index
+		/// </summary>
+		/// <returns>ActionResult</returns>
+		[HttpGet]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
         public ActionResult Index()
         {
@@ -77,19 +89,60 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
         public ActionResult Guardar(AdministrarOpcionesAvanzadasPlataformaViewModel Options)
         {
+            GuardarLogAuditoria();
             try
             {
-                GuardarOpciones(Options);
+                bool iniciado = false;
+                try
+                {
+                    iniciado = HayIntegracionContinua;
+                }
+                catch (Exception ex)
+                {
+                    GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
+                    return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                }
+
+                bool esNecesarioReiniciar = GuardarOpciones(Options);
 
                 InvalidarCaches();
 
-                return GnossResultOK();
+                if (iniciado)
+                {
+
+                    HttpResponseMessage response = InformarCambioAdministracion("OpcionesAvanzadasEcosistema", JsonConvert.SerializeObject(Options, Formatting.Indented));
+                    if (!response.StatusCode.Equals(HttpStatusCode.OK))
+                    {
+                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                    }
+                }
+
+                if (esNecesarioReiniciar)
+				{
+					return GnossResultOK("shutdown");
+				}
+				else
+				{
+					return GnossResultOK();
+				}
             }
             catch (Exception ex)
             {
                 return GnossResultERROR(ex.Message);
             }
 
+        }
+
+        /// <summary>
+        /// Añadir en la vista los idiomas personalizados
+        /// </summary>
+        /// <param name="customLanguage"> Idiomas personalizados a añadir en la vista </param>
+        /// <returns></returns>
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
+        public ActionResult AddCustomLanguage(string customLanguage)
+        {
+            return PartialView("_partial-views/_custom-language-row", customLanguage);                      
         }
 
         #endregion
@@ -102,12 +155,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             //Parámetros string
             mPaginaModel.CodigoGoogleAnalyticsProyecto = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.CodigoGoogleAnalyticsProyecto);
-            mPaginaModel.ConexionEntornoPreproduccion = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.ConexionEntornoPreproduccion);
+			mPaginaModel.DominiosPermitidosCORS = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.DominiosPermitidosCORS);
+			mPaginaModel.ConexionEntornoPreproduccion = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.ConexionEntornoPreproduccion);
             mPaginaModel.CorreoSolicitudes = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.CorreoSolicitudes);
             mPaginaModel.CorreoSugerencias = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.CorreoSugerencias);
             mPaginaModel.DominiosSinPalco = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.DominiosSinPalco);
             mPaginaModel.HashTagEntorno = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.HashTagEntorno);
-            mPaginaModel.Idiomas = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.Idiomas);
+
+            string idiomas = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.Idiomas);
+			if (string.IsNullOrEmpty(idiomas))
+            {
+                idiomas = string.Join("&&&", mConfigService.ObtenerListaIdiomasDictionary().Select(item => $"{item.Key}|{item.Value}").ToList());
+            }
+
+            mPaginaModel.Idiomas = idiomas;
+
+            CargarModeloIdiomasPersonalizados(idiomas);
+
             mPaginaModel.LoginFacebook = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.LoginFacebook);
             mPaginaModel.LoginGoogle = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.LoginGoogle);
             mPaginaModel.LoginTwitter = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.LoginTwitter);
@@ -186,15 +250,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         }
 
+        // Carga los idiomas personalizas en el modelo
+        private void CargarModeloIdiomasPersonalizados(string pIdiomas)
+        {
+            string idiomasPersonalizados = "";
+
+            string[] idiomas = pIdiomas.Split("&&&");
+            foreach (string idioma in idiomas)
+            {
+                string clave = idioma.Substring(0, 2);
+                if (!LISTA_IDIOMAS.Contains(clave))
+                {
+                    idiomasPersonalizados += $"{idioma}&&&";
+                }
+            }
+            if (!string.IsNullOrEmpty(idiomasPersonalizados))
+            {
+                // ELiminar las tres ultimos caracteres
+                mPaginaModel.IdiomasPersonalizados = idiomasPersonalizados.Substring(0, idiomasPersonalizados.Length - 3);
+            }
+        }
+
         #endregion
 
         #region Métodos de guardado
 
-        private void GuardarOpciones(AdministrarOpcionesAvanzadasPlataformaViewModel pOptions)
+        private bool GuardarOpciones(AdministrarOpcionesAvanzadasPlataformaViewModel pOptions)
         {
-            try
+			bool esNecesarioReiniciar = false;
+			try
             {
-                bool recalcularIdiomas = false;
+				bool recalcularIdiomas = false;
                 string idiomasAntiguos = ControladorProyecto.ObtenerParametroString(ListaParametrosAplicacion, TiposParametrosAplicacion.Idiomas);
                 if (string.Compare(idiomasAntiguos, pOptions.Idiomas) != 0)
                 {
@@ -208,18 +294,40 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (recalcularIdiomas)
                 {
-                    new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication).VersionarCacheLocal(Guid.Empty);
-                }
-            }
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication).VersionarCacheLocal(Guid.Empty);
+
+                    paramCL.InvalidarCacheIdiomas();
+                    UtilIdiomas mUtilIdiomas = mUtilIdiomas = new UtilIdiomas(IdiomaUsuario, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+                    mUtilIdiomas.VaciarDiccionarioLenguajes();
+
+                    // ¿Se quiere reiniciar ahora la aplicacion?
+                    if (pOptions.ReiniciarAplicacion)
+                    {
+                        esNecesarioReiniciar = true;
+                    }
+				}
+			}
             catch (Exception ex)
             {
                 throw ex;
             }
+			return esNecesarioReiniciar;
 
-        }
+		}
 
 
-        private void PasarDatosADataSet(AdministrarOpcionesAvanzadasPlataformaViewModel pOptions)
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
+        public void Shutdown()
+		{
+            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            Guid clave = Guid.NewGuid();
+            proyectoCL.AgregarObjetoCache(NombresCL.CLAVEREINICIO, clave, 3600);
+            _appLifetime.StopApplication();
+		}
+
+		private void PasarDatosADataSet(AdministrarOpcionesAvanzadasPlataformaViewModel pOptions)
         {
             // string
             if (!string.IsNullOrEmpty(pOptions.UrlBaseService))
@@ -235,7 +343,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
             GuardarParametroString(TiposParametrosAplicacion.CodigoGoogleAnalyticsProyecto, pOptions.CodigoGoogleAnalyticsProyecto);
-            GuardarParametroString(TiposParametrosAplicacion.ConexionEntornoPreproduccion, pOptions.ConexionEntornoPreproduccion);
+			GuardarParametroString(TiposParametrosAplicacion.DominiosPermitidosCORS, pOptions.DominiosPermitidosCORS);
+			GuardarParametroString(TiposParametrosAplicacion.ConexionEntornoPreproduccion, pOptions.ConexionEntornoPreproduccion);
             GuardarParametroString(TiposParametrosAplicacion.Copyright, pOptions.Copyright);
             GuardarParametroString(TiposParametrosAplicacion.CorreoSolicitudes, pOptions.CorreoSolicitudes);
             GuardarParametroString(TiposParametrosAplicacion.CorreoSugerencias, pOptions.CorreoSugerencias);
@@ -431,6 +540,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return mParametroAplicacion;
             }
         }
-        #endregion
-    }
+
+
+		#endregion
+	}
 }

@@ -68,7 +68,7 @@ Variables
 
 	@* Correo electrónico de la comunidad *@
 	<div class="form-group mb-3">
-		<label class="control-label d-block">Correo electrónico</label>
+		<label class="control-label d-block">@Html.GetText("COMMON","CORREOELECTRONICO")</label>
 		<input
 			placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCORREOELECTRONICO")"
 			type="text"				
@@ -184,10 +184,10 @@ Variables
 	<p class="form-text alert alert-warning pb-3"><span class="material-icons">info</span>Si estas usando el servidor SMTP de Google, consulta <a href="https://support.google.com/mail/thread/146949535/the-server-response-was-5-7-0-authentication-required?hl=en">estas recomendaciones</a></p>
 	
 	@* Botón guardado (Si lo permite CI/CD) *@	
-	@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+	@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 	{
 		@* No permitir guardar *@
-		<input type="button" disabled class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/>								
+		<input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")" />
 	}
 	else
 	{		

@@ -371,3 +371,13 @@ var accionesUsuarioAdminComunidad = {
     supervisor: 'Supervisor',
     usuario: 'User'
 };
+
+var espacioPersonal = {
+    avisoEditarOrganizarEnCategorias: 'Por favor, selecione um recurso antes de tentar editar sua categoria',
+};
+
+var accionesUsuarios = {
+    seguir: "Seguir",
+    dejarDeSeguir: "Deixar de seguir",
+    sinSeguimiento: "Sem seguimento"
+};

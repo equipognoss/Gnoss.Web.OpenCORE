@@ -189,7 +189,8 @@ Antes se utilizaba en el Header. Ahora se colocará en la propia página. Quitar
 				{
 				<div class="dropdown-divider"></div>
 					foreach (string ontologia in Model.ListaPestanyasOntologia)
-					{						
+					{																		
+						string nombrePaginaPropuesta = $"{Html.GetText("COMMON", "BUSQUEDAOC")} {Html.ObtenerTextoIdiomaUsuario(ontologia)}";											
 						<li>
 							<a class="item-dropdown linkAddNewPage"
 							data-pagetype="@((short)TipoPestanyaMenu.BusquedaSemantica)"
@@ -197,7 +198,7 @@ Antes se utilizaba en el Header. Ahora se colocará en la propia página. Quitar
 							data-nameonto="@ontologia"
 							data-toggle="modal">
 								<span class="material-icons">star</span>
-							@Html.GetText("COMMON", "BUSQUEDAOC") @ontologia
+								@nombrePaginaPropuesta
 							</a>
 						</li>
 					}

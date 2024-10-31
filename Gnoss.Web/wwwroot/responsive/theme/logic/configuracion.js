@@ -253,19 +253,17 @@ const operativaGestionSeoAnalytics = {
         // Código y script seleccionado
         let script = "";
         let codigo = "";
-        if (codigoSeleccionado == 'Si') {
-            codigo = that.inputCodigoGoogleAnalyticsPropio.val();
-            script = that.txtAreaScriptGoogleAnalyticsPropio.val();
+        if (codigoSeleccionado == 'Si') {            
+            that.options['ScriptGoogleAnalyticsPropio'] = encodeURIComponent(that.txtAreaScriptGoogleAnalyticsPropio.val());
         } else if (codigoSeleccionado == 'No') {
-            codigo = that.CodigoGoogleAnalytics.val();            
-            script = that.txtAreaScriptGoogleAnalytics.text();
+            that.options['CodigoGoogleAnalytics'] = encodeURIComponent(that.CodigoGoogleAnalytics.val());
         } else {
             codigo = this.inputCodigoGoogleAnalyticsDefecto.val();
             script = this.txtAreaScriptGoogleAnalyticsDefecto.val();             
         }
         // Construcción del objeto Google Analytics
-        that.options['CodigoGoogleAnalytics'] = encodeURIComponent(codigo);
-        that.options['ScriptGoogleAnalytics'] = encodeURIComponent(script);        
+        //that.options['CodigoGoogleAnalytics'] = encodeURIComponent(codigo);
+        //that.options['ScriptGoogleAnalytics'] = encodeURIComponent(script);        
     },
 
     /**
@@ -495,6 +493,20 @@ const operativaGestionDatosExtra = {
      */
     triggerEvents: function () {
         const that = this;
+
+        this.operativaMultiIdiomaParams = {
+            // Nº máximo de pestañas con idiomas a mostrar. Los demás quedarán ocultos
+            numIdiomasVisibles: 3,
+            // Establecer 1 tab por cada input (true, false) - False es la forma vieja
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
+            // No permitir padding bottom y si padding top
+            allowPaddingBottom: false,
+            allowPaddingTop: true,
+        };
+
+        // Inicializar operativa multiIdioma
+        operativaMultiIdioma.init(this.operativaMultiIdiomaParams); 
     },
 
     /**
@@ -537,6 +549,8 @@ const operativaGestionDatosExtra = {
         this.inputOpcion = $('[name="Opciones"]');
         this.translateListItemClassName = "translate-row";
         this.btnSaveEditExtraDataClassName = "btnSaveEditData";
+        this.tabIdiomaItem = $(".tabIdiomaItem ");
+        this.labelLanguageComponent = $(".language-component");
     },
 
     /**
@@ -677,6 +691,10 @@ const operativaGestionDatosExtra = {
                 }
             });
         });
+
+        this.tabIdiomaItem.off().on("click", function () {
+            that.handleViewExtraDataLanguageInfo();
+        });
     },
     handleClickBorrarTagOption: function (itemDeleted) {
         const that = this;
@@ -755,6 +773,24 @@ const operativaGestionDatosExtra = {
         // Añadir el item en el contenedor de items para su visualización
         tagContainer.append(autocompletePropertyTag); 
     },
+    handleViewExtraDataLanguageInfo: function () {
+
+        const that = this;
+        // Comprobar el item que está activo en el tab obteniendo el data-language de la opción "active"
+        setTimeout(function () {
+            // Detectar el tab item activo para conocer el idioma en el que se desean mostrar las páginas
+            const tabLanguageActive = that.tabIdiomaItem.filter(".active");
+            // Obtener el idioma del tabLanguageActivo
+            const languageActive = tabLanguageActive.data("language");
+            // Ocultar todas las labels y mostrar únicamente las del idioma seleccionado
+            that.labelLanguageComponent.addClass("d-none");
+            // Mostrar sólo las labelsLanguageComponent del idioma seleccionado
+            that.labelLanguageComponent.filter(function () {
+                return $(this).data("languageitem") == languageActive;
+            }).removeClass("d-none");
+
+        }, 250);
+    },
     handleSelectOptionEdit: function () {
         const that = this;
 
@@ -798,22 +834,44 @@ const operativaGestionDatosExtra = {
         let tagContainer = tagsSection.find(".tag-list");
         // Input oculto donde se añadirá el nuevo item seleccionado
         let inputHack = tagsSection.find("input[type=hidden]").first();
-        var nombre = $("#inptNombreNuevoDato").val();
+        //var nombre = $("#inptNombreNuevoDato").val();
+        var nombreCorto = $("#inptNombreCortoNuevoDato").val();
         var predicado = $("#inptURINuevoDato").val();
         var orden = $("#inptOrdenNuevoDato").val();
         var tipo = $('#TypeExtraData_OPCIONES')[0].checked ? "Opcion" : "TextoLibre";
         var obligatorio = $('#chkObligatorioNuevoDato')[0].checked;
+        var visible = $('#chkVisibleNuevoDato')[0].checked;
+
         var opciones = "";
         if (tipo == "Opcion") {
             opciones = inputHack.val();
         }
 
+        let textoIdiomaDefecto = $(`#input_inptNombreNuevoDato_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+        var nombre = "";
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            // Obtención del Key del idioma
+            const idioma = this.key;
+            // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para Nombre
+            let textoIdioma = $(`#input_inptNombreNuevoDato_${idioma}`).val();
+            if (textoIdioma == null || textoIdioma == "") {
+                textoIdioma = textoIdiomaDefecto;
+                $(`#input_inptNombreNuevoDato_${idioma}`).val(textoIdioma);
+            }
+            // Escribir el nombre del multiIdioma en el campo Hidden
+            nombre += textoIdioma + "@" + idioma + "|||";
+
+            //listaTextos.push({ "key": idioma, "value": textoIdioma });
+        });
+
         const params = {
             pNombre: nombre,
+            pNombreCorto: nombreCorto,
             pTipo: tipo,
             pOpciones: opciones,
             pObligatorio: obligatorio,
             pOrden: orden,
+            pVisible: visible,
             pPredicadoRDF: predicado
         };
 
@@ -848,24 +906,47 @@ const operativaGestionDatosExtra = {
         let tagContainer = modal.find("#tagsContainer_opciones_" + id);
         // Input oculto donde se añadirá el nuevo item seleccionado
         let inputHack = modal.find("#txtOpcion_Hack_" + id);
-        var nombre = modal.find("#inptNombre_" + id).val();
+        //var nombre = modal.find("#inptNombre_" + id).val();
+        var nombreCorto = modal.find("#inptNombreCorto_" + id).val();
         var predicado = modal.find("#inptURI_"+id).val();
         var tipo = modal.find("#TypeExtraDataEdit_"+id)[0].checked ? "Opcion" : "TextoLibre";
         var obligatorio = modal.find("#chkObligatorio_" + id)[0].checked;
+        var visible = modal.find("#chkVisible_" + id)[0].checked;
         var orden = modal.find("#inptOrden_"+id).val();
         var opciones = "";
+
         if (tipo == "Opcion") {
             opciones = inputHack.val();
         }
+        // nuevo
+        let textoIdiomaDefecto = $(`#input_inptNombre_${id}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+        var nombre = "";
+
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            // Obtención del Key del idioma
+            const idioma = this.key;
+            // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para Nombre
+            let textoIdioma = $(`#input_inptNombre_${id}_${idioma}`).val();
+            if (textoIdioma == null || textoIdioma == "") {
+                textoIdioma = textoIdiomaDefecto;
+                $(`#input_inptNombre_${id}_${idioma}`).val(textoIdioma);
+            }
+            // Escribir el nombre del multiIdioma en el campo Hidden
+            nombre += textoIdioma + "@" + idioma + "|||";
+
+            //listaTextos.push({ "key": idioma, "value": textoIdioma });
+        });
 
         const params = {
             pDatoExtraID: id,
             pNombre: nombre,
+            pNombreCorto: nombreCorto,
             pTipo: tipo,
             pOpciones: opciones,
             pObligatorio: obligatorio,
             pOrden: orden,
-            pPredicadoRDF: predicado
+            pPredicadoRDF: predicado,
+            pVisible: visible
         };
 
         // Mostrar loading
@@ -2930,7 +3011,7 @@ const operativaSubirConfiguracion = {
             loadingMostrar();
 
             var dataPost = new FormData();
-            dataPost.append("ficheroZip", inputFichero.files[0]);
+            dataPost.append("pFicheroZip", inputFichero.files[0]);
             // Envío del zip mediante una petición ajax
             $.ajax({
                 url: that.urlUploadConfig,
@@ -3110,7 +3191,7 @@ const operativaGestionTrazas = {
             });	                        
         });
         
-        // Botón para confirmar la activación de trazas en servicios seleccionados desde el modal
+        // Botón para confirmar la eliminación de todas las trazas
         configEventByClassName(`${that.btnConfirmDeleteAllTrazasClassName}`, function(element){
             const $btnConfirmDeleteAllTrazas = $(element);
             $btnConfirmDeleteAllTrazas.off().on("click", function(){   
@@ -3118,6 +3199,13 @@ const operativaGestionTrazas = {
             });	                        
         });
 
+        // Botón para confirmar la eliminación de la traza seleccionada
+        configEventByClassName(`${that.btnConfirmDeleteTrazaClassName}`, function(element){
+            const $btnConfirmDeleteTrazaSelected = $(element);
+            $btnConfirmDeleteTrazaSelected.off().on("click", function(){   
+                that.handleDeleteTrazaSelected();                
+            });	                        
+        });        
 
         // Input para buscar servicios dentro del modal
         configEventById(`${that.txtBuscarServicioId}`, function(element){
@@ -3341,10 +3429,10 @@ const operativaGestionTrazas = {
             setTimeout(function() {                                                                 
                 if (deleteTrazas == false){
                     // Trazas añadidas   
-                    mostrarNotificacion("success", "Las trazas se han activado correctamente.")                  
+                    mostrarNotificacion("success", "Las trazas se han activado correctamente.");   
                 }else{
                     // Trazas eliminadas    
-                    mostrarNotificacion("success", "Las trazas se han desactivado correctamente.")               
+                    mostrarNotificacion("success", "Las trazas se han desactivado correctamente.");               
                     if (deleteAllTrazas == false){
                         // Eliminar la traza seleccionada
                         that.filaService.remove();
@@ -5003,7 +5091,7 @@ const operativaGestionCookies = {
             // Sin multiIdioma.
             let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
             // Establecer el nombre en el input correspondiente
-            inputUrl.val(textoIdiomaDefecto);
+            inputName.val(textoIdiomaDefecto);
         }     
     },
     
@@ -5231,8 +5319,9 @@ operativaGestionConfiguracionMetaAdministrador = {
         this.pParams = pParams;
         this.config(pParams);
         this.configEvents();
-        this.configRutas(); 
-        this.triggerEvents();            
+        this.configRutas();
+        this.triggerEvents();
+        this.handleShowAutomaticRegistration();
     },
 
     /**
@@ -5252,7 +5341,7 @@ operativaGestionConfiguracionMetaAdministrador = {
         // Url para editar un certificado
         this.urlBase = refineURL(); 
         this.urlSaveConfiguration = `${this.urlBase}/save`;
-
+        this.urlShutdown = `${this.urlBase}/shutdown`;
         // Objeto donde se guardarán las opciones para su guardado
         this.Options = {};
     },  
@@ -5272,6 +5361,8 @@ operativaGestionConfiguracionMetaAdministrador = {
         this.AdministracionVistasPermitido = $("#AdministracionVistasPermitido");
         // Panel contenedor del Select PersonalizacionIDVistas
         this.panelPersonalizacionVistas = $(".editarVista");
+        // Panel de aleste que avisa de que se va a reiniciar la aplicación
+        this.panelAvisoReinicioAplicacion = $("#panelAvisoReinicioAplicacion");
         // Panel informativo de que las vistas se van a eliminar
         this.panelAlertaPersonalizacionVistas = $("#panelAlertaPersonalizacionVistas");
         this.PersonalizacionIDVistas = $("#PersonalizacionIDVistas");        
@@ -5324,6 +5415,9 @@ operativaGestionConfiguracionMetaAdministrador = {
         this.SiteMapActivado = $("#SiteMapActivado");
         this.GoogleDrive = $("#GoogleDrive");
         this.ProyectoSinNombreCortoEnURL = $("#ProyectoSinNombreCortoEnURL");
+        this.RegistroAutomatico = $("#RegistroAutomatico");
+        this.RegistroAutomaticoCheckbox = $("#RegistroAutomaticoCheckbox");
+        this.ReiniciarAplicacion = $("#ReiniciarAplicacion");
         this.SegundosDormirNewsletterPorCorreo = $("#SegundosDormirNewsletterPorCorreo");
         this.Replicacion = $("#Replicacion");        
         /* Inputs de Semántica */
@@ -5378,6 +5472,40 @@ operativaGestionConfiguracionMetaAdministrador = {
         this.VistasActivadas.on("click", function(){
             that.handleShowHideProjectViews();
         });
+
+        this.ProyectoSinNombreCortoEnURL.on("click", function (){
+            that.handleShowRebootAlert();
+            that.handleShowAutomaticRegistration();
+        });
+    },
+
+    /**
+     * Método para controlar la visualización del panel de alerta de reinicio de la aplicación
+     */
+    handleShowRebootAlert: function () {
+        const that = this;
+        // Detectar si se desea mostrar o no el panel de alerta de reinicio de la aplicación
+        if (!that.panelAvisoReinicioAplicacion.hasClass("d-flex"))
+        {
+            that.panelAvisoReinicioAplicacion.addClass("d-flex");
+        }
+        else
+        {
+            that.panelAvisoReinicioAplicacion.removeClass("d-flex");
+        }
+    },
+
+    handleShowAutomaticRegistration: function () {
+        const that = this;
+        if (that.ProyectoSinNombreCortoEnURL.is(':checked'))
+        {
+            that.RegistroAutomatico.removeClass("d-none");
+        }
+        else
+        {
+            that.RegistroAutomatico.addClass("d-none");
+            that.RegistroAutomaticoCheckbox.prop('checked', false);
+        }
     },
 
     /**
@@ -5468,6 +5596,9 @@ operativaGestionConfiguracionMetaAdministrador = {
         that.Options['TerceraPeticionFacetasPlegadas'] = that.TerceraPeticionFacetasPlegadas.is(':checked');
         that.Options['TieneGrafoDbPedia'] = that.TieneGrafoDbPedia.is(':checked');
         that.Options['ProyectoSinNombreCortoEnURL'] = that.ProyectoSinNombreCortoEnURL.is(':checked');
+        that.Options['RegistroAutomaticoCheckbox'] = that.RegistroAutomaticoCheckbox.is(':checked');
+        that.Options['ReiniciarAplicacion'] = that.ReiniciarAplicacion.is(':checked');
+        
 
         if (that.RegistroAbierto.length > 0) {
             that.Options['RegistroAbierto'] = that.RegistroAbierto.is(':checked');
@@ -5549,15 +5680,34 @@ operativaGestionConfiguracionMetaAdministrador = {
         true
         ).done(function (data) {
             // OK Guardado
-            if (data != "") {
-                mostrarNotificacion("success", data)
+            if (data == "shutdown")
+            {
+                mostrarNotificacion("success", "Los cambios se han guardado correctamente y se va a proceder al reinicio de la aplicacion");
+                setTimeout(function () {
+                    // Realizar petición para apagar la aplicacion
+                    GnossPeticionAjax(
+                        that.urlShutdown,
+                        true
+                    ).done(function (data) {
+                        // OK Guardado
+                        mostrarNotificacion("success", data);
+                    }).fail(function (data) {
+                        // KO Guardado
+                        mostrarNotificacion("error", data);
+                    }).always(function () {
+                        loadingOcultar();
+                    });
+                }, 5000);
             }
-            mostrarNotificacion("success", "Los cambios se han guardado correctamente");            
+            else
+            {
+                mostrarNotificacion("success", "Los cambios se han guardado correctamente");
+            }
         }).fail(function (data) {
             // KO Guardado
             const error = data.split('|||');
             if (data != "") {
-                mostrarNotificacion("error",data)
+                mostrarNotificacion("error", data);
             }
             else
             {
@@ -5592,7 +5742,8 @@ operativaGestionConfiguracionPlataforma = {
         const that = this;
                        
         // Inicializar comportamientos de select2
-        comportamientoInicial.iniciarSelects2();     
+        comportamientoInicial.iniciarSelects2(); 
+        that.loadInitialLanguageValues();
     },   
 
     /**
@@ -5602,7 +5753,8 @@ operativaGestionConfiguracionPlataforma = {
         // Url para editar un certificado
         this.urlBase = refineURL(); 
         this.urlSaveConfiguration = `${this.urlBase}/save`;
-
+        this.urlShutdown = `${this.urlBase}/shutdown`;
+        this.urlAddCustomLanguage = `${this.urlBase}/add-custom-language`;
         // Objeto donde se guardarán las opciones para su guardado
         this.Options = {};
     },  
@@ -5624,6 +5776,7 @@ operativaGestionConfiguracionPlataforma = {
         this.PerfilPersonalDisponible = $("#PerfilPersonalDisponible");
         this.MostrarGruposIDEnHtml = $("#MostrarGruposIDEnHtml");                        
         this.GenerarGrafoContribuciones = $("#GenerarGrafoContribuciones");
+        this.ReiniciarAplicacion = $("#ReiniciarAplicacion");
         this.MantenerSesionActiva = $("#MantenerSesionActiva");
         this.NoEnviarCorreoSeguirPerfil = $("#NoEnviarCorreoSeguirPerfil");
         this.EdadLimiteRegistroEcosistema = $("#EdadLimiteRegistroEcosistema");
@@ -5633,7 +5786,9 @@ operativaGestionConfiguracionPlataforma = {
         this.SelectDuracionCookieUsuario = $("#SelectDuracionCookieUsuario");
         /* Inputs de Sistemas */
         this.CodigoGoogleAnalyticsProyecto = $("#CodigoGoogleAnalyticsProyecto");
+        this.DominiosPermitidosCORS = $("#DominiosPermitidosCORS");
         this.UrlsPropiasProyecto = $("#UrlsPropiasProyecto");
+        this.Idiomas = $("#Idiomas");
         // Input de la web inicial
         this.txtUrlWeb = $("#txtUrlWeb");
         // Input de la web de proyectos
@@ -5646,14 +5801,20 @@ operativaGestionConfiguracionPlataforma = {
         this.DominiosEmailLoginRedesSociales = $("#DominiosEmailLoginRedesSociales");  
         /* Datos del ecosistema */
         this.EcosistemaSinMetaproyecto = $("#EcosistemaSinMetaproyecto");
+        
         // Desaparece por uso de checkbox this.Idiomas = $("#Idiomas"); 
         // Checkbox con los diferentes idiomas
         this.checkBoxIdiomas = $(".languageOption");
+        // Linea con los diferentes idiomas personalizados
+        this.customLanguageClassName = "custom-language-row";
+      
         // Desaparece por uso de checkbox this.ExtensionesImagenesCMSMultimedia = $("#ExtensionesImagenesCMSMultimedia");
         // Checkbox con los diferentes idiomas
         this.checkBoxExtensionesImagenesCmsMultimedia = $(".extensionImageOption");        
         // Desaparece por uso de checkbox this.ExtensionesDocumentosCMSMultimedia = $("#ExtensionesDocumentosCMSMultimedia");
-        this.checkBoxExtensionesDocumentosCMSMultimedia = $(".extensionDocumentOption");        
+        this.checkBoxExtensionesDocumentosCMSMultimedia = $(".extensionDocumentOption");
+        this.panelAvisoReinicioAplicacionPlataforma = $("#panelAvisoReinicioAplicacionPlataforma");
+
 
         this.Copyright = $("#Copyright");
         /* Urls de configuración */
@@ -5676,9 +5837,35 @@ operativaGestionConfiguracionPlataforma = {
         this.GrafoMetaBusquedaComunidades = $("#GrafoMetaBusquedaComunidades"); 
         // Botón para guardar la configuración                        
         this.btnSave = $("#btnSave");
+        // Botón para abrir el modal para añadir un nuevo idioma personalizado
+        this.btnAddLanguage = $("#btnAddLanguage");
+        // Botón para añadir un nuevo idioma personalizado
+        this.btnAddCustomLanguage = $("#btnAddCustomLanguage");
+        // Botón para editar un idioma personalizado
+        this.btnEditCustomLanguage = $("#btnEditCustomLanguage");
+        // Botón para abrir el modal para editar un idioma personalizado
+        this.btnEditCustomLanguageRowClassName = "btnEditCustomLanguageRow";
+        // Botón para eliminar un idioma personalizado
+        this.btnDeleteCustomLanguage = "btnDeleteCustomLanguage";
+        /* Inputs del modal _add-language */
+        this.inputClaveIdioma = $("#inputClaveIdioma");
+        this.inputValorIdioma = $("#inputValorIdioma");
+        // Lista con los idiomas personalizados
+        this.customLanguageList = $("#customLanguageList");
+        // Modal para añadir un idioma parsonalizado
+        this.modalAddLanguage = $("#modal-add-language");
+        // Nombre del idioma personalizado
+        this.componentCustomLanguageNameClassName = "component-customLanguageName";
 
         // Por defecto se utilizarán las mismas URLS para proyectos públicios y privados
         this.useSameUrlPrivate = true;
+
+        this.arrayCheckBoxLanguageDefaultValues = [];
+        this.inicialListCustomLanguage = [];
+        this.listCustomLanguage = [];
+        this.listLanguageKeys = [];
+
+        // APLICAR UN COMP
     },   
 
     /**
@@ -5686,7 +5873,20 @@ operativaGestionConfiguracionPlataforma = {
      */
     configEvents: function (pParams) {
         const that = this;
-                    
+
+        // Comportamientos del modal container 
+        this.modalAddLanguage.on('show.bs.modal', (e) => {
+            // Aparición del modal
+        })
+        .on('hidden.bs.modal', (e) => {
+            // Vaciar el modal
+            that.inputClaveIdioma.val("");
+            that.inputValorIdioma.val("");
+            that.inputClaveIdioma.removeAttr("disabled");
+            that.btnEditCustomLanguage.addClass("d-none");
+            that.btnAddCustomLanguage.addClass("d-none");
+        });
+
         // Opción radioButton de utilizar la misma url para proyectos privados y públicos/restringidos
         this.rbUseSameProjectsUrl.off().on("click", function(){
             const radioButton = $(this);
@@ -5698,7 +5898,87 @@ operativaGestionConfiguracionPlataforma = {
             that.handleObtenerdatos();
             that.handleSaveOpcionesPlataforma();
         });
+
+        this.checkBoxIdiomas.on("click", function () {
+            that.comprobarCambiosEnIdiomas();
+        });
+
+        // Botón para abrir el modal para añadir un nuevo idioma personalizado
+        this.btnAddLanguage.on("click", function () {
+            that.btnAddCustomLanguage.removeClass("d-none");
+        });
+
+        // Botón para añadir un nuevo idioma personalizado
+        this.btnAddCustomLanguage.on("click", function () {
+            that.handleAddCustomLaguage();
+            that.comprobarCambiosEnIdiomas();
+        });
+
+        // Botón para editar un idioma personalizado
+        this.btnEditCustomLanguage.on("click", function () {
+            that.handleEditCustomLaguage();
+            that.comprobarCambiosEnIdiomas();
+        });
+
+        // Botón para eliminar un idioma personalizado
+        configEventByClassName(`${that.btnDeleteCustomLanguage}`, function (element) {
+            const editButton = $(element);
+            editButton.off().on("click", function () {
+                that.handleDeleteCustomLanguage(editButton);
+                that.comprobarCambiosEnIdiomas();
+            });
+        });
+
+        // Botón para abrir el modal para editar un idioma personalizado
+        configEventByClassName(`${that.btnEditCustomLanguageRowClassName}`, function (element) {
+            const editButton = $(element);
+            editButton.off().on("click", function () {
+                that.handlePrepareModalForEditLanguage(editButton);
+            });
+        });
+        
     },
+
+    /**
+     * Método para eliminar un idioma personalizado
+     * @param {any} editButton boton que ha ejecutado este metodo
+     */
+    handleDeleteCustomLanguage: function (editButton) {
+        const that = this;
+
+        var customLanguageRowEdited = editButton.closest(`.${that.customLanguageClassName}`);
+        var idiomaPersonalizado = customLanguageRowEdited.data("language");
+        var key = idiomaPersonalizado.slice(0, 2);
+
+        // Elimina la clave de la lista de claves
+        that.listLanguageKeys = that.listLanguageKeys.filter(function (item) {
+            return item !== key;
+        });
+        // Elimina el idoma personalizaco de la lista
+        that.listCustomLanguage = that.listCustomLanguage.filter(function (item) {
+            return item !== idiomaPersonalizado;
+        });
+        // Elimina el idioma personalizado de la vista
+        customLanguageRowEdited.remove();
+    },
+
+    /**
+     * Método para preparar el modal para mostrar los datos y conocer la fila del idioma que está siendo editada
+     * @param {any} editButton boton que ha ejecutado este metodo
+     * */
+    handlePrepareModalForEditLanguage: function (editButton) {
+        const that = this;
+
+        that.customLanguageRowEdited = editButton.closest(`.${that.customLanguageClassName}`);
+
+        that.inputClaveIdioma.attr('disabled', 'disabled');
+        var claveValor = that.customLanguageRowEdited.attr("data-language").split("|");
+        that.inputClaveIdioma.val(claveValor[0]);
+        that.inputValorIdioma.val(claveValor[1]);
+
+        that.btnEditCustomLanguage.removeClass("d-none");
+    },
+
 
     /**
      * Método para controlar si se desea o no utilizar la misma url pública para proyectos privados. Mostrará u ocultará el panel de la url privada     
@@ -5716,7 +5996,164 @@ operativaGestionConfiguracionPlataforma = {
             that.panelUrlPrivateProjects.removeClass("d-none");
             that.useSameUrlPrivate = false;
         }
-    },    
+    },
+
+    /**
+     * Método que carga en el array los valores por defecto de los idiomas
+     */
+    loadInitialLanguageValues: function () {
+        const that = this;
+        $.each(that.checkBoxIdiomas, function () {
+            const $this = $(this);
+            const id = $this.attr('id'); //id del idioma
+            const checked = $this.prop('checked');// $this.is(":checked"); //true o false
+            const keyLanguage = $this.attr('data-language').slice(0, 2);
+            that.arrayCheckBoxLanguageDefaultValues.push({ id: id, checked: checked });
+            that.listLanguageKeys.push(keyLanguage);
+        });
+
+        // Comprobar custom language al cargar la página
+        $.each($(`.${that.customLanguageClassName}`), function () {
+            const $this = $(this);
+            const customLanguage = $this.attr('data-language');
+            that.inicialListCustomLanguage.push(customLanguage);
+        });
+    },
+
+    /**
+     * Método que comprueba si ha habido algún cambio en la configuracion de los idiomas. Si hay cambios muestra el panel de aviso
+     */
+    comprobarCambiosEnIdiomas: function () {
+        var b = false; //no hay cambios
+        const that = this;
+        $.each(that.checkBoxIdiomas, function () {
+            const $this = $(this);
+            const id = $this.attr('id');
+            const checked = $this.is(":checked");
+            // Comprobar si hay algún cambio en las checkbox
+            if (!b) {
+                var checkedLanguageInitial = that.arrayCheckBoxLanguageDefaultValues.find(objeto => objeto.id === id); 
+                if (checked != checkedLanguageInitial.checked) {
+                    // Hay algun cambio - return
+                    b = true;                   
+                }
+            }
+            // Comprobar si hay algún cambio en los idiomas personalizados
+            if (!b) {
+                $.each(that.listCustomLanguage, function () {
+                    if (!that.inicialListCustomLanguage.includes(this.toString())) {
+                        b = true;
+                    }
+                });
+            }
+            if (!b) {
+                $.each(that.inicialListCustomLanguage, function () {
+                    if (!that.listCustomLanguage.includes(this.toString())) {
+                        b = true;
+                    }
+                });
+            }
+
+        });
+        // Controlar aparición del panel de alerta
+        if (b) {
+            that.panelAvisoReinicioAplicacionPlataforma.addClass("d-flex");
+        }else {
+            that.panelAvisoReinicioAplicacionPlataforma.removeClass("d-flex");
+        }
+    },
+
+    /**
+     * Metodo para añadir un nuevo idioma personalizado
+     */
+    handleAddCustomLaguage: function () {
+        var error = false;
+
+        const that = this;
+        const inputClaveIdioma = that.inputClaveIdioma.val().trim();
+        const inputValorIdioma = that.inputValorIdioma.val().trim();
+
+        // Comprobar si el id tiene exactamente 2 caracteres
+        if (inputClaveIdioma.length != 2) {
+            mostrarNotificacion("error", "El id tiene que tener 2 caracteres exactamente");
+            return;
+        }
+
+        // Comprobar si el id no existe ya
+        $.each(that.listLanguageKeys, function () {
+            if (this == inputClaveIdioma) {
+                mostrarNotificacion("error", `El id '${inputClaveIdioma}' ya existe`);
+                error = true;
+                return;
+            }
+        });
+        if (error) {
+            return;
+        }
+
+        // Añadir el nuevo id a la lista de claves de idiomas
+        that.listLanguageKeys.push(inputClaveIdioma);
+        // Añadir el nuevo isoma a la lista de idiomas personalizados
+        that.listCustomLanguage.push(`${inputClaveIdioma}|${inputValorIdioma}`);
+
+        // Todo parece estar correcto
+        that.getCustomLangueHtmlTemplate(inputClaveIdioma, inputValorIdioma);
+
+        that.modalAddLanguage.modal('toggle');
+
+    },
+
+    /**
+     * Metodo para editar un idioma personalizado
+     */
+    handleEditCustomLaguage: function () {
+        const that = this;
+        const inputClaveIdioma = that.inputClaveIdioma.val().trim();
+        const inputValorIdioma = that.inputValorIdioma.val().trim();
+
+        var idiomaPersonalizado = that.customLanguageRowEdited.attr("data-language");
+        var claveValor = idiomaPersonalizado.split("|");
+        var clave = claveValor[0];
+
+        // Elimina la el idioma personalizado de la lista
+        that.listCustomLanguage = that.listCustomLanguage.filter(function (item) {
+            return item !== idiomaPersonalizado;
+        });
+
+        // Añada el idioma personalizado a la lista con los cambios realizados
+        that.listCustomLanguage.push(`${inputClaveIdioma}|${inputValorIdioma}`);
+
+        // Edita los cambios en la vista para el idioma personalizado
+        that.customLanguageRowEdited.attr("data-language", `${clave}|${inputValorIdioma}`);
+        that.customLanguageRowEdited.find(`.${that.componentCustomLanguageNameClassName}`).html(inputValorIdioma);
+
+        that.modalAddLanguage.modal('toggle');
+    },
+
+    /**
+    * Metodo para cargar el Html de un idioma personalizado en la vista
+    */
+    getCustomLangueHtmlTemplate: function (keyLanguage, valueLanguage) {
+        const that = this;
+        const dataPost = {
+            customLanguage: `${keyLanguage}|${valueLanguage}`
+        };
+
+        // Mostrar loading
+        loadingMostrar(); 
+        
+        GnossPeticionAjax(
+            that.urlAddCustomLanguage,
+            dataPost,
+            true
+        ).done(function (data) {
+            // OK
+            that.customLanguageList.append(data);
+        }).always(function () {
+            loadingOcultar();
+        });
+        
+    },
 
     /**
      * Método para recoger los datos de la configuración para el guardado.
@@ -5745,6 +6182,7 @@ operativaGestionConfiguracionPlataforma = {
         that.Options['PerfilPersonalDisponible'] = that.PerfilPersonalDisponible.is(':checked');
         that.Options['MostrarGruposIDEnHtml'] = that.MostrarGruposIDEnHtml.is(':checked');
         that.Options['GenerarGrafoContribuciones'] = that.GenerarGrafoContribuciones.is(':checked');
+        that.Options['ReiniciarAplicacion'] = that.ReiniciarAplicacion.is(':checked');
         that.Options['MantenerSesionActiva'] = that.MantenerSesionActiva.is(':checked');
         that.Options['NoEnviarCorreoSeguirPerfil'] = that.NoEnviarCorreoSeguirPerfil.is(':checked');
         that.Options['LoginUnicoPorUsuario'] = that.LoginUnicoPorUsuario.is(':checked');
@@ -5755,6 +6193,8 @@ operativaGestionConfiguracionPlataforma = {
         // Desaparece that.Options['UbicacionLogs'] = that.UbicacionLogs.val();
         // Desaparece that.Options['UbicacionTrazas'] = that.UbicacionTrazas.val();        
         that.Options['CodigoGoogleAnalyticsProyecto'] = that.CodigoGoogleAnalyticsProyecto.val();
+        that.Options['DominiosPermitidosCORS'] = that.DominiosPermitidosCORS.val();
+
         // Desaparece por UrlProyectosPublicos y URLProyectosPrivados that.Options['UrlsPropiasProyecto'] = that.UrlsPropiasProyecto.val();
        
         // Web para proyectos/comunidades privadas o públicas        
@@ -5778,6 +6218,11 @@ operativaGestionConfiguracionPlataforma = {
             if($this.is(":checked")) {                
                 idiomasValue += `${$this.data("language")}&&&`;
             }
+        });
+
+        $.each($(`.${that.customLanguageClassName}`), function () {
+            const $this = $(this);
+            idiomasValue += `${$this.data("language")}&&&`;
         });
         // Eliminar los 3 últimos caracteres sobrantes (&&&) y establecer valor por defecto si no hay ninguno
         that.Options['Idiomas'] = idiomasValue.trim().length > 0 ? idiomasValue.slice(0,-3) : "es|Español";
@@ -5819,7 +6264,7 @@ operativaGestionConfiguracionPlataforma = {
             }
         });
         // Eliminar los 3 últimos caracteres sobrantes (&&&) y establecer valor por defecto si no hay ninguno
-        that.Options['ExtensionesImagenesCMSMultimedia'] = extensionesDocumentosCMSMultimediaValue.trim().length > 0 ? extensionesDocumentosCMSMultimediaValue.slice(0,-3) : ".pdf&&&.txt&&&.doc&&&.docx";        
+        that.Options['ExtensionesDocumentosCMSMultimedia'] = extensionesDocumentosCMSMultimediaValue.trim().length > 0 ? extensionesDocumentosCMSMultimediaValue.slice(0,-3) : ".pdf&&&.txt&&&.doc&&&.docx";        
 
         // Desaparece that.Options['ipFTP'] = that.ipFTP.val();
         // Desaparece that.Options['puertoFTP'] = that.puertoFTP.val();
@@ -5881,7 +6326,27 @@ operativaGestionConfiguracionPlataforma = {
         true
         ).done(function (data) {
             // OK Guardado
-            mostrarNotificacion("success", "Los cambios se han guardado correctamente");            
+            if (data == "shutdown") {
+                mostrarNotificacion("success", "Los cambios se han guardado correctamente y se va a proceder al reinicio de la aplicacion");
+                setTimeout(function () {
+                    // Realizar petición para apagar la aplicacion
+                    GnossPeticionAjax(
+                        that.urlShutdown,
+                        true
+                    ).done(function (data) {
+                        // OK Guardado
+                        mostrarNotificacion("success", data);
+                    }).fail(function (data) {
+                        // KO Guardado
+                        mostrarNotificacion("error", data);
+                    }).always(function () {
+                        loadingOcultar();
+                    });
+                }, 5000);
+            }
+            else {
+                mostrarNotificacion("success", "Los cambios se han guardado correctamente");
+            }         
         }).fail(function (data) {
             // KO Guardado
             const error = data.split('|||');
@@ -5914,10 +6379,16 @@ const operativaEstadoServicios = {
      * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
      */
     triggerEvents: function(){
-        const that = this; 
-        
+        const that = this;
+
+        // Ejecutar peticiones para conocer el estado de los servicios que necesitan la creacion de un recurso para comprobarlos
+        that.handleCreateResourceAndCheckServices();
+
         // Mostrar los items según la selección
         that.handleShowServiceType();
+
+        // Ejecutar peticiones para conocer el estado de los servicios
+        that.handleCheckServices();
     },    
 
     /*
@@ -5943,14 +6414,29 @@ const operativaEstadoServicios = {
         this.numResultadosServicios = $(".numResultados");
         // Buscador de servicios
         this.txtBuscarServicio = $("#txtBuscarServicio");
+        // Panel de error que avisa de que no se ha podido borrar el recurso
+        this.panelErrorDeleteResource = $("#panelErrorDeleteResource");
     },  
     
     /**
      * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
      */
     configRutas: function (pParams) {
-        this.urlBase = refineURL();  
-        this.urlCheckInstallations = `${this.urlBase}/get-servicio`;
+        this.urlBase = refineURL();
+        this.urlComprobarServicioOntologias = `${this.urlBase}/comprobar-servicio-ontologias`;
+        this.urlComprobarServicioInterno = `${this.urlBase}/comprobar-servicio-interno`;
+        this.urlComprobarServicioDocumentos = `${this.urlBase}/comprobar-servicio-documentos`;
+        this.urlComprobarApi = `${this.urlBase}/comprobar-api`;
+        this.urlComprobarRelatedVirtuoso = `${this.urlBase}/comprobar-related-virtuoso`;
+        this.urlComprobarRabbitSearchGraphGenerator = `${this.urlBase}/comprobar-rabbit-search-graph-generator`;
+        this.urlCrearRecurso = `${this.urlBase}/crear-recurso`;
+        this.urlComprobarVirtuoso = `${this.urlBase}/comprobar-virtuoso`;
+        this.urlComprobarReplicacionVirtuoso = `${this.urlBase}/comprobar-replicacion-virtuoso`;
+        this.urlComprobarGeneradorMiniaturas = `${this.urlBase}/comprobar-generador-miniaturas`;
+        this.urlComprobarAutocompleteApiLucene = `${this.urlBase}/comprobar-autocomplete-api-lucene`;
+        this.urlComprobarVisitas = `${this.urlBase}/comprobar-visitas`;
+        this.urlEliminarRecurso = `${this.urlBase}/eliminar-recurso`;
+        this.urlComprobarRedis = `${this.urlBase}/comprobar-redis`;
     },    
 
     /**
@@ -5962,8 +6448,9 @@ const operativaEstadoServicios = {
         // Botón para comprobar el estado de las instalaciones de los servicios
         configEventById(`${that.btnCheckServicesId}`, function(element){
             const $input = $(element);
-            $input.off().on("click", function(){                                                      
-                that.handleCheckInstallations();
+            $input.off().on("click", function () {
+                that.handleDeleteServiceStatus();
+                that.triggerEvents();
             });	    
         });  
 
@@ -5985,6 +6472,20 @@ const operativaEstadoServicios = {
                 that.handleSearchService();                                                         
             }, 500);
         });        
+    },
+
+    /**
+     * Metodo para borrar los estados de los servicios en la vista
+     */
+    handleDeleteServiceStatus: function () {
+        $("#id-added-service-list").find(".okStatus").removeClass("d-flex");
+        $("#id-added-service-list").find(".koStatus").removeClass("d-flex");
+        $("#id-added-service-list").find(".okStatus").find(".material-icons").attr("data-icon", "");
+        $("#id-added-service-list").find(".okStatus").find(".material-icons").text("");
+        $("#id-added-service-list").find(".koStatus").find(".material-icons").attr("data-icon", "");
+        $("#id-added-service-list").find(".koStatus").find(".material-icons").text("");
+        $("#id-added-service-list").find(".statusDescription").text("");
+        $("#id-added-service-list").find(".loadingStatus").removeClass("d-none");
     },
 
     /**
@@ -6049,34 +6550,143 @@ const operativaEstadoServicios = {
 
         // Actualizar el contador para mostrar los servicios visibles
         that.handleCheckNumberOfServices();
-    },
+    },    
 
     /**
-     * Método para comprobar el estado de las instalaciones de los servicios de la comunidad
-     * Realiza una petición a backEnd para obtener cuál es el estado de los servicios.
+     * Método para comprobar el estado de los servicios
      */
-    handleCheckInstallations: function(){
+    handleCheckServices: function () {
         const that = this;
-        
-        loadingMostrar();
+        var json = "";
 
+        // Comprobar Api
+        that.handleCheckServiceStatus(that.urlComprobarApi);
+        // Comprobar servicio Archivos
+        that.handleCheckServiceStatus(that.urlComprobarServicioOntologias);
+        // Comprobar servicio Documentos
+        that.handleCheckServiceStatus(that.urlComprobarServicioDocumentos);
+        // Comprobar servicio Interno
+        that.handleCheckServiceStatus(that.urlComprobarServicioInterno);
+        // Comprobar servicio RelatedVirtuoso
+        that.handleCheckServiceStatus(that.urlComprobarRelatedVirtuoso);
+        // Comprobar Rabbit y servicio SearchGraphGenerator
         GnossPeticionAjax(
-            that.urlCheckInstallations,
+            that.urlComprobarRabbitSearchGraphGenerator,
             null,
             true
         ).done(function (data) {
-            // OK            
-            $(`#${that.serviceListId}`).hide().html(data).fadeIn();
-            // Mostrar los servicios activos en base a la opción activa
-            that.handleShowServiceType();
-        }).fail(function (error) {                       
-            // KO
-            mostrarNotificacion("error", "Se ha producido un error al intentar comprobar el estado de los servicios. Por favor, inténtalo de nuevo más tarde");            
-        }).always(function () {            
-            loadingOcultar();
-        });        
-    },    
+            json = JSON.parse(data);
+            $.each(json, function () {
+                that.printServiceStatus(this);
+            });
+        });
+        // Comprobar servicio Redis
+        that.handleCheckServiceStatus(that.urlComprobarRedis);
+    }, 
 
+    /**
+     * Método que comprobaro el estado del servicio segun la url pasada
+     * @param {string} url: Url a la que se realiza la petición para consultar el estado del servicio
+     * @param {any} options: Parametros que necesita el méntodo que comprueba el estado del servicio
+     */
+    handleCheckServiceStatus: function (url) {
+        const that = this;
+
+        GnossPeticionAjax(
+            url,
+            null,
+            true
+        ).done(function (data) {
+            var json = JSON.parse(data);
+            that.printServiceStatus(json);
+        });
+    },
+
+    /**
+     * Método que pinta en la vista el estado del servicio
+     * @param {any} data: modelo que contiene los datos para mostrar el estado del servicio en la vista
+     */
+    printServiceStatus: function (data) {
+        $(`#${data.service}`).find(`.${data.status}`).addClass("d-flex");
+        $(`#${data.service}`).find(`.${data.status}`).find(".material-icons").attr("data-icon", `${data.icon}`);
+        $(`#${data.service}`).find(`.${data.status}`).find(".material-icons").text(data.icon);
+        $(`#${data.service}`).find(".statusDescription").html(data.description.replace(/\n/g, '<br/>'));
+        $(`#${data.service}`).find(".loadingStatus").addClass("d-none");
+    },
+
+    /**
+     * Método que crea un recurso para comprobar el estado de los servicios
+     */
+    handleCreateResourceAndCheckServices: function () {
+        const that = this;
+        let recursoID = "";
+        var json = "";
+
+        GnossPeticionAjax(
+            that.urlCrearRecurso,
+            null,
+            true
+        ).done(function (data) {
+            json = JSON.parse(data);
+            if (json.resourceID == "00000000-0000-0000-0000-000000000000") {
+                $.each(json.serviceStatusModelList, function () {
+                    that.printServiceStatus(this);
+                });
+            }
+            else {
+                recursoID = json.resourceID;
+                // Comprobar servicio Virtuoso
+                that.handleCheckServiceStatus(that.urlComprobarVirtuoso + "?recursoID=" + recursoID);
+
+                // Comprobar servicios Replicacion Virtuoso y HaProxy
+                GnossPeticionAjax(
+                    that.urlComprobarReplicacionVirtuoso + "?recursoID=" + recursoID,
+                    null,
+                    true
+                ).done(function (data) {
+                    json = JSON.parse(data);
+                    $.each(json, function () {
+                        that.printServiceStatus(this);
+                    });
+                });
+
+                // Comprobar servicio Thumbnail Generator
+                that.handleCheckServiceStatus(that.urlComprobarGeneradorMiniaturas + "?recursoID=" + recursoID);
+
+                // Comprobar servicios Lucene Autocomplete y Lucene API
+                that.handleCheckServiceStatus(that.urlComprobarAutocompleteApiLucene);
+
+                // Comprobar servicios Visitas
+                GnossPeticionAjax(
+                    that.urlComprobarVisitas + "?recursoID=" + recursoID,
+                    null,
+                    true
+                ).done(function (data) {
+                    json = JSON.parse(data);
+                    $.each(json, function () {
+                        that.printServiceStatus(this);
+                    });
+                });
+                that.handleDeleteResource(recursoID);
+            }
+        });
+    },
+
+    /**
+     * Metodo para eliminar un recurso
+     * @param {string} recursoID: recurso a eliminar
+     */
+    handleDeleteResource: async function (recursoID) {
+        const that = this;
+
+        GnossPeticionAjax(
+            that.urlEliminarRecurso + "?recursoID=" + recursoID,
+            null,
+            true
+        ).done(function (data) {
+            that.panelErrorDeleteResource.html(data);
+        });
+    },
 
     /**
      * Método para realizar búsquedas de servicios

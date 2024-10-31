@@ -60,9 +60,22 @@
         });
 
         // Comprobar posibles cambios de los ckEditor
-        CKEDITOR.on('instanceCreated', function (e) {
+        /*CKEDITOR.on('instanceCreated', function (e) {
             e.editor.on('change', function (event) {                
                 d.checkValues(e);
+            });
+        });
+        */
+        
+        // Observar la creación de instancias de TinyMCE
+        tinymce.on('AddEditor', function (e) {
+            // Obtener la instancia del editor recién creado
+            var editor = e.editor;
+
+            // Adjuntar un controlador de eventos para el evento change del editor TinyMCE
+            editor.on('change', function () {
+                // Llamar a la función para comprobar valores
+                d.checkValues(editor);
             });
         });
 
@@ -196,7 +209,7 @@
                 formIsDirty |= thisIsDirty;                
             });
 
-            const isCkeditorDirty = this.checkValueCkEditor();
+            const isCkeditorDirty = this.checkValueTinyMCE();
 
             if (formIsDirty || isCkeditorDirty) {
                 d.setDirty();
@@ -209,7 +222,7 @@
          * Comprobará si se han producido cambios en el CKeditor para establecer la propiedad "dirty" al formulario         
          * @returns (Bool) Devolverá true si ha cambiado el formulario (sucio) o false si el ckEditor esta limpio (sin modificar)
          */
-        checkValueCkEditor: function () {
+        /*checkValueCkEditor: function () {
             var d = this;
             // Comprobar cada instancia en CKEditor
             for (var instanceName in CKEDITOR.instances) {
@@ -222,8 +235,25 @@
                     return false;
                 }
             }
+        },*/
+
+        /**
+         * Comprobará si se han producido cambios en el TinyMCE para establecer la propiedad "dirty" al formulario
+         * @returns (Bool) Devolverá true si ha cambiado el formulario (sucio) o false si el TinyMCE está limpio (sin modificar)
+         */
+        checkValueTinyMCE: function () {
+            var isDirty = false; // Bandera para indicar si se ha modificado algún editor
+            tinymce.get().forEach(function (editor) {
+                if (editor.isDirty()) {
+                    isDirty = true;
+                    return false; // Salir del bucle si se encuentra un editor sucio
+                }
+            });
+            return isDirty; // Devuelve true si se encontró algún editor sucio, de lo contrario, devuelve false
         },
 
+
+        /*
         setDirty: function() {
             this.isDirty = true;
             this.history[0] = this.history[1];
@@ -232,6 +262,13 @@
             if (this.options.fireEventsOnEachChange || this.wasJustClean()) {
                 this.form.trigger("dirty");
             }
+        },
+        */
+
+        setDirty: function () {
+            tinymce.get().forEach(function (editor) {
+                editor.setDirty(false);
+            });
         },
         
         /**          
@@ -247,15 +284,19 @@
         /**
          * Resetear el estado del ckeditor como si el usuario no fuera a hacer más cambios. De esta forma, se controla que el formulario está "limpio" y puede redirigir correctamente
          * @returns (Bool) Devolverá true si ha cambiado el formulario (sucio) o false si el ckEditor esta limpio (sin modificar)
-         */
+         */        
         setCleanCKEditor: function () {
             var d = this;
+            // TinyMCE
+            return;
             // Establecer a limpio cada instancia del ckEditor
             for (var instanceName in CKEDITOR.instances) {
                 const ckeEditorInstance = CKEDITOR.instances[instanceName];
                 ckeEditorInstance.resetDirty();
             }
         },
+        
+        
 
         setClean: function() {
             this.isDirty = false;

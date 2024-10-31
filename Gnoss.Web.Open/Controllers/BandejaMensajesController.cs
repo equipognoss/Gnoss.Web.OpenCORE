@@ -13,6 +13,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Amigos;
 using Es.Riam.Gnoss.CL.Facetado;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.Identidad;
@@ -22,6 +23,7 @@ using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.Notificacion;
 using Es.Riam.Gnoss.Logica.Organizador.Correo;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
@@ -41,6 +43,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -60,8 +63,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public BandejaMensajesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public BandejaMensajesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
 
         }
@@ -76,7 +79,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         protected override void CargarTituloPagina()
         {
-            string url = "&" + Request.Query.ToString();
+            string url = Request.Scheme + "://" + Request.Host + Request.Path + Request.QueryString;
             if (Mensaje != null)
             {
                 TituloPagina = Mensaje.Subject;
@@ -133,6 +136,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 else if (url.Contains("&enviados&"))
                 {
                     TituloPagina = UtilIdiomas.GetText("BANDEJAENTRADA", "MENSAJESENVIADOS");
+                }
+                else {
+                    TituloPagina = UtilIdiomas.GetText("BANDEJAENTRADA", "BANDEJAENTRADA");
                 }
             }
 
@@ -462,7 +468,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             //Variables normales
-            string asunto = Subject;
+            Body = UtilCadenas.LimpiarInyeccionCodigo(Body);
+            string asunto = UtilCadenas.LimpiarInyeccionCodigo(Subject);
             string cuerpo = HttpUtility.UrlDecode(Body);
 
             bool EnvioCuentaOrg = OrgIsSender;
@@ -828,12 +835,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private bool ValidarDestinatarios(ref List<string> pListaDescartados, List<Guid> pListaPreferencias, string pDestinatarios, bool pEsRespuesta, ref Dictionary<Guid, bool> pListaDestinatarios)
         {
             List<string> listaProf = new List<string>();
-
-            Dictionary<string, string> idiomas = mConfigService.ObtenerListaIdiomasDictionary();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();
 
             foreach (string claveIdioma in idiomas.Keys)
             {
-                UtilIdiomas utilIdiomas = new UtilIdiomas(claveIdioma, mLoggingService, mEntityContext, mConfigService);
+                UtilIdiomas utilIdiomas = new UtilIdiomas(claveIdioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                 //UtilIdiomas utilIdiomas = new UtilIdiomas(System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase + Path.DirectorySeparatorChar + "languages", new string[0], claveIdioma, ParametrosGeneralesRow, ParametrosAplicacionDS);
                 listaProf.Add(utilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESOR") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ");
                 listaProf.Add(utilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESORA") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ");

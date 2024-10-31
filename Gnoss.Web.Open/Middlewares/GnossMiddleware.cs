@@ -1,7 +1,12 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -30,25 +35,19 @@ namespace Gnoss.Web.Middlewares
         private ConfigService mConfigService;
         public static bool RecalculandoRutas { get; set; }
         private static ConcurrentDictionary<string, Guid?> ProyectoIDPorNombreCorto = new ConcurrentDictionary<string, Guid?>();
+
         public GnossMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService)
         {
             _next = next;
             mEnv = env;
             mConfigService = configService;
-            
         }
 
         public async Task Invoke(HttpContext context, LoggingService loggingService, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, UtilTelemetry utilTelemetry, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, RouteConfig routeConfig, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
         {
             ControladorBase controladorBase = new ControladorBase(loggingService, mConfigService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, servicesUtilVirtuosoAndReplication);
             Application_BeginRequest(entityContext, context, routeConfig, loggingService, redisCacheWrapper);
-            //To add Headers
-            //context.Response.OnStarting(state =>
-            //{
-            //    var httpContext = (HttpContext)state;
-            //    httpContext.Response.Headers.Add("Referrer-Policy", "no-referrer-when-downgrade");
-            //    return Task.CompletedTask;
-            //}, context);
+            AddHeaders(context);
             await _next(context);
             Application_PostRequestHandlerExecute(context, servicesUtilVirtuosoAndReplication, gnossCache);
             Application_EndRequest(context, loggingService, controladorBase, utilTelemetry);
@@ -57,43 +56,22 @@ namespace Gnoss.Web.Middlewares
         protected void Application_BeginRequest(EntityContext pEntityContext, HttpContext pHttpContextAccessor, RouteConfig pRouteConfig, LoggingService pLoggingService, RedisCacheWrapper pRedisCacheWrapper)
         {
             pLoggingService.AgregarEntrada("TiemposMVC_Application_BeginRequest_INICIO");
-            //ComprobarTrazaHabilitada(pEntityContext, pLoggingService, pRedisCacheWrapper, pHttpContextAccessor);
-
             pLoggingService.AgregarEntrada("TiemposMVC_Application_BeginRequest_INICIO_TRAZA_COMPROBADA");
-
-            //30 segundos de espera máxima
-            //int tiempoMaximo = 30000;
-            //int tiempoTranscurrido = 0;
-            //while (RecalculandoRutas && tiempoTranscurrido < tiempoMaximo)
-            //{
-            //    pLoggingService.AgregarEntrada("RecalculandoRutas. Espero 1000 ms");
-            //    Thread.Sleep(1000);
-            //    tiempoTranscurrido += 1000;
-            //}
-
-            //if (string.IsNullOrEmpty(LoggingService.IP))
-            //{
-            //    // Si hay una IP y un puerto configurados, hay que usar las trazas UDP
-            //    string ipConfigurada = mConfigService.ObtnerIpServicioTrazasUDP();
-            //    if (!string.IsNullOrEmpty(ipConfigurada))
-            //    {
-            //        int puerto = 1745;
-            //        LoggingService.IP = ipConfigurada;
-
-            //       int.TryParse(mConfigService.ObtenerPuertoServicioTrazasUDP(), out puerto);
-            //        LoggingService.Puerto = puerto;
-            //    }
-            //}
-
-            //RegistrarRutas(pEntityContext, pHttpContextAccessor, pRouteConfig, pLoggingService);
-
-            //Añade para mandar el referer completo a cualquier peticion Ajax: https://developers.google.com/web/updates/2020/07/referrer-policy-new-chrome-default
-            //pHttpContextAccessor.Response.Headers.Add("Referrer-Policy", "no-referrer-when-downgrade");
-
-            //pLoggingService.AgregarEntrada("TiemposMVC_Application_BeginRequest_FIN");
         }
 
-        private void ComprobarTrazaHabilitada(EntityContext pEntityContext, LoggingService pLoggingService, RedisCacheWrapper pRedisCacheWrapper, HttpContext pHttpContext,  bool pForzarComprobacion = false)
+        protected void AddHeaders(HttpContext pHttpContextAccessor)
+        {
+            if (!pHttpContextAccessor.Response.Headers.ContainsKey("Content-Security-Policy") && !string.IsNullOrEmpty(mConfigService.GetConfigContentSecurityPolocy()))
+            {
+                pHttpContextAccessor.Response.Headers.Add("Content-Security-Policy", mConfigService.GetConfigContentSecurityPolocy());
+            }
+            if (!pHttpContextAccessor.Response.Headers.ContainsKey("Strict-Transport-Security"))
+            {
+                pHttpContextAccessor.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+            }
+        }
+
+        private void ComprobarTrazaHabilitada(Es.Riam.Gnoss.AD.EntityModel.EntityContext pEntityContext, LoggingService pLoggingService, RedisCacheWrapper pRedisCacheWrapper, HttpContext pHttpContext, bool pForzarComprobacion = false)
         {
             if (pForzarComprobacion || LoggingService.HoraComprobacionCache == null || LoggingService.HoraComprobacionCache.AddSeconds(LoggingService.TiempoDuracionComprobacion) < DateTime.Now)
             {
@@ -113,12 +91,13 @@ namespace Gnoss.Web.Middlewares
                 LoggingService.HoraComprobacionCache = DateTime.Now;
             }
         }
-        private void RegistrarRutas(EntityContext pEntityContext, HttpContext pHttpContextAccessor, RouteConfig pRouteConfig, LoggingService pLoggingService)
+        private void RegistrarRutas(Es.Riam.Gnoss.AD.EntityModel.EntityContext pEntityContext, HttpContext pHttpContextAccessor, RouteConfig pRouteConfig, LoggingService pLoggingService, IServicesUtilVirtuosoAndReplication pServicesUtilVirtuosoAndReplication)
         {
-            Dictionary<string, string> listaIdiomasPlataforma = mConfigService.ObtenerListaIdiomasDictionary();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(pEntityContext, pLoggingService, null, mConfigService, pServicesUtilVirtuosoAndReplication);
+            Dictionary<string, string> listaIdiomasPlataforma = paramCL.ObtenerListaIdiomasDictionary();
             int indiceComunidad = 2;
             string url = $"{pHttpContextAccessor.Request.Scheme}://{pHttpContextAccessor.Request.Host}{pHttpContextAccessor.Request.Path}";
-            pRouteConfig.RegisterRoutesIdioma(RouteConfig.RouteBuilder, mConfigService.ObtenerListaIdiomas());
+            pRouteConfig.RegisterRoutesIdioma(RouteConfig.RouteBuilder, paramCL.ObtenerListaIdiomas());
             //if (new Uri(url).Segments.Length > 1 && new Uri(url).Segments[1].Length > 1)
             //{
             //    string idiomaPeticion = new Uri(url).Segments[1].Trim('/');
@@ -141,6 +120,7 @@ namespace Gnoss.Web.Middlewares
             Guid? proyectoID = null;
             if (new Uri(url).Segments.Length > indiceComunidad && new Uri(url).Segments[indiceComunidad].Length > 1)
             {
+                ProyectoCN proyCN = new ProyectoCN(pEntityContext, pLoggingService, mConfigService, null);
                 string nombreCortoComunidad = new Uri(url).Segments[indiceComunidad];
 
                 if (ProyectoIDPorNombreCorto.ContainsKey(nombreCortoComunidad))
@@ -149,7 +129,7 @@ namespace Gnoss.Web.Middlewares
                 }
                 else
                 {
-                    ProyectoCN proyCN = new ProyectoCN(pEntityContext, pLoggingService, mConfigService, null);
+
                     proyectoID = proyCN.ObtenerProyectoIDPorNombreCorto(nombreCortoComunidad);
                     if (proyectoID.Value.Equals(Guid.Empty))
                     {
@@ -160,7 +140,19 @@ namespace Gnoss.Web.Middlewares
 
                 if (!proyectoID.HasValue)
                 {
+                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(pEntityContext, pLoggingService, mConfigService, pServicesUtilVirtuosoAndReplication);
                     proyectoID = mConfigService.ObtenerProyectoConexion();
+                    if (proyectoID == null || proyectoID.Equals(Guid.Empty))
+                    {
+
+                        string valor = paramCN.ObtenerParametroAplicacionSeaContenidoParametro(url).FirstOrDefault();
+
+                        if (!string.IsNullOrEmpty(valor))
+                        {
+                            proyectoID = new Guid(valor);
+                        }
+
+                    }
                 }
             }
 
@@ -189,7 +181,7 @@ namespace Gnoss.Web.Middlewares
             }
         }
 
-        protected void Application_EndRequest(HttpContext pHttpContextAccessor,LoggingService pLoggingService, ControladorBase pControladorBase, UtilTelemetry pUtilTelemetry)
+        protected void Application_EndRequest(HttpContext pHttpContextAccessor, LoggingService pLoggingService, ControladorBase pControladorBase, UtilTelemetry pUtilTelemetry)
         {
             try
             {
@@ -202,7 +194,7 @@ namespace Gnoss.Web.Middlewares
 
                     listaObjetosColaReplicacionFichero = "{ \"listaReplicacion\": [" + listaObjetosColaReplicacionFichero + "]}";
 
-                    string ruta = Path.Combine(mEnv.WebRootPath, pHttpContextAccessor.Request.Path, "FicherosReplicacion"); 
+                    string ruta = Path.Combine(mEnv.WebRootPath, pHttpContextAccessor.Request.Path, "FicherosReplicacion");
 
                     if (!Directory.Exists(ruta))
                     {
@@ -255,7 +247,7 @@ namespace Gnoss.Web.Middlewares
             }
 
             return null;
-            
+
         }
     }
 
@@ -270,5 +262,5 @@ namespace Gnoss.Web.Middlewares
             return app.UseMiddleware<ErrorMiddleware>();
         }
     }
-    
+
 }

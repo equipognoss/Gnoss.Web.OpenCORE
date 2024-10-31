@@ -194,7 +194,7 @@ string cuerpo = "";
                                    autocomplete="off" />
 
                             @* Botón de Añadir Etiqueta/Tag *@
-                            <a id="anadir-tag" class="btn btn-grey uppercase">Añadir</a>
+                            <a id="anadir-tag" class="btn btn-grey uppercase">@Html.GetText("COMMON","ANYADIRENMAYUSCULA")</a>
 
                             @* Campo oculto que almacenará los destinatarios *@
                             <input type="hidden" id="@idTxtDestinatario_Hack" value="@string.Join(", ",destinatarios.Select(x=>$"{x.Value.ToLower()}|||{x.Key}"))," />
@@ -236,7 +236,7 @@ string cuerpo = "";
                                        autocomplete="off" />
 
                                 @* Botón de Añadir Etiqueta/Tag *@
-                                <a id="anadir-tag" class="btn btn-grey uppercase">Añadir</a>
+                                <a id="anadir-tag" class="btn btn-grey uppercase">@Html.GetText("COMMON","ANYADIRENMAYUSCULA")</a>
 
                                 @* Campo oculto que almacenará los destinatarios *@
                                 <input type="hidden" id="@idTxtDestinatarioOrg_Hack" value="@string.Join(", ",destinatarios.Select(x=>$"{x.Value.ToLower()}|||{x.Key}"))," />
@@ -278,7 +278,7 @@ string cuerpo = "";
                     @* Controlar el cuerpo del mensaje -> Reenviar *@
                     @if (Model != null)
                     {
-                        cuerpo = "<p>&nbsp;</p><strong>" + Html.GetText("CORREO", "MENSAJEORIGINAL") + " " + Html.ObtenerNombrePerfil(Model.Sender) + ": </strong>" + Model.Body;
+                        cuerpo = "<br></br><strong>" + Html.GetText("CORREO", "MENSAJEORIGINAL") + " " + Html.ObtenerNombrePerfil(Model.Sender) + ": </strong>" + Model.Body;
                     }
                     
                     <textarea id="@idTxtMensaje"

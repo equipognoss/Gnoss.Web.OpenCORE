@@ -29,10 +29,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private RedisCacheWrapper mRedisCacheWrapper;
         private VirtuosoAD mVirtuosoAD;
 
-        public PermisosPaginasUsuariosAttribute(string pPermisoPaginaNecesario, TipoPaginaAdministracion pTipoPaginaAdministracion, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor)
+        public PermisosPaginasUsuariosAttribute(string pPermisoPaginaNecesario, TipoPaginaAdministracion pTipoPaginaAdministracion, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, bool pComprobarPermisoUsuarioNoAdministrador = false)
         {
             TipoPaginaAdministracion = pTipoPaginaAdministracion;
             PermisoPaginaNecesario = pPermisoPaginaNecesario;
+            ComprobarPermisoUsuarioNoAdministrador = pComprobarPermisoUsuarioNoAdministrador;
             mLoggingService = loggingService;
             mConfigService = configService;
             mEntityContext = entityContext;
@@ -62,8 +63,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                 proyCN.Dispose();
             }
 
-
-            if (!tienePermisoPagina)
+            if (!tienePermisoPagina && !ComprobarPermisoUsuarioNoAdministrador)
             {
                 string urlRedirectBase = mControladorBase.BaseURLIdioma + mControladorBase.UrlPerfil;
                 if (mControladorBase.ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
@@ -101,5 +101,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         /// 
         /// </summary>
         public TipoPaginaAdministracion TipoPaginaAdministracion { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool ComprobarPermisoUsuarioNoAdministrador { get; set; }
     }
 }

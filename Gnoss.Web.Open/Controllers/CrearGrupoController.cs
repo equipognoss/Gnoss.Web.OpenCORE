@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,8 +40,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private GrupoIdentidades mGrupo = null;
         private bool mEsGrupoOrganizacion = false;
 
-        public CrearGrupoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public CrearGrupoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -204,6 +205,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 pTags = string.Empty;
             }
 
+            if (string.IsNullOrEmpty(pDescripcion))
+            {
+                pDescripcion = string.Empty;
+            }
+
             DataWrapperIdentidad identidadDW = new DataWrapperIdentidad();
             
             AD.EntityModel.Models.IdentidadDS.GrupoIdentidades filaGrupoIdentidades = new AD.EntityModel.Models.IdentidadDS.GrupoIdentidades();
@@ -348,12 +354,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 identidadCL.InvalidarCacheMiembrosOrganizacionParaFiltroGrupos(IdentidadActual.OrganizacionID.Value);
                 identidadCL.InvalidarCacheGrupoPorNombreCortoYOrganizacion(Grupo.NombreCorto, IdentidadActual.OrganizacionID.Value);
+                identidadCL.InvalidarFichaGruposMVC(new List<Guid> { Grupo.Clave });
             }
             else
             {
                 identidadCL.InvalidarCacheMiembrosComunidad(ProyectoSeleccionado.Clave);
-
                 identidadCL.InvalidarCacheGrupoPorNombreCortoYProyecto(Grupo.NombreCorto, ProyectoSeleccionado.Clave);
+                identidadCL.InvalidarFichaGruposMVC(new List<Guid> { Grupo.Clave });
+
             }
             identidadCL.Dispose();
         }
@@ -384,7 +392,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (ident.Clave != IdentidadActual.Clave)
                 {
-                    UtilIdiomas utilIdiomasPersona = new UtilIdiomas(ident.Persona.FilaPersona.Idioma, ProyectoSeleccionado.Clave, Guid.Empty, Guid.Empty, mLoggingService, mEntityContext, mConfigService);
+                    UtilIdiomas utilIdiomasPersona = new UtilIdiomas(ident.Persona.FilaPersona.Idioma, ProyectoSeleccionado.Clave, Guid.Empty, Guid.Empty, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
 
                     string urlComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
 

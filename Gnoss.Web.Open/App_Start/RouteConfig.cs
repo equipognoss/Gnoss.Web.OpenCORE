@@ -26,6 +26,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
+using Es.Riam.AbstractsOpen;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
+using Microsoft.AspNetCore.Http;
 
 namespace Es.Riam.Gnoss.Web.MVC
 {
@@ -35,27 +39,33 @@ namespace Es.Riam.Gnoss.Web.MVC
         private EntityContext mEntityContext;
         private LoggingService mLoggingService;
         private ConfigService mConfigService;
+        private IServicesUtilVirtuosoAndReplication mServicesUtilVirtuosoAndReplication;
         private RedisCacheWrapper mRedisCacheWrapper;
         private VirtuosoAD mVirtuosoAD;
         private UtilIdiomasFactory mUtilIdiomasFactory;
         private Regex mRegExprRoutes;
+        protected Elementos.ServiciosGenerales.Proyecto mProyecto;
+        protected string mIdiomaUsuario;
+        protected IHttpContextAccessor mHttpContextAccessor;
         //private IHttpContextAccessor mHttpContextAccessor;
         //private GnossCache mGnossCache;
         //private EntityContextBASE mEntityContextBASE;
         //private ControladorBase mControladorBase;
         public static IRouteBuilder RouteBuilder { get; set; }
 
-        public RouteConfig(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD)
+        public RouteConfig(EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
             mConfigService = configService;
+            mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
             mVirtuosoAD = virtuosoAD;
             //mHttpContextAccessor = httpContextAccessor;
             //mGnossCache = gnossCache;
             //mEntityContextBASE = entityContextBASE;
             mRedisCacheWrapper = redisCacheWrapper;
-            mUtilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService);
+            mUtilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService, redisCacheWrapper);
+            mHttpContextAccessor = httpContextAccessor;
             //mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor);
             mRegExprRoutes = new Regex("(@#@\\$[^@#@$]*,\\|,[^@#@$]*\\$@#@)");
         }
@@ -94,6 +104,127 @@ namespace Es.Riam.Gnoss.Web.MVC
         /// Nombre del proyecto sin nombrecorto (no hace falta poner comunidad/nombrecorto)
         /// </summary>
         private static string mNombreProyectoSinNombreCorto = null;
+        public Elementos.ServiciosGenerales.Proyecto ProyectoSeleccionado
+        {
+            get
+            {
+                if (mProyecto == null)
+                {
+                    string nombreCortoProyecto = null;
+                    Guid proyectoID = Guid.Empty;
+
+                    if (RequestParams("proyectoID") != null)
+                    {
+                        proyectoID = new Guid(RequestParams("proyectoID"));
+                    }
+                    else if (RequestParams("nombreProy") != null)
+                    {
+                        nombreCortoProyecto = RequestParams("nombreProy");
+                    }
+                    else if (RequestParams("NombreCortoComunidad") != null)
+                    {
+                        nombreCortoProyecto = RequestParams("NombreCortoComunidad");
+                    }
+                    else if (RequestParams("proy") != null)
+                    {
+                        proyectoID = new Guid(RequestParams("proy"));
+                    }
+                    else if (RequestParams("pProyectoID") != null)
+                    {
+                        Guid.TryParse(RequestParams("pProyectoID").Replace("\"", ""), out proyectoID);
+                    }
+                    else
+                    {
+                        proyectoID = ProyectoAD.MetaProyecto;
+                    }
+
+                    if (!string.IsNullOrEmpty(RequestParams("ecosistema")) && RequestParams("ecosistema").Equals("true"))
+                    {
+                        proyectoID = ProyectoAD.MetaProyecto;
+                        nombreCortoProyecto = "mygnoss";
+                    }
+
+                    if (mProyecto == null || (nombreCortoProyecto != mProyecto.NombreCorto && mProyecto.Clave != proyectoID))
+                    {
+                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+
+                        if (!string.IsNullOrEmpty(nombreCortoProyecto))
+                        {
+                            proyectoID = proyectoCL.ObtenerProyectoIDPorNombreCorto(nombreCortoProyecto);
+                        }
+
+                        GestionProyecto gestorProyecto = new GestionProyecto(proyectoCL.ObtenerProyectoPorID(proyectoID), mLoggingService, mEntityContext);
+
+                        if (gestorProyecto.ListaProyectos.Count > 0 && gestorProyecto.ListaProyectos.ContainsKey(proyectoID))
+                        {
+                            mProyecto = gestorProyecto.ListaProyectos[proyectoID];
+                        }
+
+                        if (mProyecto == null)
+                        {
+                            return null;
+                        }
+                        
+                    }
+                    return mProyecto;
+                }
+                return mProyecto;
+            }
+            set
+            {
+                mProyecto = value;
+            }
+        }
+
+        public string RequestParams(string pParametro)
+        {
+            string valorParametro = null;
+
+            try
+            {
+                if(mHttpContextAccessor != null && mHttpContextAccessor.HttpContext != null && mHttpContextAccessor.HttpContext.Request != null)
+                {
+                    if (mHttpContextAccessor.HttpContext.Request.Query.ContainsKey(pParametro))
+                    {
+                        valorParametro = mHttpContextAccessor.HttpContext.Request.Query[pParametro];
+                    }
+                    else if (mHttpContextAccessor.HttpContext.Request.RouteValues.ContainsKey(pParametro))
+                    {
+                        valorParametro = mHttpContextAccessor.HttpContext.Request.RouteValues[pParametro] as string;
+
+                    }
+                    else if (mHttpContextAccessor.HttpContext.Request.HasFormContentType && mHttpContextAccessor.HttpContext.Request.Form != null && mHttpContextAccessor.HttpContext.Request.Form.ContainsKey(pParametro))
+                    {
+                        valorParametro = mHttpContextAccessor.HttpContext.Request.Form[pParametro];
+                    }
+                }               
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex.Message);
+            }
+
+            return valorParametro;
+        }
+
+        /// <summary>
+        /// Obtiene el idioma del usuario
+        /// </summary>
+        public string IdiomaUsuario
+        {
+            get
+            {
+                if (mIdiomaUsuario == null)
+                {
+                    mIdiomaUsuario = RequestParams("lang");
+                }
+                return mIdiomaUsuario;
+            }
+            set
+            {
+                mIdiomaUsuario = value;
+            }
+        }
 
         /// <summary>
         /// Nombre del proyecto sin nombrecorto (no hace falta poner comunidad/nombrecorto)
@@ -105,7 +236,20 @@ namespace Es.Riam.Gnoss.Web.MVC
                 if (mNombreProyectoSinNombreCorto == null)
                 {
                     //Obtenemos el ProyectoSinNombreCorto para registrar las URLs de forma diferente
+                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     Guid? idProyectoPrincipal = mConfigService.ObtenerProyectoConexion();
+                    if (idProyectoPrincipal == null || idProyectoPrincipal.Equals(Guid.Empty))
+                    {
+                        if(ProyectoSeleccionado != null)
+                        {
+                            string valor = paramCN.ObtenerParametroAplicacion(ProyectoSeleccionado.UrlPropia(IdiomaUsuario));
+
+                            if (!string.IsNullOrEmpty(valor))
+                            {
+                                idProyectoPrincipal = new Guid(valor);
+                            }
+                        }
+                    }
                     if (idProyectoPrincipal.HasValue)
                     {
                         ParametroCN parametroCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, null);
@@ -288,8 +432,9 @@ namespace Es.Riam.Gnoss.Web.MVC
             ProcesarURL(RouteBuilder, "crearCookie", "CrearCookie", IdiomaPrincipalDominio);
             ProcesarURL(RouteBuilder, "eliminarCookie", "EliminarCookie", IdiomaPrincipalDominio);
             ProcesarURL(RouteBuilder, "RecargarComponenteCMS", "CMSPagina", IdiomaPrincipalDominio);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+			Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 
             mLoggingService.AgregarEntrada("Mapeo rutas - Registro Redirect/Home");
             //Si no coniene el idioma español, necesitamos registrar esta ruta para que funcione el dominio
@@ -308,7 +453,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                     pattern: "{controller=Home}/{action=Index}/{id?}");*/
             //RegisterSitemap(routes);
 
-            RegisterRoutesIdioma(RouteBuilder, mConfigService.ObtenerListaIdiomas());
+            RegisterRoutesIdioma(RouteBuilder, paramCL.ObtenerListaIdiomas());
 
             mLoggingService.AgregarEntrada("Fin mapeo rutas");
         }
@@ -351,11 +496,12 @@ namespace Es.Riam.Gnoss.Web.MVC
 
         public void RegisterRoutesIdioma(IRouteBuilder routes, List<string> pIdiomas)
         {
-            foreach (string idiomaConfig in pIdiomas)
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			foreach (string idiomaConfig in pIdiomas)
             {
                 if (!IdiomasRegistrados.Contains(idiomaConfig))
                 {
-                    Dictionary<string, string> listaIdiomasPlataforma = mConfigService.ObtenerListaIdiomasDictionary();
+                    Dictionary<string, string> listaIdiomasPlataforma = paramCL.ObtenerListaIdiomasDictionary();
                     if (!listaIdiomasPlataforma.ContainsKey(idiomaConfig))
                     {
                         return;
@@ -701,7 +847,7 @@ namespace Es.Riam.Gnoss.Web.MVC
 
                 proyCN.Dispose();
 
-                foreach (ProyectoPestanyaMenu filaPestanya in dataWrapperProyectoPestanyas.ListaProyectoPestanyaMenu)
+                foreach (AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu filaPestanya in dataWrapperProyectoPestanyas.ListaProyectoPestanyaMenu)
                 {
                     string nombreCorto = proyCL.ObtenerNombreCortoProyecto(filaPestanya.ProyectoID);
 
@@ -789,7 +935,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                             }
                             else
                             {
-                                UtilIdiomasFactory utilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService);
+                                UtilIdiomasFactory utilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                                 foreach (string idioma in listaIdiomas.Keys)
                                 {
                                     UtilIdiomas utilIdiomasActual = utilIdiomasFactory.ObtenerUtilIdiomas(idioma);

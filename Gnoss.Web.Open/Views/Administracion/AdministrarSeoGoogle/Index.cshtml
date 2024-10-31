@@ -23,126 +23,120 @@
 {
     <div class="alert alert-warning alert-dismissable">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <span class="material-icons" alt="warning" title="warning" aria-label="warning">
-        warning
-    </span>
+        <span class="material-icons" alt="warning" title="warning" aria-label="warning">
+            warning
+        </span>
         <strong>@Html.GetText("DEVTOOLS", "NOGUARDAINTEGRACIONCONTINUA")</strong>
     </div>
 }
-    @* Migas de Pan *@
-    <div class="col col-12 col-breadcrumb">
-        <ul>
-            <li>
-                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-            </li>
-            <li>
-                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
-            </li>
-            <li>
-                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")
-            </li>
-        </ul>
-    </div>
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+        </li>
+        <li>
+            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")
+        </li>
+    </ul>
+</div>
 
-    @* Contenido Central *@
-    <div class="formulario-edicion background-blanco">
-        <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")</h2>
-        <p>
-            @Html.GetText("DEVTOOLS","CONFIGURACIONDELPOSICIONAMIENTOSEODELACOMUNIDADASICOMODEUNAC")
-        </p>
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+    <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")</h2>
+    <p>
+        @Html.GetText("DEVTOOLS","CONFIGURACIONDELPOSICIONAMIENTOSEODELACOMUNIDADASICOMODEUNAC")
+    </p>
 
-        @* Indexación buscadores *@
+    @* Indexación buscadores *@
     <h3>@Html.GetText("DEVTOOLS","DESEAQUEGOOGLEYELRESTODEBUSCADORESINDEXESUSITIOWEB")</h3>
-        <div class="form-group mb-3 edit-indexacion">
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","PERMITIRINDEXACION")</label>
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","QUEESINDEXACION")</label>
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONSI")</label>
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONNO")</label>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="indexacion" id="robotBusquedaNada" value="@(Model.RobotsBusqueda)" @(Model.RobotsBusqueda.Equals("") ? "checked" : string.Empty)>
+    <div class="form-group mb-3 edit-indexacion">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","PERMITIRINDEXACION")</label>
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","QUEESINDEXACION")</label>
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONSI")</label>
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONNO")</label>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="indexacion" id="robotBusquedaNada" value="@(Model.RobotsBusqueda)" @(Model.RobotsBusqueda.Equals("") ? "checked" : string.Empty)>
             <label class="form-check-label" for="robotBusquedaNada">@Html.GetText("ADMINISTRACIONBASICA","UTILIZARLACONFIGURACIONDELAPLATAFORMA"), @Html.GetText("ADMINISTRACIONBASICA","ENLAPLATAFORMAESTACONFIGURADOCOMO:")  @(Model.RobotsBusqueda == "all" ? "Sí" : "No")</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" value="all" type="radio" name="indexacion" id="robotBusquedaSi" @((Model.ValorRobotsBusqueda.Equals("1") && Model.ConfiguracionEnParametroProyecto) || Model.RobotsBusqueda.Equals("all") ? "checked" : "")>
-                <label class="form-check-label" for="robotBusquedaSi">@Html.GetText("COMMON","SI")</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="indexacion" value="noindex,nofollow" id="robotBusquedaNo" @(Model.ValorRobotsBusqueda.Equals("0") && Model.ConfiguracionEnParametroProyecto ? "checked" : "")>
-                <label class="form-check-label" for="robotBusquedaNo">@Html.GetText("COMMON","NO")</label>
-            </div>
-            @*<h5 id="avisoPlataforma" @(Model.ValorRobotsBusqueda == "" || Model.ValorRobotsBusqueda == null ? "hidden" : "")>@Html.GetText("ADMINISTRACIONBASICA","ENLAPLATAFORMAESTACONFIGURADOCOMO:") @(Model.RobotsBusqueda == "all" ? "Sí" : "No")</h5>*@
         </div>
-
-        @* Script Analytics *@
-        <h3>@Html.GetText("DEVTOOLS","DESEAAÑADIRUNSCRIPTPROPIOOUTILIZARELDELAPLATAFORMA")</h3>
-        <div class="form-group mb-5 edit-indexacion">
-
-            @* Añadir Script de seguimiento *@
-            <label class="control-label d-block">Añadir script de seguimiento</label>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="script" id="googleSi" value="Si" @(Model.GooglaAnalitycsScriptEnParametroGeneral ? "checked" : string.Empty)>
-            <label class="form-check-label" for="googleSi">@Html.GetText("DEVTOOLS","UTILIZARLACONFIGURACIONPROPIA")</label>
-            </div>
-            @* Utilizar la configuración de la plataforma *@
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="script" id="googlePlataforma" value="No" @(Model.GooglaAnalitycsScriptEnParametroGeneral ? string.Empty : "checked")>
-                <label class="form-check-label" for="googlePlataforma">@Html.GetText("ADMINISTRACIONBASICA","UTILIZARLACONFIGURACIONDELAPLATAFORMA")</label>
-            </div>
-
-            @* Código de Google Analytics propio -> panelScriptPropio *@
-            <div id="panelScriptPropio" class="mb-4 pl-5 d-none">
-                <div class="form-group mb-3">
-                    <label class="control-label d-block">@Html.GetText("DEVTOOLS","CODIGODEGOOGLEANALYTICS")</label>
-                    <input type="text" id="CodigoGoogleAnalyticsPropio" class="form-control not-outline" disabled>
-                </div>
-                @* Script de Google Analytics propio *@
-                <div class="form-group mb-3">
-                    <label class="control-label d-block">@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICSPROPIO")</label>
-                    <textarea id="ScriptGoogleAnalyticsPropio" rows="12" class="form-control not-outline">@Model.ScriptGoogleAnalyticsPropio</textarea>
-                    <span>@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICS,SISEQUIEREUSARUNSCRIPTDISTINTOALDEPO")</span>
-                    <span>(ej: var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));)</span>
-                </div>
-            </div>
-
-            @* Código de Google Analytics de la plataforma -> panelGooglePlataforma *@
-            <div id="panelGooglePlataforma" class="mb-4 pl-5" d-none>
-                <div class="form-group mb-3">
-                    <label class="control-label d-block">@Html.GetText("DEVTOOLS","CODIGODEGOOGLEANALYTICS")</label>
-                    <input placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCODIGO")" type="text" id="CodigoGoogleAnalytics" class="form-control not-outline" value="@Model.CodigoGoogleAnalytics">
-                </div>
-
-                @* Script de Google Analytics de la plataforma por defecto *@
-                <div class="form-group mb-3">
-                    <label class="control-label d-block">@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICSDELAPLATAFORMA")</label>
-                    <textarea id="ScriptGoogleAnalytics" rows="12" class="form-control not-outline" disabled>@Model.ScriptGoogleAnalyticsPlataforma</textarea>
-                    <span>@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICS,SISEQUIEREUSARUNSCRIPTDISTINTOALDEPO")</span>
-                    <span>(ej: var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));)</span>
-                </div>
-            </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" value="all" type="radio" name="indexacion" id="robotBusquedaSi" @((Model.ValorRobotsBusqueda.Equals("1") && Model.ConfiguracionEnParametroProyecto) || Model.RobotsBusqueda.Equals("all") ? "checked" : "")>
+            <label class="form-check-label" for="robotBusquedaSi">@Html.GetText("COMMON","SI")</label>
         </div>
-
-        @* Botón para guardar (Si se permite por CI/CD) *@
-		@if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
-		{
-			@* No permitir guardar *@
-			<input type="button" disabled class="btn btn-primary uppercase btnNoSave" value="@Html.GetText("COMMON","GUARDAR")"/>								
-		}
-		else
-		{		
-			@* Permitir guardar *@
-			<input type="button" class="btn btn-primary uppercase btnSave" value="@Html.GetText("COMMON","GUARDAR")"/>								
-		}
-
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="indexacion" value="noindex,nofollow" id="robotBusquedaNo" @(Model.ValorRobotsBusqueda.Equals("0") && Model.ConfiguracionEnParametroProyecto ? "checked" : "")>
+            <label class="form-check-label" for="robotBusquedaNo">@Html.GetText("COMMON","NO")</label>
+        </div>
+        @*<h5 id="avisoPlataforma" @(Model.ValorRobotsBusqueda == "" || Model.ValorRobotsBusqueda == null ? "hidden" : "")>@Html.GetText("ADMINISTRACIONBASICA","ENLAPLATAFORMAESTACONFIGURADOCOMO:") @(Model.RobotsBusqueda == "all" ? "Sí" : "No")</h5>*@
     </div>
+
+    @* Script Analytics *@
+    <h3>@Html.GetText("DEVTOOLS","DESEAAÑADIRUNSCRIPTPROPIOOUTILIZARELDELAPLATAFORMA")</h3>
+    <div class="form-group mb-5 edit-indexacion">
+
+        @* Añadir Script de seguimiento *@
+        <label class="control-label d-block">Añadir script de seguimiento</label>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="script" id="googleSi" value="Si" @(Model.EsScriptGoogleAnalitycsPropio ? "checked" : string.Empty)>
+            <label class="form-check-label" for="googleSi">@Html.GetText("DEVTOOLS","UTILIZARLACONFIGURACIONPROPIA")</label>
+        </div>
+        @* Utilizar la configuración de la plataforma *@
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="script" id="googlePlataforma" value="No" @(Model.EsScriptGoogleAnalitycsPropio ? string.Empty : "checked")>
+            <label class="form-check-label" for="googlePlataforma">@Html.GetText("ADMINISTRACIONBASICA","UTILIZARLACONFIGURACIONDELAPLATAFORMA")</label>
+        </div>
+
+        @* Código de Google Analytics propio -> panelScriptPropio *@
+        <div id="panelScriptPropio" class="mb-4 pl-5 d-none">
+            @* Script de Google Analytics propio *@
+            <div class="form-group mb-3">
+                <label class="control-label d-block">@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICSPROPIO")</label>
+                <textarea id="ScriptGoogleAnalyticsPropio" rows="12" class="form-control not-outline">@Model.ScriptGoogleAnalyticsPropio</textarea>
+                <span>@Html.GetText("DEVTOOLS","MENSAJESCRIPTGOOGLEANALYTICSADMINISTRACION")</span>
+            </div>
+        </div>
+
+        @* Código de Google Analytics de la plataforma -> panelGooglePlataforma *@
+        <div id="panelGooglePlataforma" class="mb-4 pl-5" d-none>
+            <div class="form-group mb-3">
+                <label class="control-label d-block">@Html.GetText("DEVTOOLS","CODIGODEGOOGLEANALYTICS")</label>
+                <input placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCODIGO")" type="text" id="CodigoGoogleAnalytics" class="form-control not-outline" value="@Model.CodigoGoogleAnalytics">
+            </div>
+
+            @* Script de Google Analytics de la plataforma por defecto *@
+            <div class="form-group mb-3">
+                <label class="control-label d-block">@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICSDELAPLATAFORMA")</label>
+                <textarea id="ScriptGoogleAnalytics" rows="12" class="form-control not-outline" disabled>@Model.ScriptGoogleAnalyticsPlataforma</textarea>
+                <span>@Html.GetText("DEVTOOLS","MENSAJESCRIPTGOOGLEANALYTICSADMINISTRACION")</span>
+            </div>
+        </div>
+    </div>
+
+    @* Botón para guardar (Si se permite por CI/CD) *@
+    @if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+    {
+        @* No permitir guardar *@
+        <input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase btnNoSave" value="@Html.GetText("COMMON","GUARDAR")" />
+    }
+    else
+    {
+        @* Permitir guardar *@
+        <input type="button" class="btn btn-primary uppercase btnSave" value="@Html.GetText("COMMON","GUARDAR")" />
+    }
+
+</div>
 
 
 @* Carga de operativa *@
 @section operativaScript{
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript">
-    (function ($) {
-        // Operativa funcionamiento de Seo y Analytics
-        operativaGestionSeoAnalytics.init();
-    })();
-</script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+        (function ($) {
+            // Operativa funcionamiento de Seo y Analytics
+            operativaGestionSeoAnalytics.init();
+        })();
+    </script>
 }

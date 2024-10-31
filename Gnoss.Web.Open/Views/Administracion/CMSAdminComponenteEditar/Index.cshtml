@@ -276,9 +276,9 @@
                     <fieldset>
                         <p>
                             @*<input type="button" value="Guardar" onclick="Guardar()" class="submit" id="btnGuardar" name="btnGuardar">*@
-                            @if (Html.GetComunidad().IntContActivadaSinRamaEnUso || !Html.GetComunidad().UsuarioDadoAltaIntCont || Html.GetComunidad().EntornoBloqueado)
+                            @if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
                             {
-                                <input type="button" value="Guardar" style="background-color:gray;" disabled onclick="Guardar()" class="submit" id="btnGuardar" name="btnGuardar">
+                                <input type="button" value="Guardar" style="background-color:gray;" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" onclick="Guardar()" class="submit" id="btnGuardar" name="btnGuardar">
                             }
                             else
                             {

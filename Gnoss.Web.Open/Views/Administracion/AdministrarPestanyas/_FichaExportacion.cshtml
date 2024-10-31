@@ -15,6 +15,8 @@ TabModel.ExportacionSearchTabModel exportacion = Model;
 Guid exportationId = @Guid.NewGuid();
 string collapseId = "panel_collapse_" + exportationId.ToString().Substring(0,5);
 string addedExportationPropertyListId = "id-added-exportation-property-list_" + exportationId.ToString().Substring(0, 5);
+string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+string idioma = Html.GetUtilIdiomas().LanguageCode;
 }
 
 @*
@@ -58,7 +60,7 @@ string addedExportationPropertyListId = "id-added-exportation-property-list_" + 
 					<div class="component-header-left">						
 						@* Nombre de la exportación *@
 						<div class="component-name-wrap">																												
-							<span class="component-exportationName">@exportacion.Nombre</span>
+							<span class="component-exportationName">@UtilCadenas.ObtenerTextoDeIdioma(exportacion.Nombre, idioma, null)</span>
 						</div>					
 					</div>
 					@*Sección de acciones de la exportación *@
@@ -96,19 +98,23 @@ string addedExportationPropertyListId = "id-added-exportation-property-list_" + 
 		@* Indicación de que el filtro se ha eliminado *@
 		<input type="hidden" name="TabEliminada" value="false" />
 		<div class="card card-body">
-			
-			@* Título/Nombre de la exportación *@
-			<div class="form-group mb-2">
-				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")</label>
-				                        
-				<input
-					type="text"
-					name="Nombre"
-					placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")"
-					class="form-control inputNombreExportacion"
-					value="@exportacion.Nombre">
-				<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREIDENTIFICATIVODELAEXPORTACION")</small>
+			<div class="panContenidoMultiIdioma basicInfo">
 			</div>
+			@* Título/Nombre de la exportación *@
+			<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+				<div class="form-group mb-2">
+					@*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")</label>*@
+				                        
+					<input
+						type="text"
+						name="Nombre"
+						data-labeltext="Nombre"
+						placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")"
+						class="form-control inputNombreExportacion multiIdioma"
+						value="@exportacion.Nombre">
+					<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREIDENTIFICATIVODELAEXPORTACION")</small>
+				</div>
+			</div>			
 
 			@* Panel de grupos con permisos a la exportación *@										
 			<div class="form-group mb-2 edit-privacy-panel-privacidad-grupos">																	

@@ -36,10 +36,10 @@
                 {
                     if (Comunidad == null)
                     {
-                        <h1>Inicia sesión en <strong>myGNOSS</strong></h1>
+                        <h1>@Html.GetText("COMMON","INICIASESION") <strong>myGNOSS</strong></h1>
                     }
-                    else { 
-                        <h1>Inicia sesión en <strong>@Comunidad.Name</strong></h1>
+                    else {
+                        <h1>@Html.GetText("COMMON","INICIASESION") <strong>@Comunidad.Name</strong></h1>
                     }
                 }
                 else if (Model.TypePage == AutenticationModel.TypeAutenticationPage.Registro || Model.TypePage == AutenticationModel.TypeAutenticationPage.RegistroConRedesSociales)

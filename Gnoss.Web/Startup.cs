@@ -5,7 +5,9 @@ using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.RelatedVirtuoso;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.FirstDataLoad;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
@@ -81,15 +83,22 @@ namespace Gnoss.Web
         public void ConfigureServices(IServiceCollection services)
         {
             bool cargado = false;
-            //TODO Javier hablar con juan para el Session.Timeout
+			ILoggerFactory loggerFactory =
+			LoggerFactory.Create(builder =>
+			{
+				builder.AddConfiguration(Configuration.GetSection("Logging"));
+				builder.AddSimpleConsole(options =>
+				{
+					options.IncludeScopes = true;
+					options.SingleLine = true;
+					options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+					options.UseUtcTimestamp = true;
+				});
+			});
 
-            /*var assembly = typeof(HomeController).Assembly;
-            // This creates an AssemblyPart, but does not create any related parts for items such as views.
-            var part = new AssemblyPart(assembly);
-            services.AddControllersWithViews()
-                .ConfigureApplicationPartManager(apm => apm.ApplicationParts.Add(part));*/
+			services.AddSingleton(loggerFactory);
 
-            var assemblyOpen = Assembly.Load("Gnoss.Web.Open");
+			var assemblyOpen = Assembly.Load("Gnoss.Web.Open");
             var externalControllerOpen = new AssemblyPart(assemblyOpen);
             // ApplicationPartManager
             services.AddControllers()
@@ -97,9 +106,12 @@ namespace Gnoss.Web
                     {
                         apm.ApplicationParts.Add(externalControllerOpen);
                     });
-
-            services.AddControllers();
-            //services.AddHttpContextAccessor();
+			services.Configure<FormOptions>(x =>
+			{
+				x.ValueLengthLimit = 524288000;
+				x.MultipartBodyLengthLimit = 524288000; // In case of multipart
+			});
+			services.AddControllers();
             services.AddScoped(typeof(UtilTelemetry));
             services.AddScoped(typeof(Usuario));
             services.AddScoped(typeof(UtilPeticion));
@@ -130,14 +142,13 @@ namespace Gnoss.Web
             {
                 bdType = Configuration.GetConnectionString("connectionType");
             }
-            if (bdType.Equals("2"))
+            if (bdType.Equals("2") || bdType.Equals("1"))
             {
                 services.AddScoped(typeof(DbContextOptions<EntityContext>));
                 services.AddScoped(typeof(DbContextOptions<EntityContextBASE>));
                 services.AddScoped(typeof(DbContextOptions<EntityContextOauth>));
             }
             services.AddSingleton(typeof(ConfigService));
-            services.AddSingleton<ILoggerFactory, LoggerFactory>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             //services.AddTransient<IViewRenderingService, ViewRenderingService>();
             services.AddSingleton<RouteValueTransformer>();
@@ -224,61 +235,58 @@ namespace Gnoss.Web
             {
                 oauthConnection = Configuration.GetConnectionString("oauth");
             }
+			var sp = services.BuildServiceProvider();
+			var loggingService = sp.GetService<LoggingService>();
+			if (bdType.Equals("0"))
+			{
+				services.AddDbContext<EntityContext>(options =>
+						options.UseSqlServer(acid).LogTo(loggingService.AgregarEntradaTrazaEntity));
+				services.AddDbContext<EntityContextBASE>(options =>
+						options.UseSqlServer(baseConnection).LogTo(loggingService.AgregarEntradaTrazaEntity));
+				services.AddDbContext<EntityContextOauth>(options =>
+						options.UseSqlServer(oauthConnection).LogTo(loggingService.AgregarEntradaTrazaEntity));
+			}
+			else if (bdType.Equals("1"))
+			{
+				services.AddDbContext<EntityContext, EntityContextOracle>(options =>
+						options.UseOracle(acid).LogTo(loggingService.AgregarEntradaTrazaEntity)
+						);
+				services.AddDbContext<EntityContextBASE, EntityContextBASEOracle>(options =>
+						options.UseOracle(baseConnection).LogTo(loggingService.AgregarEntradaTrazaEntity)
 
-            if (bdType.Equals("0"))
-            {
-                services.AddDbContext<EntityContext>(options =>
-                        options.UseSqlServer(acid)
-                        );
-                services.AddDbContext<EntityContextBASE>(options =>
-                        options.UseSqlServer(baseConnection)
+						);
+				services.AddDbContext<EntityContextOauth, EntityContextOauthOracle>(options =>
+						options.UseOracle(oauthConnection).LogTo(loggingService.AgregarEntradaTrazaEntity)
 
-                        );
-                services.AddDbContext<EntityContextOauth>(options =>
-                        options.UseSqlServer(oauthConnection)
+						);
+			}
+			else if (bdType.Equals("2"))
+			{
+				services.AddDbContext<EntityContext, EntityContextPostgres>(opt =>
+				{
+					var builder = new NpgsqlDbContextOptionsBuilder(opt);
+					builder.SetPostgresVersion(new Version(9, 6));
+					opt.UseNpgsql(acid).LogTo(loggingService.AgregarEntradaTrazaEntity);
 
-                        );
-            }
-            else if (bdType.Equals("1"))
-            {
-                services.AddDbContext<EntityContext, EntityContextOracle>(options =>
-                        options.UseOracle(acid)
-                        );
-                services.AddDbContext<EntityContextBASE, EntityContextBASEOracle>(options =>
-                        options.UseOracle(baseConnection)
-                        );
-                services.AddDbContext<EntityContextOauth, EntityContextOauthOracle>(options =>
-                        options.UseOracle(baseConnection)
-                        );
-            }
-            else if (bdType.Equals("2"))
-            {
-                services.AddDbContext<EntityContext, EntityContextPostgres>(opt =>
-                {
-                    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-                    builder.SetPostgresVersion(new Version(9, 6));
-                    opt.UseNpgsql(acid);
+				});
+				services.AddDbContext<EntityContextBASE, EntityContextBASEPostgres>(opt =>
+				{
+					var builder = new NpgsqlDbContextOptionsBuilder(opt);
+					builder.SetPostgresVersion(new Version(9, 6));
+					opt.UseNpgsql(baseConnection).LogTo(loggingService.AgregarEntradaTrazaEntity);
 
-                });
-                services.AddDbContext<EntityContextBASE, EntityContextBASEPostgres>(opt =>
-                {
-                    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-                    builder.SetPostgresVersion(new Version(9, 6));
-                    opt.UseNpgsql(baseConnection);
+				});
+				services.AddDbContext<EntityContextOauth, EntityContextOauthPostgres>(opt =>
+				{
+					var builder = new NpgsqlDbContextOptionsBuilder(opt);
+					builder.SetPostgresVersion(new Version(9, 6));
+					opt.UseNpgsql(oauthConnection).LogTo(loggingService.AgregarEntradaTrazaEntity);
 
-                });
-                services.AddDbContext<EntityContextOauth, EntityContextOauthPostgres>(opt =>
-                {
-                    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-                    builder.SetPostgresVersion(new Version(9, 6));
-                    opt.UseNpgsql(oauthConnection);
-
-                });
-            }
-            var sp = services.BuildServiceProvider();
+				});
+			}
+			sp = services.BuildServiceProvider();
             // Resolve the services from the service provider
             var virtualProvider = sp.GetService<BDVirtualPath>();
-            var loggingService = sp.GetService<LoggingService>();
             var servicesUtilVirtuosoAndReplication = sp.GetService<IServicesUtilVirtuosoAndReplication>();
             while (!cargado)
             {
@@ -328,12 +336,28 @@ namespace Gnoss.Web
             var entity = sp.GetService<EntityContext>();
             var entityBASE = sp.GetService<EntityContextBASE>();
             var entityOauth = sp.GetService<EntityContextOauth>();
-            //var migrations = entity.Database.GetPendingMigrations();
-            entity.Migrate();
-            entityBASE.Migrate();
-            entityOauth.Migrate();
+			var redisCacheWrapper = sp.GetService<RedisCacheWrapper>();
+			try
+			{
+				entity.Migrate();
+				entityBASE.Migrate();
+				entityOauth.Migrate();
+			}
+			catch (Exception ex)
+			{
+				if (ex is AggregateException)
+				{
+					foreach (Exception aggregateException in ((AggregateException)ex).InnerExceptions)
+					{
+						loggingService.GuardarLogError(aggregateException);
+					}
+				}
+				loggingService.GuardarLogError(ex);
+				loggingService.GuardarTraza(ObtenerRutaTraza());
+				throw;
+			}
 
-            string configLogStash = configService.ObtenerLogStashConnection();
+			string configLogStash = configService.ObtenerLogStashConnection();
             if (!string.IsNullOrEmpty(configLogStash))
             {
                 LoggingService.InicializarLogstash(configLogStash);
@@ -348,33 +372,22 @@ namespace Gnoss.Web
             CargarDominio(configService);
             RabbitMQClient.ClientName = $"WEB_{mDominio}";
 
-            CargarIdiomasPlataforma(entity, loggingService, configService, servicesUtilVirtuosoAndReplication);
+            CargarIdiomasPlataforma(entity, loggingService, configService, servicesUtilVirtuosoAndReplication, redisCacheWrapper);
 
-            CargarTextosPersonalizadosDominio(entity, loggingService, configService);
+            CargarTextosPersonalizadosDominio(entity, loggingService, configService, redisCacheWrapper);
 
             ConfigurarApplicationInsights(configService, entity, utilTelemetry);
 
             CargarConfiguracionReplicado(entity);
 
-
-            // Resolve the services from the service provider
-            mRouteConfig = sp.GetService<RouteConfig>();
+			CargarClaveReinicioCache(entity, loggingService, redisCacheWrapper, configService, servicesUtilVirtuosoAndReplication);
+			// Resolve the services from the service provider
+			mRouteConfig = sp.GetService<RouteConfig>();
             RouteConfig.IdiomaPrincipalDominio = IdiomaPrincipalDominio;
             GnossUrlsSemanticas.IdiomaPrincipalDominio = IdiomaPrincipalDominio;
 
             ProyectoAD.MetaOrganizacion = EstablecerOrganizacionGnoss(configService);
             ProyectoAD.MetaProyecto = EstablecerMetaProyecto(configService);
-
-            //Quitamos los motores de vistas y añadimos nuestro motor Razor personalizado
-            //TODO Javier
-            //ViewEngines.Engines.Clear();
-            //ViewEngines.Engines.Add(new CustomRazorViewEngine());
-
-            //Quitamos los modos de presentacion y dejamos solamente el de por defecto
-            //DisplayModeProvider.Instance.Modes.Clear();
-            //DisplayModeProvider.Instance.Modes.Add(new DefaultDisplayMode());
-
-            //System.Web.Mvc.MvcHandler.DisableMvcResponseHeader = true;
             loggingService.AgregarEntrada("FIN Application_Start");
         }
 
@@ -384,8 +397,6 @@ namespace Gnoss.Web
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                //app.UseSwagger();
-                //app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gnoss.Web v1"));
             }
             app.UseReferrerPolicy(opts => opts.NoReferrerWhenDowngrade());
             app.UseHttpsRedirection();
@@ -433,27 +444,45 @@ namespace Gnoss.Web
                 return mDominio;
             }
         }
-        private void CargarIdiomasPlataforma(EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
-        {
-            Dictionary<string, string> listaIdiomas = new Dictionary<string, string>();
-            listaIdiomas = configService.ObtenerListaIdiomasDictionary();
-            if (listaIdiomas.Count == 1 || string.IsNullOrEmpty(Dominio))
-            {
-                IdiomaPrincipalDominio = listaIdiomas.First().Key;
-            }
-            else if (listaIdiomas.Count > 1)
-            {
-                ProyectoCN proyCN = new ProyectoCN(entityContext, loggingService, configService, servicesUtilVirtuosoAndReplication);
-                IdiomaPrincipalDominio = proyCN.ObtenerIdiomaPrincipalDominio(Dominio);//select proyectoid, URLPropia from Proyecto where URLPropia like '%pruebasiphoneen.gnoss.net@%'
+		protected string ObtenerRutaTraza()
+		{
+			string ruta = Path.Combine(mEnvironment.ContentRootPath, "trazas1");
 
-                if (!listaIdiomas.ContainsKey(IdiomaPrincipalDominio))
-                {
-                    IdiomaPrincipalDominio = listaIdiomas.First().Key;
-                }
-            }
-        }
+			if (!Directory.Exists(ruta))
+			{
+				Directory.CreateDirectory(ruta);
+			}
 
-        private void CargarDominio(ConfigService configService)
+			ruta = Path.Combine(ruta, $"traza_{DateTime.Now.ToString("yyyy-MM-dd")}.txt");
+
+			return ruta;
+		}
+		private void CargarIdiomasPlataforma(Es.Riam.Gnoss.AD.EntityModel.EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper)
+		{
+			Dictionary<string, string> listaIdiomas = new Dictionary<string, string>();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, configService, servicesUtilVirtuosoAndReplication);
+			listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+			if (listaIdiomas.Count == 1 || string.IsNullOrEmpty(Dominio))
+			{
+				IdiomaPrincipalDominio = listaIdiomas.First().Key;
+			}
+			else if (listaIdiomas.Count > 1)
+			{
+				ProyectoCN proyCN = new ProyectoCN(entityContext, loggingService, configService, servicesUtilVirtuosoAndReplication);
+				IdiomaPrincipalDominio = proyCN.ObtenerIdiomaPrincipalDominio(Dominio);//select proyectoid, URLPropia from Proyecto where URLPropia like '%pruebasiphoneen.gnoss.net@%'
+
+				if (!listaIdiomas.ContainsKey(IdiomaPrincipalDominio))
+				{
+					IdiomaPrincipalDominio = listaIdiomas.First().Key;
+				}
+			}
+		}
+		private void CargarClaveReinicioCache(EntityContext entity, LoggingService loggingService, RedisCacheWrapper redisCacheWrapper, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
+		{
+			ProyectoCL proyectoCL = new ProyectoCL(entity, loggingService, redisCacheWrapper, configService, new VirtuosoAD(loggingService, entity, configService, servicesUtilVirtuosoAndReplication), servicesUtilVirtuosoAndReplication);
+			proyectoCL.AgregarClaveReinicioAplicacion(ProyectoAD.MetaProyecto);
+		}
+		private void CargarDominio(ConfigService configService)
         {
             string dominioConfig = configService.ObtenerDominio();
             if (!string.IsNullOrEmpty(dominioConfig))
@@ -580,7 +609,7 @@ namespace Gnoss.Web
         }
 
 
-        private void CargarTextosPersonalizadosDominio(EntityContext context, LoggingService loggingService, ConfigService configService)
+        private void CargarTextosPersonalizadosDominio(EntityContext context, LoggingService loggingService, ConfigService configService,RedisCacheWrapper redisCacheWrapper)
         {
             string dominio = configService.ObtenerDominio();
             Guid personalizacionEcosistemaID = Guid.Empty;
@@ -589,8 +618,8 @@ namespace Gnoss.Web
             {
                 personalizacionEcosistemaID = new Guid(parametrosAplicacionPers[0].Valor.ToString());
             }
-            UtilIdiomas utilIdiomas = new UtilIdiomas("", loggingService, context, configService);
-            utilIdiomas.CargarTextosPersonalizadosDominio(dominio, personalizacionEcosistemaID);
+			UtilIdiomas utilIdiomas = new UtilIdiomas("", loggingService, context, configService, redisCacheWrapper);
+			utilIdiomas.CargarTextosPersonalizadosDominio(dominio, personalizacionEcosistemaID);
         }
 
         private void CargarConfiguracionReplicado(EntityContext entityContext)

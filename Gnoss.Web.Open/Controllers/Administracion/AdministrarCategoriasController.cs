@@ -43,6 +43,10 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Universal.Common.Extensions;
 using Universal.Common;
 using VDS.RDF.Query.Expressions.Functions.XPath.Cast;
+using Microsoft.AspNetCore.Http.Extensions;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -148,8 +152,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	public class AdministrarCategoriasController : ControllerBaseWeb
 	{
 
-		public AdministrarCategoriasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+		public AdministrarCategoriasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
 		{
 		}
 
@@ -456,6 +460,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Tesauro })]
 		public ActionResult EjecutarAccion(string typeAction)
 		{
+			GuardarLogAuditoria();
 			PaginaModel.Action = typeAction;
 
 			switch (typeAction)
@@ -492,6 +497,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Tesauro })]
 		public ActionResult Guardar()
 		{
+			GuardarLogAuditoria();
 			if (!PaginaModel.MultiLanguaje)
 			{
 				foreach (CategoriaTesauro categoriaTesauro in GestorTesauro.ListaCategoriasTesauro.Values)
@@ -580,7 +586,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             PintarModalCrearSubCategoria model = new PintarModalCrearSubCategoria();
 
             TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            model.NombreCategoriaPadre = tesauroCN.ObtenerNombreCategoriaPorID(categoriaPadreID, IdiomaUsuario);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			model.NombreCategoriaPadre = tesauroCN.ObtenerNombreCategoriaPorID(categoriaPadreID, IdiomaUsuario);
 			model.CategoriaId = categoriaPadreID;
             model.IdiomaTesauro = UtilIdiomas.LanguageCode;
 			model.MultiLanguaje = bool.Parse(RequestParams("multiLanguage"));
@@ -600,7 +607,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 model.MultiLanguaje = false;
                 foreach (CategoriaTesauro cat in GestorTesauro.ListaCategoriasTesauro.Values)
                 {
-                    foreach (string idioma in mConfigService.ObtenerListaIdiomas())
+                    foreach (string idioma in paramCL.ObtenerListaIdiomas())
                     {
                         if (cat.FilaCategoria.Nombre.Contains("@" + idioma.ToString()))
                         {
@@ -629,6 +636,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <returns>Devuelve el tesauro modificado</returns>
 		private ActionResult CrearCategoria_Event()
 		{
+			GuardarLogAuditoria();
 			bool nombreRepetido = false;
 
 			Guid guidPadre = new Guid(RequestParams("parentKey"));
@@ -758,6 +766,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <returns>Devuelve el tesauro modificado</returns>
 		private ActionResult CambiarNombre_Event()
 		{
+			GuardarLogAuditoria();
 			bool nombreRepetido = false;
 
 			Guid categoriaSeleccionada = new Guid(RequestParams("categoryKey"));
@@ -865,6 +874,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <returns>Devuelve el tesauro modificado</returns>
 		private ActionResult MoverCategoria_Event()
 		{
+			GuardarLogAuditoria();
 			Guid guidPadre = new Guid(RequestParams("parentKey"));
 
 			PaginaModel.PasosRealizados += ((short)AccionConCategorias.MoverCategoria).ToString() + "|_|" + guidPadre.ToString();
@@ -924,6 +934,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <returns>Devuelve el tesauro modificado</returns>
 		private ActionResult EliminarCategoria_Event()
 		{
+			GuardarLogAuditoria();
 			Guid guidCatSup = new Guid(RequestParams("parentKey"));
 
 			string accion = RequestParams("moveTo");
@@ -1086,6 +1097,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <returns>Devuelve el tesauro modificado</returns>
 		private ActionResult CompartirCategoria_Event()
 		{
+			GuardarLogAuditoria();
 			Guid idComunidad = new Guid(RequestParams("ComunidadCompartirKey"));
 			Guid idCategoria = new Guid(RequestParams("CategoriaCompartirKey"));
 
@@ -2179,6 +2191,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					mPaginaModel.PasosRealizados = RequestParams("PasosRealizados");
 
 					TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
 					GestorTesauro.TesauroDW.Merge(tesauroCN.ObtenerSugerenciasCatDeUnTesauro(GestorTesauro.TesauroDW.ListaTesauro.FirstOrDefault().TesauroID));
 					tesauroCN.Dispose();
 
@@ -2205,7 +2218,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 						mPaginaModel.MultiLanguaje = false;
 						foreach (CategoriaTesauro cat in GestorTesauro.ListaCategoriasTesauro.Values)
 						{
-							foreach (string idioma in mConfigService.ObtenerListaIdiomas())
+							foreach (string idioma in paramCL.ObtenerListaIdiomas())
 							{
 								if (cat.FilaCategoria.Nombre.Contains("@" + idioma.ToString()))
 								{

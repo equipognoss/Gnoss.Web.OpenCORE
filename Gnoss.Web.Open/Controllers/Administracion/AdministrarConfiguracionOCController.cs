@@ -7,7 +7,9 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.Faceta;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Logica.Documentacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
@@ -27,6 +29,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -56,7 +59,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                 mGnossCache.AgregarObjetoCacheLocal(ProyectoSeleccionado.Clave, "ListaOntologiasPropiedadesOC", value);
             }
         }
-        public AdministrarConfiguracionOCController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarConfiguracionOCController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
         [HttpGet]
@@ -81,7 +84,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			ConfiguracionOCModel modelo = new ConfiguracionOCModel(xmlReaderXML, xmlReaderOntologia);
             ViewBag.HeaderTitle = "Configuración de " + modelo.XmlFile.ConfiguracionGeneral.Namespace;
 
-            ViewBag.IdiomasComunidad = mConfigService.ObtenerListaIdiomasDictionary();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ViewBag.IdiomasComunidad = paramCL.ObtenerListaIdiomasDictionary();
 
             ListaOntologiasPropiedades = new Dictionary<string, Dictionary<string, List<string>>>();
             DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -202,7 +206,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [HttpPost]
         public ActionResult Save(Guid ontologiaID)
         {
-			XmlReader xmlReaderXML = ObtenerXmlReaderXML(ontologiaID);
+            GuardarLogAuditoria();
+            XmlReader xmlReaderXML = ObtenerXmlReaderXML(ontologiaID);
 			XmlSerializer serializer = new XmlSerializer(typeof(XMLModel));
             XMLModel config = new XMLModel();
             using (XmlReader xmlReader = xmlReaderXML)

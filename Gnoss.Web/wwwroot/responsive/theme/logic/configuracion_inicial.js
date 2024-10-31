@@ -383,7 +383,7 @@ const operativaGestionConfiguracionInicial = {
             }, 5000)
         }).fail(function (data) {
             // Guardado KO            
-            mostrarNotificacion("error","Se han producido errores en el guardado. Contacta con el administrador.");
+            mostrarNotificacion("error", data);
         }).always(function () {            
             loadingOcultar();
         });          

@@ -1,0 +1,532 @@
+﻿@*
+    Descripción
+    -----------------------------------------------
+    Vista donde se muestra la configuración asociada a Matomo para la Comunidad.
+
+    Variables
+    ----------------------------------------------------------------
+*@
+
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    // Layout DevTools
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+}
+<link rel="stylesheet" href="\responsive\theme\matomo.css">
+
+
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul id="ulBody">
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+        </li>
+        <li id="liBody">
+        </li>
+        
+
+    </ul>
+</div>
+
+<div class="col col-12 col-contenido">
+    <div class="wrapCol">
+
+        
+
+
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.1.1/chart.min.js"></script>
+        <script src="/responsive/theme/logic/matomo_administracion.js"></script>
+
+      
+
+    </div>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+    <h2>Administrar estadísticas de la comunidad</h2>
+    <br />
+    <br />
+    <div class="matomo-container">
+        <div class="col">
+        <div id="matomoIzquierda" class="matomoLado">
+
+                <h2>Users</h2>
+                <h3>Summary</h3>
+                <table id="table_visitors">
+                    <tr>
+                        <th>Time</th>
+                        <th>Users</th>
+                        <th>Visits</th>
+                    </tr>
+                    <tr>
+                        <td>Today</td>
+                        <td id="todayThUsers"></td>
+                        <td id="todayThVisits"></td>
+                    </tr>
+                    <tr>
+                        <td>Yesterday</td>
+                        <td id="yesterdayThUsers"></td>
+                        <td id="yesterdayThVisits"></td>
+                    </tr>
+                    <tr>
+                        <td>Last 7 days</td>
+                        <td id="last7ThUsers"></td>
+                        <td id="last7ThVisits"></td>
+                    <tr>
+                        <td>Last month</td>
+                        <td id="lastMonthThUsers"></td>
+                        <td id="lastMonthThVisits"></td>
+                    </tr>
+                    <tr>
+                        <td>Last 2 months</td>
+                        <td id="last2MonthThUsers"></td>
+                        <td id="last2MonthThVisits"></td>
+                    </tr>
+                    <tr>
+                        <td>Last 3 months</td>
+                        <td id="last3MonthThUsers"></td>
+                        <td id="last3MonthThVisits"></td>
+                    </tr>
+                    <tr>
+                        <td>Last year</td>
+                        <td id="lastYearThUsers"></td>
+                        <td id="lastYearThVisits"></td>
+                    </tr>
+                </table>
+                <br />
+                <br />
+                <div id="div_table_last_users" class="table-responsive">
+                </div>
+                <div class="col-xs-6">
+                    <h3 class="sub-header">
+                        Top referred websites
+                    </h3>
+                    <div class="table-responsive">
+
+                        <table id="table_referred_websites" class="tableCentrada">
+                            <tr>
+                                <th>Top</th>
+                                <th>Website</th>
+                                <th>Number of visits</th>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td id="top1Referr" style="word-wrap: break-word"></td>
+                                <td id="top1ReferrNumber" style="word-wrap: break-word"></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td id="top2Referr" style="word-wrap: break-word"></td>
+                                <td id="top2ReferrNumber" style="word-wrap: break-word"></td>
+                            <tr>
+                                <td>3</td>
+                                <td id="top3Referr" style="word-wrap: break-word"></td>
+                                <td id="top3ReferrNumber" style="word-wrap: break-word"></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td id="top4Referr" style="word-wrap: break-word"></td>
+                                <td id="top4ReferrNumber" style="word-wrap: break-word"></td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td id="top5Referr" style="word-wrap: break-word"></td>
+                                <td id="top5ReferrNumber" style="word-wrap: break-word"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>           
+                <br>
+                <br />
+            <div id="graphsContainer">
+                <h3>Top browsers</h3>
+                <canvas class="canvasIzq" id="chartId_3" aria-label="chart" width="200" height="200"></canvas>
+                <br>
+                <br>
+                <h3>Top platforms</h3>
+                <canvas class="canvasIzq" id="chartId_7" aria-label="chart" width="200" height="200"></canvas>
+                <br>
+                <br>
+                <h3>Top devices</h3>
+                <canvas class="canvasIzq" id="chartId_8" aria-label="chart" width="200" height="200"></canvas>
+                <br>
+                <br>
+                <h3>All visitors countries</h3>
+                <canvas class="canvasIzq" id="chartId_2" aria-label="chart" width="200" height="200"></canvas>
+                <br>
+                <br>
+            </div>
+
+        </div>
+    </div>
+    <div class="col">
+            <div id="matomoDerecha" class="matomoLado">
+            <canvas id="chartId_0_line" aria-label="chart" width="450" height="260"></canvas>
+            <br />
+            <br />
+            <input type="date" id="fechaInicio" name="Fecha de inicio">
+            <input type="date" id="fechaFinal" name="Fecha de fin">
+            <br />
+            <br />
+            <div class="form-group">
+                <label id="litInstrucciones">Filter by user name</label>
+            </div>
+            @* Filtrado de usuarios en modal *@
+            <div class="input-wrap filtroRapido position-static">
+                <input type="text"
+                       id="txtFiltro"
+                       class="filtroFaceta ac_input form-control"
+                       placeholder="@Html.GetText("METABUSCADOR","BUSCAR")"
+                       autocomplete="off" />
+                <span class="searchButton"></span>
+            </div>
+            <div class="form-group">
+                <div style="display: none" class="contactos" id="selector">
+                    <div id="panContactos"></div>
+                </div>
+            </div>
+            @* Panel de usuarios que se han invitado al grupo *@
+            <!-- <div id="panContenedorInvitados" class="tag-list mb-4 mt-3"></div>-->
+            <!-- <div class="group finderSection txtFiltrarMiembrosMatomo">
+                     <label for="finderSection">Filter by user</label>
+                     <input type="text" id="txtFiltrarUsuariosMatomo" name="txtFiltrarMiembros" value="" aux="" autocomplete="off" placeholder="Find">
+                     <input title="Encontrar" type="button" class="encontrar findAction" id="inputLupaMatomo">
+                          </div>-->
+                <br>
+                <br>
+                <div class="containerParallel">
+                    <button id="parellelBtPages" class="parellelBtIndex">Download top pages data</button>
+                    <h3 class="parallelTexth3">
+                        Top pages
+                    </h3>
+                </div>
+                <br />
+                <table id="table_top_pages">
+                    <tr>
+                        <th>Top</th>
+                        <th>Page</th>
+                        <th>Visits</th>
+                        <th>Time average</th>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td id="top1Name"></td>
+                        <td id="top1Visits"></td>
+                        <td id="top1VisitsTime"></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td id="top2Name"></td>
+                        <td id="top2Visits"></td>
+                        <td id="top2VisitsTime"></td>
+                    <tr>
+                        <td>3</td>
+                        <td id="top3Name"></td>
+                        <td id="top3Visits"></td>
+                        <td id="top3VisitsTime"></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td id="top4Name"></td>
+                        <td id="top4Visits"></td>
+                        <td id="top4VisitsTime"></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td id="top5Name"></td>
+                        <td id="top5Visits"></td>
+                        <td id="top5VisitsTime"></td>
+                    </tr>
+                </table>
+                 <br />
+                <br />
+                <div class="table-responsive">
+                        <h3 >
+                            Top searchs
+                        </h3>
+                    <br />
+                    <table id="table_top_searchs" class="tableCentrada">
+                        <tr>
+                            <th>Top</th>
+                            <th>Value</th>
+                            <th>Quantity of searchs</th>
+                        </tr>
+                        <tr>
+                            <td style="word-wrap: break-word">1</td>
+                            <td id="top1Search" style="word-wrap: break-word"></td>
+                            <td id="top1SearchNumber" style="word-wrap: break-word"></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td id="top2Search" style="word-wrap: break-word"></td>
+                            <td id="top2SearchNumber" style="word-wrap: break-word"></td>
+                        <tr>
+                            <td>3</td>
+                            <td id="top3Search" style="word-wrap: break-word"></td>
+                            <td id="top3SearchNumber" style="word-wrap: break-word"></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td id="top4Search" style="word-wrap: break-word"></td>
+                            <td id="top4SearchNumber" style="word-wrap: break-word"></td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td id="top5Search" style="word-wrap: break-word"></td>
+                            <td id="top5SearchNumber" style="word-wrap: break-word"></td>
+                        </tr>
+                    </table>
+                </div>
+                <br />
+                <br />
+                <div class="containerParallel">
+                    <button id="parellelBt" class="parellelBtIndex">Download resources data</button>
+                    <h3 class="parallelTexth3">
+                        Top downloads
+                    </h3>
+                </div>
+                <br />
+                <table id="table_top_resources_downloaded">
+                    <tr>
+                        <th>Top</th>
+                        <th>Resource</th>
+                        <th>Downloads number</th>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td id="top1Download"></td>
+                        <td id="top1DownloadNumber"></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td id="top2Download"></td>
+                        <td id="top2DownloadNumber"></td>
+                    <tr>
+                        <td>3</td>
+                        <td id="top3Download"></td>
+                        <td id="top3DownloadNumber"></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td id="top4Download"></td>
+                        <td id="top4DownloadNumber"></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td id="top5Download"></td>
+                        <td id="top5DownloadNumber"></td>
+                    </tr>
+                </table>
+
+            </div>
+            <br />
+            <br />
+            <h3>
+                Most voted resources
+            </h3>
+            <table id="table_top_resources">
+                <tr>
+                    <th>Top</th>
+                    <th>Resource</th>
+                    <th>Votes</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td id="top1ResourceUrl"></td>
+                    <td id="top1ResourceVotes"></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td id="top2ResourceUrl"></td>
+                    <td id="top2ResourceVotes"></td>
+                <tr>
+                    <td>3</td>
+                    <td id="top3ResourceUrl"></td>
+                    <td id="top3ResourceVotes"></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td id="top4ResourceUrl"></td>
+                    <td id="top4ResourceVotes"></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td id="top5ResourceUrl"></td>
+                    <td id="top5ResourceVotes"></td>
+                </tr>
+            </table>
+            <br>
+            <br>
+            <h3>
+                Most commented resources
+            </h3>
+            <table id="table_top_resources_commented">
+                <tr>
+                    <th>Top</th>
+                    <th>Resource</th>
+                    <th>Coments</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td id="top1ResourceUrl_Coments"></td>
+                    <td id="top1Resource_Coments"></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td id="top2ResourceUrl_Coments"></td>
+                    <td id="top2Resource_Coments"></td>
+                <tr>
+                    <td>3</td>
+                    <td id="top3ResourceUrl_Coments"></td>
+                    <td id="top3Resource_Coments"></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td id="top4ResourceUrl_Coments"></td>
+                    <td id="top4Resource_Coments"></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td id="top5ResourceUrl_Coments"></td>
+                    <td id="top5Resource_Coments"></td>
+                </tr>
+            </table>
+            <br />
+            <br />
+                <div class="col-xs-6">
+                    <br />
+                    <h3 class="sub-header">
+                        Top visitors
+                    </h3>
+                    <div class="table-responsive">
+                        <table id="table_visitors" class="tableCentrada">
+                            <tr>
+                                <th>Top</th>
+                                <th>Visitor</th>
+                                <th>Time</th>
+                                <th>Visits</th>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td id="top1Visit"></td>
+                                <td id="top1Time"></td>
+                                <td id="top1VisitNumber"></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td id="top2Visit"></td>
+                                <td id="top2Time"></td>
+                                <td id="top2VisitNumber"></td>
+                            <tr>
+                                <td>3</td>
+                                <td id="top3Visit"></td>
+                                <td id="top3Time"></td>
+                                <td id="top3VisitNumber"></td>
+
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td id="top4Visit"></td>
+                                <td id="top4Time"></td>
+                                <td id="top4VisitNumber"></td>
+
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td id="top5Visit"></td>
+                                <td id="top5Time"></td>
+                                <td id="top5VisitNumber"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                 <br />
+            <br />
+                <div class="col-xs-6">
+                    
+                    <h3 class="sub-header">
+                        Recent visitors
+                    </h3>
+                    <div class="table-responsive">
+                        <table id="table_recent_visitors" class="tableCentrada">
+                            <tr>
+                                <th>Top</th>
+                                <th>Visitor</th>
+                                <th>Time</th>
+                                <th>Visits</th>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td id="top1VisitRecent"></td>
+                                <td id="top1TimeRecent"></td>
+                                <td id="top1VisitNumberRecent"></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td id="top2VisitRecent"></td>
+                                <td id="top2TimeRecent"></td>
+                                <td id="top2VisitNumberRecent"></td>
+                            <tr>
+                                <td>3</td>
+                                <td id="top3VisitRecent"></td>
+                                <td id="top3TimeRecent"></td>
+                                <td id="top3VisitNumberRecent"></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td id="top4VisitRecent"></td>
+                                <td id="top4TimeRecent"></td>
+                                <td id="top4VisitNumberRecent"></td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td id="top5VisitRecent"></td>
+                                <td id="top5TimeRecent"></td>
+                                <td id="top5VisitNumberRecent"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            <br />
+            <br />
+        </div>
+    </div>
+    </div>
+
+            
+            
+    <!-- PARA METAUSUARIO<p>
+        Restablece tu usuario y contraseña para acceder a matomo.
+    </p>
+
+    @* Botón para restablecer tu usuario en Matomo*@
+    <input id="btnRestoreCurrentUser" type="button" class="btn btn-primary uppercase btnRestoreCurrentUser" data-toggle="modal" data-target="#modal-change-matomo-password" value="Restablecer tu ususario">
+
+    @* Botón para restablecer la contraseña del usuario administrador de Matomo*@
+    <input id="btnRestoreMatomoAdminPassword" type="button" class="btn btn-primary uppercase btnRestoreMatomoAdminPassword" data-toggle="modal" data-target="#modal-change-matomo-admin-password" value="Restablecer ususario Matomo">
+    -->
+
+@* Modal para restablecer tu usaurio en Matomo*@
+@Html.PartialView("_modal-views/_reset-matomo-password")
+
+
+@* Modal para restablecer el usuario Matomo*@
+@Html.PartialView("_modal-views/_reset-matomo-administrator-password")
+
+@* Carga de operativa *@
+@section operativaScript{
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+        (function ($) {
+            // Operativa funcionamiento de Gestión Matomo
+            operativaGestionMatomo.init();
+        })();
+    </script>
+    
+}

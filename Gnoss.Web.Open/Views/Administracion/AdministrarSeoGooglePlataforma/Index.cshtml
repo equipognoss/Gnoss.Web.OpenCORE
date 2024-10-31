@@ -10,10 +10,10 @@ Variables
 *@
 
 @{
-CommunityModel Comunidad = Html.GetComunidad();
-HeaderModel cabecera = Html.GetCabecera();
-// Layout DevTools
-Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    // Layout DevTools
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 }
 
 @*
@@ -24,120 +24,118 @@ Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 {
     <div class="alert alert-warning alert-dismissable">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <span class="material-icons" alt="warning" title="warning" aria-label="warning">
-        warning
-    </span>
+        <span class="material-icons" alt="warning" title="warning" aria-label="warning">
+            warning
+        </span>
         <strong>@Html.GetText("DEVTOOLS", "NOGUARDAINTEGRACIONCONTINUA")</strong>
     </div>
 }
 
-    @* Migas de Pan *@
-    <div class="col col-12 col-breadcrumb">
-        <ul>
-            <li>
-                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-            </li>
-            <li>
-                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
-            </li>
-            <li>
-                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")
-            </li>
-        </ul>
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
+        </li>
+        <li>
+            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")
+        </li>
+    </ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+    <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")</h2>
+    <p>@Html.GetText("DEVTOOLS","CONFIGURACIONDELPOSICIONAMIENTOSEODELACOMUNIDADASICOMODEUNAC")</p>
+
+    @* Indexación buscadores *@
+    <h3>@Html.GetText("DEVTOOLS","DESEAQUEGOOGLEYELRESTODEBUSCADORESINDEXESUSITIOWEB")</h3>
+    <div class="form-group mb-3 edit-indexacion">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","PERMITIRINDEXACION")</label>
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","QUEESINDEXACION")</label>
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONSI")</label>
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONNO")</label>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input"
+                   value="all"
+                   type="radio"
+                   name="indexacion"
+                   id="robotBusquedaSi"
+                   @((Model.RobotsBusqueda.Equals("all") @*&& Model.ConfiguracionEnParametroAplicacion*@) || Model.RobotsBusqueda.Equals("") ? "checked" : "")>
+            <label class="form-check-label" for="robotBusquedaSi">@Html.GetText("COMMON","SI")</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input"
+                   type="radio"
+                   name="indexacion"
+                   value="noindex,nofollow"
+                   id="robotBusquedaNo"
+                   @(Model.RobotsBusqueda.Equals("noindex,nofollow") ? "checked" : "")>
+            <label class="form-check-label" for="robotBusquedaNo">@Html.GetText("COMMON","NO")</label>
+        </div>
     </div>
 
-    @* Contenido Central *@    
-    <div class="formulario-edicion background-blanco">
-        <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")</h2>
-        <p>@Html.GetText("DEVTOOLS","CONFIGURACIONDELPOSICIONAMIENTOSEODELACOMUNIDADASICOMODEUNAC")</p>
-
-        @* Indexación buscadores *@
-    <h3>@Html.GetText("DEVTOOLS","DESEAQUEGOOGLEYELRESTODEBUSCADORESINDEXESUSITIOWEB")</h3>
-        <div class="form-group mb-3 edit-indexacion">
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","PERMITIRINDEXACION")</label>
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","QUEESINDEXACION")</label>
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONSI")</label>
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","INDEXACIONNO")</label>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" 
-                       value="all"
-                       type="radio"
-                       name="indexacion"
-                       id="robotBusquedaSi"
-                   @((Model.RobotsBusqueda.Equals("all") @*&& Model.ConfiguracionEnParametroAplicacion*@) || Model.RobotsBusqueda.Equals("") ? "checked" : "")>
-                <label class="form-check-label" for="robotBusquedaSi">@Html.GetText("COMMON","SI")</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" 
-                       type="radio"
-                       name="indexacion"
-                       value="noindex,nofollow"
-                       id="robotBusquedaNo"
-                   @(Model.RobotsBusqueda.Equals("noindex,nofollow") ? "checked" : "")>
-                <label class="form-check-label" for="robotBusquedaNo">@Html.GetText("COMMON","NO")</label>
-            </div>
-        </div>                
-
-        @* Script Analytics *@
+    @* Script Analytics *@
     <h3>@Html.GetText("DEVTOOLS","DESEAAÑADIRUNSCRIPTPROPIOOUTILIZARELDELAPLATAFORMA")</h3>
-        <div class="form-group mb-5 edit-indexacion">
+    <div class="form-group mb-5 edit-indexacion">
 
-            @* Añadir Script de seguimiento *@
-            <label class="control-label d-block">@Html.GetText("DEVTOOLS","AÑADIRSCRIPTDESEGUIMIENTO")</label>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="script" id="googleSi" value="Si" @(!string.IsNullOrEmpty(Model.ScriptGoogleAnalytics) ? "checked" : string.Empty)>
-                <label class="form-check-label" for="googleSi">@Html.GetText("DEVTOOLS","UTILIZARLACONFIGURACIONPROPIA")</label>
-            </div>
-            @* Utilizar configuración por defecto *@
-            <div class="form-check form-check-inline">
+        @* Añadir Script de seguimiento *@
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS","AÑADIRSCRIPTDESEGUIMIENTO")</label>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="script" id="googleSi" value="Si" @(!string.IsNullOrEmpty(Model.ScriptGoogleAnalytics) ? "checked" : string.Empty)>
+            <label class="form-check-label" for="googleSi">@Html.GetText("DEVTOOLS","UTILIZARLACONFIGURACIONPROPIA")</label>
+        </div>
+        @* Utilizar configuración por defecto *@
+        <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="script" id="googleDefecto" value="Defecto" @(string.IsNullOrEmpty(Model.ScriptGoogleAnalytics) ? "checked" : string.Empty)>
-                <label class="form-check-label" for="googleDefecto">@Html.GetText("ADMINISTRACIONBASICA","UTILIZARLACONFIGURACIONPORDEFECTO")</label>
-            </div>
+            <label class="form-check-label" for="googleDefecto">@Html.GetText("ADMINISTRACIONBASICA","UTILIZARLACONFIGURACIONPORDEFECTO")</label>
+        </div>
 
-            @* Código de Google Analytics -> panelScriptPropio *@
-            <div id="panelScriptPropio" class="mb-4 pl-5">
-                <div class="form-group mb-3">
-                    <label class="control-label d-block">Código de Google Analytics</label>
-                    <input placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCODIGO")" 
-                           type="text" 
-                           value="@Model.CodigoGoogleAnalytics"
-                           id="CodigoGoogleAnalyticsPropio" 
-                           class="form-control not-outline" 
-                           disabled>
-                </div>
-                @* Script de Google Analytics propio *@
-                <div class="form-group mb-3">
+        @* Código de Google Analytics -> panelScriptPropio *@
+        <div id="panelScriptPropio" class="mb-4 pl-5">
+            <div class="form-group mb-3">
+                <label class="control-label d-block">Código de Google Analytics</label>
+                <input placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCODIGO")"
+                       type="text"
+                       value="@Model.CodigoGoogleAnalytics"
+                       id="CodigoGoogleAnalyticsPropio"
+                       class="form-control not-outline"
+                       disabled>
+            </div>
+            @* Script de Google Analytics propio *@
+            <div class="form-group mb-3">
                 <label class="control-label d-block">@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICSPROPIO")</label>
-                    <textarea id="ScriptGoogleAnalyticsPropio" 
-                              class="form-control not-outline"
-                              rows="12">@Model.ScriptGoogleAnalytics</textarea>
-                    <span>@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICS,SISEQUIEREUSARUNSCRIPTDISTINTOALDEPO")</span>
-                    <span>(ej: var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));)</span>
-                </div>
-            </div>
-
-            @* Código de Google Analytics -> panelScriptDefecto *@
-            <div id="panelScriptDefecto" class="mb-4 pl-5">
-                <div class="form-group mb-3">
-                    <label class="control-label d-block">Código de Google Analytics</label>
-                    <input placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCODIGO")" type="text" id="CodigoGoogleAnalyticsDefecto" class="form-control not-outline">
-                </div>
-                @* Script de Google Analytics *@
-                <div class="form-group mb-3">
-                    <label class="control-label d-block">@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICSPORDEFECTO")</label>
-                    <textarea class="form-control not-outline" 
-                              rows="12"
-                              id="ScriptGoogleAnalyticsDefecto"
-                              disabled>@Model.ScriptPorDefecto</textarea>
-                    <span>@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICS,SISEQUIEREUSARUNSCRIPTDISTINTOALDEPO")</span>
-                    <span>(ej: var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));)</span>
-                </div>
+                <textarea id="ScriptGoogleAnalyticsPropio"
+                          class="form-control not-outline"
+                          rows="12">@Model.ScriptGoogleAnalytics</textarea>
+                <span>@Html.GetText("DEVTOOLS","MENSAJESCRIPTGOOGLEANALYTICSADMINISTRACION")</span>
             </div>
         </div>
-        @* Botón para guardar *@
-        @*<a href="javascript: void(0);" class="btn btn-primary uppercase btnSave">@Html.GetText("COMMON","GUARDAR")</a>*@
-    <input type="button" class="btn btn-primary uppercase btnSave" value="@Html.GetText("COMMON","GUARDAR")">
+
+        @* Código de Google Analytics -> panelScriptDefecto *@
+        <div id="panelScriptDefecto" class="mb-4 pl-5">
+            <div class="form-group mb-3">
+                <label class="control-label d-block">Código de Google Analytics</label>
+                <input placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCODIGO")" type="text" id="CodigoGoogleAnalyticsDefecto" class="form-control not-outline">
+            </div>
+            @* Script de Google Analytics *@
+            <div class="form-group mb-3">
+                <label class="control-label d-block">@Html.GetText("DEVTOOLS","SCRIPTDEGOOGLEANALYTICSPORDEFECTO")</label>
+                <textarea class="form-control not-outline"
+                          rows="12"
+                          id="ScriptGoogleAnalyticsDefecto"
+                          disabled>@Model.ScriptPorDefecto</textarea>
+                <span>@Html.GetText("DEVTOOLS","MENSAJESCRIPTGOOGLEANALYTICSADMINISTRACION")</span>
+            </div>
+        </div>
     </div>
+    @* Botón para guardar *@
+    @*<a href="javascript: void(0);" class="btn btn-primary uppercase btnSave">@Html.GetText("COMMON","GUARDAR")</a>*@
+    <input type="button" class="btn btn-primary uppercase btnSave" value="@Html.GetText("COMMON","GUARDAR")">
+</div>
 
 
 

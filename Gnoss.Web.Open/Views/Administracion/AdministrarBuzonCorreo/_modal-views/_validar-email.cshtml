@@ -35,14 +35,16 @@
 				        <div class="form-group">
                             @* Input para el correo *@
                             <div class="form-group mb-3">
-                                <label class="control-label d-block">Correo Electrónico</label>
+                            <label class="control-label d-block">@Html.GetText("COMMON","CORREOELECTRONICO")</label>
                             <input type="text" class="form-control" name="txtCorreoValidar" id="txtCorreoValidar" />
-                                <small class="form-text text-mute">Correo electrónico al que se enviará el email de prueba.</small>
+                            <small class="form-text text-mute">
+                                @Html.GetText("COMMON","CORREOELECTRONICOALQUESEENVIARAELEMAILDEPRUEBA")
+                            </small>
                             </div>
 
                             @* Botón de guardado y cierre del modal *@
                             <div class="panelBotonera">
-                                <input type="button" class="btn btn-primary uppercase" id="btnValidarEmail" value="Validar y Guardar"/>                                               
+                                <input type="button" class="btn btn-primary uppercase" id="btnValidarEmail" value="@Html.GetText("COMMON","GUARDAR")"/>                                               
                             </div> 
                     </div>
 

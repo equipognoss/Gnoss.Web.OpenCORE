@@ -8,6 +8,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Documentacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -27,6 +28,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -42,8 +44,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     public class ErrorController : ControllerBaseWeb
     {
         //private RouteConfig mRouteConfig;
-        public ErrorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public ErrorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
             //mRouteConfig = routeConfig;
         }
@@ -51,9 +53,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             #region Cargamos el proyecto seleccionado
-            if (mConfigService.ObtenerProyectoConexion().HasValue && (RequestParams("proyectoID") == null || RequestParams("proyID") == null))
+            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            Guid? idProyecto = mConfigService.ObtenerProyectoConexion();
+            if (idProyecto == null || idProyecto.Equals(Guid.Empty))
             {
-                base.ProyectoSeleccionadoError404 = mConfigService.ObtenerProyectoConexion().Value;
+                string valor = paramCN.ObtenerParametroAplicacion(ProyectoSeleccionado.UrlPropia(IdiomaUsuario));
+
+                if (!string.IsNullOrEmpty(valor))
+                {
+                    idProyecto = new Guid(valor);
+                }
+            }
+            if (idProyecto.HasValue && (RequestParams("proyectoID") == null || RequestParams("proyID") == null))
+            {
+                base.ProyectoSeleccionadoError404 = idProyecto.Value;
             }
             if (HttpContext.Request.Path.ToString().Contains("error?errorCode=404&404;"))
             {
@@ -116,7 +129,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string tituloInt = pControlador.UtilIdiomas.GetText("404", "TITULO");
 
             #region StatusCode
-            if ((mConfigService.ObtenerProyectoConexion().HasValue && (pControlador.RequestParams("proyectoID") == null)) || pControlador.Request.Headers.ContainsKey("gone"))
+            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            Guid? idProyecto = mConfigService.ObtenerProyectoConexion();
+            if (idProyecto == null || idProyecto.Equals(Guid.Empty))
+            {
+                string valor = paramCN.ObtenerParametroAplicacion(ProyectoSeleccionado.UrlPropia(IdiomaUsuario));
+
+                if (!string.IsNullOrEmpty(valor))
+                {
+                    idProyecto = new Guid(valor);
+                }
+            }
+            if ((idProyecto.HasValue && (pControlador.RequestParams("proyectoID") == null)) || pControlador.Request.Headers.ContainsKey("gone"))
             {
                 pControlador.Response.StatusCode = 200;
                 //pControlador.Response.Status = "200 OK";

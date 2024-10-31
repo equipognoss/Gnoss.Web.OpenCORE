@@ -13,6 +13,7 @@ Variables
     Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
     // Controlar si no hay certificados, el mostrado del panel 'panelCertificationInProgressInformation'
     string showCreacionCertificadosClassName = "d-none";
+    string idiomas = "";
 }
 
 @{
@@ -20,7 +21,11 @@ Variables
     if (Model.NivelesCertificacion.Count != 0)
     {
         showCreacionCertificadosClassName = "";        
-    }        
+    }
+    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+    {
+        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+    }
 }
 
 
@@ -30,7 +35,8 @@ Variables
 *@
 
 @* Contenedor central *@
-
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaDefecto" id="idiomaDefecto"/>
     @* Migas de Pan *@
     <div class="col col-12 col-breadcrumb">
         <ul>

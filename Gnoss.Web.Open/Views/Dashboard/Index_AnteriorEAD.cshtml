@@ -258,7 +258,7 @@
         <div class="resaltarAccion" style="" id="facetaEncuentra">
             <p>@Html.GetText("BUSCADORFACETADO", "ENCUENTRA")</p>
         </div>
-        <form method="post" id="formPanFacetas" action="@(new Uri($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}").AbsoluteUri)">
+        <form method="post" id="formPanFacetas" action="@($"{Html.GetBaseUrlIdioma()}{Context.Request.Path}")">
             <fieldset style="display: block">
                 <legend class="nota">facetas</legend>
                 <div id="panFacetas">

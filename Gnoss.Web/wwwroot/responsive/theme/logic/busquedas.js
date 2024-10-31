@@ -2513,10 +2513,12 @@ function MontarNumResultados() {
             // Nº total de resultados obtenidos
             const numResultados = parseInt($('#numResultadosRemover').text());
             // Cadena utilizada para búsqueda
-            const queryString = findGetParameter("search");
-
+            var queryString = findGetParameter("search");
+            
             // No se han encontrado resultados - Mostrar aviso siempre que se realice alguna búsqueda
             if (numResultados == 0 && queryString != undefined) {
+                queryString = queryString.replace('<', '&lt;');
+                queryString = queryString.replace('>', '&gt;');
                 // Si existe el buscador, introducir la cadena que ha usado el usuario para realizar la búsqueda con resultados 0.
                 if (finderSection.length > 0) {
                     finderSection.val(queryString);

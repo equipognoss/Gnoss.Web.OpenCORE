@@ -20,10 +20,16 @@ Variables
     string idiomasDisponibles = "";
     // Guid sugerido en caso de ser de reciente creación    
     string newGuidId = Guid.NewGuid().ToString();
+    // Nombre de la propiedad que representa el Título de la propiedad y la entidad
+    string[] propertyNameRepresentOntologyTitleArray = Model.SecondaryEntities.PropertyNameRepresentOntologyTitle.Split('|');    
+    // Obtener el primer valor y quitar espacios en blanco
+    string propertyNameRepresentOntologyTitleValue = propertyNameRepresentOntologyTitleArray[0].Trim();
+    // Obtener el segundo valor y quitar espacios en blanco
+    string propertyNameRepresentOntologyTitleEntity = propertyNameRepresentOntologyTitleArray[1].Trim();    
 }
 
 <input type="hidden" name="TabEliminada" value="false">
-<div class="card card-body d-block">
+<div class="card card-body d-block" data-property-name-represent-ontology-title-value="@propertyNameRepresentOntologyTitleValue" data-property-name-represent-ontology-title-entity="@propertyNameRepresentOntologyTitleEntity">
 	
 	@{
 		// Id automático

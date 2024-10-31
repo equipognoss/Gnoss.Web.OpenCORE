@@ -8,10 +8,12 @@ using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos.CMS;
 using Es.Riam.Gnoss.Elementos.Notificacion;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.Notificacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -30,6 +32,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,8 +62,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public CMSPaginaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public CMSPaginaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -68,7 +71,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             TipoComponenteCMS? tipoComponenteCMSActual = null;
 
-            mControladorCMS = new ControladorCMS(this, ComponenteCMSPaginaActual, TipoUbicacionCMSPaginaActual, null, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+            mControladorCMS = new ControladorCMS(this, ComponenteCMSPaginaActual, TipoUbicacionCMSPaginaActual, null, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, true);
 
             if (ComponenteCMSPaginaActual.HasValue && mControladorCMS.GestorCMSActual.ListaComponentes.ContainsKey(ComponenteCMSPaginaActual.Value))
             {
@@ -145,7 +148,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 bool pintar = false;
                 bool.TryParse(RequestParams("pintar"), out pintar);
 
-                Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+				Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                 if (string.IsNullOrEmpty(idiomaPedido) || !listaIdiomas.ContainsKey(idiomaPedido))
                 {
                     //Si no se esoecifica idioma no se pinta
@@ -154,11 +158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 //Hay que generar el HTML (bool refrescar)
                 bool.TryParse(RequestParams("refrescar"), out mRefrescar);
-                if (!pintar)
-                {
-                    mRefrescar = true;
-                }
-
+                
                 string componentName = RequestParams("ComponentName");
 				if (ComponenteCMSPaginaActual.HasValue)
 				{
@@ -331,7 +331,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             #region Actividad reciente
             CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponentKey,ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+            GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponentKey,ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext);
             cmsCN.Dispose();
 
             CMSComponenteActividadReciente componente = (CMSComponenteActividadReciente)(gestorCMS.ListaComponentes[ComponentKey]);

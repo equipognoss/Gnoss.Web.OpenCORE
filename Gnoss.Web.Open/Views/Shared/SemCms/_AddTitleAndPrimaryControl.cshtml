@@ -38,11 +38,11 @@ Variables
             }
 
             string textoLabel = Model.semanticPropertyModel.OntologyPropInfo.LabelTitle + " (" + Model.semanticPropertyModel.EntityParent.SemanticResourceModel.AvailableLanguages[idioma] + ")";
-            SemanticPropertyModel.PropertyValue propValueIdioma = null;
-
+            
             if (Model.propertyValue != null && Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues.ContainsKey(idioma))
             {
-                propValueIdioma = Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues[idioma][0];
+                Model.propertyValue = Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues[idioma][0];
+
             }
 
             <div>

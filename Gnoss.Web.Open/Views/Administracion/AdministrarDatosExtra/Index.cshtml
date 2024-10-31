@@ -13,6 +13,14 @@
 	bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
 }
 
+@{
+	@* Carga de idiomas *@
+	foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+	{
+		idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+	}
+}
+
 @* Migas de Pan *@
 <div class="col col-12 col-breadcrumb">
 	<ul>
@@ -37,19 +45,78 @@
 	</ul>
 </div>
 
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaDefecto" id="idiomaDefecto"/>
+
 @* Contenido Central *@
 <div class="formulario-edicion background-blanco">
-	@* Contenedor global de Traducciones *@
+	@* Panel de idiomas *@
+	<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+		@* Títulos de Tabs con los diferentes idiomas a visualizar. *@
+		@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+		{
+			if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+			{
+				<li class="nav-item">
+					<a class="tabIdiomaItem nav-link @( Model.IdiomaDefecto == idioma.Key ? "active" : null)"
+			   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+			   data-language="@idioma.Key"
+			   role="tab" aria-controls="@("litVer" + idioma.Key)"
+			   aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+				</li>
+				contNumPestañasVisibles += 1;
+			}
+		}
+		@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+		@if (contNumPestañasVisibles < cabecera.Languajes.Count)
+		{
+			@* Dropdown para resto de categorías *@
+			<li class="nav-item">
+				<div class="dropdown">
+					@* Desplegable del dropdown *@
+					<a class="nav-link dropdown-toggle"
+				   data-toggle="dropdown"
+				   href="#"
+				   role="button"
+				   aria-haspopup="true"
+				   aria-expanded="false">@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+					@* Sección para mostrar items del dropdown*@
+					<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+						<ul class="no-list-style">
+							@* Pintado del resto de pestañas en Dropdown *@
+							@for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+							{
+								var item = cabecera.Languajes.ElementAt(i);
+								var itemKey = item.Key;
+								var itemValue = item.Value;
+
+								@* Cada item del dropdown *@
+								<li>
+									<a id="@("ver_paginas_" + itemKey)"
+							   class="item-dropdown tabIdiomaItem @( Model.IdiomaDefecto == itemKey ? "active" : null)"
+							   data-toggle="tab"
+							   href="#@("litVer" + itemKey)"
+							   data-language="@itemKey">
+										@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+									</a>
+								</li>
+							}
+						</ul>
+					</div>
+				</div>
+			</li>
+		}
+	</ul>
+	@* Contenedor global de Datos extra *@
 	<div class="tab-content">
-		@* Contenido de las diferentes traducciones *@
+		@* Contenido de las diferentes datos extra *@
 		<div id="panelListadoDatosExtra"
 			 class="tab-pane fade show active"
 			 role="tabpanel"
 			 aria-labelledby="panelListadoDatosExtra">
 
-			@* Contenedor del Título de la Sección + Buscador *@
 			<div class="row">
-				@* Título de la sección de traducciones + Nº de traducciones *@
+				@* Título de la sección de datos extra *@
 				<div class="col col-12 header-listado">
 					<div class="h1-container">
 						<h1>
@@ -63,41 +130,10 @@
 						   data-target="#modal-new-extra-data">@Html.GetText("DEVTOOLS","NUEVODATOEXTRA")</a>
 					</div>
 				</div>
-
-				@* Buscador de Datos extra 
-				<div class="col col-12 header-buscador">
-					<div class="wrapCol">
-						<div class="col-buscador" style="width: 100%">
-
-							<form id="formBuscadorDatosExtra" onsubmit="return false;">
-								<div class="finderUtils" id="divCajaBusqueda">
-									<div class="group finderSection">
-
-										<input type="text"
-											   id="txtBuscarDatoExtra"
-											   class="not-outline finderSectionText"
-											   autocomplete="off"
-											   placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")" />
-
-										<input title="Buscar"
-											   type="button"
-											   class="findAction"
-											   id="inputLupa" />
-
-										<a href="javascript: void(0);" class="btn-filtrar-movil">
-											<span class="material-icons">filter_list</span>
-											<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>
-										</a>
-									</div>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>*@
-				@* Contenido o tabla con las traducciones de la comunidad *@
+				@* Contenido o tabla con los datos extra de la comunidad *@
 				<div class="col col-12 col-contenido">
 					<div class="wrapCol">
-						@* Cabecera del listado de traducciones *@
+						@* Cabecera del listado de datos extra *@
 						<ul id="id-header-translates-list" class="header-component-list component-list no-list-style">
 							<li class="component-wrap">
 								@* Cabecera de páginas *@
@@ -110,6 +146,9 @@
 													<div class="component-name-wrap">
 														<span class="component-name">Nombre</span>
 													</div>
+													<div class="component-shortname-wrap">
+														<span class="component-shortname">Nombre corto</span>
+													</div>
 													<div class="component-tipo-wrap">
 														<span class="component-tipo">Tipo</span>
 													</div>
@@ -121,6 +160,9 @@
 													</div>
 													<div class="component-obligatorio-wrap">
 														<span class="component-obligatorio">Obligatorio</span>
+													</div>
+													<div class="component-visible-wrap">
+														<span class="component-visible">Visible en perfil</span>
 													</div>
 												</div>
 												<div class="component-header-right">
@@ -175,7 +217,7 @@
 	<script type="text/javascript">
 
 		(function ($) {
-		@* Operativa funcionamiento de Gestión de Traducciones *@
+		@* Operativa funcionamiento de Gestión de Datos extra *@
 				operativaGestionDatosExtra.init();
 		})();
 	</script>

@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,8 +28,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class ConsultaCargaMasivaController : ControllerBaseWeb
     {
-        public ConsultaCargaMasivaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public ConsultaCargaMasivaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -85,27 +86,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             List<Carga> listaCargas = proyCN.ObtenerCargasMasivasPorIdentidadID(IdentidadActual.Clave);
             consulta.ListaInformacion = new List<InformacionMostrar>();
 
-            foreach(Carga c in listaCargas.Take(NUMERO_CARGAS_MOSTRADAS))
+            foreach(Carga carga in listaCargas.Take(NUMERO_CARGAS_MOSTRADAS))
             {
                 InformacionMostrar info = new InformacionMostrar();
-                info.NombreCarga = c.Nombre;
-                info.FechaCarga = c.FechaAlta.ToString();
+                info.NombreCarga = carga.Nombre;
+                info.FechaCarga = carga.FechaAlta.ToString();
 
-                List<CargaPaquete> listaPaquetes = new List<CargaPaquete>();
-                listaPaquetes = proyCN.ObtenerPaquetesPorIDCarga(c.CargaID);
-                info.NumPaquetes = listaPaquetes.Count;
+                List<CargaPaquete> listaPaquetes = proyCN.ObtenerPaquetesPorIDCarga(carga.CargaID);
+                
 
                 List<CargaPaquete> paquetesProcesados = listaPaquetes.Where(x => x.Estado == (short)EstadoPaquete.Correcto).ToList();
                 info.NumParquetesProcesados = paquetesProcesados.Count;
 
-                info.IDCarga = c.CargaID.ToString();
+                info.IDCarga = carga.CargaID.ToString();
 
-                if (c.Estado == ABIERTA)
+                if (carga.Estado == ABIERTA)
                 {
                     info.EstadoCarga = CARGAABIERTA;
+                    info.NumPaquetes = -1;
                 }
-                else if (c.Estado == CERRADA)
+                else if (carga.Estado == CERRADA)
                 {
+                    info.NumPaquetes = listaPaquetes.Count;
                     info.EstadoCarga = CARGACERRADA;
                     if (info.NumPaquetes == info.NumParquetesProcesados)
                     {
@@ -129,4 +131,4 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         #endregion
     }
-}
+} 

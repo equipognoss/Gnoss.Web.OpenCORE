@@ -25,14 +25,15 @@ using Es.Riam.AbstractsOpen;
 using Es.Riam.InterfacesOpen;
 using Gnoss.Web.Open.Filters;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
+using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class MisComunidadesController : ControllerBaseWeb
     {
-        public MisComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public MisComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -116,9 +117,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
                     comunidad.Name = nombreProyecto;
+                    comunidad.ProyectType = (CommunityModel.TypeProyect) filaProy.TipoProyecto;
 
-
-					/*string nombreImagenePeque = ControladorProyecto.ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID).NombreImagenPeque;
+                    /*string nombreImagenePeque = ControladorProyecto.ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID).NombreImagenPeque;
                     string urlLogo = BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesProyectos + "/" + nombreImagenePeque;
 
                     // No mostrar por defecto una imagen anónima -> Se realiza directamente en la vista vía CSS
@@ -128,10 +129,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         urlLogo = "";
                     }
                     comunidad.Logo = urlLogo;*/
-					string nombreImagenPeque = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication).ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID).NombreImagenPeque;
+
+                    var filaParametroGeneral = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication).ObtenerFilaParametrosGeneralesDeProyecto(filaProy.ProyectoID);
+
+                    string nombreImagenPeque = filaParametroGeneral?.NombreImagenPeque;
                     string urlFoto = $"{BaseURLContent}/{UtilArchivos.ContentImagenes}/{UtilArchivos.ContentImagenesProyectos}/{nombreImagenPeque}";
 					comunidad.Logo = urlFoto;
-					if (nombreImagenPeque.Equals("peque"))
+					if (string.IsNullOrEmpty(nombreImagenPeque) || nombreImagenPeque.Equals("peque"))
 					{
                         urlFoto = $"{BaseURLStatic}/img/{UtilArchivos.ContentImgIconos}/{UtilArchivos.ContentImagenesProyectos}/anonimo_peque.png";
 						comunidad.Logo = mControladorBase.CargarImagenSup(filaProy.ProyectoID);

@@ -80,13 +80,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     }
                     else
                     {
-                        ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, null);
+                        if (!proyectoOriginalID.Equals(ProyectoAD.MetaProyecto))
+                        {
+                            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, null);
 
-                        string nombreCortoProy = proyCN.ObtenerNombreCortoProyecto(proyectoOriginalID);
+                            string nombreCortoProy = proyCN.ObtenerNombreCortoProyecto(proyectoOriginalID);
 
-                        pFilterContext.Result = new RedirectResult(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(Controlador(pFilterContext).BaseURLIdioma, Controlador(pFilterContext).UtilIdiomas, nombreCortoProy, "", mControladorBase.RequestParams("nombreRecurso"), documentoID, null, false));
-                    }
-                    return;
+                            pFilterContext.Result = new RedirectResult(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(Controlador(pFilterContext).BaseURLIdioma, Controlador(pFilterContext).UtilIdiomas, nombreCortoProy, "", mControladorBase.RequestParams("nombreRecurso"), documentoID, null, false));
+                            return;
+                        }                   
+                    }                  
                 }
 
                 documentacionCN.Dispose();

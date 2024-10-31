@@ -20,6 +20,7 @@ string textoVisitas = Html.GetText("LISTARECURSOS", "VISITAS");
 CommunityModel Comunidad = Html.GetComunidad();
 bool PresentacionNoSocial = Comunidad.ProyectType == CommunityModel.TypeProyect.CatalogoNoSocial || Comunidad.ProyectType == CommunityModel.TypeProyect.CatalogoNoSocialConUnTipoDeRecurso;
 UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
+string idioma = Html.GetUtilIdiomas().LanguageCode;
 }
 
 @*
@@ -60,7 +61,7 @@ textoVisitas = Html.GetText("LISTARECURSOS", "REPRODUCCIONES");
         {
             <div class="certificar-recurso">
 	            <span class="material-icons">verified_user</span>
-                <span class="texto">@Html.Raw(FichaDocumento.Certification.Value)</span>
+                <span class="texto">@Html.Raw(UtilCadenas.ObtenerTextoDeIdioma(FichaDocumento.Certification.Value, idioma, null))</span>
             </div>           
         }
     </div>

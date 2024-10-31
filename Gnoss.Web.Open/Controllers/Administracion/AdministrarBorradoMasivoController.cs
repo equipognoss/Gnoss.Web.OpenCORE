@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -39,12 +40,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         #endregion
 
-        public AdministrarBorradoMasivoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarBorradoMasivoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
         #region Metodos de evento
+
         /// <summary>
         /// Index
         /// </summary>
@@ -54,7 +56,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
-
             // Añadir clase para el body del Layout
             ViewBag.BodyClassPestanya = "grafo-de-conocimiento borrado-grafo edicion no-max-width-container";
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
@@ -69,6 +70,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mBorradoMasivo = ObtenerOntologias();
             return View(mBorradoMasivo);
         }
+
         /// <summary>
         /// Eliminar
         /// </summary>
@@ -78,7 +80,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Eliminar(BorradoMasivoViewModel pOptions)
         {
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);            
+            GuardarLogAuditoria();
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             FacetadoCN facetaCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
             mServicesUtilVirtuosoAndReplication.UsarClienteTradicional = true;
             facetaCN.FacetadoAD.TimeOutVirtuoso = 12000;
@@ -112,37 +115,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             catch (Exception ex)
             {
                 mLoggingService.GuardarLogError(ex);
-                return GnossResultERROR();
+                return GnossResultERROR(ex.Message);
                 throw;
             }
         }
+
         #endregion
 
         #region Metodos privados
 
         private BorradoMasivoViewModel ObtenerOntologias()
         {
-            Dictionary<Guid, string> ontologias = new Dictionary<Guid, string>();
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            ontologias = docCN.ObtenerOntologiasParaBorrado(ProyectoSeleccionado.Clave);
+            Dictionary<Guid, string> ontologias = docCN.ObtenerOntologiasParaBorrado(ProyectoSeleccionado.Clave);
             BorradoMasivoViewModel bMasivo = new BorradoMasivoViewModel();
             bMasivo.OntologiaABorrar = ontologias;
             return bMasivo;
         }
+
         private List<Guid> HayOntologiaSeleccionada(BorradoMasivoViewModel pOptions)
         {
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             List<Guid> listaOnto = new List<Guid>();
-            foreach (Guid? guid in pOptions.OntologiaSeleccionada)
+            foreach (Guid guid in pOptions.OntologiaSeleccionada)
             {
-                if (guid.HasValue)
-                {
-                    Documento ontologia = docCN.OntologiaSeleccionada(guid.Value);
-                    listaOnto.Add(ontologia.DocumentoID);
-                }
+                Documento ontologia = docCN.OntologiaSeleccionada(guid);
+                listaOnto.Add(ontologia.DocumentoID);
             }
             return listaOnto;
         }
+
         private void EliminarTriplesGrafoBusqueda(string pOntologia)
         {
             FacetadoAD facetadoAD = new FacetadoAD(UrlIntragnoss, mLoggingService, mEntityContext, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
@@ -153,16 +155,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             int posPunto = pOntologia.IndexOf(".");
             string ontologiaSinExtension = pOntologia.Substring(0, posPunto);
 
-            string nombreOnt = mEntityContext.OntologiaProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OntologiaProyecto1.Equals(ontologiaSinExtension)).Select(item => item.OntologiaProyecto1).FirstOrDefault();
+            string nombreOnt = mEntityContext.OntologiaProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OntologiaProyecto1.ToLower().Equals(ontologiaSinExtension.ToLower())).Select(item => item.OntologiaProyecto1.ToLower()).FirstOrDefault();
 
             string queryCopiaGrafo = $"dump_one_graph_distinto_de_tipo('{UrlIntragnoss}{ProyectoSeleccionado.Clave}','{nombreArchivos}',1000000,'{nombreOnt}')";
             string queryBorradoGrafo = $"sparql clear graph <{UrlIntragnoss}{ProyectoSeleccionado.Clave}>";
             string queryDeleteLoadList = "delete from DB.DBA.load_list";
             string querySetLoadList = $"ld_dir ('./dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
             string queryLoaderRun = "rdf_loader_run()";
-			string queryEnableCheckpoint = "checkpoint_interval(60)";
+            string queryEnableCheckpoint = "checkpoint_interval(60)";
+            string queryEnableRegenVirtuosoIndex = "DB.DBA.VT_BATCH_UPDATE('DB.DBA.RDF_OBJ', 'ON', 1)";
 
-            facetaCN.ActualizarVirtuoso(queryCopiaGrafo, ProyectoSeleccionado.Clave.ToString(), true, 0);
+            try
+            {
+                facetaCN.ActualizarVirtuoso(queryCopiaGrafo, ProyectoSeleccionado.Clave.ToString(), true, 0);
+            }
+            catch
+            {
+                throw new ExcepcionWeb("Faltan permisos para acceder a la carpeta dumps o no existe, contacta con el administrador");
+            }
+
             GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryCopiaGrafo}");
             facetaCN.ActualizarVirtuoso(queryBorradoGrafo, ProyectoSeleccionado.Clave.ToString(), true, 0);
             GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryBorradoGrafo}");
@@ -178,7 +189,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 try
                 {
                     GuardarLogError(ex, "Error al ejecutar ld_dir en la ruta ./dumps/ Pruebo en /opt/virtuoso/var/lib/virtuoso/db/dumps/.");
-                    querySetLoadList = $"ld_dir ('/opt/virtuoso/var/lib/virtuoso/db/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";                    
+                    querySetLoadList = $"ld_dir ('/opt/virtuoso/var/lib/virtuoso/db/dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
                     facetaCN.ActualizarVirtuoso(querySetLoadList, ProyectoSeleccionado.Clave.ToString(), true, 0);
                     GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {querySetLoadList}");
                 }
@@ -208,9 +219,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryLoaderRun}");
                 facetaCN.ActualizarVirtuoso(queryEnableCheckpoint, ProyectoSeleccionado.Clave.ToString(), true, 0);
                 GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryEnableCheckpoint}");
+                facetaCN.ActualizarVirtuoso(queryEnableRegenVirtuosoIndex, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryEnableRegenVirtuosoIndex}");
                 facetadoAD.UsarClienteTradicional = false;
             }
         }
+
         #endregion
     }
 }

@@ -354,3 +354,18 @@ var accionesUsuarioAdminComunidad = {
     supervisor: 'Supervisor',
     usuario: 'Usuario'
 };
+
+var espacioPersonal = {
+    avisoEditarOrganizarEnCategorias: 'Selecciona un recurs abans d\'intentar editar la seva categoria',
+};
+
+var facetas = {
+    siguientes: "Següents",
+    anteriores: "Anteriors",
+};
+
+var accionesUsuarios = {
+    seguir: "Seguir",
+    dejarDeSeguir: "Deixar de seguir",
+    sinSeguimiento: "Sense seguiment"
+};

@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -115,8 +116,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
     public class AdministrarEventosController : ControllerBaseWeb
     {
-        public AdministrarEventosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public AdministrarEventosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -157,6 +158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarEventosViewModel.EventModel evento)
         {
+            GuardarLogAuditoria();
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             DataWrapperProyecto dataWrapperProyecto;
 
@@ -211,12 +213,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 filaEvento.ComponenteID = null;
             }
-            else { 
+            else 
+            { 
                 filaEvento.ComponenteID = evento.ComponenteCMS;
 
                 //Comprobar si exsite el componente
                 CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(evento.ComponenteCMS, ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(evento.ComponenteCMS, ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext);
                 cmsCN.Dispose();
                 if (!gestorCMS.ListaComponentes.ContainsKey(evento.ComponenteCMS))
                 {
@@ -232,6 +235,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         public ActionResult Delete(Guid eventoID)
         {
+            GuardarLogAuditoria();
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
             DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerEventoProyectoPorEventoID(eventoID);
             ProyectoEvento filaEvento = dataWrapperProyecto.ListaProyectoEvento.First();

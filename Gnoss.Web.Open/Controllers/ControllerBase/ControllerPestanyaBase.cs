@@ -6,9 +6,11 @@ using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.Tesauro;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Tesauro;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
@@ -27,6 +29,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -46,8 +49,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private UtilServiciosFacetas mUtilServiciosFacetas;
         private ControladorFacetas mControladorFacetas;
 
-        protected ControllerPestanyaBase(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        protected ControllerPestanyaBase(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -76,10 +79,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (ProyectoPestanyaActual != null)
             {
-                ViewBag.BodyClassPestanya = ProyectoPestanyaActual.CSSBodyClassPestanya;
-
-                ViewBag.MetaDescriptionPestanya = ProyectoPestanyaActual.MetaDescription;
-
+                ViewBag.BodyClassPestanya = ProyectoPestanyaActual.CSSBodyClassPestanya;                
+                ViewBag.MetaDescriptionPestanya = UtilCadenas.ObtenerTextoDeIdioma(ProyectoPestanyaActual.MetaDescription, IdiomaUsuario, "es");
             }
         }
 
@@ -208,11 +209,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (ProyectoPestanyaActual != null)
             {
-                Dictionary<string, string> listaIdiomas = mConfigService.ObtenerListaIdiomasDictionary();
+				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+				Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                 Dictionary<string, KeyValuePair<bool, string>> listaEnlacesMultiIdioma = new Dictionary<string, KeyValuePair<bool, string>>();
                 foreach (string idioma in listaIdiomas.Keys)
                 {
-                    Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+                    Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                     string rutaComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(utilIdiomasActual, BaseURLIdioma, ProyectoVirtual.NombreCorto);
                     string rutaPestanya = "";
                     switch (ProyectoPestanyaActual.TipoPestanya)
@@ -272,10 +274,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ListaEnlacesMultiIdioma = new Dictionary<string, KeyValuePair<bool, string>>();
                 if (RequestParams("Comunidades") != null && RequestParams("Comunidades").Equals("true"))
                 {
-                    List<string> listaIdiomas = mConfigService.ObtenerListaIdiomas();
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
                     foreach (string idioma in listaIdiomas)
                     {
-                        Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService);
+                        Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
                         ListaEnlacesMultiIdioma.Add(idioma, new KeyValuePair<bool, string>(true, $"{BaseURL}/{utilIdiomasActual.GetText("URLSEM", "COMUNIDADES")}"));
                     }
                 }

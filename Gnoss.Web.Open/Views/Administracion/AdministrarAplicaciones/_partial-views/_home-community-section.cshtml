@@ -96,13 +96,13 @@ Variables
             </p>
         </div>
 
-        @* Chequear Instalaciones (Comunidad) - Deshabilitado hasta asegurarse de qué añadir en la vista final. De momento funciona correctamente
+        @* Estado Sistemas (Comunidad) - Deshabilitado hasta asegurarse de qué añadir en la vista final. De momento funciona correctamente
         @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
         {
-            bool chequearInstalaciones = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
-            if (chequearInstalaciones)
+            bool estadoSistemas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
+            if (estadoSistemas)
             {
-                @if (chequearInstalaciones && !string.IsNullOrEmpty(Comunidad.ShortName))
+                @if (estadoSistemas && !string.IsNullOrEmpty(Comunidad.ShortName))
                 {
                     <div class="section section-navigation" data-parent-section="configuracion" data-section="estado-servicios">
                         <h2>@Html.GetText("DEVTOOLS","ESTADODELOSSERVICIOS")</h2>
@@ -130,6 +130,14 @@ Variables
             <h2>@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")</h2>
             <p>
                 @Html.GetText("DEVTOOLS","SEO,GOOGLEANALYTICSEINDEXACIONDECONTENIDODELACOMUNIDADENBUSC")
+            </p>
+        </div>
+
+        @* Estadísticas de la comunidad (Matomo) *@
+        <div class="section section-navigation" data-parent-section="configuracion" data-section="system-status">
+            <h2>@Html.GetText("DEVTOOLS","ESTADISTICASDELACOMUNIDAD")</h2>
+            <p>
+                @Html.GetText("DEVTOOLS","ANALIZAELTRAFICODELACOMUNIDADDESDEESTASECCIONENCUENTRADATOS")
             </p>
         </div>
 

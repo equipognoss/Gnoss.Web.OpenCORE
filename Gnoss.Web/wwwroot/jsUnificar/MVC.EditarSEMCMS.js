@@ -285,6 +285,11 @@ function EntidadEsSubClase(pTipoEntidad) {
     return (subClase != null && subClase == 'true')
 }
 
+/**
+ * Esta función obtiene el tipo de entidad editada, considerando si tiene una superclase y selecciona la subclase correspondiente si hay opciones disponibles.
+ * @param {any} pTipoEntidad El tipo de entidad a obtener.
+ * @returns
+ */
 function ObtenerTipoEntidadEditada(pTipoEntidad) {
     var superClase = GetCaracteristicaPropiedad(pTipoEntidad, '', TxtCaracteristicasElem, 'superclase');
 
@@ -666,6 +671,17 @@ function EliminarValorDeDataNoFuncionalProp(pNumElem, pEntidad, pPropiedad, pCon
     $('#' + idControlCampo.replace('Campo_', 'divContPesIdioma_')).attr('langActual', '');//Si es multiIdioma reiniciará los valres editados
 }
 
+
+/**
+ * Esta función verifica si una entidad pertenece a algún grupo de paneles sin editar. 
+ * Primero, obtiene todas las propiedades asociadas a la entidad mediante la función GetEntidadYPropiedadConEntidadComoRango. 
+ * Luego, itera sobre estas propiedades para verificar si alguna de ellas está siendo editada. 
+ * Si encuentra alguna propiedad en edición, devuelve false, indicando que la entidad no pertenece a ningún grupo de paneles sin editar. Si ninguna propiedad está siendo editada, utiliza la función PerteneceEntidadAlgonaProp_LO para determinar si la entidad pertenece a algún grupo de paneles. Si ninguna propiedad de la entidad está en edición y tampoco pertenece a algún grupo de paneles, devuelve false, indicando que la entidad no pertenece a ningún grupo de paneles sin editar.
+ * @param {any} pEntidad El nombre de la entidad que se desea verificar.
+ * @param {any} pTxtCaract El identificador del elemento HTML donde se almacenan las características de las propiedades.
+ * @param {any} pTxtElemEditados El identificador del elemento HTML donde se almacenan los elementos XML editados.
+ * @returns
+ */
 function PerteneceEntidadAAlgunGrupoPanelSinEditar(pEntidad, pTxtCaract, pTxtElemEditados)
 {
     var entProps = GetEntidadYPropiedadConEntidadComoRango(pEntidad);
@@ -789,12 +805,30 @@ function DarValorControlConIdioma(pEntPropID, pTxtIDs, pTxtCaract, pValor, pIdio
             document.getElementById(idControl).children[1].style.color = 'gray';
         }
     }
-    else if (tipoCampo == 'Tiny')//TODO: Enlaces y cosas raras del tiny
-    {
-        /*if (document.getElementById('cke_contents_' + idControl) != null) {
-            document.getElementById('cke_contents_' + idControl).children[0].contentWindow.document.body.innerHTML = pValor;
-        }*/
-        $('#' + idControl).val(pValor)
+    else if (tipoCampo == 'Tiny')
+    {     
+        /* Modificado para TinyMCE */
+
+        // Asociar el valor al input
+        if (idControl != '') {
+            $('#' + idControl).val(pValor);
+            // Obtener el id del TinyMCE asociado a este input
+            const inputTinyIdRelated = $('#' + idControl).data("editorrelated");
+
+            // Obtener los TinyMCE existentes
+            const tinyMCEEditors = tinymce.get();
+            // Buscar el TinyMCE asociado al input para cargar sus datos
+            var tinyMCEForInput = Object.keys(tinyMCEEditors).map(function (key) {
+                return tinyMCEEditors[key];
+            }).find(function (tinyInstance) {
+                return tinyInstance.id === inputTinyIdRelated;
+            });
+
+            // Asociar el valor al TinyMCE concreto
+            if (tinyMCEForInput) {
+                tinyMCEForInput.setContent(pValor);
+            }
+        }
     }
     else if (document.getElementById(idControl) != null)
     {
@@ -1041,7 +1075,7 @@ function GuardarValorEnContenedorGrupoValores(pControlCont, pValor, pEntidad, pP
 
 function ObtenerFilaValorContenedorGrupoValores(pControlCont, pValor, pNumElem, pAgregarTR, pEntidad, pPropiedad, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados){
     var fila = '';
-    
+    var escaparComillaSimple = new RegExp('\'', 'g');
     if (pAgregarTR)
     {
         var claseFila = 'impar';
@@ -1099,7 +1133,7 @@ function ObtenerFilaValorContenedorGrupoValores(pControlCont, pValor, pNumElem, 
                             '${textoRecursos.Eliminar}',                                
                             '${borr.si.charAt(0).toUpperCase()}${borr.si.slice(1)}',
                             '${borr.no.charAt(0).toUpperCase()}${borr.no.slice(1)}',
-                            '${textoFormSem.confimEliminar.replace('@1@', pValor)}',
+                            '${textoFormSem.confimEliminar.replace('@1@', pValor.replace(escaparComillaSimple, '\\\''))}',
                             'sin-definir',
                             function () {
                               ${metodoEliminar};
@@ -1217,6 +1251,16 @@ function SeleccionarElementoGrupoValores(pEntidad, pPropiedad, pNumElem, pTxtVal
     document.getElementById(idControlCampo.replace('Campo_', 'lbGuardar_')).style.display = '';
 }
 
+/**
+ * Función que marca un elemento como editado en un campo de texto que contiene elementos editados. 
+ * Si el elemento ya está marcado como editado, se actualiza su número de edición. 
+ * Además, si el elemento es una propiedad de un grupo de paneles, también se marcan como editadas todas las propiedades hijas del grupo de paneles.
+ * @param {any} pEntidad
+ * @param {any} pPropiedad
+ * @param {any} pNumElem
+ * @param {any} pTxtElemEditados
+ * @param {any} pTxtCaract
+ */
 function MarcarElementoEditado(pEntidad, pPropiedad, pNumElem, pTxtElemEditados, pTxtCaract){
     var editados = document.getElementById(pTxtElemEditados).value;
     var idElem = pEntidad;
@@ -1255,6 +1299,13 @@ function MarcarElementoEditado(pEntidad, pPropiedad, pNumElem, pTxtElemEditados,
     }
 }
 
+/**
+ * Esta función determina si una propiedad específica pertenece a un grupo de paneles, verificando si el tipo de propiedad es 'LO' (Lista de opciones).
+ * @param {any} pEntidad El nombre de la entidad asociada a la propiedad.
+ * @param {any} pPropiedad El nombre de la propiedad que se está evaluando.
+ * @param {any} pTxtCaract El identificador del campo de texto que almacena las características relacionadas.
+ * @returns
+ */
 function EsPropiedadGrupoPaneles(pEntidad, pPropiedad, pTxtCaract){
     return (GetTipoPropiedad(pEntidad, pPropiedad, pTxtCaract) == 'LO');
 }
@@ -1282,6 +1333,14 @@ function GetValorElementoEnPosicion(pElemento, pNumElem, pValores){
     return ObtenerValorTextoElemento(trozo, pElemento);
 }
 
+/**
+ * La función GetNumEdicionEntProp se utiliza para obtener el número de edición de una entidad y propiedad específicas, en un contexto donde se lleva un seguimiento de los elementos editados. 
+ * Esta función busca en un texto que contiene los elementos editados para encontrar el número de edición correspondiente a la entidad y propiedad proporcionadas.
+ * @param {any} pEntidad: La entidad para la cual se desea obtener el número de edición.
+ * @param {any} pPropiedad: La propiedad específica de la entidad para la cual se desea obtener el número de edición (puede ser null si no se aplica).
+ * @param {any} pTxtElemEditados: El texto que contiene los elementos editados, donde se buscará el número de edición.
+ * @returns {any} El número de edición de la entidad y propiedad especificadas, si se encuentra en el texto de elementos editados.  -1 si la entidad y propiedad no se han editado o no se encuentra el número de edición correspondiente.
+ */ 
 function GetNumEdicionEntProp(pEntidad, pPropiedad, pTxtElemEditados){
     var editados = document.getElementById(pTxtElemEditados).value;
     
@@ -1419,6 +1478,12 @@ function SeHaModificadoPropiedadDeEntidad(pEntidad, pPropiedad, pTxtValores, pTx
     return modificado;
 }
 
+/**
+ * Función que se encarga de agregar propiedades obligatorias de edición a una entidad dada.
+ * @param {any} pEntidad La entidad a la que se agregarán las propiedades obligatorias.
+ * @param {any} pPropiedadYaAgregada La propiedad que ya se ha agregado, si hay alguna. Esto se usa para evitar duplicados.
+ * @param {any} pExtraEnt Texto adicional que se agrega al nombre de la entidad.
+ */
 function AgregarPropsEntidadObligatoriasEdicion(pEntidad, pPropiedadYaAgregada, pExtraEnt) {
     var propiedades = GetPropiedadesEntidad(pEntidad, TxtCaracteristicasElem);
     for (var i = 0; i < propiedades.length; i++) {
@@ -1654,18 +1719,33 @@ function EstablecerBotonesObjectNoFuncionalSeleccEnt(pEntidad, pPropiedad){
 }
 
 
-
+/**
+ * Esta función agrega un objeto no funcional a una propiedad de una entidad, actualizando los valores correspondientes en los campos de texto y elementos editados.
+ * @param {any} pEntidad El nombre de la entidad a la cual se agregará el objeto no funcional.
+ * @param {any} pPropiedad El nombre de la propiedad donde se agregará el objeto no funcional.
+ * @param {any} pEntidadHija El nombre de la entidad no funcional que se agregará.
+ * @param {any} pControlContValores El identificador del contenedor donde se mostrarán los valores.
+ * @param {any} pTxtValores El identificador del campo de texto que contiene los valores de la entidad.
+ * @param {any} pTxtIDs El identificador del campo de texto que contiene los IDs de los elementos.
+ * @param {any} pTxtCaract El identificador del campo de texto que contiene las características de las propiedades.
+ * @param {any} pTxtElemEditados El identificador del campo de texto que contiene los elementos editados.
+ * @param {any} pVisibleContPaneles Indica si el contenedor de paneles es visible o no.
+ * @param {any} pRaiz Indica si la entidad es la raíz del árbol o no.
+ * @param {any} pAntiguoNumElem El número de elementos antiguos.
+ * @returns
+ */
 function AgregarObjectNoFuncionalProp(pEntidad, pPropiedad, pEntidadHija, pControlContValores, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados, pVisibleContPaneles, pRaiz, pAntiguoNumElem) {
     TxtHackHayCambios = true;
     var rdfBK = document.getElementById(pTxtValores).value;
     var pEntidadHija = ObtenerTipoEntidadEditada(pEntidadHija);
+   
     var perteneceEntPanelGrupoSinEditar = PerteneceEntidadAAlgunGrupoPanelSinEditar(pEntidad, pTxtCaract, pTxtElemEditados);
     var tipoProp = GetTipoPropiedad(pEntidad, pPropiedad, pTxtCaract);
     if (!perteneceEntPanelGrupoSinEditar /*||  tipoProp == 'FO' || tipoProp == 'CO'*/)
     {
         var elemAgregado = AgregarNuevaEntidadAProp(pEntidad, pPropiedad, pEntidadHija, pTxtValores, pTxtElemEditados);
 
-        if (elemAgregado) {
+        if (elemAgregado) {            
             AgregarPropsEntidadObligatoriasEdicion(pEntidadHija, null, '');
         }
     }
@@ -1718,37 +1798,62 @@ function AgregarObjectNoFuncionalProp(pEntidad, pPropiedad, pEntidadHija, pContr
     return camposCorrectos;
 }
 
+
+/**
+ * Método que se encarga de guardar y manejar las propiedades no funcionales de una entidad en el contexto de una aplicación. 
+ * Realiza operaciones como guardar los valores de las propiedades, eliminar elementos existentes, agregar nuevos elementos, y realizar varias operaciones relacionadas con la edición de entidades y propiedades.
+ * @param {any} pEntidad: La entidad principal para la cual se están manejando las propiedades.
+ * @param {any} pPropiedad: La propiedad específica que se está manipulando.
+ * @param {any} pEntidadHija: La entidad secundaria relacionada con la propiedad.
+ * @param {any} pControlContValores: El control que contiene los valores de las propiedades.
+ * @param {any} pTxtValores: El texto que representa los valores de las propiedades.
+ * @param {any} pTxtIDs: El texto que representa los IDs relacionados con las propiedades.
+ * @param {any} pTxtCaract: El texto que representa las características de las propiedades.
+ * @param {any} pTxtElemEditados: El texto que representa los elementos editados.
+ * 
+ * @return {boolean} camposCorrectos: Valor booleano que indica si se han guardado correctamente los campos. 
+ */
+
 function GuardarObjectNoFuncionalProp(pEntidad, pPropiedad, pEntidadHija, pControlContValores, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados){
+
+    // Backup de los datos rdf
     var rdfBK = document.getElementById(pTxtValores).value;
     var entidadPadre = pEntidadHija;
     var pEntidadHija = ObtenerTipoEntidadEditada(pEntidadHija);
     var contendedorEntBK = null;
     var mostrarContenedorAlAgregar = false;
+    // Comprobar el contenedor de Propiedades 
     if (pControlContValores != '')
     {
+        // Guardar el HTML del contenedor de Propiedades 
         contendedorEntBK = document.getElementById(pControlContValores).innerHTML;
         if (document.getElementById(pControlContValores).style.display != 'none')
         {
             mostrarContenedorAlAgregar = true;
         }
     }
+
+    // Obtener el la posición del item que se desea editar dentro de la lista de propiedades
     var numElem = GetNumEdicionEntProp(pEntidad, pPropiedad, pTxtElemEditados);
-    
+
     SalvarPropiedadesNoFuncionalesEntidad(pEntidadHija, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados);
     
     var entidadBorrar = pEntidad;
+    
     if (PerteneceEntidadAAlgunGrupoPanelSinEditar(pEntidad, pTxtCaract, pTxtElemEditados))
     {
         entidadBorrar += '&ULT';
     }
+    
     DeleteElementoGuardado(entidadBorrar, pPropiedad, pTxtValores, pTxtElemEditados, numElem);
     
     if (pControlContValores != '')
-    {
+    {        
         EliminarEntidadDeContenedorGrupoPaneles(pControlContValores, pEntidad, pPropiedad, numElem, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados);
     }
-    MarcarElementoEditado(pEntidad, pPropiedad, -1, pTxtElemEditados, pTxtCaract);
     
+    MarcarElementoEditado(pEntidad, pPropiedad, -1, pTxtElemEditados, pTxtCaract);
+
     var camposCorrectos = AgregarObjectNoFuncionalProp(pEntidad, pPropiedad, pEntidadHija, pControlContValores, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados, mostrarContenedorAlAgregar, false, numElem);
 
     DeleteElementoGuardado(null, pEntidadHija + '&ULT', pTxtValores, pTxtElemEditados, 0);
@@ -1831,6 +1936,15 @@ function EliminarIDEntidadAuxiliar(pNumElem, pEntidad, pPropiedad, pEntidadHija)
     DeleteElementoGuardado(pEntidad, pPropiedad, 'txtEntidadesOntoIDs', TxtElemEditados, pNumElem);
 }
 
+/**
+ * Esta función agrega una nueva entidad a una propiedad especificada.
+ * @param {any} pEntidad La entidad a la que se agregará la nueva entidad.
+ * @param {any} pPropiedad La propiedad a la que pertenece la nueva entidad.
+ * @param {any} pEntidadHija La nueva entidad que se agregará.
+ * @param {any} pTxtValores El ID del elemento de texto que contiene los valores.
+ * @param {any} pTxtElemEditados El ID del elemento de texto que contiene los elementos editados.
+ * @returns
+ */
 function AgregarNuevaEntidadAProp(pEntidad, pPropiedad, pEntidadHija, pTxtValores, pTxtElemEditados){
     return PutElementoGuardado(pEntidad, pPropiedad, '<' + pEntidadHija + '></' + pEntidadHija + '>', pTxtValores, pTxtElemEditados);
 }
@@ -1981,10 +2095,20 @@ function EntidadEstaVacia(pEntidad, pTxtValores)
 	return (valores.indexOf('<' + pEntidad + '>' + '</' + pEntidad + '>') != -1);
 }
 
+/**
+ * La función SalvarPropiedadesNoFuncionalesEntidad se encarga de guardar las propiedades no funcionales de una entidad en un contexto específico de una aplicación. 
+ * Realiza un ciclo a través de las propiedades de la entidad dada y guarda sus valores correspondientes en el texto de valores y elementos editados.
+ * @param {any} pEntidad La entidad para la cual se desean guardar las propiedades no funcionales.
+ * @param {any} pTxtValores El texto que representa los valores de las propiedades.
+ * @param {any} pTxtIDs El texto que representa los IDs relacionados con las propiedades (no parece ser utilizado en esta función).
+ * @param {any} pTxtCaract El texto que representa las características de las propiedades (no parece ser utilizado en esta función).
+ * @param {any} pTxtElemEditados El texto que representa los elementos editados, donde se guardarán las nuevas propiedades.
+ */
 function SalvarPropiedadesNoFuncionalesEntidad(pEntidad, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados){
     DeleteElementoGuardado(null, pEntidad + '&ULT', pTxtValores, pTxtElemEditados, 0);
     var propiedades = GetPropiedadesEntidad(pEntidad, pTxtCaract);
-    
+
+    // Recorrer las propiedades de la entidad existentes según las características para coger el valor guardado
     for (var i=0;i<propiedades.length;i++)
     {
         if (propiedades[i] != '')
@@ -1996,13 +2120,16 @@ function SalvarPropiedadesNoFuncionalesEntidad(pEntidad, pTxtValores, pTxtIDs, p
 				//{
 					//DeleteElementoGuardado(null, pEntidad + '&ULT', pTxtValores, pTxtElemEditados, 0);
 				//}
-                
+
+                // Obtener el valor de cada propiedad existente en el input "mTxtValorRdf"
                 var valorProp = GetValorElementoGuardado(pEntidad, propiedades[i], pTxtValores, pTxtElemEditados, 0);
                 if (valorProp != '' && valorProp != null)
                 {
                     var j = 1;
                     while (valorProp != '')
-                    {
+                    {  
+                        // Insertar el valor de la propiedad (valorProp) que tiene por nombre "propiedades[i]"
+                        // extraída del input "mTxtValorRdf" y se añade con identificación ULT de última insercción
                         PutElementoGuardado(pEntidad + '&ULT', propiedades[i], valorProp, pTxtValores, pTxtElemEditados);
                         valorProp = GetValorElementoGuardado(pEntidad, propiedades[i], pTxtValores, pTxtElemEditados, j);
                         j++;
@@ -2699,7 +2826,20 @@ function MoverEntidadEnContenedorGrupoPaneles(pControlCont, pEntidad, pPropiedad
     contenedorHTML=contenedorHTML.replace(document.getElementById(pControlCont).children[0].children[0].innerHTML,htmlFinal);       
     document.getElementById(pControlCont).innerHTML=contenedorHTML;
 }
-
+/**
+ * Esta función elimina una entidad de un contenedor de grupo de paneles en la interfaz de usuario. 
+ * Recorre los hijos del contenedor y reconstruye el contenido HTML del contenedor, excluyendo la entidad específica que se desea eliminar. 
+ * Se utiliza para mantener la coherencia visual en la interfaz de usuario después de eliminar una entidad de un grupo de paneles.
+ * @param {any} pControlCont El identificador del contenedor de grupo de paneles.
+ * @param {any} pEntidad El nombre de la entidad que se va a eliminar del contenedor.
+ * @param {any} pPropiedad La propiedad asociada a la entidad que se va a eliminar.
+ * @param {any} pNumElem El número de elementos que se van a eliminar del contenedor.
+ * @param {any} pTxtValores El identificador del campo de texto que almacena los valores relacionados.
+ * @param {any} pTxtIDs El identificador del campo de texto que almacena los IDs relacionados.
+ * @param {any} pTxtCaract El identificador del campo de texto que almacena las características relacionadas.
+ * @param {any} pTxtElemEditados El identificador del campo de texto que almacena los elementos editados.
+ * @returns
+ */
 function EliminarEntidadDeContenedorGrupoPaneles(pControlCont, pEntidad, pPropiedad, pNumElem, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados){
     var hijos = document.getElementById(pControlCont).children[0].children[0].children;
     if (hijos.length == 0)
@@ -2725,9 +2865,9 @@ function EliminarEntidadDeContenedorGrupoPaneles(pControlCont, pEntidad, pPropie
                 else
                 {
                     clase = 'par';
-                }
-                
-                htmlFinal += '<tr class="'+clase+'">' + hijos[i].innerHTML.replace(', \''+(i - 1),', \'' + (i-2)).replace('(\\\''+(i - 1),'(\\\''+(i-2)) + '</tr>';
+                }                                
+                // Establecer los nuevos índides tanto para la edición como para el borrado
+                htmlFinal += '<tr class="' + clase + '">' + hijos[i].innerHTML.replace(new RegExp('\'' + (i - 1), 'g'), '\'' + (i - 2)) + '</tr>';
             }
             else
             {
@@ -2748,6 +2888,8 @@ function EliminarEntidadDeContenedorGrupoPaneles(pControlCont, pEntidad, pPropie
 
 function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNumElem, pAgregarTR, pEntidad, pPropiedad, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados, pAgregandoNuevoElem) {
     var fila = '';
+    // Valor final que se mostraría en la tabla. Usado para comprobar que no hay duplicados
+    let valorFinalRow = "";    
     
     if (pAgregarTR)
     {
@@ -2830,6 +2972,7 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
 		if (pValor.length!=0)
 		{
 			pValor=ReemplarIDsCatTesSemPorNombre(pValor);
+            valorFinalRow = pValor;
 			fila += '<td><span>' + GetValorDecode(pValor) +'</span></td>';
 		}else
 		{
@@ -2905,6 +3048,19 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
     if (pAgregarTR)
     {
         fila += '</tr>';
+        /*// No añadir la fila si ya existe en el panel correspondiente
+        const panelContenedorEntidades = $(`#${pControlCont}`);        
+        // Evitar duplicados Buscar la fila que contiene el texto
+        const filaValue = panelContenedorEntidades.find("table tbody tr td").filter(function() {
+            return $(this).text().trim() === valorFinalRow;
+        });
+
+        // Si ya existe, evitar duplicados
+        if (filaValue.length > 0) {
+            fila = "";
+        } 
+        */    
+
     }
     
     return fila;
@@ -3004,18 +3160,25 @@ function DarValorAPropiedadDeEntidad(pEntidad, pPropiedad, pTxtValores, pTxtIDs,
 
         if (idControl.indexOf('selEnt_') != -1) {
             var inputHack = $('#' + idControl.replace('selEnt_', 'hack_'));
-            if (inputHack.length > 0 && inputHack.hasClass("autocompletarSelecEnt")) {
-                inputHack.prop("disabled", true);
+            if (inputHack.length > 0 && inputHack.hasClass("autocompletarSelecEnt")) {                
+                let aspaOcultaClassName = ""; 
+                // Comprobar si inputHack contiene algún valor
+                if (inputHack.val()) {
+                    // Si inputHack contiene algún valor, ponerlo como disabled
+                    inputHack.prop("disabled", true);
+                } else {
+                    // Si inputHack no contiene ningún valor, quitar el atributo disabled
+                    inputHack.prop("disabled", false);
+                    aspaOcultaClassName = "d-none";
+                }
                 var contenedor = $('#' + idControl).closest('div.cont');
                 // Controlar visibilidad del "X" en caso de que no exista valor                
-                let aspaOcultaClassName = "";                
+                               
                 let aspa = $('a.removeAutocompletar', contenedor);                               
                 if (aspa.length == 0 ) {
                     // Añadir el "X" dentro del contenedor ".input-with-icon" si existe
                     const contenedorWithIcon = contenedor.find(".input-with-icon");
-                    if (inputHack.val().trim() == ""){
-                        aspaOcultaClassName = "d-none";
-                    }
+                    // Mostrar la (X) aunque no haya datos cuando se esté editando
                     if (contenedorWithIcon.length > 0){
                         contenedorWithIcon.append(`<a class="remove removeAutocompletar ${aspaOcultaClassName}"></a>`);                        
                     }else{
@@ -3285,6 +3448,14 @@ function GetCapturarFlashPropiedad(pEntidad, pPropiedad, pTxtCaract){
     }
 }
 
+/**
+ * Esta función obtiene una característica específica asociada a una propiedad de una entidad.
+ * @param {any} pEntidad El nombre de la entidad asociada a la propiedad.
+ * @param {any} pPropiedad El nombre de la propiedad de la cual se desea obtener la característica.
+ * @param {any} pTxtCaract El identificador del campo de texto que contiene las características asociadas a las propiedades.
+ * @param {any} pElemento El nombre de la característica que se quiere obtener.
+ * @returns Si encuentra la característica, devuelve su valor. Si no encuentra la característica, retorna null.
+ */
 function GetCaracteristicaPropiedad(pEntidad, pPropiedad, pTxtCaract, pElemento){
     pElemento = pElemento + '=';
     var caract = document.getElementById(pTxtCaract).value;
@@ -3378,6 +3549,14 @@ function GetEsPropiedadGrafoDependienteSinPadres(pEntidad, pPropiedad) {
 
 /* Operaciones sobre el RDF */
 
+/**
+ * Función que extrae el valor de un elemento XML especificado dentro de un nodo XML. 
+ * Después de encontrar el elemento deseado, elimina las etiquetas de apertura y cierre y devuelve solo el valor contenido dentro del elemento.
+ * @param {any} pNodo: El nodo XML del cual se extrae el valor del elemento.
+ * @param {any} pElemento: El nombre del elemento XML del cual se desea obtener el valor.
+ * @param {any} pNumElemet: El número de elemento que se desea obtener en caso de que haya varios elementos con el mismo nombre.
+ * @returns
+ */
 function ObtenerValorElementoXMLNodo(pNodo, pElemento, pNumElemet)
 {
     var elemento = ObtenerElementoXMLNodo(pNodo, pElemento, pNumElemet);
@@ -3386,6 +3565,14 @@ function ObtenerValorElementoXMLNodo(pNodo, pElemento, pNumElemet)
     return elemento;
 }
 
+/**
+ * Esta función busca y devuelve el fragmento de texto que contiene el elemento XML especificado dentro de un nodo XML.
+ * Utiliza la función ObtenerElementosXMLNodo para obtener una lista de todos los elementos en el nodo XML y luego busca el elemento deseado por su nombre (pElemento) y su número de ocurrencia (pNumElemet).
+ * @param {any} pNodo
+ * @param {any} pElemento
+ * @param {any} pNumElemet
+ * @returns
+ */
 function ObtenerElementoXMLNodo(pNodo, pElemento, pNumElemet)
 {
     var elementos = ObtenerElementosXMLNodo(pNodo);
@@ -3415,6 +3602,12 @@ function ObtenerElementoXMLNodo(pNodo, pElemento, pNumElemet)
     return elemento;
 }
 
+/**
+ * Función que extrae y devuelve una lista de elementos XML contenidos dentro de un nodo XML dado. 
+ * Toma una cadena de texto que representa el nodo XML (pNodo), elimina las etiquetas de apertura y cierre del nodo y luego itera sobre el contenido del nodo para identificar y extraer los elementos XML individuales.
+ * @param {any} pNodo La cadena de texto que representa el nodo XML del cual se desean extraer los elementos.
+ * @returns
+ */
 function ObtenerElementosXMLNodo(pNodo)
 {
     pNodo = pNodo.substring(pNodo.indexOf('>') + 1);
@@ -3461,6 +3654,14 @@ function ObtenerElementosXMLNodo(pNodo)
     }
 }
 
+/**
+ * Agrega un nuevo elemento XML a un nodo XML existente. 
+ * Puede agregar el nuevo elemento al final del nodo o justo después del último elemento del mismo tipo.
+ * @param {any} pNodo El nodo XML al que se le agregará el nuevo elemento.
+ * @param {any} pElemento El elemento XML que se va a agregar.
+ * @param {any} pNumElemet (Opcional) El número del elemento que se va a agregar. Si es -1, el elemento se agrega al final del nodo.
+ * @returns
+ */
 function AgregarElementoAXml(pNodo, pElemento, pNumElemet)
 {
     var raiz = ObtenerElementoRaiz(pNodo);
@@ -3570,6 +3771,98 @@ function ObtenerElementoRaiz(pNodo)
     return '';
 }
 
+/**
+ * Esta función agrega un elemento XML con un valor específico al contenido XML representado por la cadena de texto valorRdf. 
+ * Primero verifica si el elemento padre ya existe en el XML. Si existe, agrega el nuevo elemento como hijo del elemento padre. 
+ * Si el elemento padre no existe, agrega el nuevo elemento al final del XML. 
+ * También verifica la existencia de elementos duplicados antes de agregar el nuevo elemento.
+ * @param {any} pPadre
+ * @param {any} pElemento
+ * @param {any} pValor
+ * @param {any} pTxtValores
+ * @param {any} pTxtElemEditados
+ * @returns
+ */
+/*
+function PutElementoGuardado(pPadre, pElemento, pValor, pTxtValores, pTxtElemEditados) {
+    var valorRdf = document.getElementById(pTxtValores).value;
+
+    if (pPadre != null && pPadre != '' && valorRdf.indexOf('<' + pPadre + '>') != -1) {
+        var indicesIniFinPadre = GetIndiceInicioFinElementoEditado(pPadre, valorRdf, pTxtElemEditados);
+        var inicio = parseInt(indicesIniFinPadre.split(',')[0]);
+        var fin = parseInt(indicesIniFinPadre.split(',')[1]);
+
+        var cierrePadre = '</' + pPadre + '>';
+        var elemElemento = '<' + pElemento + '>';
+        var cierreElemento = '</' + pElemento + '>';
+
+        var trozo1 = valorRdf.substring(0, inicio);
+        var trozo2 = valorRdf.substring(inicio, (fin + cierrePadre.length));
+        var trozo3 = valorRdf.substring(fin + cierrePadre.length);
+
+        // Si el cierre del elemento no está presente, significa que el elemento aún no se ha cerrado dentro del padre.
+        // Agregar el nuevo elemento justo antes de cerrar el padre.
+        if (trozo2.indexOf(cierreElemento) == -1) //Agregamo justo antes de acabar el padre:
+        {
+            trozo2 = trozo2.substring(0, trozo2.length - cierrePadre.length);
+            trozo2 += elemElemento + pValor + cierreElemento + cierrePadre;
+        }
+        else //Agregamos detrás del último elemento del mismo tipo dentro del padre:
+        {
+            // Si el cierre del elemento ya está presente en trozo2,
+            // el elemento ya está cerrado dentro del padre.En este caso, agrega el nuevo elemento detrás del último elemento del mismo tipo
+            // que ya existe dentro del padre.Esto se hace utilizando la función AgregarElementoAXml con un índice de - 1, lo que indica que el nuevo elemento debe agregarse al final
+            trozo2 = AgregarElementoAXml(trozo2, elemElemento + pValor + cierreElemento, -1);
+        }
+
+        document.getElementById(pTxtValores).value = trozo1 + trozo2 + trozo3;
+        return true;    
+
+        /*
+        // Añadir el item sólo si no existe. Evitar duplicados
+        const currentValorRdf = valorRdf;
+        // Variable para almacenar el resultado
+        let isItemAdded = true;
+        // Comprobar que no existe ningún item y añadirlo
+        const pValorArray = pValor.split(',').map(valor => valor.replace('|', ''));
+        for (let i = 0; i < pValorArray.length; i++) {
+            if (currentValorRdf.indexOf(pValorArray[i]) === -1) {
+                isItemAdded = false;
+                // Al menos un elemento que no existe
+                break;
+            }
+        }
+        // Añadirlo sólo si no existen los items - Evitar duplicidad
+        if (!isItemAdded) {
+            document.getElementById(pTxtValores).value = trozo1 + trozo2 + trozo3;
+            elementoAdded = true;
+        }
+        return elementoAdded;
+        
+    }
+    /*
+    else if (pPadre != null && pPadre != '' && valorRdf.indexOf('<' + pPadre + '&ULT>') != -1) {
+        return PutElementoGuardado(pPadre + '&ULT', pElemento, pValor, pTxtValores, pTxtElemEditados)
+    }
+    else {
+        var elemElemento = '<' + pElemento + '>';
+        var cierreElemento = '</' + pElemento + '>';
+
+        if (pPadre == null || pPadre == '') {
+            document.getElementById(pTxtValores).value += elemElemento + pValor + cierreElemento;
+        }
+        else {
+            if (pPadre.indexOf('&ULT') == -1) {
+                pPadre += '&ULT';
+            }
+
+            document.getElementById(pTxtValores).value += '<' + pPadre + '>' + elemElemento + pValor + cierreElemento + '</' + pPadre + '>';
+            return true;
+        }
+    }
+    return false;
+}*/
+
 
 function PutElementoGuardado(pPadre, pElemento, pValor, pTxtValores, pTxtElemEditados){
     var valorRdf = document.getElementById(pTxtValores).value;
@@ -3629,14 +3922,36 @@ function PutElementoGuardado(pPadre, pElemento, pValor, pTxtValores, pTxtElemEdi
     return false;
 }
 
+
+/**
+ * Función que obtiene el valor de un elemento XML que ha sido editado y guardado previamente. 
+ * Primero, obtiene el número de edición del elemento mediante la función GetNumEdicionEntProp. Luego, utiliza este número para obtener el valor del elemento XML mediante la función GetValorElementoGuardado.
+ * @param {any} pPadre
+ * @param {any} pElemento
+ * @param {any} pTxtValores
+ * @param {any} pTxtElemEditados
+ * @returns {any} Se devuelve el valor del elemento XML.
+ */
 function GetValorElementoEditadoGuardado(pPadre, pElemento, pTxtValores, pTxtElemEditados){
     var numElem = GetNumEdicionEntProp(pPadre, pElemento, pTxtElemEditados);
     return GetValorElementoGuardado(pPadre, pElemento, pTxtValores, pTxtElemEditados, numElem);
 }
 
+/**
+ * Este bloque de código es una sección de un método o función que busca un elemento XML dentro de un texto que representa datos RDF (Resource Description Framework). 
+ * Después de encontrar este elemento, obtiene su valor y lo devuelve.
+ * @param {any} pPadre El ID del elemento HTML (normalmente un textarea) donde se almacenan los valores de los datos RDF.
+ * @param {any} pElemento El elemento padre del elemento que se está buscando.
+ * @param {any} pTxtValores El ID del elemento HTML (normalmente un input hidden) donde se almacenan los elementos editados.
+ * @param {any} pTxtElemEditados El elemento XML que se está buscando.
+ * @param {any} pNumElemet El número de elemento que se desea obtener, en caso de que haya varios elementos con el mismo nombre.
+ * @returns
+ */
 function GetValorElementoGuardado(pPadre, pElemento, pTxtValores, pTxtElemEditados, pNumElemet){
+    // Rdf o valores actuales que están almacenados
     var valorRdf = document.getElementById(pTxtValores).value;
     var indicesIniFinPadre = GetIndiceInicioFinElementoEditado(pPadre, valorRdf, pTxtElemEditados);
+    // Posición inicial y final del padre 
     var inicio = parseInt(indicesIniFinPadre.split(',')[0]);
     var fin = parseInt(indicesIniFinPadre.split(',')[1]);
 	
@@ -3644,13 +3959,15 @@ function GetValorElementoGuardado(pPadre, pElemento, pTxtValores, pTxtElemEditad
 	{
 		return '';
 	}
-    
+
+    // Construir el cierre del padre
     var cierrePadre = '</' + pPadre + '>';
+    // Construir el inicio y cierre del elemento del que se desea obtener los datos (propiedad)
     var elemElemento = '<' + pElemento + '>';
     var cierreElemento = '</' + pElemento + '>';
-    
+    // Extraer el contenido XML con los valores de la propiedad de la entidad que se desea analizar
     var trozo2 = valorRdf.substring(inicio, (fin + cierrePadre.length));
-    
+    // Obtener el valor que hay guardado en el "mTxtValorRdf" a partir de la propiedad pasada (pElemento)
     var valor = ObtenerValorElementoXMLNodo(trozo2, pElemento, pNumElemet);
     return valor;
 }
@@ -3722,6 +4039,16 @@ function DeleteElementoEditadoGuardado(pPadre, pElemento, pTxtValores, pTxtElemE
     return DeleteElementoGuardado(pPadre, pElemento, pTxtValores, pTxtElemEditados, numElem);
 }
 
+/**
+ * La función DeleteElementoGuardado se encarga de eliminar un elemento específico de un texto que representa datos RDF (Resource Description Framework) guardados. 
+ * Este elemento puede ser tanto un elemento principal como un elemento secundario dentro de otro elemento.
+ * @param {any} pPadre
+ * @param {any} pElemento
+ * @param {any} pTxtValores
+ * @param {any} pTxtElemEditados
+ * @param {any} pNumElemet
+ * @returns
+ */
 function DeleteElementoGuardado(pPadre, pElemento, pTxtValores, pTxtElemEditados, pNumElemet){
     var valorRdf = document.getElementById(pTxtValores).value;
     var trozo1 = '';
@@ -3729,14 +4056,15 @@ function DeleteElementoGuardado(pPadre, pElemento, pTxtValores, pTxtElemEditados
     var trozo3 = '';
     var elemElemento = '<' + pElemento + '>';
     var cierreElemento = '</' + pElemento + '>';
-    
+
+    // Comprueba si el elemElemento no existe en valorRdf. Si no existe, no procede borrarlo
     if (valorRdf.indexOf(elemElemento) == -1)
     {
         return;
     }
 
     if (pPadre != null && pPadre != '')
-    {
+    {        
         var indicesIniFinPadre = GetIndiceInicioFinElementoEditado(pPadre, valorRdf, pTxtElemEditados);
         var inicio = parseInt(indicesIniFinPadre.split(',')[0]);
         var fin = parseInt(indicesIniFinPadre.split(',')[1]);
@@ -3829,6 +4157,14 @@ function GetNumElementosPropiedad(pPadre, pElemento, pTxtValores, pTxtElemEditad
     return numElem;
 }
 
+/**
+ * La función GetIndiceInicioFinElementoEditado se utiliza para obtener los índices de inicio y fin de un elemento específico dentro de un texto que representa datos RDF (Resource Description Framework) guardados. 
+ * Estos índices indican la posición inicial y final del elemento en el texto.
+ * @param {any} pElemento
+ * @param {any} pValores
+ * @param {any} pTxtElemEditados
+ * @returns
+ */
 function GetIndiceInicioFinElementoEditado(pElemento, pValores, pTxtElemEditados){
     var valorRdf = pValores;
     var editados = document.getElementById(pTxtElemEditados).value;
@@ -3841,6 +4177,14 @@ function GetIndiceInicioFinElementoEditado(pElemento, pValores, pTxtElemEditados
     return indiceInicio + ',' + indiceFin;
 }
 
+/**
+ * Método que se utiliza para obtener el índice de inicio de un elemento específico dentro de un texto que representa datos RDF (Resource Description Framework) guardados. 
+ * Este índice indica la posición inicial del elemento en el texto.
+ * @param {any} pElemento
+ * @param {any} pValores
+ * @param {any} pEditados
+ * @returns
+ */
 function GetIndiceInicioElementoEditado(pElemento, pValores, pEditados){
     var editados = pEditados;
     var valores = pValores;
@@ -4851,11 +5195,30 @@ function AgregarOnBlurCKEditors() {
         var onblurArea = $(textAreas[i]).attr('onblur');
         if (onblurArea != null) {
             instanceName = textAreas[i].id;
-
+        
+            /*
+            Cambiar para TinyMCE
             if (typeof (CKEDITOR.instances[instanceName]) != "undefined") {
                 CKEDITOR.instances[instanceName].blurPers = onblurArea;
                 CKEDITOR.instances[instanceName].on('blur', function () { eval(this.blurPers); });
             }
+            */
+            const editors = tinymce.get();
+            const relatedTinyMCEId = instanceName;            
+            
+            editors.forEach(function (editor) {
+                if (editor.id === relatedTinyMCEId) {
+                    // TinyMCE para obtención de datos es .getContent() no getData()
+                    onblurArea = onblurArea.replace("this.getData()","this.getContent()");
+                    // Asignar una propiedad personalizada para la instancia de TinyMCE
+                    editor.blurPers = onblurArea;                    
+                    // Adjuntar un controlador de eventos para el evento blur
+                    editor.on('blur', function (e) {
+                        // Llamar la función asociada con blurPers
+                        eval(this.blurPers);
+                    });
+                }
+            });
         }
     }
 }
@@ -5196,9 +5559,7 @@ function EditarPropsPrincRecCarMas(evento, pDocID) {
     pintarTagsInicio();
 
     EnlazarEtiquetadoAutoFormSem('txtTituloAux', 'txtDescripcionAux', 'txtHackTagsTituloAux', 'txtHackTagsDescripcionAux', 'txtTagsAux');
-
-    RecargarTodosCKEditor();
-
+   
     $('#lbGuardarTitDespTagGuarCatMas').unbind('click');
     $('#lbGuardarTitDespTagGuarCatMas').bind('click', function (evento) {
         GuardarPropPrinCargMas(pDocID);
@@ -5296,7 +5657,6 @@ function ObtenerSelectoresDependientes(pPropiedad, pEntidad, pMultiple) {
     arg.PropertyName = pPropiedad;
     arg.EntityType = pEntidad;
     arg.PropertyValue = valorProp;
-    arg.documentoID = InicializarModificarRecursoSemantico;
     MostrarUpdateProgressTime(0);
 
     GnossPeticionAjax(urlPaginaActual + '/getdependentselectorsentities', arg, true).done(function (data) {

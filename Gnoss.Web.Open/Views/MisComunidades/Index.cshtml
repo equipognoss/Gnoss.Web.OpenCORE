@@ -60,9 +60,10 @@ List<MyCommunitiesViewModel.MyCommunityModel> communityItems = new List<MyCommun
             <div class="col-buscador">
                 <form onsubmit="return false">
                     <fieldset style="display: block">
+                        <legend class="sr-only">@Html.GetText("COMMON","BUSCAR")</legend>
                         <div class="finderUtils" id="divCajaBusqueda">
                             <div class="group finderSection txtFiltrarItems">
-                                <label for="finderSection">Encontrar</label>
+                                <label for="txtFiltrarItems sr-only">@Html.GetText("COMMON","BUSCAR")</label>
                                 <input type="text" id="txtFiltrarItems" 
                                        name="txtFiltrarItems" 
                                        class="not-outline finderSectionText ac_input" 

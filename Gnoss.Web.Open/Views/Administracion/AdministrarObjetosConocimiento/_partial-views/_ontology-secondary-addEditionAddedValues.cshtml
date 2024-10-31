@@ -1,0 +1,138 @@
+﻿@model SharedSemCms
+@*
+Vista parcial que se utiliz apara mostrar cada una de entidades secundarias en modo lista y que se mostrarán dentro del modal del objeto ontológico
+*@
+@{
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
+    string idControl = Model.semanticPropertyModel.OntologyPropInfo.ControlID;
+
+    if ((!Model.semanticPropertyModel.OntologyPropInfo.UniqueValue && mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion != "ListaCheck") || (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Tesauro" && mPropiedad.ValoresUnificados.Count > 0))
+    {
+        string idDivContValores = idControl.Replace("selEnt_", "contEntSelec_");
+
+        if (mPropiedad.ListaValores.Count > 0)
+        {
+            <div id="@idDivContValores" class="mt-2 _ontology-secondary-addEditionAddedValues">
+                <ul class="no-list-style _ontology-secondary-addEditionAddedValuesListItems mb-4 " style="background-color: #fff; border: 1px solid var(--c-gris-borde);">
+                               
+                    @if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion == "Tesauro")                
+                    {
+                        string textoValor = Model.semanticPropertyModel.OntologyPropInfo.EntitySelector.SemanticThesaurusAddedValue.Value;
+                        if (textoValor.Length > 143)
+                        {
+                            textoValor = textoValor.Substring(0, 143);
+                        }
+                        <li class="component-wrap ontology-secondary-addEditionAddedValues">
+                            <div class="component">
+                                <div class="component-header-wrap">
+                                    <div class="component-header">
+                                        <div class="component-header-content">
+                                            <div class="component-header-left">
+                                                @* Mostrar cada una de las propiedades en el panel *@                                                                                        
+                                                <div class="component-name-wrap">
+                                                    <span class="component-item-name">
+                                                        @textoValor
+                                                    </span>
+                                                </div>                                            
+                                            </div>
+                                            @* Sección de acciones Editar y Eliminar *@
+                                            <div class="component-header-right">
+                                                <div class="component-actions-wrap">
+                                                    <ul class="no-list-style component-actions">
+                                                        @{
+                                                            SharedSemCms sharedSemCms = new SharedSemCms();
+                                                            sharedSemCms.semanticPropertyModel = Model.semanticPropertyModel;
+                                                            sharedSemCms.pNumValor = 0;
+                                                            sharedSemCms.pTesauroSemSimple = Model.semanticPropertyModel.OntologyPropInfo.UniqueValue;
+                                                            sharedSemCms.pValor = textoValor;
+                                                        }
+                                                        @*@Html.PartialView("../Shared/SemCMS/_AddDeleteButon", sharedSemCms)*@
+                                                        @Html.PartialView("_partial-views/_ontology-secondary-AddDeleteButon", sharedSemCms)
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    else
+                    {
+                        int count = 0;
+                        foreach (string valor in mPropiedad.ListaValores.Keys)
+                        {
+                            string textoValor = null;
+
+                            if (Model.semanticPropertyModel.OntologyPropInfo.EntitySelector.EditionEntitiesValues.ContainsKey(valor))
+                            {
+                                textoValor = Model.semanticPropertyModel.OntologyPropInfo.EntitySelector.EditionEntitiesValues[valor];
+                            }
+                            else
+                            {
+                                textoValor = valor;
+                            }
+
+                            if (textoValor.Length > 143)
+                            {
+                                textoValor = textoValor.Substring(0, 143);
+                            }
+
+                            // Aquí el nuevo li
+                            <li class="component-wrap ontology-secondary-addEditionAddedValues">
+                                <div class="component">
+                                    <div class="component-header-wrap">
+                                        <div class="component-header">
+                                            <div class="component-header-content">
+                                                <div class="component-header-left">
+                                                    @* Mostrar cada una de las propiedades en el panel *@
+                                                    <div class="component-name-wrap">
+                                                        <span class="component-item-name">
+                                                            @textoValor
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                @* Sección de acciones Editar y Eliminar *@
+                                                <div class="component-header-right">
+                                                    <div class="component-actions-wrap">
+                                                        <ul class="no-list-style component-actions">
+                                                            @{
+                                                                SharedSemCms sharedSemCms = new SharedSemCms();
+                                                                sharedSemCms.semanticPropertyModel = Model.semanticPropertyModel;
+                                                                sharedSemCms.pNumValor = count;
+                                                                sharedSemCms.pTesauroSemSimple = false;
+                                                                sharedSemCms.pValor = textoValor;
+                                                            }                                                        
+                                                            @* Acción de editar *@
+                                                            @if (mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion != "Autocompletar" && mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion != "GruposGnoss" && mPropiedad.EspecifPropiedad.SelectorEntidad.TipoSeleccion != "PersonaGnoss")
+                                                            {
+                                                                <li>
+                                                                    <a class="action-edit round-icon-button js-action-edit-component btnEditObjectNoFuncionalProp" href="javascript: void(0);" onclick="SeleccionarObjectNoFuncionalSeleccEnt('@mPropiedad.ElementoOntologia.TipoEntidad','@mPropiedad.Nombre','@count')">
+                                                                        <span class="material-icons">edit</span>
+                                                                    </a>
+                                                                </li>
+                                                            }
+                                                            @* Acción de Eliminar *@
+                                                            @Html.PartialView("_partial-views/_ontology-secondary-AddDeleteButon", sharedSemCms)
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            count++;
+                        }
+                    }
+                </ul>
+            </div>
+        }
+        else
+        {
+            <div id="@idDivContValores"></div>
+        }
+    }
+
+
+}

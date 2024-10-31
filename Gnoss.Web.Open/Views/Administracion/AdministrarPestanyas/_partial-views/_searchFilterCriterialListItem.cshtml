@@ -1,0 +1,58 @@
+﻿@model TabModel
+@*
+Descripción
+-----------------------------------------------
+Vista que presenta el panel de un criterio en concreto para pintar la información que en él se ha definido.
+El primer no deberá de permitir la eliminación ya que debe haber al menos una condición para el filtro.
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    string randomId = Guid.NewGuid().ToString().Substring(0, 5);
+}
+
+<div class="panelCriterial mb-3">
+    <div class="panelCriterialListItem">
+        @* Tipo de filtrado *@
+        <div class="panelCriterialListItemInfo">
+            @* Etiqueta OR. Sólo visible si hay más de una condición *@
+            <span class="panelCriterialListItemInfo__orLabel d-none">OR</span>
+            @* Tipo de filtrado *@
+            <div class="form-group">
+                <label class="control-label d-block">Tipo de filtrado</label>
+                @* Select/ComboBox para selección del tipo de filtrado una Propiedad *@
+                <select class="cmbCriterialFilter js-select2"
+                        name="CriterialFilter_@(randomId)">
+                    <option value="igualA" data-property-value="igualA" data-property-id="==">igual que</option>
+                    <option value="contiene" data-property-value="contiene" data-property-id="==">contiene</option>
+                    <option value="diferente" data-property-value="diferente" data-property-id="!=">diferente a </option>
+                    <option value="mayorque" data-property-value="mayorque" data-property-id="<">mayor que</option>
+                    <option value="mayorIgualQue" data-property-value="mayorIgualQue" data-property-id="<=">mayor o igual que</option>
+                    <option value="menorQue" data-property-value="menorQue" data-property-id=">">menor que</option>
+                    <option value="menorIgualQue" data-property-value="menorQueIgualQue" data-property-id=">=">menor o igual que</option> 
+                    @*<option @(pestanya.Privacidad == 2 ? "selected" : "") value="2">@Html.GetText("COMADMINPESTANYAS", "PRIVACIDADLECTORES")</option>*@
+                </select>
+            </div>
+            @* Condición *@
+            <div class="form-group">
+                <label class="control-label d-block">Condición</label>
+                <input type="text" class="form-control txtCriterial" name="txtCriterial_@(randomId)">
+            </div>
+        </div>
+
+        @* Listado de acciones (Añadir / Eliminar criterio del filtro) *@
+        <div class="panelCriterialListItemActions">
+            @* Botón para añadir un nuevo filtro *@
+            <button class="btn btnCriterialListItemActions add" title="Añadir condición">
+                <span class="material-icons">add</span>
+            </button>
+            @* Botón para eliminar el filtro. Si es el primero, deberá estar deshabilitado*@
+            <button class="btn btnCriterialListItemActions remove disabled" title="Eliminar condición">
+                <span class="material-icons">delete</span>
+            </button>
+        </div>
+    </div>
+    @* Ayuda *@
+    <small class="form-text text-muted mt-n2">Selecciona las condiciones de filtrado para aplicar a la propiedad elegida.</small>
+</div>

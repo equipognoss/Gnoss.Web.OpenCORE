@@ -25,7 +25,6 @@
         //Obtenemos el identificadorID y establecemos el id en matomo
         var idUsuarioGnoss = $('#inpt_usuarioID').val();
         var nombreCortoComunidad = '@Comunidad.ShortName';
-
         if (idUsuarioGnoss != undefined && idUsuarioGnoss != 'ffffffff-ffff-ffff-ffff-ffffffffffff') {
             _paq.push(['setUserId', idUsuarioGnoss]);
             _paq.push(['setCustomDimension', 1, idUsuarioGnoss]);

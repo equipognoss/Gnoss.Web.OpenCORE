@@ -5,6 +5,7 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.ParametroGeneralDSEspacio;
 using Es.Riam.Gnoss.Elementos.ParametroGeneralDSName;
@@ -17,14 +18,12 @@ using Es.Riam.Gnoss.Web.Controles.ParametroGeneralDSName;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Util;
-using Es.Riam.Web.Util;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Web;
+using static Es.Riam.Gnoss.Web.MVC.Models.HeaderModel.SearchHeaderModel;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -46,6 +45,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private ConfigService mConfigService;
         protected ControladorBase mControladorBase;
         protected EntityContext mEntityContext;
+        protected LoggingService mLoggingService;
+        private RedisCacheWrapper mRedisCacheWrapper;
 
         public ControllerCabeceraBase(ControllerBaseWeb pControllerBase, IHttpContextAccessor httpContextAccessor, EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, GnossCache gnossCache)
         {
@@ -56,14 +57,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mConfigService = configService;
             IdentidadActual = mControllerBase.IdentidadActual;
             ProyectoSeleccionado = mControllerBase.ProyectoSeleccionado;
-            ProyectoVirtual = mControllerBase.ProyectoVirtual;
-            //UtilIdiomasCache = mControllerBase.UtilIdiomasCache;
+            ProyectoVirtual = mControllerBase.ProyectoVirtual;            
             UtilIdiomas = mControllerBase.UtilIdiomas;
             BaseURLIdioma = mControllerBase.BaseURLIdioma;
             UrlPerfil = mControllerBase.UrlPerfil;
             Request = mControllerBase.Request;
-
+            mRedisCacheWrapper = redisCacheWrapper;
             mEntityContext = entityContext;
+            mLoggingService = loggingService;
             mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
         }
 
@@ -74,17 +75,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         public void CargarDatosCabecera()
         {
-            //ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD);
-
-            //HeaderModel cabecera = (HeaderModel)proyCL.ObtenerCabeceraMVC(ProyectoVirtual.Clave);
-
-            //if (cabecera == null)
-            //{
             HeaderModel cabecera = new HeaderModel();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, null);
 
-            cabecera.UrlAdvancedSearch = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, mControllerBase.BaseURLIdioma, ProyectoVirtual.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "BUSQUEDAAVANZADA");
+			cabecera.UrlAdvancedSearch = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, mControllerBase.BaseURLIdioma, ProyectoVirtual.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "BUSQUEDAAVANZADA");
 
-            cabecera.Languajes = mConfigService.ObtenerListaIdiomasDictionary();
+            cabecera.Languajes = paramCL.ObtenerListaIdiomasDictionary();
 
             cabecera.Searcher = CargarMetabuscador();
 
@@ -95,8 +91,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             cabecera.ContactsAvailable = !mControllerBase.EsEcosistemaSinContactos;
 
             cabecera.ChangePasswordVisible = !(mControllerBase.ParametroProyecto.ContainsKey(ParametroAD.OcultarCambiarPassword) && mControllerBase.ParametroProyecto[ParametroAD.OcultarCambiarPassword].ToLower().Equals("true"));
-            //    proyCL.AgregarCabeceraMVC(ProyectoVirtual.Clave, cabecera);
-            //}
 
             ProcesarPrivacidadPestanyasMetabuscadorComunidad(cabecera.Searcher);
 
@@ -127,6 +121,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 cabecera.SocialNetworkRegister.Add("Twitter", urlServicioLoginTwitter);
             }
+
             if (mControllerBase.ObtenerParametrosLoginExterno(TipoRedSocialLogin.Santillana, mControllerBase.ParametroProyecto, mControllerBase.ParametrosAplicacionDS).Count > 0)
             {
                 string urlServicioLoginSantillana = mControladorBase.UrlServicioLogin + "/loginSantillana.aspx?token=" + System.Net.WebUtility.UrlEncode(mControllerBase.TokenLoginUsuario) + "&proyectoID=" + ProyectoSeleccionado.Clave.ToString() + "&urlOrigen=" + System.Net.WebUtility.UrlEncode(mControllerBase.BaseURL + mHttpContextAccessor.HttpContext.Request.Path);
@@ -140,150 +135,111 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
             {
-                #region Agregamos al ddl de busqueda opciones en funcion de la peticion
-                string pSearch = "?search=";
-                string textoBusquedaEspacioPersonal = UtilIdiomas.GetText("COMENTARIOS", "MIESPACIOPERSONAL");
-                if (RequestParams("perfilorg") != null && RequestParams("perfilorg").Equals("true"))
+                AgregarOpcionesBusquedaPeticion(cabecera.Searcher.ListSelectCombo);
+
+                SeleccionarItemBusquedaActivo(cabecera.Searcher.ListSelectCombo);
+            }
+                       
+            ViewBag.Cabecera = cabecera;
+        }
+
+        /// <summary>
+        /// De la lista de opciones para los buscadores, marcamos como seleccionado el que nos interesa en función de la petición recibida
+        /// </summary>
+        /// <param name="pListaOpciones">Lista de opciones a la que se añadirán las necesarias</param>
+        private void SeleccionarItemBusquedaActivo(List<SearchSelectComboModel> pListaOpciones)
+        {
+            string pagActual = "";
+            if (Request != null)
+            {
+                pagActual = Request.Path.ToString().Trim('/').ToLower();
+            }
+            if (pagActual.Equals("admin"))
+            {
+                string path = Request.Path.ToString().Remove(Request.Path.ToString().LastIndexOf("/"));//quito el /admin
+                pagActual = path.Substring(path.LastIndexOf("/") + 1);
+            }
+
+            SearchSelectComboModel elementoSeleccionado = pListaOpciones.Where(item => item.Name.ToLower() == pagActual).FirstOrDefault();
+            if (elementoSeleccionado != null)
+            {
+                elementoSeleccionado.Selected = true;
+            }
+        }
+
+        /// <summary>
+        /// Agrega las opciones de búsqueda a la lista en función del origen de la petición recibida
+        /// </summary>
+        /// <param name="pListaOpciones">Lista de opciones a la que se añadirán las necesarias</param>
+        private void AgregarOpcionesBusquedaPeticion(List<SearchSelectComboModel> pListaOpciones)
+        {
+            string search = "?search=";
+            string textoBusquedaEspacioPersonal = UtilIdiomas.GetText("COMENTARIOS", "MIESPACIOPERSONAL");
+            if (RequestParams("perfilorg") != null && RequestParams("perfilorg").Equals("true"))
+            {
+                if (!string.IsNullOrEmpty(RequestParams("organizacion")) && IdentidadActual.IdentidadOrganizacion != null)
                 {
-                    if (!string.IsNullOrEmpty(RequestParams("organizacion")) && IdentidadActual.IdentidadOrganizacion != null)
-                    {
-                        //administrador organizacion
-                        textoBusquedaEspacioPersonal = UtilIdiomas.GetText("PERFIL", "ESPACIOCORPORATIVODE", IdentidadActual.OrganizacionPerfil.Nombre);
-                    }
-                    else
-                    {
-                        textoBusquedaEspacioPersonal = UtilCadenas.ObtenerTextoDeIdioma(mControllerBase.EspacioPersonal, UtilIdiomas.LanguageCode, null);
-                    }
+                    //administrador organizacion
+                    textoBusquedaEspacioPersonal = UtilIdiomas.GetText("PERFIL", "ESPACIOCORPORATIVODE", IdentidadActual.OrganizacionPerfil.Nombre);
                 }
                 else
                 {
-                    if (!string.IsNullOrEmpty(mControllerBase.EspacioPersonal))
-                    {
-                        textoBusquedaEspacioPersonal = UtilCadenas.ObtenerTextoDeIdioma(mControllerBase.EspacioPersonal, UtilIdiomas.LanguageCode, null);
-                    }
+                    textoBusquedaEspacioPersonal = UtilCadenas.ObtenerTextoDeIdioma(mControllerBase.EspacioPersonal, UtilIdiomas.LanguageCode, null);
                 }
-
-                if (RequestParams("EditarRecursosPerfil") != null && RequestParams("EditarRecursosPerfil").Equals("true"))
-                {
-                    HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModel = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                    selectComboModel.Name = textoBusquedaEspacioPersonal;
-                    selectComboModel.ID = FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES;
-                    selectComboModel.Url = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MISRECURSOS") + pSearch;
-                    selectComboModel.Autocomplete = FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES;
-                    selectComboModel.Selected = true;
-                    cabecera.Searcher.ListSelectCombo.Add(selectComboModel);
-                }
-                else if (RequestParams("perfilorg") != null && RequestParams("perfilorg").Equals("true"))
-                {
-                    HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModel = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                    selectComboModel.Name = UtilIdiomas.GetText("COMENTARIOS", "ESPACIOCORPORATIVODE", IdentidadActual.OrganizacionPerfil.Nombre);
-                    selectComboModel.ID = FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES;
-                    selectComboModel.Url = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MISRECURSOS") + pSearch;
-                    selectComboModel.Autocomplete = FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES;
-                    selectComboModel.Selected = true;
-                    cabecera.Searcher.ListSelectCombo.Add(selectComboModel);
-                }
-                else if (RequestParams("mensajes") != null && RequestParams("mensajes").Equals("true"))
-                {
-                    HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModel = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                    selectComboModel.ID = FacetadoAD.BUSQUEDA_MENSAJES;
-                    selectComboModel.Name = UtilIdiomas.GetText("MENU", "MENSAJES");
-                    selectComboModel.Url = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MENSAJES") + pSearch;
-                    selectComboModel.Autocomplete = FacetadoAD.BUSQUEDA_MENSAJES;
-                    selectComboModel.Selected = true;
-                    cabecera.Searcher.ListSelectCombo.Add(selectComboModel);
-                }
-                if (RequestParams("contribuciones") != null && RequestParams("contribuciones").Equals("true"))
-                {
-                    string textoBusqueda = UtilIdiomas.GetText("PERFIL", "MISCONTRIBUCIONES");
-                    if (IdentidadActual.OrganizacionID.HasValue)
-                    {
-                        //administrador organizacion
-                        textoBusqueda = UtilIdiomas.GetText("PERFIL", "CONTRIBUCIONESDE", IdentidadActual.OrganizacionPerfil.Nombre);
-                    }
-                    HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModel = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                    selectComboModel.ID = FacetadoAD.BUSQUEDA_CONTRIBUCIONES_RECURSOS;
-                    selectComboModel.Name = textoBusqueda;
-                    selectComboModel.Url = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MISCONTRIBUCIONES") + pSearch;
-                    selectComboModel.Autocomplete = FacetadoAD.BUSQUEDA_CONTRIBUCIONES_RECURSOS;
-                    selectComboModel.Selected = true;
-                    cabecera.Searcher.ListSelectCombo.Add(selectComboModel);
-                }
-                if (RequestParams("contactos") != null && RequestParams("contactos").Equals("true"))
-                {
-                    HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModel = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                    selectComboModel.ID = FacetadoAD.BUSQUEDA_CONTACTOS;
-                    selectComboModel.Name = UtilIdiomas.GetText("COMMON", "CONTACTOS");
-                    selectComboModel.Autocomplete = FacetadoAD.BUSQUEDA_CONTACTOS;
-                    selectComboModel.Selected = true;
-                    if (RequestParams("organizacion") != null && IdentidadActual.IdentidadOrganizacion != null)
-                    {
-                        selectComboModel.Url = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "CONTACTOSORG") + pSearch;
-                    }
-                    else
-                    {
-                        selectComboModel.Url = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "CONTACTOS") + pSearch;
-                    }
-                    cabecera.Searcher.ListSelectCombo.Add(selectComboModel);
-                }
-                #endregion
-
-                #region Seleccionamos el item del ddl seleccionado
-
-                string pagActual = "";
-                if (Request != null)
-                {
-                    pagActual = Request.Path.ToString().Substring(Request.Path.ToString().LastIndexOf("/") + 1);
-                }
-                if (pagActual.Equals("admin"))
-                {
-                    string path = Request.Path.ToString().Remove(Request.Path.ToString().LastIndexOf("/"));//quito el /admin
-                    pagActual = path.Substring(path.LastIndexOf("/") + 1);
-                }
-
-
-                foreach (HeaderModel.SearchHeaderModel.SearchSelectComboModel combo in cabecera.Searcher.ListSelectCombo)
-                {
-                    if (pagActual == UtilIdiomas.GetText("URLSEM", "BLOGS") && combo.Autocomplete == FacetadoAD.BUSQUEDA_BLOGS)
-                    {
-                        combo.Selected = true;
-                        break;
-                    }
-                    if (pagActual == UtilIdiomas.GetText("URLSEM", "COMUNIDADES") && combo.Autocomplete == FacetadoAD.BUSQUEDA_COMUNIDADES)
-                    {
-                        combo.Selected = true;
-                        break;
-                    }
-                    if (pagActual == UtilIdiomas.GetText("URLSEM", "PERSONASYORGANIZACIONES") && combo.Autocomplete == FacetadoAD.BUSQUEDA_PERSONASYORG)
-                    {
-                        combo.Selected = true;
-                        break;
-                    }
-                }
-                #endregion
             }
-
-            Dictionary<string, string> dicParametrosAplicacion = new Dictionary<string, string>();
-            // foreach(ParametroAplicacionDS.ParametroAplicacionRow filaParam in mControllerBase.ParametrosAplicacionDS.ParametroAplicacion.Rows)
-            foreach (AD.EntityModel.ParametroAplicacion filaParam in mControllerBase.ParametrosAplicacionDS)
+            else
             {
-                if (!dicParametrosAplicacion.ContainsKey(filaParam.Parametro))
+                if (!string.IsNullOrEmpty(mControllerBase.EspacioPersonal))
                 {
-                    dicParametrosAplicacion.Add(filaParam.Parametro, filaParam.Valor);
+                    textoBusquedaEspacioPersonal = UtilCadenas.ObtenerTextoDeIdioma(mControllerBase.EspacioPersonal, UtilIdiomas.LanguageCode, null);
                 }
             }
 
-            ViewBag.ParametrosAplicacion = dicParametrosAplicacion;
+            if (RequestParams("EditarRecursosPerfil") != null && RequestParams("EditarRecursosPerfil").Equals("true"))
+            {
+                pListaOpciones.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES, textoBusquedaEspacioPersonal, BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MISRECURSOS") + search, true, FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES));
+            }
+            else if (RequestParams("perfilorg") != null && RequestParams("perfilorg").Equals("true"))
+            {
+                pListaOpciones.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES, UtilIdiomas.GetText("COMENTARIOS", "ESPACIOCORPORATIVODE", IdentidadActual.OrganizacionPerfil.Nombre), BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MISRECURSOS") + search, true, FacetadoAD.BUSQUEDA_RECURSOS_PERSONALES));
+            }
+            else if (RequestParams("mensajes") != null && RequestParams("mensajes").Equals("true"))
+            {
+                pListaOpciones.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_MENSAJES, UtilIdiomas.GetText("MENU", "MENSAJES"), BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MENSAJES") + search, true, FacetadoAD.BUSQUEDA_MENSAJES));
+            }
+            if (RequestParams("contribuciones") != null && RequestParams("contribuciones").Equals("true"))
+            {
+                string textoBusqueda = UtilIdiomas.GetText("PERFIL", "MISCONTRIBUCIONES");
+                if (IdentidadActual.OrganizacionID.HasValue)
+                {
+                    //Administrador organizacion
+                    textoBusqueda = UtilIdiomas.GetText("PERFIL", "CONTRIBUCIONESDE", IdentidadActual.OrganizacionPerfil.Nombre);
+                }
 
-            //proyCL.Dispose();
-            ViewBag.Cabecera = cabecera;
+                pListaOpciones.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_CONTRIBUCIONES_RECURSOS, textoBusqueda, BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MISCONTRIBUCIONES") + search, true, FacetadoAD.BUSQUEDA_CONTRIBUCIONES_RECURSOS));
+            }
+            if (RequestParams("contactos") != null && RequestParams("contactos").Equals("true"))
+            {
+                string urlContactos = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "CONTACTOS") + search;
+                if (RequestParams("organizacion") != null && IdentidadActual.IdentidadOrganizacion != null)
+                {
+                    urlContactos = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "CONTACTOSORG") + search;
+                }
+
+                pListaOpciones.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_CONTACTOS, UtilIdiomas.GetText("COMMON", "CONTACTOS"), urlContactos, true, FacetadoAD.BUSQUEDA_CONTACTOS));
+            }
+
+            if(RequestParams("mis-recursos") != null && RequestParams("mis-recursos").Equals("true"))
+            {
+                pListaOpciones.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_MIS_RECURSOS, UtilIdiomas.GetText("URLSEM", "MISRECURSOS"), $"{BaseURLIdioma}/{UtilIdiomas.GetText("URLSEM", "MISRECURSOS")}{search}", true, FacetadoAD.BUSQUEDA_MIS_RECURSOS));
+            }
         }
 
         private string AgregarEventoComunidad(string pUrlServicioLogin)
         {
             if (!string.IsNullOrEmpty(RequestParams("eventoComID")))
             {
-                pUrlServicioLogin += "&eventoComID=" + RequestParams("eventoComID");
+                pUrlServicioLogin += $"&eventoComID={RequestParams("eventoComID")}";
             }
 
             return pUrlServicioLogin;
@@ -292,15 +248,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <summary>
         /// Carga un control lista con las categorías de primer nivel
         /// </summary>
-        /// <param name="pListaCategorias">Control lista que vamos a cargar</param>
         public HeaderModel.SearchHeaderModel CargarMetabuscador()
         {
             HeaderModel.SearchHeaderModel buscador = new HeaderModel.SearchHeaderModel();
-            buscador.ListSelectCombo = new List<HeaderModel.SearchHeaderModel.SearchSelectComboModel>();
-
-            //ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService);
-            //ParametroGeneralDS paramDS = paramCN.ObtenerParametrosGeneralesDeProyecto(ProyectoVirtual.Clave);
-            //paramCN.Dispose();
+            buscador.ListSelectCombo = new List<SearchSelectComboModel>();
+           
             GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
             ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
             gestorParametroGeneral = gestorController.ObtenerParametrosGeneralesDeProyecto(gestorParametroGeneral, ProyectoVirtual.Clave);
@@ -310,10 +262,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (listaConfiguracionAmbitoBusqueda.Count > 0 && listaConfiguracionAmbitoBusqueda[0].TodoGnoss)
                 {
-                    //if (((ParametroGeneralDS.ConfiguracionAmbitoBusquedaProyectoRow[])gestorParametroGeneral.ConfiguracionAmbitoBusquedaProyecto.Select("ProyectoID = '" + ProyectoVirtual.Clave + "'"))[0].TodoGnoss)
-                    // {
                     metaBusquedaActiva = true;
-                    // }
                 }
                 else
                 {
@@ -323,12 +272,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             if (metaBusquedaActiva)
             {
-                HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModel = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                selectComboModel.ID = "MyGNOSS" + FacetadoAD.BUSQUEDA_AVANZADA;
-                selectComboModel.Name = UtilIdiomas.GetText("BUSCADORFACETADO", "TODOGNOSS", mControllerBase.NombreProyectoEcosistema);
-                selectComboModel.Url = UtilIdiomas.GetText("URLSEM", "BUSQUEDAAVANZADA");
-                selectComboModel.Selected = ProyectoVirtual.Clave.Equals(ProyectoAD.MetaProyecto);
-                buscador.ListSelectCombo.Add(selectComboModel);
+                //Metabúsqueda
+                buscador.ListSelectCombo.Add(GenerarSearchComboModel($"MyGNOSS{FacetadoAD.BUSQUEDA_AVANZADA}", UtilIdiomas.GetText("BUSCADORFACETADO", "TODOGNOSS", mControllerBase.NombreProyectoEcosistema), UtilIdiomas.GetText("URLSEM", "BUSQUEDAAVANZADA"), ProyectoVirtual.Clave.Equals(ProyectoAD.MetaProyecto)));
             }
 
             if (ProyectoVirtual.Clave.Equals(ProyectoAD.MetaProyecto))
@@ -340,7 +285,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 int numCombosCargados = buscador.ListSelectCombo.Count;
                 CargarMetabuscadorComunidad(buscador.ListSelectCombo, gestorParametroGeneral, buscador);
                 bool comboseleccionado = false;
-                foreach (HeaderModel.SearchHeaderModel.SearchSelectComboModel combo in buscador.ListSelectCombo)
+                foreach (SearchSelectComboModel combo in buscador.ListSelectCombo)
                 {
                     if (combo.Selected)
                     {
@@ -354,47 +299,35 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            //  paramDS.Dispose();
-
-
             return buscador;
         }
 
-        public void CargarMetabuscadorMetaProyecto(List<HeaderModel.SearchHeaderModel.SearchSelectComboModel> pListaSelectCombo)
+        /// <summary>
+        /// Cargo los posibles buscadores del proyecto. Se marcará el seleccionado a posteriori en función de la página en la que te encuentres.
+        /// </summary>
+        /// <param name="pListaSelectCombo">Lista de buscadores donde se añadirán más</param>
+        public void CargarMetabuscadorMetaProyecto(List<SearchSelectComboModel> pListaSelectCombo)
         {
-            //Agrego blogs, comunidad y personas y organizaciones
-            //Blogs
-            HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelBlogs = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-            selectComboModelBlogs.ID = FacetadoAD.BUSQUEDA_BLOGS;
-            selectComboModelBlogs.Name = UtilIdiomas.GetText("COMMON", "BLOGS");
-            selectComboModelBlogs.Url = UtilIdiomas.GetText("URLSEM", "BLOGS");
-            selectComboModelBlogs.Selected = false;
-            pListaSelectCombo.Add(selectComboModelBlogs);
+            //Blogs            
+            pListaSelectCombo.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_BLOGS, UtilIdiomas.GetText("COMMON", "BLOGS"), UtilIdiomas.GetText("URLSEM", "BLOGS"), false));
 
-            //Comunidades
-            HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelComunidades = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-            selectComboModelComunidades.ID = FacetadoAD.BUSQUEDA_COMUNIDADES;
-            selectComboModelComunidades.Name = UtilIdiomas.GetText("COMMON", "COMUNIDADES");
-            selectComboModelComunidades.Url = UtilIdiomas.GetText("URLSEM", "COMUNIDADES");
-            selectComboModelComunidades.Selected = false;
-            pListaSelectCombo.Add(selectComboModelComunidades);
+            //Comentarios
+            pListaSelectCombo.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_COMENTARIOS, UtilIdiomas.GetText("COMMON", "COMENTARIOS"), UtilIdiomas.GetText("URLSEM", "COMENTARIOS"), false));
+
+            //Comunidades            
+            pListaSelectCombo.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_COMUNIDADES, UtilIdiomas.GetText("COMMON", "COMUNIDADES"), UtilIdiomas.GetText("URLSEM", "COMUNIDADES"), false));
 
             //Personas
-            HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelPersonas = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-            selectComboModelPersonas.ID = FacetadoAD.BUSQUEDA_PERSONASYORG;
-            selectComboModelPersonas.Autocomplete = Es.Riam.Gnoss.AD.BASE_BD.OrigenAutocompletar.PersyOrg;
-            selectComboModelPersonas.Name = UtilIdiomas.GetText("COMMON", "PERSONASYORGANIZACIONES");
-            string admin = "";
+            string urlPersonasYOrganizaciones = UtilIdiomas.GetText("URLSEM", "PERSONASYORGANIZACIONES");
             if (mControllerBase.AdministradorQuiereVerTodasLasPersonas)
             {
-                admin = "/admin";
+                urlPersonasYOrganizaciones += "/admin";
             }
-            selectComboModelPersonas.Url = UtilIdiomas.GetText("URLSEM", "PERSONASYORGANIZACIONES") + admin;
-            selectComboModelPersonas.Selected = false;
-            pListaSelectCombo.Add(selectComboModelPersonas);
+
+            pListaSelectCombo.Add(GenerarSearchComboModel(FacetadoAD.BUSQUEDA_PERSONASYORG, UtilIdiomas.GetText("COMMON", "PERSONASYORGANIZACIONES"), urlPersonasYOrganizaciones, false, AD.BASE_BD.OrigenAutocompletar.PersyOrg));
         }
 
-        public void CargarMetabuscadorComunidad(List<HeaderModel.SearchHeaderModel.SearchSelectComboModel> pListaSelectCombo, GestorParametroGeneral gestorParametroGeneral, HeaderModel.SearchHeaderModel pBuscador)
+        public void CargarMetabuscadorComunidad(List<SearchSelectComboModel> pListaSelectCombo, GestorParametroGeneral gestorParametroGeneral, HeaderModel.SearchHeaderModel pBuscador)
         {
             bool montarMetaBusquedaComunidad = false;
             Guid? pestanyaDefecto = null;
@@ -414,6 +347,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 montarMetaBusquedaComunidad = true;
             }
+            
             if (montarMetaBusquedaComunidad)
             {
                 ProyectoPestanyaMenu pestanyaBusquedaAvanzada = ProyectoVirtual.ListaPestanyasMenu.Values.FirstOrDefault(p => p.TipoPestanya.Equals(TipoPestanyaMenu.BusquedaAvanzada));
@@ -427,20 +361,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         rutaPestanya = UtilIdiomas.GetText("URLSEM", "BUSQUEDAAVANZADA");
                     }
 
-                    HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModel = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                    selectComboModel.ID = pestanyaBusquedaAvanzada.Clave.ToString();
-                    selectComboModel.Selected = !pestanyaDefecto.HasValue;
-                    selectComboModel.Name = nombrePestanya;
                     if (string.IsNullOrEmpty(nombrePestanya))
                     {
-                        selectComboModel.Name = UtilIdiomas.GetText("BUSCADORFACETADO", "TODALACOMUNIDAD");
+                        nombrePestanya = UtilIdiomas.GetText("BUSCADORFACETADO", "TODALACOMUNIDAD");
                     }
-                    selectComboModel.Url = rutaPestanya;
-
-                    pListaSelectCombo.Add(selectComboModel);
+                    
+                    pListaSelectCombo.Add(GenerarSearchComboModel(pestanyaBusquedaAvanzada.Clave.ToString(), nombrePestanya, rutaPestanya, !pestanyaDefecto.HasValue));
                 }
             }
-
 
             foreach (ProyectoPestanyaMenu pestanyaMenu in ProyectoVirtual.ListaPestanyasMenu.Values)
             {
@@ -450,9 +378,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
         }
-
-        // private void CargarPestanyaMetabuscadorComunidad(List<HeaderModel.SearchHeaderModel.SearchSelectComboModel> pListaSelectCombo, ParametroGeneralDS pParamDS,  HeaderModel.SearchHeaderModel pBuscador, ProyectoPestanyaMenu pPestanyaMenu, Guid? pPestanyaDefecto)
-        private void CargarPestanyaMetabuscadorComunidad(List<HeaderModel.SearchHeaderModel.SearchSelectComboModel> pListaSelectCombo, GestorParametroGeneral pParamDS, HeaderModel.SearchHeaderModel pBuscador, ProyectoPestanyaMenu pPestanyaMenu, Guid? pPestanyaDefecto)
+       
+        private void CargarPestanyaMetabuscadorComunidad(List<SearchSelectComboModel> pListaSelectCombo, GestorParametroGeneral pParamDS, HeaderModel.SearchHeaderModel pBuscador, ProyectoPestanyaMenu pPestanyaMenu, Guid? pPestanyaDefecto)
         {
             string nombrePestanya = pPestanyaMenu.Nombre;
             string rutaPestanya = pPestanyaMenu.Ruta;
@@ -463,40 +390,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     case TipoPestanyaMenu.Recursos:
                         #region Recursos
-                        HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelRecursos = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                        selectComboModelRecursos.ID = pPestanyaMenu.Clave.ToString();
-                        selectComboModelRecursos.Autocomplete = Es.Riam.Gnoss.AD.BASE_BD.OrigenAutocompletar.Recursos;
-                        selectComboModelRecursos.FacetAutocomplete = facetasAutocompletar;
-                        selectComboModelRecursos.Name = nombrePestanya;
-                        selectComboModelRecursos.Selected = pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave;
-                        if (string.IsNullOrEmpty(selectComboModelRecursos.Name))
+                        
+                        if (string.IsNullOrEmpty(nombrePestanya))
                         {
-                            selectComboModelRecursos.Name = UtilIdiomas.GetText("COMMON", "BASERECURSOS");
+                            nombrePestanya = UtilIdiomas.GetText("COMMON", "BASERECURSOS");
                         }
                         if (string.IsNullOrEmpty(rutaPestanya))
                         {
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "RECURSOS");
                         }
-                        selectComboModelRecursos.Url = rutaPestanya;
-                        pListaSelectCombo.Add(selectComboModelRecursos);
+                        
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Recursos, facetasAutocompletar));
+                        
                         #endregion
                         break;
                     case TipoPestanyaMenu.BusquedaSemantica:
-                        #region Búsqueda
+                        #region Busqueda semántica
                         //Añadimos las busquedas de los recursos semánticos configurados
                         if (pPestanyaMenu.FilaProyectoPestanyaBusqueda != null)
                         {
                             string extraJsProyOrigen = "";
                             string filtroPest = pPestanyaMenu.FilaProyectoPestanyaBusqueda.CampoFiltro.Replace("rdf:type=", "");
 
-                            HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelBusqueda = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                            selectComboModelBusqueda.ID = pPestanyaMenu.Clave.ToString();
-                            selectComboModelBusqueda.Autocomplete = pPestanyaMenu.FilaProyectoPestanyaMenu.Ruta;
-                            selectComboModelBusqueda.FacetAutocomplete = facetasAutocompletar;
-                            selectComboModelBusqueda.Name = nombrePestanya;
-                            selectComboModelBusqueda.Url = rutaPestanya;
-                            selectComboModelBusqueda.Selected = pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave;
-                            pListaSelectCombo.Add(selectComboModelBusqueda);
+                            pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, pPestanyaMenu.FilaProyectoPestanyaMenu.Ruta, facetasAutocompletar));
 
                             if (mControllerBase.ProyectoOrigenBusquedaID != Guid.Empty)
                             {
@@ -508,89 +424,73 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         break;
                     case TipoPestanyaMenu.Preguntas:
                         #region Preguntas
-                        HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelPreguntas = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                        selectComboModelPreguntas.ID = pPestanyaMenu.Clave.ToString();
-                        selectComboModelPreguntas.Autocomplete = Es.Riam.Gnoss.AD.BASE_BD.OrigenAutocompletar.Preguntas;
-                        selectComboModelPreguntas.FacetAutocomplete = facetasAutocompletar;
-                        selectComboModelPreguntas.Name = nombrePestanya;
-                        selectComboModelPreguntas.Selected = pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave;
-                        if (string.IsNullOrEmpty(selectComboModelPreguntas.Name))
+
+                        if (string.IsNullOrEmpty(nombrePestanya))
                         {
-                            selectComboModelPreguntas.Name = UtilIdiomas.GetText("COMMON", "PREGUNTAS");
+                            nombrePestanya = UtilIdiomas.GetText("COMMON", "PREGUNTAS");
                         }
                         if (string.IsNullOrEmpty(rutaPestanya))
                         {
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "PREGUNTAS");
                         }
-                        selectComboModelPreguntas.Url = rutaPestanya;
-                        pListaSelectCombo.Add(selectComboModelPreguntas);
+                        
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Preguntas, facetasAutocompletar));
+                        
                         #endregion
                         break;
                     case TipoPestanyaMenu.Encuestas:
                         #region Encuestas
-                        HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelEncuestas = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                        selectComboModelEncuestas.ID = pPestanyaMenu.Clave.ToString();
-                        selectComboModelEncuestas.Autocomplete = Es.Riam.Gnoss.AD.BASE_BD.OrigenAutocompletar.Encuestas;
-                        selectComboModelEncuestas.FacetAutocomplete = facetasAutocompletar;
-                        selectComboModelEncuestas.Name = nombrePestanya;
-                        selectComboModelEncuestas.Selected = pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave;
-                        if (string.IsNullOrEmpty(selectComboModelEncuestas.Name))
+
+                        if (string.IsNullOrEmpty(nombrePestanya))
                         {
-                            selectComboModelEncuestas.Name = UtilIdiomas.GetText("COMMON", "ENCUESTAS");
+                            nombrePestanya = UtilIdiomas.GetText("COMMON", "ENCUESTAS");
                         }
                         if (string.IsNullOrEmpty(rutaPestanya))
                         {
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "ENCUESTAS");
                         }
-                        selectComboModelEncuestas.Url = rutaPestanya;
-                        pListaSelectCombo.Add(selectComboModelEncuestas);
+
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Encuestas, facetasAutocompletar));
+                        
                         #endregion
                         break;
                     case TipoPestanyaMenu.Debates:
                         #region Debates
-                        HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelDebates = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                        selectComboModelDebates.ID = pPestanyaMenu.Clave.ToString();
-                        selectComboModelDebates.Autocomplete = Es.Riam.Gnoss.AD.BASE_BD.OrigenAutocompletar.Debates;
-                        selectComboModelDebates.FacetAutocomplete = facetasAutocompletar;
-                        selectComboModelDebates.Name = nombrePestanya;
-                        selectComboModelDebates.Selected = pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave;
-                        if (string.IsNullOrEmpty(selectComboModelDebates.Name))
+
+                        if (string.IsNullOrEmpty(nombrePestanya))
                         {
-                            selectComboModelDebates.Name = UtilIdiomas.GetText("COMMON", "DEBATES");
+                            nombrePestanya = UtilIdiomas.GetText("COMMON", "DEBATES");
                         }
                         if (string.IsNullOrEmpty(rutaPestanya))
                         {
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "DEBATES");
                         }
-                        selectComboModelDebates.Url = rutaPestanya;
-                        pListaSelectCombo.Add(selectComboModelDebates);
+
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Debates, facetasAutocompletar));
+
                         #endregion
                         break;
                     case TipoPestanyaMenu.PersonasYOrganizaciones:
                         #region PersonasYOrganizaciones
-                        HeaderModel.SearchHeaderModel.SearchSelectComboModel selectComboModelPersonas = new HeaderModel.SearchHeaderModel.SearchSelectComboModel();
-                        selectComboModelPersonas.ID = pPestanyaMenu.Clave.ToString();
-                        selectComboModelPersonas.Autocomplete = Es.Riam.Gnoss.AD.BASE_BD.OrigenAutocompletar.PersyOrg;
-                        selectComboModelPersonas.FacetAutocomplete = facetasAutocompletar;
-                        selectComboModelPersonas.Name = nombrePestanya;
-                        selectComboModelPersonas.Selected = pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave;
-                        if (string.IsNullOrEmpty(selectComboModelPersonas.Name))
+                       
+                        if (string.IsNullOrEmpty(nombrePestanya))
                         {
                             if (ProyectoVirtual.EsProyectoEduca)
                             {
-                                selectComboModelPersonas.Name = UtilIdiomas.GetText("COMMON", "PROFESORESYALUMNOS");
+                                nombrePestanya = UtilIdiomas.GetText("COMMON", "PROFESORESYALUMNOS");
                             }
                             else
                             {
-                                selectComboModelPersonas.Name = UtilIdiomas.GetText("COMMON", "PERSONASYORGANIZACIONES");
+                                nombrePestanya = UtilIdiomas.GetText("COMMON", "PERSONASYORGANIZACIONES");
                             }
                         }
                         if (string.IsNullOrEmpty(rutaPestanya))
                         {
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "PERSONASYORGANIZACIONES");
                         }
-                        selectComboModelPersonas.Url = rutaPestanya;
-                        pListaSelectCombo.Add(selectComboModelPersonas);
+                        
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.PersyOrg, facetasAutocompletar));
+
                         #endregion
                         break;
                 }
@@ -607,9 +507,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void ProcesarPrivacidadPestanyasMetabuscadorComunidad(HeaderModel.SearchHeaderModel pSearchHeaderModel)
         {
-            List<HeaderModel.SearchHeaderModel.SearchSelectComboModel> combosEliminar = new List<HeaderModel.SearchHeaderModel.SearchSelectComboModel>();
+            List<SearchSelectComboModel> combosEliminar = new List<SearchSelectComboModel>();
             bool marcarSleccionada = false;
-            foreach (HeaderModel.SearchHeaderModel.SearchSelectComboModel combo in pSearchHeaderModel.ListSelectCombo)
+            foreach (SearchSelectComboModel combo in pSearchHeaderModel.ListSelectCombo)
             {
                 if (marcarSleccionada)
                 {
@@ -673,24 +573,38 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            foreach (HeaderModel.SearchHeaderModel.SearchSelectComboModel comboEliminar in combosEliminar)
+            foreach (SearchSelectComboModel comboEliminar in combosEliminar)
             {
                 pSearchHeaderModel.ListSelectCombo.Remove(comboEliminar);
             }
         }
 
-        private void ProcesarCombosBusquedas(List<HeaderModel.SearchHeaderModel.SearchSelectComboModel> pListaCombos, UtilIdiomas pUtilIdiomas, string pIdiomaDefecto)
+        private void ProcesarCombosBusquedas(List<SearchSelectComboModel> pListaCombos, UtilIdiomas pUtilIdiomas, string pIdiomaDefecto)
         {
-            string urlComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(pUtilIdiomas, mControllerBase.BaseURLIdioma, ProyectoVirtual.NombreCorto) + "/";
+            string urlComunidad = $"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(pUtilIdiomas, mControllerBase.BaseURLIdioma, ProyectoVirtual.NombreCorto)}/";
             if (ProyectoVirtual.Clave.Equals(ProyectoAD.MetaProyecto))
             {
                 urlComunidad = BaseURLIdioma + UrlPerfil;
             }
-            foreach (HeaderModel.SearchHeaderModel.SearchSelectComboModel combo in pListaCombos)
+            foreach (SearchSelectComboModel combo in pListaCombos)
             {
                 combo.Name = UtilCadenas.ObtenerTextoDeIdioma(combo.Name, pUtilIdiomas.LanguageCode, pIdiomaDefecto);
-                combo.Url = urlComunidad + UtilCadenas.ObtenerTextoDeIdioma(combo.Url, pUtilIdiomas.LanguageCode, pIdiomaDefecto) + "?search=";
+                combo.Url = $"{urlComunidad}{UtilCadenas.ObtenerTextoDeIdioma(combo.Url, pUtilIdiomas.LanguageCode, pIdiomaDefecto)}?search=";
             }
+        }
+
+        /// <summary>
+        /// Crea una opción para los buscadores del proyecto
+        /// </summary>
+        /// <param name="pId">Id del elemento</param>
+        /// <param name="pName">Nombre del elemento</param>
+        /// <param name="pUrl">Url de la página en la que se realizará la búesqueda</param>
+        /// <param name="pSelected">Si es o no el elemento seleccionado del combo</param>
+        /// <param name="pAutocomplete">Nombre utilizado para el autocompletar del elemento. Puede ser nulo</param>
+        /// <returns></returns>
+        private SearchSelectComboModel GenerarSearchComboModel(string pId, string pName, string pUrl, bool pSelected, string pAutocomplete = "", string pFacetAutocomplete = "")
+        {
+            return new SearchSelectComboModel() { ID = pId, Name = pName, Url = pUrl, Selected = pSelected, Autocomplete = pAutocomplete, FacetAutocomplete = pFacetAutocomplete };
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Es.Riam.AbstractsOpen;
+﻿using BeetleX.Buffers;
+using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
@@ -15,6 +16,7 @@ using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Documentacion;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Tesauro;
 using Es.Riam.Gnoss.Elementos;
@@ -63,8 +65,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -97,8 +102,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public EditarRecursoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public EditarRecursoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
             //mConfigService.ObtenerUrlServicioLogin() + "/auth-sharepoint"
         }
@@ -887,7 +892,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string artWiki = pModel.Link;
             if (artWiki == "")
             {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASESUBIR", "NOMBREVACIO")); ;
+                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASESUBIR", "NOMBREVACIO"));
             }
             else
             {
@@ -995,7 +1000,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             if (ProyectoSeleccionado.Clave == ProyectoAD.MetaProyecto || ListaPermisosDocumentos.Contains(TiposDocumentacion.Video))
                             {
-                                CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
+                                ServicioVideos servicioVideos = new ServicioVideos(mConfigService, mLoggingService);
                                 if (ProyectoSeleccionado.Clave == ProyectoAD.MetaProyecto)
                                 {
                                     if (IdentidadOrganizacion == null)
@@ -1384,7 +1389,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 pSubirRecModel.WikiAvailable = true;
             }
 
-            if (pSubirRecModel.OntologyNameUrls != null && pSubirRecModel.OntologyNameUrls.Count > 0 && (!pExaminarPermisos || mHayOntologiaOtroProyecto || pListaTiposDocPermitidos.Contains(TiposDocumentacion.Semantico)))
+            if (pSubirRecModel.OntologyNameUrls != null && pSubirRecModel.OntologyNameUrls.Count > 0)
             {
                 pSubirRecModel.SemanticResourceAvailable = true;
             }
@@ -3523,10 +3528,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             bool versionCreadaPorConcurrencia = false;
             Guid? nuevaVersionDocID = null;
 
-            Guid documentoEnEdicionID = Documento.Clave;
-
             ControladorDocumentacion contrDoc = new ControladorDocumentacion(Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-            ErroresConcurrencia errorConcurrencia = (ErroresConcurrencia)contrDoc.ComprobarConcurrenciaDocumento(Documento, IdentidadActual, out nuevaVersionDocID);
+            ErroresConcurrencia errorConcurrencia = contrDoc.ComprobarConcurrenciaDocumento(Documento, IdentidadActual, out nuevaVersionDocID);
 
             if (creandoVersion && errorConcurrencia == ErroresConcurrencia.NoConcurrencia)
             {
@@ -3540,7 +3543,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            if (versionCreadaPorConcurrencia || errorConcurrencia == ErroresConcurrencia.NoConcurrencia)
+            if (errorConcurrencia == ErroresConcurrencia.NoConcurrencia)
             {
                 ActionResult redireccion = null;
                 try
@@ -3558,13 +3561,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (errorConcurrencia != ErroresConcurrencia.NoConcurrencia)
             {
-                Guid identidadUltimaModificacion = Guid.Empty;
-
                 DocumentacionCN DocumentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
                 DocumentacionCN.ObtenerHistorialDocumentoPorID(Documento.Clave, dataWrapperDocumentacion);
                 DocumentacionCN.Dispose();
-                identidadUltimaModificacion = dataWrapperDocumentacion.ListaHistorialDocumento.OrderByDescending(historial => historial.Fecha).FirstOrDefault().IdentidadID;
+
+                Guid identidadUltimaModificacion = Guid.Empty;
+
+                Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion.HistorialDocumento historialDocumento = dataWrapperDocumentacion.ListaHistorialDocumento.OrderByDescending(historial => historial.Fecha).FirstOrDefault();
+
+                if (historialDocumento != null)
+                {
+                    identidadUltimaModificacion = historialDocumento.IdentidadID;
+                }
 
                 return MostrarPanelConcurrencia_ModificarRecurso(identidadUltimaModificacion);
             }
@@ -4410,7 +4419,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (tipoArchivo == TipoArchivo.Audio || tipoArchivo == TipoArchivo.Video)
                     {
-                        CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
+                        ServicioVideos servicioVideos = new ServicioVideos(mConfigService, mLoggingService);
 
                         if (!EsComunidad)
                         {
@@ -5726,8 +5735,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (mOntologia.ConfiguracionPlantilla.MultiIdioma && !(ParametrosGeneralesRow.IdiomaDefecto == null) && !string.IsNullOrEmpty(ParametrosGeneralesRow.IdiomaDefecto))
             {//Es multiidioma:
+                ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
                 mSemController.IdiomaDefecto = ParametrosGeneralesRow.IdiomaDefecto;
-                mSemController.IdiomasDisponibles = mConfigService.ObtenerListaIdiomasDictionary();
+                mSemController.IdiomasDisponibles = paramCL.ObtenerListaIdiomasDictionary();
             }
 
             if (GestorDocumental.ListaDocumentos[mOntologiaID].FilaDocumento.VersionFotoDocumento.HasValue && GestorDocumental.ListaDocumentos[mOntologiaID].FilaDocumento.VersionFotoDocumento > 0)
@@ -6234,13 +6244,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (pPropImagen == 1)
             {
-                /* TODO Javier rest
-                ServicioVideos servicioVideos = new ServicioVideos();
-                servicioVideos.Url = UrlIntragnossServicios + "/ServicioVideos.asmx";
-
-                correcto = (servicioVideos.AgregarVideoSemantico(pBuffer1, pExtensionArchivo, pDocumentoID, new Guid(pEspecialID)) == 1);
-                servicioVideos.Dispose();
-                */
+                ServicioVideos servicioVideos = new ServicioVideos(mConfigService, mLoggingService);
+                correcto = servicioVideos.AgregarVideoSemantico(pBuffer1, pExtensionArchivo, pDocumentoID, new Guid(pEspecialID)) == 1;
             }
             else if (pPropImagen == 2)
             {
@@ -6291,7 +6296,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     Stopwatch sw = LoggingService.IniciarRelojTelemetria();
                     string idAuxGestorDocumental = gestionDoc.AdjuntarDocumentoADirectorio(pBuffer1, directorio, pEspecialID.Substring(0, pEspecialID.LastIndexOf(".")), pEspecialID.Substring(pEspecialID.LastIndexOf(".")));
                     correcto = (!idAuxGestorDocumental.ToUpper().Equals("ERROR"));
-                    //gestionDoc.Dispose();
                     mLoggingService.AgregarEntradaDependencia("Agregar archivo a gestor documental", false, "AgregarArchivoAServcicio_SemCMS", sw, true);
                 }
 
@@ -6321,11 +6325,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             catch (Exception ex)
             {
                 GuardarLogError(ex.Message + " \r\nPila: " + ex.StackTrace);
-
-                //Es posible que no esté instalada la verisón REST del servicio interno, ejecuto la acción contra el servicio web
-
-                CallInterntService servicioDocsLink = new CallInterntService(mConfigService, mLoggingService);
-
+                ServicioVideos servicioDocsLink = new ServicioVideos(mConfigService, mLoggingService);
                 exito = servicioDocsLink.AgregarDocumento(pBytes, pDocumentoID, pNombre, pExtension);
             }
 
@@ -6359,14 +6359,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         throw new Exception("La propiedad imagen '" + pPropiedad + "' tiene alguna captura configura sin Alto y Ancho, debe tener ambos.");
                     }
 
-                    Image imagenPeque = UtilImages.AjustarImagen(pImagen, ancho, imagenMini.Tamanios[ancho]);
-
-                    if (imagenPeque.Width > pImagen.Width || imagenPeque.Height > pImagen.Height)
+                    pImagen.Mutate(x => x.Resize(ancho, imagenMini.Tamanios[ancho]));
+                    using (var ms = new MemoryStream())
                     {
-                        imagenPeque = pImagen;
+                        pImagen.Save(ms, PngFormat.Instance);
+                        buffer1 = ms.ToArray();
                     }
-
-                    buffer1 = UtilImages.ImageToBytePng(imagenPeque);
 
                     //MemoryStream ms = new MemoryStream();
                     //imagenPeque.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
@@ -7002,7 +7000,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //string ruta = Path.GetTempPath() + nombreTemporal;
 
             GestionOWL gestionOWL = new GestionOWL();
-            gestionOWL.UrlOntologia = BaseURLFormulariosSem + "/Ontologia/" + enlaceOnto + "#"; ;
+            gestionOWL.UrlOntologia = BaseURLFormulariosSem + "/Ontologia/" + enlaceOnto + "#";
             gestionOWL.NamespaceOntologia = mNamespaceOntologia;
 
             Stream streamRDF = gestionOWL.PasarOWL(null, mOntologia.OntologiasExternas[pPropiedad.EspecifPropiedad.SelectorEntidad.Grafo], entidadesGuardar, null, null);
@@ -7425,7 +7423,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                string directorioInfo = Path.Combine(mEnv.WebRootPath, Request.Path, "logs"); ; //Server.MapPath(Request.ApplicationPath + "/logs") + "\\";
+                string directorioInfo = Path.Combine(mEnv.WebRootPath, Request.Path, "logs"); //Server.MapPath(Request.ApplicationPath + "/logs") + "\\";
                 bool editandoForm = EditandoFormSem && !mCambioDeBorradoAPublicado;
 
                 // Recojo primero los parámetros que no puedo obtener dentro de un hilo
@@ -7869,8 +7867,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             #region UrlCaptura
 
-            //Si el valor de ImgRepresentante es distinto de "" entonces obtenemos la captura.
-            if (urlCaptura != null && (string.IsNullOrEmpty(mModelSaveRec.ImageRepresentativeValue) || !mModelSaveRec.ImageRepresentativeValue.Contains("doc,")))
+            //Si hay url de captura enviamos al Thumbnail Generator una notificación para que genere la miniatura.
+            if (urlCaptura != null)
             {
                 try
                 {
@@ -8107,7 +8105,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
             }
-
+            if (!propTitulo.EspecifPropiedad.PermitirScript)
+            {
+                titulo = UtilCadenas.LimpiarInyeccionCodigo(titulo);
+            }
             return titulo;
         }
 
@@ -9150,6 +9151,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 HttpResponseMessage response = null;
                 HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("UserAgent", UtilWeb.GenerarUserAgent());
                 if (httpMethod == "POST")
                 {
                     HttpContent contentData = null;
@@ -9159,6 +9161,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         contentData = new MultipartFormDataContent();
                         ((MultipartFormDataContent)contentData).Add(bytes, "pBytes", "pBytes");
                     }
+                    contentData.Headers.Add("UserAgent", UtilWeb.GenerarUserAgent());
                     response = client.PostAsync($"{url}", contentData).Result;
                     response.EnsureSuccessStatusCode();
                     result = response.Content.ReadAsStringAsync().Result;
@@ -9166,6 +9169,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else
                 {
+                    client.DefaultRequestHeaders.Add("UserAgent", UtilWeb.GenerarUserAgent());
                     response = client.GetAsync(url).Result;
                     response.EnsureSuccessStatusCode();
                     result = response.Content.ReadAsStringAsync().Result;
@@ -9591,7 +9595,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         //Subimos el fichero al servidor
 
-                        CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
+                        ServicioVideos servicioVideos = new ServicioVideos(mConfigService, mLoggingService);
                         if (brProyecto)
                         {
                             resultado = servicioVideos.AgregarVideo(bufferRecurso, extensionArchivo, pDocumento.Clave);
@@ -10433,7 +10437,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         gestorAddtoGnoss.EsBaseRecursosOrganizacion = true;
                         gestorAddtoGnoss.IdentidadEnProyecto = identidad.Clave;
                         gestorAddtoGnoss.ProyectoBRID = ProyectoAD.MetaProyecto;
-                        gestorAddtoGnoss.OrganizacionBRID = (Guid)identidad.OrganizacionID; ;
+                        gestorAddtoGnoss.OrganizacionBRID = (Guid)identidad.OrganizacionID;
                         gestorAddtoGnoss.PerfilEnProyecto = identidad.PerfilID;
                         mGestoresAddToGnoss.Add(baseRecursosID, gestorAddtoGnoss);
                     }
@@ -11535,7 +11539,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     documentoID = RequestParams("docID");
                 }
-                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
+                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 string enlace = docCN.ObtenerEnlaceDocumentoPorDocumentoID(new Guid(documentoID));
 
@@ -11616,7 +11620,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 string urlServicioLogin = mConfigService.ObtenerUrlServicioLogin();
 
-                SharepointController sharepointController = new SharepointController(docID.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
+                SharepointController sharepointController = new SharepointController(docID.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
 
                 if (string.IsNullOrEmpty(enlace))
                 {
@@ -11699,7 +11703,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     documentoID = RequestParams("docID");
                 }
-                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
+                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                 string enlace = docCN.ObtenerEnlaceDocumentoPorDocumentoID(new Guid(documentoID));
 
@@ -11774,7 +11778,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     documentoID = RequestParams("docID");
                 }
-                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth);
+                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
 
                 if (string.IsNullOrEmpty(enlace))
                 {
@@ -12093,10 +12097,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 return GnossResultERROR(ex.Message);
             }
-
-
-
-
         }
 
         /// <summary>
@@ -12111,10 +12111,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             try
             {
+                traza.Append("Antes de LimpiarInyeccionCodigo");
+                pPaginaModel.Description = HttpUtility.UrlEncode(UtilCadenas.LimpiarInyeccionCodigo(HttpUtility.UrlDecode(pPaginaModel.Description)));
                 traza.Append("Antes de TratarImagenesDescripcion");
                 TratarImagenesDescripcion(pPaginaModel);
                 ActionResult respuesta;
-
 
                 if (EditandoRecurso && !Duplicando)
                 {
@@ -12356,10 +12357,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     // TODO: No se usan los vídeos, se consideran archivos de tipo servidor.
 
-                    CallInterntService servicioVideos = new CallInterntService(mConfigService, mLoggingService);
-                    //servicioVideos.Timeout = 600000;
+                    ServicioVideos servicioVideos = new ServicioVideos(mConfigService, mLoggingService);
                     resultado = servicioVideos.AgregarVideo(byteArray, ext, mDocumentoDuplicadoID);
-
                 }
 
                 pPaginaModel.Link = nombre + ext;

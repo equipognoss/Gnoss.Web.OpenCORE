@@ -1,0 +1,84 @@
+﻿@model AdministrarFacetasViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista modal que se utilizará para poder mover una faceta debajo de una faceta ya existente a través de un ComboBox. 
+Esta acción falicitará al usuario el movimiento de una faceta siempre y cuando haya una gran cantidad de facetas en la comunidad.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{                         
+}
+
+@* Modal con la información de la faceta *@
+<div id="modal-move-faceta"
+     class="modal modal-top fade modal-move-faceta"     
+     role="dialog"
+     aria-modal="true">
+
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            @* Título del modal *@
+            <div class="modal-header">
+                <p class="modal-title">
+                    <span class="material-icons">move_up</span>
+                    @Html.GetText("DEVTOOLS","MOVERFACETA") <span class="move-faceta-title"></span>                    
+                </p>
+                <span class="material-icons cerrar"
+                      data-dismiss="modal"
+                      aria-label="Close">close</span>
+            </div>
+            <div class="modal-body">                
+                <div class="form-group">
+                    <label class="control-label">
+                        @Html.GetText("DEVTOOLS","DEFINELAPOSICIONEXACTADELAFACETAELIGIENDOSUUBICACIONESPECIFI")
+                    </label>
+                </div>
+
+                @* Elementos visibles *@
+                <div class="form-group mb-3">
+                    @* Select de la lista de facetas *@
+                    <div class="form-group mb-2">
+                        <label class="control-label d-block">Mover la faceta debajo de:</label>
+                        <select name="listaFacetas"
+                                class="cmbListaFacetas js-select2"
+                                tabindex="0"
+                                data-select-search="true"
+                                aria-hidden="false">
+
+                            @* Pintado de cada faceta *@
+                            @foreach (FacetaModel faceta in Model.ListaFacetas.OrderBy(p2 => p2.Orden))
+                            {
+                                <option class="faceta-item"
+                                        value="@(faceta.ClaveFaceta)"
+                                        name="@(faceta.AgrupacionID)">
+                                        @Html.ObtenerTextoDeIdioma(@faceta.Name)                                            
+                                </option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">
+                            @Html.GetText("DEVTOOLS","LAFACETAQUEQUEDARADIRECTAMENTEDEBAJODELASELECCIONADA")
+                        </small>
+                    </div>
+                </div>
+
+                @* Botón para guardar la acción de mover *@
+                <div class="panelBotonera">
+                    @if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+                    {
+                        @* No permitir guardar *@
+                        <input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase btnNoSaveFacetaMove" value="@Html.GetText("COMMON","GUARDAR")" />
+                    }
+                    else
+                    {
+                        @* Permitir guardar *@
+                        <input type="button" class="btn btn-primary uppercase btnSaveFacetaMove" value="@Html.GetText("COMMON","GUARDAR")" />
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

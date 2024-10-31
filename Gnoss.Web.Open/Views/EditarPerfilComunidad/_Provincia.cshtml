@@ -39,7 +39,7 @@ string idRegion= "ProfilePersonal_Region";
 
 @* Select / Input de la provincia *@
 <div class="form-group mb-5">    
-    <label class="control-label d-block" for="@nameCampoProvincia">Provincia</label>
+    <label class="control-label d-block" for="@nameCampoProvincia">@Html.GetText("REGISTRO", "PROVINCIASIMPLE")</label>
     @if (Model.RegionList != null && Model.RegionList.Count > 0)
     {
         <select id="@idRegion" name="@nameCampoProvincia" class="js-select2" data-select-search="true">

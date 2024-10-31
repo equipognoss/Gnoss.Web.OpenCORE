@@ -24,8 +24,8 @@ CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
 @*Buscador utilizado para buscar en toda la comunidad o en todo GNOSS*@
     <div class="header-contenido">
         <div id="buscador" class="col-buscador">
-            @* Formulario del buscador *@    
-            <form method="post" id="formBuscador" action="@(new Uri($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}").AbsoluteUri)">
+            @* Formulario del buscador *@
+            <form method="post" id="formBuscador" action="@($"{Html.GetBaseUrlIdioma()}{Context.Request.Path}")">
                 <fieldset style="display: block" class="form-inline">
                     <legend class="nota">buscador</legend>
                     @* SELECT + CAMPOS OCULTOS PARA EL BUSCADOR *@

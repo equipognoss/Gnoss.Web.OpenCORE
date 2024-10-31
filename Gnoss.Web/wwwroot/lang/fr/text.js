@@ -350,7 +350,7 @@ if ($.datepicker != undefined) {
         dayNamesMin: ['D', 'L', 'M', 'Me', 'J', 'V', 'S'],
         dayStatus: 'DD',
         dateStatus: 'D, M d',
-        dateFormat: 'jj/mm/aa',
+        dateFormat: 'dd/mm/yy',
         buttonText: ' ',
         firstDay: 1,
         initStatus: '',
@@ -370,4 +370,19 @@ var accionesUsuarioAdminComunidad = {
     administrador: 'Administrator',
     supervisor: 'Supervisor',
     usuario: 'User'
+};
+
+var espacioPersonal = {
+    avisoEditarOrganizarEnCategorias: 'Veuillez sélectionner une ressource avant de tenter de modifier sa catégorie',
+};
+
+var facetas = {
+    siguientes: "Suivants",
+    anteriores: "Précédents",
+};
+
+var accionesUsuarios = {
+    seguir: "Suivre",
+    dejarDeSeguir: "Ne plus suivre",
+    sinSeguimiento: "Sans suivi"
 };

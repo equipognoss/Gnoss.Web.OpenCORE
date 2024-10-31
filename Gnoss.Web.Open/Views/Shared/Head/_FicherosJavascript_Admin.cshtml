@@ -16,8 +16,11 @@ Variables
 -------------------- Vista parcial para código JS que se incluirá en DevTools --------------------
 *@
 
-<!-- JQUERY 3.6.1 -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+
+<!-- JQUERY 3.7.1 -->
+<script src="//code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous"></script>
 
 <!-- JQUERYUI 1.13.2 -->
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" 
@@ -94,18 +97,17 @@ Variables
 <script type="text/javascript"
         src="@Html.GetBaseUrlStatic()/responsive/theme/community.js?v=@Html.GetVersion()"></script>
 
-<!-- CKEditor DevTools -->
+<!-- TinyMCE V6 -->
 <script type="text/javascript"
-        src="@Html.GetBaseUrlStatic()/ckeditor_admin/ckeditor.js?v=@Html.GetVersion()"></script>
+        src="@Html.GetBaseUrlStatic()/tinymce/js/tinymce/tinymce.min.js?v=@Html.GetVersion()"></script>
 
-<!-- CKEditor Adaptador jquery DevTools -->
+<!-- TinyMCE Config -->
 <script type="text/javascript"
-        src="@Html.GetBaseUrlStatic()/ckeditor_admin/adapters/jquery.js?v=@Html.GetVersion()"></script>
+        src="@Html.GetBaseUrlStatic()/tinymce/js/tinymce/tinymceConfig.js?v=@Html.GetVersion()"></script>
 
 <!-- Dirty Form -->
 <script type="text/javascript"  
         src="@Html.GetBaseUrlStatic()/responsive/theme/libraries/dirty-form/jquery.dirty.js?v=@Html.GetVersion()"></script>
-
 
 <!-- Importar comportamientos para búsquedas/facetas -->
 <script type="text/javascript"  
@@ -119,6 +121,10 @@ Variables
 <!-- Wizard Modal -->
 <script type="text/javascript"
         src="@Html.GetBaseUrlStatic()/responsive/theme/libraries/smartwizard/js/jquery.smartWizard.js?v=@Html.GetVersion()"></script>
+
+<!-- ChartsJS -->
+<script type="text/javascript" 
+        src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <!-- Popper para explicaciones en hover-->
 <script src="https://unpkg.com/@@popperjs/core@2/dist/umd/popper.js"></script>

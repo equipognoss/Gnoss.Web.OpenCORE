@@ -38,6 +38,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -84,8 +85,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public EspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public EspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
         }
 
@@ -141,6 +142,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             // Permitir añadir recursos desde EspacioPersonal
             ViewBag.Comunidad.Permissions.CreateResource = true;
             ViewBag.EsPaginaEspacioPersonal = true;
+            ViewBag.TituloPagina = TituloPagina;
 
             return View(mPerSpaceModel);
         }
@@ -457,7 +459,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 else if (doc.TipoDocumentacion == TiposDocumentacion.Video)
                                 {
 
-                                    CallInterntService sV = new CallInterntService(mConfigService, mLoggingService);
+                                    ServicioVideos sV = new ServicioVideos(mConfigService, mLoggingService);
 
                                     espacioArchivo = sV.ObtenerEspacioVideoPersonal(recurso, mControladorBase.UsuarioActual.PersonaID);
 
@@ -604,6 +606,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 //this.lblMisRecursos.Text = GetText("PERFIL", "MIESPACIOPERSONAL");
                 textoBusqueda = UtilCadenas.ObtenerTextoDeIdioma(EspacioPersonal, UtilIdiomas.LanguageCode, null);
             }
+
+            // Evitar textoBusqueda en blanco
+            textoBusqueda = string.IsNullOrEmpty(textoBusqueda) ? UtilIdiomas.GetText("DEVTOOLS", "MIESPACIOPERSONAL") : textoBusqueda;
 
             mPerSpaceModel.PageTitle = textoBusqueda;
 

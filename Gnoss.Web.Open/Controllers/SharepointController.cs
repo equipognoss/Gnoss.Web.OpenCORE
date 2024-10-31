@@ -30,6 +30,7 @@ using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.InterfacesOpen;
 using System.Linq;
+using Microsoft.Extensions.Hosting;
 
 namespace Gnoss.Web.Controllers
 {
@@ -58,8 +59,8 @@ namespace Gnoss.Web.Controllers
             set { mTokenCreadorRecurso = value; }
         }
 
-        public SharepointController(string documentoID, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth)
+        public SharepointController(string documentoID, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
         {
             ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, servicesUtilVirtuosoAndReplication);
 
@@ -210,6 +211,7 @@ namespace Gnoss.Web.Controllers
             webRequest.Timeout = 600000;
             webRequest.ContentType = "application/json";
             webRequest.Headers.Add("Authorization", "Bearer " + mToken);
+            webRequest.UserAgent = UtilWeb.GenerarUserAgent();
 
             FileInfo archivoInfo = new FileInfo(nombreFichero);
             string extensionArchivo = Path.GetExtension(archivoInfo.Name).ToLower();

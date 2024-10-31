@@ -21,9 +21,10 @@
     <link type="text/css"
           class="styleForCkEditorPreview"
           rel="stylesheet"
-          href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/jqueryUI/jquery-ui.min.css?v=@Html.GetVersion()" />        
+          href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
 
-    <!-- BOOTSTRAP 4 + PROPELLER -->
+
+<!-- BOOTSTRAP 4 + PROPELLER -->
     <link rel="stylesheet"
           class="styleForCkEditorPreview"
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/bootstrap/bootstrap.min.css?v=@Html.GetVersion()"
@@ -37,13 +38,6 @@
     <link type="text/css"
           rel="stylesheet"
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/lightgallery/css/lightgallery.min.css?v=@Html.GetVersion()" />
-
-
-    <!-- CUSTOM HOME CMS -->
-    <link type="text/css"
-          class="styleForCkEditorPreview"
-          rel="stylesheet"
-          href="@Html.GetBaseUrlStatic()/responsive/theme/custom.css?v=@Html.GetVersion()" />
 
 
     <!-- JQUERY CUSTOM SCROLL BAR Version: 3.1.13 -->
@@ -80,16 +74,6 @@
     <link type="text/css"
           rel="stylesheet"
           href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/owl-carousel/css/owl.carousel.min.css?v=@Html.GetVersion()" />
-
-    <!-- FullScreenImageViewer ddFullScreenViewer - Zoom en imágenes -->
-    <link type="text/css"
-          rel="stylesheet"
-          href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/fullScreenImageViewer/ddfullscreenimageviewer.css?v=@Html.GetVersion()" />
-
-    <!-- FullScreenImageViewer zoomio - Zoom en imágenes -->
-    <link type="text/css"
-          rel="stylesheet"
-          href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/fullScreenImageViewer/zoomio.css?v=@Html.GetVersion()" />
       
     <!-- PERSONALIZACION TEMA -->
     <link type="text/css"
@@ -103,6 +87,15 @@
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" />
 
+    <!-- BUSYLOAD -> VISTAS LOADING -->
+    <link type="text/css"
+      rel="stylesheet"
+      href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/busy-load/app.min.css?v=@Html.GetVersion()" />
+
+    <!-- Visualizador Prism para Code en TinyMCE -->
+    <link type="text/css"
+          rel="stylesheet"
+          href="@Html.GetBaseUrlStatic()/responsive/theme/prism/prism.css?v=@Html.GetVersion()" />
 
 @if (Html.GetListaCSS() != null)
 {

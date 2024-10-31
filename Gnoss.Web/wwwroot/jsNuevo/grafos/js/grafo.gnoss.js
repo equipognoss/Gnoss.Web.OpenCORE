@@ -565,16 +565,10 @@ function TraerRecPuntoGrafo(docID, nombreSubTipo) {
 
         docID = docID.substring(docID.lastIndexOf('/') + 1);
     }
-    
-    
-    var tipoBusqeda = 0;
-    var filtroContexto = '';
-    var parametros_adiccionales = '';
+
     var contResultados = '';
 
-    var servicio = new WS($('input.inpt_UrlServicioResultados').val(), WSDataType.jsonp);
-
-    var metodo = 'ObtenerFichaRecurso';
+    var metodo = $('input.inpt_UrlServicioResultados').val() + '/ObtenerFichaRecurso';
     var params = {};
 
     params['proyecto'] = $('input.inpt_proyID').val();
@@ -588,8 +582,9 @@ function TraerRecPuntoGrafo(docID, nombreSubTipo) {
     params['cont'] = contResultados;
     params['documentoID'] = docID;
     params['urlBusqueda'] = urlBusqGrafoDbpedia;
-    servicio.call(metodo, params, function (data) {
-        PintarHtmlToopTipDef(divAgrupacion + data + divCierreAgrupacion)
+
+    GnossPeticionAjax(metodo, params, true).done(function (data) {
+        PintarHtmlToopTipDef(divAgrupacion + JSON.parse(data).d + divCierreAgrupacion)
     });
 }
 

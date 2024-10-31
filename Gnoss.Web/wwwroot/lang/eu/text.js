@@ -322,9 +322,9 @@ if ($.datepicker != undefined) {
         dayNames: ['Igandea', 'Astelehena', 'Asteartea', 'Asteazkena', 'Osteguna', 'Ostirala', 'Larunbata'],
         dayNamesShort: ['Iga.', 'Astl.', 'Astr.', 'Astz.', 'Ostg.', 'Osti.', 'Lar.'],
         dayNamesMin: ['I', 'AL', 'AR', 'AZ', 'OG', 'OT', 'L'],
-        dayStatus: 'EE',
-        dateStatus: 'E, H e',
-        dateFormat: 'uu/hh/ee',
+        dayStatus: 'DD',
+        dateStatus: 'D, M d',
+        dateFormat: 'dd/mm/yy',
         buttonText: ' ',
         firstDay: 1,
         initStatus: '',
@@ -345,4 +345,19 @@ var accionesUsuarioAdminComunidad = {
     administrador: 'Administrador',
     supervisor: 'Supervisor',
     usuario: 'Usuario'
+};
+
+var espacioPersonal = {
+    avisoEditarOrganizarEnCategorias: 'Aukeratu baliabide bat bere kategoria editatzen saiatu aurretik',
+};
+
+var facetas = {
+    siguientes: "Hurrengoak",
+    anteriores: "Aurrekoak",
+};
+
+var accionesUsuarios = {
+    seguir: "Jarraitu",
+    dejarDeSeguir: "Utzi jarraitzea",
+    sinSeguimiento: "Jarraipenik gabe"
 };
