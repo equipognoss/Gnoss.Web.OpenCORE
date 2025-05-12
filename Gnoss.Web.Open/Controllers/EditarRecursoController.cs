@@ -6359,12 +6359,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         throw new Exception("La propiedad imagen '" + pPropiedad + "' tiene alguna captura configura sin Alto y Ancho, debe tener ambos.");
                     }
 
-                    pImagen.Mutate(x => x.Resize(ancho, imagenMini.Tamanios[ancho]));
-                    using (var ms = new MemoryStream())
+                    Image imagenPeque = UtilImages.AjustarImagen(pImagen, ancho, imagenMini.Tamanios[ancho]);
+
+                    if (imagenPeque.Width > pImagen.Width || imagenPeque.Height > pImagen.Height)
                     {
-                        pImagen.Save(ms, PngFormat.Instance);
-                        buffer1 = ms.ToArray();
+                        imagenPeque = pImagen;
                     }
+
+                    buffer1 = UtilImages.ImageToBytePng(imagenPeque);
 
                     //MemoryStream ms = new MemoryStream();
                     //imagenPeque.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
