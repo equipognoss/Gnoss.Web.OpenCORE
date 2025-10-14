@@ -1,7 +1,9 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 
-RUN sed -i "s|MinProtocol = TLSv1.2|MinProtocol = TLSv1|g" /etc/ssl/openssl.cnf && \
-    sed -i 's|CipherString = DEFAULT@SECLEVEL=2|CipherString = DEFAULT@SECLEVEL=1|g' /etc/ssl/openssl.cnf
+RUN sed -i 's/\[openssl_init\]/# [openssl_init]/' /etc/ssl/openssl.cnf &&\
+    printf "\n\n[openssl_init]\nssl_conf = ssl_sect" >> /etc/ssl/openssl.cnf &&\
+    printf "\n\n[ssl_sect]\nsystem_default = ssl_default_sect" >> /etc/ssl/openssl.cnf &&\
+    printf "\n\n[ssl_default_sect]\nMinProtocol = TLSv1\nCipherString = DEFAULT@SECLEVEL=0\n" >> /etc/ssl/openssl.cnf
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl
 # install libgdiplus for System.Drawing
@@ -13,21 +15,35 @@ COPY Gnoss.Web/*.csproj ./
 
 RUN dotnet restore
 
+# Install dotnet debug tools
+RUN dotnet tool install --tool-path /tools dotnet-trace \
+ && dotnet tool install --tool-path /tools dotnet-counters \
+ && dotnet tool install --tool-path /tools dotnet-dump \
+ && dotnet tool install --tool-path /tools dotnet-gcdump
+
 COPY . ./
 
 RUN echo $(date +%s) > Gnoss.Web/Config/version.txt
 
 RUN dotnet publish Gnoss.Web/Gnoss.Web.csproj -c Release -o out
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 
-RUN sed -i "s|MinProtocol = TLSv1.2|MinProtocol = TLSv1|g" /etc/ssl/openssl.cnf && \
-    sed -i 's|CipherString = DEFAULT@SECLEVEL=2|CipherString = DEFAULT@SECLEVEL=1|g' /etc/ssl/openssl.cnf
+# Copy dotnet-tools
+WORKDIR /tools
+COPY --from=build-env /tools .
+
+
+RUN sed -i 's/\[openssl_init\]/# [openssl_init]/' /etc/ssl/openssl.cnf &&\
+    printf "\n\n[openssl_init]\nssl_conf = ssl_sect" >> /etc/ssl/openssl.cnf &&\
+    printf "\n\n[ssl_sect]\nsystem_default = ssl_default_sect" >> /etc/ssl/openssl.cnf &&\
+    printf "\n\n[ssl_default_sect]\nMinProtocol = TLSv1\nCipherString = DEFAULT@SECLEVEL=0\n" >> /etc/ssl/openssl.cnf
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl
 # install libgdiplus for System.Drawing
 RUN apt-get update && apt-get install -y --allow-unauthenticated libgdiplus libc6-dev
 WORKDIR /app
+# RUN echo "Version    : $version \nProducto   : Web  \nFecha      : $(date +"%d/%m/%Y %H:%M:%S") \n" > wwwroot/versioninfo.txt
 
 COPY --from=build-env /app/out .
 
@@ -35,7 +51,11 @@ COPY --from=build-env /app/Gnoss.Web.Open/Views/ Views/
 
 ARG version=latest
 
-RUN echo "Version    : $version \nProducto   : Web  \nFecha      : $(date +"%d/%m/%Y %H:%M:%S") \n" > wwwroot/versioninfo.txt
+RUN groupadd -g 2000 gnoss && useradd -u 2000 -g 2000 gnoss &&\
+    mkdir -p config logs trazas ViewsAdministracion &&\
+	chown -R gnoss:gnoss config logs trazas ViewsAdministracion &&\
+	chmod -R 777 config logs trazas ViewsAdministracion
+USER gnoss
 
 ENTRYPOINT ["dotnet", "Gnoss.Web.dll"]
 
