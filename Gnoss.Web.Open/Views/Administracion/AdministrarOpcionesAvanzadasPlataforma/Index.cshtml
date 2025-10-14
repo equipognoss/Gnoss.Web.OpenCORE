@@ -10,1007 +10,818 @@ Variables
 *@
 
 @{
-	CommunityModel Comunidad = Html.GetComunidad();
-	HeaderModel cabecera = Html.GetCabecera();
-	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
-	@* Idiomas disponibles de la plataforma *@
-	string[] idiomas = Model.Idiomas.Split("&&&");
-	@* Idiomas personalizados disponibles de la plataforma *@
-	string[] idiomasPersonalizados = null;
-	if(!string.IsNullOrEmpty(Model.IdiomasPersonalizados)){
-		idiomasPersonalizados = Model.IdiomasPersonalizados.Split("&&&");
-	}
-	@* Extensiones válidas para imágenes CMS - Controlar que si no hay ninguna añadir las de por defecto *@
-	string[] imageExtensions = Model.ExtensionesImagenesCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesImagenesCMSMultimedia) ? ".jpg&&&.jpeg&&&.png&&&.gif".Split("&&&") : Model.ExtensionesImagenesCMSMultimedia.Split("&&&") ;	
-	@* Extensiones válidas para documentos - Controlar que si no hay ninguna añadir las de por defecto *@
-	string[] documentExtensions = Model.ExtensionesDocumentosCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesDocumentosCMSMultimedia) ? ".pdf&&&.txt&&&.doc&&&.docx".Split("&&&") : Model.ExtensionesDocumentosCMSMultimedia.Split("&&&") ;	
-	// Controlar si se está en Administración del Ecosistema
-	bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    @* Idiomas disponibles de la plataforma *@
+    string[] idiomas = Model.Idiomas.Split("&&&");
+    @* Idiomas personalizados disponibles de la plataforma *@
+    string[] idiomasPersonalizados = null;
+    if (!string.IsNullOrEmpty(Model.IdiomasPersonalizados))
+    {
+        idiomasPersonalizados = Model.IdiomasPersonalizados.Split("&&&");
+    }
+    @* Extensiones válidas para imágenes CMS - Controlar que si no hay ninguna añadir las de por defecto *@
+    string[] imageExtensions = Model.ExtensionesImagenesCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesImagenesCMSMultimedia) ? ".jpg&&&.jpeg&&&.png&&&.gif".Split("&&&") : Model.ExtensionesImagenesCMSMultimedia.Split("&&&");
+    @* Extensiones válidas para documentos - Controlar que si no hay ninguna añadir las de por defecto *@
+    string[] documentExtensions = Model.ExtensionesDocumentosCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesDocumentosCMSMultimedia) ? ".pdf&&&.txt&&&.doc&&&.docx".Split("&&&") : Model.ExtensionesDocumentosCMSMultimedia.Split("&&&");
+    // Controlar si se está en Administración del Ecosistema
+    bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
 
 }
 @* Migas de Pan *@
 <div class="col col-12 col-breadcrumb">
     <ul>
-		@if (!isInEcosistemaPlatform)
-		{
-			<li>
-				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-			</li>
-			<li>
-				<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
-			</li>
-		}
-		else
-		{
-			<li>
-				<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-			</li>
-		}
+        @if (!isInEcosistemaPlatform)
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS", "CONFIGURACION")</a>
+            </li>
+        }
+        else
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+        }
         <li>
-            @Html.GetText("DEVTOOLS","CONFIGURACIONDELAPLATAFORMA")
+            @Html.GetText("DEVTOOLS", "CONFIGURACIONDELAPLATAFORMA")
         </li>
     </ul>
 </div>
 
 @* Contenido Central *@
 <div class="formulario-edicion background-blanco">
-	<h2>@Html.GetText("DEVTOOLS","CONFIGURACIONDELAPLATAFORMA")</h2>
-	<p>		
-		@Html.GetText("DEVTOOLS","CONFIGURACIONAVANZADADEUSUARIOS,SISTEMAS,REDESSOCIALES,DOMIN")
-	</p>
-	@* Panel de navegación *@
-	<ul class="no-list-style navigation">
-		<li>
-			<a href="#usuarios" 
-			   data-toggle="collapse">
-			   @Html.GetText("ADMINISTRACIONBASICA","USUARIOS")
-		   </a>
-		</li>
-		<li>
-			<a href="#sistemas" 
-			   data-toggle="collapse">
-			   @Html.GetText("ADMINISTRACIONBASICA","SISTEMAS")
-		   </a>
-		</li>
-		<li>
-			<a href="#ecosistema" 
-			   data-toggle="collapse">
-			   @Html.GetText("DEVTOOLS","DATOSDELECOSISTEMA")
-		   </a>
-		</li>
-		<li>
-			<a href="#url-configuracion" 
-			   data-toggle="collapse">
-			   @Html.GetText("DEVTOOLS","URLDECONFIGURACION")
-		   </a>
-		</li>
-		<li>
-			<a href="#comunidades-excluidas" 
-			   data-toggle="collapse">
-			   @Html.GetText("DEVTOOLS","COMUNIDADESEXCLUIDASDELAPERSONALIZACION")
-		   </a>
-		</li>
-		<li>
-			<a href="#versiones" 
-			   data-toggle="collapse">
-			   @Html.GetText("DEVTOOLS","VERSIONES")
-		   </a>
-		</li>
-		<li>
-			<a href="#login" 
-			   data-toggle="collapse">
-			   @Html.GetText("DEVTOOLS","LOGIN")
-		   </a>
-		</li>
-		<li>
-			<a href="#comunidad" 
-			   data-toggle="collapse">
-			   @Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")
-		   </a>
-		</li>
-	</ul>
-	@* Panel central con opciones de configuración (Accordion) *@
-	<div id="accordion">
-		@* Usuarios *@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Usuarios *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#usuarios"
-						aria-expanded="true"
-						aria-controls="usuarios">
-						Usuarios
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Usuarios *@
-			<div
-				id="usuarios"
-				class="collapse show"
-				data-parent="#accordion">
-				<div class="card-body">
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="EcosistemaSinBandejaSuscripciones"
-							@(Model.EcosistemaSinBandejaSuscripciones ? "checked" : "")/>
-						<label class="custom-control-label" for="EcosistemaSinBandejaSuscripciones">Los usuarios de esta plataforma tienen disponible la bandeja de suscripciones</label>						
-					</div>
+    <h2>@Html.GetText("DEVTOOLS", "CONFIGURACIONDELAPLATAFORMA")</h2>
+    <p>
+        @Html.GetText("DEVTOOLS", "CONFIGURACIONAVANZADADEUSUARIOS,SISTEMAS,REDESSOCIALES,DOMIN")
+    </p>
+    @* Panel de navegación *@
+    <ul class="no-list-style navigation">
+        <li>
+            <a href="#usuarios"
+               data-toggle="collapse">
+                @Html.GetText("ADMINISTRACIONBASICA", "USUARIOS")
+            </a>
+        </li>
+        <li>
+            <a href="#sistemas"
+               data-toggle="collapse">
+                @Html.GetText("ADMINISTRACIONBASICA", "SISTEMAS")
+            </a>
+        </li>
+        <li>
+            <a href="#ecosistema"
+               data-toggle="collapse">
+                @Html.GetText("DEVTOOLS", "DATOSDELECOSISTEMA")
+            </a>
+        </li>
+        <li>
+            <a href="#url-configuracion"
+               data-toggle="collapse">
+                @Html.GetText("DEVTOOLS", "URLDECONFIGURACION")
+            </a>
+        </li>
+        <li>
+            <a href="#comunidades-excluidas"
+               data-toggle="collapse">
+                @Html.GetText("DEVTOOLS", "COMUNIDADESEXCLUIDASDELAPERSONALIZACION")
+            </a>
+        </li>
+        <li>
+            <a href="#versiones"
+               data-toggle="collapse">
+                @Html.GetText("DEVTOOLS", "VERSIONES")
+            </a>
+        </li>
+        <li>
+            <a href="#login"
+               data-toggle="collapse">
+                @Html.GetText("DEVTOOLS", "LOGIN")
+            </a>
+        </li>
+        <li>
+            <a href="#comunidad"
+               data-toggle="collapse">
+                @Html.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD")
+            </a>
+        </li>
+    </ul>
+    @* Panel central con opciones de configuración (Accordion) *@
+    <div id="accordion">
+        @* Usuarios *@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Usuarios *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#usuarios"
+                            aria-expanded="true"
+                            aria-controls="usuarios">
+                        Usuarios
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Usuarios *@
+            <div id="usuarios"
+                 class="collapse show"
+                 data-parent="#accordion">
+                <div class="card-body">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="EcosistemaSinBandejaSuscripciones"
+                        @(Model.EcosistemaSinBandejaSuscripciones ? "checked" : "") />
+                        <label class="custom-control-label" for="EcosistemaSinBandejaSuscripciones">Los usuarios de esta plataforma tienen disponible la bandeja de suscripciones</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="DatosDemograficosPerfil"
-							@(Model.DatosDemograficosPerfil ? "checked" : "")/>
-						<label class="custom-control-label" for="DatosDemograficosPerfil">Los usuarios deben rellenar sus datos de ciudad, provincia y país en el proceso de registro</label>						
-					</div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="DatosDemograficosPerfil"
+                        @(Model.DatosDemograficosPerfil ? "checked" : "") />
+                        <label class="custom-control-label" for="DatosDemograficosPerfil">Los usuarios deben rellenar sus datos de ciudad, provincia y país en el proceso de registro</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="PanelMensajeImportarContactos"
-							@(Model.PanelMensajeImportarContactos ? "checked" : "")/>
-						<label class="custom-control-label" for="PanelMensajeImportarContactos">Los usuarios pueden personalizar el mensaje que se envía al invitar a un usuario a la comunidad</label>						
-					</div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="PanelMensajeImportarContactos"
+                        @(Model.PanelMensajeImportarContactos ? "checked" : "") />
+                        <label class="custom-control-label" for="PanelMensajeImportarContactos">Los usuarios pueden personalizar el mensaje que se envía al invitar a un usuario a la comunidad</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="PerfilGlobalEnComunidadPrincipal"
-							@(Model.PerfilGlobalEnComunidadPrincipal ? "checked" : "")/>
-						<label class="custom-control-label" for="PerfilGlobalEnComunidadPrincipal">El enlace al perfil del usuario apunta al perfil global en la comunidad principal</label>						
-					</div>	
-					
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="PestanyaImportarContactosCorreo"
-							@(Model.PestanyaImportarContactosCorreo ? "checked" : "")/>
-						<label class="custom-control-label" for="PestanyaImportarContactosCorreo">Los usuarios pueden invitar por email a otros usuarios a las comunidades de la plataforma</label>						
-					</div>	
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="PerfilGlobalEnComunidadPrincipal"
+                        @(Model.PerfilGlobalEnComunidadPrincipal ? "checked" : "") />
+                        <label class="custom-control-label" for="PerfilGlobalEnComunidadPrincipal">El enlace al perfil del usuario apunta al perfil global en la comunidad principal</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="RegistroAutomaticoEcosistema"
-							@(Model.RegistroAutomaticoEcosistema ? "checked" : "")/>
-						<label class="custom-control-label" for="RegistroAutomaticoEcosistema">Los usuarios deben entrar automáticamente al registrarse. Si no se marca esta opción, el usuario no podrá entrar hasta que el administrador acepte la solicitud</label>						
-					</div>	
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="PestanyaImportarContactosCorreo"
+                        @(Model.PestanyaImportarContactosCorreo ? "checked" : "") />
+                        <label class="custom-control-label" for="PestanyaImportarContactosCorreo">Los usuarios pueden invitar por email a otros usuarios a las comunidades de la plataforma</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="SeguirEnTodaLaActividad"
-							@(Model.SeguirEnTodaLaActividad ? "checked" : "")/>
-						<label class="custom-control-label" for="SeguirEnTodaLaActividad">Los usuarios siguen a otros usuarios en todas sus comunidades (no se pueden suscribir a comunidades individuales)</label>						
-					</div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="RegistroAutomaticoEcosistema"
+                        @(Model.RegistroAutomaticoEcosistema ? "checked" : "") />
+                        <label class="custom-control-label" for="RegistroAutomaticoEcosistema">Los usuarios deben entrar automáticamente al registrarse. Si no se marca esta opción, el usuario no podrá entrar hasta que el administrador acepte la solicitud</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="EcosistemaSinHomeUsuario"
-							@(Model.EcosistemaSinHomeUsuario ? "checked" : "")/>
-						<label class="custom-control-label" for="EcosistemaSinHomeUsuario">Los usuarios no disponen de una home de usuario conectado, donde ven la actividad de todas sus comunidades</label>						
-					</div>			
-					
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="RecibirNewsletterDefecto"
-							@(Model.RecibirNewsletterDefecto ? "checked" : "")/>
-						<label class="custom-control-label" for="RecibirNewsletterDefecto">Los usuarios van a estar suscritos por defecto a la newsletter o no en todas las comunidades de la plataforma</label>						
-					</div>		
-					
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="PerfilPersonalDisponible"
-							@(Model.PerfilPersonalDisponible ? "checked" : "")/>
-						<label class="custom-control-label" for="PerfilPersonalDisponible">Los usuarios de esta plataforma van a tener perfil personal</label>						
-					</div>	
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="SeguirEnTodaLaActividad"
+                        @(Model.SeguirEnTodaLaActividad ? "checked" : "") />
+                        <label class="custom-control-label" for="SeguirEnTodaLaActividad">Los usuarios siguen a otros usuarios en todas sus comunidades (no se pueden suscribir a comunidades individuales)</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="MostrarGruposIDEnHtml"
-							@(Model.MostrarGruposIDEnHtml ? "checked" : "")/>
-						<label class="custom-control-label" for="MostrarGruposIDEnHtml">Se debe cargar un input hidden en el HTML con los grupos en los que participa el usuario</label>						
-					</div>	
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="EcosistemaSinHomeUsuario"
+                        @(Model.EcosistemaSinHomeUsuario ? "checked" : "") />
+                        <label class="custom-control-label" for="EcosistemaSinHomeUsuario">Los usuarios no disponen de una home de usuario conectado, donde ven la actividad de todas sus comunidades</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="GenerarGrafoContribuciones"
-							@(Model.GenerarGrafoContribuciones ? "checked" : "")/>
-						<label class="custom-control-label" for="GenerarGrafoContribuciones">Los usuarios tienen un grafo de contribuciones</label>						
-					</div>	
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="RecibirNewsletterDefecto"
+                        @(Model.RecibirNewsletterDefecto ? "checked" : "") />
+                        <label class="custom-control-label" for="RecibirNewsletterDefecto">Los usuarios van a estar suscritos por defecto a la newsletter o no en todas las comunidades de la plataforma</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="MantenerSesionActiva"
-							@(Model.MantenerSesionActiva ? "checked" : "")/>
-						<label class="custom-control-label" for="MantenerSesionActiva">Mantener la sesión del usuario activa mientras esté abierta la pestaña del navegador</label>						
-					</div>	
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="PerfilPersonalDisponible"
+                        @(Model.PerfilPersonalDisponible ? "checked" : "") />
+                        <label class="custom-control-label" for="PerfilPersonalDisponible">Los usuarios de esta plataforma van a tener perfil personal</label>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input type="checkbox"
-							   class="custom-control-input"
-							   id="NoEnviarCorreoSeguirPerfil"
-							   @(Model.NoEnviarCorreoSeguirPerfil ? "checked" : "") />
-						<label class="custom-control-label" for="NoEnviarCorreoSeguirPerfil">No enviar un correo de notificación al usuario cuando alguien siga su perfil</label>
-					</div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="MostrarGruposIDEnHtml"
+                        @(Model.MostrarGruposIDEnHtml ? "checked" : "") />
+                        <label class="custom-control-label" for="MostrarGruposIDEnHtml">Se debe cargar un input hidden en el HTML con los grupos en los que participa el usuario</label>
+                    </div>
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Edad mínima con la que los usuarios pueden registrarse en la plataforma. (Por defecto 18 años).</label>
-						<input
-							id="EdadLimiteRegistroEcosistema"
-							type="number"		
-							value="@(Model.EdadLimiteRegistroEcosistema > 0 ? Model.EdadLimiteRegistroEcosistema.ToString() : "18")"
-							placeholder=""
-							style="width: 200px;"
-							onkeypress="return event.charCode >= 48 && event.charCode <= 57"		
-							class="form-control not-outline"/>
-					</div>
-				
-					<div class="form-group mb-3">
-						<label class="control-label d-block">URL a la que se le va a redireccionar al usuario tras el login. Puede ser una url absoluta, una url que exista en el archivo de idiomas, o una url de una página del CMS.</label>
-						<input
-							id="UrlHomeConectado" 
-							type="text"		
-							value="@Model.UrlHomeConectado"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Ejemplo: http://www.gnoss.com/home</small>
-					</div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="GenerarGrafoContribuciones"
+                        @(Model.GenerarGrafoContribuciones ? "checked" : "") />
+                        <label class="custom-control-label" for="GenerarGrafoContribuciones">Los usuarios tienen un grafo de contribuciones</label>
+                    </div>
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Ontologías que no deben ir a la actividad reciente de los usuarios.</label>
-						<input
-							id="OntologiasNoLive" 
-							type="text"		
-							value="@Model.OntologiasNoLive"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Ejemplo: LearningOpportunitySpecification.owl|LearningOpportunityInstance.owl|request.owl|frequentRequest.owl</small>
-					</div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="MantenerSesionActiva"
+                        @(Model.MantenerSesionActiva ? "checked" : "") />
+                        <label class="custom-control-label" for="MantenerSesionActiva">Mantener la sesión del usuario activa mientras esté abierta la pestaña del navegador</label>
+                    </div>
 
-					@* Duración de la cookie de usuario *@
-					<div class="form-group mb-3">
-						@{ 
-							string duracionCookie = Model.DuracionCookieUsuario;
-							string letra = string.Empty;
-							string digitos = string.Empty;
-							int cantidad = 0;
-							if (!string.IsNullOrEmpty(duracionCookie))
-							{
-								letra = duracionCookie.Substring(duracionCookie.Length - 1).ToLower();
-								digitos = duracionCookie.Substring(0, duracionCookie.Length - 1);
-								int.TryParse(digitos, out cantidad);
-							}
-						}
-						<label for="" class="control-label d-block">Duración de la cookie de usuario</label>
-						<form class="form-inline mb-3">
-							<div class="form-group mb-2">							
-								<input type="number" id="InputDuracionCookieUsuario" value="@(cantidad > 0 ? cantidad.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" class="form-control not-outline"/>							
-							</div>
-							<div class="form-group mx-sm-3 mb-2">															
-								<select id="SelectDuracionCookieUsuario" class="js-select2 form-control">
-									<option value="d" @(letra.Equals("d") ? "selected=\"selected\"" : "")>Dias</option>
-									<option value="h" @(letra.Equals("h") ? "selected=\"selected\"" : "")>Horas</option>
-									<option value="m" @(letra.Equals("m") ? "selected=\"selected\"" : "")>Minutos</option>
-								</select>
-							</div>
-						</form>
-					</div>
-				</div>
-			</div>
-		</div>	
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="NoEnviarCorreoSeguirPerfil"
+                        @(Model.NoEnviarCorreoSeguirPerfil ? "checked" : "") />
+                        <label class="custom-control-label" for="NoEnviarCorreoSeguirPerfil">No enviar un correo de notificación al usuario cuando alguien siga su perfil</label>
+                    </div>
 
-		@* Sistemas *@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Sistemas *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#sistemas"
-						aria-controls="sistemas">
-						Sistemas
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Sistemas *@
-			<div
-				id="sistemas"
-				class="collapse"
-				data-parent="#accordion">
-				<div class="card-body">
-					
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Código de Google Analytics que se le va a asignar a cada proyecto nuevo según su tipo.</label>
-						<input
-							id="CodigoGoogleAnalyticsProyecto" 
-							type="text"		
-							value="@Model.CodigoGoogleAnalyticsProyecto"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Formato: tipoProyecto=codigo|tipoProyecto=codigo. Tipos de proyecto: 0 publico, 1 privado, 2 acceso restringido, 3 reservado. Ejemplo: 0=UA-XXXXXXXX-1|2=UA-YYYYYYYY-1</small>
-					</div>
-					@* Cambia por URL para públicas y privadas
-					<div class="form-group mb-3">
-						<label class="control-label d-block">URL en la que van a estar disponibles las comunidades nuevas según su tipo.</label>
-						<input
-							id="UrlsPropiasProyecto" 
-							type="text"		
-							value="@Model.UrlsPropiasProyecto"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Formato: tipoProyecto=codigo|tipoProyecto=codigo. Tipos de proyecto: 0 publico, 1 privado, 2 acceso restringido, 3 reservado. Ejemplo: 0=http://prered.gnoss.com|2=http://prered.gnoss.com|1=https://preredprivada.gnoss.com|3=https://preredprivada.gnoss.com</small>
-					</div>
-					*@
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Edad mínima con la que los usuarios pueden registrarse en la plataforma. (Por defecto 18 años).</label>
+                        <input id="EdadLimiteRegistroEcosistema"
+                               type="number"
+                               value="@(Model.EdadLimiteRegistroEcosistema > 0 ? Model.EdadLimiteRegistroEcosistema.ToString() : "18")"
+                               placeholder=""
+                               style="width: 200px;"
+                               onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                               class="form-control not-outline" />
+                    </div>
 
-					@* Url Web Inicial / Web de proyectos públicos *@
-					<div class="form-group mb-3">
-						<label class="control-label d-block">@Html.GetText("DEVTOOLS","DIRECCIONWEBDEPROYECTOSPUBLICOS")</label>
-						<input type="text" class="form-control" id="txtUrlWeb" placeholder="https://domain.es">
-						<small class="form-text text-muted">@Html.GetText("DEVTOOLS","DOMINIODONDEESTARANALOJADOSLOSPROYECTOSPUBLICOSODEACCESOREST")</small>
-					</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">URL a la que se le va a redireccionar al usuario tras el login. Puede ser una url absoluta, una url que exista en el archivo de idiomas, o una url de una página del CMS.</label>
+                        <input id="UrlHomeConectado"
+                               type="text"
+                               value="@Model.UrlHomeConectado"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Ejemplo: http://www.gnoss.com/home</small>
+                    </div>
 
-					@* RadioButton de uso de misma URL para proyectos públicos y privados *@
-					<div class="form-group mb-3 panelUseSameProjectsUrl">
-						<label class="control-label d-block">@Html.GetText("DEVTOOLS","USARLAMISMAURLDEPROYECTOS")</label>                                            
-						<div class="form-check form-check-inline">
-							<input id="rbUseSameProjectsUrl_SI" class="form-check-input rbUseSameProjectsUrl" data-value="si" type="radio" name="useSameProjectsUrl" checked>
-							<label class="form-check-label" for="rbUseSameProjectsUrl_SI">@Html.GetText("COMMON","SI")</label>									
-						</div>
-						<div class="form-check form-check-inline">
-							<input id="rbUseSameProjectsUrl_NO" class="form-check-input rbUseSameProjectsUrl" type="radio" data-value="no" name="useSameProjectsUrl">
-							<label class="form-check-label" for="rbUseSameProjectsUrl_NO">@Html.GetText("COMMON","NO")</label>									
-						</div>
-						<small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS","INDICASISEDESEAUTILIZARLAMISMAURLPARAPROYECTOSPUBLICOS/RESTR")</small>
-					</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Ontologías que no deben ir a la actividad reciente de los usuarios.</label>
+                        <input id="OntologiasNoLive"
+                               type="text"
+                               value="@Model.OntologiasNoLive"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Ejemplo: LearningOpportunitySpecification.owl|LearningOpportunityInstance.owl|request.owl|frequentRequest.owl</small>
+                    </div>
 
-					@*URL de aplicaciones web externas (Wordpress, Liferay, etc.) que usan por AJAX los servicios de búsqueda de esta plataforma: *@
-					<div class="form-group mb-3">
-						<label class="control-label d-block">@Html.GetText("DEVTOOLS", "URLDEAPLICACIONESWEBEXTERNAS(WORDPRESS,LIFERAY,ETC)QUEUSANP")</label>
-						<input id="DominiosPermitidosCORS"
-							   type="text"
-							   value="@Model.DominiosPermitidosCORS"
-							   placeholder=""
-							   class="form-control not-outline" />
-						<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "SIVANAEXISTIRPAGINASWEBAJENASAESTEDESPLIEGUE(WORDPRESS,LIFER")</small>
-					</div>
+                    @* Duración de la cookie de usuario *@
+                    <div class="form-group mb-3">
+                        @{
+                            string duracionCookie = Model.DuracionCookieUsuario;
+                            string letra = string.Empty;
+                            string digitos = string.Empty;
+                            int cantidad = 0;
+                            if (!string.IsNullOrEmpty(duracionCookie))
+                            {
+                                letra = duracionCookie.Substring(duracionCookie.Length - 1).ToLower();
+                                digitos = duracionCookie.Substring(0, duracionCookie.Length - 1);
+                                int.TryParse(digitos, out cantidad);
+                            }
+                        }
+                        <label for="" class="control-label d-block">Duración de la cookie de usuario</label>
+                        <form class="form-inline mb-3">
+                            <div class="form-group mb-2">
+                                <input type="number" id="InputDuracionCookieUsuario" value="@(cantidad > 0 ? cantidad.ToString() : "")" onkeypress="return event.charCode >= 48 && event.charCode <= 57" class="form-control not-outline" />
+                            </div>
+                            <div class="form-group mx-sm-3 mb-2">
+                                <select id="SelectDuracionCookieUsuario" class="js-select2 form-control">
+                                    <option value="d" @(letra.Equals("d") ? "selected=\"selected\"" : "")>Dias</option>
+                                    <option value="h" @(letra.Equals("h") ? "selected=\"selected\"" : "")>Horas</option>
+                                    <option value="m" @(letra.Equals("m") ? "selected=\"selected\"" : "")>Minutos</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-					@* Web de Proyectos / Web de proyectos privados *@
-					<div id="panelUrlPrivateProjects" class="form-group mb-3 d-none">
-						<label class="control-label d-block">@Html.GetText("DEVTOOLS","DIRECCIONWEBDEPROYECTOSPRIVADOS")</label>
-						<input type="text" class="form-control" id="txtUrlProjects" placeholder="https://domain.es">
-						<small class="form-text text-muted">@Html.GetText("DEVTOOLS","URLODIRECCIONWEBDELOSPROYECTOS")</small>
-					</div>
-				</div>
-			</div>
-		</div>	
+        @* Sistemas *@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Sistemas *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#sistemas"
+                            aria-controls="sistemas">
+                        Sistemas
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Sistemas *@
+            <div id="sistemas"
+                 class="collapse"
+                 data-parent="#accordion">
+                <div class="card-body">
 
-		@* Datos del ecosistema *@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Datos del ecosistema *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#ecosistema"
-						aria-controls="ecosistema">
-						Datos del ecosistema
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Datos del ecosistema *@
-			<div
-				id="ecosistema"
-				class="collapse"
-				data-parent="#accordion">
-				<div class="card-body">
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Código de Google Analytics que se le va a asignar a cada proyecto nuevo según su tipo.</label>
+                        <input id="CodigoGoogleAnalyticsProyecto"
+                               type="text"
+                               value="@Model.CodigoGoogleAnalyticsProyecto"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Formato: tipoProyecto=codigo|tipoProyecto=codigo. Tipos de proyecto: 0 publico, 1 privado, 2 acceso restringido, 3 reservado. Ejemplo: 0=UA-XXXXXXXX-1|2=UA-YYYYYYYY-1</small>
+                    </div>
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="EcosistemaSinMetaproyecto"
-							@(Model.EcosistemaSinMetaproyecto ? "checked" : "")/>
-						<label class="custom-control-label" for="EcosistemaSinMetaproyecto">La plataforma actual no tiene un metaproyecto (mygnoss)</label>
-					</div>
+                    @* Url Web Inicial / Web de proyectos públicos *@
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "DIRECCIONWEBDEPROYECTOSPUBLICOS")</label>
+                        <input type="text" class="form-control" id="txtUrlWeb" placeholder="https://domain.es" value="@Model.UrlProyectosPublicos">
+                        <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "DOMINIODONDEESTARANALOJADOSLOSPROYECTOSPUBLICOSODEACCESOREST")</small>
+                    </div>
 
-					@* desaparece idioma antiguo 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Lista de idiomas disponibles en la plataforma.</label>
-						<input
-							id="Idiomas" 
-							type="text"		
-							value="@Model.Idiomas"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">@Html.GetText("DEVTOOLS","EJEMPLO:"): es|Español&&&en|English&&&pt|Portuguese&&&ca|Català&&&eu|Euskera&&&gl|Galego&&&fr|Français&&&de|Deutsch&&&it|Italiano.</small>
-					</div>
-					*@
+                    @* RadioButton de uso de misma URL para proyectos públicos y privados *@
+                    <div class="form-group mb-3 panelUseSameProjectsUrl">
+                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "USARLAMISMAURLDEPROYECTOS")</label>
+                        <div class="form-check form-check-inline">
+                            <input id="rbUseSameProjectsUrl_SI" class="form-check-input rbUseSameProjectsUrl" data-value="si" type="radio" name="useSameProjectsUrl" checked>
+                            <label class="form-check-label" for="rbUseSameProjectsUrl_SI">@Html.GetText("COMMON", "SI")</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input id="rbUseSameProjectsUrl_NO" class="form-check-input rbUseSameProjectsUrl" type="radio" data-value="no" name="useSameProjectsUrl">
+                            <label class="form-check-label" for="rbUseSameProjectsUrl_NO">@Html.GetText("COMMON", "NO")</label>
+                        </div>
+                        <small class="form-text text-muted mt-n2">@Html.GetText("DEVTOOLS", "INDICASISEDESEAUTILIZARLAMISMAURLPARAPROYECTOSPUBLICOS/RESTR")</small>
+                    </div>
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">@Html.GetText("DEVTOOLS", "LISTADEIDIOMASDISPONIBLESENLAPLATAFORMA")</label>
-						@* Lista de Checkbox de idiomas de la plataforma *@
-						<form>
-							<div class="form-row align-items-center">
-								<div
-									class="col"
-									style="display: flex; align-items: center; flex-wrap: wrap">
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionSpanish"
-											data-language="es|Español"
-											@( idiomas.Any("es|Español".Contains) ? "checked" : "" )																				
-											class="custom-control-input languageOption"					
-										/>
-										<label class="custom-control-label" for="languageOptionSpanish">Español</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionEnglish"
-											data-language="en|English"
-											@( idiomas.Any("en|English".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"					
-										/>
-										<label class="custom-control-label" for="languageOptionEnglish">Inglés</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionPortuguese"
-											data-language="pt|Portuguese"
-											@( idiomas.Any("pt|Portuguese".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"					
-										/>
-										<label class="custom-control-label" for="languageOptionPortuguese">Portugués</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionCatalan"
-											data-language="ca|Català"
-											@( idiomas.Any("ca|Català".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"
-										/>
-										<label class="custom-control-label" for="languageOptionCatalan">Catalán</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionEuskera"
-											data-language="eu|Euskera"
-											@( idiomas.Any("eu|Euskera".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"
-										/>
-										<label class="custom-control-label" for="languageOptionEuskera">Euskera</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionGallego"
-											data-language="gl|Galego"
-											@( idiomas.Any("gl|Galego".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"
-										/>
-										<label class="custom-control-label" for="languageOptionGallego">Gallego</label>
-									</div>            
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionFrench"
-											data-language="fr|Français"
-											@( idiomas.Any("fr|Français".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"
-										/>
-										<label class="custom-control-label" for="languageOptionFrench">Francés</label>
-									</div>
+                    @* Web de Proyectos / Web de proyectos privados *@
+                    <div id="panelUrlPrivateProjects" class="form-group mb-3 d-none">
+                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "DIRECCIONWEBDEPROYECTOSPRIVADOS")</label>
+                        <input type="text" class="form-control" id="txtUrlProjects" placeholder="https://domain.es" value="@Model.UrlProyectosPrivados">
+                        <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "URLODIRECCIONWEBDELOSPROYECTOS")</small>
+                    </div>
 
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionGermany"
-											data-language="de|Deutsch"
-											@( idiomas.Any("de|Deutsch".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"
-										/>
-										<label class="custom-control-label" for="languageOptionGermany">Alemán</label>
-									</div>             
+                    @*URL de aplicaciones web externas (Wordpress, Liferay, etc.) que usan por AJAX los servicios de búsqueda de esta plataforma: *@
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "URLDEAPLICACIONESWEBEXTERNAS(WORDPRESS,LIFERAY,ETC)QUEUSANP")</label>
+                        <input id="DominiosPermitidosCORS"
+                               type="text"
+                               value="@Model.DominiosPermitidosCORS"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "SIVANAEXISTIRPAGINASWEBAJENASAESTEDESPLIEGUE(WORDPRESS,LIFER")</small>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="languageOptionItalian"
-											data-language="it|Italiano"
-											@( idiomas.Any("it|Italiano".Contains) ? "checked" : "" )
-											class="custom-control-input languageOption"
-										/>
-										<label class="custom-control-label" for="languageOptionItalian">Italiano</label>
-									</div>            
-								</div>
-							</div>
-							@* Botón para añadir un idioma *@
-							<div class="d-flex align-items-center justify-content-between mb-3">
-								<label class="control-label">Lista de idiomas personalizados en la plataforma.</label>
-								<button id="btnAddLanguage" type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-add-language" style="height:30px">
-									Añadir idioma
-								</button>
-							</div>
-							<ul id="customLanguageList" class="component-list no-list-style">
-								@{
-									if (idiomasPersonalizados != null){
-										foreach(string idioma in idiomasPersonalizados){
-											@Html.PartialView("_partial-views/_custom-language-row", idioma);
-										}
-									}
-								}
-							</ul>
-						</form>
-					</div>
+        @* Datos del ecosistema *@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Datos del ecosistema *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#ecosistema"
+                            aria-controls="ecosistema">
+                        Datos del ecosistema
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Datos del ecosistema *@
+            <div id="ecosistema"
+                 class="collapse"
+                 data-parent="#accordion">
+                <div class="card-body">
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="EcosistemaSinMetaproyecto"
+                        @(Model.EcosistemaSinMetaproyecto ? "checked" : "") />
+                        <label class="custom-control-label" for="EcosistemaSinMetaproyecto">La plataforma actual no tiene un metaproyecto (mygnoss)</label>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "LISTADEIDIOMASDISPONIBLESENLAPLATAFORMA")</label>
+                        @* Lista de Checkbox de idiomas de la plataforma *@
+                        <form>
+                            <div>
+                                <ul id="platform-languages" class="component-list no-list-style mb-4">
+                                    @{
+                                        foreach (string lang in Model.IdiomasBase)
+                                        {
+                                            string text = Html.GetText("COMMON", $"IDIOMA{lang.ToUpper()}");
+                                            string data = $"{lang}|{text}";
+                                            if (idiomas[0].Split("|")[0].Equals(lang))
+                                            {
+                                                data += "|default";
+                                            }
+                                            if (idiomas.Any(item => item.Split("|")[0].Equals(lang)))
+                                            {
+                                                data += "|checked";
+                                            }
+                                            @Html.PartialView("_partial-views/_language-row", data)
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                            @* Botón para añadir un idioma *@
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <label class="control-label">Lista de idiomas personalizados en la plataforma.</label>
+                                <button id="btnAddLanguage" type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-add-language" style="height:30px">
+                                    Añadir idioma
+                                </button>
+                            </div>
+                            <ul id="customLanguageList" class="component-list no-list-style">
+                                @{
+                                    if (idiomasPersonalizados != null)
+                                    {
+                                        foreach (string idioma in idiomasPersonalizados)
+                                        {
+                                            @Html.PartialView("_partial-views/_language-row", idioma + "|custom")
+                                            ;
+                                        }
+                                    }
+                                }
+                            </ul>
+                        </form>
+                    </div>
 
 
-					@* Panel de alerta de reinicio de la aplicación en la plataforma*@
-					<div id="panelAvisoReinicioAplicacionPlataforma" class="alert alert-warning flex-column pt-2 d-none" role="alert">
-						<span class="title mb-2" style="font-weight: 700">Reinicio necesario</span>
-						<span class="title mb-2" style="font-weight: 700">¡¡¡IMPORTANTE!!!</span>
-						<div class="custom-control custom-checkbox">
-    						<input 
-								type="checkbox" 
-								class="custom-control-input" 
-								id="ReiniciarAplicacion" 
-								checked="checked">
-							<label class="custom-control-label description" style="font-weight: 300" for="ReiniciarAplicacion">Se va a reiniciar la aplicación para aplicar los cambios. Si desmarcas esta casilla, los cambios no surtirán efecto hasta que se reinice la aplicación.</label>
-						</div>
-					</div>
+                    @* Panel de alerta de reinicio de la aplicación en la plataforma*@
+                    <div id="panelAvisoReinicioAplicacionPlataforma" class="alert alert-warning flex-column pt-2 d-none" role="alert">
+                        <span class="title mb-2" style="font-weight: 700">Reinicio necesario</span>
+                        <span class="title mb-2" style="font-weight: 700">¡¡¡IMPORTANTE!!!</span>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox"
+                                   class="custom-control-input"
+                                   id="ReiniciarAplicacion"
+                                   checked="checked">
+                            <label class="custom-control-label description" style="font-weight: 300" for="ReiniciarAplicacion">Se va a reiniciar la aplicación para aplicar los cambios. Si desmarcas esta casilla, los cambios no surtirán efecto hasta que se reinice la aplicación.</label>
+                        </div>
+                    </div>
 
-					@*<div class="alert alert-warning" role="alert">
-						A simple warning alert—check it out!
-					</div>*@
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Lista de extensiones de imágenes permitidas en la plataforma para la edición de componentes multimedia.</label>
+                        @* Lista de Checkbox de Extensiones de imágenes permitidas en la plataforma *@
+                        <form>
+                            <div class="form-row align-items-center">
+                                <div class="col"
+                                     style="display: flex; align-items: center; flex-wrap: wrap">
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionImageOptionJpg"
+                                               data-extension=".jpg"
+                                        @(imageExtensions.Any(".jpg".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionImageOption" />
+                                        <label class="custom-control-label" for="extensionImageOptionJpg">JPG</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionImageOptionJpeg"
+                                               data-extension=".jpeg"
+                                        @(imageExtensions.Any(".jpeg".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionImageOption" />
+                                        <label class="custom-control-label" for="extensionImageOptionJpeg">JPEG</label>
+                                    </div>
 
-					@* Desaparece Extensiones por checkbox
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Lista de extensiones de imágenes permitidas en la plataforma para la edición de componentes multimedia.</label>
-						<input
-							id="ExtensionesImagenesCMSMultimedia" 
-							type="text"		
-							value="@Model.ExtensionesImagenesCMSMultimedia"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">@Html.GetText("DEVTOOLS","EJEMPLO:") .jpg&&&.jpeg&&&.png&&&.gif @Html.GetText("DEVTOOLS","(ESTASSONLASEXTENSIONESPORDEFECTOSINOSEINDICANINGUNA)").</small>
-					</div>
-					*@
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionImageOptionPng"
+                                               data-extension=".png"
+                                        @(imageExtensions.Any(".png".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionImageOption" />
+                                        <label class="custom-control-label" for="extensionImageOptionPng">PNG</label>
+                                    </div>
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Lista de extensiones de imágenes permitidas en la plataforma para la edición de componentes multimedia.</label>				
-						@* Lista de Checkbox de Extensiones de imágenes permitidas en la plataforma *@
-						<form>
-							<div class="form-row align-items-center">
-								<div
-									class="col"
-									style="display: flex; align-items: center; flex-wrap: wrap">
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionImageOptionJpg"
-											data-extension=".jpg"
-											@( imageExtensions.Any(".jpg".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionImageOption"					
-										/>
-										<label class="custom-control-label" for="extensionImageOptionJpg">JPG</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionImageOptionJpeg"
-											data-extension=".jpeg"
-											@( imageExtensions.Any(".jpeg".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionImageOption"					
-										/>
-										<label class="custom-control-label" for="extensionImageOptionJpeg">JPEG</label>
-									</div>
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionImageOptionGif"
+                                               data-extension=".gif"
+                                        @(imageExtensions.Any(".gif".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionImageOption" />
+                                        <label class="custom-control-label" for="extensionImageOptionGif">GIF</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionImageOptionPng"
-											data-extension=".png"
-											@( imageExtensions.Any(".png".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionImageOption"					
-										/>
-										<label class="custom-control-label" for="extensionImageOptionPng">PNG</label>
-									</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Lista de extensiones de documentos permitidas en la plataforma para la edición de componentes multimedia.</label>
+                        @* Lista de Checkbox de Extensiones de documentos permitidos en la plataforma *@
+                        <form>
+                            <div class="form-row align-items-center">
+                                <div class="col"
+                                     style="display: flex; align-items: center; flex-wrap: wrap">
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionDocumentOptionPdf"
+                                               data-extension=".pdf"
+                                        @(documentExtensions.Any(".pdf".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionDocumentOption" />
+                                        <label class="custom-control-label" for="extensionDocumentOptionPdf">PDF</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionDocumentOptionTxt"
+                                               data-extension=".txt"
+                                        @(documentExtensions.Any(".txt".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionDocumentOption" />
+                                        <label class="custom-control-label" for="extensionDocumentOptionTxt">TXT</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionDocumentOptionDoc"
+                                               data-extension=".doc"
+                                        @(documentExtensions.Any(".doc".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionDocumentOption" />
+                                        <label class="custom-control-label" for="extensionDocumentOptionDoc">DOC</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionDocumentOptionDocx"
+                                               data-extension=".docx"
+                                        @(documentExtensions.Any(".docx".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionDocumentOption" />
+                                        <label class="custom-control-label" for="extensionDocumentOptionDocx">DOCX</label>
+                                    </div>
 
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionImageOptionGif"
-											data-extension=".gif"
-											@( imageExtensions.Any(".gif".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionImageOption"					
-										/>
-										<label class="custom-control-label" for="extensionImageOptionGif">GIF</label>
-									</div>									          
-								</div>
-							</div>
-						</form>
-					</div>
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionDocumentOptionXls"
+                                               data-extension=".xls"
+                                        @(documentExtensions.Any(".xls".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionDocumentOption" />
+                                        <label class="custom-control-label" for="extensionDocumentOptionXls">XLS</label>
+                                    </div>
 
-					@* Desaparece por extensiones de documentos 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Lista de extensiones de documentos permitidas en la plataforma para la edición de componentes multimedia.</label>
-						<input
-							id="ExtensionesDocumentosCMSMultimedia" 
-							type="text"		
-							value="@Model.ExtensionesDocumentosCMSMultimedia"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">@Html.GetText("DEVTOOLS","EJEMPLO:"): .pdf&&&.txt&&&.doc&&&.docx @Html.GetText("DEVTOOLS","(ESTASSONLASEXTENSIONESPORDEFECTOSINOSEINDICANINGUNA)").</small>
-					</div>
-					*@
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionDocumentOptionXlsx"
+                                               data-extension=".xlsx"
+                                        @(documentExtensions.Any(".xlsx".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionDocumentOption" />
+                                        <label class="custom-control-label" for="extensionDocumentOptionXlsx">XLSX</label>
+                                    </div>
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Lista de extensiones de documentos permitidas en la plataforma para la edición de componentes multimedia.</label>				
-						@* Lista de Checkbox de Extensiones de documentos permitidos en la plataforma *@
-						<form>
-							<div class="form-row align-items-center">
-								<div
-									class="col"
-									style="display: flex; align-items: center; flex-wrap: wrap">
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionDocumentOptionPdf"
-											data-extension=".pdf"
-											@( documentExtensions.Any(".pdf".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionDocumentOption"					
-										/>
-										<label class="custom-control-label" for="extensionDocumentOptionPdf">PDF</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionDocumentOptionTxt"
-											data-extension=".txt"
-											@( documentExtensions.Any(".txt".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionDocumentOption"					
-										/>
-										<label class="custom-control-label" for="extensionDocumentOptionTxt">TXT</label>
-									</div>		
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionDocumentOptionDoc"
-											data-extension=".doc"
-											@( documentExtensions.Any(".doc".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionDocumentOption"					
-										/>
-										<label class="custom-control-label" for="extensionDocumentOptionDoc">DOC</label>
-									</div>
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionDocumentOptionDocx"
-											data-extension=".docx"
-											@( documentExtensions.Any(".docx".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionDocumentOption"					
-										/>
-										<label class="custom-control-label" for="extensionDocumentOptionDocx">DOCX</label>
-									</div>
-									
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionDocumentOptionXls"
-											data-extension=".xls"
-											@( documentExtensions.Any(".xls".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionDocumentOption"					
-										/>
-										<label class="custom-control-label" for="extensionDocumentOptionXls">XLS</label>
-									</div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
-									<div class="custom-control custom-checkbox mr-3">
-										<input
-											type="checkbox"
-											id="extensionDocumentOptionXlsx"
-											data-extension=".xlsx"
-											@( documentExtensions.Any(".xlsx".Contains) ? "checked" : "" )																				
-											class="custom-control-input extensionDocumentOption"					
-										/>
-										<label class="custom-control-label" for="extensionDocumentOptionXlsx">XLSX</label>
-									</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Copyright de la plataforma.</label>
+                        <input id="Copyright"
+                               type="text"
+                               value="@Model.Copyright"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Ejemplo: RIAM I+L lab.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-								</div>
-							</div>
-						</form>
-					</div>				
+        @* Datos de Url de Configuración *@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Url de configuración *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#url-configuracion"
+                            aria-controls="configuracion">
+                        Url de configuración
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Url de configuración *@
+            <div id="url-configuracion"
+                 class="collapse"
+                 data-parent="#accordion">
+                <div class="card-body">
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Copyright de la plataforma.</label>
-						<input
-							id="Copyright" 
-							type="text"		
-							value="@Model.Copyright"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Ejemplo: RIAM I+L lab.</small>
-					</div>
-				</div>
-			</div>
-		</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Url de Intragnoss.</label>
+                        <input id="UrlIntragnoss"
+                               type="text"
+                               value="@Model.UrlIntragnoss"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Ejemplo: http://gnoss.com/.</small>
+                    </div>
 
-		@* Datos de Url de Configuración *@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Url de configuración *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#url-configuracion"
-						aria-controls="configuracion">
-						Url de configuración
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Url de configuración *@
-			<div
-				id="url-configuracion"
-				class="collapse"
-				data-parent="#accordion">
-				<div class="card-body">				
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "URLBASEPARAALOJARLOSSERVICIOS")</label>
+                        <input id="UrlBaseService"
+                               type="text"
+                               value="@Model.UrlBaseService"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "ESTAURLCONTIENEELPATRONCONELQUESEVANAGENERARLOSSERVICIOSESPE")</small>
+                    </div>
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Url de Intragnoss.</label>
-						<input
-							id="UrlIntragnoss" 
-							type="text"		
-							value="@Model.UrlIntragnoss"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Ejemplo: http://gnoss.com/.</small>
-					</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "DOMINIOPAGINASADMINISTRACION")</label>
+                        <input id="DominioPaginasAdministracion"
+                               type="text"
+                               value="@Model.DominioPaginasAdministracion"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "AYUDADOMINIOPAGINASADMINISTRACION")</small>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Url base para alojar los servicios.</label>
-						<input
-							id="UrlBaseService" 
-							type="text"		
-							value="@Model.UrlBaseService"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Esta url contiene el patrón con el que se van a generar los servicios específicos para cada proyecto. Si configuramos "http://servicios.gnoss.com/{ServiceName}", los servicios se generarán como http://servicios.gnoss.com/loginadfs, http://servicios.gnoss.com/externoce... Si configuramos http://{ServiceName}.azurewebsites.net, los servicios se generarán como http://loginconnect.azurewebsites.net.</small>
-					</div>
-				</div>
-			</div>
-		</div>
+        @* Comunidades excluidas de la personalización*@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Comunidades excluidas *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#comunidades-excluidas"
+                            aria-controls="analytics">
+                        Comunidades excluidas de la personalización
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Comunidades excluidas *@
+            <div id="comunidades-excluidas"
+                 class="collapse"
+                 data-parent="#accordion">
+                <div class="card-body">
 
-		@* Comunidades excluidas de la personalización*@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Comunidades excluidas *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#comunidades-excluidas"
-						aria-controls="analytics">
-						Comunidades excluidas de la personalización
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Comunidades excluidas *@
-			<div
-				id="comunidades-excluidas"
-				class="collapse"
-				data-parent="#accordion">
-				<div class="card-body">
-				
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Indicar si el ecosistema tiene una personalizacion de vistas</label>
-						<input
-							id="ComunidadesExcluidaPersonalizacion" 
-							type="text"		
-							value="@Model.ComunidadesExcluidaPersonalizacion"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Ejemplo: 9ad6d986-baea-4a38-9713-f001cfcdf60b,edcb4989-3676-4a2b-8e21-beae19abc67c,34d68027-aca9-404d-b76a-992b2ff91dde,5bf23892-57a8-47b2-9afe-2acd3ddd121f</small>
-					</div>					
-				</div>
-			</div>
-		</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Indicar si el ecosistema tiene una personalizacion de vistas</label>
+                        <input id="ComunidadesExcluidaPersonalizacion"
+                               type="text"
+                               value="@Model.ComunidadesExcluidaPersonalizacion"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Ejemplo: 9ad6d986-baea-4a38-9713-f001cfcdf60b,edcb4989-3676-4a2b-8e21-beae19abc67c,34d68027-aca9-404d-b76a-992b2ff91dde,5bf23892-57a8-47b2-9afe-2acd3ddd121f</small>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-		@* Versiones *@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Versiones *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#versiones"
-						aria-controls="analytics">
-						Versiones
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Versiones *@
-			<div
-				id="versiones"
-				class="collapse"
-				data-parent="#accordion">
-				<div class="card-body">
-				
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Indica la version del JS del Ecosistema</label>
-						<input
-							id="VersionJSEcosistema" 
-							type="text"		
-							value="@(Model.VersionJSEcosistema > 0 ? Model.VersionJSEcosistema.ToString() : "")"
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Versión de los ficheros JavaScript utilizados en el ecosistema para evitar problemas con la caché del navegador.</small>
-					</div>	
+        @* Versiones *@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Versiones *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#versiones"
+                            aria-controls="analytics">
+                        Versiones
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Versiones *@
+            <div id="versiones"
+                 class="collapse"
+                 data-parent="#accordion">
+                <div class="card-body">
 
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Indica la version del CSS del Ecosistema</label>
-						<input
-							id="VersionCSSEcosistema" 
-							type="text"		
-							value="@(Model.VersionCSSEcosistema > 0 ? Model.VersionCSSEcosistema.ToString() : "")"
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Versión de los ficheros CSS utilizados en el ecosistema para evitar problemas con la caché del navegador.</small>
-					</div>												
-				</div>
-			</div>
-		</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Indica la version del JS del Ecosistema</label>
+                        <input id="VersionJSEcosistema"
+                               type="text"
+                               value="@(Model.VersionJSEcosistema > 0 ? Model.VersionJSEcosistema.ToString() : "")"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Versión de los ficheros JavaScript utilizados en el ecosistema para evitar problemas con la caché del navegador.</small>
+                    </div>
 
-		@* Login *@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Login *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#login"
-						aria-controls="login">
-						Login
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Login *@
-			<div
-				id="login"
-				class="collapse"
-				data-parent="#accordion">
-				<div class="card-body">
-				
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="LoginUnicoPorUsuario"
-							@(Model.LoginUnicoPorUsuario ? "checked" : "")/>
-						<label class="custom-control-label" for="LoginUnicoPorUsuario">Un usuario no puede estar conectado en más de un dispositivo de forma simultánea</label>
-					</div>
-					
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Indica los usuarios que están excluidos de tener un login único</label>
-						<input
-							id="LoginUnicoUsuariosExcluidos" 
-							type="text"		
-							value="@Model.LoginUnicoUsuariosExcluidos"
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Ejemplo: 9ad6d986-baea-4a38-9713-f001cfcdf60b,edcb4989-3676-4a2b-8e21-beae19abc67c,34d68027-aca9-404d-b76a-992b2ff91dde,5bf23892-57a8-47b2-9afe-2acd3ddd121f.</small>
-					</div>	
-					
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Cuentas válidas para hacer login con redes sociales. Si la cuenta de email con la que se han logueado no es una de las especificadas aquí, no se logueará al usuario.</label>
-						<input
-							id="DominiosEmailLoginRedesSociales" 
-							type="text"		
-							value="@Model.DominiosEmailLoginRedesSociales"							
-							placeholder=""														
-							class="form-control not-outline"/>
-							<small class="form-text text-muted">Ejemplo: @@opendeusto.es,@@deusto.es.</small>
-					</div>
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Indica la version del CSS del Ecosistema</label>
+                        <input id="VersionCSSEcosistema"
+                               type="text"
+                               value="@(Model.VersionCSSEcosistema > 0 ? Model.VersionCSSEcosistema.ToString() : "")"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Versión de los ficheros CSS utilizados en el ecosistema para evitar problemas con la caché del navegador.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-				</div>
-			</div>
-		</div>
+        @* Login *@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Login *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#login"
+                            aria-controls="login">
+                        Login
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Login *@
+            <div id="login"
+                 class="collapse"
+                 data-parent="#accordion">
+                <div class="card-body">
 
-		@* Comunidad *@
-		<div class="card">			
-			<div class="card-header">
-				@* Botón Comunidad *@
-				<h3 class="mb-0">
-					<button
-						class="btn btn-link"
-						data-toggle="collapse"
-						data-target="#comunidad"
-						aria-controls="comunidad">
-						Comunidad
-					</button>
-				</h3>
-			</div>
-			@* Opciones de Comunidad *@
-			<div
-				id="comunidad"
-				class="collapse"
-				data-parent="#accordion">
-				<div class="card-body">
-					
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="EnviarNotificacionesDeSuscripciones"
-							@(Model.EnviarNotificacionesDeSuscripciones ? "checked" : "") />
-						<label class="custom-control-label" for="EnviarNotificacionesDeSuscripciones">Envía notificaciones de las suscripciones</label>
-					</div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="LoginUnicoPorUsuario"
+                        @(Model.LoginUnicoPorUsuario ? "checked" : "") />
+                        <label class="custom-control-label" for="LoginUnicoPorUsuario">Un usuario no puede estar conectado en más de un dispositivo de forma simultánea</label>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Indica los usuarios que están excluidos de tener un login único</label>
+                        <input id="LoginUnicoUsuariosExcluidos"
+                               type="text"
+                               value="@Model.LoginUnicoUsuariosExcluidos"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Ejemplo: 9ad6d986-baea-4a38-9713-f001cfcdf60b,edcb4989-3676-4a2b-8e21-beae19abc67c,34d68027-aca9-404d-b76a-992b2ff91dde,5bf23892-57a8-47b2-9afe-2acd3ddd121f.</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Cuentas válidas para hacer login con redes sociales. Si la cuenta de email con la que se han logueado no es una de las especificadas aquí, no se logueará al usuario.</label>
+                        <input id="DominiosEmailLoginRedesSociales"
+                               type="text"
+                               value="@Model.DominiosEmailLoginRedesSociales"
+                               placeholder=""
+                               class="form-control not-outline" />
+                        <small class="form-text text-muted">Ejemplo: @@opendeusto.es,@@deusto.es.</small>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        @* Comunidad *@
+        <div class="card">
+            <div class="card-header">
+                @* Botón Comunidad *@
+                <h3 class="mb-0">
+                    <button class="btn btn-link"
+                            data-toggle="collapse"
+                            data-target="#comunidad"
+                            aria-controls="comunidad">
+                        Comunidad
+                    </button>
+                </h3>
+            </div>
+            @* Opciones de Comunidad *@
+            <div id="comunidad"
+                 class="collapse"
+                 data-parent="#accordion">
+                <div class="card-body">
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="EnviarNotificacionesDeSuscripciones"
+                        @(Model.EnviarNotificacionesDeSuscripciones ? "checked" : "") />
+                        <label class="custom-control-label" for="EnviarNotificacionesDeSuscripciones">Envía notificaciones de las suscripciones</label>
+                    </div>
 
 
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="AceptacionComunidadesAutomatica"
-							@(Model.AceptacionComunidadesAutomatica > 0 ? "checked" : "")/>
-						<label class="custom-control-label" for="AdministracionPaginasPermitido">Indica si la aceptación de comunidades puede ser automática</label>
-					</div>					
-									
-					<div class="custom-control custom-checkbox">
-						<input
-							type="checkbox"
-							class="custom-control-input"
-							id="CargarIdentidadesDeProyectosPrivadosComoAmigos"
-							@(Model.CargarIdentidadesDeProyectosPrivadosComoAmigos > 0 ? "checked" : "")/>
-						<label class="custom-control-label" for="AdministracionPaginasPermitido">Cargar identidades de proyectos privados como amigos</label>
-					</div>	
-										
-					<div class="form-group mb-3">
-						<label class="control-label d-block">Grafo en el que se debe insertar los proyectos para la metabusqueda si se trata de un ecosistema sin metaproyecto</label>
-						<input
-							id="GrafoMetaBusquedaComunidades" 
-							type="text"		
-							value="@Model.GrafoMetaBusquedaComunidades"							
-							placeholder=""														
-							class="form-control-plaintext not-outline"/>
-							<small class="form-text text-muted">Ejemplo: 11111111-1111-1111-111111111111.</small>
-					</div>
-				</div>
-			</div>
-		</div>		
-	</div>
-	@* Botón de guardado *@
-	<a id="btnSave" href="javascript: void(0);" class="btn btn-primary uppercase mt-4">@Html.GetText("COMMON","GUARDAR")</a>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="AceptacionComunidadesAutomatica"
+                        @(Model.AceptacionComunidadesAutomatica > 0 ? "checked" : "") />
+                        <label class="custom-control-label" for="AdministracionPaginasPermitido">Indica si la aceptación de comunidades puede ser automática</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="CargarIdentidadesDeProyectosPrivadosComoAmigos"
+                        @(Model.CargarIdentidadesDeProyectosPrivadosComoAmigos > 0 ? "checked" : "") />
+                        <label class="custom-control-label" for="AdministracionPaginasPermitido">Cargar identidades de proyectos privados como amigos</label>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label d-block">Grafo en el que se debe insertar los proyectos para la metabusqueda si se trata de un ecosistema sin metaproyecto</label>
+                        <input id="GrafoMetaBusquedaComunidades"
+                               type="text"
+                               value="@Model.GrafoMetaBusquedaComunidades"
+                               placeholder=""
+                               class="form-control-plaintext not-outline" />
+                        <small class="form-text text-muted">Ejemplo: 11111111-1111-1111-111111111111.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* Botón de guardado *@
+    <a id="btnSave" href="javascript: void(0);" class="btn btn-primary uppercase mt-4">@Html.GetText("COMMON", "GUARDAR")</a>
 </div>
 
 @* Modal para editar/crear un nuevo idioma *@
@@ -1018,7 +829,7 @@ Variables
 
 
 @* Carga de operativa *@
-@section operativaScript{
+@section operativaScript {
     <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
     <script type="text/javascript">
 

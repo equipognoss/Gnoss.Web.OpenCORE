@@ -1,0 +1,147 @@
+﻿@model List<TabModel>
+@{
+    HeaderModel cabecera = Html.GetCabecera();
+    TabModel modelo1 = Model[0];
+    TabModel modelo2 = Model[1];
+    string cabecera1 = $"{Html.GetText("HISTORIALVERSIONES", "VERSION")} {modelo1.Version}";
+    string cabecera2 = $"{Html.GetText("HISTORIALVERSIONES", "VERSION")} {modelo2.Version}";
+    // Contador del nº de pestañas listadas
+    int contNumPestañasVisibles = 0;
+    // Nº de pestañas de idiomas a visualizar en la sección Tab
+    int numMaxPestañasIdiomasVisibles = 3;
+    ViewBag.DefaultViewDiff = modelo1.Comparaciones["defaultView"] ? new Dictionary<short, bool> { { modelo2.OpcionesBusqueda.OpcionesVistas.VistaPorDefecto, true } } : new Dictionary<short, bool> { { -1, false} };
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">compare</span>
+        Comparar versiones @* Pasar a traduccion *@
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div></div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        @if (ViewBag.ListaIdiomas.Count > 1)
+        {
+            @* Tabs o cabecera de los idiomas *@
+            <ul class="nav nav-tabs edicionMultiIdioma" id="tabIdiomasPaginas" role="tablist">
+                @* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@			
+                @foreach (string idioma in ViewBag.ListaIdiomas.Keys)
+                {
+                    if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+                    {
+                        <li class="nav-item">
+                            <a class="tabIdiomaItem nav-link @Html.Raw(idioma.Equals(ViewBag.IdiomaPorDefecto) ? "active" : "")"
+                               id="@($"versiones_{idioma}")" data-toggle="tab" href="@($"#versiones_{idioma}_left")"
+                               data-language="@idioma"
+                               role="tab" aria-controls="@($"versiones_{idioma}_left")"
+                               aria-selected="true">@ViewBag.ListaIdiomas[idioma]@(idioma.Equals(ViewBag.IdiomaPorDefecto) ? " *" : "")</a>
+                        </li>
+                        contNumPestañasVisibles += 1;
+                    }
+                }
+                @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+                @if (contNumPestañasVisibles < cabecera.Languajes.Count)
+                {
+                    @* Dropdown para resto de categorías *@
+                    <li class="nav-item dropdown">
+                        @* Desplegable del dropdown *@
+                        <a class="nav-link dropdown-toggle languageOculto"
+                           data-toggle="dropdown"
+                           href="#"
+                           role="button"
+                           aria-haspopup="true"
+                           aria-expanded="false">
+                            @Html.GetText("DEVTOOLS", "OTROSIDIOMAS")
+                        </a>
+                        @* Sección para mostrar items del dropdown*@
+                        <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+                            @* Pintado del resto de pestañas en Dropdown *@									
+                                @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+                            {
+                                var item = cabecera.Languajes.ElementAt(i);
+                                var itemKey = item.Key;
+                                var itemValue = item.Value;
+
+                                @* Cada item del dropdown *@
+                                <a id="@("tab_" + itemKey)"
+                                   class="item-dropdown languageOcultoItem tabIdiomaItem @( ViewBag.IdiomaPorDefecto == itemKey ? "active" : null)"
+                                   data-toggle="tab"
+                                   role="tab"
+                                   href="@($"versiones_{itemKey}_left")"
+                                   data-language="@itemKey">
+                                    @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                </a>
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+
+        <div class="comparar-versiones__wrap">
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header pt-3">
+                    <p class="version">
+                        @cabecera1
+                        @if (Model[0].VersionActual)
+                        {
+                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @Model[0].FechaModificacion.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body">
+                    @{
+                        ViewBag.Side = "left";
+                    }
+                    <div class="comparar-version">
+                        @Html.PartialView("_comparator-views/_comparator-item", Model[0])
+                    </div>
+                </div>
+            </div>
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header pt-3">
+                    <p class="version">
+                        @cabecera2
+                        @if (Model[1].VersionActual)
+                        {
+                            <span class="badge-success badge-pill">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @Model[1].FechaModificacion.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body">
+                    @{
+                        ViewBag.Side = "right";
+                    }
+                    <div class="comparar-version">
+                        @Html.PartialView("_comparator-views/_comparator-item", Model[1])
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (ViewBag.Restaurando)
+        {
+            <div class="panelBotonera">
+                <a class="btn btn-primary uppercase btnAgregarComentarioRestauracion"
+                   data-version-id="@modelo2.VersionID"
+                   data-target="#modal-container"
+                   data-toggle="modal">@Html.GetText("HISTORIALVERSIONES", "RESTAURARVERSION") @cabecera2</a>
+            </div>
+        }
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    (function ($) {
+        // Operativa funcionamiento de Páginas
+        operativaComparadorPestanyas.init();
+    })();
+</script>

@@ -164,12 +164,13 @@ bool estaEnDefinicion = false;
             <div class="form-group mb-3">        
                 <label class="control-label d-block">@Html.GetText("COMADMIN", "DIASDEGRACIA")</label>
                 <select id="ddlDiasGracia" class="form-control">
-                    <option value="5" @Html.Raw(Model.DaysOfGrace.Equals(5) ? "selected=\"selected\"" : "")>5</option>
-                    <option value="10" @Html.Raw(Model.DaysOfGrace.Equals(10) ? "selected=\"selected\"" : "")>10</option>
-                    <option value="15" @Html.Raw(Model.DaysOfGrace.Equals(15) ? "selected=\"selected\"" : "")>15</option>
-                    <option value="20" @Html.Raw(Model.DaysOfGrace.Equals(20) ? "selected=\"selected\"" : "")>20</option>
-                    <option value="25" @Html.Raw(Model.DaysOfGrace.Equals(25) ? "selected=\"selected\"" : "")>25</option>
-                    <option value="30" @Html.Raw(Model.DaysOfGrace.Equals(30) ? "selected=\"selected\"" : "")>30</option>
+                    <option value="0" @Html.Raw(Model.DaysOfGrace.Equals(0) ? "selected=\"selected\"" : "")>0 (@Html.GetText("COMADMIN", "AVISOCIERRE"))</option>
+                    <option value="5" disabled @Html.Raw(Model.DaysOfGrace.Equals(5) ? "selected=\"selected\"" : "")>5</option>
+                    <option value="10" disabled @Html.Raw(Model.DaysOfGrace.Equals(10) ? "selected=\"selected\"" : "")>10</option>
+                    <option value="15" disabled @Html.Raw(Model.DaysOfGrace.Equals(15) ? "selected=\" selected\"" : "" )>15</option>
+                    <option value="20" disabled @Html.Raw(Model.DaysOfGrace.Equals(20) ? "selected=\"selected\"" : "")>20</option>
+                    <option value="25" disabled @Html.Raw(Model.DaysOfGrace.Equals(25) ? "selected=\" selected\"" : "" )>25</option>
+                    <option value="30" disabled @Html.Raw(Model.DaysOfGrace.Equals(30) ? "selected=\"selected\"" : "")>30</option>
                 </select>
                 <p class="mt-2">
                     @Html.GetText("COMADMIN", "FECHACIERRE") <span id="fechaFinalGracia"></span>

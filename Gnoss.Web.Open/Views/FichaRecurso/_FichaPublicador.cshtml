@@ -225,7 +225,7 @@ string iconoTipoRecurso = "";
     {
         <div role="alert" class="alert alert-warning mt-2 d-flex" id="noUltVer-info">
             <span class="material-icons mr-3">content_paste_off</span>
-            <span>@Html.Raw(Html.GetText("PERFILBASERECURSOSFICHA", "NOULTIMAVERSION", Html.GetUrlPagina().Replace(FichaDocumento.Key.ToString(), FichaDocumento.LastVersion.ToString())))</span>
+            <span>@Html.Raw(Html.GetText("PERFILBASERECURSOSFICHA", "NOULTIMAVERSION", Html.GetUrlPagina().Substring(0, Html.GetUrlPagina().LastIndexOf('/') + 1) + FichaDocumento.LastVersion.ToString()))</span>
         </div>
     }
 

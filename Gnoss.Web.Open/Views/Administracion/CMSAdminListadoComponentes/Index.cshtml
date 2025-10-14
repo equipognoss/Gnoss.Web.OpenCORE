@@ -23,8 +23,8 @@ Variables
 	List<FacetItemModel> filtros = Model.FilterList;
 
 	@* Nº de páginas de resultados -> Paginador *@
-    int numTotal = Model.Result.NumeroResultadosTotal;
-    int numResultadosPagina = Model.Result.NumeroResultadosPagina;
+	int numTotal = Model.Result.NumeroResultadosTotal;
+	int numResultadosPagina = Model.Result.NumeroResultadosPagina;
 	int PaginaActual = Model.Result.NumeroPaginaActual;		
 	int numPaginas = (int)Math.Ceiling((double)numTotal / (double)numResultadosPagina);
 }
@@ -36,152 +36,158 @@ Variables
 *@
 
 
-    @* Migas de Pan *@
-    <div class="col col-12 col-breadcrumb">
-        <ul>
-            <li>
-                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-            </li>
-            <li>
-                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/estructura">@Html.GetText("DEVTOOLS","ESTRUCTURA")</a>
-            </li>
-            <li>
-                @Html.GetText("DEVTOOLS","COMPONENTES")
-            </li>
-        </ul>
-    </div>
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+	<ul>
+		<li>
+			<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+		</li>
+		<li>
+			<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/estructura">@Html.GetText("DEVTOOLS","ESTRUCTURA")</a>
+		</li>
+		<li>
+			@Html.GetText("DEVTOOLS","COMPONENTES")
+		</li>
+	</ul>
+</div>
 
-    @* Contenido Central *@
-    <div class="formulario-edicion background-blanco">       
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">       
 
-		@* Contenedor del Título de la Sección + Buscador *@
-		<div class="row">
-			@* Título de la sección de páginas + Nº de páginas *@
-			<div class="col col-12 col-xl-3 header-listado">
-				<div class="h1-container">
-					<h1>@Html.GetText("DEVTOOLS","COMPONENTES")
-						<span id="numPaginas" class="numResultados">@resultado</span>
-					</h1>
-				</div>
-			</div>
-
-			@* Buscador de componentes *@
-			<div class="col col-12 col-xl-9 header-buscador">
-				<div class="wrapCol">
-					<div class="col-buscador" style="width: 100%">					
-					@* Formulario para búsquedas de componentes *@
-						<form id="formBuscadorComponentesMultimedia" onsubmit="return false;">								
-							<div class="finderUtils d-flex justify-content-between" id="divCajaBusqueda">
-								<div class="group finderSection flex-grow-1">
-									@* Input para realizar la búsqueda de páginas *@
-									<input
-										type="text"
-										id="txtBuscarComponente"
-										class="not-outline finderSectionText"
-										autocomplete="off"
-										placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
-									/>
-									@* Botón para realizar la búsqueda *@
-									<input
-										title="Buscar"
-										type="button"
-										class="findAction"
-										id="inputLupa"
-									/>
-									@* Botón para Facetas de la búsqueda *@
-									<a href="javascript: void(0);" class="btn-filtrar-movil">
-										<span class="material-icons">filter_list</span>
-										<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
-									</a>
-								</div>
-								@* Botón para crear item *@						
-								<div class="acciones d-flex align-items-center ml-2">
-									@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-component-admin", Model)							
-								</div>
-							</div>								
-						</form>
-					</div>
-				</div>
-
-			</div>
-
-            @* Panel izquierdo de Facetas *@
-            <div class="col col-12 col-xl-3 col-facetas col-lateral izquierda">				
-				@Html.PartialView("_partial-views/_list-content-facetes", Model)
-            </div>
-
-			@* Contenido o tabla con las páginas de la comunidad *@
-			<div class="col col-12 col-xl-9 col-contenido">
-				@* Panel de filtros activos*@
-				 
-				@if (filtros.Count > 0)
-				{			
-					<div class="etiquetas add-shadow mt-n4" id="divFiltros">
-						<div class="group filterSpace">
-							@* Subpanel de filtros *@                 
-							<ul class="facetedSearch tags" id="panListadoFiltrosPulgarcito">
-								@* Filtro activo *@
-								@foreach (FacetItemModel item in filtros)
-								{									
-									<li class="@item.Name">
-										@item.Name
-										<a rel="nofollow" 
-										   class="remove faceta" 
-										   name="@item.Filter" 
-										   href="javascript: void(0)" 
-										   onclick="operativaGestionComponentsCMS.AgregarFiltroComponentes('@item.Filter', this);return false;">
-										   eliminar
-									   </a>
-									</li>
-
-								}
-								@* Eliminación de todos los filtros *@
-								<li class="borrarFiltros-wrap">
-									<a id="btnLimpiarFiltros" 
-									   style="cursor:pointer" 
-									   class="limpiarfiltros borrarFiltros" 
-									   onclick="operativaGestionComponentsCMS.LimpiarFiltroComponentes(true);">@Html.GetText("DEVTOOLS","LIMPIARFILTROS")</a>
-								</li>
-							</ul>                
-						</div>
-					</div>
-				}				
-
-				@* Contenido central de items *@
-				<div class="wrapCol">
-					@* Inicio de tabla componentes Multimedia *@
-					<table class="display nowrap table table-sm tabla-componente">
-						@* Header de la tabla *@
-						<thead>
-							<tr>
-								<th class="th-titulo">@Html.GetText("DEVTOOLS","TITULO")</th>
-								<th class="th-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</th>
-								<th class="th-dimensiones">Activo</th>
-								<th class="th-creacion">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</th>
-								<th class="th-acciones">@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</th>
-							</tr>
-						</thead>
-						@* Body de la tabla *@
-						<tbody>
-							@* Listado de componentes *@
-							@if (Model.Result != null && Model.Result.ListaResultados != null)
-							{
-								foreach (CMSEditComponentModel ficha in Model.Result.ListaResultados)
-								{
-									@* Item Componente *@
-									@Html.PartialView("_partial-views/_component-item", ficha)									
-								}
-							}							
-						</tbody>
-					</table>
-					@* Paginador si es necesario según el nº de componentes existentes *@					
-					@if (numPaginas> 1){
-						@Html.PartialView("_partial-views/_component-paginator", Model)
-					}					
-				</div>
+	@* Contenedor del Título de la Sección + Buscador *@
+	<div class="row">
+		@* Título de la sección de páginas + Nº de páginas *@
+		<div class="col col-12 col-xl-3 header-listado">
+			<div class="h1-container">
+				<h1>@Html.GetText("DEVTOOLS","COMPONENTES")
+					<span id="numPaginas" class="numResultados">@resultado</span>
+				</h1>
 			</div>
 		</div>
-	</div>	
+
+		@* Buscador de componentes *@
+		<div class="col col-12 col-xl-9 header-buscador">
+			<div class="wrapCol">
+				<div class="col-buscador" style="width: 100%">					
+					@* Formulario para búsquedas de componentes *@
+					<form id="formBuscadorComponentesMultimedia" onsubmit="return false;">								
+						<div class="finderUtils d-flex justify-content-between" id="divCajaBusqueda">
+							<div class="group finderSection flex-grow-1">
+								@* Input para realizar la búsqueda de páginas *@
+								<input
+								type="text"
+								id="txtBuscarComponente"
+								class="not-outline finderSectionText"
+								autocomplete="off"
+								placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
+								/>
+								@* Botón para realizar la búsqueda *@
+								<input
+								title="Buscar"
+								type="button"
+								class="findAction"
+								id="inputLupa"
+								/>
+								@* Botón para Facetas de la búsqueda *@
+								<a href="javascript: void(0);" class="btn-filtrar-movil">
+									<span class="material-icons">filter_list</span>
+									<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
+								</a>
+							</div>
+							@* Botón para crear item *@		
+							@if (ViewBag.CrearComponenteCMSPermitido != null && ViewBag.CrearComponenteCMSPermitido)
+							{
+								<div class="acciones d-flex align-items-center ml-2">
+									@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-component-admin", Model)
+								</div>
+							}
+
+                        </div>
+                    </form>
+				</div>
+			</div>
+
+		</div>
+
+        @* Panel izquierdo de Facetas *@
+        <div class="col col-12 col-xl-3 col-facetas col-lateral izquierda">				
+			@Html.PartialView("_partial-views/_list-content-facetes", Model)
+        </div>
+
+		@* Contenido o tabla con las páginas de la comunidad *@
+		<div class="col col-12 col-xl-9 col-contenido">
+			@* Panel de filtros activos*@
+				 
+			@if (filtros.Count > 0)
+			{			
+				<div class="etiquetas add-shadow mt-n4" id="divFiltros">
+					<div class="group filterSpace">
+						@* Subpanel de filtros *@                 
+						<ul class="facetedSearch tags" id="panListadoFiltrosPulgarcito">
+							@* Filtro activo *@
+							@foreach (FacetItemModel item in filtros)
+							{									
+								<li class="@item.Name">
+									@item.Name
+									<a rel="nofollow" 
+										class="remove faceta" 
+										name="@item.Filter" 
+										href="javascript: void(0)" 
+										onclick="operativaGestionComponentsCMS.AgregarFiltroComponentes('@item.Filter', this);return false;">
+										eliminar
+									</a>
+								</li>
+
+							}
+							@* Eliminación de todos los filtros *@
+							<li class="borrarFiltros-wrap">
+								<a id="btnLimpiarFiltros" 
+									style="cursor:pointer" 
+									class="limpiarfiltros borrarFiltros" 
+									onclick="operativaGestionComponentsCMS.LimpiarFiltroComponentes(true);">@Html.GetText("DEVTOOLS","LIMPIARFILTROS")</a>
+							</li>
+						</ul>                
+					</div>
+				</div>
+			}				
+
+			@* Contenido central de items *@
+			<div class="wrapCol">
+				@* Inicio de tabla componentes Multimedia *@
+				<table class="display nowrap table table-sm tabla-componente">
+					@* Header de la tabla *@
+					<thead>
+						<tr>
+							<th class="th-titulo">@Html.GetText("DEVTOOLS","TITULO")</th>
+							<th class="th-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</th>
+							<th class="th-dimensiones">Activo</th>
+							<th class="th-creacion">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</th>
+							<th class="th-acciones">@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</th>
+						</tr>
+					</thead>
+					@* Body de la tabla *@
+					<tbody>
+						@* Listado de componentes *@
+						@if (Model.Result != null && Model.Result.ListaResultados != null)
+						{
+							foreach (CMSEditComponentModel ficha in Model.Result.ListaResultados)
+							{
+								@* Item Componente *@
+								@Html.PartialView("_partial-views/_component-item", ficha)									
+							}
+						}							
+					</tbody>
+				</table>
+				@* Paginador si es necesario según el nº de componentes existentes *@					
+				@if (numPaginas> 1){
+					@Html.PartialView("_partial-views/_component-paginator", Model)
+				}
+				@Html.PartialView("_modal-views/_comparator-layout")
+				@Html.PartialView("_modal-views/_history-layout")
+			</div>
+		</div>
+	</div>
+</div>	
 
 @* Carga de operativa *@
 @section operativaScript{

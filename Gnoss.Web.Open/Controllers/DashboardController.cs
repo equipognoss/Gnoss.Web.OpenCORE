@@ -49,6 +49,7 @@ using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.Exportaciones;
 using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
@@ -69,7 +70,9 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -118,13 +121,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public const string SEPARADOR_MULTIVALOR = "@|@";
 
         private UtilWeb mUtilWeb;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
         #endregion
 
-        public DashboardController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public DashboardController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<DashboardController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mUtilWeb = new UtilWeb(httpContextAccessor);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Metodos
@@ -256,7 +263,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mProyectoDW == null)
                 {
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     mProyectoDW = proyCN.ObtenerProyectoDashboardPorID(ProyectoSeleccionado.Clave);
                     proyCN.Dispose();
                 }

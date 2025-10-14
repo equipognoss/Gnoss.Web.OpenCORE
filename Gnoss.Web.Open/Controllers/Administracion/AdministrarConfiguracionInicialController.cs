@@ -32,6 +32,10 @@ using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
+using Es.Riam.Gnoss.Elementos.Amigos;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -44,11 +48,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// Controller de administrar configuración inicial del proyecto.
     /// </summary>
-    public partial class AdministrarConfiguracionInicialController : ControllerBaseWeb
-    {
-        public AdministrarConfiguracionInicialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public partial class AdministrarConfiguracionInicialController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarConfiguracionInicialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarConfiguracionInicialController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+
         }
 
         /// <summary>
@@ -87,7 +96,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             if (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(ShortName) && !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(UserEmail) && !string.IsNullOrEmpty(UserPassword) && !string.IsNullOrEmpty(UrlProyectosPublicos))
             {
                 #region Actualizar los parámetros de UrlIntragnoss y UrlsPropiasProyecto
-                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 
                 parametroAplicacionCN.ActualizarParametroAplicacion("UrlIntragnoss", UrlIntraGnoss);
 
@@ -132,7 +141,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private void EstablecerUsuarioAdministrador(string pNombreUsuario, string pEmail, string pPassword)
         {
             string error = string.Empty;
-            UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
 
             try
             {
@@ -152,9 +161,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void EstablecerEmailUsuario(string pEmail, Guid pUsuarioID)
         {
-            DataWrapperPersona dataWrapperPersona = new DataWrapperPersona();
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            dataWrapperPersona = personaCN.ObtenerPersonaPorUsuario(pUsuarioID);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
+            DataWrapperPersona dataWrapperPersona = personaCN.ObtenerPersonaPorUsuario(pUsuarioID);
             AD.EntityModel.Models.PersonaDS.Persona filaPersona = dataWrapperPersona?.ListaPersona.Find(persona => persona.UsuarioID.Equals(pUsuarioID));
 
             if (UtilCadenas.ValidarEmail(pEmail))
@@ -163,7 +171,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else
             {
-                throw new Exception($"El email introducido no es válido: {pEmail}");
+                throw new BadHttpRequestException($"El email introducido no es válido: {pEmail}");
             }
 
             personaCN.Dispose();
@@ -171,7 +179,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void CrearComunidad(string pNombre, string pNombreCorto, short pTipo, string pUrlsPropias)
         {
-            ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyecto>(), mLoggerFactory);
             DataWrapperOrganizacion orgDW = null;
             DataWrapperProyecto proyDWP = null;
             GestorParametroGeneral paramDS = new GestorParametroGeneral();
@@ -180,14 +188,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             DataWrapperUsuario dataWrapperUsuario = null;
             DataWrapperIdentidad dataWrapperIdentidad = null;
             
-            Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(pNombre, pNombreCorto, "", null, pTipo, 1, mControladorBase.UsuarioActual.UsuarioID, IdentidadActual.PerfilUsuario.Clave, ProyectoAD.MetaOrganizacion, Guid.Empty, true, true, true, true, false, null, out orgDW, out proyDWP, out paramDS, out tesauroDW, out documentacionDW, out dataWrapperUsuario, out dataWrapperIdentidad, pUrlsPropias);
+            Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(pNombre, pNombreCorto, "", null, pTipo, 1, IdiomaPorDefecto ,mControladorBase.UsuarioActual.UsuarioID, IdentidadActual.PerfilUsuario.Clave, ProyectoAD.MetaOrganizacion, Guid.Empty, true, true, true, true, false, null, out orgDW, out proyDWP, out paramDS, out tesauroDW, out documentacionDW, out dataWrapperUsuario, out dataWrapperIdentidad,mAvailableServices, pUrlsPropias);
 
             mEntityContext.SaveChanges();
  
-            ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-            controladorPersonas.ActualizarModeloBASE(proyecto.IdentidadCreadoraProyecto, proyecto.Clave, true, true, PrioridadBase.Alta);
+            ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+            controladorPersonas.ActualizarModeloBASE(proyecto.IdentidadCreadoraProyecto, proyecto.Clave, true, true, PrioridadBase.Alta, mAvailableServices);
 
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             proyCL.InvalidarCacheListaProyectosPerfil(IdentidadActual.PerfilUsuario.Clave);
             proyCL.Dispose();
 
@@ -211,7 +219,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 catch (Exception ex)
                 {
-                    mLoggingService.GuardarLog("Problema al obtener el xml de la comunidad por defecto. Ruta: " + urlDocConfigComunidad);
+                    mLoggingService.GuardarLog("Problema al obtener el xml de la comunidad por defecto. Ruta: " + urlDocConfigComunidad, mlogger);
                 }
 
                 try
@@ -220,7 +228,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 catch (Exception ex)
                 {
-                    mLoggingService.GuardarLog("Problema al obtener el xml del tesauro por defecto. Ruta: " + urlDocTesauroComunidad);
+                    mLoggingService.GuardarLog("Problema al obtener el xml del tesauro por defecto. Ruta: " + urlDocTesauroComunidad, mlogger);
                 }
                 webClient.Dispose();
             }
@@ -228,11 +236,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (!string.IsNullOrEmpty(xml))
             {
-                controladorProyecto.ConfigurarComunidadConXML(xml, ProyectoAD.MetaOrganizacion, proyecto.Clave);
+                controladorProyecto.ConfigurarComunidadConXML(xml, ProyectoAD.MetaOrganizacion, proyecto.Clave, mAvailableServices);
 
                 //Subimos el fichero al servidor
                 Stopwatch sw = LoggingService.IniciarRelojTelemetria();
-                GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+                GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
                 gd.Url = UrlServicioWebDocumentacion.Replace("https://", "http://");
                 gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString(), ".xml");
                 gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString() + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xml");
@@ -248,8 +256,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private string ComprobarErrores(string Name, string ShortName, short Type)
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
             string error = "";
 
             if (proyectoCN.ExisteNombreCortoEnBD(ShortName) || peticionCN.ExistePeticionProyectoMismoNombreCorto(ShortName))

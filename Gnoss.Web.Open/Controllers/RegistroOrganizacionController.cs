@@ -22,6 +22,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.Solicitudes;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
@@ -33,6 +34,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -43,21 +45,18 @@ namespace Gnoss.Web.Controllers
 {
     public class RegistroOrganizacionController : ControllerBaseWeb
     {
-        public RegistroOrganizacionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+
+        public RegistroOrganizacionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<RegistroOrganizacionController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
 
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
-        /// <summary>
-        /// Verdad si el registro es de una clase
-        /// </summary>
-        private bool EsRegistroDeClase
-        {
-            get
-            {
-                return ((RequestParams("clase") != null) && (RequestParams("clase").Equals("true")));
-            }
-        }
+
 
         [HttpGet]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
@@ -68,25 +67,11 @@ namespace Gnoss.Web.Controllers
             return View(registrarOrg);
         }
 
-        private bool ValidarNombreCortoOrganizacion(string pNombreCorto)
-        {
-            OrganizacionCN orgCN = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            bool existeNombreCorto = orgCN.ExisteNombreCortoEnBD(pNombreCorto);
-
-            return !existeNombreCorto;
-        }
-
-
-        private bool ValidarOrganizacion(string pOrganizacion)
-        {
-            return !new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication).ExisteOrganizacion(pOrganizacion);
-        }
-
         [NonAction]
         private Guid Guardar(string pNombreCorto, string pNombre)
         {
-            ControladorDeSolicitudes controladorDeSolicitudes = new ControladorDeSolicitudes(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-            Guid idOrganizacion = controladorDeSolicitudes.GuardarRegistroOrganizacion(pNombreCorto, pNombre, UsuarioActual.UsuarioID);
+            ControladorDeSolicitudes controladorDeSolicitudes = new ControladorDeSolicitudes(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDeSolicitudes>(), mLoggerFactory);
+            Guid idOrganizacion = controladorDeSolicitudes.GuardarRegistroOrganizacion(pNombreCorto, pNombre, UsuarioActual.UsuarioID, mAvailableServices);
 
             EliminarCacheGestorIdentidades();
 
@@ -118,33 +103,6 @@ namespace Gnoss.Web.Controllers
         }
 
         /// <summary>
-        /// Guarda la foto del perfil
-        /// </summary>
-        /// <param name="pFila">Fila de la organización o de la solicitud</param>
-        private void GuardarLogo(SolicitudNuevaOrganizacion pFila, IFormFile pLogo)
-        {
-            if (pLogo != null && pLogo.Length > 0)
-            {
-                byte[] fileBytes = null;
-
-                using (var ms = new MemoryStream())
-                {
-                    pLogo.CopyTo(ms);
-                    fileBytes = ms.ToArray();
-                }
-                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
-                string url = UrlIntragnossServicios;
-                servicioImagenes.Url = url;
-                string idFoto;
-
-                idFoto = $"{UtilArchivos.ContentImagenesSolicitudes}/{pFila.SolicitudID}";
-
-                servicioImagenes.AgregarImagen(fileBytes, idFoto, ".png");
-                Session.Remove("Logo");
-            }
-        }
-
-        /// <summary>
         /// Comprueba si el nombre corto de la organización introducido existe ya en la base de datos
         /// </summary>
         /// <param name="pNombreCorto">Nombre corto de la organización a comprobar</param>
@@ -156,7 +114,7 @@ namespace Gnoss.Web.Controllers
 
         private void EliminarCacheGestorIdentidades()
         {
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
         }
     }

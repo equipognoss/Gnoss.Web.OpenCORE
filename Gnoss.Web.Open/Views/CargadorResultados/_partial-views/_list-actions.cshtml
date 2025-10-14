@@ -131,28 +131,6 @@ ResourceModel.ActionsModel acciones = fichaRecurso.Actions;
                             </li>
                         }
 
-                        @* Opción Crear versión de un recurso *@
-                        @if (acciones.CreateVersion)
-                        {
-                            <li>
-                                @if (fichaRecurso.TypeDocument != ResourceModel.DocumentType.Semantico)
-                                {
-                                    <a id="op_AddCreateVersion" class="item-dropdown" href="#">
-                                        <span class="material-icons">file_copy</span>
-                                        <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "CREARVERSION")</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    string accionEnlace = "CrearVersionDocSem('" + Html.GetUrlPagina() + "', '" + fichaRecurso.Key + "')";
-                                    <a id="op_AddCreateVersion" class="item-dropdown" onclick="@accionEnlace">
-                                        <span class="material-icons">file_copy</span>
-                                        <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "CREARVERSION")</span>
-                                    </a>
-                                }
-                            </li>
-                        }
-
                         @* Opción Ver historial de un recurso *@
                         @if (acciones.ViewHistory)
                         {

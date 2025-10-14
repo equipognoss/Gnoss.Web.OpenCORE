@@ -24,34 +24,34 @@ function enlazarFiltrosBusqueda() {
 
     // Permitir borrar filtros de búsqueda
     $("#divFiltros")
-    .unbind()
-    .on('click', '.limpiarfiltros', function (event) {
+        .unbind()
+        .on('click', '.limpiarfiltros', function (event) {
             LimpiarFiltros();
             event.preventDefault();
-    });
+        });
     $("#panFiltros")
         .unbind()
         .on('click', '.limpiarfiltros', function (event) {
             LimpiarFiltros();
             event.preventDefault();
-    });
-          
+        });
+
     $('.panelOrdenContenedor select.filtro')
-    .unbind()
-        .change(function (e) {            
-        AgregarFiltro('ordenarPor', $(this).val(), true);
-    });
+        .unbind()
+        .change(function (e) {
+            AgregarFiltro('ordenarPor', $(this).val(), true);
+        });
 
     // Configurar la sección de ordenación de los resultados al pulsar en "Ordenado por"    
     $("#panel-orderBy a.item-dropdown")
         // En ordenación, no mostraba el icono seleccionado ya que lo "desmontaba".
         //.unbind()
-        .click(function (e) {                    
+        .click(function (e) {
             var orderBy = $(this).attr("data-orderBy");
             var filtroOrder = $(this).attr("data-order");
             const concatFilterAndOrder = orderBy + "|" + filtroOrder.split("|")[1];
             AgregarFiltro('ordenarPor', concatFilterAndOrder, true);
-    });
+        });
 
     // Orden Ascedente o Descedente
     $('#panel-orderAscDesc a.item-dropdown')
@@ -62,41 +62,41 @@ function enlazarFiltrosBusqueda() {
         });
 
     $('.panelOrdenContenedor a.filtroV2')
-    .unbind()
-    .click(function (e) {
-        var filtro = $(this).attr("name");
-        AgregarFiltro(filtro.split('-')[0], filtro.split('-')[1], false);
-        e.preventDefault();
-    });
+        .unbind()
+        .click(function (e) {
+            var filtro = $(this).attr("name");
+            AgregarFiltro(filtro.split('-')[0], filtro.split('-')[1], false);
+            e.preventDefault();
+        });
     $('.paginadorResultados a.filtro')
-    .unbind()
-    .click(function (e) {
-        var filtro = $(this).attr("name");
-        AgregarFiltro(filtro.split('|')[0], filtro.split('|')[1], false);
+        .unbind()
+        .click(function (e) {
+            var filtro = $(this).attr("name");
+            AgregarFiltro(filtro.split('|')[0], filtro.split('|')[1], false);
 
-        if (typeof searchAnalitics != 'undefined') {
-            searchAnalitics.pageSearch(filtro.split('|')[1]);
-        }
-        e.preventDefault();
-    });
+            if (typeof searchAnalitics != 'undefined') {
+                searchAnalitics.pageSearch(filtro.split('|')[1]);
+            }
+            e.preventDefault();
+        });
 }
 
 function enlazarFacetasBusqueda() {
     $('.facetedSearchBox .filtroFaceta')
-	.unbind()
-	.keydown(function (event) {
-	    if ($(this).val().indexOf('|') > -1) {
-	        $(this).val($(this).val().replace(/\|/g, ''));
-	    };
+        .unbind()
+        .keydown(function (event) {
+            if ($(this).val().indexOf('|') > -1) {
+                $(this).val($(this).val().replace(/\|/g, ''));
+            };
 
-	    if (event.which || event.keyCode) {
-	        if ((event.which == 13) || (event.keyCode == 13)) {
-	            return false;
-	        }
-	    } else {
-	        return true;
-	    };
-	});
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    return false;
+                }
+            } else {
+                return true;
+            };
+        });
 
     var desde = '';
     var hasta = '';
@@ -106,106 +106,106 @@ function enlazarFacetasBusqueda() {
     }
 
     $('.facetedSearchBox .searchButton')
-	.unbind()
-	.click(function (event) {
-	    if ($(this).parents('.facetedSearchBox').find('.filtroFaceta').length == 1) {
-	        if ($(this).parents('.facetedSearchBox').find('.filtroFacetaTesauroSemantico').length == 1 && $(this).parents('.facetedSearchBox').find('.filtroFaceta').val().indexOf('@' + $('input.inpt_Idioma').val()) == -1) {
-	            AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val() + '@' + $('input.inpt_Idioma').val());
-	        } else {
-	            AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val());
-	        }
-	    } else {
-	        var filtroBusqueda = $(this).attr('name');
-	        var fechaDesde = $(this).parents('.facetedSearchBox').find('input')[0];
-	        var fechaHasta = $(this).parents('.facetedSearchBox').find('input')[1];
-	        var formatoFecha = false;
+        .unbind()
+        .click(function (event) {
+            if ($(this).parents('.facetedSearchBox').find('.filtroFaceta').length == 1) {
+                if ($(this).parents('.facetedSearchBox').find('.filtroFacetaTesauroSemantico').length == 1 && $(this).parents('.facetedSearchBox').find('.filtroFaceta').val().indexOf('@' + $('input.inpt_Idioma').val()) == -1) {
+                    AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val() + '@' + $('input.inpt_Idioma').val());
+                } else {
+                    AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val());
+                }
+            } else {
+                var filtroBusqueda = $(this).attr('name');
+                var fechaDesde = $(this).parents('.facetedSearchBox').find('input')[0];
+                var fechaHasta = $(this).parents('.facetedSearchBox').find('input')[1];
+                var formatoFecha = false;
 
-	        if (typeof ($(this).parents('.facetedSearchBox').find('input.hasDatepicker')[0]) != 'undefined') {
-	            formatoFecha = true;
-	        }
+                if (typeof ($(this).parents('.facetedSearchBox').find('input.hasDatepicker')[0]) != 'undefined') {
+                    formatoFecha = true;
+                }
 
-	        if (desde == '') {
-	            desde = $('input.inpt_Desde').val();
-	        }
-	        if (hasta == '') {
-	            hasta = $('input.inpt_Hasta').val();
-	        }
+                if (desde == '') {
+                    desde = $('input.inpt_Desde').val();
+                }
+                if (hasta == '') {
+                    hasta = $('input.inpt_Hasta').val();
+                }
 
-	        var filtro = ObtenerFiltroRango(fechaDesde, desde, fechaHasta, hasta, formatoFecha);
+                var filtro = ObtenerFiltroRango(fechaDesde, desde, fechaHasta, hasta, formatoFecha);
 
-	        if (filtro != '-') {
-	            AgregarFaceta(filtroBusqueda + '=' + filtro);
-	        }
-	    }
-	    return false;
-	});
+                if (filtro != '-') {
+                    AgregarFaceta(filtroBusqueda + '=' + filtro);
+                }
+            }
+            return false;
+        });
 
     $('.facetedSearch a.faceta')
-	.unbind()
-	.click(function (e) {
-	    AgregarFaceta($(this).attr("name"));
-        // Quitar el panel de filtrado para móvil para visualizar resultados correctamente
-        $(body).removeClass("facetas-abiertas");
-	    e.preventDefault();
-	});
+        .unbind()
+        .click(function (e) {
+            AgregarFaceta($(this).attr("name"));
+            // Quitar el panel de filtrado para móvil para visualizar resultados correctamente
+            $(body).removeClass("facetas-abiertas");
+            e.preventDefault();
+        });
     $('.facetedSearch input.faceta')
-	.unbind()
-	.click(function (e) {
-	    AgregarFaceta($(this).attr("name"));
-	    e.preventDefault();
-	});
+        .unbind()
+        .click(function (e) {
+            AgregarFaceta($(this).attr("name"));
+            e.preventDefault();
+        });
     $('.facetedSearch a.faceta.grupo')
-	.unbind()
-	.click(function (e) {
-	    AgregarFacetaGrupo($(this).attr("name"));
-	    e.preventDefault();
-	});
+        .unbind()
+        .click(function (e) {
+            AgregarFacetaGrupo($(this).attr("name"));
+            e.preventDefault();
+        });
 
     $('#descargarRDF')
-    .unbind()
-	.click(function (e) {
-	    var filtros = ObtenerHash2();
-	    var url = document.location.href;
+        .unbind()
+        .click(function (e) {
+            var filtros = ObtenerHash2();
+            var url = document.location.href;
 
-	    if (url.indexOf('?') != -1) {
-	        url = url.substring(0, url.indexOf('?'));
-	    }
+            if (url.indexOf('?') != -1) {
+                url = url.substring(0, url.indexOf('?'));
+            }
 
-	    var filtroRdf = '?rdf';
-	    if (filtros != '') {
-	        filtros = '?' + filtros;
-	        filtroRdf = '&rdf';
-	    }
+            var filtroRdf = '?rdf';
+            if (filtros != '') {
+                filtros = '?' + filtros;
+                filtroRdf = '&rdf';
+            }
 
-	    url = url + filtros + filtroRdf;
-	    $('#descargarRDF').prop('href', url);
-	    eval($('#descargarRDF').href);
-	});
+            url = url + filtros + filtroRdf;
+            $('#descargarRDF').prop('href', url);
+            eval($('#descargarRDF').href);
+        });
 }
 
 function enlazarFacetasNoBusqueda() {
     $('.facetedSearchBox .filtroFaceta')
-	.unbind()
-	.keydown(function (event) {
-	    if ($(this).val().indexOf('|') > -1) {
-	        $(this).val($(this).val().replace(/\|/g, ''));
-	    };
-	    if (event.which || event.keyCode) {
-	        if ((event.which == 13) || (event.keyCode == 13)) {
-	            return false;
-	        }
-	    } else {
-	        return true;
-	    };
-	});
+        .unbind()
+        .keydown(function (event) {
+            if ($(this).val().indexOf('|') > -1) {
+                $(this).val($(this).val().replace(/\|/g, ''));
+            };
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    return false;
+                }
+            } else {
+                return true;
+            };
+        });
 
     $('.facetedSearchBox .searchButton')
-	.unbind()
-	.click(function (event) {
-	    event.preventDefault();
-	    var urlRedirect = $(this).attr('href') + '?' + $(this).parent().find('.filtroFaceta').attr('name') + '=' + $(this).parent().find('.filtroFaceta').val();
-	    window.location.href = urlRedirect;
-	});
+        .unbind()
+        .click(function (event) {
+            event.preventDefault();
+            var urlRedirect = $(this).attr('href') + '?' + $(this).parent().find('.filtroFaceta').attr('name') + '=' + $(this).parent().find('.filtroFaceta').val();
+            window.location.href = urlRedirect;
+        });
 }
 
 var cargarFacetas = true;
@@ -216,8 +216,7 @@ function AgregarFiltro(tipoFiltro, filtro, reiniciarPag) {
     var filtros = ObtenerHash2();
 
     var tipoOrden = "";
-	if (tipoFiltro ==  "ordenarPor" && filtro.split("|").length>1)
-	{
+    if (tipoFiltro == "ordenarPor" && filtro.split("|").length > 1) {
         tipoOrden = filtro.split("|")[1];
         filtro = filtro.split("|")[0];
     }
@@ -227,13 +226,13 @@ function AgregarFiltro(tipoFiltro, filtro, reiniciarPag) {
         var tipoFiltroOrden = "orden";
         var filtroOrden = "asc";
 
-	    if (filtros.indexOf(tipoFiltroOrden + '=') == 0 || filtros.indexOf('&' + tipoFiltroOrden + '=') > 0) {
+        if (filtros.indexOf(tipoFiltroOrden + '=') == 0 || filtros.indexOf('&' + tipoFiltroOrden + '=') > 0) {
             if (filtros.indexOf(tipoFiltroOrden + '=' + filtroOrden) == 0 || filtros.indexOf('&' + tipoFiltroOrden + '=' + filtroOrden) > 0) {
-		  
-	            filtroOrden = "desc";
-	        }
+
+                filtroOrden = "desc";
+            }
             if (tipoOrden != "") {
-		  
+
                 filtroOrden = tipoOrden;
             }
 
@@ -314,7 +313,7 @@ function AgregarFaceta(faceta) {
     filtros = replaceAll(filtros, '%26', '---AMPERSAND---');
     filtros = decodeURIComponent(filtros);
     filtros = replaceAll(filtros, '---AMPERSAND---', '%26');
-	
+
 
 
     var esFacetaTesSem = false;
@@ -360,7 +359,7 @@ function AgregarFaceta(faceta) {
         filtros = filtros.substring(0, filtros.length - 1);
     }
     if (faceta.indexOf('search=') == 0) {
-	 
+
         $('h1 span#filtroInicio').remove();
     }
 
@@ -424,7 +423,7 @@ function AgregarFaceta(faceta) {
 
         for (var i = 0; i < filtrosArray.length; i++) {
             if (filtrosArray[i] != '' && filtrosArray[i] != faceta && filtrosArray[i] != facetaDecode) {
-            //if (filtrosArray[i] != '' && (filtrosArray[i].indexOf(faceta) == -1 || filtrosArray[i].indexOf(facetaDecode)) == -1)) {
+                //if (filtrosArray[i] != '' && (filtrosArray[i].indexOf(faceta) == -1 || filtrosArray[i].indexOf(facetaDecode)) == -1)) {
                 filtros += filtrosArray[i] + '&';
             }
         }
@@ -466,7 +465,7 @@ function EscribirUrlForm(filtros) {
 }
 
 function AgregarFacetaGrupo(faceta) {
- 
+
     estamosFiltrando = true;
     var filtros = ObtenerHash2();
     filtros = replaceAll(filtros, '%26', '---AMPERSAND---');
@@ -489,7 +488,7 @@ function AgregarFacetaGrupo(faceta) {
     }
 
     if (agregar) {
-	 
+
         if (filtros.indexOf(faceta) != -1) {
             //Si lo contiene lo reemplaza
             filtros = filtros.replace(faceta, "default;" + faceta);
@@ -640,7 +639,7 @@ function FiltrarPorFacetasGenerico(filtro) {
 
     var parametrosFacetas = 'ObtenerResultados';
 
-    var gruposPorTipo = $('#facetedSearch.facetedSearch .listadoAgrupado ').length>0;
+    var gruposPorTipo = $('#facetedSearch.facetedSearch .listadoAgrupado ').length > 0;
 
     if (cargarFacetas && !gruposPorTipo) {
         if (typeof panFacetas != "undefined" && panFacetas != "" && $('#' + panFacetas).length > 0 && !primeraCargaDeFacetas && !gruposPorTipo) {
@@ -891,11 +890,11 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
     params['pEsUsuarioInvitado'] = $('input.inpt_bool_esUsuarioInvitado').val() == 'True';
 
     if (typeof (identOrg) != 'undefined') {
-	 
+
         params['pIdentidadID'] = identOrg;
     }
     else {
-	 
+
         params['pIdentidadID'] = $('input.inpt_identidadID').val();
     }
     params['pParametros'] = '' + pFiltros.replace('#', '');
@@ -940,7 +939,7 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
                 panel.html(descripcion);
                 panelListado.append(panel.find('.resource-list').html())
                 panel.find('.resource-list').html('');
-            } else if (!vistaMapa && !vistaChart) {                                
+            } else if (!vistaMapa && !vistaChart) {
                 // Mostrar los resultados dentro de "panResultados / panelResultados -->resource-list-wrap"
                 //$(pPanelID).html(descripcion);
                 let contenedorPrincipal = $(document).find(`${pPanelID} .resource-list-wrap`).length > 0
@@ -1396,7 +1395,7 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
 
     // Ejecutar Scripts iniciales sólo si es necesario
     if (typeof EjecutarScriptsIniciales === 'function') {
-        EjecutarScriptsIniciales();         
+        EjecutarScriptsIniciales();
     }
 
     if (pNumeroResultados == 1) {
@@ -1425,29 +1424,29 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
             mensaje.removeClass('over');
             if (vistaCompacta) { acciones.hide(); }
             mensaje.hover(
-		        function () {
-		            $(this).removeClass('over');
-		            utils.show();
-		            acciones.show();
-		        },
-		        function () {
-		            $(this).removeClass('over');
-		            utils.show();
-		            acciones.show();
-		        }
-	        );
+                function () {
+                    $(this).removeClass('over');
+                    utils.show();
+                    acciones.show();
+                },
+                function () {
+                    $(this).removeClass('over');
+                    utils.show();
+                    acciones.show();
+                }
+            );
         });
     }
-    
+
     // Controlar existencia de función en backOffice
-    if (typeof MontarFechas === 'function'){
+    if (typeof MontarFechas === 'function') {
         MontarFechas();
     }
 
     // Controlar existencia de comportamiento 
-    if (typeof limpiarActividadRecienteHome != 'undefined'){        
+    if (typeof limpiarActividadRecienteHome != 'undefined') {
         limpiarActividadRecienteHome.init();
-    }    
+    }
 
     enlazarFiltrosBusqueda();
 
@@ -1466,11 +1465,11 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
     verTodasCategoriasEtiquetas.init();
 
     /* pintar iconos de los videos*/
-    if (typeof pintarRecursoVideo != 'undefined') {        
+    if (typeof pintarRecursoVideo != 'undefined') {
         pintarRecursoVideo.init();
     }
 
-    
+
 
     /* Es listado de mensajes */
     if (tipoBusqeda == 12) {
@@ -1502,11 +1501,11 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
         // Controlar si es necesario visualización de listados. En backoffice no haría falta
         if ((typeof modoVisualizacionListados != 'undefined')) {
             modoVisualizacionListados.init(pPanelID);
-        }        
+        }
     }
 
     // Controlar comportamientos de mapas. En backoffice no haría falta.
-    if (typeof utilMapas !== 'undefined'){        
+    if (typeof utilMapas !== 'undefined') {
         utilMapas.AjustarBotonesVisibilidad();
     }
 
@@ -1527,15 +1526,15 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
 
     if (typeof (urlCargarAccionesRecursos) != 'undefined') {
         // Controlar commportamiento de AccionesListadoMVC.
-        if (typeof (ObtenerAccionesListadoMVC) != 'undefined') {        
+        if (typeof (ObtenerAccionesListadoMVC) != 'undefined') {
             ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
-        }            
+        }
     }
 
     // Controlar comportamientos de fechas. Para backoffice no haría falta
-    if (typeof (MontarFechaCliente) != 'undefined') {        
+    if (typeof (MontarFechaCliente) != 'undefined') {
         MontarFechaCliente();
-    }    
+    }
 }
 
 function TraerRecPuntoMapa(me, panelVerMas, claveLatLog, docIDs, docIDsExtra, panelVerMasX, panelVerMasY, tipo) {
@@ -1584,7 +1583,7 @@ function TraerRecPuntoMapa(me, panelVerMas, claveLatLog, docIDs, docIDsExtra, pa
             if (panelVerMasX != null && panelVerMasY != null) {
                 $('#' + panelVerMas).removeAttr('class');
                 if (tipo != null) {
-		   
+
                     $('#' + panelVerMas).addClass(tipo);
                 }
 
@@ -1656,7 +1655,12 @@ function SeleccionarChart(pCharID, pJsChart) {
     $('.listView').attr('class', 'listView');
     $('.gridView').attr('class', 'gridView');
     $('.mapView').attr('class', 'mapView');
-    $('.chartView').attr('class', 'chartView activeView');
+
+    $('.chartView').each(function () {
+        if (!$(this).hasClass('activeView')) {
+            $(this).addClass('activeView');
+        }
+    });
 
     chartActivo = pCharID;
     jsChartActivo = pJsChart;
@@ -1740,10 +1744,9 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
                 }
 
                 if (pFaceta == null || pFaceta == '' || pNumeroFacetas == 1) {
-					if( pNumeroFacetas == 1)
-					{
-						$('#' + panFacetas).html('');
-					}
+                    if (pNumeroFacetas == 1) {
+                        $('#' + panFacetas).html('');
+                    }
                     var panelFacetas = pPanelID;
                     if ($('#facetedSearch').length) {
                         panelFacetas = '#facetedSearch';
@@ -1780,7 +1783,7 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
                             descripcion += '<p class="moreResults">' + htmlVerMas + '</p>';
                         }
                         if (descripcion == null) {
-						 
+
                             descripcion = data.trim();
                         }
                     }
@@ -1798,13 +1801,13 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
                 if (pNumeroFacetas == 1) { MontarPanelFiltros(); }
                 /* presentacion facetas */
                 // Longitud facetas por CSS
-		        // limiteLongitudFacetas.init();
+                // limiteLongitudFacetas.init();
 
                 //}
 
                 if (pNumeroFacetas == 3) {
                     if ($(".filtroFacetaFecha").length > 0) {
-					 
+
                         $(".filtroFacetaFecha").datepicker();
                     }
 
@@ -2108,20 +2111,20 @@ $(document).ready(function () {
     });
 
     $('.aaCabecera .searchGroup .text')
-    .unbind()
-    .keydown(function (event) {
-        if ($(this).val().indexOf('|') > -1) {
-            $(this).val($(this).val().replace(/\|/g, ''));
-        };
-        if (!$(this).hasClass('ac_input') && (event.which || event.keyCode)) {
-            if ((event.which == 13) || (event.keyCode == 13)) {
-                $(this).parent().find('.encontrar').click();
-                return false;
-            }
-        } else {
-            return true;
-        };
-    });
+        .unbind()
+        .keydown(function (event) {
+            if ($(this).val().indexOf('|') > -1) {
+                $(this).val($(this).val().replace(/\|/g, ''));
+            };
+            if (!$(this).hasClass('ac_input') && (event.which || event.keyCode)) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    $(this).parent().find('.encontrar').click();
+                    return false;
+                }
+            } else {
+                return true;
+            };
+        });
 
     $('.searchGroup .text').focus(function (event) {
         if ($(this).attr('class') == 'text defaultText') {
@@ -2132,32 +2135,32 @@ $(document).ready(function () {
 
     //Buscador de la cabecera superior - Buscador de algunos buscadores (Comentarios, Mensajes...)
     $('.searchGroup .encontrar')
-    .unbind()
-    .click(function (event) {
-        const input = $(this).parent().find('.text');
-        if (input.hasClass("input_buscador_cms")) {
-            // Busqueda a realizar vía Caja CMS
-            $(".encontrar_cms_form").trigger("submit");
-        } else {
-            var ddlCategorias = $('.fieldsetGroup .ddlCategorias').val();
-            var url = ObtenerUrlBusqueda(ddlCategorias);
-            if (typeof ($('.tipoBandeja').val()) != 'undefined' && ddlCategorias == 'Mensaje') {
-                //Es una búsqueda en la bandeja de mensajes
-                url = url.replace('search=', $('.tipoBandeja').val() + '&search=')
-            }
-            var parametros = $('.searchGroup .text').val();
-            var autocompletar = $('.ac_results .ac_over');
-            if (typeof (autocompletar) != 'undefined' && autocompletar.length > 0 && typeof ($('.ac_results .ac_over')[0].textContent) != 'undefined') {
+        .unbind()
+        .click(function (event) {
+            const input = $(this).parent().find('.text');
+            if (input.hasClass("input_buscador_cms")) {
+                // Busqueda a realizar vía Caja CMS
+                $(".encontrar_cms_form").trigger("submit");
+            } else {
+                var ddlCategorias = $('.fieldsetGroup .ddlCategorias').val();
+                var url = ObtenerUrlBusqueda(ddlCategorias);
+                if (typeof ($('.tipoBandeja').val()) != 'undefined' && ddlCategorias == 'Mensaje') {
+                    //Es una búsqueda en la bandeja de mensajes
+                    url = url.replace('search=', $('.tipoBandeja').val() + '&search=')
+                }
+                var parametros = $('.searchGroup .text').val();
+                var autocompletar = $('.ac_results .ac_over');
+                if (typeof (autocompletar) != 'undefined' && autocompletar.length > 0 && typeof ($('.ac_results .ac_over')[0].textContent) != 'undefined') {
 
-                parametros = $('.ac_results .ac_over')[0].textContent;
-            }
+                    parametros = $('.ac_results .ac_over')[0].textContent;
+                }
 
-            if (parametros == '') {
-                url = url.replace('?search=', '').replace('/tag/', '');
+                if (parametros == '') {
+                    url = url.replace('?search=', '').replace('/tag/', '');
+                }
+                window.location.href = url + parametros;
             }
-            window.location.href = url + parametros;
-        }
-    });
+        });
 });
 
 
@@ -2167,7 +2170,7 @@ $(document).ready(function () {
         var urlPaginaActual = $('.inpt_urlPaginaActual').val();
         if (typeof (urlPaginaActual) != 'undefined') {
             $('#inputLupa').click(function (event) {
-                window.location.href = urlPaginaActual + "?search=" + encodeURIComponent($('#finderSection').val()); 
+                window.location.href = urlPaginaActual + "?search=" + encodeURIComponent($('#finderSection').val());
             });
         }
 
@@ -2199,6 +2202,10 @@ $(document).ready(function () {
             }
         }
 
+        if (typeof (tipoAutocompletar) == 'undefined') {
+            tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda($('input.inpt_tipoBusquedaAutoCompl').val());
+        }
+
         //var tablaPropiaAutoCompletar = $('input.inpt_tablaPropiaAutoCompletar').val().toLowerCase() == 'true';
         var urlServicioAutocompletar = $('.inpt_urlServicioAutocompletar').val();
         if (urlServicioAutocompletar.indexOf('autocompletarEtiquetas') > 0) {
@@ -2207,29 +2214,30 @@ $(document).ready(function () {
             var identidadID = $('.inpt_identidadID').val();
 
             $('#finderSection').autocomplete(
-			null,
-			{
-			    servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
-			    metodo: 'AutoCompletarTipado',
-			    delay: 0,
-			    scroll: false,
-			    selectFirst: false,
-			    minChars: 1,
-			    width: 'auto',
-			    max: 25,
-			    cacheLength: 0,
-			    extraParams: {
-			        pProyecto: proyID,
-			        //pTablaPropia: tablaPropiaAutoCompletar,
-			        pFacetas: facetasBusqPag,
-			        pOrigen: origenAutoCompletar,
-			        pIdentidad: $('input.inpt_identidadID').val(),
-			        pIdioma: $('input.inpt_Idioma').val(),
-			        maxwidth: '420px',
-			        botonBuscar: 'inputLupa'
-			    }
-			}
-			);
+                null,
+                {
+                    servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
+                    metodo: 'AutoCompletarTipado',
+                    delay: 0,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 'auto',
+                    max: 25,
+                    cacheLength: 0,
+                    extraParams: {
+                        pProyecto: proyID,
+                        //pTablaPropia: tablaPropiaAutoCompletar,
+                        pFacetas: facetasBusqPag,
+                        pOrigen: origenAutoCompletar,
+                        pTipoAutocompletar: tipoAutocompletar,
+                        pIdentidad: $('input.inpt_identidadID').val(),
+                        pIdioma: $('input.inpt_Idioma').val(),
+                        maxwidth: '420px',
+                        botonBuscar: 'inputLupa'
+                    }
+                }
+            );
         } else {
             var proyID = $('.inpt_proyID').val();
             var facetasBusqPag = $('.inpt_facetasBusqPag').val();
@@ -2243,40 +2251,40 @@ $(document).ready(function () {
             var tipo = $('.inpt_tipoBusquedaAutoCompl').val();
             var facetasBusqPag = $('.inpt_facetasBusqPag').val();
             $('#finderSection').autocomplete(
-				null,
-				{
-				    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
-				    //metodo: 'AutoCompletarFacetas',
-				    url: urlServicioAutocompletar + "/AutoCompletarFacetas",
+                null,
+                {
+                    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
+                    //metodo: 'AutoCompletarFacetas',
+                    url: urlServicioAutocompletar + "/AutoCompletarFacetas",
                     type: "POST",
-				    delay: 0,
-				    minLength: 4,
-				    scroll: false,
-				    selectFirst: false,
-				    minChars: 4,
-				    width: 190,
-				    cacheLength: 0,
-				    extraParams: {
-				        proyecto: proyID,
-				        bool_esMyGnoss: bool_esMyGnoss == true,
-				        bool_estaEnProyecto: bool_estaEnProyecto == true,
-				        bool_esUsuarioInvitado: bool_esUsuarioInvitado == true,
-				        identidad: identidadID,
-				        organizacion: orgID,
-				        filtrosContexto: '',
-				        languageCode: $('input.inpt_Idioma').val(),
-				        perfil: perfilID,
-				        //pTablaPropia: tablaPropiaAutoCompletar,
-				        pFacetas: facetasBusqPag,
-				        pOrigen: origenAutoCompletar,
-				        nombreFaceta: 'search',
-				        orden: '',
-				        parametros: parametros,
-				        tipo: tipo,
-				        botonBuscar: 'inputLupa'
-				    }
-				}
-			);
+                    delay: 0,
+                    minLength: 4,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 4,
+                    width: 190,
+                    cacheLength: 0,
+                    extraParams: {
+                        proyecto: proyID,
+                        bool_esMyGnoss: bool_esMyGnoss == true,
+                        bool_estaEnProyecto: bool_estaEnProyecto == true,
+                        bool_esUsuarioInvitado: bool_esUsuarioInvitado == true,
+                        identidad: identidadID,
+                        organizacion: orgID,
+                        filtrosContexto: '',
+                        languageCode: $('input.inpt_Idioma').val(),
+                        perfil: perfilID,
+                        //pTablaPropia: tablaPropiaAutoCompletar,
+                        pFacetas: facetasBusqPag,
+                        pOrigen: origenAutoCompletar,
+                        nombreFaceta: 'search',
+                        orden: '',
+                        parametros: parametros,
+                        tipo: tipo,
+                        botonBuscar: 'inputLupa'
+                    }
+                }
+            );
         }
     }
 });
@@ -2292,18 +2300,22 @@ function PreparaAutoCompletarComunidad() {
         var pOrigen = '';
         var pTipoDdlCategorias = '';
         var facetasAutoComTip = '';
+        tipoAutocompletar = -1;
         if ($(this).attr('origen') != undefined) {
             pTipoDdlCategorias = $(this).attr('origen');
             pOrigen = ObtenerOrigenAutoCompletarBusqueda($(this).attr('origen'));
             facetasAutoComTip = ObtenerFacetasAutocompletar($(this).attr('origen'));
+            tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda($(this).attr('origen'));
         } else if (typeof (ddlCategorias.val()) != 'undefined' && ddlCategorias.val() != '') {
             pOrigen = ObtenerOrigenAutoCompletarBusqueda(ddlCategorias.val());
+            tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda(ddlCategorias.val());
             facetasAutoComTip = ObtenerFacetasAutocompletar(ddlCategorias.val());
             pTipoDdlCategorias = ddlCategorias.val();
         } else if (typeof ($('input.inpt_tipoBusquedaAutoCompl').val()) != 'undefined') {
             if ($('input.inpt_tipoBusquedaAutoCompl').val() != '') {
                 pOrigen = origenAutoCompletar;
                 facetasAutoComTip = ObtenerFacetasAutocompletar($('input.inpt_tipoBusquedaAutoCompl').val());
+                pTipoAutocompletar = ObtenerTipoAutoCompletarBusqueda($('input.inpt_tipoBusquedaAutoCompl').val());
             }
             pTipoDdlCategorias = $('input.inpt_tipoBusquedaAutoCompl').val();
         }
@@ -2330,7 +2342,7 @@ function PreparaAutoCompletarComunidad() {
         var btnBuscarID = '';
         // Size() deprecado
         //if ($(this).parent().find('.encontrar').size() > 0) {
-          if ($(this).parent().find('.encontrar').length > 0) {
+        if ($(this).parent().find('.encontrar').length > 0) {
             btnBuscarID = $(this).parent().find('.encontrar').attr('id');
         } else {
             return;
@@ -2341,7 +2353,7 @@ function PreparaAutoCompletarComunidad() {
         var bool_estaEnProyecto = $('input.inpt_bool_estaEnProyecto').val() == 'True';
         var bool_esUsuarioInvitado = $('input.inpt_bool_esUsuarioInvitado').val() == 'True';
         if (facetasAutoComTip == '') {
-		 
+
             facetasAutoComTip = $('input.inpt_FacetasProyAutoCompBuscadorCom').val();
         }
         //var tablaPropiaAutoCompletar = $('input.inpt_tablaPropiaAutoCompletar').val().toLowerCase() == "true";
@@ -2366,6 +2378,7 @@ function PreparaAutoCompletarComunidad() {
                         //pTablaPropia: tablaPropiaAutoCompletar,
                         pFacetas: facetasAutoComTip,
                         pOrigen: pOrigen,
+                        pTipoAutocompletar: tipoAutocompletar,
                         pIdentidad: identidadID,
                         pIdioma: $('input.inpt_Idioma').val(),
                         maxwidth: '389px',
@@ -2374,36 +2387,36 @@ function PreparaAutoCompletarComunidad() {
                 });
         } else {
             $(this).autocomplete(
-			null,
-			{
-			    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
-			    //metodo: 'AutoCompletarFacetas',
-			    url: urlServicioAutocompletar + "/AutoCompletarFacetas",
-			    type: "POST",
-			    delay: 0,
-			    minLength: 4,
-			    scroll: false,
-			    selectFirst: false,
-			    minChars: 4,
-			    width: 190,
-			    cacheLength: 0,
-			    extraParams: {
-			        proyecto: proyID,
-			        bool_esMyGnoss: bool_esMyGnoss == 'True',
-			        bool_estaEnProyecto: bool_estaEnProyecto == 'True',
-			        bool_esUsuarioInvitado: bool_esUsuarioInvitado == 'True',
-			        identidad: identidadID,
-			        organizacion: organizacionID,
-			        filtrosContexto: '',
-			        languageCode: $('input.inpt_Idioma').val(),
-			        perfil: perfilID,
-			        nombreFaceta: 'search',
-			        orden: '',
-			        parametros: '',
-			        tipo: pTipoDdlCategorias,
-			        botonBuscar: btnBuscarID
-			    }
-			});
+                null,
+                {
+                    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
+                    //metodo: 'AutoCompletarFacetas',
+                    url: urlServicioAutocompletar + "/AutoCompletarFacetas",
+                    type: "POST",
+                    delay: 0,
+                    minLength: 4,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 4,
+                    width: 190,
+                    cacheLength: 0,
+                    extraParams: {
+                        proyecto: proyID,
+                        bool_esMyGnoss: bool_esMyGnoss == 'True',
+                        bool_estaEnProyecto: bool_estaEnProyecto == 'True',
+                        bool_esUsuarioInvitado: bool_esUsuarioInvitado == 'True',
+                        identidad: identidadID,
+                        organizacion: organizacionID,
+                        filtrosContexto: '',
+                        languageCode: $('input.inpt_Idioma').val(),
+                        perfil: perfilID,
+                        nombreFaceta: 'search',
+                        orden: '',
+                        parametros: '',
+                        tipo: pTipoDdlCategorias,
+                        botonBuscar: btnBuscarID
+                    }
+                });
         }
     });
 }
@@ -2440,6 +2453,33 @@ function ObtenerOrigenAutoCompletarBusqueda(tipo) {
 
     //Devolvemos el por defecto.
     return '';
+}
+
+function ObtenerTipoAutoCompletarBusqueda(tipo) {
+    var tamagno = $('input.inpt_OrigenAutocompletar').length;
+    for (var i = 0; i < tamagno; i++) {
+        var valor = ($('input.inpt_OrigenAutocompletar')[i]).value;
+        if (valor.startsWith("oa_")) {
+            valor = valor.substring(3);
+        }
+        if (valor.split('@')[0] == tipo) {
+            if ($('input.inpt_OrigenAutocompletar')[i].dataset.tipoautocomplete != undefined) {
+                var tipoAutocompletar = $('input.inpt_OrigenAutocompletar')[i].dataset.tipoautocomplete;
+                if (Number.isInteger(parseInt(tipoAutocompletar))) {
+                    return parseInt(tipoAutocompletar);
+                }
+                else {
+                    return -1
+                }
+            }
+            else {
+                return -1;
+            }
+        }
+    }
+
+    //Devolvemos el por defecto.
+    return -1;
 }
 
 function ObtenerFacetasAutocompletar(tipo) {
@@ -2514,7 +2554,7 @@ function MontarNumResultados() {
             const numResultados = parseInt($('#numResultadosRemover').text());
             // Cadena utilizada para búsqueda
             var queryString = findGetParameter("search");
-            
+
             // No se han encontrado resultados - Mostrar aviso siempre que se realice alguna búsqueda
             if (numResultados == 0 && queryString != undefined) {
                 queryString = queryString.replace('<', '&lt;');
@@ -2605,13 +2645,13 @@ function ObtenerAccionesListado(jsEjecutar) {
     });
 
     if (jsEjecutar == null) {
-	 
+
         jsEjecutar = "";
     }
 
     if (idPanelesAcciones != '') {
         try {
-		 
+
             WebForm_DoCallback(UniqueDesplegarID, 'CargarControlDesplegar&ObtenerAcciones&' + idPanelesAcciones + "&jsEjecutar=" + jsEjecutar, ReceiveServerData, '', null, false);
         }
         catch (ex) { }
@@ -2701,12 +2741,12 @@ function PintarGraficoFaceta(faceta, estilo) {
 
         var view = new google.visualization.DataView(data);
         view.setColumns([0, 1,
-                    {
-                        calc: "stringify",
-                        sourceColumn: 1,
-                        type: "string",
-                        role: "annotation"
-                    }]);
+            {
+                calc: "stringify",
+                sourceColumn: 1,
+                type: "string",
+                role: "annotation"
+            }]);
 
         var options = {
             title: titulo
@@ -2754,14 +2794,14 @@ function obtenerUrl(service) {
     if (url.indexOf(',') != -1) {
         var urlMultiple = url.split(',');
         if (indicesWS[service] == null) {
-		 
+
             indicesWS[service] = null;
         }
         if (indicesWS[service] == null) {
-		 
+
             indicesWS[service] = this.aleatorio(0, urlMultiple.length - 1);
         } else if (indicesWS[service] > urlMultiple.length - 1) {
-		 
+
             indicesWS[service] = 0;
         }
         url = urlMultiple[indicesWS[service]];

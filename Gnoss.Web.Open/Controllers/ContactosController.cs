@@ -23,6 +23,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Amigos;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Microsoft.AspNetCore.Hosting;
@@ -32,6 +33,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Web;
@@ -40,9 +43,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class ContactosController : ControllerBaseWeb
     {
-        public ContactosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private IAvailableServices mAvailableServices;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public ContactosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ContactosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mAvailableServices = availableServices;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -79,7 +88,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             insertarScriptBuscador("divFac", "divRel", "divNumResultadosBusqueda", "panListadoFiltrosPulgarcito", "divRel", "divFiltros", grafo, "navegadorBusqueda", "", "", null, "", "", "", javascriptAdicional, identidadBusqueda, ProyectoSeleccionado.Clave, null, (short)TipoBusqueda.Contactos, null, null);
 
-            NotificacionCN notCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            NotificacionCN notCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
             int numInvitaciones = notCN.ObtenerNumeroInvitacionesPendientesDeMyGnoss(mControladorBase.UsuarioActual.PersonaID, IdentidadActual.OrganizacionID, RequestParams("organizacion") == "true");
             notCN.Dispose();
 
@@ -104,7 +113,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             bool existe = false;
             GrupoAmigos grupo = null;
-            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCN>(), mLoggerFactory);
             /*TODO Javier migrar
             AmigosDS amigosDS = amigosCN.ObtenerAmigosDeIdentidad(mControladorBase.UsuarioActual.IdentidadID);
             amigosCN.Dispose();
@@ -334,7 +343,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             Guid autor = IdentidadActual.IdentidadMyGNOSS.Clave;
 
-            GestionCorreo gestionCorreo = new GestionCorreo(new CorreoDS(), null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionCorreo gestionCorreo = new GestionCorreo(new CorreoDS(), null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<GestionCorreo>(), mLoggerFactory);
             gestionCorreo.IdentidadActual = IdentidadActual;
             gestionCorreo.GestorIdentidades = IdentidadActual.GestorIdentidades;
 
@@ -351,14 +360,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 correoID = gestionCorreo.AgregarCorreo(autor, listaDestinatarios, Subject, Body, BaseURL, ProyectoVirtual, TiposNotificacion.AvisoCorreoNuevoContacto, UtilIdiomas.LanguageCode);
             }
 
-            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             actualizarCN.ActualizarCorreo(gestionCorreo.CorreoDS);
 
+            string destinatarios = "";
             foreach (Guid destinatario in listaDestinatarios)
             {
-                ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(correoID, autor, ProyectoSeleccionado.Clave, "base", destinatario.ToString(), null, PrioridadBase.Alta);
-
+                destinatarios += "|" + destinatario.ToString();
             }
+
+            if (destinatarios.StartsWith("|")) destinatarios = destinatarios.Substring(1);
+
+            ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(correoID, autor, ProyectoSeleccionado.Clave, "base", destinatarios, null, PrioridadBase.Alta, mAvailableServices);
 
             return GnossResultOK();
         }
@@ -381,7 +394,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             Body = HttpUtility.HtmlDecode(Body);
 
-            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCN>(), mLoggerFactory);
             /*TODO Javier migrar
             GestionAmigos gestorAmigos = new GestionAmigos(amigosCN.ObtenerAmigosDeIdentidad(IdentidadActual.Clave), IdentidadActual.GestorIdentidades, mLoggingService, mEntityContext, mConfigService);
 
@@ -479,7 +492,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string[] listaContactos = ContactsList.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
 
-            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCN>(), mLoggerFactory);
             /* TODO Javier migrar
             AmigosDS amigosDS = amigosCN.ObtenerGrupoYMiembros(GroupID);
             GestionAmigos gestionAmigos = new GestionAmigos(amigosDS, mLoggingService, mEntityContext, mConfigService);
@@ -517,7 +530,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
 
-            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCN>(), mLoggerFactory);
 
             string[] listaGrupos = GroupsList.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
 

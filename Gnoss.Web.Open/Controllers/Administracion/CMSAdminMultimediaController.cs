@@ -2,6 +2,7 @@
 using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
@@ -21,12 +22,15 @@ using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
 using Es.Riam.Web.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -36,11 +40,15 @@ using System.Web;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-    public class CMSAdminMultimediaController : ControllerBaseWeb
-    {
-        public CMSAdminMultimediaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class CMSAdminMultimediaController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CMSAdminMultimediaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminMultimediaController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -51,8 +59,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         #endregion
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
         public ActionResult Index(string pagina, string search, string extension, string numusos)
         {
             EliminarPersonalizacionVistas();
@@ -119,7 +126,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult CargarNuevoItem()
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
+		public ActionResult CargarNuevoItem()
         {
             ActionResult partialView = View();
 
@@ -135,7 +143,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult CargarEliminarMultimediaItem()
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
+		public ActionResult CargarEliminarMultimediaItem()
         {
             // Devolver la vista modal
             return GnossResultHtml("_modal-views/_delete-multimedia-item", null);
@@ -166,7 +175,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         if (ExtensionesImagenesPermitidas.Contains(extensionArchivo))
                         {
                             
-                            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+                            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                             servicioImagenes.Url = UrlIntragnossServicios;
 
                             string primeroDisponible = servicioImagenes.ObtenerNombreDisponible(ruta + nombre + extensionArchivo);
@@ -182,7 +191,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             try
                             {
                                 string rutaFichero = $"{UtilArchivos.ContentImagenes}/{ruta}";
-                                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+                                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                                 servicioImagenes.Url = UrlIntragnossServicios;
                                 cargado = servicioImagenes.AgregarFichero(buffer1.ToArray(), nombre, extensionArchivo, rutaFichero);
                                 InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(buffer1), fichero.FileName);
@@ -210,7 +219,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         public void CargarModelo(int pPagina, string pSearch, string pExtension, string pNumusos)
         {
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
             servicioImagenes.Url = UrlIntragnossServicios;
             string ruta = $"{UtilArchivos.ContentImagenesProyectos}/personalizacion/{ProyectoSeleccionado.Clave.ToString().ToLower()}/cms/";
             List<FileInfoModel> datosFicheros = servicioImagenes.ObtenerDatosFicherosDeCarpeta(ruta);
@@ -395,7 +404,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mGestorCMS == null)
                 {
-                    CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
                     mGestorCMS = new GestionCMS(CMSCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
                     CMSCN.Dispose();
                 }
@@ -411,7 +420,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     mExtensionesImagenesPermitidas = new List<string>();
                     ParametroAplicacionCL paramCL = null;
-                    paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
                     //ParametroAplicacionDS paramDS = ((ParametroAplicacionDS)paramCL.ObtenerParametrosAplicacion());
                     List<AD.EntityModel.ParametroAplicacion> paramDS = paramCL.ObtenerParametrosAplicacionPorContext();
                     bool extensionesConfiguradas = false;
@@ -453,7 +462,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     mExtensionesDocumentosPermitidos = new List<string>();
                     ParametroAplicacionCL paramCL = null;
-                    paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
                     // ParametroAplicacionDS paramDS = ((ParametroAplicacionDS)paramCL.ObtenerParametrosAplicacion());
                     List<AD.EntityModel.ParametroAplicacion> paramDS = paramCL.ObtenerParametrosAplicacionPorContext();
                     bool extensionesConfiguradas = false;
@@ -486,12 +495,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        #endregion
+		#endregion
 
-        #region Callback
+		#region Callback
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
-        public ActionResult ActionCallback()
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
+		public ActionResult ActionCallback()
         {
             string action = RequestParams("callback");
 
@@ -505,7 +514,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if ((!ViewBag.ListaComponentesItem.ContainsKey(nombreComponente) || ViewBag.ListaComponentesItem[nombreComponente].Count == 0)
                     && (!ViewBag.ListaPaginasItem.ContainsKey(nombreComponente) || ViewBag.ListaPaginasItem[nombreComponente].Count == 0))
                 {
-                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+                    ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                     servicioImagenes.Url = UrlIntragnossServicios;
                     String ruta = UtilArchivos.ContentImagenesProyectos + "/personalizacion/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "/cms/";
                     servicioImagenes.BorrarImagen(ruta + nombreComponente);

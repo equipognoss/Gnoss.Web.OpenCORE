@@ -1,0 +1,24 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal en el que se cargara dinamicamente la edición de un rol
+*@
+
+<div id="modal-editar-rol" class="modal modal-top fade modal-edicion modal-con-tabs background-azul" tabindex="-1" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            @*Espacio reservado para que se carge dinamicamente el formulario de edicion de un rol*@
+            <div id="content">
+                <div class="modal-header">
+                    <p class="modal-title">
+                        <span class="spinner-border white-color mr-2"></span>
+                        @Html.GetText("DEVTOOLS", "CARGANDOMODAL")
+                    </p>
+                    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+                </div>
+                <div class="modal-body">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

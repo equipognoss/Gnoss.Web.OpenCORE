@@ -23,6 +23,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Es.Riam.InterfacesOpen;
 using Microsoft.Extensions.Hosting;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -128,11 +131,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// Handles the registration of redirections 
     /// </summary>
-    public class AdministrarRedireccionesController : ControllerBaseWeb
-    {
-        public AdministrarRedireccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarRedireccionesController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarRedireccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarRedireccionesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -146,8 +153,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// 
         /// </summary>
         /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
-        public ActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
+		public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -169,8 +176,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
-        public ActionResult NuevaRedireccion()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
+		public ActionResult NuevaRedireccion()
         {
             EliminarPersonalizacionVistas();
 
@@ -191,8 +198,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
-        public ActionResult Guardar(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
+		public ActionResult Guardar(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
         {
             GuardarLogAuditoria();
             string errores = "";
@@ -312,8 +319,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mPaginaModel.RedirectionsList = new List<ManageRedirectionsViewModel.RedirectionModel>();
 
                     string dominio = ProyectoSeleccionado.UrlPropia(IdiomaUsuario).Replace("http://", "").Replace("https://", "");
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    List<RedireccionRegistroRuta> listaRedirecciones = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, false);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+                    List<RedireccionRegistroRuta> listaRedirecciones = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, true);
 
                     if (listaRedirecciones != null && listaRedirecciones.Count > 0)
                     {
@@ -366,12 +373,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void GuardarRedirecciones(List<ManageRedirectionsViewModel.RedirectionModel> pListaRedireccionesVista)
         {           
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 
             try
             {
                 string dominio = ProyectoSeleccionado.UrlPropia(IdiomaUsuario).Replace("http://", "").Replace("https://", "");
-                List<RedireccionRegistroRuta> listaRedireccionesBD = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, true);
+                List<RedireccionRegistroRuta> listaRedireccionesBD = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, false);
 
                 foreach (ManageRedirectionsViewModel.RedirectionModel redireccionVista in pListaRedireccionesVista)
                 {

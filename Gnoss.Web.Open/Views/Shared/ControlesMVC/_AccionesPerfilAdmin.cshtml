@@ -100,7 +100,7 @@ Variables
 }
 
 
-@if (identidad.IsProyectAdmin == true)
+@if (identidad.IsProyectAdmin == true || identidad.CanManageUsers)
 {
     <div class="dropdown dropdown-select">               
         @* Primera acción - Título *@                                      
@@ -324,7 +324,7 @@ Variables
                 </a>
             }
 
-            @* Acción para editar administrar páginas de la comunidad *@
+            @*
             @if (!isAdministratorRol)
             {
                 <a class="item-dropdown btnLoadManagePagePermissions" data-toggle="modal"
@@ -335,7 +335,7 @@ Variables
                         @Html.GetText("DEVTOOLS","ADMINISTRARPERMISOSDEPAGINAS")
                     </span>
                 </a>
-            }    
+            }    *@
 
         </div>
     </div>  

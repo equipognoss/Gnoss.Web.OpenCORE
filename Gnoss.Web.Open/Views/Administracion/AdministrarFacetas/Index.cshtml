@@ -24,11 +24,11 @@ Variables
 }
 
 @{
-    @* Carga de idiomas *@
-    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
-    {
-        idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
-    }     
+	@* Carga de idiomas *@
+	foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+	{
+		idiomas += idiomaKey + "|" + Model.ListaIdiomas[idiomaKey] + "&&&";
+	}     
 }
 
 @*
@@ -41,17 +41,17 @@ Variables
 
 @* Migas de Pan *@
 <div class="col col-12 col-breadcrumb">
-    <ul>
-        <li>
-            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-        </li>
-        <li>
-            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/descubrimiento-analisis">@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")</a>
-        </li>
-        <li>
-            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOM")
-        </li>
-    </ul>
+	<ul>
+		<li>
+			<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+		</li>
+		<li>
+			<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/descubrimiento-analisis">@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")</a>
+		</li>
+		<li>
+			@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOM")
+		</li>
+	</ul>
 </div>
 
 @* Contenido Central *@
@@ -59,65 +59,65 @@ Variables
 	@* Panel de idiomas *@	
 	<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
 		@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
-			@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
-				if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
-					<li class="nav-item" role="presentation">
-						<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
-							id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
-							data-language = "@idioma.Key"
-							role="tab"
-							aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
-					</li>
-					contNumPestañasVisibles += 1;
-				}				
-			}
-			@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
-			@if (contNumPestañasVisibles < cabecera.Languajes.Count){
-				@* Dropdown para resto de categorías *@
-				<li class="nav-item">
-					<div class="dropdown">
-						@* Desplegable del dropdown *@
-						<a
-							class="nav-link dropdown-toggle"
-							data-toggle="dropdown"
-							href="#"
-							role="button"
-							aria-haspopup="true"
-							aria-expanded="false"
-							>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
-						@* Sección para mostrar items del dropdown*@
-						<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
-							<ul class="no-list-style">
-								@* Pintado del resto de pestañas en Dropdown *@									
-								@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
-									var item = cabecera.Languajes.ElementAt(i);
-									var itemKey = item.Key;
-									var itemValue = item.Value;
-
-									@* Cada item del dropdown *@
-									<li>
-										<a id="@("ver_paginas_" + itemKey)" 
-										   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
-										   data-toggle="tab"
-										   href="#@("litVer" + itemKey)"
-										   data-language = "@itemKey">
-										   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
-									</li>
-								}
-							</ul>
-						</div>
-					</div>
+		@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
+			if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
+				<li class="nav-item" role="presentation">
+					<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
+					id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
+					data-language = "@idioma.Key"
+					role="tab"
+					aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
 				</li>
-			}
+				contNumPestañasVisibles += 1;
+			}				
+		}
+		@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+		@if (contNumPestañasVisibles < cabecera.Languajes.Count){
+			@* Dropdown para resto de categorías *@
+			<li class="nav-item">
+				<div class="dropdown">
+					@* Desplegable del dropdown *@
+					<a
+					class="nav-link dropdown-toggle"
+					data-toggle="dropdown"
+					href="#"
+					role="button"
+					aria-haspopup="true"
+					aria-expanded="false"
+					>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+					@* Sección para mostrar items del dropdown*@
+					<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+						<ul class="no-list-style">
+							@* Pintado del resto de pestañas en Dropdown *@									
+							@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
+								var item = cabecera.Languajes.ElementAt(i);
+								var itemKey = item.Key;
+								var itemValue = item.Value;
+
+								@* Cada item del dropdown *@
+								<li>
+									<a id="@("ver_paginas_" + itemKey)" 
+									class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+									data-toggle="tab"
+									href="#@("litVer" + itemKey)"
+									data-language = "@itemKey">
+										@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+								</li>
+							}
+						</ul>
+					</div>
+				</div>
+			</li>
+		}
 	</ul>
 
 	@* Contenedor global de páginas *@
 	<div class="tab-content">	
 		@* Contenido de las diferentes páginas *@
 		<div id="panelListadoFacetas" 
-			class="tab-pane fade show active" 
-			role="tabpanel" 
-			aria-labelledby="panelListadoFacetas">
+		class="tab-pane fade show active" 
+		role="tabpanel" 
+		aria-labelledby="panelListadoFacetas">
 
 			@* Contenedor del Título de la Sección + Buscador *@
 			<div class="row">
@@ -128,10 +128,13 @@ Variables
 							<span id="numFacetas" class="numResultados"></span>
 						</h1>
 					</div>
-					@* Botón para crear item *@						
-					<div class="acciones d-flex align-items-center">
-						@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-faceta", Model)							
-					</div>
+					@* Botón para crear item *@			
+					@if (ViewBag.CrearFacetaPermitido != null && ViewBag.CrearFacetaPermitido)
+					{
+						<div class="acciones d-flex align-items-center">
+							@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-faceta", Model)
+						</div>
+					}					
 				</div>
 
 				@* Buscador *@
@@ -192,7 +195,10 @@ Variables
 													</div>
 													<div class="component-faceta-wrap">
 														<span class="component-faceta">@Html.GetText("ADMINISTRACIONSEMANTICA","FACETA")</span>
-													</div>																											
+													</div>				
+													<div class="component-fecha-wrap">
+														<span class="component-fecha">@Html.GetText("COMMON", "FECHA")</span>
+													</div>
 												</div>
 												<div class="component-header-right">
 													<div class="component-actions-wrap">
@@ -209,7 +215,6 @@ Variables
 						@* Contenido de facetas *@
 						<ul id="id-added-faceta-list" 
 							class="js-community-faceta-list component-list no-list-style">
-			
 							@* Pintado de cada faceta *@
 							@foreach (FacetaModel faceta in Model.ListaFacetas.OrderBy(p2 => p2.Orden))
 							{
@@ -268,9 +273,6 @@ Variables
 								<div class="component ">
 									<div class="component-header-wrap">
 										<div class="component-header">
-											<div class="component-sortable js-component-sortable-faceta">
-												<span class="material-icons-outlined sortable-icon">drag_handle</span>
-											</div>
 											@* Sección títulos de listado de facetas *@
 											<div class="component-header-content">
 												<div class="component-header-left">

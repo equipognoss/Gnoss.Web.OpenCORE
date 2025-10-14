@@ -6,6 +6,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Tesauro;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.Tesauro;
 using Es.Riam.Gnoss.Logica.Identidad;
@@ -27,6 +28,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -35,10 +37,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class AcercaDeComunidadController : ControllerPestanyaBase
     {
-
-        public AcercaDeComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AcercaDeComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AcercaDeComunidadController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         [TypeFilter(typeof(AccesoPestanyaAttribute))]
@@ -46,7 +51,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             AboutTheCommunityViewModel paginaModel = new AboutTheCommunityViewModel();
 
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 
             int? numRecursos = proyCL.ObtenerContadorComunidad(ProyectoSeleccionado.Clave, TipoBusqueda.Recursos);
             if (!numRecursos.HasValue) { numRecursos = ContadoresProyecto.NumeroRecursos; }
@@ -65,8 +70,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (ProyectoSeleccionado.GestorProyectos.GestionTesauro == null)
             {
-                TesauroCL tesCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                ProyectoSeleccionado.GestorProyectos.GestionTesauro = new GestionTesauro(tesCL.ObtenerTesauroDeProyectoMyGnoss(), mLoggingService, mEntityContext);
+                TesauroCL tesCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
+                ProyectoSeleccionado.GestorProyectos.GestionTesauro = new GestionTesauro(tesCL.ObtenerTesauroDeProyectoMyGnoss(), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 tesCL.Dispose();
             }
 
@@ -82,18 +87,24 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (ParametrosGeneralesRow.PermitirCertificacionRec)
             {
-                ParametroGeneralCN paramGCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                paginaModel.CertificationPolicy = paramGCN.ObtenerPoliticaCertificacionDeProyecto(ProyectoSeleccionado.Clave);
+                ParametroGeneralCN paramGCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
+                string politicaCertificacionMultiidioma = paramGCN.ObtenerPoliticaCertificacionDeProyecto(ProyectoSeleccionado.Clave);
+                paginaModel.CertificationPolicy = UtilCadenas.ObtenerTextoDeIdioma(politicaCertificacionMultiidioma, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                 paramGCN.Dispose();
 
-                paginaModel.CertificationLevels = Comunidad.CertificationLevels;
+                paginaModel.CertificationLevels = new List<string>();
+
+                foreach(string nivelCertificacion in Comunidad.CertificationLevels)
+                {
+                    paginaModel.CertificationLevels.Add(UtilCadenas.ObtenerTextoDeIdioma(nivelCertificacion, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto));
+                }
             }
 
             paginaModel.InvitationsAvailable = ParametrosGeneralesRow.InvitacionesDisponibles;
             paginaModel.RatingsAvailable = ParametrosGeneralesRow.VotacionesDisponibles;
             paginaModel.CommentsAvailable = ParametrosGeneralesRow.ComentariosDisponibles;
 
-            ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyecto>(), mLoggerFactory);
 
             List<Identidad> ListaAdministradores = controladorProyecto.CargarAdministradoresProyecto(ProyectoSeleccionado);
             List<Guid> listaIds = new List<Guid>();
@@ -105,7 +116,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             Dictionary<Guid, string> listaFotosIds = identCN.ObtenerSiListaIdentidadesTienenFoto(listaIds);
             identCN.Dispose();
 

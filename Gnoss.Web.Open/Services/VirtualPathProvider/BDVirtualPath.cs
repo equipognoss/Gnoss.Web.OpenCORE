@@ -3,6 +3,8 @@ using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,6 +18,8 @@ namespace Gnoss.Web.Services.VirtualPathProvider
         private readonly LoggingService _loggingService;
         EntityContext _entityContext;
         ConfigService _configService;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         private IServicesUtilVirtuosoAndReplication _servicesUtilVirtuosoAndReplication;
         public static ConcurrentDictionary<string, string> ListaRutasVirtuales { get; } = new ConcurrentDictionary<string, string>();
         private static Dictionary<Guid, string> ListaHtmlsTemporales = new Dictionary<Guid, string>();
@@ -34,11 +38,13 @@ namespace Gnoss.Web.Services.VirtualPathProvider
             "@using Microsoft.AspNetCore.Components.Web"
         };
 
-        public BDVirtualPath(EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
+        public BDVirtualPath(EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, ILogger<BDVirtualPath> logger, ILoggerFactory loggerFactory)
         {
             _loggingService = loggingService;
             _entityContext = entityContext;
             _configService = configService;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
             _servicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
         }
 
@@ -87,7 +93,7 @@ namespace Gnoss.Web.Services.VirtualPathProvider
                                 tipoPagina += parametrosPagina[0];
                             }
 
-                            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(_entityContext, _loggingService, _configService, _servicesUtilVirtuosoAndReplication);
+                            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(_entityContext, _loggingService, _configService, _servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 
                             if (tipoPagina == "FichaRecurso")
                             {

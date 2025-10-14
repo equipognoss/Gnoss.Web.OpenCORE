@@ -520,7 +520,17 @@ main .container .row-content { min-height: calc(100vh - 165px); }
 
 
 /* BOTONES */
-.btn { text-transform: none; display: inline-flex; align-items: center; justify-content: center; height: 38px; padding: 0 25px; line-height: 1; font-size: 0.867rem; text-decoration: none !important; position: relative; }
+.btn {
+    text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px; /*padding: 0 25px;*/
+    line-height: 1;
+    font-size: 0.867rem;
+    text-decoration: none !important;
+    position: relative;
+}
 .btn:hover,
 .btn:focus,
 .btn:active:focus { outline: none; box-shadow: none; }
@@ -772,7 +782,10 @@ table.table > head { }
 table.table > thead > tr > th { color: var(--c-texto); border: none; border-bottom: 1px solid var(--c-gris-borde); }
 table.table > tbody { }
 table.table > tbody > tr > td { border: none; border-bottom: 1px solid var(--c-gris-borde); }
-table.table > tbody > tr > td .btn { height: auto; text-align: left; padding: 0;}
+    table.table > tbody > tr > td .btn {
+        height: auto;
+        text-align: left; /*padding: 0;*/
+    }
 table.table > tbody > tr > td .btn .material-icons { font-size: 22px; }
 table.table > tbody > tr > td .custom-control.custom-checkbox { min-height: auto; padding-top: 0; padding-bottom: 0; }
 table.dataTable.dtr-inline.collapsed.table-sm > tbody > tr > td:first-child:before,
@@ -1188,7 +1201,8 @@ header .row.community-row .community-menu-wrapper > a { display: none; color: in
 .menuLateral.usuario .menuUsuario .group-collapse ul li.nuevos a:hover,
 .menuLateral.usuario .menuUsuario .group-collapse ul li a:hover { color: var(--c-primario); }
 .menuLateral.usuario .menuUsuario .group-collapse ul li.liMensajes:after { content: "\e0e1" }
-.menuLateral.usuario .menuUsuario .group-collapse ul li.liNotificaciones:after { content: "\e7f5" }
+.menuLateral.usuario .menuUsuario .group-collapse ul li.liSuscripciones:after {content: "\e89a"}
+.menuLateral.usuario .menuUsuario .group-collapse ul li.liNotificaciones:after {content: "\e7f5"}
 .menuLateral.usuario .menuUsuario .group-collapse ul li.liComentarios:after { content: "\e0cb" }
 .menuLateral.usuario .menuUsuario .group-collapse ul li.liContactos:after { content: "\e7ff" }
 .menuLateral.usuario .menuUsuario .group-collapse.espacio ul li:after { content: "\e2c8" }
@@ -1682,8 +1696,13 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .resource-list .resource .info-wrap .autor,
 .resource-list .resource .info-wrap .autor a { font-size: 0.8rem; color: var(--c-texto-claro); }
 /* Destinatarios de mensajes en Listado de mensajes */
-.resource-list .resource .info-wrap .autor.destinatario {display: flex; flex-wrap: wrap; align-items: center;}
-
+.resource-list .resource .info-wrap .autor.destinatario { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-overflow: ellipsis;}
+.resource-list .resource .info-wrap { gap: 1.2em; }
+.resource-list .resource .info-wrap__details { display: flex; align-items: center; }
+@media (max-width: 767px) {
+    .resource-list .resource .info-wrap { flex-direction: column; gap: 0.5em; }    
+    .info-wrap__details { width: 100%; justify-content: flex-end; }
+}
 .resource-list .resource .middle-wrap { margin-bottom: 15px; }
 .resource-list .resource .middle-wrap .title-wrap { padding-bottom: 3px; }
 .resource-list .resource .middle-wrap .title-wrap .resource-title { position: relative; font-size: 1.067rem; font-weight: 500; line-height: 20px; color: var(--c-texto); margin-bottom: 0px; }
@@ -2008,6 +2027,18 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .user-miniatura .acciones-usuario-wrap .acciones-recurso-listado { margin-left: 10px; }
 .user-miniatura .acciones-usuario-wrap .acciones-recurso-listado .dropdown-menu { margin-top: 7px; }
 
+/* SOLICITUDES DE COMUNIDAD */
+.request-list .request{ border-bottom: 1px solid var(--c-gris-borde)}
+.request { display: flex;flex-direction: column;gap: 0.5em; }
+.request_details { display: flex; justify-content: space-between; gap: 20px; align-items: normal; }
+.request__detailsInfo { display: flex;align-items: center;justify-content: space-between;flex: 1;gap: 0.5em; }
+.request__description{ color: var(--c-texto-claro); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; white-space: normal; }
+.request__info { display: flex; justify-content: space-between; flex: 1; align-items: center; }
+.request__mainInfo h4, .request__extraInfo h4{ color: var(--c-texto-claro) }
+.request__detailsInfo > span { padding-left: 0px; }
+@media (max-width: 768px) { .request_details{flex-direction: column;} }
+
+
 @media (max-width: 767px){
     .user-miniatura { flex-wrap: wrap; }
     .user-miniatura .nombre-usuario-wrap { min-width: 200px; }
@@ -2059,23 +2090,25 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .fichaRecurso .col-contenido li.option_mobile { display: none; }
 
 .fichaRecurso .col-contenido .contenido { margin-bottom: 15px; }
-/*.fichaRecurso .col-contenido .contenido * { color: var(--c-texto-medio); font-size: 0.933rem; line-height: 21px; }*/
-/* Estilos generales para todo el contenido dentro de TinyMCE, excepto pre, code y span dentro de pre y code */
-.fichaRecurso .col-contenido .contenido *:not(pre):not(code):not(pre span):not(code span) {
-    color: var(--c-texto-medio);
-    font-size: 0.933rem;
-    line-height: 21px;
-}
+/* Elementos de primer nivel estos elementos reciben el color predeterminado. */
+.fichaRecurso .contenido > * { color: var(--c-texto-medio); font-size: 0.933rem; line-height: 21px; }
+/* Elementos hijos (> * *) heredan el color del contenedor en lugar de sobrescribirlo */
+.fichaRecurso .contenido > * * { color: inherit; }
+
+/* Ficha de recurso semántico (Por defecto) */
+.contenidoSemantico .contentGroup > strong {font-size: 1rem;letter-spacing: 1.1px;text-transform: uppercase;margin-top: 20px;margin-bottom: 5px;font-weight: 500;color: var(--c-texto-claro);border-bottom: 2px solid #878787;}
+.contenidoSemantico .edit .control-label {color: var(--c-texto-claro);; font-weight: 400;font-size: 1rem;}
+.contenidoSemantico .group h3 {font-size: 1rem;letter-spacing: 1.1px;text-transform: uppercase;margin-top: 20px;margin-bottom: 5px;font-weight: 500;color: var(--c-texto-claro);border-bottom: 2px solid #878787;}
+.contenidoSemantico .group .contentgroup .control-label, .contenidoSemantico .contentGroup h4 { color: var(--c-texto-claro); font-weight: 400; font-size: 14px;}
+.contenidoSemantico .group .contentgroup span.values .value, .contenidoSemantico .contentGroup .edit .values .value { font-weight:500; }
+.contenidoSemantico img{ width: 100%; height: auto; }
+.contenidoSemantico div{ margin-bottom:10px; }
+
 /* MathJax visualización de fórmulas */
 .math-tex *{line-height: 0px !important;}
 /* CKEditor */
 .cke_editable {padding: 10px;}
-/* Permitir el color añadido desde ckEditor al texto */
-/*.fichaRecurso .col-contenido .contenido span{color: inherit;}*/
-/* Permitir colores del TinyMCE pero no de CODE-PRE */
-.fichaRecurso .col-contenido .contenido span:not(pre):not(code):not(pre span):not(code span) {
-    color: inherit;
-}
+
 /* Eliminación de margen de separación del Editor de código del TinyMCE */
 .ace_print-margin-layer{display: none !important;}
 /* Evitar visualizar contenido hasta que no se cargue en Editor TinyMCE */
@@ -3280,3 +3313,29 @@ table.table > tbody > tr.activo > td { font-weight: 500; color: var(--c-primario
 .withDarker{ color: #046bf1;}
 .col-breadcrumb a{color: #046bf1;}
 .badge{background-color: var(--c-texto-claro);}
+
+/* AUTOCOMPLETE RESULTADOS (Custom Autocomplete) */
+.ac_custom_fill ul{ padding: 0px; }
+.ac_custom_fill .autocomplete__result-item {display: flex;align-items: center;padding: 10px;border-bottom: 1px solid var(--c-gris-borde);}
+.ac_custom_fill .autocomplete__result-item-image {flex-shrink: 0;margin-right: 10px;width: 40px;height: 40px;display: flex;justify-content: center;align-items: center;background-color: var(--c-gris-fondo);border-radius: 5px;overflow: hidden;}
+.ac_custom_fill .autocomplete__result-item-img {width: 100%;height: 100%;object-fit: cover;}
+.ac_custom_fill .autocomplete__result-item-placeholder {font-size: 20px;color: var(--c-gris-borde);display: flex;justify-content: center;align-items: center;width: 100%;height: 100%;text-align: center;background-color: var(--c-gris-fondo);border-radius: 5px;}
+.autocomplete__result-item-content {display: flex;flex-direction: column;}
+.ac_custom_fill .autocomplete__result-item-title {font-weight: bold;font-size: 14px;}
+.ac_custom_fill .autocomplete__result-item-subtype {font-size: 12px;color: var(--c-texto-claro);}
+.ac_custom_fill .ac_over {background-color: whitesmoke;color: var(--c-texto) !important;border-radius: 5px;transition: background-color 0.3s ease, color 0.3s ease;}
+.ac_custom_fill .ac_over .autocomplete__result-item-anchor:hover {color: var(--c-primario) ;opacity: 0.7;transition: opacity 0.2s ease, color 0.3s ease;}
+
+/* MIS COMUNIDADES */
+.card-community .card { height: 100%; }
+.card-community .card .card-wrapper { height: 100%; flex-direction: column; display: flex}
+.card-community-img { padding-top: 10px}
+.card-community-img img { overflow: hidden; height: 60px; width: 60px; border-radius: 50%; display: flex; margin: auto; object-fit: cover }
+.card .card-body .community-card-description { max-height: 150px; overflow: hidden; max-width: 350px; }
+.card .card-body .social { display: flex; }
+.card .card-body .social > div { display: flex; align-items: center; margin-right: 1.5em; }
+.listView .resource.card-community .card { display: flex; flex-direction: row; }
+.listView .card-community-img { display: flex; align-items: center; padding: 0 20px; height: 100%; border-right: 1px solid rgba(0,0,0,.125); }
+.listView .card-wrapper { width: 100% }
+.listView .card .card-body .community-card-description { max-height: 250px; overflow: hidden; max-width: 100%; }
+/* */

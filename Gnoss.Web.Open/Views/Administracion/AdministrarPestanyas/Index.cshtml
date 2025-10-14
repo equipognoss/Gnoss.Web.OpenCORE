@@ -10,21 +10,22 @@ Variables
 *@
 
 @{
-	CommunityModel Comunidad = Html.GetComunidad();
-	HeaderModel cabecera = Html.GetCabecera();
-	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
-	// Carga de idiomas de la plataforma
-	string idiomas = "";
-	// Contador del nº de pestañas listadas
-	int contNumPestañasVisibles = 0;
-	// Nº de pestañas de idiomas a visualizar en la sección Tab
-	int numMaxPestañasIdiomasVisibles = 2;
-	// Nº de páginas existentes en la comunidad
-	int numPaginas = Model.ListaPestanyas.Count;
-	// Referencia al AdministrarPestanyasViewModel para el botón de tipo de pintado de tipo de páginas desde la cabecera
-	ViewBag.AdministrarPestanyasViewModel = Model;
-	// Control de poder guardar datos según el estado de CI/CD
-	bool allowSaveData = true;
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    // Carga de idiomas de la plataforma
+    string idiomas = "";
+    // Contador del nº de pestañas listadas
+    int contNumPestañasVisibles = 0;
+    // Nº de pestañas de idiomas a visualizar en la sección Tab
+    int numMaxPestañasIdiomasVisibles = 2;
+    // Nº de páginas existentes en la comunidad
+    int numPaginas = Model.ListaPestanyas.Count;
+    // Referencia al AdministrarPestanyasViewModel para el botón de tipo de pintado de tipo de páginas desde la cabecera
+    ViewBag.AdministrarPestanyasViewModel = Model;
+    // Control de poder guardar datos según el estado de CI/CD
+    bool allowSaveData = true;
+    string urlLoadStructHistory = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL") + "/load-history";
 }
 
 @{
@@ -32,13 +33,13 @@ Variables
     foreach (string idiomaKey in Model.ListaIdiomas.Keys)
     {
         idiomas += $"{idiomaKey}|{Model.ListaIdiomas[idiomaKey]}&&&";
-    }     
+    }
 
-	@* Controlar la posibilidad de guardar datos (CI/CD) *@
-	if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
-	{
-		allowSaveData = false;
-	}
+    @* Controlar la posibilidad de guardar datos (CI/CD) *@
+    if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+    {
+        allowSaveData = false;
+    }
 }
 
 @*
@@ -47,258 +48,304 @@ Variables
 *@
 
 <input type="hidden" id="idiomasComunidad" value="@idiomas" />
-<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
+<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto" />
+<input type="hidden" id="txtHackCheckSeleccionados" />
 
-    @* Migas de Pan *@
-    <div class="col col-12 col-breadcrumb">
-        <ul>
-            <li>
-                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-            </li>
-            <li>
-                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/estructura">@Html.GetText("DEVTOOLS","ESTRUCTURA")</a>
-            </li>
-            <li>
-                @Html.GetText("COMADMINCOMUNIDAD","ADMINISTRARPESTANYASCOM")
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/estructura">@Html.GetText("DEVTOOLS", "ESTRUCTURA")</a>
+        </li>
+        <li>
+            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARPESTANYASCOM")
+        </li>
+    </ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+    @* Panel de idiomas *@	
+  @if (Html.ObtenerEdicionMultiIidoma())
+    {
+        <ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+            @* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
+            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+            {
+                if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+                {
+                    <li class="nav-item" role="presentation">
+                        <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                           id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                           data-language="@idioma.Key"
+                           role="tab"
+                           aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                    </li>
+                    contNumPestañasVisibles += 1;
+                }
+            }
+            @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+            @if (contNumPestañasVisibles < cabecera.Languajes.Count)
+            {
+                @* Dropdown para resto de categorías *@
+                <li class="nav-item">
+                    <div class="dropdown">
+                        @* Desplegable del dropdown *@
+                        <a class="nav-link dropdown-toggle"
+                           data-toggle="dropdown"
+                           href="#"
+                           role="button"
+                           aria-haspopup="true"
+                           aria-expanded="false">@Html.GetText("DEVTOOLS", "OTROSIDIOMAS")</a>
+                        @* Sección para mostrar items del dropdown*@
+                        <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+                            <ul class="no-list-style">
+                                @* Pintado del resto de pestañas en Dropdown *@									
+                         @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+                                {
+                                    var item = cabecera.Languajes.ElementAt(i);
+                                    var itemKey = item.Key;
+                                    var itemValue = item.Value;
+
+                                    @* Cada item del dropdown *@
+                                    <li role="presentation">
+                                        <a id="@("ver_paginas_" + itemKey)"
+                                           class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+                                           data-toggle="tab"
+                                           href="#@("litVer" + itemKey)"
+                                           data-language="@itemKey">
+                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        KeyValuePair<string, string>
+        idioma = new KeyValuePair<string, string>
+
+        ("es", "español");
+        <ul class="nav nav-tabs id="tabIdiomasPaginas" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                   data-language="@idioma.Key"
+                   role="tab"
+                   aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
             </li>
         </ul>
-    </div>
+    }
 
-    @* Contenido Central *@
-    <div class="formulario-edicion background-blanco">       
-		@* Panel de idiomas *@	
-		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
-			@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
-				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
-					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
-					{
-						<li class="nav-item" role="presentation">
-							<a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
-							   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
-							   data-language="@idioma.Key"
-							   role="tab"
-							   aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
-						</li>
-						contNumPestañasVisibles += 1;
-					}
-				}
-				@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
-				@if (contNumPestañasVisibles < cabecera.Languajes.Count){
-					@* Dropdown para resto de categorías *@
-					<li class="nav-item">
-						<div class="dropdown">
-							@* Desplegable del dropdown *@
-							<a
-								class="nav-link dropdown-toggle"
-								data-toggle="dropdown"
-								href="#"
-								role="button"
-								aria-haspopup="true"
-								aria-expanded="false"
-								>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
-							@* Sección para mostrar items del dropdown*@
-							<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
-								<ul class="no-list-style">
-									@* Pintado del resto de pestañas en Dropdown *@									
-									@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
-										var item = cabecera.Languajes.ElementAt(i);
-										var itemKey = item.Key;
-										var itemValue = item.Value;
+    @* Contenedor global de páginas *@
+    <div class="tab-content">
+        @* Contenido de las diferentes páginas *@
+        <div id="panelListadoPaginas"
+             class="tab-pane fade show active"
+             role="tabpanel"
+             aria-labelledby="panelListadoPaginas">
 
-										@* Cada item del dropdown *@
-										<li role="presentation">
-											<a id="@("ver_paginas_" + itemKey)" 
-											   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
-											   data-toggle="tab"
-											   href="#@("litVer" + itemKey)"
-											   data-language = "@itemKey">
-											   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
-										</li>
-									}
-								</ul>
-							</div>
-						</div>
-					</li>
-				}
-		</ul>
+            @* Contenedor del Título de la Sección + Buscador *@
+            <div class="row">
+                @* Título de la sección de páginas + Nº de páginas *@
+                <div class="col col-12 header-listado">
+                    <div class="h1-container">
+                        <h1>
+                            @Html.GetText("COMADMINPESTANYAS", "TITULO")
+                            <span id="numPaginas" class="numResultados">@numPaginas</span>
+                        </h1>
+                    </div>
+                    @* Botón para crear página *@						
+      <div class="acciones d-flex align-items-center">
+                        @Html.PartialView("../Shared/Layout/_partial-views/_layout-add-page-admin", Model)
+                    </div>
+                </div>
 
-		@* Contenedor global de páginas *@
-		<div class="tab-content">	
-			@* Contenido de las diferentes páginas *@
-			<div id="panelListadoPaginas" 
-				class="tab-pane fade show active" 
-				role="tabpanel" 
-				aria-labelledby="panelListadoPaginas">
-
-				@* Contenedor del Título de la Sección + Buscador *@
-				<div class="row">
-					@* Título de la sección de páginas + Nº de páginas *@
-					<div class="col col-12 header-listado">
-						<div class="h1-container">
-							<h1>@Html.GetText("COMADMINPESTANYAS", "TITULO") 
-								<span id="numPaginas" class="numResultados">@numPaginas</span>
-							</h1>
-						</div>
-						@* Botón para crear página *@						
-						<div class="acciones d-flex align-items-center">
-							@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-page-admin", Model)							
-						</div>
-					</div>
-
-					@* Buscador de páginas *@
-					<div class="col col-12 header-buscador">
-						<div class="wrapCol">
-							<div class="col-buscador" style="width: 100%">					
-							@* Formulario para búsquedas de páginas *@
-								<form id="formBuscadorPaginas" onsubmit="return false;">								
-									<div class="finderUtils" id="divCajaBusqueda">
-										<div class="group finderSection">
-											@* Input para realizar la búsqueda de páginas *@
-											<input
-												type="text"
-												id="txtBuscarPagina"
-												class="not-outline finderSectionText"
-												autocomplete="off"
-												placeholder="@Html.GetText("DEVTOOLS","BUSCARENLASECCION")"
-											/>
-											@* Botón para realizar la búsqueda *@
-											<input
-												title="Buscar"
-												type="button"
-												class="findAction"
-												id="inputLupa"
-											/>
-											@* Botón para Facetas de la búsqueda *@
-											<a href="javascript: void(0);" class="btn-filtrar-movil">
-												<span class="material-icons">filter_list</span>
-												<span class="texto">@Html.GetText("DEVTOOLS","FILTRAR")</span>											
-											</a>
-										</div>
-									</div>								
-								</form>
-							</div>
-						</div>
-					</div>
-					@* Contenido o tabla con las páginas de la comunidad *@
-					<div class="col col-12 col-contenido">
-						<div class="wrapCol">
-							@* Cabecera del listado de páginas *@
-							<ul id="id-header-pages-list" class="header-component-list component-list no-list-style">
-								<li class="component-wrap">
-									@* Cabecera de páginas *@
-									<div class="component ">
-										<div class="component-header-wrap">
-											<div class="component-header">
-												<div class="component-sortable js-component-sortable-page">
-													<span class="material-icons-outlined sortable-icon">drag_handle</span>
-												</div>
-												@* Sección títulos de listado de páginas *@
-												<div class="component-header-content">
-													<div class="component-header-left">
-														<div class="component-name-wrap component-w-40">
-															<span class="component-name">@Html.GetText("DEVTOOLS","TITULO")</span>
-														</div>
-														<div class="component-url-wrap component-w-20">
-															<span class="component-url">@Html.GetText("ADMINISTRACIONBASICA","URL")</span>
-														</div>
-														<div class="component-tipo-wrap component-w-20">
-															<span class="component-tipo">@Html.GetText("ADMINISTRACIONBASICA","TIPO")</span>
-														</div>
-														<div class="component-estado-wrap component-w-10">
-															<span class="component-estado">@Html.GetText("ADMINISTRACIONPAGINAS","ACTIVA")</span>
-														</div>
-														<div class="component-visible-wrap component-w-10">
-															<span class="component-visible">@Html.GetText("COMADMINCONTEXTOS","VISIBLE")</span>
-														</div>
-														@*
-														<div class="component-fecha-wrap">
-															<span class="component-fecha">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</span>
-														</div>
+                @* Buscador de páginas *@
+                <div class="col col-12 header-buscador">
+                    <div class="wrapCol">
+                        <div class="col-buscador" style="width: 100%">
+                            @* Formulario para búsquedas de páginas *@
+                            <form id="formBuscadorPaginas" onsubmit="return false;">
+                                <div class="finderUtils" id="divCajaBusqueda">
+                                    <div class="group finderSection">
+                                        @* Input para realizar la búsqueda de páginas *@
+                                        <input type="text"
+                                               id="txtBuscarPagina"
+                                               class="not-outline finderSectionText"
+                                               autocomplete="off"
+                                               placeholder="@Html.GetText("DEVTOOLS", "BUSCARENLASECCION")" />
+                                        @* Botón para realizar la búsqueda *@
+                                        <input title="Buscar"
+                                               type="button"
+                                               class="findAction"
+                                               id="inputLupa" />
+                                        @* Botón para Facetas de la búsqueda *@
+                                        <a href="javascript: void(0);" class="btn-filtrar-movil">
+                                            <span class="material-icons">filter_list</span>
+                                            <span class="texto">@Html.GetText("DEVTOOLS", "FILTRAR")</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @* Contenido o tabla con las páginas de la comunidad *@
+                <div class="col col-12 col-contenido">
+                    <div class="wrapCol">
+                        @* Cabecera del listado de páginas *@
+                        <ul id="id-header-pages-list" class="header-component-list component-list no-list-style">
+                            <li class="component-wrap">
+                                @* Cabecera de páginas *@
+                                <div class="component ">
+                                    <div class="component-header-wrap">
+                                        <div class="component-header">
+                                            <div class="component-sortable js-component-sortable-page">
+                                                <span class="material-icons-outlined sortable-icon">drag_handle</span>
+                                            </div>
+                                            @* Sección títulos de listado de páginas *@
+                                            <div class="component-header-content">
+                                                <div class="component-header-left">
+                                                    <div class="component-name-wrap component-w-40">
+                                                        <span class="component-name">@Html.GetText("DEVTOOLS", "TITULO")</span>
+                                                    </div>
+                                                    <div class="component-url-wrap component-w-20">
+                                                        <span class="component-url">@Html.GetText("ADMINISTRACIONBASICA", "URL")</span>
+                                                    </div>
+                                                    <div class="component-tipo-wrap component-w-20">
+                                                        <span class="component-tipo">@Html.GetText("ADMINISTRACIONBASICA", "TIPO")</span>
+                                                    </div>
+                                                    <div class="component-estado-wrap component-w-10">
+                                                        <span class="component-estado">@Html.GetText("ADMINISTRACIONPAGINAS", "ACTIVA")</span>
+                                                    </div>
+                                                    <div class="component-visible-wrap component-w-15">
+                                                        <span class="component-visible">@Html.GetText("COMADMINCONTEXTOS", "VISIBLE")</span>
+                                                    </div>
+                                                    <div class="component-fecha-wrap component-w-15">
+                                                        <span class="component-fecha">@Html.GetText("ADMINISTRACIONSEMANTICA", "FECHA")</span>
+                                                    </div>
+                                                    @*
 														<div class="component-editor-wrap">
 															<span class="component-editor">@Html.GetText("DEVTOOLS","ÚLTIMOEDITOR")</span>
 														</div>
 														*@
-													</div>
-													<div class="component-header-right">
-														<div class="component-actions-wrap">
-															<span>@Html.GetText("ADMINISTRACIONBASICA","ACCIONES")</span>
-														</div>
-													</div>
-												</div>
-											</div>
-										</div>
-									</div>
-								</li>
-							</ul>
+                                                </div>
+                                                <div class="component-header-right">
+                                                    <div class="component-actions-wrap">
+                                                        <span>@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
 
-							@* Contenido de páginas *@
-							<ul id="id-added-pages-list" 
-								class="js-community-pages-list component-list no-list-style">
-				
-								@* Pintado de cada página *@
-								@foreach (TabModel pestanya in Model.ListaPestanyas.Where(p => p.ParentTabKey == Guid.Empty).OrderBy(p2 => p2.Order))
-								{								
-									PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
-									pintar.pestanya = pestanya;
-									pintar.ListaPestanyas = Model.ListaPestanyas;
-									@Html.PartialView("../Administracion/AdministrarPestanyas/_PintarPestanya", pintar)																						
-								}
-							</ul>							
-						</div>
-					</div>
-				</div>
-			</div>		
-		</div>        
+                        @* Contenido de páginas *@
+                        <ul id="id-added-pages-list"
+                            class="js-community-pages-list component-list no-list-style">
 
-		@* Modal para eliminación de la página *@	
-		@Html.PartialView("_modal-views/_delete-page")
+                            @* Pintado de cada página *@
+                            @foreach (TabModel pestanya in Model.ListaPestanyas.Where(p => p.ParentTabKey == Guid.Empty).OrderBy(p2 => p2.Order))
+                            {
+                                //Añadir el insertar version al tabModel
+                                PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
+                                pintar.pestanya = pestanya;
+                                pintar.ListaPestanyas = Model.ListaPestanyas;
+                                @Html.PartialView("../Administracion/AdministrarPestanyas/_PintarPestanya", pintar)
+
+                                @if (ViewBag.ModificarPaginaPermitido != null && ViewBag.ModificarPaginaPermitido)
+                                {
+                                    @Html.PartialView("_modal-views/_CloseModal", pestanya)
+                                }                                                                
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    @* Modal para eliminación de la página *@
+    @Html.PartialView("_modal-views/_delete-page")
+    <div id="modal-comparar-versiones"
+         class="modal modal-top fade modal-edicion modal-con-tabs"
+         role="dialog"
+         aria-modal="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="modal-comparar-versiones-content">
+            </div>
+        </div>
+    </div>
+    @* Modal para comparar la configuracion de 2 versiones de una página*@
+    <div id="modal-comparar-estructura" class="modal modal-top fade modal-edicion"
+         role="dialog"
+         aria-modal="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="modal-comparar-versiones-estructura-content">
+            </div>
+        </div>
+    </div>
+</div>
 
 @Html.PartialView("_modal-views/_page-item-move")
 
-
 @* Carga de operativa *@
-@section operativaScript{
+@section operativaScript {
     <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/estructura.js?v=@Html.GetVersion()"></script>
-	<!--TFG FRAN-->
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-	<script src="https://code.highcharts.com/highcharts.js"></script>
-	<script src="https://code.highcharts.com/modules/heatmap.js"></script>
-	<script>
-		google.charts.load('current', { 'packages': ['table'] });
-	</script>
+    <!--TFG FRAN-->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
+    <script>
+        google.charts.load('current', { 'packages': ['table'] });
+    </script>
     <script type="text/javascript">
 
         (function ($) {
-			// Permitir o no guardar datos
-			const pParams =
-			{
-				allowSaveData: "@allowSaveData",
-			}
+            // Permitir o no guardar datos
+            const pParams =
+            {
+                allowSaveData: "@allowSaveData",
+                urlLoadStructHistory: "@urlLoadStructHistory"
+            }
 
             // Operativa funcionamiento de Páginas
             operativaGestionPaginas.init(pParams);
-			// Operativa funcionamiento de filtros
-			operativaAsistenteFiltros.init();
+            // Operativa funcionamiento de filtros
+            operativaAsistenteFiltros.init();
         })();
     </script>
 }
 <style>
-	    ol.table li.row ol.exportacionesSortable.asistentesLista section.panEdicion.edit{
+    ol.table li.row ol.exportacionesSortable.asistentesLista section.panEdicion.edit {
         width: auto;
     }
-    .datasetsLista{
+
+    .datasetsLista {
         margin-right: 60px;
     }
-    li.row.dataset input[type="text"]{
+
+    li.row.dataset input[type="text"] {
         width: 450px;
     }
+
     li.row.dataset select {
         width: 450px;
     }
-    .consulta{
-        margin-top:20px;
+
+    .consulta {
+        margin-top: 20px;
     }
 </style>

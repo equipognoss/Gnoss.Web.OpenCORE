@@ -57,63 +57,79 @@ Variables
 
 @* Contenido Central *@
 <div class="formulario-edicion background-blanco">
-    @* Panel de idiomas *@
-    <ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
-        @* Títulos de Tabs con los diferentes idiomas a visualizar. *@
-        @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
-        {
-            if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+    @if (Html.ObtenerEdicionMultiIidoma())
+    {
+        @* Panel de idiomas *@
+        <ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+            @* Títulos de Tabs con los diferentes idiomas a visualizar. *@
+            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
             {
-                <li class="nav-item" role="presentation">
-                    <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
-                       id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
-                       data-language="@idioma.Key"
-                       role="tab"
-                       aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
-                </li>
-                contNumPestañasVisibles += 1;
+                if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+                {
+                    <li class="nav-item" role="presentation">
+                        <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                           id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                           data-language="@idioma.Key"
+                           role="tab"
+                           aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                    </li>
+                    contNumPestañasVisibles += 1;
+                }
             }
-        }
-        @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
-        @if (contNumPestañasVisibles < cabecera.Languajes.Count)
-        {
-            @* Dropdown para resto de categorías *@
-            <li class="nav-item">
-                <div class="dropdown">
-                    @* Desplegable del dropdown *@
-                    <a class="nav-link dropdown-toggle"
-                   data-toggle="dropdown"
-                   href="#"
-                   role="button"
-                   aria-haspopup="true"
-                   aria-expanded="false">@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
-                    @* Sección para mostrar items del dropdown*@
-                    <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
-                        <ul class="no-list-style">
-                            @* Pintado del resto de pestañas en Dropdown *@
-                            @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
-                            {
-                                var item = cabecera.Languajes.ElementAt(i);
-                                var itemKey = item.Key;
-                                var itemValue = item.Value;
+            @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+            @if (contNumPestañasVisibles < cabecera.Languajes.Count)
+            {
+                @* Dropdown para resto de categorías *@
+                <li class="nav-item">
+                    <div class="dropdown">
+                        @* Desplegable del dropdown *@
+                        <a class="nav-link dropdown-toggle"
+                           data-toggle="dropdown"
+                           href="#"
+                           role="button"
+                           aria-haspopup="true"
+                           aria-expanded="false">@Html.GetText("DEVTOOLS", "OTROSIDIOMAS")</a>
+                        @* Sección para mostrar items del dropdown*@
+                        <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+                            <ul class="no-list-style">
+                                @* Pintado del resto de pestañas en Dropdown *@
+                                @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+                                {
+                                    var item = cabecera.Languajes.ElementAt(i);
+                                    var itemKey = item.Key;
+                                    var itemValue = item.Value;
 
-                                @* Cada item del dropdown *@
-                                <li>
-                                    <a id="@("ver_paginas_" + itemKey)"
-                               class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
-                               data-toggle="tab"
-                               href="#@("litVer" + itemKey)"
-                               data-language="@itemKey">
-                                        @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
-                                    </a>
-                                </li>
-                            }
-                        </ul>
+                                    @* Cada item del dropdown *@
+                                    <li>
+                                        <a id="@("ver_paginas_" + itemKey)"
+                                           class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+                                           data-toggle="tab"
+                                           href="#@("litVer" + itemKey)"
+                                           data-language="@itemKey">
+                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                </li>
+            }
+        </ul>
+    }else{
+        KeyValuePair<string, string>
+        idioma = new KeyValuePair<string, string>
+        ("es", "español");
+        <ul class="nav nav-tabs id="tabIdiomasPaginas" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                   data-language="@idioma.Key"
+                   role="tab"
+                   aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
             </li>
-        }
-    </ul>
+        </ul>
+    }
 
     @* Contenedor global de cookies *@
     <div class="tab-content">

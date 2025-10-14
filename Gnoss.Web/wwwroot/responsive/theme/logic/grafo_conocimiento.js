@@ -57,7 +57,43 @@ const operativaGestionObjetosConocimientoOntologias = {
         this.initDragAndDropForObjetosConocimiento();
         // Reiniciar funcionamiento de ckEditor
         ckEditorRecargarTodos();
-    },  
+        this.setupShareOntologyAutocomplete();
+        // Controlar si hay elementos secundarios "cargandose"
+        this.isLoadingDataForSecondaryItems = false;
+    }, 
+    
+    /**
+     * Método para habilitar o deshabilitar aplicando una clase a los "links/botones" de editar/borrar de los elementos secundarios durante la petición de edición y creación de un item secundario 
+     * @param {bool} disable Indica si se desea deshabilitar los botones o no. True deshabilitará los botones y false los deshabilitará de nuevo
+     */
+    handleEnableDisableEditAndDeleteButtonsForSecundaryItems: function(disable){
+        const that = this;
+        const disabledClass = "disabled";
+
+        // Seleccionar cada fila de componente
+        $(`.component-wrap.${that.elementRowClassName}`).each(function() {
+            // Botones de Edit y Delete propiedad
+            const editButton = $(this).find(`.${that.btnEditElementClassName}`);
+            const deleteButton = $(this).find(`.${that.btnDeleteElementClassName}`);
+            // Agregar o quitar la clase 'disabled' según el valor de 'disable'
+            if (disable) {
+                editButton.addClass(disabledClass);
+                deleteButton.addClass(disabledClass);
+            } else {
+                editButton.removeClass(disabledClass);
+                deleteButton.removeClass(disabledClass);
+            }
+        });
+        
+        // Habilitar o deshabilitar el botón para creación de nuevas propiedades
+        $(`.${that.btnAddSecondaryElementClassName}`).each(function() {
+            if (disable) {
+                $(this).prop('disabled', true);
+            } else {
+                $(this).prop('disabled', false);
+            }
+        });
+    },
 
     /**
      * Método que se ejecuta al cambiar el valor de un input que se ha generado dinámicamente por los idiomas desde operativaMultiIdioma       
@@ -90,6 +126,7 @@ const operativaGestionObjetosConocimientoOntologias = {
     configRutas: function () {
         // Url para editar un certificado
         this.urlBase = refineURL();
+
         this.urlCreateObjetoConocimiento = `${this.urlBase}/load-add-objeto-conocimiento`;
         // Url para guardar la ontología/nuevo objeto de conocimiento desde 0.
         this.urlSaveNewObjetoConocimiento = `${this.urlBase}/save-ontology`;        
@@ -109,8 +146,11 @@ const operativaGestionObjetosConocimientoOntologias = {
         this.urlSaveObjetosConocimiento = `${this.urlBase}/save`;
         // Descarga de vistas y vistas java
         this.urlDownloadClasesVistas = `${this.urlBase}/download-classes`;
-        this.urlDownloadClasesVistasJava = `${this.urlBase}/download-classes-java`;        
-        
+        this.urlDownloadClasesVistasJava = `${this.urlBase}/download-classes-java`;
+        this.urlCompilarWebVerionPropia = `${this.urlBase}/compilar-version`;
+        this.urlDesplegarWebVerionPropia = `${this.urlBase}/desplegar-version`;
+        this.urlComprobarDespliegueWeb = `${this.urlBase}/comprobar-despliegue`;
+        this.urlDescargarClases = `${this.urlBase}/descargar-clases`;
         // Url para cargar los elementos de un objeto de conocimiento secundario.
         this.urlLoadSecondaryEntities = `${this.urlBase}/load-elements-secondary-entity`;
         // Url para cargar los detalles de un elemento de un objeto de conocimiento secundario.
@@ -154,6 +194,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         this.modalObjetoConocimientoClassName = 'modal-objetoConocimiento';
         this.modalEdicionClassName = "modal-edicion";
         this.modalDeleteObjetoConocimientoClassName = 'modal-confirmDelete';
+        this.modalCompartirOntologiaClassName = 'modal-compartirOntologia';
 
         /* Idiomas Tabs */
         // Tab de idioma de la página para cambiar la visualización en el idioma
@@ -173,6 +214,10 @@ const operativaGestionObjetosConocimientoOntologias = {
         
         // Botón de editar objeto de conocimiento
         this.btnEditObjetoConocimientoClassName = "btnEditObjetoConocimiento";
+        this.btnShareOntologyClassName = "btnShareOntology";
+        this.btnAddSharedInCommunity = "btnAddSharedInCommunity";
+        this.tagRemoveFiltro = "tag-remove-filtro";
+        this.btnConfirmarCompartirOntologiaClassName = "btnConfirmarCompartirOntologia";
         // Botón para descargar plantilla de objeto de conocimiento
         this.btnDownloadTemplateObjetoConocimientoClassName = "btnDownloadTemplateObjetoConocimiento";
         // Botón para descargar archivo de configuración
@@ -310,7 +355,24 @@ const operativaGestionObjetosConocimientoOntologias = {
         // Botones para descargar vistas y clases
         this.btnDownloadClasesYVistas = $("#btnDownloadClasesYVistas");
         this.btnDownloadClasesYVistasJava = $("#btnDownloadClasesYVistasJava");
+        this.btnCompilarWebVersionPropia = $("#btnCompilarWebVersionPropia");
+        this.btnCompilarWeb = $("#btnCompilarWeb");
+        this.btnDesplegarWebVersionPropia = $("#btnDesplegarWebVersionPropia");
+        this.btnDesplegarWeb = $("#btnDesplegarWeb");
+        this.btnDescargarClases = $("#btnDescargarClases");
 
+
+        // Label que muestra los datos del repositorio
+        this.txtVersionWeb = $("#txtVersionWeb");
+        this.txtNombreRepositorio = $("#txtNombreRepositorio");
+        this.txtTokenRepositorio = $("#txtTokenRepositorio");
+        // Modal para compilar la web version propia
+        this.modalCompilarWeb = $("#modal-compilarWeb");
+
+        // Label que muestra la version de la web
+        this.lblVersionWeb = $("#lblVersionWeb");
+        this.modalDesplegarWeb = $("#modal-desplegarWeb");
+       
         /* Objetos de conocimiento secundarios */
         // Buscador de elementos de un objeto de conocimiento secundario
         this.findSecundaryOntologyElementsClassName = "findSecundaryOntologyElements";
@@ -386,6 +448,20 @@ const operativaGestionObjetosConocimientoOntologias = {
             resetearModalContainer(); 
         });
 
+        //Comportamiento del modal Compilar Web
+        that.modalCompilarWeb.on('show.bs.modal', (e) => {
+            // Aparición del modal           
+        }).on('hide.bs.modal', (e) => {
+            // Acción de ocultar el modal
+        });
+
+        //Comportamiento del modal Desplegar Web
+        that.modalDesplegarWeb.on('show.bs.modal', (e) => {
+            // Aparición del modal           
+        }).on('hide.bs.modal', (e) => {
+            // Acción de ocultar el modal
+        });
+
         // Comportamientos del modal de borrado de OC
         configEventByClassName(`${that.modalDeleteObjetoConocimientoClassName}`, function(element){
             const $modalDelete = $(element);
@@ -415,7 +491,20 @@ const operativaGestionObjetosConocimientoOntologias = {
                 // Acción de ocultar el modal              
             }); 
         });
-        
+
+        configEventByClassName(`${that.modalCompartirOntologiaClassName}`, function (element) {
+            const $modal = $(element);
+            $modal
+                .on('show.bs.modal', (e) => {
+                    // Aparición del modal
+                    that.triggerModalContainer = $(e.relatedTarget);
+                    that.currentModalOC = $(e.target);
+                })
+                .on('hide.bs.modal', (e) => {
+                    // Acción de ocultar el modal              
+                });
+        });
+
         // Tab de cada uno de los idiomas disponibles para cambiar la visualización y poder ver el nombre y url del idioma elegido
         this.tabIdiomaItem.off().on("click", function(){
             that.handleViewOcLanguageInfo();            
@@ -531,7 +620,65 @@ const operativaGestionObjetosConocimientoOntologias = {
         // Botón para descargar clases y vistas Java
         this.btnDownloadClasesYVistasJava.off().on("click", function(){
             that.handleDownloadClasesYVistas(true);
-        });    
+        });
+
+        //Botón para compilar la web version propia
+        this.btnCompilarWeb.off().on("click", function () {
+            that.handleCompilarWebVersionPropia(true);
+        });
+
+        this.btnDescargarClases.off().on("click", function () {
+            that.handleDescargarClases();
+        });
+
+        //Botón para desplegar la web version propia
+        this.btnDesplegarWeb.off().on("click", function () {
+            that.handleDesplegarWebVersionPropia(true);
+            //setInterval(that.comprobarDespliegueWeb(true), 5000);
+            loadingMostrar();
+            //sleep
+            var start = new Date().getTime();
+            var milliseconds = 5000;
+            for (var i = 0; i < 1e7; i++) {
+                if ((new Date().getTime() - start) > milliseconds) {
+                    break;
+                }
+            }
+        const intervalDespliegue = setInterval(function () {
+                
+                urlComprobarDespliegueWeb = `${that.urlBase}/comprobar-despliegue`;
+                GnossPeticionAjax(urlComprobarDespliegueWeb, true)
+                    .done(function (data) {
+                        if(data == "Ok"){
+                                mostrarNotificacion("success", "Se ha desplegado correctamente");
+                            }
+                        else if(data == "Ko"){
+                                mostrarNotificacion("error", "No se ha desplegado correctamente");
+                            }
+                        clearInterval(intervalDespliegue);
+                        loadingOcultar();
+                    }).fail(function (data) {
+                        
+                    }).always(function () {
+                        
+                    });
+            }, 10000);
+        });
+
+        //// Input de la version de la web en el modal de compilaciom
+        //this.txtVersionWeb.off().on("keyup", function () {
+        //    that.handleKeyUpCompilarWeb();
+        //});
+
+        //// Input del nombre del repositorio
+        //this.txtNombreRepositorio.off().on("keyup", function () {
+        //    that.handleKeyUpCompilarWeb();
+        //});
+
+        //// Input del token del repositorio
+        //this.txtTokenRepositorio.off().on("keyup", function () {
+        //    that.handleKeyUpCompilarWeb();
+        //});
     
         
         // Botón para eliminar un subtipo de un objeto de conocimiento
@@ -569,6 +716,30 @@ const operativaGestionObjetosConocimientoOntologias = {
             });	                        
         }); 
         
+        configEventByClassName(`${that.btnAddSharedInCommunity}`, function (element) {
+            const $addButton = $(element);
+            $addButton.off().on("click", function (event) {
+                // Input de autocompletar a partir del panel autocompletar
+                const inputAutocompletar = $addButton.parent().find('.buscarProyectoAutocomplete');
+                that.handleCompartirOntologia(inputAutocompletar.val(), $addButton);
+                inputAutocompletar.val("");
+            });
+        });
+
+        configEventByClassName(`${that.tagRemoveFiltro}`, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                const $itemRemoved = $jqueryElement.parent().parent();
+                that.handleDeleteProyectoCompartido($itemRemoved, $jqueryElement);
+            });
+        });
+
+        configEventByClassName(`${that.btnConfirmarCompartirOntologiaClassName}`, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                that.handleGuardarCompartirOntologia($jqueryElement);
+            });
+        });
 
         // Botón para confirmar la eliminación de un objeto de conocimiento desde el modal
         configEventByClassName(`${that.btnConfirmDeleteObjetoConocimientoClassName}`, function(element){
@@ -659,8 +830,12 @@ const operativaGestionObjetosConocimientoOntologias = {
             const editButton = $(element);
             editButton.off().on("click", function(){                  
                 // Guardamos referencia de la fila del elemento del objeto de conocimiento secundario a editar/crear
-                that.filaElementoObjetoConocimientoSecundario = $(this).closest(`.${that.elementRowClassName}`);                                            
-                that.handleGetElementInfoOrCreateNewElementInfo(that.filaElementoObjetoConocimientoSecundario);                                
+                that.filaElementoObjetoConocimientoSecundario = $(this).closest(`.${that.elementRowClassName}`);                     
+                // Permitir sólo la edición de una propiedad secundaria/creación a la vez
+                const currentPanelId = $(this).data("target").replace("#","");                                
+                that.handleGetElementInfoOrCreateNewElementInfo(that.filaElementoObjetoConocimientoSecundario, function(){
+                    that.handleCollapseSecondaryElementsAndEmptyPanel(currentPanelId);
+                });                 
             });	                        
         });
 
@@ -682,10 +857,7 @@ const operativaGestionObjetosConocimientoOntologias = {
             const pElementRow = propertyPanel.closest(`.${that.elementRowClassName}`); 
             const pElementInput = propertyPanel.find("input:text");
             // Input change del tipo "Element"
-            pElementInput.on("input", function(){     
-                // Habilitar el botón Guardar Elemento ya que se desea "Guardar"
-                // const btnAplicar = pPanelDetail.find(`.${that.btnSaveInstanciaEntidadClassName}`);
-                // btnAplicar.prop('disabled', false);                                  
+            pElementInput.on("input", function(){                                    
                 // Detectar la fila del elemento editado
                 that.filaElementoObjetoConocimientoSecundario = $(this).closest(`.${that.elementRowClassName}`);
                 // Detectar el input del sujeto
@@ -762,6 +934,8 @@ const operativaGestionObjetosConocimientoOntologias = {
                 // Fila elemento que está siendo editada. Contenedor de todo
                 const pElementRow = button.closest(`.${that.elementRowClassName}`);
                 that.GuardarEntSec(pElementRow);
+                // Guardar el "valor" de label en el "previousValue" del título para que quede actualizado
+                that.handleRestoreTitlePropertyValue(pElementRow);
             });	                        
         });
 
@@ -2565,20 +2739,32 @@ const operativaGestionObjetosConocimientoOntologias = {
             Grafo: graphName,                        
         }
 
+        // Deshabilitar posibles botones de edición de propiedades secundarias
+        that.handleEnableDisableEditAndDeleteButtonsForSecundaryItems(true);
+
         // Realizar la petición para obtener la vista       
         GnossPeticionAjax(
             that.urlLoadCreateNewEntity,
             dataPost,
             true
-        ).done(function (view) {
-            // Añadir la vista a añadir nueva al principio del listado de items            
-            panelElementsSecondaryOntology.prepend(view);
+        ).done(function (view) {               
+            // Ocultar todos los demás paneles. Quedará como activo el nuevo añadido
+            that.handleCollapseSecondaryElementsAndEmptyPanel();            
+            // Convertir el string `view` a un objeto jQuery
+            let $view = $(view);
+            // Establecer el item activo y su panel
+            $view.find(`.${that.panelElementDetailClassName}`).addClass('active');
+            $view.addClass('active');
+            // Añadir la vista al DOM
+            panelElementsSecondaryOntology.prepend($view);
             // Actualizar contador de nº de entidades
             that.handleCheckNumberOfEntities();
         }).fail(function (data) {            
             mostrarNotificacion("error", data);
+            // Habilitado de los botones de nuevo            
         }).always(function () {
             // Ocultar el loading
+            that.handleEnableDisableEditAndDeleteButtonsForSecundaryItems(false);
             loadingOcultar();
         });        
     },
@@ -2621,12 +2807,88 @@ const operativaGestionObjetosConocimientoOntologias = {
             loadingOcultar();
         });            
     },
+        
+    /**
+     * Manejar el colapso de los paneles abiertos, vaciando su contenido y eliminando atributos específicos.
+     * Solo se colapsará el panel que no tenga el ID especificado.
+     *
+     * @param {string} panelIdNotToHide - El ID del panel que no se debe colapsar. Si no se pasa un panel to hide, se cerrarán y vaciarán todos.
+     */
+    handleCollapseSecondaryElementsAndEmptyPanel: function(panelIdNotToHide = "1"){
+        const that = this;
+        
+        // Recorrer todos los paneles "activos" que contienen las propiedades secundarias
+        $(`.${that.panelElementDetailClassName}.collapse`).each(function() {        
+            const currentPanel = $(this);            
+            if (currentPanel.hasClass("active")){
+                const currentPanelId = currentPanel.attr('id');
+                // Verificar si el panel actual no es el que queremos mantener abierto
+                if (currentPanelId !== panelIdNotToHide) {
+                    // Cerrar el panel usando el método collapse de Bootstrap
+                    currentPanel.collapse("hide");
+                    // Una vez cerrado realizar las acciones de limpieza. No usado hidden.bs.collapse porque las ejecutaría siempre
+                    setTimeout(function(){
+                        currentPanel.html('');                         
+                    },600);                
+                    // Eliminar el atributo "active" para saber cuál sería el activo aunque esté colapsado o no colapsado y de su correspondiente padre/row                
+                    currentPanel.removeClass("active");
+                    // Localizamos la fila de la propiedad que está siendo editada para eliminar el "download-items" ya que será necesario que se descarguen sus datos si se vuelve a desear editar
+                    const pElementRow = currentPanel.closest(`.${that.elementRowClassName}`); 
+                    pElementRow.removeClass("active");
+                    // Quitar la aviso "Pendiente de ser guardado" ya que los datos no se han "guardado"
+                    const labelElementExtraInfo = pElementRow.find(`.${that.labelElementExtraInfoClassName}`);
+                    labelElementExtraInfo.addClass("d-none");
+                    // Restaurar el valor por defecto en la label ya que no se desea guardar
+                    that.handleRestoreTitlePropertyValue(pElementRow);
+                    pElementRow.data("download-items","false");
+                    // Si es un elemento nuevo o de reciente creación, se tendrá que eliminar 
+                    if (pElementRow.data("new-element") == true){
+                        // Eliminar la fila sin petición            
+                        pElementRow.fadeOut(300, function() { 
+                            $(this).remove(); 
+                            // Actualizar el nº de entidades del objeto de conocimiento
+                            that.handleCheckNumberOfEntities();
+                        });
+                    }                                     
+                }
+            }            
+        });
+    },
+
+    /**
+     * Método para asignar el valor inicial en la label correspondiente, y el cual, corresponde con el inicial del input
+     * @param {*} pElementRow Fila de la propiedad secundaria que está siendo modificada
+     */
+    handleRestoreTitlePropertyValue: function(pElementRow){
+        const that = this;
+
+        const labelElementName = pElementRow.find(`.${that.labelElementNameClassName}`);
+         
+        // Selecciona el primer input con el atributo `data-original-value` en `pElementRow`
+        const inputWithOriginalValue = pElementRow.find('input[data-original-value]').first();
+        
+        // Verifica si se encontró el input antes de intentar obtener su valor
+        if (inputWithOriginalValue.length) {
+            // Obtiene el valor del input y asignala el valor al elemento `labelElementName`            
+            const inputValue = inputWithOriginalValue.data("original-value");
+            // Comprobar que hubiera valor previo. Si no lo hay, establecer el valor del input y actualizar el label y el previousValue
+            if (inputValue.trim().length > 0){
+                labelElementName.html(inputValue);
+            }else{
+                const currentTitlePropertyValue = inputWithOriginalValue.val().trim();
+                inputWithOriginalValue.data("original-value", currentTitlePropertyValue);
+                labelElementName.html(currentTitlePropertyValue);
+            }
+            
+        }
+    },
 
     /**
      * Método para obtener los datos de un determinado elemento que pertenece a un objeto de conocimiento de tipo secundario
      * @param {*} pElementRow 
+     * @param {*} callback: Función a ejecutar cuando se haga la petición para obtener los datos de la propiedad secundaria
      */
-    handleGetElementInfoOrCreateNewElementInfo: function(pElementRow){
+    handleGetElementInfoOrCreateNewElementInfo: function(pElementRow, callback){
         const that = this;
 
         // Panel donde se desplegarán los detalles del elemento
@@ -2635,8 +2897,6 @@ const operativaGestionObjetosConocimientoOntologias = {
         const graphName = that.filaObjetoConocimiento.data("grafo-actual");
         // Sujeto entidad del elemento a editar
         const entitySubjet = pElementRow.data("sujeto-entidad"); 
-        // Flag para detectar si se desea petición para editar datos
-        let isInEditMode = true;
         // Url al que se desea realizar la petición
         let urlRequest = that.urlLoadSecondaryEntityDetails;
         // Parámetros para realizar la petición (Edición / Creación nuevo item)
@@ -2645,17 +2905,16 @@ const operativaGestionObjetosConocimientoOntologias = {
         };      
                 
 
-        // Continuary comprobar la descarga si el elemento no es nuevo
+        // Continuar y comprobar la descarga si el elemento no es nuevo
         if (pElementRow.data("new-element") == true){
             return;
         }       
-        
+
         // Comprobar si es necesario descargar los datos si no es un elemento nuevo a crear o si ya se han descargado          
         if (!stringToBoolean(pElementRow.data("download-items"))){                         
             // Comprobar si es necesario descargar o editar datos para realizar la petición             
             if (graphName.length == 0){
                 // Crear elemento
-                isInEditMode = false;
                 urlRequest = that.urlLoadCreateNewEntity;
             }else{
                 // Editar elemento: Añadir el SujetoEntidad                
@@ -2663,6 +2922,9 @@ const operativaGestionObjetosConocimientoOntologias = {
             }
             // Mostrar loading en el panel collapsed donde se añadirán los datos/vista
             loadingMostrar(panelElementDetail);
+
+            // Deshabilitar botones de acción para evitar posibles peticiones "adicionales" durante la carga
+            that.handleEnableDisableEditAndDeleteButtonsForSecundaryItems(true);
 
             // Realizar la petición para la obtención de los datos (Vista) a editar o del nuevo item            
             GnossPeticionAjax(
@@ -2682,15 +2944,19 @@ const operativaGestionObjetosConocimientoOntologias = {
                                                    
                 // Panel donde se añadirá la vista                                
                 panelElementDetail.prepend(view);
-                // Asignar el sujetoId correspondiente si sujetoId existe (no es reciente creación)
-                sujetoId.length > 0 && panelElementDetail.find('.sujEntidadSec').val(sujetoId)
-                
-
+                // Asignar el sujetoId correspondiente si sujetoId existe (no es reciente creación)                
+                sujetoId && sujetoId.length > 0 && panelElementDetail.find('.sujEntidadSec').val(sujetoId);
+                // Establecer el panel activo que es sobre el que se han descargado los datos así como su línea para marcar el icono como "activo"
+                pElementRow.addClass("active");
+                panelElementDetail.addClass("active");
+                // Ejecutar acciones para controlar el vaciado de los demás paneles
+                callback();
             }).fail(function (data) {            
                 mostrarNotificacion("error", data);
             }).always(function () {
                 // Ocultar el loading
                 loadingOcultar();
+                that.handleEnableDisableEditAndDeleteButtonsForSecundaryItems(false);
             });            
         }
     },
@@ -2830,10 +3096,132 @@ const operativaGestionObjetosConocimientoOntologias = {
             loadingOcultar();
         });
         */         
-        
-        
          
     },
+
+
+
+    /**
+    * Método para controlar los valores introducidos del repositorio para compilar la web
+    */
+    handleKeyUpCompilarWeb: function () {
+        const that = this;
+
+        that.txtVersionWeb = document.getElementById("txtVersionWeb").value;
+        that.txtNombreRepositorio = document.getElementById("txtNombreRepositorio").value;
+        that.txtTokenRepositorio = document.getElementById("txtTokenRepositorio").value;
+
+        //if (that.txtVersionWeb.length > 0) {
+            // Quitar la opción de "disabled" en el botón
+            setTimeout(function () {
+                that.btnCompilarWeb.prop("disabled", false);
+            }
+                , 500);
+        //} else {
+            // Añadir la opción de "disabled"
+            //that.btnCompilarWeb.prop("disabled", true);
+       // }
+    },
+
+
+
+
+    /**
+    * Método para enviar los valores introducidos del repositorio para compilar la web
+    */
+    handleCompilarWebVersionPropia: function () {
+        const that = this;
+
+        that.txtVersionWeb = document.getElementById("txtVersionWeb").value;
+        that.txtNombreRepositorio = document.getElementById("txtNombreRepositorio").value;
+        that.txtTokenRepositorio = document.getElementById("txtTokenRepositorio").value;
+
+        const arg = {
+            VersionWeb: that.txtVersionWeb,
+            NombreRepositorio: that.txtNombreRepositorio,
+            TokenRepositorio: that.txtTokenRepositorio
+        };
+
+        loadingMostrar();
+
+        /*
+        jQuery.ajax({
+            url: this.urlCompilarWebVerionPropia,
+            data: arg,
+            cache: false,
+            xhr: function () {
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 2) {
+                        if (xhr.status == 200) {
+                            xhr.responseType = "blob";
+                        } else {
+                            xhr.responseType = "text";
+                        }
+                    }
+                };
+                return xhr;
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                mostrarNotificacion("error", xhr.responseText);
+                loadingOcultar();
+            },
+            success: function (data) {
+                mostrarNotificacion("success", "Se han enviado los datos correctamente para la compilación.");
+                loadingOcultar();
+            },
+        });
+        */
+
+        GnossPeticionAjax(this.urlCompilarWebVerionPropia, arg, true)
+        .done(function (data) {
+            mostrarNotificacion("success", "La compilación de la web se ha realizado correctamente.");
+            location.reload();
+        }).fail(function (data) {
+            mostrarNotificacion("error", "Se ha producido un error en el proceso de compilación de la web.");
+        }).always(function () {
+            loadingOcultar();
+            //reload();
+        });
+    },
+    handleDescargarClases: function () {
+        const that = this;
+        loadingMostrar();
+        GnossPeticionAjax(this.urlDescargarClases, null, true)
+            .fail(function (data) {
+                mostrarNotificacion("error", "Se ha producido un error al descargar las clases: " + data);
+            }).always(function () {
+                loadingOcultar();
+            });
+    },
+
+    handleDesplegarWebVersionPropia: function () {
+        const that = this;
+
+        that.txtVersionWeb = document.getElementById("lblVersionWeb").value;
+        that.txtNombreRepositorio = document.getElementById("lblNombreRepositorio").value;
+        that.txtTokenRepositorio = document.getElementById("lblTokenRepositorio").value;
+
+        const arg = {
+            VersionWeb: that.txtVersionWeb,
+            NombreRepositorio: that.txtNombreRepositorio,
+            TokenRepositorio: that.txtTokenRepositorio
+        };
+
+        loadingMostrar();
+
+        GnossPeticionAjax(this.urlDesplegarWebVerionPropia, arg, true)
+            .done(function (data) {
+                //mostrarNotificacion("success", "El despliegue de la web se ha realizado correctamente.");
+            }).fail(function (data) {
+                //mostrarNotificacion("error", "Se ha producido un error en el proceso del despliegue de la web.");
+            }).always(function () {
+                //loadingOcultar();
+            });
+    },
+
+
+
 
     /**
      * Método para comprobar cómo debería de estar el "DragAndDrop" del objeto de conocimiento dependiendo del estado de los checkboxes de "Uso del fichero genérico"
@@ -3013,6 +3401,78 @@ const operativaGestionObjetosConocimientoOntologias = {
         });                        
     },
 
+    handleCompartirOntologia: function (proyecto, btn) {
+        const that = this;
+        if (proyecto.length > 0) {
+            // Crear el item y añadirlo al contenedor
+            let item = '';
+            item += '<div class="tag" id="' + proyecto + '">';
+            item += '<div class="tag-wrap">';
+            item += '<span class="tag-text">' + proyecto + '</span>';
+            item += "<span class=\"tag-remove tag-remove-filtro material-icons remove\">close</span>";
+            item += '</div>';
+            item += '</div>';
+
+            // Contenedor de items donde se añadirá el nuevo item seleccionado para su visualización
+            var contenedorProyectos = btn.parents('.col-buscador').find('.panListadoProyectos')
+            contenedorProyectos.append(item);
+
+            // Input oculto donde se añadirá el nuevo item seleccionado
+
+            const inputHack = btn.parents('.col-buscador').find('.auxProyectosCompartidos')
+            inputHack.val(inputHack.val() + proyecto + '|');
+        }
+    },
+    handleDeleteProyectoCompartido: function (itemRemoved, btn) {
+        const that = this;
+        const proyecto = itemRemoved.prop("id");
+        const inputHack = btn.parents('.col-buscador').find('.auxProyectosCompartidos');
+        const itemsId = inputHack.val().split("|");
+        // Eliminar el id seleccionado
+        itemsId.splice($.inArray(proyecto, itemsId), 1);
+        // Pasarle los datos de los grupos actualizados al input hidden
+        inputHack.val(itemsId.join("|"));
+        // Eliminar el tag/item del panel de tags
+        itemRemoved.remove();
+    },
+    handleGuardarCompartirOntologia: function (button) {
+        const that = this;
+        loadingMostrar();
+        var urlCompartir = button.parents('.modal-body').find('.urlCompartirOntologia').val();
+        var proyectos = {};
+        var proyectosCompartidos = button.parents('.modal-body').find('.auxProyectosCompartidos');
+        if (proyectosCompartidos.length > 0) {
+            var listaProyectos = proyectosCompartidos.val().split('|');
+            var cont = 0;
+            for (var i = 0; i < listaProyectos.length; i++) {
+                if (listaProyectos[i].trim() != "") {
+                    proyectos[cont] = listaProyectos[i] + '$$';
+                    cont++;
+                }
+            }
+        }
+        const dataPost = {
+            Categories: proyectos,
+            Editors: {},
+            Readers: {},
+            Private: false
+        }
+       
+        GnossPeticionAjax(
+            urlCompartir,
+            dataPost,
+            true
+        ).done(function (data) {        
+            dismissVistaModal();            
+            mostrarNotificacion("success", "Los cambios se han guardado correctamente");
+        }).fail(function (data) {
+            dismissVistaModal();
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+            dismissVistaModal();
+        });
+    },
     /**
      * Método para eliminar un objeto de conocimiento una vez se ha confirmado desde el modal.
      */
@@ -3028,15 +3488,16 @@ const operativaGestionObjetosConocimientoOntologias = {
             // Id Objeto conocimiento
             Id: that.filaObjetoConocimiento.attr('id'),                        
         }
-        
+
+        const modalDeleteObjetoConocimiento = that.filaObjetoConocimiento.find(`.${that.modalDeleteObjetoConocimientoClassName}`);     
+
         GnossPeticionAjax(
             that.urlDeleteObjetoConocimiento,
             dataPost,
             true
         ).done(function (data) {
             // OK al borrado del item
-            // Ocultar el modal del borrado
-            const modalDeleteObjetoConocimiento = that.filaObjetoConocimiento.find(`.${that.modalDeleteObjetoConocimientoClassName}`);                                          
+            // Ocultar el modal del borrado            
             dismissVistaModal(modalDeleteObjetoConocimiento);   
             // Ocultar la fila que se desea eliminar y eliminar
             that.filaObjetoConocimiento.addClass("d-none");                                     
@@ -3046,6 +3507,9 @@ const operativaGestionObjetosConocimientoOntologias = {
             that.confirmDeleteObjetoConocimiento = false;   
             mostrarNotificacion("success", "Los cambios se han guardado correctamente");                             
         }).fail(function (data) {
+            // Ocultar el modal del borrado
+            dismissVistaModal(modalDeleteObjetoConocimiento);
+            that.filaObjetoConocimiento.removeClass("deleted");
             // KO borrado de objeto de conocimiento
             mostrarNotificacion("error", data);           
         }).always(function () {
@@ -3202,7 +3666,35 @@ const operativaGestionObjetosConocimientoOntologias = {
         // Mostrar el nº de items                
         that.numResultadosObjetosConocimiento.html(numberObjetosConocimiento);
     },  
+    setupShareOntologyAutocomplete: function () {
+        const that = this;
+        const inputFiltro = $(`.${"buscarProyectoAutocomplete"}`);
 
+        inputFiltro.autocomplete(
+            null,
+            {
+                url: $('#inpt_urlServicioAutocompletar').val() + "/AutocompletarNombresProyectos",
+                delay: 0,
+                scroll: false,
+                selectFirst: false,
+                minChars: 2,
+                width: 300,
+                cacheLength: 0,
+                NoPintarSeleccionado: true,
+                multiple: true,
+                extraParams: {
+                    grupo: '',
+                    identidad: $('#inpt_identidadID').val(),
+                    organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                    proyecto: $('#inpt_proyID').val()
+                }
+            }
+        );
+        //Comportamiento resultado cuando se selecciona una resultado de autocomplete 
+        inputFiltro.result(function (event, data, formatted) {              
+            $(this).val(data[0]);
+        });   
+    },
     /**
      * Método para comprobar errores, obtener datos y prepararlos para el guardado de datos vía "handleSave"
      * @param {*} completion : Función a ejecutar cuando se realice o complete este método.
@@ -3591,6 +4083,7 @@ const operativaGestionObjetosConocimientoOntologias = {
             const panelPresentacionMapa = panelEdicion.find('.PresentacionMapa');
             // Prefijo para guardado de datos
             const prefijoPresentacionMapaClave = prefijoClave + 'PresentacionMapa';
+            const prefijoPropiedadAutocompletado = prefijoClave + 'ListaAutocompletadoPresentacionModel';
 
             let numPropMapa = 0;
             $('.property-row:not(.deleted)', panelPresentacionMapa).each(function () {
@@ -3616,6 +4109,14 @@ const operativaGestionObjetosConocimientoOntologias = {
             that.ListaObjetosConocimiento.append(prefijoPresentacionMapaClave + '.MostrarEtiquetas', panelPresentacionMapa.find('[name="MostrarEtiquetas"]').is(':checked'));                 
             //that.ListaObjetosConocimiento[prefijoPresentacionMapaClave + '.MostrarCategorias'] = panelPresentacionMapa.find('[name="MostrarCategorias"]').is(':checked');        
             that.ListaObjetosConocimiento.append(prefijoPresentacionMapaClave + '.MostrarCategorias', panelPresentacionMapa.find('[name="MostrarCategorias"]').is(':checked'));                         
+
+            //Obtener datos del autocompletar
+            var conteo = 0; 
+            $('.div_propiedad-autocompletar', panelEdicion).each(function () {
+                that.ListaObjetosConocimiento.append(prefijoPropiedadAutocompletado + '[' + conteo + ']' + '.Propiedad', $(this).find('[name=inpt_mostrar-autocompletado]').val());
+                that.ListaObjetosConocimiento.append(prefijoPropiedadAutocompletado + '[' + conteo + ']' + '.MostrarEnAutocompletar', $(this).find('[name=chb_mostrar-autocompletado]').is(':checked'));
+                conteo++;
+            });
 
             // Obtener datos de Mapa - Presentación Personalizado
             const panelPresentacionPersonalizada = panelEdicion.find('.PresentacionPersonalizado');
@@ -8841,7 +9342,7 @@ const operativaGestionSparql = {
         }
         const valorFrom = fromItems.join(',');
         // WHERE
-        const valorWhere = txtQuery.toLowerCase().substring(txtQuery.toLowerCase().indexOf("where")).trim();
+        const valorWhere = txtQuery.substring(txtQuery.toLowerCase().indexOf("where")).trim();
        
         // Construir objeto para petición Sparql
         that.Options['pSelect'] = valorSelect;
@@ -9347,6 +9848,11 @@ const operativaGestionBorradoMasivo = {
 
         // Botón para confirmar el borrado de recursos asociados a una ontología (desde modal)
         this.btnDeleteConfirm = $("#btnDeleteConfirm");
+
+        //Botón para seleccionar todas las ontologias
+        this.btnCheckAllOntologies = $("#btnSelectAllOntologiesCheckboxes");
+        this.txtSelectAll = pParams.txtSelectAll;
+        this.txtClearSelect = pParams.txtClearSelect;
     },   
 
     /**
@@ -9400,6 +9906,23 @@ const operativaGestionBorradoMasivo = {
         // Botón del modal para confirmar el borrado de rcursos asociados a las ontologías seleccionadas
         this.btnDeleteConfirm.on("click", function(){
             that.handleDeleteOntologies();
+        });
+
+        // Botón del modal para seleccionar todas las ontologías
+        this.btnCheckAllOntologies.on("click", function () {
+            that.handleCheckAllOntologies();
+        });
+
+        // Comprobamos si los demás checkbox están seleccionados
+        $("#tablaOntologias input[type=checkbox]").on("click", function () {
+            // Si hay al menos 1 elemento seleccionado, cambiaremos el comportamiento del boton para que quite solo
+            // los seleccionados y en caso de que no estén seleccionados ninguno restaurar el comportamiento normal 
+            // de seleccionar todos.
+            if ($("#tablaOntologias input[type=checkbox]:checked").length > 0) {
+                that.btnCheckAllOntologies.text(that.txtClearSelect)
+            } else if ($("#tablaOntologias input[type=checkbox]:checked").length == 0) {
+                that.btnCheckAllOntologies.text(that.txtSelectAll)
+            }
         });
     }, 
     
@@ -9455,6 +9978,26 @@ const operativaGestionBorradoMasivo = {
 
         // Mostrar el modal para el borrado
         that.modalMassiveOntologyDelete.modal("show");
+    },
+
+
+    /**
+     * Método para marcar / desmarcar todos los checkbox de las ontologías 
+     */
+    handleCheckAllOntologies: function () {
+        that = this;
+        let seleccion = "";
+
+        if (that.btnCheckAllOntologies.text() === that.txtSelectAll) {
+            seleccion = "#tablaOntologias input[type=checkbox]";
+            that.btnCheckAllOntologies.text(that.txtClearSelect);
+        } else {
+            that.btnCheckAllOntologies.text(that.txtSelectAll);
+            seleccion = "#tablaOntologias input[type=checkbox]:checked";
+        }
+        document.querySelectorAll(seleccion).forEach(function (checkElement) {
+            checkElement.checked = !checkElement.checked;
+        });
     },
 
     /**
@@ -10771,7 +11314,7 @@ const operativaGestionParametrosBusquedaPersonalizados = {
         // OrderBy
         this.txtOrderByDelParametroClassName = "txtOrderByDelParametro";
         // Fuente tesauro
-        this.txtWhereDeFacetaParametroClassName = "txtFuente";   
+        this.txtWhereDeFacetaParametroClassName = "txtWhereDeFacetaParametro";   
         // Botón para guardar el parámetro
         this.btnSaveParametroBusquedaClassName = "btnSaveParametroBusqueda";
 
@@ -11028,7 +11571,7 @@ const operativaGestionParametrosBusquedaPersonalizados = {
         const nombre = panelEdicion.find(`.${that.txtNombreDelParametroBusquedaClassName}`).val();
         const where = panelEdicion.find(`.${that.txtWhereDelParametroClassName}`).val().trim();
         const orderBy = panelEdicion.find(`.${that.txtOrderByDelParametroClassName}`).val().trim();
-        const whereFaceta = panelEdicion.find(`.${that.txtWhereDelParametroClassName}`).val().trim();
+        const whereFaceta = panelEdicion.find(`.${that.txtWhereDeFacetaParametroClassName}`).val().trim();
 
         that.ListaPestanyas[prefijoClave + '.NombreParametro'] = nombre;
         that.ListaPestanyas[prefijoClave + '.WhereParametro'] = where;

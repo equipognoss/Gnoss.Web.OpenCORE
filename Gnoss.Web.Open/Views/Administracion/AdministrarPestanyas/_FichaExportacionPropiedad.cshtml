@@ -11,11 +11,12 @@ Variables
 *@
 
 @{
-TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel propiedadExport = Model; 
-Guid propertyId = @Guid.NewGuid();
-string collapseId = "panel_collapse_" + propertyId.ToString().Substring(0,5);
-string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
-string idioma = Html.GetUtilIdiomas().LanguageCode;
+    TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel propiedadExport = Model;
+    Guid propertyId = @Guid.NewGuid();
+    string collapseId = "panel_collapse_" + propertyId.ToString().Substring(0, 5);
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+    string idioma = Html.GetUtilIdiomas().LanguageCode;
+    bool comparando = ViewBag.ComparandoPestanya ?? false;
 }
 
 @*
@@ -26,121 +27,124 @@ string idioma = Html.GetUtilIdiomas().LanguageCode;
 
 <li class="component-wrap property-row containerConfirmDeleteItemInModal" data-propertykey="@propertyId" data-collapseid="@collapseId">
 
-	<div class="component">
-		<div class="component-header-wrap">
-			<div class="component-header">
-				@* Icono para arrastrar la propiedad *@
-				<div class="component-sortable">
-					<span class="material-icons-outlined sortable-icon sortable-export-property">drag_handle</span>
-				</div>
-				<div class="component-header-content">
-					<div class="component-header-left">						
-						@* Nombre de la propiedad *@
-						<div class="component-name-wrap">																												
-							<span class="component-exportationName">@UtilCadenas.ObtenerTextoDeIdioma(propiedadExport.Nombre, idioma, null)</span>
-						</div>					
-					</div>
+    <div class="component">
+        <div class="component-header-wrap">
+            <div class="component-header">
+                @* Icono para arrastrar la propiedad *@
+                <div class="component-sortable">
+                    <span class="material-icons-outlined sortable-icon sortable-export-property">drag_handle</span>
+                </div>
+                <div class="component-header-content">
+                    <div class="component-header-left">
+                        @* Nombre de la propiedad *@
+                        <div class="component-name-wrap">
+                            <span class="component-exportationName">@UtilCadenas.ObtenerTextoDeIdioma(propiedadExport.Nombre, idioma, null)</span>
+                        </div>
+                    </div>
 
-					@*Sección de acciones de la propiedad *@
-					<div class="component-header-right">
-						<div class="component-actions-wrap">
-							<ul class="no-list-style component-actions">
-								<li>
-									@* Acción de editar la propiedad *@
-									<a class="action-edit round-icon-button js-action-edit-component btnEditProperty"
-									   data-toggle="collapse" 
-									   data-target="#@collapseId"									   
-									   role="button" 
-									   aria-expanded="false" 
-									   aria-controls="@collapseId">									   
-										<span class="material-icons">edit</span>
-									</a>
-								</li>
-								<li>
-									@* Acción de borrar la propiedad *@
-									<a class="action-delete round-icon-button js-action-delete btnDeleteProperty"
-										href="javascript: void(0);">
-										<span class="material-icons">delete</span>
-									</a>
-								</li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                    @*Sección de acciones de la propiedad *@
+                    <div class="component-header-right">
+                        <div class="component-actions-wrap">
+                            <ul class="no-list-style component-actions">
+                                <li>
+                                    @* Acción de editar la propiedad *@
+                                    <a class="action-edit round-icon-button js-action-edit-component btnEditProperty"
+                                       data-toggle="collapse"
+                                       data-target="#@collapseId"
+                                       role="button"
+                                       aria-expanded="false"
+                                       aria-controls="@collapseId">
+                                        <span class="material-icons">edit</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    @if (!comparando)
+                                    {
+                                        @* Acción de borrar la propiedad *@
+                                        <a class="action-delete round-icon-button js-action-delete btnDeleteProperty"
+                                           href="javascript: void(0);">
+                                            <span class="material-icons">delete</span>
+                                        </a>
+                                    }
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	@* Información detallada de la propiedad - Collapse *@
-	<div class="collapse property-info" id="@collapseId">
-		@* Indicación de que el filtro se ha eliminado *@
-		<input type="hidden" name="TabEliminada" value="false" />
-		<div class="card card-body">
-			<div class="panContenidoMultiIdioma basicInfo">
-			</div>
-			<div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
-				@* Título/Nombre de la propiedad *@
-				<div class="form-group mb-2">
-					@*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>*@
+    @* Información detallada de la propiedad - Collapse *@
+    <div class="collapse property-info" id="@collapseId">
+        @* Indicación de que el filtro se ha eliminado *@
+        <input type="hidden" name="TabEliminada" value="false" />
+        <div class="card card-body">
+            <div class="panContenidoMultiIdioma basicInfo">
+            </div>
+            <div class="inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+                @* Título/Nombre de la propiedad *@
+                <div class="form-group mb-2">
+                    @*<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>*@
 
-					<input type="text"
-						   name="Nombre"
-						   data-labeltext="Nombre"
-						   placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
-						   class="form-control inputNombrePropiedad multiIdioma"
-						   value="@propiedadExport.Nombre">
-					<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREIDENTIFICATIVODELAPROPIEDAD")</small>
-				</div>
-			</div>
-			
-			@* Ontología a seleccionar para la propiedad *@ 										
-			<div class="form-group mb-2">
-				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "ONTOLOGIA")</label>				
-				@if (ViewBag.ListaOntologias != null && ViewBag.ListaOntologias.Count > 0)
-				{
-					@* Select | Input de Ontologia de la página *@												
-					<select name="Ontologia"
-							class="cmbOntologia js-select2"
-							tabindex="0"
-							aria-hidden="false">
-							@{
-								<option value="" @(string.IsNullOrEmpty(propiedadExport.Ontologia) ? "selected" : "")>@Html.GetText("COMADMINPESTANYAS", "SINONTOLOGIA")</option>
-								foreach (string oc in ViewBag.ListaOntologias.Keys)
-								{
-									<option value="@oc" @(propiedadExport.Ontologia == oc ? "selected" : "")>@ViewBag.ListaOntologias[oc]</option>
-								}
-							}
-					</select>
-					<small class="form-text text-muted mb-2">Selecciona una ontología existente para asignar a la propiedad.</small>
-				}
-				else
-				{
-					<input type="text" placeholder="@Html.GetText("COMADMINPESTANYAS", "ONTOLOGIA")" class="form-control" name="Ontologia" value="">
-					<small class="form-text text-muted mb-2">
-						@Html.GetText("DEVTOOLS","INTRODUCEELNOMBREDEUNAONTOLOGIAPOSTERIORMENTE,ESTADEBERASER")
-					</small>
-				}					
-			</div>
+                    <input type="text"
+                           name="Nombre"
+                           data-labeltext="Nombre"
+                           placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
+                           class="form-control inputNombrePropiedad multiIdioma"
+                           value="@propiedadExport.Nombre">
+                    <small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS", "NOMBREIDENTIFICATIVODELAPROPIEDAD")</small>
+                </div>
+            </div>
 
-			@* Propiedad / Nombre a asignar a la propiedad *@
-			<div class="form-group mb-2">
-				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "PROPIEDAD")</label>
-				<input type="text" 
-					   placeholder="@Html.GetText("COMADMINPESTANYAS", "PROPIEDAD")" 
-					   class="form-control" name="Propiedad" 
-					   value="@propiedadExport.Propiedad">										
-				<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","INTRODUCECOMOSERALAPROPIEDADPARALAEXPORTACIONDEESTAPAGINA")</small>
-			</div>
+            @* Ontología a seleccionar para la propiedad *@ 										
+   <div class="form-group mb-2">
+                <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "ONTOLOGIA")</label>
+                @if (ViewBag.ListaOntologias != null && ViewBag.ListaOntologias.Count > 0)
+                {
+                    @* Select | Input de Ontologia de la página *@												
+         <select name="Ontologia"
+                            class="cmbOntologia js-select2"
+                            tabindex="0"
+                            aria-hidden="false">
+                        @{
+                            <option value="" @(string.IsNullOrEmpty(propiedadExport.Ontologia) ? "selected" : "")>@Html.GetText("COMADMINPESTANYAS", "SINONTOLOGIA")</option>
+                            foreach (string oc in ViewBag.ListaOntologias.Keys)
+                            {
+                                <option value="@oc" @(propiedadExport.Ontologia == oc ? "selected" : "")>@ViewBag.ListaOntologias[oc]</option>
+                            }
+                        }
+                    </select>
+                    <small class="form-text text-muted mb-2">Selecciona una ontología existente para asignar a la propiedad.</small>
+                }
+                else
+                {
+                    <input type="text" placeholder="@Html.GetText("COMADMINPESTANYAS", "ONTOLOGIA")" class="form-control" name="Ontologia" value="">
+                    <small class="form-text text-muted mb-2">
+                        @Html.GetText("DEVTOOLS", "INTRODUCEELNOMBREDEUNAONTOLOGIAPOSTERIORMENTE,ESTADEBERASER")
+                    </small>
+                }
+            </div>
 
-			@* Dato extra de la propiedad *@
-			<div class="form-group mb-2">
-				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "DATOEXTRAPROPIEDAD")</label>
-				<input type="text" 
-					   placeholder="@Html.GetText("COMADMINPESTANYAS", "DATOEXTRAPROPIEDAD")" 
-					   class="form-control" name="DatoExtraPropiedad" 
-					   value="@propiedadExport.DatoExtraPropiedad">										
-				<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","PROPORCIONAINFORMACIONEXTRASIESNECESARIOPARALAPROPIEDAD")</small>
-			</div>
-		</div>
-	</div>	
+            @* Propiedad / Nombre a asignar a la propiedad *@
+            <div class="form-group mb-2">
+                <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "PROPIEDAD")</label>
+                <input type="text"
+                       placeholder="@Html.GetText("COMADMINPESTANYAS", "PROPIEDAD")"
+                       class="form-control" name="Propiedad"
+                       value="@propiedadExport.Propiedad">
+                <small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS", "INTRODUCECOMOSERALAPROPIEDADPARALAEXPORTACIONDEESTAPAGINA")</small>
+            </div>
+
+            @* Dato extra de la propiedad *@
+            <div class="form-group mb-2">
+                <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "DATOEXTRAPROPIEDAD")</label>
+                <input type="text"
+                       placeholder="@Html.GetText("COMADMINPESTANYAS", "DATOEXTRAPROPIEDAD")"
+                       class="form-control" name="DatoExtraPropiedad"
+                       value="@propiedadExport.DatoExtraPropiedad">
+                <small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS", "PROPORCIONAINFORMACIONEXTRASIESNECESARIOPARALAPROPIEDAD")</small>
+            </div>
+        </div>
+    </div>
 </li>

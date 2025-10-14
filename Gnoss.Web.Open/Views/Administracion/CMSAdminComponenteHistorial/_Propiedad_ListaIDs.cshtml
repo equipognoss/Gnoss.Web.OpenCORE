@@ -1,0 +1,80 @@
+﻿@model CMSAdminPropiedadComponenteViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS que es de tipo Contenedor de Componentes.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.Propiedad.TipoPropiedadCMS);
+    // Listado de componentes
+    List<string> componentListId = new List<string>();
+
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+
+    }
+
+    string nombrePropiedad = "";
+    string inputPlaceHolder = "";
+
+    @* Conocer el tipo de componente a mostrar *@
+    switch (Model.Propiedad.TypeComponent)
+    {
+        case TipoComponenteCMS.ListadoEstatico:
+            //case TipoComponenteCMS.RecursosDestacadosEstatico:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.Propiedad.TipoPropiedadCMS + "RECURSOS");
+            inputPlaceHolder = Html.GetText("DEVTOOLS", "INTRODUCEELID(RESOURCEID)DELRECURSO");
+            break;
+        case TipoComponenteCMS.GrupoComponentes:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.Propiedad.TipoPropiedadCMS + "COMPONENTES");
+            inputPlaceHolder = Html.GetText("DEVTOOLS", "INTRODUCEELIDDELCOMPONENTEYPULSAENTEROAÑADIR");
+            break;
+        case TipoComponenteCMS.ListadoProyectos:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.Propiedad.TipoPropiedadCMS + "COMUNIDADES");
+            inputPlaceHolder = Html.GetText("DEVTOOLS", "INTRODUCEELIDDELCOMPONENTEYPULSAENTEROAÑADIR");
+            @Html.GetText("DEVTOOLS", "INTRODUCEELID(PROYECTID)DELPROYECTO")
+            break;
+        default:
+            nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.Propiedad.TipoPropiedadCMS);
+            inputPlaceHolder = Html.GetText("DEVTOOLS", "INTRODUCEELIDDELCOMPONENTEYPULSAENTEROAÑADIR");
+            break;
+    }
+
+    @* Listado de componentes separados por coma *@
+    if (!String.IsNullOrEmpty(Model.Propiedad.Value))
+    {
+        componentListId = Model.Propiedad.Value.Split(",").ToList<string>();
+    }
+
+    // Referencia al Recurso para ser utilizado para el botón de tipo de pintado de tipo de páginas desde la cabecera
+    ViewBag.PropiedadComponente = Model.Propiedad;
+
+}
+
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="form-group contenedorListaIds @(Model.DiferenciasPropiedadesCMS[idiomaPanel] ? "error" : "")" data-idpanel="@idPanel">
+    <div class="autocompletar autocompletar-recursos form-group">
+        <label class="control-label d-block" for="@idPanel">@nombrePropiedad@(Model.Propiedad.Required ? " *" : "")</label>
+        @* Listado de componentes existentes en la lista*@
+        <ul class="js-community-components-list component-list no-list-style">
+            @* Pintado de Componente Item dentro del contenedor *@			
+        @{
+                foreach (string componentId in componentListId)
+                {
+                    if (!String.IsNullOrEmpty(componentId))
+                    {
+                        @Html.PartialView("_partial-views/_component-row-item", componentId)
+                    }
+                }
+            }
+        </ul>
+    </div>
+</div>

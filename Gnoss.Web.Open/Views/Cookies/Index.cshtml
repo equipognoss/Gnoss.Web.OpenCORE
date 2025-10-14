@@ -74,6 +74,9 @@
     function EngancharComportamientoGuardar() {
         $("#guardar").click(Guardar);
     }
+    function EngancharComportamientoRechazar() {
+        $("#rechazar").click(Rechazar);
+    }
 
     /** Acepta todas las cookies y las guarda */
     function AceptarTodo() {
@@ -120,10 +123,39 @@
         cm.innerHTML = "Se han modificado las cookies del sitio web.";
     }
 
+    function Rechazar() {
+        var fecha = new Date();
+        fecha.setTime(fecha.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+        $('.cookieAceptada').each(function (indice, elemento) {
+            if ($(elemento).prop("id") === "tecnica") {
+                document.cookie = $(elemento).val() + "=yes;path=/; expires=" + fecha.toUTCString();
+            }else {
+                document.cookie = $(elemento).val() + "=no;path=/; expires=" + fecha.toUTCString();
+            }
+        });
+
+        MostrarUpdateProgress();
+        GnossPeticionAjax(
+            document.location.origin + '/aceptar-cookies',
+            null,
+            true
+        ).fail(function (data) {
+            mostrarErrorGuardado(data);
+        }).done(function () {
+        }).always(function () {
+            OcultarUpdateProgress();
+            $('#phAvisoCookie').hide();
+            $("#aviso-cookies").hide();
+            $("#modalAvisoCookies").hide();
+        });
+    }
+
     /** Cuando la página se ha terminado de cargar se vinculan los eventos a los botones */
     $(document).ready(function () {
         AceptarCookieTecnica();
         EngancharComportamientoAceptarTodo();
         EngancharComportamientoGuardar();
+        EngancharComportamientoRechazar();
     });
 </script>

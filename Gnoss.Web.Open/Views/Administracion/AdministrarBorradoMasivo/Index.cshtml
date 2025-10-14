@@ -20,17 +20,17 @@ Variables
 
 @* Migas de Pan *@
 <div class="col col-12 col-breadcrumb">
-    <ul>
-        <li>
-            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
-        </li>
-        <li>
-            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/grafo-conocimiento">@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")</a>
-        </li>
-        <li>
-            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRABORRADOMASIVO")
-        </li>
-    </ul>
+	<ul>
+		<li>
+			<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+		</li>
+		<li>
+			<a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/grafo-conocimiento">@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")</a>
+		</li>
+		<li>
+			@Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRABORRADOMASIVO")
+		</li>
+	</ul>
 </div>
 
 @* Contenido Central *@
@@ -73,11 +73,11 @@ Variables
 					</p>
 				</div>
 				@* Tabla de borrado de items *@
-				<table class="display nowrap table table-sm tabla-borrado">
+				<table class="display nowrap table table-sm tabla-borrado" id="tablaOntologias">
 					<thead>
 						<tr>
 							@* Header de la tabla *@
-							<th class="th-checkbox"></th>
+							<th class="th-checkbox"> <button id="btnSelectAllOntologiesCheckboxes" class="btn btn-outline-grey">@Html.GetText("COMMON", "SELECCIONARTODOS")</button></th>
 							<th class="th-titulo">@Html.GetText("COMBUSQUEDAAVANZADA","TIPODOCONTOLOGIA")</th>
 							<th class="th-recursos">@Html.GetText("ADMINISTRACIONBASICA","RECURSOS")</th>
 							<th class="th-fecha">@Html.GetText("ADMINISTRACIONSEMANTICA","FECHA")</th>
@@ -87,10 +87,21 @@ Variables
 					<tbody>
 						@* Pintado de cada ontología de recursos a borrar *@																				
 						@foreach(Guid ontologia in Model.OntologiaABorrar.Keys)
-						{							
+						{
+							string fecha = string.Empty;							
+							DateTime fechaCreacion = new DateTime(Model.FechaCreacionOntologias[ontologia]);
+							DateTime fechaModificacion = new DateTime(Model.FechaModificacionOntologias[ontologia]);							
+							if (fechaCreacion == fechaModificacion){
+								fecha = fechaCreacion.ToShortDateString();
+							}
+							else
+							{
+								fecha = fechaModificacion.ToShortDateString();
+							}
+							int cantidadRecursos = Model.CantidadRecursosDeOntologia[ontologia];
 							<tr class="row-ontologyMassiveItem" data-value="@ontologia">
 								@* Columna vacía de ontología *@
-								<td class="td-checkbox">
+								<td class="td-checkbox text-center" style="width: 13% !important">
 									<div class="custom-control custom-checkbox">
 										<input
 											id="@ontologia"
@@ -104,11 +115,11 @@ Variables
 								@* Nombre de la ontología *@
 								<td class="td-titulo">@Html.ObtenerTextoIdiomaUsuario(Model.OntologiaABorrar[ontologia])</td>
 								@* Nº de recursos de la ontología *@
-								<td class="td-recursos">XXX</td>
+								<td class="td-recursos">@cantidadRecursos</td>
 								@* Fecha *@
-								<td class="td-fecha">--/--/----</td>
+								<td class="td-fecha">@fecha</td>
 								@* Acciones disponibles *@
-								<td class="td-acciones">
+								<td class="td-acciones">	
 									<ul class="no-list-style">
 										<li>
 											<a href="javascript: void(0);" class="btn btn-outline-grey btnDeleteMassiveOntology">
@@ -138,8 +149,13 @@ Variables
     <script type="text/javascript">
 
         (function ($) {
-            // Operativa funcionamiento de Cláusulas legales
-            operativaGestionBorradoMasivo.init();
+			const pParams = 
+			{
+				txtSelectAll: "@Html.GetText("COMMON","SELECCIONARTODOS")",
+				txtClearSelect: "@Html.Raw(Html.GetText("COMMON", "SELECCIONARNINGUNO"))"
+			}
+            // Operativa funcionamiento de Borrado Masivo
+            operativaGestionBorradoMasivo.init(pParams);
         })();
     </script>
 }

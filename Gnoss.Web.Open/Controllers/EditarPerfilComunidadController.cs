@@ -1,8 +1,6 @@
-﻿using DocumentFormat.OpenXml.Office.CustomUI;
-using Es.Riam.AbstractsOpen;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.Amigos.Model;
 using Es.Riam.Gnoss.AD.BASE_BD;
-using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.OrganizacionDS;
@@ -11,20 +9,16 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.UsuarioDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ParametroAplicacion;
-using Es.Riam.Gnoss.AD.RDF.Model;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Identidad;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
-using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.ParametroAplicacion;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Suscripcion;
-using Es.Riam.Gnoss.Logica.Amigos;
-using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Suscripcion;
@@ -32,12 +26,11 @@ using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.Util.Seguridad;
-using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Controles;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
@@ -46,7 +39,6 @@ using Es.Riam.InterfacesOpen;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -54,19 +46,22 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
 using static Es.Riam.Gnoss.Web.MVC.Models.ViewModels.EditProfileViewModel;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class EditarPerfilComunidadController : ControllerBaseWeb
     {
-        #region Miembrios
+        #region Miembros
         private EditProfileViewModel paginaModel = new EditProfileViewModel();
         private Suscripcion mSuscripcion;
         private DataWrapperProyecto mDatosExtraProyectoDS = null;
@@ -79,13 +74,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <summary>
         /// Clausulas adicionales del registro
         /// </summary>
-        private List<EditProfileViewModel.AdditionalClause> mClausulasRegistro = null;
+        private List<AdditionalClause> mClausulasRegistro = null;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
         #endregion
 
-        public EditarPerfilComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public EditarPerfilComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EditarPerfilComunidadController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Metodos Acciones
@@ -103,9 +102,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad })]
         public ActionResult Index()
         {
-            paginaModel.UrlActionSaveImage = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "save-image";
+            paginaModel.UrlActionSaveImage = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/save-image";
 
-            paginaModel.UrlActionSaveProfile = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "save-profile";
+            paginaModel.UrlActionSaveProfile = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/save-profile";
             List<CategoryModel> categoriasTesauro = CargarTesauroProyecto(UtilIdiomas.LanguageCode);
 
             if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
@@ -115,26 +114,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     return RedireccionarAPaginaNoEncontrada();
                 }
 
-                paginaModel.ProfileOrganization = new EditProfileViewModel.ProfileOrganizationViewModel();
+                paginaModel.ProfileOrganization = new ProfileOrganizationViewModel();
                 CargarDatosPerfilOrganizacion();
 
-                paginaModel.UrlActionSaveImage = mControladorBase.UrlsSemanticas.GetURLEditarPerfilOrg(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "save-image";
+                paginaModel.UrlActionSaveImage = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfilOrg(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/save-image";
 
-                paginaModel.UrlActionSaveProfile = mControladorBase.UrlsSemanticas.GetURLEditarPerfilOrg(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "save-profile";
+                paginaModel.UrlActionSaveProfile = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfilOrg(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/save-profile";
             }
             else if (IdentidadActual.TrabajaConOrganizacion)
             {
-                paginaModel.ProfileProfesional = new EditProfileViewModel.ProfileProfesionalViewModel();
+                paginaModel.ProfileProfesional = new ProfileProfesionalViewModel();
                 CargarDatosPerfilProfesional();
             }
             else if (IdentidadActual.EsIdentidadProfesor)
             {
-                paginaModel.ProfileTeacher = new EditProfileViewModel.ProfileTeacherViewModel();
+                paginaModel.ProfileTeacher = new ProfileTeacherViewModel();
                 CargarDatosPerfilProfesor();
             }
             else if (IdentidadActual.ModoPersonal)
             {
-                paginaModel.ProfilePersonal = new EditProfileViewModel.ProfilePersonalViewModel();
+                paginaModel.ProfilePersonal = new ProfilePersonalViewModel();
                 CargarDatosPerfilPersonal();
             }
 
@@ -145,13 +144,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             CargarRedesSociales();
 
-            paginaModel.UrlActionSaveEmail = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "save-email";
+            paginaModel.UrlActionSaveEmail = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/save-email";
 
-            paginaModel.UrlActionSaveBio = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "save-bio";
+            paginaModel.UrlActionSaveBio = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/save-bio";
 
-            paginaModel.UrlSaveUserDataForm = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "save-data";
+            paginaModel.UrlSaveUserDataForm = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/save-data";
 
-            paginaModel.UrlActionDeleteBio = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto) + "/" + "delete-bio";
+            paginaModel.UrlActionDeleteBio = $"{mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma, UrlPerfil, UtilIdiomas, ProyectoSeleccionado.NombreCorto)}/delete-bio";
 
             if (Suscripcion != null && Suscripcion.FilasCategoriasVinculadas != null)
             {
@@ -171,7 +170,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mSuscripcion == null)
                 {
-                    SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SuscripcionCN>(), mLoggerFactory);
                     DataWrapperSuscripcion suscDW = suscCN.ObtenerSuscripcionesDePerfil(IdentidadActual.FilaIdentidad.PerfilID, false);
                     IdentidadActual.GestorIdentidades.GestorSuscripciones = new GestionSuscripcion(suscDW, mLoggingService, mEntityContext);
                     suscCN.Dispose();
@@ -185,12 +184,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [HttpPost]
         public ActionResult Index(EditProfileViewModel pPaginaModel)
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
 
             if (RequestParams("callback") != null)
@@ -203,7 +199,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 else if (RequestParams("callback").ToLower() == "UsarFotoPersonal".ToLower())
                 {
                     UsarImagenPersonal(bool.Parse(RequestParams("UsarFotoPersonal")));
-                    IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
                     identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                     identidadCL.Dispose();
                     return new EmptyResult();
@@ -213,8 +209,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     Guid paisID = new Guid(RequestParams("pais"));
                     CargarDatosProvincia(paisID);
                     return PartialView("_Provincia", paginaModel);
-
-                    //return GnossResultHtml("_Provincia", paginaModel);
                 }
                 else if (RequestParams("callback").ToLower() == "comprobarEmail".ToLower())
                 {
@@ -234,21 +228,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         Uri urlTest = null;
                         if (!url.ToLower().StartsWith("http://") && !url.ToLower().StartsWith("https://"))
                         {
-                            url = "http://" + url;
+                            url = $"http://{url}";
                         }
                         if (!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out urlTest))
                         {
                             nombreRedSocial = AnyadirRedSocial(url);
-                            return Content("OK:" + nombreRedSocial);
+                            return Content($"OK:{nombreRedSocial}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLogError(ex);
-                        return Content("ERROR:" + UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS"));
+                        mLoggingService.GuardarLogError(ex,mlogger);
+                        return Content($"ERROR:{UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS")}");
                     }
 
-                    return Content("ERROR:" + UtilIdiomas.GetText("COMMON", "URLNOVALIDA"));
+                    return Content($"ERROR:{UtilIdiomas.GetText("COMMON", "URLNOVALIDA")}");
                 }
                 else if (RequestParams("callback").ToLower() == "EliminarRedSocial".ToLower())
                 {
@@ -265,12 +259,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [HttpPost]
         public ActionResult GuardarBio(QuickCurriculum pCurriculum)
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
 
             // Permitir guardar Biografía sin información -> Eliminación de biografía o Tags por parte del usuario                       
@@ -282,42 +273,32 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 pCurriculum.Tags = "";
             }
+
             GuardarCVRapido(pCurriculum.Description, pCurriculum.Tags, true);
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
             identidadCL.Dispose();
             return GnossResultOK(UtilIdiomas.GetText("COMADMINCMS", "COMPONENTEGUARDADOOK"));
-
-            //return GnossResultERROR();
         }
 
         [HttpPost]
         public ActionResult EliminarBio()
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
 
-            //EliminarCVRapido();
             return GnossResultOK(UtilIdiomas.GetText("COMADMINCMS", "COMPONENTEGUARDADOOK"));
         }
 
         [HttpPost]
         public ActionResult GuardarPerfil(EditProfileViewModel pPaginaModel)
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
-
-            string urlRedirect = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma.Replace("http://", "https://"), "/", UtilIdiomas, ProyectoSeleccionado.NombreCorto);
 
             Dictionary<string, string> errores = new Dictionary<string, string>();
 
@@ -325,25 +306,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (paginaModel.ProfilePersonal != null)
             {
-                UtilIdiomas utilIdiomasProfilePersonal = new Recursos.UtilIdiomas(paginaModel.ProfilePersonal.Lang, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-                urlRedirect = mControladorBase.UrlsSemanticas.GetURLEditarPerfil(BaseURLIdioma.Replace("http://", "https://"), "/", utilIdiomasProfilePersonal, ProyectoSeleccionado.NombreCorto);
-
-
                 CargarCamposExtraRegistro();
 
                 foreach (AdditionalFieldAutentication campoExtra in paginaModel.ProfilePersonal.AdditionalFields)
                 {
                     string nombreCampo = campoExtra.FieldName;
-                    string valorCampo = RequestParams(nombreCampo);//campoExtra.FieldValue;
+                    string valorCampo = RequestParams(nombreCampo);
 
                     campoExtra.FieldValue = valorCampo;
 
-                    if (campoExtra.Required && (string.IsNullOrEmpty(valorCampo) || valorCampo.Equals(Guid.Empty.ToString())))
+                    if (campoExtra.Required && (string.IsNullOrEmpty(valorCampo) || valorCampo.Equals(Guid.Empty.ToString())) && !errores.ContainsKey(campoExtra.Title))
                     {
-                        if (!errores.ContainsKey(campoExtra.Title))
-                        {
-                            errores.Add(campoExtra.Title, UtilIdiomas.GetText("COMADMINCMS", "ERRORCAMPOVACIO", campoExtra.Title));
-                        }
+                        errores.Add(campoExtra.Title, UtilIdiomas.GetText("COMADMINCMS", "ERRORCAMPOVACIO", campoExtra.Title));
                     }
                 }
 
@@ -358,30 +332,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (paginaModel.ProfileOrganization != null)
             {
-                urlRedirect = mControladorBase.UrlsSemanticas.GetURLEditarPerfilOrg(BaseURLIdioma.Replace("http://", "https://"), "/", UtilIdiomas, ProyectoSeleccionado.NombreCorto);
-
                 errores = GuardarPerfilOrganizacion(paginaModel.ProfileOrganization);
             }
             else if (paginaModel.ProfileTeacher != null)
             {
                 errores = GuardarPerfilProfesor(paginaModel.ProfileTeacher);
             }
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
             identidadCL.EliminarPerfilMVC(IdentidadActual.PerfilID);
             identidadCL.Dispose();
 
             if (errores.Count > 0)
             {
-                string erroresString = "";
-                string separador = "";
+                StringBuilder conjuntoErrores = new StringBuilder();
+                string separador = string.Empty;
+
                 foreach (string error in errores.Keys)
                 {
-                    erroresString += separador + error + "&&" + errores[error];
+                    conjuntoErrores.Append($"{separador}{error}&&{errores[error]}");
                     separador = "||";
                 }
 
-                return GnossResultERROR(erroresString);
+                return GnossResultERROR(conjuntoErrores.ToString());
             }
             else
             {
@@ -396,8 +370,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             IFormFile pFicheroImagen = dataEditProfile.FicheroImagen;
             string imagen = Request.Form["FicheroImagen"];
-            EditProfileViewModel.ProfilePersonalViewModel perfilPersonal = dataEditProfile.ProfilePersonal;
-            Dictionary<string, string> errores = new Dictionary<string, string>();
+            ProfilePersonalViewModel perfilPersonal = dataEditProfile.ProfilePersonal;
+            Dictionary<string, string> errores;
             string description = dataEditProfile.Description;
             string tags = dataEditProfile.Tags;
             string[] listaRedesSociales = null;
@@ -425,12 +399,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     AnyadirRedSocial(redSocial);
                 }
             }
-            else if (dataEditProfile.RedesSociales != null && dataEditProfile.RedesSociales.Equals("undefined"))
+            else if (dataEditProfile.RedesSociales != null && dataEditProfile.RedesSociales.Equals("undefined") && listaRedesSociales == null && dataEditProfile.RedesSociales.Equals("undefined"))
             {
-                if (dataEditProfile.RedesSociales.Equals("undefined") && listaRedesSociales == null)
-                {
-                    EliminarRedesSociales();
-                }
+                EliminarRedesSociales();
             }
 
             if (perfilPersonal != null)
@@ -444,21 +415,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                paginaModel.ProfilePersonal = new EditProfileViewModel.ProfilePersonalViewModel();
+                paginaModel.ProfilePersonal = new ProfilePersonalViewModel();
                 CargarDatosPerfilPersonal();
 
                 perfilPersonal = paginaModel.ProfilePersonal;
-                //CargarCamposExtraRegistro();
-                //Dictionary<int, string> dicDatosExtraProyectoVirtuoso = new Dictionary<int, string>();
-                //Dictionary<int, string> dicDatosExtraEcosistemaVirtuoso = new Dictionary<int, string>();
-                //GuardarDatosExtraNulos(perfilPersonal, dicDatosExtraProyectoVirtuoso, dicDatosExtraEcosistemaVirtuoso);
                 errores = GuardarPerfilPersonalNulo(perfilPersonal);
             }
 
             if (!string.IsNullOrEmpty(description) || !string.IsNullOrEmpty(tags))
             {
                 GuardarCVRapido(description, tags, true);
-                IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
                 identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                 identidadCL.Dispose();
             }
@@ -481,14 +448,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                string erroresString = string.Empty;
+                StringBuilder erroresString = new StringBuilder();
                 string separador = string.Empty;
                 foreach (string error in errores.Keys)
                 {
-                    erroresString += $"{separador}{error}&&{errores[error]}";
+                    erroresString.Append($"{separador}{error}&&{errores[error]}");
                     separador = "||";
                 }
-                return GnossResultERROR(erroresString);
+                return GnossResultERROR(erroresString.ToString());
             }
         }
 
@@ -496,15 +463,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [HttpPost]
         public ActionResult GuardarEmail(string pEmail)
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
 
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             string error = string.Empty;
             if (string.IsNullOrEmpty(pEmail))
             {
@@ -522,16 +486,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (string.IsNullOrEmpty(error))
             {
                 //Cambiamos el email            
-                IdentidadActual.Persona.FilaPersona.Email = pEmail;
+                IdentidadActual.Persona.FilaPersona.Email = pEmail.ToLower();
                 personaCN.ActualizarPersonas();
                 personaCN.Dispose();
 
-                IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
                 identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
                 identidadCL.EliminarPerfilMVC(IdentidadActual.PerfilID);
                 identidadCL.Dispose();
 
-                ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", "", ProyectoSeleccionado.Clave);
+                ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, string.Empty, string.Empty);
 
                 return GnossResultOK(UtilIdiomas.GetText("COMADMINCMS", "COMPONENTEGUARDADOOK"));
             }
@@ -544,12 +508,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [HttpPost]
         public ActionResult GuardarImagen(IFormFile FicheroImagen)
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
 
             if (mControladorBase.UsuarioActual.EsIdentidadInvitada)
@@ -563,7 +524,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
             {
-                urlFicheroImagen = UtilArchivos.ContentImagenesOrganizaciones + "/" + IdentidadActual.OrganizacionID.ToString();
+                urlFicheroImagen = $"{UtilArchivos.ContentImagenesOrganizaciones}/{IdentidadActual.OrganizacionID.ToString()}";
 
                 if (IdentidadActual.OrganizacionPerfil.FilaOrganizacion.VersionLogo != null)
                 {
@@ -572,9 +533,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (IdentidadActual.TrabajaConOrganizacion)
             {
-                urlFicheroImagen = UtilArchivos.ContentImagenesPersona_Organizacion + "/" + IdentidadActual.OrganizacionID.ToString() + "/" + mControladorBase.UsuarioActual.PersonaID.ToString();
+                urlFicheroImagen = $"{UtilArchivos.ContentImagenesPersona_Organizacion}/{IdentidadActual.OrganizacionID.ToString()}/{mControladorBase.UsuarioActual.PersonaID.ToString()}";
 
-                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
+                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Find(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
                 if (filaPersona.VersionFoto != null)
                 {
                     versionFoto = filaPersona.VersionFoto.Value;
@@ -586,7 +547,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (IdentidadActual.ModoPersonal)
             {
-                urlFicheroImagen = UtilArchivos.ContentImagenesPersonas + "/" + mControladorBase.UsuarioActual.PersonaID.ToString();
+                urlFicheroImagen = $"{UtilArchivos.ContentImagenesPersonas}/{mControladorBase.UsuarioActual.PersonaID.ToString()}";
 
                 if (IdentidadActual.Persona.FilaPersona.VersionFoto.HasValue)
                 {
@@ -602,7 +563,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             int minSize = 240;
             int maxSize = 450;
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
             servicioImagenes.Url = UrlIntragnossServicios;
 
             //Si se sube un fichero nuevo se borra la foto temporal
@@ -685,52 +646,47 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         string coordenadasFoto = $"[ {x}, {y}, {x + w}, {y + h} ]";
                         versionFoto = versionFoto + 1;
 
-                        if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+                        using (IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory))
                         {
-                            if (mEntityContext.Entry(IdentidadActual.OrganizacionPerfil.FilaOrganizacion).State.Equals(EntityState.Detached))
+                            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
                             {
-                                IdentidadActual.OrganizacionPerfil.FilaElementoEntity = mEntityContext.Organizacion.FirstOrDefault(orga => orga.OrganizacionID.Equals(IdentidadActual.OrganizacionPerfil.FilaOrganizacion.OrganizacionID));
+                                if (mEntityContext.Entry(IdentidadActual.OrganizacionPerfil.FilaOrganizacion).State.Equals(EntityState.Detached))
+                                {
+                                    IdentidadActual.OrganizacionPerfil.FilaElementoEntity = mEntityContext.Organizacion.FirstOrDefault(orga => orga.OrganizacionID.Equals(IdentidadActual.OrganizacionPerfil.FilaOrganizacion.OrganizacionID));
+                                }
+                                IdentidadActual.OrganizacionPerfil.FilaOrganizacion.VersionLogo = versionFoto;
+                                IdentidadActual.OrganizacionPerfil.FilaOrganizacion.CoordenadasLogo = coordenadasFoto;
+
+                                identidadCN.ActualizarFotoIdentidadesOrganizacion(IdentidadActual.OrganizacionID.Value, false);
                             }
-                            IdentidadActual.OrganizacionPerfil.FilaOrganizacion.VersionLogo = versionFoto;
-                            IdentidadActual.OrganizacionPerfil.FilaOrganizacion.CoordenadasLogo = coordenadasFoto;
+                            else if (IdentidadActual.TrabajaConOrganizacion)
+                            {
+                                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Find(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
+                                if (mEntityContext.Entry(filaPersona).State.Equals(EntityState.Detached))
+                                {
+                                    filaPersona = mEntityContext.PersonaVinculoOrganizacion.FirstOrDefault(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
+                                }
+                                filaPersona.VersionFoto = versionFoto;
+                                filaPersona.CoordenadasFoto = coordenadasFoto;
+                                filaPersona.FechaAnadidaFoto = DateTime.Now;
+                                filaPersona.UsarFotoPersonal = false;
+
+                                identidadCN.ActualizarFotoIdentidadesDePersonaDeOrganizacion(IdentidadActual.PersonaID.Value, filaPersona.OrganizacionID, false, false);
+                            }
+                            else if (IdentidadActual.ModoPersonal)
+                            {
+                                if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State.Equals(EntityState.Detached))
+                                {
+                                    IdentidadActual.Persona.FilaPersona = mEntityContext.Persona.FirstOrDefault(pers => pers.PersonaID.Equals(IdentidadActual.Persona.FilaPersona.PersonaID));
+                                }
+                                IdentidadActual.Persona.FilaPersona.VersionFoto = versionFoto;
+                                IdentidadActual.Persona.FilaPersona.CoordenadasFoto = coordenadasFoto;
+                                IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = DateTime.Now;
+
+                                identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
+                            }
 
                             mEntityContext.SaveChanges();
-
-                            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            identidadCN.ActualizarFotoIdentidadesOrganizacion(IdentidadActual.OrganizacionID.Value, false);
-                            identidadCN.Dispose();
-                        }
-                        else if (IdentidadActual.TrabajaConOrganizacion)
-                        {
-                            PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
-                            if (mEntityContext.Entry(filaPersona).State.Equals(EntityState.Detached))
-                            {
-                                filaPersona = mEntityContext.PersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
-                            }
-                            filaPersona.VersionFoto = versionFoto;
-                            filaPersona.CoordenadasFoto = coordenadasFoto;
-                            filaPersona.FechaAnadidaFoto = DateTime.Now;
-                            filaPersona.UsarFotoPersonal = false;
-                            mEntityContext.SaveChanges();
-
-                            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            identidadCN.ActualizarFotoIdentidadesDePersonaDeOrganizacion(IdentidadActual.PersonaID.Value, filaPersona.OrganizacionID, false, false);
-                            identidadCN.Dispose();
-                        }
-                        else if (IdentidadActual.ModoPersonal)
-                        {
-                            if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State.Equals(EntityState.Detached))
-                            {
-                                IdentidadActual.Persona.FilaPersona = mEntityContext.Persona.FirstOrDefault(pers => pers.PersonaID.Equals(IdentidadActual.Persona.FilaPersona.PersonaID));
-                            }
-                            IdentidadActual.Persona.FilaPersona.VersionFoto = versionFoto;
-                            IdentidadActual.Persona.FilaPersona.CoordenadasFoto = coordenadasFoto;
-                            IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = DateTime.Now;
-                            mEntityContext.SaveChanges();
-
-                            IdentidadCN identidadCN = new IdentidadCN(mEntityContext,mLoggingService,mConfigService, mServicesUtilVirtuosoAndReplication);
-                            identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
-                            identidadCN.Dispose();
                         }
                     }
                     else
@@ -748,10 +704,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 error = UtilIdiomas.GetText("PERFIL", "ERRORTAMAÑOIMAGEN");
             }
 
-            if (error.Equals(string.Empty))
+            if (string.IsNullOrEmpty(error))
             {
                 EliminarCaches();
-                return GnossResultOK(UtilArchivos.ContentImagenes + "/" + urlFicheroImagen/*.ToLower()*/ + "_grande.png?" + Guid.NewGuid().ToString());
+                return GnossResultOK($"{UtilArchivos.ContentImagenes}/{urlFicheroImagen}_grande.png?{Guid.NewGuid().ToString()}");
             }
             else
             {
@@ -769,12 +725,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 IdentidadUsuario = IdentidadActual.IdentidadOrganizacion;
             }
 
-            AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales perfil = IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Where(item => item.PerfilID.Equals(IdentidadUsuario.FilaIdentidad.PerfilID) && item.NombreRedSocial.Equals(nombreRedSocial)).FirstOrDefault();
+            AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales perfil = IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Find(item => item.PerfilID.Equals(IdentidadUsuario.FilaIdentidad.PerfilID) && item.NombreRedSocial.Equals(nombreRedSocial));
 
             IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Remove(perfil);
             mEntityContext.EliminarElemento(perfil);
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             identidadCN.ActualizaIdentidades();
             identidadCN.Dispose();
 
@@ -796,7 +752,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEntityContext.EliminarElemento(filaEliminar);
             }
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             identidadCN.ActualizaIdentidades();
             identidadCN.Dispose();
 
@@ -811,14 +767,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 IdentidadUsuario = IdentidadActual.IdentidadOrganizacion;
             }
 
-            AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales filaPerfilRedesSoc = IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Where(item => item.PerfilID.Equals(IdentidadUsuario.FilaIdentidad.PerfilID) && item.NombreRedSocial.Equals(nombreRedSocial)).FirstOrDefault();
+            AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales filaPerfilRedesSoc = IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Find(item => item.PerfilID.Equals(IdentidadUsuario.FilaIdentidad.PerfilID) && item.NombreRedSocial.Equals(nombreRedSocial));
             if (mEntityContext.Entry(filaPerfilRedesSoc).State.Equals(EntityState.Detached))
             {
                 filaPerfilRedesSoc = mEntityContext.PerfilRedesSociales.Where(item => item.PerfilID.Equals(IdentidadUsuario.FilaIdentidad.PerfilID) && item.NombreRedSocial.Equals(nombreRedSocial)).FirstOrDefault();
             }
             while (true)
             {
-                if (urlRedSocial.EndsWith("/"))
+                if (urlRedSocial.EndsWith('/'))
                 {
                     urlRedSocial = urlRedSocial.Substring(0, urlRedSocial.Length - 1);
                 }
@@ -844,7 +800,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             filaPerfilRedesSoc.NombreRedSocial = urlRedSocial.Substring(0, 1).ToUpper() + urlRedSocial.Substring(1, urlRedSocial.IndexOf('.') - 1).ToLower();
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             identidadCN.ActualizaIdentidades();
             identidadCN.Dispose();
 
@@ -865,7 +821,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             while (true)
             {
-                if (urlRedSocial.EndsWith("/"))
+                if (urlRedSocial.EndsWith('/'))
                 {
                     urlRedSocial = urlRedSocial.Substring(0, urlRedSocial.Length - 1);
                 }
@@ -876,7 +832,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             filaPerfilRedesSoc.urlUsuario = urlRedSocial;
             int fin = urlRedSocial.Length;
-            if (urlRedSocial.IndexOf('?') > 0)
+            if (urlRedSocial.IndexOf('?') != -1)
             {
                 fin = urlRedSocial.IndexOf('?');
             }
@@ -929,7 +885,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEntityContext.PerfilRedesSociales.Add(filaPerfilRedesSoc);
             }
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             identidadCN.ActualizaIdentidades();
             identidadCN.Dispose();
 
@@ -938,7 +894,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return filaPerfilRedesSoc.NombreRedSocial;
         }
 
-        private Dictionary<string, string> GuardarPerfilOrganizacion(EditProfileViewModel.ProfileOrganizationViewModel pPerfilOrganizacion)
+        private Dictionary<string, string> GuardarPerfilOrganizacion(ProfileOrganizationViewModel pPerfilOrganizacion)
         {
             Dictionary<string, string> listaErrores = new Dictionary<string, string>();
 
@@ -954,7 +910,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 organizacion.FilaOrganizacion.Localidad = pPerfilOrganizacion.Location;
                 organizacion.FilaOrganizacion.Provincia = "";
 
-                Guid provinciaID = Guid.Empty;
+                Guid provinciaID;
                 if (Guid.TryParse(pPerfilOrganizacion.Region, out provinciaID) && provinciaID != Guid.Empty)
                 {
                     organizacion.FilaOrganizacion.ProvinciaID = provinciaID;
@@ -968,7 +924,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 organizacion.FilaOrganizacion.Web = pPerfilOrganizacion.WebSite;
                 organizacion.FilaOrganizacion.Alias = pPerfilOrganizacion.Alias;
 
-                AmigosDS amigosDS = null;
+                AmigosDS amigosDS;
 
                 bool organizacionEsClase = organizacion is OrganizacionClase;
                 paginaModel.ProfileOrganization.IsClass = organizacionEsClase;
@@ -1008,20 +964,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 mEntityContext.SaveChanges();
 
-                ControladorOrganizaciones contrOrg = new ControladorOrganizaciones(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ControladorOrganizaciones contrOrg = new ControladorOrganizaciones(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorOrganizaciones>(), mLoggerFactory);
+                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 List<Guid> listaProyectos = proyCN.ObtenerListaProyectoIDDeOrganizacion(organizacion.Clave, false);
                 if (cambiadoNombre)
                 {
                     List<AD.EntityModel.Models.IdentidadDS.Perfil> listaPerfiles = identidadCN.ObtenerPerfilesDeUnaOrganizacion(organizacion.FilaOrganizacion.OrganizacionID);
-                    foreach(AD.EntityModel.Models.IdentidadDS.Perfil perfil in listaPerfiles)
+                    foreach (AD.EntityModel.Models.IdentidadDS.Perfil perfil in listaPerfiles)
                     {
                         perfil.NombreOrganizacion = organizacion.FilaOrganizacion.Nombre;
                     }
                     mEntityContext.SaveChanges();
                 }
-                contrOrg.ActualizarModeloBaseSimpleMultiple(IdentidadActual.Persona.Clave, listaProyectos);
+                contrOrg.ActualizarModeloBaseSimpleMultiple(IdentidadActual.Persona.Clave, listaProyectos, mAvailableServices);
 
                 EliminarCaches();
             }
@@ -1041,7 +997,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 Guid organizacionID = (IdentidadActual.GestorIdentidades.GestorOrganizaciones.OrganizacionDW.ListaOrganizacion.FirstOrDefault(item => item.Nombre.Equals(pNombreOrganizacion))).OrganizacionID;
 
-                OrganizacionCN orgCN = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                OrganizacionCN orgCN = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<OrganizacionCN>(), mLoggerFactory);
                 DataWrapperOrganizacion orgDW = orgCN.ObtenerOrganizacionesPorID(new List<Guid>() { organizacionID });
                 orgCN.Dispose();
 
@@ -1060,7 +1016,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             bool existenErrores = false;
 
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
 
             Dictionary<string, string> listaErrores = new Dictionary<string, string>();
 
@@ -1120,7 +1076,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     string antiguoEmail = IdentidadActual.Persona.FilaPersona.Email;
                     if (!string.IsNullOrEmpty(pPerfilPersonal.Email))
                     {
-                        IdentidadActual.Persona.FilaPersona.Email = pPerfilPersonal.Email;
+                        IdentidadActual.Persona.FilaPersona.Email = pPerfilPersonal.Email.ToLower();
                     }
                     if (!string.IsNullOrEmpty(pPerfilPersonal.Lang))
                     {
@@ -1130,7 +1086,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         IdentidadActual.Persona.FilaPersona.ProvinciaPersonal = "";
 
-                        Guid provinciaID = Guid.Empty;
+                        Guid provinciaID;
                         if (Guid.TryParse(pPerfilPersonal.Region, out provinciaID) && provinciaID != Guid.Empty)
                         {
                             IdentidadActual.Persona.FilaPersona.ProvinciaPersonalID = provinciaID;
@@ -1179,11 +1135,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         string profesorSexo = "";
                         if (IdentidadActual.Persona.Sexo.Equals("H"))
                         {
-                            profesorSexo = UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESOR") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ";
+                            profesorSexo = $"{UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESOR")} {ConstantesDeSeparacion.SEPARACION_CONCATENADOR} ";
                         }
                         else
                         {
-                            profesorSexo = UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESORA") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ";
+                            profesorSexo = $"{UtilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESORA")} {ConstantesDeSeparacion.SEPARACION_CONCATENADOR} ";
                         }
 
                         foreach (AD.EntityModel.Models.IdentidadDS.Perfil filaPerfil in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaPerfil.Where(perfil => perfil.PersonaID.Equals(mControladorBase.UsuarioActual.PersonaID)).ToList())
@@ -1228,7 +1184,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             IdentidadActual.Persona.FilaPersona.EsBuscableExternos = pPerfilPersonal.IsExternalSearched.Value;
 
-                            //si está marcado visible en todo internet implica que será visible en la comunidad
+                            //si está marcado visible implica que será visible en la comunidad
                             if (pPerfilPersonal.IsExternalSearched.HasValue && pPerfilPersonal.IsExternalSearched.Value)
                             {
                                 IdentidadActual.Persona.FilaPersona.EsBuscable = true;
@@ -1244,7 +1200,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         IdentidadActual.Persona.CodPostal = "";
                     }
 
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     DataWrapperIdentidad dataWrapperIdentidad = identidadCN.ObtenerDatosExtraProyectoOpcionIdentidadPorIdentidadID(IdentidadActual.Clave);
                     IdentidadActual.GestorIdentidades.DataWrapperIdentidad.Merge(dataWrapperIdentidad);
                     identidadCN.Dispose();
@@ -1270,24 +1226,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     else
                     {
                         mEntityContext.SaveChanges();
-                        IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
                         identidadCL.InvalidarFichasIdentidadesMVC(IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Select(item => item.IdentidadID).ToList());
                     }
 
-                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", antiguoEmail, ProyectoSeleccionado.Clave);
+                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, string.Empty, antiguoEmail);
 
                     if (personaCN != null)
                     {
                         personaCN.Dispose();
-                        personaCN = null;
                     }
 
                     List<Guid> listaProyectos = new List<Guid>();
-                    foreach (AD.EntityModel.Models.IdentidadDS.Identidad filaIdentidad in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad)
+                    foreach (Guid proyectoID in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Select(item => item.ProyectoID))
                     {
-                        if (!listaProyectos.Contains(filaIdentidad.ProyectoID))
+                        if (!listaProyectos.Contains(proyectoID))
                         {
-                            listaProyectos.Add(filaIdentidad.ProyectoID);
+                            listaProyectos.Add(proyectoID);
                         }
                     }
                     if (!listaProyectos.Contains(ProyectoAD.MyGnoss))
@@ -1295,8 +1250,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         listaProyectos.Add(ProyectoAD.MyGnoss);
                     }
 
-                    ControladorPersonas contrPers = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                    contrPers.ActualizarModeloBaseSimpleMultiple(IdentidadActual.Persona.Clave, listaProyectos);
+                    ControladorPersonas contrPers = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                    contrPers.ActualizarModeloBaseSimpleMultiple(IdentidadActual.Persona.Clave, listaProyectos, mAvailableServices);
                     EliminarCaches();
                 }
             }
@@ -1314,7 +1269,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             bool existenErrores = false;
 
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
 
             Dictionary<string, string> listaErrores = new Dictionary<string, string>();
 
@@ -1336,21 +1291,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     listaErrores.Add("nombre", UtilIdiomas.GetText("COMADMINCMS", "ERRORCAMPOVACIO", UtilIdiomas.GetText("REGISTRO", "POBLACION").Replace(" *", "")));
                     existenErrores = true;
                 }
-                //if (string.IsNullOrEmpty(pPerfilPersonal.Email))
-                //{
-                //    listaErrores.Add("email", UtilIdiomas.GetText("COMADMINCMS", "ERRORCAMPOVACIO", UtilIdiomas.GetText("REGISTROUSUARIOORGANIZACION", "EMAIL").Replace(" *", "")));
-                //    existenErrores = true;
-                //}
-                //else if (personaCN.ExisteEmail(pPerfilPersonal.Email, IdentidadActual.Persona.Clave))
-                //{
-                //    listaErrores.Add("email", UtilIdiomas.GetText("PERFIL", "ERRORMAIL"));
-                //    existenErrores = true;
-                //}
-                //else if (!UtilCadenas.ValidarEmail(pPerfilPersonal.Email))
-                //{
-                //    listaErrores.Add("formatoEmail", UtilIdiomas.GetText("REGISTRO", "ERRORFORMATOEMAIL"));
-                //    existenErrores = true;
-                //}
 
                 //Para los Emails de Tutores
                 if (!string.IsNullOrEmpty(pPerfilPersonal.Email))
@@ -1382,7 +1322,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     bool CambiadoNombre = (IdentidadActual.Persona.FilaPersona.Nombre != pPerfilPersonal.Name);
                     bool CambiadoApellidos = (IdentidadActual.Persona.FilaPersona.Apellidos != pPerfilPersonal.LastName);
-                    
+
 
                     if ((IdentidadActual.Persona.FilaPersona.EstadoCorreccion == (short)EstadoCorreccion.NotificadoNoCambiado || IdentidadActual.Persona.FilaPersona.EstadoCorreccion == (short)EstadoCorreccion.NotificadoNoCambiado3Dias) && (CambiadoNombre || CambiadoApellidos))
                     {
@@ -1393,12 +1333,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     IdentidadActual.Persona.FilaPersona.Apellidos = pPerfilPersonal.LastName.Trim();
                     IdentidadActual.Persona.FilaPersona.LocalidadPersonal = pPerfilPersonal.Location;
 
-
-                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                     AD.EntityModel.Models.UsuarioDS.Usuario usuario = usuarioCN.ObtenerFilaUsuarioPorLoginOEmail(IdentidadActual.Persona.FilaPersona.Email);
 
-                    //BEA
-                    if (usuario.TwoFactorAuthentication!= pPerfilPersonal.TwoFactorAuthentication)
+                    if (usuario.TwoFactorAuthentication != pPerfilPersonal.TwoFactorAuthentication)
                     {
                         usuario.TwoFactorAuthentication = pPerfilPersonal.TwoFactorAuthentication;
                     }
@@ -1407,7 +1345,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     string antiguoEmail = IdentidadActual.Persona.FilaPersona.Email;
                     if (!string.IsNullOrEmpty(pPerfilPersonal.Email))
                     {
-                        IdentidadActual.Persona.FilaPersona.Email = pPerfilPersonal.Email;
+                        IdentidadActual.Persona.FilaPersona.Email = pPerfilPersonal.Email.ToLower();
                     }
 
                     if (!string.IsNullOrEmpty(pPerfilPersonal.EmailTutor))
@@ -1418,7 +1356,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     IdentidadActual.Persona.FilaPersona.Idioma = pPerfilPersonal.Lang;
                     IdentidadActual.Persona.FilaPersona.ProvinciaPersonal = "";
 
-                    Guid provinciaID = Guid.Empty;
+                    Guid provinciaID;
                     if (Guid.TryParse(pPerfilPersonal.Region, out provinciaID) && provinciaID != Guid.Empty)
                     {
                         IdentidadActual.Persona.FilaPersona.ProvinciaPersonalID = provinciaID;
@@ -1468,13 +1406,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         foreach (AD.EntityModel.Models.IdentidadDS.Perfil filaPerfil2 in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaPerfil.Where(perfil => perfil.PersonaID.Equals(mControladorBase.UsuarioActual.PersonaID)).ToList())
                         {
                             AD.EntityModel.Models.IdentidadDS.Perfil filaPerfil = filaPerfil2;
-                            IdentidadCN idenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            IdentidadCN idenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                             string profesor = "";
                             if (IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaProfesor.Any(teacher => teacher.PerfilID.Equals(filaPerfil.PerfilID)))
                             {
                                 profesor = profesorSexo;
                             }
-                            if(mEntityContext.Entry(filaPerfil).State.Equals(EntityState.Detached))
+                            if (mEntityContext.Entry(filaPerfil).State.Equals(EntityState.Detached))
                             {
                                 filaPerfil = mEntityContext.Perfil.First(item => item.PerfilID.Equals(filaPerfil.PerfilID));
                             }
@@ -1486,10 +1424,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                                 foreach (AD.EntityModel.Models.IdentidadDS.Identidad identidadEntity in listaIdentidadesEntity)
                                 {
-                                    AD.EntityModel.Models.IdentidadDS.Identidad filaIdentidad = IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(item => item.IdentidadID.Equals(identidadEntity.IdentidadID)).FirstOrDefault();
+                                    AD.EntityModel.Models.IdentidadDS.Identidad filaIdentidad = IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Find(item => item.IdentidadID.Equals(identidadEntity.IdentidadID));
 
                                     identidadEntity.NombreCortoIdentidad = profesor + IdentidadActual.Persona.Nombre;
-                                    if(filaIdentidad != null)
+                                    if (filaIdentidad != null)
                                     {
                                         filaIdentidad.NombreCortoIdentidad = profesor + IdentidadActual.Persona.Nombre;
                                     }
@@ -1503,11 +1441,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         bool comprobarPerfil = true;
                         bool comprobarPerfilExterno = true;
 
-                        // if (ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro = 'VisibilidadPerfil'").Length == 1)
                         if (ParametrosAplicacionDS.Where(parametro => parametro.Parametro.Equals("VisibilidadPerfil")).ToList().Count == 1)
                         {
-                            //string visibilidadPerfil = (string)ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro = 'VisibilidadPerfil'")[0]["Valor"];
-                            string visibilidadPerfil = ParametrosAplicacionDS.Where(parametro => parametro.Parametro.Equals("VisibilidadPerfil")).ToList().First().Valor;
+                            string visibilidadPerfil = ParametrosAplicacionDS.Find(parametro => parametro.Parametro.Equals("VisibilidadPerfil")).Valor;
 
                             comprobarPerfil = visibilidadPerfil[0].ToString() == "1";
                             comprobarPerfilExterno = visibilidadPerfil[2].ToString() == "1";
@@ -1523,7 +1459,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             IdentidadActual.Persona.FilaPersona.EsBuscableExternos = pPerfilPersonal.IsExternalSearched.Value;
 
-                            //si está marcado visible en todo internet implica que será visible en la comunidad
+                            //si está marcado visible implica que será visible en la comunidad
                             if (pPerfilPersonal.IsExternalSearched.HasValue && pPerfilPersonal.IsExternalSearched.Value)
                             {
                                 IdentidadActual.Persona.FilaPersona.EsBuscable = true;
@@ -1540,7 +1476,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     personaCN.Actualizar();
 
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     DataWrapperIdentidad dataWrapperIdentidad = identidadCN.ObtenerDatosExtraProyectoOpcionIdentidadPorIdentidadID(IdentidadActual.Clave);
                     IdentidadActual.GestorIdentidades.DataWrapperIdentidad.Merge(dataWrapperIdentidad);
                     identidadCN.Dispose();
@@ -1550,7 +1486,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     GuardarDatosExtra(pPerfilPersonal, dicDatosExtraProyectoVirtuoso, dicDatosExtraEcosistemaVirtuoso);
 
-                    //JsonEstado jsonEstado = ControladorIdentidades.AccionEnServicioExternoEcosistema(TipoAccionExterna.Edicion, ProyectoSeleccionado.Clave, mControladorBase.UsuarioActual.UsuarioID, IdentidadActual.Persona.Nombre, IdentidadActual.Persona.Apellidos, IdentidadActual.Persona.FilaPersona.Email, "", ParametrosAplicacionDS, DatosExtraProyectoDS, dicDatosExtraEcosistemaVirtuoso, dicDatosExtraProyectoVirtuoso, antiguoEmail);
                     JsonEstado jsonEstado = ControladorIdentidades.AccionEnServicioExternoEcosistema(TipoAccionExterna.Edicion, ProyectoSeleccionado.Clave, mControladorBase.UsuarioActual.UsuarioID, IdentidadActual.Persona.Nombre, IdentidadActual.Persona.Apellidos, IdentidadActual.Persona.FilaPersona.Email, "", GestorParametroAplicacion, DatosExtraProyectoDS, dicDatosExtraEcosistemaVirtuoso, dicDatosExtraProyectoVirtuoso, antiguoEmail);
                     if (jsonEstado != null && !jsonEstado.Correcto)
                     {
@@ -1567,20 +1502,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         mEntityContext.SaveChanges();
                     }
 
-                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, "", antiguoEmail, ProyectoSeleccionado.Clave);
+                    ControladorIdentidades.NotificarEdicionPerfilEnProyectos(TipoAccionExterna.Edicion, IdentidadActual.Persona.Clave, string.Empty, antiguoEmail);
 
                     if (personaCN != null)
                     {
                         personaCN.Dispose();
-                        personaCN = null;
                     }
 
                     List<Guid> listaProyectos = new List<Guid>();
-                    foreach (AD.EntityModel.Models.IdentidadDS.Identidad filaIdentidad in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad)
+                    foreach (Guid proyectoID in IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Select(item => item.ProyectoID))
                     {
-                        if (!listaProyectos.Contains(filaIdentidad.ProyectoID))
+                        if (!listaProyectos.Contains(proyectoID))
                         {
-                            listaProyectos.Add(filaIdentidad.ProyectoID);
+                            listaProyectos.Add(proyectoID);
                         }
                     }
                     if (!listaProyectos.Contains(ProyectoAD.MyGnoss))
@@ -1588,9 +1522,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         listaProyectos.Add(ProyectoAD.MyGnoss);
                     }
 
-                    ControladorPersonas contrPers = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorPersonas contrPers = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
                     EliminarCaches();
-                    contrPers.ActualizarModeloBaseSimpleMultiple(IdentidadActual.Persona.Clave, listaProyectos);
+                    contrPers.ActualizarModeloBaseSimpleMultiple(IdentidadActual.Persona.Clave, listaProyectos, mAvailableServices);
 
                 }
             }
@@ -1605,7 +1539,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private Dictionary<string, string> GuardarPerfilProfesional(ProfileProfesionalViewModel pPerfilProfesional)
         {
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
 
             Dictionary<string, string> listaErrores = new Dictionary<string, string>();
 
@@ -1617,9 +1551,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 personaCN.Dispose();
 
-                /*PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
-                filaPersona.EmailTrabajo = pPerfilProfesional.Email;
-                */
                 mEntityContext.PersonaVinculoOrganizacion.FirstOrDefault(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).EmailTrabajo = pPerfilProfesional.Email;
 
                 mEntityContext.SaveChanges();
@@ -1715,17 +1646,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             Dictionary<Guid, Guid> dicDatosExtraProyecto = new Dictionary<Guid, Guid>();
             Dictionary<Guid, Guid> dicDatosExtraEcosistema = new Dictionary<Guid, Guid>();
-            List<Guid> listaClausulasRegistro = new List<Guid>();
 
             if (paginaModel.ProfilePersonal != null)
             {
 
-                foreach (AdditionalClause clausulaAdicional in paginaModel.ProfilePersonal.AdditionalClauses)
+                foreach (Guid clausulaAdicionalID in paginaModel.ProfilePersonal.AdditionalClauses.Select(item => item.Id))
                 {
-                    AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg fila = usuarioDW.ListaProyRolUsuClausulaReg.Where(item => item.ClausulaID.Equals(clausulaAdicional.Id) && item.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OrganizacionGnossID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID)).FirstOrDefault();
+                    ProyRolUsuClausulaReg fila = usuarioDW.ListaProyRolUsuClausulaReg.Find(item => item.ClausulaID.Equals(clausulaAdicionalID) && item.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OrganizacionGnossID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID));
 
-                    bool valor = clausulaAdicional.Checked;
-                    bool.TryParse(RequestParams(clausulaAdicional.Id.ToString()), out valor);
+                    bool valor;
+                    bool.TryParse(RequestParams(clausulaAdicionalID.ToString()), out valor);
 
                     if (fila != null)
                     {
@@ -1733,8 +1663,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else
                     {
-                        AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg proyRolUsuClausulaReg = new AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg();
-                        proyRolUsuClausulaReg.ClausulaID = clausulaAdicional.Id;
+                        ProyRolUsuClausulaReg proyRolUsuClausulaReg = new ProyRolUsuClausulaReg();
+                        proyRolUsuClausulaReg.ClausulaID = clausulaAdicionalID;
                         proyRolUsuClausulaReg.OrganizacionID = ProyectoSeleccionado.FilaProyecto.OrganizacionID;
                         proyRolUsuClausulaReg.ProyectoID = ProyectoSeleccionado.Clave;
                         proyRolUsuClausulaReg.OrganizacionGnossID = ProyectoSeleccionado.FilaProyecto.OrganizacionID;
@@ -1748,10 +1678,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             if (pPerfilPersonal.AdditionalFields != null)
             {
-                foreach (AdditionalFieldAutentication campoExtra in pPerfilPersonal.AdditionalFields)
+                foreach (string nombreCampo in pPerfilPersonal.AdditionalFields.Select(item => item.FieldName))
                 {
-                    string nombreCampo = campoExtra.FieldName;
-                    string valorCampo = RequestParams(nombreCampo);// || campoExtra.FieldValue;
+                    string valorCampo = RequestParams(nombreCampo);
 
                     Guid guidNombreCampo = Guid.Empty;
                     if (Guid.TryParse(nombreCampo, out guidNombreCampo))
@@ -1763,7 +1692,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                         else
                         {
-                            //FindByOrganizacionIDProyectoIDDatoExtraID(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, guidNombreCampo);
                             DatoExtraProyecto filaDatoExtraProyecto = DatosExtraProyectoDS.ListaDatoExtraProyecto.FirstOrDefault();
                             if (filaDatoExtraProyecto != null && !valorCampo.Equals(Guid.Empty.ToString()))
                             {
@@ -1797,8 +1725,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 datoExtraProyectoOpcionIdentidad.DatoExtraID = datoExtra;
                 datoExtraProyectoOpcionIdentidad.OpcionID = dicDatosExtraProyecto[datoExtra];
                 datoExtraProyectoOpcionIdentidad.IdentidadID = IdentidadActual.Clave;
-				//dataWrapperIdentidad.ListaDatoExtraProyectoOpcionIdentidad.AddDatoExtraProyectoOpcionIdentidadRow(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, datoExtra, dicDatosExtraProyecto[datoExtra], IdentidadActual.FilaIdentidad);
-				dataWrapperIdentidad.ListaDatoExtraProyectoOpcionIdentidad.Add(datoExtraProyectoOpcionIdentidad);
+                dataWrapperIdentidad.ListaDatoExtraProyectoOpcionIdentidad.Add(datoExtraProyectoOpcionIdentidad);
                 mEntityContext.DatoExtraProyectoOpcionIdentidad.Add(datoExtraProyectoOpcionIdentidad);
             }
 
@@ -1807,7 +1734,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (!string.IsNullOrEmpty(pDicDatosExtraProyectoVirtuoso[orden].Trim()) && pDicDatosExtraProyectoVirtuoso[orden].Trim() != "|")
                 {
                     string valor = pDicDatosExtraProyectoVirtuoso[orden].Trim();
-                    if (valor.EndsWith("|"))
+                    if (valor.EndsWith('|'))
                     {
                         valor = valor.Substring(0, valor.Length - 1);
                     }
@@ -1840,7 +1767,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (!string.IsNullOrEmpty(pDicDatosExtraEcosistemaVirtuoso[orden].Trim()) && pDicDatosExtraEcosistemaVirtuoso[orden].Trim() != "|")
                 {
                     string valor = pDicDatosExtraEcosistemaVirtuoso[orden].Trim();
-                    if (valor.EndsWith("|"))
+                    if (valor.EndsWith('|'))
                     {
                         valor = valor.Substring(0, valor.Length - 1);
                     }
@@ -1913,7 +1840,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            List<AD.EntityModel.Models.IdentidadDS.DatoExtraEcosistemaVirtuosoPerfil> listaDatoExtraEcosistemaVirtuosoPerfil = identidadDW.ListaDatoExtraEcosistemaVirtuosoPerfil;
             foreach (AD.EntityModel.Models.IdentidadDS.DatoExtraEcosistemaVirtuosoPerfil filaDatoExtraEcosistemaVirtuoso in identidadDW.ListaDatoExtraEcosistemaVirtuosoPerfil)
             {
                 if (filaDatoExtraEcosistemaVirtuoso.PerfilID == IdentidadActual.PerfilID)
@@ -1930,16 +1856,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             Dictionary<Guid, Guid> dicDatosExtraProyecto = new Dictionary<Guid, Guid>();
             Dictionary<Guid, Guid> dicDatosExtraEcosistema = new Dictionary<Guid, Guid>();
-            List<Guid> listaClausulasRegistro = new List<Guid>();
 
             if (paginaModel.ProfilePersonal != null)
             {
-                foreach (EditProfileViewModel.AdditionalClause clausulaAdicional in paginaModel.ProfilePersonal.AdditionalClauses)
+                foreach (Guid clausulaAdicionalID in paginaModel.ProfilePersonal.AdditionalClauses.Select(item => item.Id))
                 {
-                    AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg fila = usuarioDW.ListaProyRolUsuClausulaReg.Where(item => item.ClausulaID.Equals(clausulaAdicional.Id) && item.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OrganizacionGnossID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID)).FirstOrDefault();
+                    ProyRolUsuClausulaReg fila = usuarioDW.ListaProyRolUsuClausulaReg.Find(item => item.ClausulaID.Equals(clausulaAdicionalID) && item.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OrganizacionGnossID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID));
 
-                    bool valor = clausulaAdicional.Checked;
-                    bool.TryParse(RequestParams(clausulaAdicional.Id.ToString()), out valor);
+                    bool valor;
+                    bool.TryParse(RequestParams(clausulaAdicionalID.ToString()), out valor);
 
                     if (fila != null)
                     {
@@ -1947,8 +1872,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else
                     {
-                        AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg proyRolUsuClausulaReg = new AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg();
-                        proyRolUsuClausulaReg.ClausulaID = clausulaAdicional.Id;
+                        ProyRolUsuClausulaReg proyRolUsuClausulaReg = new ProyRolUsuClausulaReg();
+                        proyRolUsuClausulaReg.ClausulaID = clausulaAdicionalID;
                         proyRolUsuClausulaReg.OrganizacionID = ProyectoSeleccionado.FilaProyecto.OrganizacionID;
                         proyRolUsuClausulaReg.ProyectoID = ProyectoSeleccionado.Clave;
                         proyRolUsuClausulaReg.OrganizacionGnossID = ProyectoSeleccionado.FilaProyecto.OrganizacionID;
@@ -1965,7 +1890,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 foreach (AdditionalFieldAutentication campoExtra in pPerfilPersonal.AdditionalFields)
                 {
                     string nombreCampo = campoExtra.FieldName;
-                    string valorCampo = RequestParams(nombreCampo);// || campoExtra.FieldValue;
+                    string valorCampo = RequestParams(nombreCampo);
                     if (string.IsNullOrEmpty(valorCampo))
                     {
                         valorCampo = campoExtra.FieldValue;
@@ -1990,14 +1915,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else if (!string.IsNullOrEmpty(valorCampo))
                     {
-                        List<AD.EntityModel.Models.ProyectoDS.DatoExtraEcosistemaVirtuoso> filasDatoExtraEcosistemaVirtuoso = DatosExtraProyectoDS.ListaDatoExtraEcosistemaVirtuoso.Where(dato => dato.InputID.Equals(nombreCampo)).ToList();
+                        List<DatoExtraEcosistemaVirtuoso> filasDatoExtraEcosistemaVirtuoso = DatosExtraProyectoDS.ListaDatoExtraEcosistemaVirtuoso.Where(dato => dato.InputID.Equals(nombreCampo)).ToList();
                         if (filasDatoExtraEcosistemaVirtuoso.Count > 0 && !string.IsNullOrEmpty(valorCampo))
                         {
                             pDicDatosExtraEcosistemaVirtuoso.Add(filasDatoExtraEcosistemaVirtuoso[0].Orden, valorCampo);
                         }
                         else
                         {
-                            List<AD.EntityModel.Models.ProyectoDS.DatoExtraProyectoVirtuoso> filasDatoExtraProyectoVirtuoso = DatosExtraProyectoDS.ListaDatoExtraProyectoVirtuoso.Where(dato => dato.InputID.Equals(nombreCampo)).ToList();
+                            List<DatoExtraProyectoVirtuoso> filasDatoExtraProyectoVirtuoso = DatosExtraProyectoDS.ListaDatoExtraProyectoVirtuoso.Where(dato => dato.InputID.Equals(nombreCampo)).ToList();
                             if (filasDatoExtraProyectoVirtuoso.Count > 0 && !string.IsNullOrEmpty(valorCampo))
                             {
                                 pDicDatosExtraProyectoVirtuoso.Add(filasDatoExtraProyectoVirtuoso[0].Orden, valorCampo);
@@ -2024,7 +1949,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (!string.IsNullOrEmpty(pDicDatosExtraProyectoVirtuoso[orden].Trim()) && pDicDatosExtraProyectoVirtuoso[orden].Trim() != "|")
                 {
                     string valor = pDicDatosExtraProyectoVirtuoso[orden].Trim();
-                    if (valor.EndsWith("|"))
+                    if (valor.EndsWith('|'))
                     {
                         valor = valor.Substring(0, valor.Length - 1);
                     }
@@ -2057,7 +1982,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (!string.IsNullOrEmpty(pDicDatosExtraEcosistemaVirtuoso[orden].Trim()) && pDicDatosExtraEcosistemaVirtuoso[orden].Trim() != "|")
                 {
                     string valor = pDicDatosExtraEcosistemaVirtuoso[orden].Trim();
-                    if (valor.EndsWith("|"))
+                    if (valor.EndsWith('|'))
                     {
                         valor = valor.Substring(0, valor.Length - 1);
                     }
@@ -2101,20 +2026,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 descp = pDescription.Trim();
             }
-            if (permitirNulos && !string.IsNullOrEmpty(pTags))
+            if (!string.IsNullOrEmpty(pTags))
             {
                 tags = pTags.Trim();
             }
-            else if (!permitirNulos)
-            {
-                tags = pTags.Trim();
-            }
+
             //DocumentoID y IDCV pra crear uno nuevo
-            Guid DocumentoID = Guid.NewGuid();
             Guid IDCV = Guid.NewGuid();
-
-            bool nuevoCurriculum = true;
-
             Guid curriculumID = Guid.Empty;
 
             if (CVUnicoPorPerfil)
@@ -2134,35 +2052,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (!curriculumID.Equals(Guid.Empty))
             {
-                nuevoCurriculum = false;
                 IDCV = curriculumID;
             }
 
             List<string> listaTags = new List<string>();
-            if (permitirNulos && !string.IsNullOrEmpty(tags))
+            if (!string.IsNullOrEmpty(tags))
             {
                 listaTags = UtilCadenas.SepararTexto(tags);
             }
-            else if (!permitirNulos)
-            {
-                listaTags = UtilCadenas.SepararTexto(tags);
-            }
-            string descripcion = descp;
 
             if ((string.IsNullOrEmpty(descp) || descp == "<p></p>") && !permitirNulos)
             {
                 //En el rdf antiguo no había tags. Lanzar excepción y controlarla para mostrar un mensaje en el que se le pidan tags.
-                throw new ArgumentNullException("No se ha agregado una descripción.");
+                throw new BadHttpRequestException("No se ha agregado una descripción.");
             }
             else if (listaTags.Count == 0 && !permitirNulos)
             {
                 //En el rdf antiguo no había tags. Lanzar excepción y controlarla para mostrar un mensaje en el que se le pidan tags.
-                throw new ArgumentNullException("No se han agregado tags.");
+                throw new BadHttpRequestException("No se han agregado tags.");
             }
             if (paginaModel.Curriculum != null)
             {
                 Curriculum curriculum = mEntityContext.Curriculum.FirstOrDefault(cv => cv.CurriculumID.Equals(IDCV));
-                if(curriculum != null)
+                if (curriculum != null)
                 {
                     curriculum.Tags = tags;
                     curriculum.Description = descp;
@@ -2212,19 +2124,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 IdentidadActual.FilaIdentidad.CurriculumID = pCVSeleccionado;
                 filas = IdentidadActual.GestorIdentidades.DataWrapperIdentidad.ListaIdentidad.Where(identidad => identidad.CurriculumID.Equals(pCVSeleccionado)).ToList();
-                foreach (AD.EntityModel.Models.IdentidadDS.Identidad filaIdent in filas)
+
+                foreach (AD.EntityModel.Models.IdentidadDS.Identidad filaIdent in filas.Where(item => mEntityContext.Entry(item).State.Equals(EntityState.Detached)))
                 {
-                    if (mEntityContext.Entry(filaIdent).State.Equals(EntityState.Detached))
-                    {
-                        AD.EntityModel.Models.IdentidadDS.Identidad identBD = mEntityContext.Identidad.FirstOrDefault(item => item.IdentidadID.Equals(filaIdent.IdentidadID));
-                        identBD.CurriculumID = pCVSeleccionado;
-                    }
+                    AD.EntityModel.Models.IdentidadDS.Identidad identBD = mEntityContext.Identidad.FirstOrDefault(item => item.IdentidadID.Equals(filaIdent.IdentidadID));
+                    identBD.CurriculumID = pCVSeleccionado;
                 }
             }
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             identidadCN.ActualizaIdentidades();
             identidadCN.Dispose();
+
             #endregion
 
             #region Actualizamos base de las identidades que tienen este curriculum
@@ -2236,92 +2147,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (filaIdent.Tipo == 2 || filaIdent.Tipo == 3)
                     {
                         //Genero los nuevos
-                        ControladorOrganizaciones controladorOrganizaciones2 = new ControladorOrganizaciones(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-                        controladorOrganizaciones2.ActualizarModeloBASE(IdentidadActual.GestorIdentidades.ListaIdentidades[filaIdent.IdentidadID], filaIdent.ProyectoID, true, false, PrioridadBase.Alta);
+                        ControladorOrganizaciones controladorOrganizaciones2 = new ControladorOrganizaciones(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorOrganizaciones>(), mLoggerFactory);
+                        controladorOrganizaciones2.ActualizarModeloBASE(IdentidadActual.GestorIdentidades.ListaIdentidades[filaIdent.IdentidadID], filaIdent.ProyectoID, true, false, PrioridadBase.Alta, mAvailableServices);
                     }
                     else
                     {
                         //Genero los nuevos
-                        ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                        controladorPersonas.ActualizarModeloBASE(IdentidadActual.GestorIdentidades.ListaIdentidades[filaIdent.IdentidadID], filaIdent.ProyectoID, true, false, PrioridadBase.Alta);
+                        ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                        controladorPersonas.ActualizarModeloBASE(IdentidadActual.GestorIdentidades.ListaIdentidades[filaIdent.IdentidadID], filaIdent.ProyectoID, true, false, PrioridadBase.Alta, mAvailableServices);
 
                     }
                 }
             }
+
             #endregion
 
             #region Borramos caché
 
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             identidadCL.EliminarCacheGestorIdentidadActual(UsuarioActual.UsuarioID, UsuarioActual.IdentidadID, UsuarioActual.PersonaID);
             identidadCL.Dispose();
 
             #endregion
         }
-
-        /// <summary>
-        /// Guarda los datos del documento en la BD en formato RDF.
-        /// <returns>TRUE si se ha podido guardar el formulario RDF, FALSE en caso contrario</returns>
-        /// </summary>
-        //private bool GuardarFormularioRDF(string pRDF, Guid pDocumentoID, Guid pIDCv, bool pEsNuevo)
-        //{
-        //    try
-        //    {
-        //        //string nombreTemporal = Path.GetRandomFileName() + ".rdf";
-        //        //string ruta = Path.GetTempPath() + nombreTemporal;
-
-        //        GestionOWL GestionOWL = new GestionOWL();
-        //        GestionOWL.UrlOntologia = UrlOntologiaCurriculum;
-        //        GestionOWL.NamespaceOntologia = GestionOWL.NAMESPACE_ONTO_HR_XML;
-
-        //        GeneradorPantillaOWL GeneradorOWL = new GeneradorPantillaOWL(Ontologia, true, new Dictionary<Propiedad, CampoOntologia>(), new Dictionary<ElementoOntologia, HtmlGenericControl>(), pDocumentoID, false, false, pIDCv);
-        //        List<ElementoOntologia> entidadesPrincipales = GeneradorOWL.RecogerValoresRdf(pRDF);
-        //        Stream stream = GestionOWL.PasarOWL(null, Ontologia, entidadesPrincipales, null, null);
-        //        stream.Position = 0;
-
-        //        string contenidoFichero = new StreamReader(stream).ReadToEnd();
-
-        //        stream.Flush();
-        //        //string contenidoFichero = System.IO.File.ReadAllText(ruta);
-        //        //System.IO.File.Delete(ruta);
-
-        //        if (!pEsNuevo)
-        //        {
-        //            //El RDF ya existia por lo que hay que remplazarlo:  
-        //            ControladorDocumentacion.BorrarRDFDeVirtuoso(pDocumentoID, "Curriculum.owl", UrlIntragnoss, false, UsuarioActual.ProyectoID);
-        //        }
-
-        //        #region SemWeb
-
-        //        RdfDS RdfDS = null;
-        //        if (!pEsNuevo)
-        //        {
-        //            RdfDS = ControladorDocumentacion.ObtenerRDFDeBDRDF(pDocumentoID, ProyectoAD.MetaProyecto);
-        //        }
-
-        //        ControladorDocumentacion.GuardarRDFEnVirtuoso(entidadesPrincipales, "Curriculum.owl", UrlIntragnoss, null, mControladorBase.UsuarioActual.ProyectoID, pDocumentoID.ToString(), false, "", false, false, (short)PrioridadBase.Alta);
-        //        ControladorDocumentacion.GuardarRDFEnBDRDF(contenidoFichero, pDocumentoID, ProyectoAD.MetaProyecto, RdfDS);
-
-        //        #endregion
-
-        //        return true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        GuardarLogErrorAJAX(" ERROR: " + ex.Message + "\r\nStackTrace: " + ex.StackTrace);
-        //    }
-
-        //    return false;
-        //}
-
         private void UsarImagenPersonal(bool pUsarFotoPerfil)
         {
             if (IdentidadActual.TrabajaConOrganizacion)
             {
-                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
+                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Find(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
                 if (mEntityContext.Entry(filaPersona).State.Equals(EntityState.Detached))
                 {
-                    filaPersona = mEntityContext.PersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
+                    filaPersona = mEntityContext.PersonaVinculoOrganizacion.FirstOrDefault(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
                 }
                 filaPersona.UsarFotoPersonal = pUsarFotoPerfil;
 
@@ -2335,11 +2191,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
             {
-                urlFicheroImagen = UtilArchivos.ContentImagenesOrganizaciones + "/" + IdentidadActual.OrganizacionID.ToString();
+                urlFicheroImagen = $"{UtilArchivos.ContentImagenesOrganizaciones}/{IdentidadActual.OrganizacionID}";
             }
             else if (IdentidadActual.TrabajaConOrganizacion)
             {
-                urlFicheroImagen = UtilArchivos.ContentImagenesPersona_Organizacion + "/" + IdentidadActual.OrganizacionID.ToString() + "/" + mControladorBase.UsuarioActual.PersonaID.ToString();
+                urlFicheroImagen = $"{UtilArchivos.ContentImagenesPersona_Organizacion}/{IdentidadActual.OrganizacionID}/{mControladorBase.UsuarioActual.PersonaID}";
             }
             else if (IdentidadActual.EsIdentidadProfesor)
             {
@@ -2347,18 +2203,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (IdentidadActual.ModoPersonal)
             {
-                urlFicheroImagen = UtilArchivos.ContentImagenesPersonas + "/" + mControladorBase.UsuarioActual.PersonaID.ToString();
+                urlFicheroImagen = $"{UtilArchivos.ContentImagenesPersonas}/{mControladorBase.UsuarioActual.PersonaID}";
             }
 
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
             servicioImagenes.Url = UrlIntragnossServicios;
 
             //Si se sube un fichero nuevo se borra la foto temporal
-            servicioImagenes.BorrarImagen(urlFicheroImagen + "_temp" + ".png");
-            servicioImagenes.BorrarImagen(urlFicheroImagen + "_temp2" + ".png");
-            servicioImagenes.BorrarImagen(urlFicheroImagen + ".png");
-            servicioImagenes.BorrarImagen(urlFicheroImagen + "_peque" + ".png");
-            servicioImagenes.BorrarImagen(urlFicheroImagen + "_grande" + ".png");
+            servicioImagenes.BorrarImagen($"{urlFicheroImagen}_temp.png");
+            servicioImagenes.BorrarImagen($"{urlFicheroImagen} _temp2.png");
+            servicioImagenes.BorrarImagen($"{urlFicheroImagen}.png");
+            servicioImagenes.BorrarImagen($"{urlFicheroImagen}_peque.png");
+            servicioImagenes.BorrarImagen($"{urlFicheroImagen} _grande.png");
 
             if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
             {
@@ -2369,22 +2225,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 IdentidadActual.OrganizacionPerfil.FilaOrganizacion.Logotipo = null;
                 IdentidadActual.OrganizacionPerfil.FilaOrganizacion.CoordenadasLogo = null;
                 mEntityContext.SaveChanges();
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, true);
                 identidadCN.Dispose();
             }
             else if (IdentidadActual.TrabajaConOrganizacion)
             {
-                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
+                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Find(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
                 if (mEntityContext.Entry(filaPersona).State.Equals(EntityState.Detached))
                 {
-                    filaPersona = mEntityContext.PersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
+                    filaPersona = mEntityContext.PersonaVinculoOrganizacion.FirstOrDefault(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
                 }
                 filaPersona.Foto = null;
                 filaPersona.CoordenadasFoto = null;
                 filaPersona.FechaAnadidaFoto = null;
                 mEntityContext.SaveChanges();
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, true);
                 identidadCN.Dispose();
             }
@@ -2399,7 +2255,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = null;
 
                 mEntityContext.SaveChanges();
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, true);
                 identidadCN.Dispose();
             }
@@ -2414,34 +2270,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             List<string> listaClavesInvalidar = new List<string>();
 
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
 
-            string prefijoClave;
-
-            if (!string.IsNullOrEmpty(identidadCL.Dominio))
-            {
-                prefijoClave = identidadCL.Dominio;
-            }
-            else
-            {
-                prefijoClave = IdentidadCL.DominioEstatico;
-            }
-
-
-            prefijoClave = prefijoClave + "_" + identidadCL.ClaveCache[0]  + "_5.0.0.0_";
-            prefijoClave = prefijoClave.ToLower();
-
-            
 
             foreach (Guid perfilID in IdentidadActual.GestorIdentidades.ListaPerfiles.Keys)
             {
                 string rawKeyCache = identidadCL.ObtenerClaveCache(string.Concat("IdentidadActual_", IdentidadActual.PersonaID, "_", perfilID));
-                string rawKey2Cache = identidadCL.ObtenerClaveCache("PerfilMVC_" + perfilID);              
+                string rawKey2Cache = identidadCL.ObtenerClaveCache("PerfilMVC_" + perfilID);
 
                 listaClavesInvalidar.Add(rawKeyCache.ToLower());
-                listaClavesInvalidar.Add(rawKey2Cache.ToLower());            
+                listaClavesInvalidar.Add(rawKey2Cache.ToLower());
             }
-            
+
             string rawKey3Cache = identidadCL.ObtenerClaveCache($"IdentidadActual_{IdentidadActual.PersonaID}_{IdentidadActual.Clave}");
             listaClavesInvalidar.Add(rawKey3Cache.ToLower());
             identidadCL.InvalidarCachesMultiples(listaClavesInvalidar);
@@ -2469,7 +2309,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarDatosPerfilPersonal()
         {
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State == EntityState.Detached)
             {
                 IdentidadActual.Persona.FilaPersona = personaCN.ObtenerFilaPersonaPorID(IdentidadActual.Persona.FilaPersona.PersonaID);
@@ -2507,14 +2347,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 paginaModel.ProfilePersonal.PostalCode = IdentidadActual.Persona.FilaPersona.CPPersonal;
                 paginaModel.ProfilePersonal.Location = IdentidadActual.Persona.FilaPersona.LocalidadPersonal;
-                paginaModel.ProfilePersonal.Email = IdentidadActual.Persona.FilaPersona.Email;
+                paginaModel.ProfilePersonal.Email = IdentidadActual.Persona.FilaPersona.Email.ToLower();
 
-                //paginaModel.ProfilePersonal.TwoFactorAuthentication = IdentidadActual.Usuario.FilaUsuario.TwoFactorAuthentication;
-                //BEA                
-                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                 AD.EntityModel.Models.UsuarioDS.Usuario usuario = usuarioCN.ObtenerFilaUsuarioPorLoginOEmail(IdentidadActual.Persona.FilaPersona.Email);
                 paginaModel.ProfilePersonal.TwoFactorAuthentication = usuario.TwoFactorAuthentication;
-                
 
                 if (!string.IsNullOrEmpty(IdentidadActual.Persona.FilaPersona.EmailTutor))
                 {
@@ -2541,15 +2378,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 paginaModel.ProfilePersonal.IsSearched = IdentidadActual.Persona.FilaPersona.EsBuscable;
                 paginaModel.ProfilePersonal.IsExternalSearched = IdentidadActual.Persona.FilaPersona.EsBuscableExternos;
 
-                // if (ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro = 'VisibilidadPerfil'").Length == 1)
-                List<Es.Riam.Gnoss.AD.EntityModel.ParametroAplicacion> busqueda = ParametrosAplicacionDS.Where(parametro => parametro.Parametro.Equals("VisibilidadPerfil")).ToList();
+                List<ParametroAplicacion> busqueda = ParametrosAplicacionDS.Where(parametro => parametro.Parametro.Equals("VisibilidadPerfil")).ToList();
                 if (busqueda.Count == 1)
                 {
-                    //cadena de 4 digitos, los dos primeros configuran visibilidad en la comunidad, los dos últimos visibilidad en todo internet
+                    //cadena de 4 digitos, los dos primeros configuran visibilidad en la comunidad, los dos últimos visibilidad en internet
                     //de cada pareja de digitos, el primero indica si el check es visible y el segundo si está marcado
-                    //ej.: 0111 -> es visible únicamente el check de "visible en todo internet" pero ambos están marcados
-                    //string visibilidadPerfil = (string)ParametrosAplicacionDS.ParametroAplicacion.Select("Parametro = 'VisibilidadPerfil'")[0]["Valor"];
-                    string visibilidadPerfil = busqueda.First().Valor;
+                    //ej.: 0111 -> es visible únicamente el check de "visible en internet" pero ambos están marcados                    
+                    string visibilidadPerfil = busqueda[0].Valor;
 
                     if (visibilidadPerfil[0].ToString() == "0")
                     {
@@ -2583,7 +2418,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarDatosPerfilProfesional()
         {
-            PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Where(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value)).ToList().FirstOrDefault();
+            PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Find(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
 
             paginaModel.ProfileProfesional.Email = filaPersona.EmailTrabajo;
 
@@ -2594,7 +2429,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 paginaModel.UrlFoto = foto;
             }
-
         }
 
         private void CargarDatosPerfilOrganizacion()
@@ -2678,8 +2512,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarCamposExtraRegistro()
         {
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            DataWrapperIdentidad dataWrapperIdentidad = new DataWrapperIdentidad();
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+            DataWrapperIdentidad dataWrapperIdentidad;
             if (IdentidadActual.TrabajaConOrganizacion || IdentidadActual.TrabajaPersonaConOrganizacion || IdentidadActual.OrganizacionID.HasValue)
             {
                 DataWrapperIdentidad identidadesPersonas = identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true, IdentidadActual.Clave);
@@ -2786,7 +2620,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (fila.InputID.Equals("ddlPais"))
                     {
                         Dictionary<Guid, string> listaOpciones = new Dictionary<Guid, string>();
-                        foreach (Es.Riam.Gnoss.AD.EntityModel.Models.Pais.Pais filaPais in PaisesDW.ListaPais)
+                        foreach (AD.EntityModel.Models.Pais.Pais filaPais in PaisesDW.ListaPais)
                         {
 
                             listaOpciones.Add(filaPais.PaisID, filaPais.Nombre);
@@ -2843,7 +2677,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarCurriculum()
         {
-            paginaModel.Curriculum = new EditProfileViewModel.QuickCurriculum();
+            paginaModel.Curriculum = new QuickCurriculum();
 
             Guid curriculumID = Guid.Empty;
 
@@ -2863,7 +2697,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             Curriculum curriculum = mEntityContext.Curriculum.FirstOrDefault(cv => cv.CurriculumID.Equals(curriculumID));
-            if (curriculum != null) 
+            if (curriculum != null)
             {
                 paginaModel.Curriculum.Description = curriculum.Description;
                 paginaModel.Curriculum.Tags = curriculum.Tags;
@@ -2872,7 +2706,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarRedesSociales()
         {
-            paginaModel.SocialNetworks = new List<EditProfileViewModel.SocialNetwork>();
+            paginaModel.SocialNetworks = new List<SocialNetwork>();
 
             Dictionary<string, AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales> ListaRedesSociales = IdentidadActual.ListaRedesSociales;
 
@@ -2905,63 +2739,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     dominio = dominio.Substring(0, dominio.IndexOf('/'));
                 }
 
-                EditProfileViewModel.SocialNetwork redSocial = new EditProfileViewModel.SocialNetwork();
+                SocialNetwork redSocial = new SocialNetwork();
                 redSocial.Domain = dominio;
                 redSocial.Name = filaPerfilRedesSoc.NombreRedSocial;
                 redSocial.Url = filaPerfilRedesSoc.urlUsuario;
 
                 paginaModel.SocialNetworks.Add(redSocial);
             }
-        }
-
-        /// <summary>
-        /// Obtiene el RDF del documento de la BD, y devuele las entidades pricipales del mismo.
-        /// </summary>
-        /// <param name="pDocumentoID"></param>
-        /// <returns>Lista con las entidades pricipales leidas del archivo RDF leido de la BD y generado</returns>
-        private List<ElementoOntologia> ObtenerRdfDeDocumento(GestorDocumental pGestorDoc, Guid pDocumentoID)
-        {
-            GestionOWL gestorOWL = new GestionOWL();
-            gestorOWL.UrlOntologia = UrlOntologiaCurriculum;
-            gestorOWL.NamespaceOntologia = GestionOWL.NAMESPACE_ONTO_HR_XML;
-
-            pGestorDoc.RdfDS = ControladorDocumentacion.ObtenerRDFDeBDRDF(pDocumentoID, ProyectoAD.MetaProyecto);
-
-            string rdfTexto = "";
-
-
-            if (pGestorDoc.RdfDS.RdfDocumento.Count > 0)
-            {
-                rdfTexto = pGestorDoc.ListaDocumentos[pDocumentoID].RdfSemantico;
-            }
-            else
-            {
-                pGestorDoc.RdfDS = null;
-
-                byte[] buffer = ControladorDocumentacion.ObtenerRDFDeVirtuoso(pDocumentoID, "Curriculum.owl", UrlIntragnoss, UrlOntologiaCurriculum, GestionOWL.NAMESPACE_ONTO_HR_XML, Ontologia);
-
-                if (buffer != null)
-                {
-                    MemoryStream ms = new MemoryStream();
-                    StreamReader reader = new StreamReader(ms);
-                    rdfTexto = reader.ReadToEnd();
-                    reader.Close();
-                    reader.Dispose();
-                }
-            }
-
-            List<ElementoOntologia> instanciasPrincipales = null;
-
-            if (!string.IsNullOrEmpty(rdfTexto))
-            {
-                try
-                {
-                    instanciasPrincipales = gestorOWL.LeerFicheroRDF(Ontologia, rdfTexto, true);
-                }
-                catch { }
-            }
-
-            return instanciasPrincipales;
         }
 
         /// <summary>
@@ -2972,9 +2756,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// o no hay dominio</param>
         private string AgregarValoresRDF(ElementoOntologia pEntidad, bool pDominioFuncional)
         {
-            string texto = "";
-
-            texto += "<" + pEntidad.TipoEntidad + ">";
+            StringBuilder texto = new StringBuilder($"<{pEntidad.TipoEntidad}>");
 
             foreach (Propiedad propiedad in pEntidad.Propiedades)
             {
@@ -2987,37 +2769,38 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (propiedad.FunctionalProperty || propiedad.CardinalidadMenorOIgualUno || propiedad.EspecifPropiedad.ValoresSepComas)
                     {
-                        string valorProp = "";
+                        StringBuilder valorProp = new StringBuilder();
 
                         if (propiedad.UnicoValor.Key != null)
                         {
-                            valorProp = propiedad.UnicoValor.Key;
+                            valorProp.Append(propiedad.UnicoValor.Key);
                         }
                         else if (propiedad.ListaValores != null)
                         {
                             string coma = "";
                             foreach (string valor in propiedad.ListaValores.Keys)
                             {
-                                valorProp += coma + valor;
+                                valorProp.Append(coma + valor);
                                 coma = ",";
                             }
                         }
 
-                        texto += "<" + propiedad.Nombre + ">" + valorProp.Replace("<", "[--C]").Replace(">", "[C--]") + "</" + propiedad.Nombre + ">";
+                        texto.Append($"<{propiedad.Nombre}>{valorProp.ToString().Replace("<", "[--C]").Replace(">", "[C--]")}</{propiedad.Nombre}>");
                     }
                     else if (propiedad.ListaValores != null)
                     {
                         foreach (string valor in propiedad.ListaValores.Keys)
                         {
-                            texto += "<" + propiedad.Nombre + ">" + valor.Replace("<", "[--C]").Replace(">", "[C--]") + "</" + propiedad.Nombre + ">";
+                            texto.Append($"<{propiedad.Nombre}>{valor.Replace("<", "[--C]").Replace(">", "[C--]")}</{propiedad.Nombre}>");
                         }
                     }
                 }
                 else
-                {//Es ObjectPropert
-
+                {
+                    //Es ObjectPropert
                     if (propiedad.FunctionalProperty || propiedad.CardinalidadMenorOIgualUno)
-                    {//Solo puede tomar un valor.
+                    {
+                        //Solo puede tomar un valor.
                         ElementoOntologia entidad = null;
 
                         if (propiedad.UnicoValor.Key != null)
@@ -3029,33 +2812,35 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             entidad = propiedad.ListaValores.First().Value;
                         }
 
-                        if (entidad == null)//Creamos una nueva:
+                        if (entidad == null)
                         {
+                            //Creamos una nueva:
                             entidad = Ontologia.GetEntidadTipo(propiedad.Rango, false);
                         }
 
-                        texto += "<" + propiedad.Nombre + ">";
-                        texto += AgregarValoresRDF(entidad, pDominioFuncional);
-                        texto += "</" + propiedad.Nombre + ">";
+                        texto.Append($"<{propiedad.Nombre}>");
+                        texto.Append(AgregarValoresRDF(entidad, pDominioFuncional));
+                        texto.Append($"</{propiedad.Nombre}>");
                     }
                     else
-                    {//Puede tomar varios valores.
+                    {
+                        //Puede tomar varios valores.
                         if (propiedad.ListaValores.Count > 0)
                         {
                             foreach (ElementoOntologia entidadProp in propiedad.ListaValores.Values)
                             {
-                                texto += "<" + propiedad.Nombre + ">";
-                                texto += AgregarValoresRDF(entidadProp, false);
-                                texto += "</" + propiedad.Nombre + ">";
+                                texto.Append($"<{propiedad.Nombre}>");
+                                texto.Append(AgregarValoresRDF(entidadProp, false));
+                                texto.Append($"</{propiedad.Nombre}>");
                             }
                         }
                     }
                 }
             }
 
-            texto += "</" + pEntidad.TipoEntidad + ">";
+            texto.Append($"</{pEntidad.TipoEntidad}>");
 
-            return texto;
+            return texto.ToString();
         }
 
         /// <summary>
@@ -3065,7 +2850,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns></returns>
         private bool ExisteEmail(string pEmail)
         {
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             bool existe = personaCN.ExisteEmail(pEmail);
             personaCN.Dispose();
 
@@ -3074,7 +2859,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private string IntentoObtenerElPais(string pValor)
         {
-            PaisCL paisCL = new PaisCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PaisCL paisCL = new PaisCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PaisCL>(), mLoggerFactory);
             DataWrapperPais paisDS = paisCL.ObtenerPaisesProvincias();
 
             foreach (AD.EntityModel.Models.Pais.Pais fila in paisDS.ListaPais)
@@ -3096,50 +2881,49 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<ParametroAplicacion> busqueda = ParametrosAplicacionDS.Where(parametro => parametro.Parametro.Equals("EdadLimiteRegistroEcosistema")).ToList();
             if (busqueda.Count > 0)
             {
-                ViewBag.EdadMinimaRegistro = int.Parse(busqueda.First().Valor);
+                ViewBag.EdadMinimaRegistro = int.Parse(busqueda[0].Valor);
             }
         }
 
-
         private void CargarClausulasRegistrosOpcionales()
         {
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             DataWrapperUsuario usuClauProyDS = proyCL.ObtenerClausulasRegitroProyecto(ProyectoSeleccionado.Clave);
             proyCL.Dispose();
 
-            UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
             usuClauProyDS.Merge(usuCN.ObtenerProyClausulasUsuPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID));
             usuCN.Dispose();
 
             //cargar el gestor de usuario con las cláusulas del registro
-            IdentidadActual.GestorIdentidades.GestorUsuarios = new GestionUsuarios(usuClauProyDS, mLoggingService, mEntityContext, mConfigService);
+            IdentidadActual.GestorIdentidades.GestorUsuarios = new GestionUsuarios(usuClauProyDS, mLoggingService, mEntityContext, mConfigService, mLoggerFactory.CreateLogger<GestionUsuarios>(), mLoggerFactory);
         }
 
-        private List<EditProfileViewModel.AdditionalClause> ClausulasRegistroOpcionales
+        private List<AdditionalClause> ClausulasRegistroOpcionales
         {
             get
             {
                 if (mClausulasRegistro == null)
                 {
-                    mClausulasRegistro = new List<EditProfileViewModel.AdditionalClause>();
+                    mClausulasRegistro = new List<AdditionalClause>();
                     try
                     {
-                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                         DataWrapperUsuario usuClauProyDS = proyCL.ObtenerClausulasRegitroProyecto(ProyectoSeleccionado.Clave);
                         proyCL.Dispose();
 
-                        UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        usuClauProyDS.Merge(usuCN.ObtenerProyClausulasUsuPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID)); //Migrar EF  Original
+                        UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+                        usuClauProyDS.Merge(usuCN.ObtenerProyClausulasUsuPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID));
                         usuCN.Dispose();
 
                         //cargar el gestor de usuario con las cláusulas del registro
-                        IdentidadActual.GestorIdentidades.GestorUsuarios = new GestionUsuarios(usuClauProyDS, mLoggingService, mEntityContext, mConfigService);
-                        //IdentidadActual.GestorIdentidades.GestorUsuarios.UsuarioDS = usuCN.ObtenerProyClausulasUsuPorUsuarioID(mControladorBase.UsuarioActual.UsuarioID);
-                        foreach (AD.EntityModel.Models.UsuarioDS.ClausulaRegistro filaClausula in usuClauProyDS.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.Opcional)))
+                        IdentidadActual.GestorIdentidades.GestorUsuarios = new GestionUsuarios(usuClauProyDS, mLoggingService, mEntityContext, mConfigService, mLoggerFactory.CreateLogger<GestionUsuarios>(), mLoggerFactory);
+                        
+                        foreach (ClausulaRegistro filaClausula in usuClauProyDS.ListaClausulaRegistro.Where(item => item.Tipo.Equals((short)TipoClausulaAdicional.Opcional)))
                         {
-                            AD.EntityModel.Models.UsuarioDS.ProyRolUsuClausulaReg filasProyRolClau = usuClauProyDS.ListaProyRolUsuClausulaReg.Where(item => item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.ClausulaID.Equals(filaClausula.ClausulaID)).FirstOrDefault();
+                            ProyRolUsuClausulaReg filasProyRolClau = usuClauProyDS.ListaProyRolUsuClausulaReg.Find(item => item.UsuarioID.Equals(mControladorBase.UsuarioActual.UsuarioID) && item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.ClausulaID.Equals(filaClausula.ClausulaID));
 
-                            EditProfileViewModel.AdditionalClause clausula = new EditProfileViewModel.AdditionalClause();
+                            AdditionalClause clausula = new AdditionalClause();
                             clausula.Id = filaClausula.ClausulaID;
                             clausula.Text = filaClausula.Texto;
                             clausula.Order = filaClausula.Orden;
@@ -3152,7 +2936,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLogError(ex);
+                        mLoggingService.GuardarLogError(ex, mlogger);
                     }
                 }
                 return mClausulasRegistro;
@@ -3165,7 +2949,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mDatosExtraProyectoDS == null)
                 {
-                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     mDatosExtraProyectoDS = proyectoCN.ObtenerDatosExtraProyectoPorID(ProyectoSeleccionado.Clave);
                     proyectoCN.Dispose();
                 }
@@ -3182,11 +2966,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mOntologia == null)
                 {
-                    LectorXmlConfig lectorXML = new LectorXmlConfig(Guid.Empty, ProyectoAD.MetaProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD);
+                    LectorXmlConfig lectorXML = new LectorXmlConfig(Guid.Empty, ProyectoAD.MetaProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mLoggerFactory.CreateLogger<LectorXmlConfig>(), mLoggerFactory);
 
-                    Dictionary<string, List<EstiloPlantilla>> listaEstilos = lectorXML.ObtenerConfiguracionXml(Es.Riam.Gnoss.Recursos.Properties.Resources.Curriculum, ProyectoAD.MetaProyecto);
+                    Dictionary<string, List<EstiloPlantilla>> listaEstilos = lectorXML.ObtenerConfiguracionXml(Recursos.Properties.Resources.Curriculum, ProyectoAD.MetaProyecto);
 
-                    string rutaOntologia = Path.Combine($"{BaseURLSinHTTP}/{UtilArchivos.ContentOntologias}/Curriculum.owl");//Server.MapPath(BaseURLSinHTTP + "/" + UtilArchivos.ContentOntologias + "/Curriculum.owl");
+                    string rutaOntologia = Path.Combine($"{BaseURLSinHTTP}/{UtilArchivos.ContentOntologias}/Curriculum.owl");
 
                     mOntologia = new Ontologia(rutaOntologia, true);
                     mOntologia.LeerOntologia();

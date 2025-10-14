@@ -1060,7 +1060,7 @@ function GuardarValorEnContenedorGrupoValores(pControlCont, pValor, pEntidad, pP
                         clase = 'par';
                     }
                     
-                    htmlFinal += '<tr class="'+clase+'">' + hijos[i].innerHTML.replace(', \''+i,', \'' + (i-1)).replace('(\\\''+i,'(\\\''+(i-1)) + '</tr>';
+                    htmlFinal += '<tr class="'+clase+'">' + hijos[i].innerHTML.replace(', \''+i,', \'' + (i-1)).replace('(\''+i,'(\''+(i-1)) + '</tr>';
                 }
                 else
                 {
@@ -2228,8 +2228,7 @@ function ComprobarValorCampoCorrectoInt(pEntidad, pPropiedad, pValor, pTxtIDs, p
         }
         else if (tipoCampo == 'Numerico')
         {
-            var valorNum = parseFloat(pValor);
-            if (isNaN(valorNum) || (valorNum + '').length != pValor.length)
+            if (!EsDecimalValido(pValor))
             {
                 MostrarErrorPropiedad(pEntidad, pPropiedad, textoFormSem.errorNum, pTxtIDs);
                 return false;
@@ -2436,6 +2435,16 @@ function FechaConHoraCorrecta(pFecha) {
     }
 
     return FechaCorrecta(fecha);
+}
+
+function EsDecimalValido(valor) {
+  // Elimina espacios al principio y al final
+  const limpio = valor.trim();
+
+  // Valida que sea un número decimal positivo o negativo con punto como separador
+  const regex = /^-?\d+(\.\d+)?$/;
+
+  return regex.test(limpio);
 }
 
 function MostrarErrorPropiedad(pEntidad, pPropiedad, pError, pTxtIDs){
@@ -2775,7 +2784,7 @@ function MoverEntidadEnContenedorGrupoPaneles(pControlCont, pEntidad, pPropiedad
     }
     
     var valorOrgigen = document.getElementById(pControlCont).children[0].children[0].children[pNumOrigen + 1].innerHTML;
-    valorOrgigen = valorOrgigen.replace(', \''+(pNumOrigen),', \'' + (pNumDestino)).replace('(\\\''+(pNumOrigen),'(\\\''+(pNumDestino))
+    valorOrgigen = valorOrgigen.replace(', \''+(pNumOrigen),', \'' + (pNumDestino)).replace('(\''+(pNumOrigen),'(\''+(pNumDestino))
     
     var hijos = document.getElementById(pControlCont).children[0].children[0].children;
     var htmlFinal = '<tr>' + document.getElementById(pControlCont).children[0].children[0].children[0].innerHTML + '</tr>';
@@ -2813,7 +2822,7 @@ function MoverEntidadEnContenedorGrupoPaneles(pControlCont, pEntidad, pPropiedad
                     clase = 'par';
                 }
                 
-                htmlFinal += '<tr class="'+clase+'">' + hijos[i].innerHTML.replace(', \''+(i - 1),', \'' + (i)).replace('(\\\''+(i - 1),'(\\\''+(i)) + '</tr>';
+                htmlFinal += '<tr class="'+clase+'">' + hijos[i].innerHTML.replace(', \''+(i - 1),', \'' + (i)).replace('(\''+(i - 1),'(\''+(i)) + '</tr>';
             }
             else
             {
@@ -4295,19 +4304,36 @@ function AgregarAchivoClick(event, pControlID, pTipo) {
 
 /**
  * Método para descargar un fichero que ha sido subido previamente y que una vez guardado, se precisa su descarga
- * @param {any} event
- * @param {any} pControlID
- * @param {any} pTipo
  * @param {any} pElement: Elemento sobre el que se ha hecho clic.
  */
-function DownloadAchivoClick(event, pControlID, pTipo, pElement) {
-    const dragDropArea = $(pElement).closest('.dragdropArea-preview-wrap-content');
-    const linkElement = dragDropArea.find('a');    
+async function DownloadAchivoClick(pElement) {
+    // Encuentra el área de vista previa que contiene la imagen
+    const dragDropArea = $(pElement).closest(
+        ".dragdropArea-preview-wrap-content"
+    );
+    const imageElement = dragDropArea.find("img");
 
-    if (linkElement.length > 0) {
-        const downloadLink = linkElement.attr('href');
-        // Realizar acciones con downloadLink
-        window.location.href = downloadLink;
+    if (imageElement.length > 0) {
+        const imageUrl = imageElement.attr("src");
+
+        try {
+            // Realiza una petición para obtener la imagen como blob
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+
+            // Crea un enlace de descarga utilizando el blob
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            // Usa el nombre del archivo de la URL
+            a.download = imageUrl.split("/").pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (error) {
+            console.log("Error al descargar la imagen: " + error.message);
+        }
+    } else {
+        console.log("No se encontró la imagen para descargar a descargar.");
     }
 }
 

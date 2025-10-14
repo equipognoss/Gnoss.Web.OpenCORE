@@ -45,6 +45,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,8 +66,13 @@ namespace Gnoss.Web
 {
     public class Startup
     {
+        private const int _minKestrelMaxRequestLineSize = 8192;
+        private const int _maxKestrelMaxRequestLineSize = 24576;
+
         private RouteConfig mRouteConfig;
+
         private string IdiomaPrincipalDominio = "es";
+        private IPublishEvents mIPublishEvents;
 
         private static string mDominio = null;
         public Startup(IConfiguration configuration, Microsoft.AspNetCore.Hosting.IHostingEnvironment environment)
@@ -98,7 +104,7 @@ namespace Gnoss.Web
 
 			services.AddSingleton(loggerFactory);
 
-			var assemblyOpen = Assembly.Load("Gnoss.Web.Open");
+            var assemblyOpen = Assembly.Load("Gnoss.Web.Open");
             var externalControllerOpen = new AssemblyPart(assemblyOpen);
             // ApplicationPartManager
             services.AddControllers()
@@ -118,7 +124,14 @@ namespace Gnoss.Web
             services.AddScoped(typeof(Conexion));
             services.AddScoped(typeof(UtilGeneral));
             services.AddScoped(typeof(LoggingService));
-            services.AddScoped(typeof(RedisCacheWrapper));
+            if (Environment.GetEnvironmentVariables().Contains("redisCacheSingleton"))
+            {
+                services.AddSingleton(typeof(RedisCacheWrapper));
+            }
+            else
+            {
+                services.AddScoped(typeof(RedisCacheWrapper));
+            }
             services.AddScoped(typeof(Configuracion));
             services.AddScoped(typeof(GnossCache));
             services.AddScoped(typeof(VirtuosoAD));
@@ -130,6 +143,8 @@ namespace Gnoss.Web
             services.AddScoped<IServicesUtilVirtuosoAndReplication, ServicesVirtuosoAndBidirectionalReplicationOpen>();
             services.AddScoped<IMassiveOntologyToClass, MassiveOntologyToClassOpen>();
             services.AddScoped<IUtilArchivos, UtilArchivosOpen>();
+            services.AddScoped<IPublishEvents, PublishEventsOpen>();
+            services.AddScoped<IAvailableServices, AvailableServicesOpen>();
             services.AddScoped<IRDFSearch, RDFSearchOpen>();
             services.AddScoped<IOAuth, OAuthOpen>();
             string bdType = "";
@@ -150,7 +165,6 @@ namespace Gnoss.Web
             }
             services.AddSingleton(typeof(ConfigService));
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            //services.AddTransient<IViewRenderingService, ViewRenderingService>();
             services.AddSingleton<RouteValueTransformer>();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
             services.AddMemoryCache();
@@ -167,45 +181,6 @@ namespace Gnoss.Web
 
             services.Configure<FormOptions>(options => { options.ValueCountLimit = 4096; });
             services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
-
-            //------------------------------MIGRATIONS------------------------------------------
-            //string baseConnection = Configuration.GetConnectionString("base");
-            //string acid = Configuration.GetConnectionString("acid");
-
-            ////SQL
-            //services.AddDbContext<EntityContext>(options =>
-            //            options.UseSqlServer(acid)
-            //            );
-
-            ////Postgres
-            //services.AddDbContext<EntityContext>(opt =>
-            //{
-            //    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-            //    builder.SetPostgresVersion(new Version(9, 6));
-            //    opt.UseNpgsql(acid);
-
-            //});
-            //services.AddDbContext<EntityContext, EntityContextPostgres>(opt =>
-            //{
-            //    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-            //    builder.SetPostgresVersion(new Version(9, 6));
-            //    opt.UseNpgsql(acid);
-
-            //});
-            //services.AddDbContext<EntityContextBASE>(opt =>
-            //{
-            //    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-            //    builder.SetPostgresVersion(new Version(9, 6));
-            //    opt.UseNpgsql(baseConnection);
-
-            //});
-            //services.AddDbContext<EntityContextBASE, EntityContextBASEPostgres>(opt =>
-            //{
-            //    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-            //    builder.SetPostgresVersion(new Version(9, 6));
-            //    opt.UseNpgsql(baseConnection);
-            //});
-            //----------------------------------------------------------------------------------
 
             string acid = "";
             if (environmentVariables.Contains("acid"))
@@ -239,13 +214,13 @@ namespace Gnoss.Web
 			var loggingService = sp.GetService<LoggingService>();
 			if (bdType.Equals("0"))
 			{
-				services.AddDbContext<EntityContext>(options =>
-						options.UseSqlServer(acid).LogTo(loggingService.AgregarEntradaTrazaEntity));
-				services.AddDbContext<EntityContextBASE>(options =>
-						options.UseSqlServer(baseConnection).LogTo(loggingService.AgregarEntradaTrazaEntity));
-				services.AddDbContext<EntityContextOauth>(options =>
-						options.UseSqlServer(oauthConnection).LogTo(loggingService.AgregarEntradaTrazaEntity));
-			}
+                services.AddDbContext<EntityContext>(options =>
+                        options.UseSqlServer(acid, o => o.UseCompatibilityLevel(110)).LogTo(loggingService.AgregarEntradaTrazaEntity));
+                services.AddDbContext<EntityContextBASE>(options =>
+                        options.UseSqlServer(baseConnection, o => o.UseCompatibilityLevel(110)).LogTo(loggingService.AgregarEntradaTrazaEntity));
+                services.AddDbContext<EntityContextOauth>(options =>
+                        options.UseSqlServer(oauthConnection, o => o.UseCompatibilityLevel(110)).LogTo(loggingService.AgregarEntradaTrazaEntity));
+            }
 			else if (bdType.Equals("1"))
 			{
 				services.AddDbContext<EntityContext, EntityContextOracle>(options =>
@@ -310,15 +285,26 @@ namespace Gnoss.Web
             var configService = sp.GetService<ConfigService>();
             string redisConnection = configService.ObtenerConexionRedisIPMaster("redis");
             configService.ObtenerProcesarStringGrafo();
-            var redis = ConnectionMultiplexer.Connect(redisConnection);
+            int workerThreads = configService.ObtenerWorkerThreads();
+            int completionPortThreads = configService.ObtenerPortThreads();
+            if (completionPortThreads > 0 || workerThreads > 0)
+            {
+                System.Threading.ThreadPool.SetMinThreads(workerThreads, completionPortThreads);
+            }
+            var options = ConfigurationOptions.Parse(redisConnection);
+            options.ClientName = $"{AppDomain.CurrentDomain.FriendlyName}_DataProtectionKeys_{Environment.GetEnvironmentVariable("COMPOSE_PROJECT_NAME")}_{Guid.NewGuid()}"; ;
+            options.SocketManager = SocketManager.ThreadPool;
+            var redis = ConnectionMultiplexer.Connect(options);
             services.AddDataProtection().PersistKeysToStackExchangeRedis(redis, "DataProtectionKeys");
-            //Esto estaba antes con esta libreria: Microsoft.Extensions.Caching.Redis 2.2.0
-            // var redis = ConnectionMultiplexer.Connect(redisConnection);
-            // services.AddDataProtection().PersistKeysToStackExchangeRedis(redis, "DataProtectionKeys");
+            if (!redisConnection.Contains("name"))
+            {
+                redisConnection += $",name={AppDomain.CurrentDomain.FriendlyName}_Session_{Environment.GetEnvironmentVariable("COMPOSE_PROJECT_NAME")}_{Guid.NewGuid()}";
+            }
             services.AddStackExchangeRedisCache(o =>
             {
                 o.Configuration = redisConnection;
             });
+            ConnectionMultiplexer.SetFeatureFlag("preventthreadtheft", true);
 
             services.Configure<RazorViewEngineOptions>(o =>
             {
@@ -326,10 +312,44 @@ namespace Gnoss.Web
                 o.ViewLocationFormats.Add("/Views/CMSPagina/{0}" + RazorViewEngine.ViewExtension);
             });
 
+            int maxRequestLineSize = 0;
+            string maxRequestLineSizeString = string.Empty;
+            if (environmentVariables.Contains("Kestrel__maxRequestLineSize"))
+            {
+                maxRequestLineSizeString = environmentVariables["Kestrel__maxRequestLineSize"] as string;
+            }
+            else
+            {
+                maxRequestLineSizeString = Configuration.GetSection("Kestrel")["maxRequestLineSize"];
+            }
+
+            if (!string.IsNullOrWhiteSpace(maxRequestLineSizeString))
+            {
+                if (int.TryParse(maxRequestLineSizeString, out maxRequestLineSize))
+                {
+                    if (maxRequestLineSize >= _minKestrelMaxRequestLineSize && maxRequestLineSize <= _maxKestrelMaxRequestLineSize)
+                    {
+                        services.Configure<KestrelServerOptions>(options =>
+                        {
+                            options.Limits.MaxRequestLineSize = maxRequestLineSize;
+                        }
+                        );
+                    }
+                    else
+                    {
+                        loggingService.GuardarLogError($"La variable 'Kestrel__maxRequestLineSize' solo acepta valores entre {_minKestrelMaxRequestLineSize} y {_maxKestrelMaxRequestLineSize}.");
+                    }
+                }
+                else
+                {
+                    loggingService.GuardarLogError("La variable 'Kestrel__maxRequestLineSize' se encuentra configurada pero su valor no es valido.");
+                }
+            }
 
             UtilTelemetry utilTelemetry = sp.GetService<UtilTelemetry>();
             loggingService.AgregarEntrada("INICIO Application_Start");
             LoggingService.RUTA_DIRECTORIO_ERROR = Path.Combine(mEnvironment.ContentRootPath, "logs");
+            loggingService.GuardarLogError("Application_Start", loggerFactory.CreateLogger<Startup>());
             loggingService.GuardarLogError("Application_Start");
             // Resolve the services from the service provider
 
@@ -362,8 +382,11 @@ namespace Gnoss.Web
             {
                 LoggingService.InicializarLogstash(configLogStash);
             }
-            FirstDataLoad firstDataLoad = new FirstDataLoad(entity, configService, entityOauth);
+            FirstDataLoad firstDataLoad = new FirstDataLoad(entity, configService, entityOauth, loggingService, loggerFactory.CreateLogger<FirstDataLoad>(), loggerFactory);
             firstDataLoad.InsertDataIfPossible();
+            firstDataLoad.InsertRoles();
+            mIPublishEvents = sp.GetService<IPublishEvents>();
+            CrearColaEventosInternos();
             BaseCL.UsarCacheLocal = UsoCacheLocal.SiElServicioLoUsanPocosProyectos;
             string rutaVersionCacheLocal = $"{AppDomain.CurrentDomain.SetupInformation.ApplicationBase}/config/versionCacheLocal/";
             if (!Directory.Exists(rutaVersionCacheLocal)) { Directory.CreateDirectory(rutaVersionCacheLocal); }
@@ -372,17 +395,18 @@ namespace Gnoss.Web
             CargarDominio(configService);
             RabbitMQClient.ClientName = $"WEB_{mDominio}";
 
-            CargarIdiomasPlataforma(entity, loggingService, configService, servicesUtilVirtuosoAndReplication, redisCacheWrapper);
+            CargarIdiomasPlataforma(entity, loggingService, configService, servicesUtilVirtuosoAndReplication, redisCacheWrapper, loggerFactory);
 
-            CargarTextosPersonalizadosDominio(entity, loggingService, configService, redisCacheWrapper);
+            CargarTextosPersonalizadosDominio(entity, loggingService, configService, redisCacheWrapper, loggerFactory);
 
             ConfigurarApplicationInsights(configService, entity, utilTelemetry);
 
             CargarConfiguracionReplicado(entity);
 
-			CargarClaveReinicioCache(entity, loggingService, redisCacheWrapper, configService, servicesUtilVirtuosoAndReplication);
-			// Resolve the services from the service provider
-			mRouteConfig = sp.GetService<RouteConfig>();
+            Conexion.CargarMimeType();
+
+            // Resolve the services from the service provider
+            mRouteConfig = sp.GetService<RouteConfig>();
             RouteConfig.IdiomaPrincipalDominio = IdiomaPrincipalDominio;
             GnossUrlsSemanticas.IdiomaPrincipalDominio = IdiomaPrincipalDominio;
 
@@ -399,9 +423,23 @@ namespace Gnoss.Web
                 app.UseDeveloperExceptionPage();
             }
             app.UseReferrerPolicy(opts => opts.NoReferrerWhenDowngrade());
+            app.UseXContentTypeOptions();
+            app.UseHsts();
             app.UseHttpsRedirection();
             app.UseErrorGnossMidleware();
-            app.UseStaticFiles();
+            string rutaEjecucionWeb = configService.ObtenerRutaEjecucionWeb();
+            if (!string.IsNullOrEmpty(rutaEjecucionWeb))
+            {
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    RequestPath = $"/{rutaEjecucionWeb.Trim('/')}"
+                });
+            }
+            else
+            {
+                app.UseStaticFiles();
+            }
+
             app.UseRouting();
 
             app.UseAuthorization();
@@ -457,31 +495,27 @@ namespace Gnoss.Web
 
 			return ruta;
 		}
-		private void CargarIdiomasPlataforma(Es.Riam.Gnoss.AD.EntityModel.EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper)
-		{
-			Dictionary<string, string> listaIdiomas = new Dictionary<string, string>();
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, configService, servicesUtilVirtuosoAndReplication);
-			listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
-			if (listaIdiomas.Count == 1 || string.IsNullOrEmpty(Dominio))
-			{
-				IdiomaPrincipalDominio = listaIdiomas.First().Key;
-			}
-			else if (listaIdiomas.Count > 1)
-			{
-				ProyectoCN proyCN = new ProyectoCN(entityContext, loggingService, configService, servicesUtilVirtuosoAndReplication);
-				IdiomaPrincipalDominio = proyCN.ObtenerIdiomaPrincipalDominio(Dominio);//select proyectoid, URLPropia from Proyecto where URLPropia like '%pruebasiphoneen.gnoss.net@%'
+        private void CargarIdiomasPlataforma(Es.Riam.Gnoss.AD.EntityModel.EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory)
+        {
+            Dictionary<string, string> listaIdiomas = new Dictionary<string, string>();
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, configService, servicesUtilVirtuosoAndReplication, loggerFactory.CreateLogger<ParametroAplicacionCL>(), loggerFactory);
+            listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+            if (listaIdiomas.Count == 1 || string.IsNullOrEmpty(Dominio))
+            {
+                IdiomaPrincipalDominio = listaIdiomas.First().Key;
+            }
+            else if (listaIdiomas.Count > 1)
+            {
+                ProyectoCN proyCN = new ProyectoCN(entityContext, loggingService, configService, servicesUtilVirtuosoAndReplication, loggerFactory.CreateLogger<ProyectoCN>(), loggerFactory);
+                IdiomaPrincipalDominio = proyCN.ObtenerIdiomaPrincipalDominio(Dominio);//select proyectoid, URLPropia from Proyecto where URLPropia like '%pruebasiphoneen.gnoss.net@%'
 
-				if (!listaIdiomas.ContainsKey(IdiomaPrincipalDominio))
-				{
-					IdiomaPrincipalDominio = listaIdiomas.First().Key;
-				}
-			}
-		}
-		private void CargarClaveReinicioCache(EntityContext entity, LoggingService loggingService, RedisCacheWrapper redisCacheWrapper, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
-		{
-			ProyectoCL proyectoCL = new ProyectoCL(entity, loggingService, redisCacheWrapper, configService, new VirtuosoAD(loggingService, entity, configService, servicesUtilVirtuosoAndReplication), servicesUtilVirtuosoAndReplication);
-			proyectoCL.AgregarClaveReinicioAplicacion(ProyectoAD.MetaProyecto);
-		}
+                if (!listaIdiomas.ContainsKey(IdiomaPrincipalDominio))
+                {
+                    IdiomaPrincipalDominio = listaIdiomas.First().Key;
+                }
+            }
+        }
+
 		private void CargarDominio(ConfigService configService)
         {
             string dominioConfig = configService.ObtenerDominio();
@@ -609,7 +643,7 @@ namespace Gnoss.Web
         }
 
 
-        private void CargarTextosPersonalizadosDominio(EntityContext context, LoggingService loggingService, ConfigService configService,RedisCacheWrapper redisCacheWrapper)
+        private void CargarTextosPersonalizadosDominio(EntityContext context, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory)
         {
             string dominio = configService.ObtenerDominio();
             Guid personalizacionEcosistemaID = Guid.Empty;
@@ -618,8 +652,8 @@ namespace Gnoss.Web
             {
                 personalizacionEcosistemaID = new Guid(parametrosAplicacionPers[0].Valor.ToString());
             }
-			UtilIdiomas utilIdiomas = new UtilIdiomas("", loggingService, context, configService, redisCacheWrapper);
-			utilIdiomas.CargarTextosPersonalizadosDominio(dominio, personalizacionEcosistemaID);
+            UtilIdiomas utilIdiomas = new UtilIdiomas("", loggingService, context, configService, redisCacheWrapper, loggerFactory.CreateLogger<UtilIdiomas>(), loggerFactory);
+            utilIdiomas.CargarTextosPersonalizadosDominio(dominio, personalizacionEcosistemaID);
         }
 
         private void CargarConfiguracionReplicado(EntityContext entityContext)
@@ -645,6 +679,10 @@ namespace Gnoss.Web
             mRouteConfig.RegistrarRutasRedireccionamiento(routes);
             mRouteConfig.RegisterRoutes(routes);
             //routes.Routes.Add(new CachedRouter<Guid>(routes.DefaultHandler, applicationBuilder, configService));
+        }
+        public void CrearColaEventosInternos()
+        {
+            mIPublishEvents.CrearCola();
         }
     }
 }

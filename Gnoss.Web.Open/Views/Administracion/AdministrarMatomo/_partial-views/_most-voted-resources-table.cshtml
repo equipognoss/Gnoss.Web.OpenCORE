@@ -8,9 +8,13 @@ Variables
 *@
 
 <div class="table-responsive matomoContainer__table">
-    <h3 class="matomoContainer__header">Votos de recursos</h3>
+    <div class="d-flex align-items-center justify-content-between">
+        <h3 class="matomoContainer__header">Recursos más votados</h3>
+        <button id="parellelBtVotes" class="parellelBtIndex btn btn-outline-primary matomoContainer__downloadButton">Descargar en CSV</button>
+    </div>
+    
     <hr />
-    <table id="table_top_resources" class="table table-bordered">
+    <table id="table_top_resources_voted" class="table table-bordered">
         <thead>
             <tr>
                 <th>Top</th>

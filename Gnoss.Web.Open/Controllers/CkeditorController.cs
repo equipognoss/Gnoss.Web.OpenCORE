@@ -8,6 +8,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.Util;
@@ -16,7 +17,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.IO;
 
@@ -40,10 +43,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private string mExtension;
 
-
-        public CkeditorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IHostingEnvironment env, EntityContextBASE entityContextBASE)
-            : base(httpContextAccessor, entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD, gnossCache, viewEngine, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, env, entityContextBASE)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CkeditorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IHostingEnvironment env, EntityContextBASE entityContextBASE, IAvailableServices availableServices, ILogger<CkeditorController> logger, ILoggerFactory loggerFactory)
+            : base(httpContextAccessor, entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD, gnossCache, viewEngine, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, env, entityContextBASE, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
 
@@ -57,11 +63,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [HttpPost]
         public JsonResult Index()
         {
-            if (Session.Get("Usuario") == null || Session.Get<GnossIdentity>("Usuario").EsUsuarioInvitado)
+            if (Session.Get<GnossIdentity>("Usuario") == null || Session.Get<GnossIdentity>("Usuario").EsUsuarioInvitado)
             {
                 throw new Exception("No tienes permiso");
             }
-            //JsonResult json = new JsonResult();
 
             string nombreFichero = "";
 
@@ -70,7 +75,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mUsuarioID = Session.Get<GnossIdentity>("Usuario").UsuarioID;
                 mEspecialID = Guid.NewGuid();
 
-                //IFormFile fileUpload = Request.Form.Files["fuCKEditor"];
                 IFormFile fileUpload = Request.Form.Files[0];
                 if (fileUpload == null)
                 {
@@ -83,11 +87,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 BinaryReader reader = new BinaryReader(fileUpload.OpenReadStream());
                 buffer1 = reader.ReadBytes((int)fileUpload.Length);
-                //reader.Close(); NO SE CIERRA, SI NO NOS CARGAMOS EL ARCHIVO
 
                 bool correcto = false;
 
-                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+                ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                 servicioImagenes.Url = UrlIntragnossServicios.ToString();
 
                 correcto = servicioImagenes.AgregarImagenADirectorio(buffer1, Path.Combine(UtilArchivos.ContentImagenesUsuarios, "ImagenesCKEditor",  mUsuarioID.ToString()), mEspecialID.ToString(), mExtension);
@@ -107,7 +110,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             ObjetoJson objetoJsonDevolver = new ObjetoJson();
             objetoJsonDevolver.fileName = nombreFichero;
             objetoJsonDevolver.uploaded = 1;
-            objetoJsonDevolver.url = BaseURLContent + "/" + UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesUsuarios + "/" + "ImagenesCKEditor/" + mUsuarioID.ToString().ToLower() + "/" + mEspecialID + mExtension;
+            objetoJsonDevolver.url = $"{BaseURLContent}/{UtilArchivos.ContentImagenes}/{UtilArchivos.ContentImagenesUsuarios}/ImagenesCKEditor/{mUsuarioID.ToString().ToLower()}/{mEspecialID}{mExtension}";
             return Json(objetoJsonDevolver);
         }
 

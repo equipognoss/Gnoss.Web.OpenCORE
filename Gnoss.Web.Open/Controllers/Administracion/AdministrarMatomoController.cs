@@ -30,6 +30,10 @@ using Newtonsoft.Json.Converters;
 using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Hosting;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Es.Riam.Gnoss.Elementos.Amigos;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -38,11 +42,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// 
     /// </summary>
-    public class AdministrarMatomoController : ControllerBaseWeb
+    public class AdministrarMatomoController : ControllerAdministrationWeb
     {
-        public AdministrarMatomoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarMatomoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarMatomoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         /// <summary>
@@ -50,8 +58,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -77,22 +85,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel">Gráfico que queremos leer</param>
         /// <returns>-</returns>
         [HttpPost]
-        public ActionResult Graphic(MatomoGraphicsViewModel pModel)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult Graphic(MatomoGraphicsViewModel pModel)
         {
             UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+            pModel = GetMatomoGraphicsViewModel(pModel);
             string json = utilMatomo.GetGraphic(pModel);
             return Content(json, "application/json");
         }
 
         /// <summary>
-        /// Se devuelve elo JSON de la estadística de Matomo correspondiente en el html.
+        /// Se devuelve el JSON de la estadística de Matomo correspondiente en el html.
         /// </summary>
         /// <param name="pModel">Gráfico que queremos leer</param>
         /// <returns>-</returns>
         [HttpPost]
-        public ActionResult TopUsersGraphic(MatomoGraphicsViewModel pModel)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult TopUsersGraphic(MatomoGraphicsViewModel pModel)
         {
             UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+            pModel = GetMatomoGraphicsViewModel(pModel);
             string json = utilMatomo.GetGraphic(pModel);
 
             var usersMatomo = UsersMatomo.FromJson(json);
@@ -115,14 +127,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
 
-            PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            Dictionary<string, string> nombresPersonas = persCN.ObtenerNombreCortoYNombresPersonasDeUsuariosID(usuariosID);
-            Dictionary<string, string> nombreAsociadoAId = new Dictionary<string, string>();
-            List<string> namesUsers = nombresPersonas.Keys.ToList();
-            for (int i = 0; i < nombresPersonas.Count; i++)
-            {
-                nombreAsociadoAId.Add(usuariosID[i].ToString(), namesUsers[i]);
-            }
+            PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
+            Dictionary<string, string[]> nombrePerfiles = persCN.ObtenerNombreCortoYNombresPerfilPorUsuariosID(usuariosID);
+            persCN.Dispose();
+
             foreach (var dias in usersMatomo)
             {
                 if (dias.Value.Count != 0)
@@ -130,15 +138,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     foreach (var u in dias.Value)
                     {
                         string[] id = u.Segment.Split("==");
-                        if (nombreAsociadoAId.ContainsKey(id[1]))
+                        if (nombrePerfiles.ContainsKey(id[1]))
                         {
-                            //foreach (string nombreCorto in nombresPersonas.Keys)
-                            string nombreCorto = nombreAsociadoAId[id[1]];
-                            string urlPerfil = GnossUrlsSemanticas.GetURLPerfilPersonaOOrgEnProyecto(BaseURL, UtilIdiomas, UrlPerfil, ProyectoSeleccionado.NombreCorto, nombreCorto, null);
-                            string nombre = nombresPersonas[nombreCorto];
-                            u.nombrePerfil = nombre;
+                            string urlPerfil = GnossUrlsSemanticas.GetURLPerfilPersonaOOrgEnProyecto(BaseURL, UtilIdiomas, UrlPerfil, ProyectoSeleccionado.NombreCorto, nombrePerfiles[id[1]][0], null);
+                            u.nombrePerfil = nombrePerfiles[id[1]][1];
                             u.urlPerfil = urlPerfil;
-                            u.idPerfil = id[1];
                         }
                     }
                 }
@@ -151,14 +155,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 
         /// <summary>
-        /// Se devuelve elo JSON de la estadística de Matomo correspondiente en el html.
+        /// Se devuelve el JSON de la estadística de Matomo correspondiente en el html.
         /// </summary>
         /// <param name="pModel">Gráfico que queremos leer</param>
         /// <returns>-</returns>
         [HttpPost]
-        public ActionResult TopDownloadsGraphic(MatomoGraphicsViewModel pModel)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult TopDownloadsGraphic(MatomoGraphicsViewModel pModel)
         {
             UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+            pModel = GetMatomoGraphicsViewModel(pModel);
             string json = utilMatomo.GetGraphic(pModel);
             List<RootMatomo> myDeserializedClass = JsonConvert.DeserializeObject<List<RootMatomo>>(json);
 
@@ -199,7 +205,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             }
                         }
 
-                        if (!string.IsNullOrEmpty(a.eventName) && a.eventName.Equals("Comentario"))
+                        if (!string.IsNullOrEmpty(a.eventName) && a.eventName.Equals("Comentar"))
                         {
                             string urlWithoutQuery = a.url.Split('?')[0];
                             string param1 = urlWithoutQuery.Split('/').Last();
@@ -240,7 +246,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             act.ResourceURL = url;
                         }
 
-                        if (!string.IsNullOrEmpty(act.eventName) && act.eventName.Equals("Comentario") && act.ResourceID != null && recursosUrlYNombre.ContainsKey(act.ResourceID))
+                        if (!string.IsNullOrEmpty(act.eventName) && act.eventName.Equals("Comentar") && act.ResourceID != null && recursosUrlYNombre.ContainsKey(act.ResourceID))
                         {
                             act.ResourceName = recursosUrlYNombre[act.ResourceID];
                             string url = GnossUrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, recursosUrlYNombre[act.ResourceID], new Guid(act.ResourceID), Guid.Empty, false);
@@ -254,14 +260,75 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return Content(jsonString, "application/json");
         }
 
+        /// <summary>
+        /// Se devuelve el JSON de la estadística de Matomo correspondiente en el html.
+        /// </summary>
+        /// <param name="pModel">Gráfico que queremos leer</param>
+        /// <returns>-</returns>
+        [HttpPost]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult TopResourcesGraphic(MatomoGraphicsViewModel pModel)
+        {
+            UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+            pModel = GetMatomoGraphicsViewModel(pModel);
+            string json = utilMatomo.GetGraphic(pModel);
+            List<RootMatomo> myDeserializedClass = JsonConvert.DeserializeObject<List<RootMatomo>>(json);
+
+            foreach (RootMatomo day in myDeserializedClass)
+            {
+                if (day.actionDetails.Count != 0)
+                {
+                    foreach (var a in day.actionDetails)
+                    {
+                        if (a.url != null && a.url.Contains("/recurso/"))
+                        {
+                            string datosRecurso = a.url.Split(new string[] { "/recurso/" }, StringSplitOptions.None)[1];
+                            if (datosRecurso.Split("/").Length == 2)
+                            {
+                                a.ResourceID = datosRecurso.Split("/")[1];
+                                a.ResourceName = datosRecurso.Split("/")[0];
+                            }
+                        }
+                    }
+                }
+            }
+            var jsonString = JsonConvert.SerializeObject(myDeserializedClass);
+            return Content(jsonString, "application/json");
+        }
 
         /// <summary>
-        /// Se devuelve el src del widget de la estadística de Matomo correspondiente .
+        /// Modifica el segment del modelo que le llega para reemplazar el proyectoId por su nombre corto
         /// </summary>
-        /// <param name="pModel">Widget que queremos leer</param>
-        /// <returns>-</returns>
+        /// <param name="pModel"></param>
+        /// <returns>Devuelve un MatomoGraphicsViewModel con el segment modificado</returns>
+        public MatomoGraphicsViewModel GetMatomoGraphicsViewModel(MatomoGraphicsViewModel pModel)
+        {
+            string[] segment = pModel.segment.Split(";");
+            Guid proyectoId = Guid.Empty;
+            string nombreCortoProyecto = "";
+            if (segment.Length > 1)
+            {
+                Guid.TryParse(segment[0].Split("==")[1], out proyectoId);
+            }
+            else
+            {
+                Guid.TryParse(pModel.segment.Split("==")[1], out proyectoId);
+            }
 
-        public ActionResult Widget(MatomoWidgetViewModel pModel)
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            nombreCortoProyecto = proyCN.ObtenerNombreCortoProyecto(proyectoId);
+            pModel.segment = pModel.segment.Replace(proyectoId.ToString(), nombreCortoProyecto);
+            return pModel;
+        }
+
+
+		/// <summary>
+		/// Se devuelve el src del widget de la estadística de Matomo correspondiente .
+		/// </summary>
+		/// <param name="pModel">Widget que queremos leer</param>
+		/// <returns>-</returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult Widget(MatomoWidgetViewModel pModel)
         {
             UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
             string content = utilMatomo.GetWidget(pModel);
@@ -271,12 +338,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 
-        /// <summary>
-        /// Se devuelve el src del widget de la estadística de Matomo correspondiente .
-        /// </summary>
-        /// <param name="pModel">Widget que queremos leer</param>
-        /// <returns>-</returns>
-        public ActionResult MatomoRequest(MatomoWidgetViewModel pModel)
+		/// <summary>
+		/// Se devuelve el src del widget de la estadística de Matomo correspondiente .
+		/// </summary>
+		/// <param name="pModel">Widget que queremos leer</param>
+		/// <returns>-</returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult MatomoRequest(MatomoWidgetViewModel pModel)
         {
             UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
             WebResponse response = utilMatomo.MatomoRequest(RequestParams("matomopage"), Request.QueryString.Value);
@@ -296,13 +364,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pPassword">Contraseña actual del usuario</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult RestoreCurrentUser(string pPassword)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult RestoreCurrentUser(string pPassword)
         {
             if (!string.IsNullOrEmpty(mConfigService.ObtenerUrlMatomo()))
             {
-                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+                PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
 
                 Usuario usuario = usuarioCN.ObtenerUsuarioPorID(UsuarioActual.UsuarioID);
 
@@ -338,8 +406,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pPassword">Contraseña a establecer para el adminsitrador de matomo</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult RestoreAdminMatomoPassword(string pPassword)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
+		public ActionResult RestoreAdminMatomoPassword(string pPassword)
         {
             GuardarLogAuditoria();
             if (!string.IsNullOrEmpty(mConfigService.ObtenerUrlMatomo()))
@@ -536,7 +604,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         public string nombrePerfil { get; set; }
 
-        public string idPerfil { get; set; }
     }
 
     public partial class UsersMatomo

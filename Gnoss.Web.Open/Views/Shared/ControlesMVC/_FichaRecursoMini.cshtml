@@ -52,7 +52,7 @@ descriptionFormatted = Html.CleanHtmlParagraphsStringHtml(descriptionFormatted);
 <article class="resource resource-grupo @claseTipoRecurso @privado" typeof="sioc_t:Item" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:sioc_t="http://rdfs.org/sioc/types#" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:sioc="http://rdfs.org/sioc/ns#">
     <div class="wrap">
         <h3 class="title icono-recurso con-icono-before @classTitulo">
-            <a href="@Model.CompletCardLink" property="dcterms:title" content="@Model.Title">@Model.Title</a>
+            <a href="@Model.CompleteOriginalCardLink" property="dcterms:title" content="@Model.Title">@Model.Title</a>
         </h3>
         
         @* Breve descripción del recurso mini con imagen *@
@@ -86,10 +86,10 @@ descriptionFormatted = Html.CleanHtmlParagraphsStringHtml(descriptionFormatted);
 
         @if (Model.ViewSettings != null)
         {
-            if (!string.IsNullOrEmpty(Model.ViewSettings.InfoExtraContext))
+            if (!string.IsNullOrEmpty(Model.ViewSettings.ContextView.InfoExtra))
             {
                 <div class="group body">                    
-                    @Html.Raw(Model.ViewSettings.InfoExtraContext)                    
+                    @Html.Raw(Model.ViewSettings.ContextView.InfoExtra)                    
                 </div>
             }
         }

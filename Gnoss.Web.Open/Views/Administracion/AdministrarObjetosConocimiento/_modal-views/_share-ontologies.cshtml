@@ -1,0 +1,57 @@
+﻿@model ObjetoConocimientoModel
+@{
+	ObjetoConocimientoModel objetoConocimiento = Model;
+	string idModalCompartirOntologia = "modal-compartir-ontologia_" + objetoConocimiento.Ontologia.Trim().Replace(" ", "_").Replace("(", "_").Replace(")", "_");
+}
+<div id="@idModalCompartirOntologia"
+class="modal modal-top fade modal-compartirOntologia"
+role="dialog"
+aria-modal="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar el borrado *@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">share</span>
+					@Html.GetText("COMMON", "COMPARTIRONTOLOGIA")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+				data-dismiss="modal"
+				aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label class="control-label d-block">@Html.GetText("COMMON", "COMPARTIRONTOLOGIABUSCARPROYECTO")</label>
+					<div class="header-buscador">
+						<div class="wrapCol">
+							<div class="col-buscador" style="width: 100%">
+								<div class="input-wrap autocompletar form-sticky-button">
+									<input type="text" class="form-control buscarProyectoAutocomplete ac_input" autocomplete="off" placeholder="Buscar proyectos">										
+									<a class="btn btn-grey uppercase btnAddSharedInCommunity">@Html.GetText("COMMON", "AÑADIR")</a>
+								</div>
+								<div class="tag-list mb-4 mt-3 panListadoProyectos">
+									@foreach (string proyecto in objetoConocimiento.ListaProyectosCompartidos)
+									{
+										<div class="tag" id="@proyecto">
+											<div class="tag-wrap">
+												<span class="tag-text">@proyecto</span>
+											</div>
+										</div>
+									}
+								</div>
+								<input type="hidden" class="auxProyectosCompartidos" value="" />		
+								<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "NOSEPUEDEDEJARCOMPARTIRONTOLOGIA")</small>
+							</div>
+						</div>
+					</div>
+				</div>			
+				<div class="form-actions">
+					<button class="btn btn-primary btnConfirmarCompartirOntologia uppercase">@Html.GetText("COMMON", "ACEPTAR")</button>
+					<input type="hidden" class="urlCompartirOntologia" value="@objetoConocimiento.UrlCompartir" />
+				</div>
+			</div>
+		</div>
+	</div>
+ </div>

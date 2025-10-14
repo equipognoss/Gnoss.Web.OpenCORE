@@ -27,12 +27,15 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,12 +46,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	/// <summary>
 	/// Controlador para administrar las opciones avanzadas de la comunidad por el metaadministrador de la plataforma
 	/// </summary>
-	public class AdministrarOpcionesMetaAdministradorController : ControllerBaseWeb
+	public class AdministrarOpcionesMetaAdministradorController : ControllerAdministrationWeb
 	{
-		public AdministrarOpcionesMetaAdministradorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarOpcionesMetaAdministradorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesMetaAdministradorController> logger, ILoggerFactory loggerFactory )
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
 		{
-			_appLifetime = appLifetime;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            _appLifetime = appLifetime;
 		}
 
 		#region Miembros
@@ -73,7 +80,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpGet]
-		[TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarOpcionesDelMetaadministrador } })]
 		public ActionResult Index()
 		{
 			// Añadir clases para el body del Layout
@@ -97,7 +104,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarOpcionesDelMetaadministrador } })]
 		public ActionResult Guardar(AdministrarOpcionesMetaadministradorViewModel Options)
 		{
 			GuardarLogAuditoria();
@@ -131,10 +138,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		}
 
 		[HttpPost]
-		[TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarOpcionesDelMetaadministrador } })]
 		public void Shutdown()
 		{
-			ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+			ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 			Guid clave = Guid.NewGuid();
 			proyectoCL.AgregarObjetoCache(NombresCL.CLAVEREINICIO, clave, 3600);
 			_appLifetime.StopApplication();
@@ -150,8 +157,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			DataWrapperVistaVirtual vistaVirtualDW = PasarDatosDeModeloADataSet(pOptions, out esNecesarioReiniciar);
 
-			ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
+			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 
 			mEntityContext.NoConfirmarTransacciones = true;
 			try
@@ -172,7 +179,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				throw;
 			}
 
-			ParametroAplicacionCN ParametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCN ParametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 			ParametroAplicacionCN.ActualizarConfiguracionGnoss();
 			ParametroAplicacionCN.Dispose();
 
@@ -181,7 +188,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		private DataWrapperVistaVirtual PasarDatosVistasADataSet(AdministrarOpcionesMetaadministradorViewModel pOptions)
 		{
-			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 			DataWrapperVistaVirtual vistaVirtualDW = null;
 
 			if (pOptions.VistasActivadas)
@@ -287,7 +294,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					lista.Add(proyecto[0], booleano);
 				}
 
-				ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+				ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 				foreach (string proyecto in lista.Keys)
 				{
 					Guid proyID = proyCL.ObtenerProyectoIDPorNombreCorto(proyecto);
@@ -491,7 +498,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		private DataWrapperVistaVirtual PasarDatosDeModeloADataSet(AdministrarOpcionesMetaadministradorViewModel pOptions, out bool pReiniciarAplicacion)
 		{
-			ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 			//Compruebo si puedo activar la url corta en este proyecto
 			mProyectoSinNombreCortoEnUrlActivado = !ParametrosGeneralesDS.ListaParametroProyecto.Exists(parametro => parametro.OrganizacionID.Equals(ProyectoSeleccionado.FilaProyecto.OrganizacionID) && parametro.ProyectoID.Equals(ProyectoSeleccionado.Clave) && parametro.Parametro.Equals("ProyectoSinNombreCortoEnURL"));
 
@@ -562,7 +569,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			ControladorProyecto.GuardarParametroBooleano(ParametrosGeneralesDS, "PropiedadCMSMultiIdioma", pOptions.PropiedadCMSMultiIdioma);
 			if (mProyectoSinNombreCortoEnUrlActivado)
 			{
-				Gnoss.Logica.ServiciosGenerales.ProyectoCN proyCN = new Gnoss.Logica.ServiciosGenerales.ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+				Gnoss.Logica.ServiciosGenerales.ProyectoCN proyCN = new Gnoss.Logica.ServiciosGenerales.ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 				List<string> listaUrls = proyCN.ObtenerUrlsComunidadCajaBusqueda(ProyectoSeleccionado.Clave);
 
 				foreach (string url in listaUrls)
@@ -671,26 +678,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		private void InvalidarCaches(bool pEliminarTerceraPeticionFacetas)
 		{
-			ParametroGeneralCL paramCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroGeneralCL paramCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
 			paramCL.InvalidarCacheParametrosGeneralesDeProyecto(ProyectoSeleccionado.Clave);
 
-			VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory);
 			vistaVirtualCL.InvalidarVistasVirtuales(ProyectoSeleccionado.Clave);
 
-			ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+			ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 			proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
 			proyCL.InvalidarFilaProyecto(ProyectoSeleccionado.Clave);
 			proyCL.InvalidarParametrosProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID);
 			proyCL.Dispose();
 
-			ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 			parametroAplicacionCL.InvalidarCacheParametrosAplicacion();
 
 			mGnossCache.VersionarCacheLocal(ProyectoSeleccionado.Clave);
 
 			if (pEliminarTerceraPeticionFacetas)
 			{
-				FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+				FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
 				facetadoCL.InvalidarCacheQueContengaCadena($"facetado_{ProyectoSeleccionado.Clave.ToString()}_*_facetas_3_");
 				facetadoCL.Dispose();
 			}
@@ -698,7 +705,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		private Dictionary<Guid, KeyValuePair<string, Guid>> CargarListaProyectosConVistas()
 		{
-			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 			Dictionary<Guid, KeyValuePair<string, Guid>> listaProyectosVistas = vistaVirtualCN.ObtenerProyectosConVistas();
 			vistaVirtualCN.Dispose();
 
@@ -708,7 +715,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		private Dictionary<string, bool> CargarProyectosRegistroObligatorio(Guid id)
 		{
 			//Pasar a ParametroAplicacion estos metodos
-			ParametroAplicacionCN parametroaplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCN parametroaplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 			Dictionary<string, bool> listaFinal = new Dictionary<string, bool>();
 			Dictionary<Guid, string> listaProyectos = parametroaplicacionCN.ObtenerProyectosRegistroObligatorio();
 			List<Guid> listaSinRegistro = parametroaplicacionCN.ObtenerProyectosSinRegistroObligatorio(id);
@@ -930,8 +937,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="registroAutomatico">True o false segun se quiera añadir el registro automático o no</param>
 		private void ConfigurarRegistroAutomatico(bool registroAutomatico)
 		{
-			ParametroCN paramCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-			ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroCN paramCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroCN>(), mLoggerFactory);
+			ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 			Guid organizacionID;
 
 			if(ProyectoSeleccionado.Organizacion != null)
@@ -1025,7 +1032,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			{
 				if (mParametroAplicacion == null)
 				{
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 					mParametroAplicacion = paramCL.ObtenerParametrosAplicacionPorContext();
 				}
 				return mParametroAplicacion;

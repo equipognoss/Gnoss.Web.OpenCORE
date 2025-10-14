@@ -591,11 +591,14 @@ Descripción
 					{
 						<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("ADMINISTRACIONSEMANTICA", "FACETAS")</label>
 					}
-					@* Botón para añadir nuevos Filtros de Orden *@
-					<a href="javascript: void(0);" class="linkAddFacet btn btn-outline-primary new" style="display: flex; text-decoration: none;">
-						<span class="material-icons">add</span>
-						<span class="texto">@Html.GetText("DEVTOOLS", "AGREGARFACETA")</span>
-					</a>
+					@if (ViewBag.ModificarPaginaPermitido)
+					{
+						@* Botón para añadir nuevos Filtros de Orden *@
+						<a href="javascript: void(0);" class="linkAddFacet btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+							<span class="material-icons">add</span>
+							<span class="texto">@Html.GetText("DEVTOOLS", "AGREGARFACETA")</span>
+						</a>
+					}					
 				</div>
 
 				@* Listado/Contenedor donde se cargarán las facetas existentes + nuevas *@

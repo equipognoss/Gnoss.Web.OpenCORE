@@ -15,6 +15,7 @@ Variables
 	TabModel.SearchTabModel.FiltroOrden filtroOrden = Model;
 	Guid filterId = @Guid.NewGuid();
 	string collapseId = "panel_collapse_" + filterId.ToString().Substring(0,5);
+	bool comparando = ViewBag.ComparandoPestanya ?? false;
 }
 
 @*
@@ -54,13 +55,16 @@ Variables
 										<span class="material-icons">edit</span>
 									</a>
 								</li>
-								<li>
-									@* Acción de borrar el filtro *@
-									<a class="action-delete round-icon-button js-action-delete btnDeleteFilter"
-										href="javascript: void(0);">
-										<span class="material-icons">delete</span>
-									</a>
-								</li>
+								@if (!comparando)
+								{
+									<li>
+										@* Acción de borrar el filtro *@
+										<a class="action-delete round-icon-button js-action-delete btnDeleteFilter"
+										   href="javascript: void(0);">
+											<span class="material-icons">delete</span>
+										</a>
+									</li>
+								}
 							</ul>
 						</div>
 					</div>
@@ -91,8 +95,9 @@ Variables
 						data-labeltext="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"	
 						placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBRE")"
 						class="form-control multiIdioma"
-						value="@filtroOrden.Nombre">
-					<small class="form-text text-muted mb-2 mt-n2">Nombre identificativo del filtro.</small>
+						value="@filtroOrden.Nombre"
+					    @(comparando ? "readonly" : "")>
+					<small class="form-text text-muted mb-2 mt-n2">Nombre identificativo del criterio.</small>
 				</div>			
 			</div>
 
@@ -105,12 +110,13 @@ Variables
 					name="Filtro"
 					placeholder="@Html.GetText("COMADMINPESTANYAS", "FILTRO")"
 					class="form-control inputFiltroValue"
-					value="@filtroOrden.Filtro">
-				<small class="form-text text-muted mb-2">Filtro de resultados que se utilizará para realizar la búsqueda personalizada.</small>
+					value="@filtroOrden.Filtro"
+					@(comparando ? "readonly" : "")>
+				<small class="form-text text-muted mb-2">Propiedad y criterio que se utilizará para ordenar los resultados. Ejemplo: schema:name|desc</small>
 			</div>		
 			<div class="form-group mb-2">
 				<label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "CONSULTA")</label>
-				<textarea name="TabConsulta">@filtroOrden.Consulta</textarea>
+				<textarea name="TabConsulta" @(comparando ? "readonly" : "")>@filtroOrden.Consulta</textarea>
 				<small class="form-text text-muted mb-2">Cláusula SPARQL que se utilizará para ordenar los resultados de la búsqueda.</small>
 			</div>
 			<div class="form-group mb-2">
@@ -118,8 +124,9 @@ Variables
 				<input type="text"
 					   name="TabOrderBy"
 					   class="form-control inputFiltroValue"
-					   value="@filtroOrden.OrderBy">
-				<small class="form-text text-muted mb-2">Campos que formarán parte de la cláusula "Order by" de la búsqueda. Formato: ?col1 ?col2</small>
+					   value="@filtroOrden.OrderBy"
+					   @(comparando ? "readonly" : "")>
+				<small class="form-text text-muted mb-2">Variables que formarán parte de la cláusula "Order by" de la búsqueda. Formato: ?col1 ?col2</small>
 			</div>
 		</div>
 	</div>	

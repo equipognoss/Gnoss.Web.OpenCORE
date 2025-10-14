@@ -21,17 +21,20 @@ Variables
 Antes se utilizaba en el Header. Ahora se colocará en la propia página. Quitar ul > li y la clase "btn-round" del <a>
 <ul>
 	<li class="nuevo nueva-pagina">*@
-		@* Botón para añadir una nueva página *@
-		<a
-			href="javascript: void(0);"
-			class="btn btn-outline-primary dropdown-toggle no-flecha"
-			id="menuNuevaPagina"
-			data-toggle="dropdown"
-			aria-haspopup="true"
-			aria-expanded="true">
+	@* Botón para añadir una nueva página *@
+	@if (ViewBag.CrearPaginaPermitido != null && ViewBag.CrearPaginaPermitido)
+	{
+		<a href="javascript: void(0);"
+		class="btn btn-outline-primary dropdown-toggle no-flecha"
+		id="menuNuevaPagina"
+		data-toggle="dropdown"
+		aria-haspopup="true"
+		aria-expanded="true">
 			<span class="material-icons">add</span>
-			<span>@Html.GetText("DEVTOOLS","NUEVAPAGINA")</span>
+			<span>@Html.GetText("DEVTOOLS", "NUEVAPAGINA")</span>
 		</a>
+	
+		
 		@* Dropdown con el tipo de páginas a crear *@
 		<div
 			class="dropdown-menu dropdown-menu-right basic-dropdown"
@@ -206,6 +209,7 @@ Antes se utilizaba en el Header. Ahora se colocará en la propia página. Quitar
 				</ul>
 			</div>
 		</div>
+		}
 @*
 	</li>
 </ul>

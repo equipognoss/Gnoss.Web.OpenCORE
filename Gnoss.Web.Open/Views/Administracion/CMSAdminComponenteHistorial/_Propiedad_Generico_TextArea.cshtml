@@ -1,0 +1,40 @@
+﻿@model CMSAdminPropiedadComponenteViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato TextArea (Input)
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.Propiedad.TipoPropiedadCMS);
+    string valorPropiedad = Model.Propiedad.Value;
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+        valorPropiedad = Html.ObtenerTextoDeIdioma(Model.Propiedad.Value, idiomaPanel, null, true);
+    }
+
+    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.Propiedad.TipoPropiedadCMS);
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo TextArea (Input) --------------------
+*@
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="form-group @(Model.DiferenciasPropiedadesCMS[idiomaPanel] ? "error" : "")">
+    @* Label del elemento Html*@
+    <label class="control-label d-block">@nombrePropiedad@(Model.Propiedad.Required ? " *" : "")</label>
+    @* Elemento Html *@
+    <textarea data-propertyid="@idPanel" class="form-control noCKE" cols="20" readonly>@valorPropiedad</textarea>
+
+</div>
+
+
+

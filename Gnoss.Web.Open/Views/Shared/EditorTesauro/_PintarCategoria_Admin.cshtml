@@ -56,12 +56,16 @@ Variables
 			@* Sección header de la categoría*@
 			<div class="component-header">
 				@* Botón para arrastrar *@
-				<div class="component-sortable js-component-sortable-category">
-					<span class="material-icons-outlined sortable-icon">drag_handle</span>
-				</div>
+				@if ((ViewBag.ModificarCategoriaPermitido != null && ViewBag.ModificarCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+				{
+					<div class="component-sortable js-component-sortable-category">
+						<span class="material-icons-outlined sortable-icon">drag_handle</span>
+					</div>
+				}				
 				@* Contenido de la categoría *@
 				<div class="component-header-content">
-					<div class="component-header-left">
+
+					<div class="component-header-left">					
 						@* Botón de tiene hijos o no *@
 						@if (tieneHijos)						
 						{													
@@ -75,52 +79,59 @@ Variables
 								@* Hijos desplegados *@
 								<span class="material-icons-outlined showHide-icon expanded">remove_circle_outline</span>
 							}												
-						}
-						
+						}	
 						@* Nombre de la categoría *@
 						<div class="component-name-wrap">
-							<span class="component-name" data-categoryname="@Model.Name" data-categoryid="@Model.Key">@Model.Name</span>							
+							<span class="component-name" data-categoryname="@Model.Name" data-categoryid="@Model.Key">@Model.Name</span>
 						</div>
-					</div>
+					</div>					
 					@* Sección de acciones de la derecha *@
 					<div class="component-header-right">
 						<div class="component-actions-wrap">
 							@* Acciones en la categoría *@
 							<ul class="no-list-style component-actions">							
 								@* Editar categoría *@
-								<li>
-									<a class="action-edit round-icon-button js-action-edit-component"
-									    data-categoryid="@Model.Key" 
+								@if ((ViewBag.VerCategoriaPermitido != null && ViewBag.VerCategoriaPermitido) || (ViewBag.ModificarCategoriaPermitido != null && ViewBag.ModificarCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+								{
+									<li>
+										<a class="action-edit round-icon-button js-action-edit-component"
+										data-categoryid="@Model.Key"
 										data-categoryname="@Model.Name"
-										data-target="#modal-container" 	
+										data-target="#modal-container"
 										data-toggle="modal"
 										style="cursor:pointer">
-										<span class="material-icons">edit</span>
-									</a>
-								</li>
+											<span class="material-icons">edit</span>
+										</a>
+									</li>
+								}
 								@* Crear nueva categoría dentro de la propia categoría *@
-								<li>
-									<a class="action-add round-icon-button js-action-add"
-										data-categoryid="@Model.Key" 
+								@if ((ViewBag.CrearCategoriaPermitido != null && ViewBag.CrearCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+								{
+									<li>
+										<a class="action-add round-icon-button js-action-add"
+										data-categoryid="@Model.Key"
 										data-categoryname="@Model.Name"
-										data-target="#modal-container" 										
+										data-target="#modal-container"
 										data-toggle="modal"
 										style="cursor:pointer">
-										<span class="material-icons">create_new_folder</span>
-									</a>
-								</li>
+											<span class="material-icons">create_new_folder</span>
+										</a>
+									</li>
+								}
 								@* Borrar categoría *@
-								<li>
-									<a
-										class="action-delete round-icon-button js-action-delete"
-										data-categoryid="@Model.Key" 
-										data-categoryname="@Model.Name"
-										data-target="#modal-delete-category" 
-										data-toggle="modal"
-										style="cursor:pointer">
-										<span class="material-icons">delete</span>
-									</a>
-								</li>
+								@if ((ViewBag.EliminarCategoriaPermitido != null && ViewBag.EliminarCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+								{
+									<li>
+										<a class="action-delete round-icon-button js-action-delete"
+										   data-categoryid="@Model.Key"
+										   data-categoryname="@Model.Name"
+										   data-target="#modal-delete-category"
+										   data-toggle="modal"
+										   style="cursor:pointer">
+											<span class="material-icons">delete</span>
+										</a>
+									</li>
+								}								
 							</ul>
 						</div>
 					</div>

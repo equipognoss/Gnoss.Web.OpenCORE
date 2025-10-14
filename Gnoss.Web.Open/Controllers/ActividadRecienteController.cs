@@ -3,7 +3,9 @@ using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.CMS;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -18,6 +20,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Linq;
 
@@ -26,9 +30,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class ActividadRecienteController : ControllerBaseWeb
     {
-        public ActividadRecienteController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public ActividadRecienteController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ActividadRecienteController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public ActionResult Index(int TypeActivity, int NumPeticion, Guid ComponentKey, Guid? ProfileKey)
@@ -45,8 +53,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (ComponentKey != Guid.Empty)
             {
-                CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponentKey,ProyectoSeleccionado.Clave, true), mLoggingService, mEntityContext);
+                CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
+                GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponentKey, ProyectoSeleccionado.Clave, true), mLoggingService, mEntityContext);
                 cmsCN.Dispose();
 
                 if (gestorCMS.ListaComponentes.ContainsKey(ComponentKey) && gestorCMS.ListaComponentes[ComponentKey] is CMSComponenteActividadReciente)
@@ -62,7 +70,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 partialView = "ControlesMVC/_ActividadRecientePerfil";
             }
 
-            ActividadReciente actividadRecienteController = new ActividadReciente(mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
+            ActividadReciente actividadRecienteController = new ActividadReciente(mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, mAvailableServices, mLoggerFactory.CreateLogger<ActividadReciente>(), mLoggerFactory);
             return PartialView(partialView, actividadRecienteController.ObtenerActividadReciente(NumPeticion, numItems, (TipoActividadReciente)TypeActivity, ProfileKey, false, ComponentKey));
         }
     }

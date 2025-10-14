@@ -29,7 +29,6 @@ using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -40,14 +39,22 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Universal.Common.Extensions;
-using Universal.Common;
-using VDS.RDF.Query.Expressions.Functions.XPath.Cast;
-using Microsoft.AspNetCore.Http.Extensions;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
-
+using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
+using Es.Riam.Util;
+using System.IO;
+using Es.Riam.Gnoss.RabbitMQ;
+using Newtonsoft.Json;
+using Es.Riam.Gnoss.Web.RSS.Redifusion;
+using Es.Riam.Gnoss.Web.MVC.Models.Tesauro;
+using DocumentFormat.OpenXml.Bibliography;
+using Gnoss.Web.Open.Filters;
+using StackExchange.Redis;
+using Es.Riam.Gnoss.UtilServiciosWeb;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
+using Es.Riam.Gnoss.Elementos.Amigos;
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
 	/// <summary>
@@ -96,10 +103,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <summary>
 		/// 
 		/// </summary>
-		public string PasosRealizados { get; set; }
-		/// <summary>
-		/// 
-		/// </summary>
 		public KeyValuePair<Guid, Dictionary<string, string>> Categoria { get; set; }
 		/// <summary>
 		/// 
@@ -113,6 +116,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// 
 		/// </summary>
 		public List<CategoryModel> CategoriasCompartir { get; set; }
+
+		public Dictionary<Guid, string> CategoriasConImagen { get; set; }
 	}
 
 	/// <summary>
@@ -146,15 +151,40 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		share
 	}
 
-	/// <summary>
-	/// Controller de administrar categorías
-	/// </summary>
-	public class AdministrarCategoriasController : ControllerBaseWeb
-	{
+    /// <summary>
+    /// Categorias y su orden
+    /// </summary>
+    [Serializable]
+    public class OrdenCategoria
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public Guid CategoriaID { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public Guid CategoriaPadreID { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public short Orden { get; set; }
+       
+    }
 
-		public AdministrarCategoriasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    /// <summary>
+    /// Controller de administrar categorías
+    /// </summary>
+    public class AdministrarCategoriasController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarCategoriasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarCategoriasController> logger, ILoggerFactory loggerFactory)
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
 		{
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            mAvailableServices = availableServices;
 		}
 
 		#region Miembros
@@ -217,10 +247,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// 
 		/// </summary>
 		private List<CategoryModel> mCategoriasSugeridas;
+
 		/// <summary>
-		/// 
+		/// Lista usada para almacenar las categorias en cache local y que no se borren cada vez que se crea una categoria nueva
 		/// </summary>
-		private GestionTesauro mGestorTesauro = null;
+		private SortedList<Guid, CategoriaTesauro> mListaCategoriasCache;
+        /// <summary>
+        /// 
+        /// </summary>
+        private GestionTesauro mGestorTesauro = null;
+
+		private const string COLA_MINIATURA_CATEGORIA = "ColaMiniaturaCategoria";
+
+		private const int MAX_PESO_MB = 20;
+
+		private const int MAX_PESO_KB = MAX_PESO_MB * 1024 * 1024;
+
+		private IAvailableServices mAvailableServices;
 
 		#endregion
 
@@ -228,16 +271,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Muestra la pagina de administrar categorías
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Tesauro })]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarCategoriasDePlataforma } })]
 		public ActionResult Index()
 		{
 			EliminarPersonalizacionVistas();
 			CargarPermisosAdministracionComunidadEnViewBag();
+			CargarPermisosCategoriasViewBag();
 
 			// Añadir clase para el body del Layout
 			ViewBag.BodyClassPestanya = "edicionCategorias";
-			ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;
-			ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Categorias;
+			if (EsAdministracionEcosistema)
+			{
+                ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+                ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Categorias;
+                ViewBag.isInEcosistemaPlatform = "true";
+            }
+			else
+			{
+                ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;
+                ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Categorias;
+            }
+			
 			// Establecer el título para el header de DevTools                      
 			ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "ESTRUCTURA");
 			ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONBASICA", "CATEGORIAS");
@@ -264,17 +319,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				}
 				i++;
 			}
-			GestorTesauro.RecargarGestor();
+			GestorTesauro.RecargarGestor(mListaCategoriasCache);
 
 			try
 			{
-				TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+				TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 				tesauroCN.ActualizarTesauro();
 				tesauroCN.Dispose();
 			}
 			finally
 			{
-				TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+				TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
 				tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
 				tesauroCL.Dispose();
 			}
@@ -287,10 +342,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns></returns>
 		[HttpPost]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.ModificarCategoria } })]
 		public ActionResult LoadDisableMultilenguage()
 		{
+			CargarPermisosCategoriasViewBag();
 			ActionResult partialView = View();
-			partialView = GnossResultHtml("../AdministrarCategorias/_modal-views/_disable-multilenguage-categories", null);
+			partialView = GnossResultHtml("../AdministrarCategorias/_modal-views/_disable-multilenguage-categories", EsAdministracionEcosistema);
 
 			// Devolver la vista modal
 			return partialView;
@@ -303,9 +360,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Muestra el panel para realizar la acción solicitada
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Tesauro })]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
 		public ActionResult MostrarAccion(string typeAction)
 		{
+			CargarPermisosCategoriasViewBag();
 			typeAction = typeAction.Replace('-', '_');
 
 			string error = string.Empty;
@@ -385,9 +443,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 					PaginaModel.ComunidadCompartir = new KeyValuePair<Guid, string>(idComunidad, nombreComunidad);
 
-					TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
 					DataWrapperTesauro tesauroDW = tesauroCL.ObtenerTesauroDeProyecto(idComunidad);
-					GestionTesauro gesTesauro = new GestionTesauro(tesauroDW, mLoggingService, mEntityContext);
+					GestionTesauro gesTesauro = new GestionTesauro(tesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory, mListaCategoriasCache);
 
 					PaginaModel.CategoriasCompartir = CargarTesauroPorGestorTesauro(gesTesauro);
 				}
@@ -404,7 +462,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 						AgregarCategoriaEHijosALista(GestorTesauro.ListaCategoriasTesauro[catID], listaCatSeleccionadasEHijos);
 					}
 
-					TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+					TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 					bool tieneRecursosAsociados = tesCN.EstanVinculadasCategoriasTesauro(GestorTesauro.TesauroActualID, listaCatSeleccionadasEHijos);
 
 					if (!tieneRecursosAsociados)
@@ -423,7 +481,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					else
 					{
 
-						TesauroCN tesCN2 = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+						TesauroCN tesCN2 = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 						bool existenRecursosNoHuerfanos = tesCN2.ObtenerSiExistenElementosNoHuerfanos(GestorTesauro.TesauroActualID, listaCatSeleccionadasEHijos);
 						tesCN2.Dispose();
 
@@ -432,7 +490,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				}
 				else if (typeAction == TypesAccion.share.ToString() && ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
 				{
-					ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 					DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerProyectosParticipaUsuario(mControladorBase.UsuarioActual.UsuarioID);
 
 					Dictionary<Guid, string> listaProyectos = new Dictionary<Guid, string>();
@@ -457,34 +515,87 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Ejecuta la acción solicitada
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Tesauro })]
-		public ActionResult EjecutarAccion(string typeAction)
+		public ActionResult EjecutarAccion(string typeAction, IFormFile pImagenCategoria, string name, Guid parentKey)
 		{
 			GuardarLogAuditoria();
+			CargarPermisosCategoriasViewBag();
 			PaginaModel.Action = typeAction;
+			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
 
 			switch (typeAction)
 			{
 				case "create":
-					return CrearCategoria_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.AnyadirCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return CrearCategoria_Event(pImagenCategoria, name, parentKey);
+					}
+					break;
 				case "change-name":
-					return CambiarNombre_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return CambiarNombre_Event();
+					}
+					break;
 				case "move":
-					return MoverCategoria_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return MoverCategoria_Event();
+					}
+					break;
 				case "order":
-					return OrdenarCategoria_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return OrdenarCategoria_Event();
+					}
+					break;
 				case "delete":
-					return EliminarCategoria_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return EliminarCategoria_Event();
+					}
+					break;
 				case "multilanguaje":
-					return CambiarIdioma_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return CambiarIdioma_Event();
+					}
+					break;
 				case "onlylanguaje":
-					return IdiomaUnico_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return IdiomaUnico_Event();
+					}
+					break;
 				case "acept-category":
-					return AceptarSolicitudCategoria_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return AceptarSolicitudCategoria_Event();
+					}
+					break;
 				case "reject-category":
-					return RechazarSolicitudCategoria_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return RechazarSolicitudCategoria_Event();
+					}
+					break;
 				case "share":
-					return CompartirCategoria_Event();
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return CompartirCategoria_Event();
+					}
+					break;
+				case "edit-image":
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return ModificarImagenCategoria_Event();
+					}
+					break;
+				case "delete-image":
+					if (utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos))
+					{
+						return EliminarImagenCategoria_Event();
+					}
+					break;
 			}
 
 			return GnossResultERROR();
@@ -494,10 +605,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Guardar los cambios
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Tesauro })]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
 		public ActionResult Guardar()
 		{
 			GuardarLogAuditoria();
+			CargarPermisosCategoriasViewBag();
 			if (!PaginaModel.MultiLanguaje)
 			{
 				foreach (CategoriaTesauro categoriaTesauro in GestorTesauro.ListaCategoriasTesauro.Values)
@@ -512,14 +624,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			List<Object> categoriasModificadas = mEntityContext.ObtenerElementosModificados(typeof(AD.EntityModel.Models.Tesauro.CategoriaTesauro));
 
 			Dictionary<string, string> listaModificadas = new Dictionary<string, string>();
-
+			List<Guid> idsCategoriasModificadas = new List<Guid>();
 			if ((categoriasModificadas != null) && (categoriasModificadas.Count > 0))
 			{
 				try
 				{
-					//Intento actualiar el modelo base
-					foreach (AD.EntityModel.Models.Tesauro.CategoriaTesauro filaCat in categoriasModificadas)
-					{
+                    //Intento actualiar el modelo base
+                    foreach (AD.EntityModel.Models.Tesauro.CategoriaTesauro filaCat in categoriasModificadas)
+                    {
 						string nombreOriginal = mEntityContext.ObtenerValorOriginalDeObjeto<string>(filaCat, nameof(filaCat.Nombre)).Trim().ToLower();
 						string nombreActual = filaCat.Nombre.Trim().ToLower();
 
@@ -527,11 +639,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 						{
 							listaModificadas.Add(nombreOriginal, nombreActual);
 						}
-					}
+						idsCategoriasModificadas.Add(filaCat.CategoriaTesauroID);
+					}	
 				}
 				catch (Exception ex)
 				{
-					mLoggingService.GuardarLogError(ex);
+					mLoggingService.GuardarLogError(ex, mlogger);
 				}
 			}
 
@@ -551,97 +664,120 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			mEntityContext.SaveChanges();
 
-			ControladorDocumentacion.AgregarEliminacionCategoriasModeloBase(EliminarCategoriasActualizarBaseTodo, mControladorBase.UsuarioActual.ProyectoID, true, PrioridadBase.Baja);
-			ControladorDocumentacion.AgregarEliminacionCategoriasModeloBase(EliminarCategoriasActualizarBaseSoloHuerfanos, mControladorBase.UsuarioActual.ProyectoID, false, PrioridadBase.Baja);
-			ControladorDocumentacion.AgregarMoverCategoriasModeloBase(MoverCategoriasActualizarBase, mControladorBase.UsuarioActual.ProyectoID, PrioridadBase.Baja);
+			ControladorDocumentacion.AgregarEliminacionCategoriasModeloBase(EliminarCategoriasActualizarBaseTodo, ProyectoSeleccionado.Clave, true, PrioridadBase.Baja, mAvailableServices);
+			ControladorDocumentacion.AgregarEliminacionCategoriasModeloBase(EliminarCategoriasActualizarBaseSoloHuerfanos, ProyectoSeleccionado.Clave, false, PrioridadBase.Baja, mAvailableServices);
+			ControladorDocumentacion.AgregarMoverCategoriasModeloBase(MoverCategoriasActualizarBase, ProyectoSeleccionado.Clave, PrioridadBase.Baja, mAvailableServices);
+			ControladorDocumentacion.AgregarRenombrarCategoriasModeloBase(idsCategoriasModificadas, ProyectoSeleccionado.Clave, PrioridadBase.Baja, mAvailableServices);
 
-			TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-			tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
-			tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
-			tesauroCL.Dispose();
-
-			ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-			proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
-			proyCL.Dispose();
-
-			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-			facetadoCL.InvalidarResultadosYFacetasDeBusquedaEnProyecto(ProyectoSeleccionado.Clave, "");
-			facetadoCL.Dispose();
-			ControladorFacetas contrFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, null, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-			contrFacetas.InvalidarCaches(UrlIntragnoss);
-			PaginaModel.PasosRealizados = "";
+			InvalidarCachesTesauro();
 
 			return PartialView("_Tesauro", PaginaModel);
 
 		}
 
-        /// <summary>
-        /// Carga el modal para crear una subcategoría dentro de otra
-        /// </summary>
-        /// <param name="categoriaPadreID">Id de la categoría padre de la cual se va a crear su hija</param>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Tesauro })]
+
+		/// <summary>
+		/// Guardar los cambios al mover categorias
+		/// </summary>
+		/// <returns>ActionResult</returns>
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
+		public ActionResult GuardarNuevoOrden(List<OrdenCategoria> pListaOrden)
+        {
+			try
+			{
+				CargarPermisosCategoriasViewBag();
+				var listaAgrupada = pListaOrden.GroupBy(item => item.CategoriaPadreID, item => item, (categoriaPadre, valor) => new
+				{
+					CategoriaPadre = categoriaPadre,
+					Valor = valor.ToList()
+				}).ToList();
+
+				foreach (var item in listaAgrupada)
+				{
+					MoverCategoriasTesauro(item.CategoriaPadre, item.Valor);
+				}
+
+				mEntityContext.SaveChanges();
+				InvalidarCachesTesauro();
+
+				return GnossResultOK();
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, $"Error al guardar el orden de las categrías", mlogger);
+				return GnossResultERROR("Error al guardar el orden de las categorías");
+			}            
+        }
+
+		/// <summary>
+		/// Carga el modal para crear una subcategoría dentro de otra
+		/// </summary>
+		/// <param name="categoriaPadreID">Id de la categoría padre de la cual se va a crear su hija</param>
+		/// <returns></returns>
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirCategoria } })]
 		public ActionResult CargarModalCrearCategoriaEnCategoria(Guid categoriaPadreID)
 		{
-            PintarModalCrearSubCategoria model = new PintarModalCrearSubCategoria();
+			CargarPermisosCategoriasViewBag();
+			PintarModalCrearSubCategoria model = new PintarModalCrearSubCategoria();
 
-            TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 			model.NombreCategoriaPadre = tesauroCN.ObtenerNombreCategoriaPorID(categoriaPadreID, IdiomaUsuario);
 			model.CategoriaId = categoriaPadreID;
-            model.IdiomaTesauro = UtilIdiomas.LanguageCode;
+			model.IdiomaTesauro = UtilIdiomas.LanguageCode;
 			model.MultiLanguaje = bool.Parse(RequestParams("multiLanguage"));
 
 
-            if (model.MultiLanguaje && !string.IsNullOrEmpty(RequestParams("IdiomaSeleccionado")))
-            {
-                model.IdiomaTesauro = RequestParams("IdiomaSeleccionado");
-            }
+			if (model.MultiLanguaje && !string.IsNullOrEmpty(RequestParams("IdiomaSeleccionado")))
+			{
+				model.IdiomaTesauro = RequestParams("IdiomaSeleccionado");
+			}
 
-            if (!string.IsNullOrEmpty(RequestParams("multiLanguage")))
-            {
-                model.MultiLanguaje = bool.Parse(RequestParams("multiLanguage"));
-            }
-            else
-            {
-                model.MultiLanguaje = false;
-                foreach (CategoriaTesauro cat in GestorTesauro.ListaCategoriasTesauro.Values)
-                {
-                    foreach (string idioma in paramCL.ObtenerListaIdiomas())
-                    {
-                        if (cat.FilaCategoria.Nombre.Contains("@" + idioma.ToString()))
-                        {
-                            model.MultiLanguaje = true;
-                            break;
-                        }
-                        else if (idioma.Contains("-"))
-                        {
-                            string idiomaAux = idioma.Substring(0, idioma.IndexOf('-'));
-                            if (cat.FilaCategoria.Nombre.Contains("@" + idiomaAux.ToString()))
-                            {
-                                model.MultiLanguaje = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+			if (!string.IsNullOrEmpty(RequestParams("multiLanguage")))
+			{
+				model.MultiLanguaje = bool.Parse(RequestParams("multiLanguage"));
+			}
+			else
+			{
+				model.MultiLanguaje = false;
+				foreach (CategoriaTesauro cat in GestorTesauro.ListaCategoriasTesauro.Values)
+				{
+					foreach (string idioma in paramCL.ObtenerListaIdiomas())
+					{
+						if (cat.FilaCategoria.Nombre.Contains("@" + idioma.ToString()))
+						{
+							model.MultiLanguaje = true;
+							break;
+						}
+						else if (idioma.Contains("-"))
+						{
+							string idiomaAux = idioma.Substring(0, idioma.IndexOf('-'));
+							if (cat.FilaCategoria.Nombre.Contains("@" + idiomaAux.ToString()))
+							{
+								model.MultiLanguaje = true;
+								break;
+							}
+						}
+					}
+				}
+			}
 
-            return PartialView("_modal-views/_add-categories-in-category", model);
+			return PartialView("_modal-views/_add-categories-in-category", model);
 		}
 
 		/// <summary>
 		/// Acción de crear una categoría
 		/// </summary>
 		/// <returns>Devuelve el tesauro modificado</returns>
-		private ActionResult CrearCategoria_Event()
+		private ActionResult CrearCategoria_Event(IFormFile pImagenCategoria, string pNombre, Guid pParentKey)
 		{
 			GuardarLogAuditoria();
 			bool nombreRepetido = false;
 
-			Guid guidPadre = new Guid(RequestParams("parentKey"));
-			string nombre = RequestParams("name");
+			Guid guidPadre = pParentKey;
+			string nombre = pNombre;
 
+			var files = Request.Form.Files;
 
 			Dictionary<string, string> listaCatIdiomas = new Dictionary<string, string>();
 
@@ -670,18 +806,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			else
 			{
 				foreach (CategoriaTesauro catTes in GestorTesauro.ListaCategoriasTesauroPrimerNivel.Values)
-				{
+				{					
 					foreach (string idioma in listaCatIdiomas.Keys)
 					{
 						if (((CategoriaTesauro)catTes).Nombre[idioma].ToLower() == listaCatIdiomas[idioma].ToLower())
 						{
 							nombreRepetido = true;
 						}
-					}
-				}
+					}                  
+                }
 			}
 
-			bool faltaNombre = (bool.Parse(RequestParams("multiLanguage")) && string.IsNullOrEmpty(listaCatIdiomas["es"])) || (listaCatIdiomas.ContainsKey(IdiomaDefecto) && string.IsNullOrEmpty(listaCatIdiomas[IdiomaDefecto]));
+			bool faltaNombre = (string.IsNullOrEmpty(listaCatIdiomas["es"])) || (listaCatIdiomas.ContainsKey(IdiomaDefecto) && string.IsNullOrEmpty(listaCatIdiomas[IdiomaDefecto]));
 
 			bool caracterNoPermitido = false;
 
@@ -712,9 +848,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					}
 				}
 
-				PaginaModel.PasosRealizados += ((short)AccionConCategorias.CrearCategoria).ToString() + "|_|" + guidPadre.ToString() + "|_|" + nombreCategoria.Trim() + "|_|" + IDNuevaCategoria + "|,|";
+				bool tieneFoto = pImagenCategoria != null;
 
-				CrearCategoriaTesauro(guidPadre, IDNuevaCategoria, nombreCategoria.Trim());
+				CrearCategoriaTesauro(guidPadre, IDNuevaCategoria, nombreCategoria.Trim(), tieneFoto);
 
 				if (guidPadre != Guid.Empty)
 				{
@@ -723,10 +859,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					CategoriasExpandidasIDs = catSel;
 				}
 
-				RecargarPagniaModel();
+				string errorImagen = GuardarImagenCategoria(pImagenCategoria, IDNuevaCategoria);
+				if (!string.IsNullOrEmpty(errorImagen))
+				{
+					return GnossResultERROR(errorImagen);
+				}
+
+				Guardar();
+                CaracterizarCategoria(IDNuevaCategoria);
+                RecargarPagniaModel();
 
 				return PartialView("_Tesauro", PaginaModel);
-				//return UtilAJAX.AgregarJavaScripADevolucionCallBack(UtilAJAX.RefrescarControlesCallBack(true, TipoPeticionAjax.Normal, panTesauro, PanParaSelectorCategorias, panTxtAcciones, txtAccionesTesauroHack), "SlideUp();LimpiarCamposCrearCategoriaTesauro();");
 			}
 			else
 			{
@@ -760,19 +903,200 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		}
 
-		/// <summary>
-		/// Acción de cambiar el nombre a una categoría
-		/// </summary>
-		/// <returns>Devuelve el tesauro modificado</returns>
-		private ActionResult CambiarNombre_Event()
+		private string EliminarImagenCategoria(Guid pCategoriaID, bool pEliminandoCategoria = false)
+		{
+			try
+			{
+				ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
+				servicioImagenes.Url = UrlIntragnossServicios;
+				servicioImagenes.BorrarImagenesCategoria(pCategoriaID, ProyectoSeleccionado.Clave);
+
+				if (!pEliminandoCategoria)
+				{
+					GestorTesauro.ActualizarTieneFoto(pCategoriaID, false);
+					GestorTesauro.RecargarGestor(mListaCategoriasCache);
+				}
+                Guardar();
+                return "";
+				
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, $"Error al eliminar las imagenes de la categoría {pCategoriaID}", mlogger);
+				return UtilIdiomas.GetText("DEVTOOLS", "ERRORELIMINARIMAGENCATEGORIA");
+			}
+		}
+
+		private string GuardarImagenCategoria(IFormFile pImagenCategoria, Guid pCategoriaID)
+		{
+			byte[] buffer1;
+			string rutaFichero = $"{UtilArchivos.ContentImagenes}/{UtilArchivos.ContentImagenesCategorias}/{ProyectoSeleccionado.Clave.ToString().ToLower()}/{pCategoriaID.ToString().ToLower()}";
+			try
+			{
+				if (pImagenCategoria != null && !string.IsNullOrEmpty(pImagenCategoria.FileName) && pImagenCategoria.Length > 0)
+				{
+					FileInfo file = new FileInfo(pImagenCategoria.FileName);
+					string extensionArchivo = Path.GetExtension(file.Name).ToLower();
+					if (!extensionArchivo.Equals(".png") && !extensionArchivo.Equals(".jpg"))
+					{
+						return UtilIdiomas.GetText("DEVTOOLS", "ERRORFORMATOIMAGENCATEGORIA");
+					}
+					if (pImagenCategoria.Length > MAX_PESO_KB)
+					{
+						return $"{UtilIdiomas.GetText("DEVTOOLS", "ERRORPESOIMAGENCATEGORIA")}{MAX_PESO_MB}";
+					}
+
+					BinaryReader reader = new BinaryReader(pImagenCategoria.OpenReadStream());
+					buffer1 = reader.ReadBytes((int)pImagenCategoria.Length);
+					ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
+					servicioImagenes.Url = UrlIntragnossServicios;
+					servicioImagenes.AgregarFichero(buffer1.ToArray(), "original", ".png", rutaFichero);
+					if (mAvailableServices.CheckIfServiceIsAvailable(mAvailableServices.GetBackServiceCode(Interfaces.InterfacesOpen.BackgroundService.Thumbnail), ServiceType.Background))
+					{
+						GestorTesauro.InsertarFilaEnColaMiniaturaCategoria("original.png", pCategoriaID, ProyectoSeleccionado.Clave, mConfigService);
+					}				
+
+					InvalidarCachesTesauro();
+				}
+                Guardar();
+                return "";
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, $"Ha habido un error al subir la imagen. Ruta: {rutaFichero}", mlogger);
+				return UtilIdiomas.GetText("DEVTOOLS", "ERRORGENERICOIMAGENCATEGORIA");
+			}
+		}
+
+		private ActionResult ModificarImagenCategoria_Event()
+		{
+			try
+			{
+				IFormFile imagenCategoria = Request.Form.Files[0];
+				if (imagenCategoria == null)
+				{
+					return GnossResultERROR("Error, la imagen no ha llegado al servidor.");
+				}
+				else
+				{
+					Guid categoriaSeleccionada = new Guid(RequestParams("pCategoriaID"));
+					string errorGuardarImagen = GuardarImagenCategoria(imagenCategoria, categoriaSeleccionada);
+
+					if (!string.IsNullOrEmpty(errorGuardarImagen))
+					{
+						return GnossResultERROR(errorGuardarImagen);
+					}
+
+					GestorTesauro.ActualizarTieneFoto(categoriaSeleccionada, true);
+
+					RecargarPagniaModel();
+                    Guardar();
+                    return GnossResultOK($"Se ha modificado la imagen correctamente.");
+				}
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, $"Error al modifcar la imagen de la categoría.", mlogger);
+				return GnossResultERROR($"Error al modificar la imagen de la categoría");
+			}
+		}
+
+		private ActionResult EliminarImagenCategoria_Event()
+		{
+			try
+			{
+				Guid categoriaSeleccionada = new Guid(RequestParams("categoryKey"));
+				string errorEliminar = EliminarImagenCategoria(categoriaSeleccionada);
+
+				if (!string.IsNullOrEmpty(errorEliminar))
+				{
+					mLoggingService.GuardarLogError(errorEliminar, mlogger);
+					return GnossResultERROR(errorEliminar);
+				}
+
+				GestorTesauro.TesauroDW.ListaCategoriaTesauro.Where(cat => cat.CategoriaTesauroID.Equals(categoriaSeleccionada)).FirstOrDefault().TieneFoto = false;
+				GestorTesauro.ListaCategoriasTesauro.Where(cat => cat.Key.Equals(categoriaSeleccionada)).FirstOrDefault().Value.FilaCategoria.TieneFoto = false;
+
+				InvalidarCachesTesauro();
+
+				RecargarPagniaModel();
+                Guardar();
+                return PartialView("_Tesauro", PaginaModel);
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, $"Error al elimnar la imagen de la categoría.", mlogger);
+				return GnossResultERROR($"Error al eliminar la imagen de la categoría");
+			}
+		}
+
+        private void CaracterizarCategoria(Guid categoriaSeleccionada)
+        {
+            string esObligatoria = RequestParams("obligatoria");
+            string esEstructurante = RequestParams("estructurante");
+
+            //Para buscar la propiedad obligatoria
+            AD.EntityModel.Models.Tesauro.CategoriaTesauroPropiedades cat = mEntityContext.CategoriaTesauroPropiedades.FirstOrDefault(x => x.CategoriaTesauroID == categoriaSeleccionada);
+
+            //Para buscar la propiedad estructurante y utilizar el TesauroID en caso de que no exista registro de CategoriaTesauroPropiedades para crear uno nuevo (propiedad obligatoria)
+            AD.EntityModel.Models.Tesauro.CategoriaTesauro cat2 = mEntityContext.CategoriaTesauro.FirstOrDefault(x => x.CategoriaTesauroID == categoriaSeleccionada);
+
+            if (cat == null)
+            {
+                cat = new AD.EntityModel.Models.Tesauro.CategoriaTesauroPropiedades();
+                cat.TesauroID = cat2.TesauroID;
+                cat.CategoriaTesauroID = categoriaSeleccionada;
+
+                if (esObligatoria.Equals("true"))
+                {
+                    cat.Obligatoria = 1;
+                }
+                else
+                {
+                    cat.Obligatoria = 0;
+                }
+
+                mEntityContext.CategoriaTesauroPropiedades.Add(cat);
+
+            }
+            else
+            {
+                if (esObligatoria.Equals("true"))
+                {
+                    cat.Obligatoria = 1;
+                }
+                else
+                {
+                    cat.Obligatoria = 0;
+                }
+            }
+
+            if (esEstructurante.Equals("true"))
+            {
+                cat2.Estructurante = 1;
+            }
+            else
+            {
+                cat2.Estructurante = 0;
+            }
+
+            mEntityContext.SaveChanges();
+        }
+
+        /// <summary>
+        /// Acción de cambiar el nombre a una categoría
+        /// </summary>
+        /// <returns>Devuelve el tesauro modificado</returns>
+        private ActionResult CambiarNombre_Event()
 		{
 			GuardarLogAuditoria();
 			bool nombreRepetido = false;
 
 			Guid categoriaSeleccionada = new Guid(RequestParams("categoryKey"));
 			string nombre = RequestParams("name");
+            CaracterizarCategoria(categoriaSeleccionada);
 
-			Dictionary<string, string> listaCatIdiomas = new Dictionary<string, string>();
+            Dictionary<string, string> listaCatIdiomas = new Dictionary<string, string>();
 
 			string[] arrayCatIdiomas = nombre.Split(new string[] { "$$$" }, StringSplitOptions.None);
 
@@ -826,15 +1150,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					}
 				}
 
-				PaginaModel.PasosRealizados += ((short)AccionConCategorias.CambiarNombreCategoria).ToString() + "|_|" + categoriaSeleccionada.ToString() + "|_|" + nombreCategoria + "|,|";
-
+				
 				CambiarNombreCategoriasTesauro(categoriaSeleccionada, nombreCategoria);
-
-				RecargarPagniaModel();
+                Guardar();
+                RecargarPagniaModel();
 
 				return PartialView("_Tesauro", PaginaModel);
-				//return UtilAJAX.AgregarJavaScripADevolucionCallBack(UtilAJAX.RefrescarControlesCallBack(true, TipoPeticionAjax.Normal, panTesauro, PanParaSelectorCategorias, panTxtAcciones, txtAccionesTesauroHack), "SlideUp();LimpiarCamposCambiarNombreCategoriaTesauro();");
-
 			}
 			else
 			{
@@ -877,19 +1198,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			GuardarLogAuditoria();
 			Guid guidPadre = new Guid(RequestParams("parentKey"));
 
-			PaginaModel.PasosRealizados += ((short)AccionConCategorias.MoverCategoria).ToString() + "|_|" + guidPadre.ToString();
-
-			List<Guid> IDCatSeleccionadas = new List<Guid>();
-
-			foreach (Guid catTesID in CategoriasSeleccionadasIDs)
-			{
-				PaginaModel.PasosRealizados += "|_|" + catTesID.ToString();
-				IDCatSeleccionadas.Add(catTesID);
-			}
-			PaginaModel.PasosRealizados += "|,|";
-
-			MoverCategoriasTesauro(guidPadre, CategoriasSeleccionadasIDs);
-
 			if (guidPadre != Guid.Empty)
 			{
 				List<Guid> catSel = CategoriasExpandidasIDs;
@@ -911,15 +1219,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		{
 			//Guid categoriaPadre = new Guid(RequestParams("parentKey"));
 			string ordenDestino = RequestParams("newOrderCategory");
-
-			PaginaModel.PasosRealizados += $"{(short)AccionConCategorias.OrdenarCategoria}|_|{ordenDestino}";
-
-			foreach (Guid guidCatSel in CategoriasSeleccionadasIDs)
-			{
-				PaginaModel.PasosRealizados += $"|_|{guidCatSel}";
-			}
-
-			PaginaModel.PasosRealizados += "|,|";
 
 			OrdenarCategoriasTesauro(Int32.Parse(ordenDestino), CategoriasSeleccionadasIDs);
 
@@ -945,19 +1244,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			CategoriasSeleccionadasIDs = new List<Guid>();
 
-			RecargarPagniaModel();
-			TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-			tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
-			tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
-			tesauroCL.Dispose();
+            RecargarPagniaModel();
+			InvalidarCachesTesauro();
 
-			ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-			proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
-			proyCL.Dispose();
-
-			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-			facetadoCL.InvalidarResultadosYFacetasDeBusquedaEnProyecto(ProyectoSeleccionado.Clave, "");
-			facetadoCL.Dispose();
 			return PartialView("_Tesauro", PaginaModel);
 		}
 
@@ -967,10 +1256,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <returns>Devuelve el tesauro modificado</returns>
 		private ActionResult IdiomaUnico_Event()
 		{
-			PaginaModel.PasosRealizados += ((short)AccionConCategorias.SeleccionarUnicoIdioma).ToString() + "|_|" + IdiomaDefecto + "|,|";
 			CambiarIdiomaTesauro(IdiomaDefecto);
-
-			RecargarPagniaModel();
+            Guardar();
+            RecargarPagniaModel();
 
 			return PartialView("_Tesauro", PaginaModel);
 		}
@@ -1023,25 +1311,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				if (!nombreRepetido)
 				{
 					Guid IDNuevaCategoria = Guid.NewGuid();
-					PaginaModel.PasosRealizados += ((short)AccionConCategorias.AceptarSugerenciaCat).ToString() + "|_|" + guidCatSugerencia.ToString() + "|_|" + IDNuevaCategoria.ToString() + "|,|";
 					AceptarSugerenciaCategoria(guidCatSugerencia, IDNuevaCategoria);
 
 					CategoryModel catSugerida = PaginaModel.Thesaurus.SuggestedThesaurusCategories.Find(cat => cat.Key == guidCatSugerencia);
 					PaginaModel.Thesaurus.SuggestedThesaurusCategories.Remove(catSugerida);
 					RecargarPagniaModel();
-					TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
 					tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
 					tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
 					tesauroCL.Dispose();
 
-					ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+					ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 					proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
 					proyCL.Dispose();
 
-					FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+					FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
 					facetadoCL.InvalidarResultadosYFacetasDeBusquedaEnProyecto(ProyectoSeleccionado.Clave, "");
 					facetadoCL.Dispose();
-					return PartialView("_Tesauro", PaginaModel);
+                    Guardar();
+                    return PartialView("_Tesauro", PaginaModel);
 				}
 				else
 				{
@@ -1065,7 +1353,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			if (filasCatSug.Count > 0)
 			{
 				filasCatSug[0].Estado = (short)EstadoSugerenciaCatTesauro.Rechazada;
-				PaginaModel.PasosRealizados += ((short)AccionConCategorias.RechazarSugerenciaCat).ToString() + "|_|" + guidCatSugerencia.ToString() + "|,|";
 				RechazarSugerenciaCategoriaDefinitiva(guidCatSugerencia);
 
 
@@ -1073,19 +1360,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				PaginaModel.Thesaurus.SuggestedThesaurusCategories.Remove(catSugerida);
 
 				RecargarPagniaModel();
-				TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+				TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
 				tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
 				tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
 				tesauroCL.Dispose();
 
-				ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+				ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 				proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
 				proyCL.Dispose();
 
-				FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+				FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
 				facetadoCL.InvalidarResultadosYFacetasDeBusquedaEnProyecto(ProyectoSeleccionado.Clave, "");
 				facetadoCL.Dispose();
-				return PartialView("_Tesauro", PaginaModel);
+                Guardar();
+                return PartialView("_Tesauro", PaginaModel);
 			}
 
 			return GnossResultERROR();
@@ -1103,15 +1391,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			CategoriaTesauro catTesauro = GestorTesauro.ListaCategoriasTesauroPrimerNivel.OrderBy(cat => cat.Value.FilaCategoria.Orden).Last().Value;
 
-			TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 			Guid tesauroOrigenID = tesauroCN.ObtenerIDTesauroDeProyecto(idComunidad);
 			tesauroCN.Dispose();
 
 			CompartirCategoria(idCategoria, tesauroOrigenID, (short)(catTesauro.FilaCategoria.Orden + 1));
 
-			PaginaModel.PasosRealizados += ((short)AccionConCategorias.CompartirCategoria).ToString() + "|_|" + idCategoria.ToString() + "|_|" + tesauroOrigenID.ToString() + "|_|" + (catTesauro.FilaCategoria.Orden + 1).ToString() + "|,|";
-
-			RecargarPagniaModel();
+            Guardar();
+            RecargarPagniaModel();
 
 			return PartialView("_Tesauro", PaginaModel);
 		}
@@ -1131,7 +1418,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			filaCatTesauroCompartida.Orden = pOrden;
 			GestorTesauro.TesauroDW.ListaCatTesauroCompartida.Add(filaCatTesauroCompartida);
 
-			TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 			DataWrapperTesauro tesauroTempDW = tesauroCN.ObtenerTesauroPorID(pTeauroID);
 
 			Es.Riam.Gnoss.AD.EntityModel.Models.Tesauro.CategoriaTesauro filaCatTesauro = tesauroTempDW.ListaCategoriaTesauro.FirstOrDefault(item => item.TesauroID.Equals(pTeauroID) && item.CategoriaTesauroID.Equals(pCategoriaID));
@@ -1140,7 +1427,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			CategoriasCompartidasIDs.Add(pCategoriaID);
 
-			GestorTesauro.RecargarGestor();
+			GestorTesauro.RecargarGestor(mListaCategoriasCache);
 		}
 
 		/// <summary>
@@ -1149,23 +1436,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="pIdCategoriaPadre">Id de la categoría padre en la que se crea la nueva categoría</param>
 		/// <param name="pIdNuevaCategoria">Id de la nueva categoría</param>
 		/// <param name="pNombreCategoria">Nombre de la nueva categoría</param>
-		private void CrearCategoriaTesauro(Guid pIdCategoriaPadre, Guid pIdNuevaCategoria, string pNombreCategoria)
+		private void CrearCategoriaTesauro(Guid pIdCategoriaPadre, Guid pIdNuevaCategoria, string pNombreCategoria, bool pTieneFoto)
 		{
 			CategoriaTesauro categoriaNueva = null;
 			if (pIdCategoriaPadre != Guid.Empty)
 			{
 				CategoriaTesauro categoriaPadre = GestorTesauro.ListaCategoriasTesauro[pIdCategoriaPadre];
-				categoriaNueva = GestorTesauro.AgregarSubcategoria(categoriaPadre, pNombreCategoria.Trim());
+				categoriaNueva = GestorTesauro.AgregarSubcategoria(categoriaPadre, pNombreCategoria.Trim(), pTieneFoto);
 				(GestorTesauro.TesauroDW.ListaCatTesauroAgCatTesauro.Where(item => item.CategoriaInferiorID.Equals(categoriaNueva.Clave)).FirstOrDefault()).CategoriaInferiorID = pIdNuevaCategoria;
 
 			}
 			else
 			{
-				categoriaNueva = GestorTesauro.AgregarCategoriaPrimerNivel(pNombreCategoria.Trim());
+				categoriaNueva = GestorTesauro.AgregarCategoriaPrimerNivel(pNombreCategoria.Trim(), pTieneFoto);
 			}
 			(GestorTesauro.TesauroDW.ListaCategoriaTesauro.Where(item => item.CategoriaTesauroID.Equals(categoriaNueva.Clave)).FirstOrDefault()).CategoriaTesauroID = pIdNuevaCategoria;
 
-			GestorTesauro.RecargarGestor();
+			GestorTesauro.RecargarGestor(mListaCategoriasCache);
 		}
 
 		/// <summary>
@@ -1276,17 +1563,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			return nuevoOrden;
 		}
 
+		private void CargarPermisosCategoriasViewBag()
+		{
+			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);			
+			if (EsAdministracionEcosistema)
+			{
+				ViewBag.PermisoCategoriasEcosistema = utilPermisos.UsuarioTienePermisoAdministracionEcosistema((ulong)PermisoEcosistema.GestionarCategoriasDePlataforma, UsuarioActual.UsuarioID);
+			}
+			else
+			{
+				ViewBag.VerCategoriaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.VerCategorias, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+				ViewBag.CrearCategoriaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.AnyadirCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+				ViewBag.EliminarCategoriaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+				ViewBag.ModificarCategoriaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarCategoria, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+				ViewBag.PermisoCategoriasEcosistema = false;
+			}
+			
+		}
+
 		/// <summary>
 		/// Mueve una serie de categorías del tesauro.
 		/// </summary>
-		private void MoverCategoriasTesauro(Guid pCategoriaPadre, List<Guid> pCategoriasAMover)
+		private void MoverCategoriasTesauro(Guid pCategoriaPadre, List<OrdenCategoria> pCategoriasAMover)
 		{
 			if (CategoriasCompartidasIDs.Contains(pCategoriaPadre))
 			{
 				return;
 			}
-			foreach (Guid guidCat in pCategoriasAMover)
+			Guid guidCat;
+            foreach (OrdenCategoria cat in pCategoriasAMover)
 			{
+				guidCat = cat.CategoriaID;
 				if (CategoriasCompartidasIDs.Contains(guidCat))
 				{
 					AD.EntityModel.Models.Tesauro.CatTesauroCompartida filaCatCompartida = GestorTesauro.TesauroDW.ListaCatTesauroCompartida.Where(item => item.CategoriaOrigenID.Equals(guidCat)).FirstOrDefault();
@@ -1306,12 +1613,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 						categoriaTesauro.Padre.Hijos.Remove(categoriaTesauro);
 						GestorTesauro.DesasignarSubcategoriaDeCategoria(categoriaTesauro, (CategoriaTesauro)categoriaTesauro.Padre);
 
-						GestorTesauro.RecargarGestor();
+						GestorTesauro.RecargarGestor(mListaCategoriasCache);
 					}
 
 					if (pCategoriaPadre != Guid.Empty && categoriaPadreDistintaActual)
 					{
-						GestorTesauro.AgregarSubcategoriaACategoria(categoriaTesauro, GestorTesauro.ListaCategoriasTesauro[pCategoriaPadre]);
+						GestorTesauro.AgregarSubcategoriaACategoria(categoriaTesauro, GestorTesauro.ListaCategoriasTesauro[pCategoriaPadre], cat.Orden);
 					}
 
 					if (pCategoriaPadre.Equals(Guid.Empty))
@@ -1331,7 +1638,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					mEntityContext.AceptarCambios(categoriaTesauro.FilaCategoria);
 					mEntityContext.AceptarCambios(categoriaTesauro.FilaAgregacion);
 
-					GestorTesauro.RecargarGestor();
+					GestorTesauro.RecargarGestor(mListaCategoriasCache);
 				}
 				else
 				{
@@ -1371,21 +1678,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 						GestorTesauro.ListaCategoriasTesauro[guidCat].Padre.Hijos.Remove(GestorTesauro.ListaCategoriasTesauro[guidCat]);
 						GestorTesauro.DesasignarSubcategoriaDeCategoria(GestorTesauro.ListaCategoriasTesauro[guidCat], (CategoriaTesauro)GestorTesauro.ListaCategoriasTesauro[guidCat].Padre);
 
-						GestorTesauro.RecargarGestor();
+						GestorTesauro.RecargarGestor(mListaCategoriasCache);
 					}
 
 					if (pCategoriaPadre != Guid.Empty && categoriaPadreDistintaActual)
 					{
-						GestorTesauro.AgregarSubcategoriaACategoria(GestorTesauro.ListaCategoriasTesauro[guidCat], GestorTesauro.ListaCategoriasTesauro[pCategoriaPadre]);
+						GestorTesauro.AgregarSubcategoriaACategoria(GestorTesauro.ListaCategoriasTesauro[guidCat], GestorTesauro.ListaCategoriasTesauro[pCategoriaPadre], cat.Orden);
 					}
+					else if (pCategoriaPadre.Equals(Guid.Empty))
+					{
+						GestorTesauro.ListaCategoriasTesauro[guidCat].FilaCategoria.Orden = cat.Orden;
+                        //GestorTesauro.ListaCategoriasTesauro[guidCat].FilaCategoria.
+                    }
 				}
 			}
 
 			if (MoverCategoriasActualizarBase.ContainsKey(pCategoriaPadre))
 			{
-				foreach (Guid catID in pCategoriasAMover)
+				Guid catID;
+
+                foreach (OrdenCategoria cat2 in pCategoriasAMover)
 				{
-					if (!MoverCategoriasActualizarBase[pCategoriaPadre].Contains(catID))
+					catID = cat2.CategoriaID;
+
+                    if (!MoverCategoriasActualizarBase[pCategoriaPadre].Contains(catID))
 					{
 						MoverCategoriasActualizarBase[pCategoriaPadre].Add(catID);
 					}
@@ -1393,7 +1709,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
 			else
 			{
-				MoverCategoriasActualizarBase.Add(pCategoriaPadre, pCategoriasAMover);
+				List<Guid> listaCategoriasAMoverGuid = new List<Guid>();
+				foreach (OrdenCategoria item in pCategoriasAMover)
+				{
+					listaCategoriasAMoverGuid.Add(item.CategoriaID);
+
+                }
+				MoverCategoriasActualizarBase.Add(pCategoriaPadre, listaCategoriasAMoverGuid);
 			}
 		}
 
@@ -1409,22 +1731,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				AgregarCategoriaEHijosALista(GestorTesauro.ListaCategoriasTesauro[catTeID], listaCatEliminarIDs);
 			}
 
-			if (pMoverSoloLoJusto)
-			{
-				PaginaModel.PasosRealizados += ((short)AccionConCategorias.EliminarCategoriaYMoverSoloHuerfanos).ToString() + "|_|" + pCategoriaSustitutaID.ToString();
-			}
-			else
-			{
-				PaginaModel.PasosRealizados += ((short)AccionConCategorias.EliminarCategoria).ToString() + "|_|" + pCategoriaSustitutaID.ToString();
-			}
-			foreach (Guid idCatEliminar in listaCatEliminarIDs)
-			{
-				PaginaModel.PasosRealizados += "|_|" + idCatEliminar.ToString();
-			}
-			PaginaModel.PasosRealizados += "|,|";
-
 			EliminarCategoriasTesauro(pCategoriaSustitutaID, listaCatEliminarIDs, pMoverSoloLoJusto);
-		}
+            Guardar();
+
+			AD.EntityModel.Models.Tesauro.CategoriaTesauroPropiedades cat;
+            foreach (Guid categoriaId in listaCatEliminarIDs)
+            {
+                cat = mEntityContext.CategoriaTesauroPropiedades.FirstOrDefault(x => x.CategoriaTesauroID == categoriaId);
+				if (cat != null) 
+				{
+					mEntityContext.CategoriaTesauroPropiedades.Remove(cat);
+                }
+            }
+			mEntityContext.SaveChanges();
+        }
 
 		/// <summary>
 		/// Eliminar una serie de categorías del tesauro.
@@ -1434,7 +1754,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="pMoverSoloLoJusto">Indica si solo se debe recatigarizar aquellas cosas que de lo contrario quedarían huérfanas</param>
 		private void EliminarCategoriasTesauro(Guid pIDCategoriaVincularm, List<Guid> pListaCategoriasAEliminar, bool pMoverSoloLoJusto)
 		{
-			TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 			bool tieneRecursosAsociados = tesCN.EstanVinculadasCategoriasTesauro(GestorTesauro.TesauroActualID, pListaCategoriasAEliminar);
 			tesCN.Dispose();
 			if (tieneRecursosAsociados)
@@ -1443,12 +1763,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
 
 			//Eliminamos las preferencias
-			ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 			DataWrapperProyecto.Merge(proyectoCN.ObtenerPreferenciasProyectoPorID(ProyectoSeleccionado.Clave));
 			proyectoCN.Dispose();
-
-
-			foreach (Guid IDCatAEliminar in pListaCategoriasAEliminar)
+            foreach (Guid IDCatAEliminar in pListaCategoriasAEliminar)
 			{
 				List<PreferenciaProyecto> filas = DataWrapperProyecto.ListaPreferenciaProyecto.Where(pref => pref.CategoriaTesauroID.Equals(IDCatAEliminar)).ToList();
 				if (filas.Count == 1)
@@ -1460,9 +1778,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				CategoriaTesauro catTe = GestorTesauro.ListaCategoriasTesauro[IDCatAEliminar];
 				if (!catTe.EstaEliminado)
 				{
-					GestorTesauro.EliminarCategoriaEHijos(catTe);
+					GestorTesauro.EliminarCategoriaEHijos(catTe, mListaCategoriasCache);
+					EliminarImagenCategoria(catTe.Clave, true);
 				}
 			}
+			TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
+			mListaCategoriasCache = tesauroCL.ObtenerObjetoDeCacheLocal($"{ProyectoSeleccionado.Clave}_CategoriasCom") as SortedList<Guid, CategoriaTesauro>;
+            mListaCategoriasCache = GestorTesauro.ListaCategoriasTesauroCache;
+            tesauroCL.AgregarObjetoCacheLocal(ProyectoSeleccionado.Clave, $"{ProyectoSeleccionado.Clave}_CategoriasCom", mListaCategoriasCache);
 		}
 
 		/// <summary>
@@ -1503,7 +1826,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				categoriaNueva = GestorTesauro.AgregarSubcategoria(categoriaPadre, filasCatSug[0].Nombre.Trim());
 				GestorTesauro.TesauroDW.ListaCatTesauroAgCatTesauro.Where(item => item.CategoriaInferiorID.Equals(categoriaNueva.Clave)).FirstOrDefault().CategoriaInferiorID = pNuevaCategoria;
 			}
-			
+
 			GestorTesauro.TesauroDW.ListaCategoriaTesauro.Where(item => item.CategoriaTesauroID.Equals(categoriaNueva.Clave)).FirstOrDefault().CategoriaTesauroID = pNuevaCategoria;
 
 			filasCatSug[0].CategoriaTesauroAceptadaID = pNuevaCategoria;
@@ -1511,7 +1834,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			mEntityContext.SaveChanges();
 
-			TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
 			tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
 		}
 
@@ -1648,7 +1971,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		private void CambiarNombreCategoriasTesauro(Guid pIdCategoria, string pNombreCategoria)
 		{
 			GestorTesauro.ListaCategoriasTesauro[pIdCategoria].FilaCategoria.Nombre = pNombreCategoria;
-		}
+            GestorTesauro.ListaCategoriasTesauroCache[pIdCategoria].FilaCategoria.Nombre = pNombreCategoria;
+        }
 
 		/// <summary>
 		/// 
@@ -1678,7 +2002,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			{
 				pListaCategoriasParaSustituirIDs.Add(pCategoriaSustitutaID);
 			}
-			DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 			DataWrapperDocumentacion dataWrapperDocumentacion = docCN.ObtenerVinculacionDocumentosDeCategoriasTesauro(pListaCategoriasParaSustituirIDs, GestorTesauro.TesauroActualID);
 			docCN.Dispose();
 
@@ -1726,7 +2050,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			#region Muevo las suscripciones de las categorias
 
-			SuscripcionCN suscripCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			SuscripcionCN suscripCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SuscripcionCN>(), mLoggerFactory);
 			DataWrapperSuscripcion suscripDW = suscripCN.ObtenerVinculacionesSuscripcionesDeCategoriasTesauro(pListaCategoriasParaSustituirIDs, GestorTesauro.TesauroActualID);
 			suscripCN.Dispose();
 
@@ -1745,7 +2069,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 			#region Muevo los proyectos de las categorias
 
-			ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 			DataWrapperProyecto dataWrapperProyecto = proyectoCN.ObtenerVinculacionProyectosDeCategoriasTesauro(pListaCategoriasParaSustituirIDs, GestorTesauro.TesauroActualID);
 			proyectoCN.Dispose();
 			List<ProyectoAgCatTesauro> listaProyectoAgCatTesauroBorrar = dataWrapperProyecto.ListaProyectoAgCatTesauro.ToList();
@@ -1833,7 +2157,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 							Guid idPadre = new Guid(accion2[1]);
 							Guid idNuevaCategoria = new Guid(accion2[3]);
 							string nombreNuevaCat = accion2[2];
-							CrearCategoriaTesauro(idPadre, idNuevaCategoria, nombreNuevaCat.Trim());
+							bool.TryParse(accion2[4], out bool tieneFoto);
+							CrearCategoriaTesauro(idPadre, idNuevaCategoria, nombreNuevaCat.Trim(), tieneFoto);
 							break;
 						case "1"://MoverCategorias
 							Guid idNuevoPadre = new Guid(accion2[1]);
@@ -1842,7 +2167,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 							{
 								idCat.Add(new Guid(accion2[i]));
 							}
-							MoverCategoriasTesauro(idNuevoPadre, idCat);
+							//MoverCategoriasTesauro(idNuevoPadre, idCat);
 							break;
 						case "2"://EliminarCategoria                        
 							Guid idCategoriaVincular = new Guid(accion2[1]);
@@ -1896,7 +2221,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 							CompartirCategoria(categoriaCompartirID, tesauroCompartirID, ordenCategoria);
 							break;
 					}
-					GestorTesauro.RecargarGestor();
+					GestorTesauro.RecargarGestor(mListaCategoriasCache);
 				}
 			}
 
@@ -2162,17 +2487,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		{
 			List<CategoryModel> listaCategoriasTesauro = new List<CategoryModel>();
 
-			foreach (CategoriaTesauro catTes in GestorTesauro.ListaCategoriasTesauroPrimerNivel.Values)
+            foreach (CategoriaTesauro catTes in GestorTesauro.ListaCategoriasTesauro.Values)
 			{
-				CategoryModel categoriaTesauro = CargarCategoria(catTes, pIdiomaTesauro);
-				if (!string.IsNullOrEmpty(pIdiomaTesauro))
+				if (catTes.FilaAgregacion?.CategoriaSuperiorID == null)
 				{
-					categoriaTesauro.Lang = pIdiomaTesauro;
-				}
-				listaCategoriasTesauro.Add(categoriaTesauro);
+                    CategoryModel categoriaTesauro = CargarCategoria(catTes, pIdiomaTesauro);
+                    if (!string.IsNullOrEmpty(pIdiomaTesauro))
+                    {
+                        categoriaTesauro.Lang = pIdiomaTesauro;
+                    }
+                    listaCategoriasTesauro.Add(categoriaTesauro);
+                }                      				
 			}
 
 			return listaCategoriasTesauro;
+		}
+
+		private void GuardarCambios()
+		{
+			mEntityContext.SaveChanges();
+
+			//InvalidarCachesTesauro();
 		}
 
 		/// <summary>
@@ -2188,16 +2523,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 					mPaginaModel.Thesaurus = new ThesaurusEditorModel();
 
-					mPaginaModel.PasosRealizados = RequestParams("PasosRealizados");
-
-					TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 					GestorTesauro.TesauroDW.Merge(tesauroCN.ObtenerSugerenciasCatDeUnTesauro(GestorTesauro.TesauroDW.ListaTesauro.FirstOrDefault().TesauroID));
 					tesauroCN.Dispose();
 
 					GestorTesauro.CargarCategoriasSugerencia();
-
-					EjecutarAcciones(mPaginaModel.PasosRealizados);
 
 					mPaginaModel.Thesaurus.ThesaurusCategories = ObtenerListaCategorias();
 
@@ -2208,6 +2539,35 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					mPaginaModel.Thesaurus.SharedCategories = CategoriasCompartidasIDs;
 
 					mPaginaModel.IdiomaDefecto = IdiomaDefecto;
+
+					mPaginaModel.CategoriasConImagen = new Dictionary<Guid, string>();
+					foreach (CategoriaTesauro cat in GestorTesauro.ListaCategoriasTesauro.Values)
+					{
+						if (cat.FilaCategoria.TieneFoto)
+						{
+							ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
+							servicioImagenes.Url = UrlIntragnossServicios;
+							string nombreImagen = $"{cat.Clave.ToString().ToLower()}.png";
+							string ruta = $"{UtilArchivos.ContentImagenesCategorias}/{ProyectoSeleccionado.Clave.ToString().ToLower()}/{cat.Clave.ToString().ToLower()}/{nombreImagen}";
+							string nombreServidor = servicioImagenes.ObtenerNombreDisponible(ruta);
+							int version = cat.FilaCategoria.VersionFoto;
+							if (cat.FilaCategoria.VersionFoto == 0)
+							{
+								version = (int)DateTime.Now.Ticks;
+							}
+							// si el nombre que devuelve es diferente al original es porque tiene foto
+							if (!nombreServidor.Equals(nombreImagen))
+							{
+								string rutaImagen = $"{BaseURLContent}/{UtilArchivos.ContentImagenes}/{ruta}";
+								mPaginaModel.CategoriasConImagen.TryAdd(cat.Clave, $"{rutaImagen}?v={version}");
+							}
+							else // si el servicio de miniaturas todavia no ha procesado la imagen, cargamos la original
+							{
+								string imagenOriginal = $"{BaseURLContent}/{UtilArchivos.ContentImagenes}/{UtilArchivos.ContentImagenesCategorias}/{ProyectoSeleccionado.Clave.ToString().ToLower()}/{cat.Clave.ToString().ToLower()}/original.png";
+								mPaginaModel.CategoriasConImagen.TryAdd(cat.Clave, $"{imagenOriginal}?v={version}");
+							}
+						}
+					}
 
 					if (!string.IsNullOrEmpty(RequestParams("multiLanguage")))
 					{
@@ -2316,7 +2676,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			{
 				if (mGestorTesauro == null)
 				{
-					TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+					TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 					DataWrapperTesauro dataWrapperTesauro = tesauroCN.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
 
 					if (dataWrapperTesauro.ListaCatTesauroCompartida.Count > 0)
@@ -2362,8 +2722,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 							}
 						}
 					}
-
-					mGestorTesauro = new GestionTesauro(dataWrapperTesauro, mLoggingService, mEntityContext);
+					TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
+                    mListaCategoriasCache = tesauroCL.ObtenerObjetoDeCacheLocal($"{ProyectoSeleccionado.Clave}_CategoriasCom") as SortedList<Guid, CategoriaTesauro>;					
+					mGestorTesauro = new GestionTesauro(dataWrapperTesauro, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory, mListaCategoriasCache);
+					mListaCategoriasCache = mGestorTesauro.ListaCategoriasTesauroCache;
+                    tesauroCL.AgregarObjetoCacheLocal(ProyectoSeleccionado.Clave, $"{ProyectoSeleccionado.Clave}_CategoriasCom", mListaCategoriasCache);
 				}
 				return mGestorTesauro;
 			}
@@ -2391,6 +2754,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		}
 
+		private void InvalidarCachesTesauro()
+		{
+			TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
+			tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
+			tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
+			tesauroCL.Dispose();
+
+			ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
+			proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
+			proyCL.Dispose();
+
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarResultadosYFacetasDeBusquedaEnProyecto(ProyectoSeleccionado.Clave, "");
+			facetadoCL.InvalidarCacheLocal($"{ProyectoSeleccionado.Clave}_CategoriasCom");
+			facetadoCL.Dispose();
+			ControladorFacetas contrFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, null, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorFacetas>(), mLoggerFactory);
+			contrFacetas.InvalidarCaches(UrlIntragnoss);
+		}
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -2400,8 +2782,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			{
 				if (mBaseRecursosID.Equals(Guid.Empty))
 				{
-					DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-					DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+					DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
 
 					DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
 					docCL.ObtenerBaseRecursosProyecto(dataWrapperDocumentacion, ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, UsuarioActual.UsuarioID);

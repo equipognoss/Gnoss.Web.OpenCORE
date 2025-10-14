@@ -13,6 +13,7 @@ Variables
 @{
 	CommunityModel Comunidad = Html.GetComunidad();
 	HeaderModel cabecera = Html.GetCabecera();
+	Dictionary<string, string> nombreCategoria = Model.ListaIdiomas;
 	Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 	// Carga de idiomas de la plataforma
 	string idiomas = "";
@@ -24,6 +25,7 @@ Variables
 	ViewBag.AdministrarObjetosConocimientoViewModel = Model;	
 	// Posibilidad de NO mostrar el panel lateral izquierdo de las DevTools
 	bool hideLeftNavigationPanel = !string.IsNullOrEmpty(ViewBag.HideLeftNavigationPanel) ? (bool.Parse(ViewBag.HideLeftNavigationPanel)) : false;
+	//Para mostrar la información cuando compile la web
 }
 
 
@@ -37,7 +39,6 @@ Variables
 
 <input type="hidden" id="idiomasComunidad" value="@idiomas" />
 <input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto"/>
-
 
 @{
 	if (!hideLeftNavigationPanel)
@@ -63,51 +64,57 @@ Variables
     @* Contenido Central *@
     <div class="formulario-edicion background-blanco">       
 		@* Panel de idiomas *@	
-		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
-			@* Títulos de Tabs con los diferentes idiomas a visualizar. *@
-				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
-					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
+		@if (Html.ObtenerEdicionMultiIidoma())
+		{
+			<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+				@* Títulos de Tabs con los diferentes idiomas a visualizar. *@
+				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+				{
+					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+					{
 						<li class="nav-item" role="presentation">
-							<a  class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)" 
-								id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
-								data-language = "@idioma.Key"
-								role="tab"
-								aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+							<a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+							   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+							   data-language="@idioma.Key"
+							   role="tab"
+							   aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
 						</li>
 						contNumPestañasVisibles += 1;
-					}				
+					}
 				}
 				@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
-				@if (contNumPestañasVisibles < cabecera.Languajes.Count){
+				@if (contNumPestañasVisibles < cabecera.Languajes.Count)
+				{
 					@* Dropdown para resto de categorías *@
 					<li class="nav-item">
 						<div class="dropdown">
 							@* Desplegable del dropdown *@
-							<a
-								class="nav-link dropdown-toggle"
-								data-toggle="dropdown"
-								href="#"
-								role="button"
-								aria-haspopup="true"
-								aria-expanded="false">@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+							<a class="nav-link dropdown-toggle"
+							   data-toggle="dropdown"
+							   href="#"
+							   role="button"
+							   aria-haspopup="true"
+							   aria-expanded="false">@Html.GetText("DEVTOOLS", "OTROSIDIOMAS")</a>
 
 							@* Sección para mostrar items del dropdown*@
 							<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
 								<ul class="no-list-style">
 									@* Pintado del resto de pestañas en Dropdown *@									
-									@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
+									@for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+									{
 										var item = cabecera.Languajes.ElementAt(i);
 										var itemKey = item.Key;
 										var itemValue = item.Value;
 
 										@* Cada item del dropdown *@
 										<li>
-											<a id="@("ver_paginas_" + itemKey)" 
+											<a id="@("ver_paginas_" + itemKey)"
 											   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
 											   data-toggle="tab"
 											   href="#@("litVer" + itemKey)"
-											   data-language = "@itemKey">
-											   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+											   data-language="@itemKey">
+												@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+											</a>
 										</li>
 									}
 								</ul>
@@ -115,8 +122,21 @@ Variables
 						</div>
 					</li>
 				}
-		</ul>
-
+			</ul>
+		}else{
+			KeyValuePair<string, string>
+			idioma = new KeyValuePair<string, string>
+			("es", "español");
+			<ul class="nav nav-tabs id="tabIdiomasPaginas" role="tablist">
+				<li class="nav-item" role="presentation">
+					<a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+						id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+						data-language="@idioma.Key"
+						role="tab"
+						aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+				</li>
+			</ul>
+		}
 		@* Contenedor global de objetos de conocimiento *@
 		<div class="tab-content">	
 			@* Contenido de las diferentes objetos de conocimiento *@
@@ -137,7 +157,7 @@ Variables
 						@* Acciones de Objetos de conocimiento *@
 						<div class="acciones d-flex align-items-center">
 							@* Botón de nuevo Objeto Conocimiento*@
-							@if (!hideLeftNavigationPanel)
+							@if (!hideLeftNavigationPanel && ((ViewBag.GestionarOC != null && ViewBag.GestionarOC) || (ViewBag.CrearSecundaria != null && ViewBag.CrearSecundaria)))
 							{
 								<a href="javascript: void(0);"
 								id="btnNewOC"
@@ -236,6 +256,9 @@ Variables
 														</div>
 														<div class="component-fecha-wrap">
 															<span class="component-fecha">@Html.GetText("COMMON","FECHA")</span>
+														</div>
+														<div class="component-compartida-wrap">
+															<span class="component-compartida">@Html.GetText("DEVTOOLS", "COMPARTIDAPOR")</span>
 														</div>
 													</div>
 													<div class="component-header-right">

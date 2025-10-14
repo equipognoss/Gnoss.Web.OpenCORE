@@ -20,12 +20,14 @@ using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,11 +37,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// Controlador de la página para administrar la preferencia del proyecto
     /// </summary>
-    public class AdministrarPreferenciaProyectoController : ControllerBaseWeb
-    {
-        public AdministrarPreferenciaProyectoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarPreferenciaProyectoController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarPreferenciaProyectoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarPreferenciaProyectoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -71,8 +77,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -98,13 +102,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             try
             {
-                TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
                 tesauroCN.ActualizarTesauro();
                 tesauroCN.Dispose();
             }
             finally
             {
-                TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
                 tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
                 tesauroCL.Dispose();
             }
@@ -115,8 +119,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Muestra el panel para realizar la acción solicitada
         /// </summary>
         /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { Models.ViewModels.TipoPaginaAdministracion.Tesauro })]
-        public ActionResult MostrarAccion(string typeAction)
+		public ActionResult MostrarAccion(string typeAction)
         {
             typeAction = typeAction.Replace('-', '_');
 
@@ -196,9 +199,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     //mPaginaModel.ComunidadCompartir = new KeyValuePair<Guid, string>(idComunidad, nombreComunidad);
 
-                    TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
                     DataWrapperTesauro tesauroDW = tesauroCL.ObtenerTesauroDeProyecto(idComunidad);
-                    GestionTesauro gesTesauro = new GestionTesauro(tesauroDW, mLoggingService, mEntityContext);
+                    GestionTesauro gesTesauro = new GestionTesauro(tesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
 
                     //mPaginaModel.CategoriasCompartir = CargarTesauroPorGestorTesauro(gesTesauro);
                 }
@@ -215,7 +218,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         AgregarCategoriaEHijosALista(GestorTesauro.ListaCategoriasTesauro[catID], listaCatSeleccionadasEHijos);
                     }
 
-                    TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
                     bool tieneRecursosAsociados = tesCN.EstanVinculadasCategoriasTesauro(GestorTesauro.TesauroActualID, listaCatSeleccionadasEHijos);
 
                     if (!tieneRecursosAsociados)
@@ -234,7 +237,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     else
                     {
 
-                        TesauroCN tesCN2 = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        TesauroCN tesCN2 = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
                         bool existenRecursosNoHuerfanos = tesCN2.ObtenerSiExistenElementosNoHuerfanos(GestorTesauro.TesauroActualID, listaCatSeleccionadasEHijos);
                         tesCN2.Dispose();
 
@@ -243,7 +246,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 else if (typeAction == TypesAccion.share.ToString() && ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
                 {
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     //DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerProyectosParticipaUsuario(AD.EntityModel.Models.UsuarioDS.Usuario.UsuarioID);
 
                     Dictionary<Guid, string> listaProyectos = new Dictionary<Guid, string>();
@@ -268,7 +271,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Ejecuta la acción solicitada
         /// </summary>
         /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { Models.ViewModels.TipoPaginaAdministracion.Tesauro })]
         public ActionResult EjecutarAccion(string typeAction)
         {
             PaginaModel.Action = typeAction;
@@ -289,7 +291,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Guardar los cambios
         /// </summary>
         /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { Models.ViewModels.TipoPaginaAdministracion.Tesauro })]
         public ActionResult Guardar()
         {
             GuardarLogAuditoria();
@@ -306,19 +307,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                 }
                 List<Guid> categoriasSeleccionadas = CategoriasSeleccionadasIDs;
-                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                 proyCN.ActualizarTablaPreferenciaProyecto(categoriasSeleccionadas, ProyectoSeleccionado.Clave);
 
-                TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
                 tesauroCL.InvalidarCacheDeTesauroDeProyecto(ProyectoSeleccionado.Clave);
                 tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
                 tesauroCL.Dispose();
 
-                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 proyCL.InvalidarComunidadMVC(ProyectoSeleccionado.Clave);
                 proyCL.Dispose();
 
-                CL.Facetado.FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                CL.Facetado.FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
                 facetadoCL.InvalidarResultadosYFacetasDeBusquedaEnProyecto(ProyectoSeleccionado.Clave, "");
                 facetadoCL.Dispose();
 
@@ -593,7 +594,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mGestorTesauro == null)
                 {
-                    TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
                     DataWrapperTesauro dataWrapperTesauro = tesauroCN.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
                     // TesauroDS tesauroDS = tesauroCN.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
 
@@ -641,7 +642,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         }
                     }
 
-                    mGestorTesauro = new GestionTesauro(dataWrapperTesauro, mLoggingService, mEntityContext);
+                    mGestorTesauro = new GestionTesauro(dataWrapperTesauro, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 return mGestorTesauro;
             }
@@ -754,7 +755,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     mPaginaModel.PasosRealizados = RequestParams("PasosRealizados");
 
-                    TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
                     GestorTesauro.TesauroDW.Merge(tesauroCN.ObtenerSugerenciasCatDeUnTesauro(GestorTesauro.TesauroDW.ListaTesauro.FirstOrDefault().TesauroID));
                     tesauroCN.Dispose();
 
@@ -766,8 +767,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     //mPaginaModel.Thesaurus.SuggestedThesaurusCategories = CategoriasSugeridas;
 
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 					mPaginaModel.Thesaurus.ExpandedCategories = CategoriasExpandidasIDs;
                     mPaginaModel.Thesaurus.SelectedCategories = proyCN.ObtenerCategoriasSeleccionadas(ProyectoSeleccionado.Clave);
                     mPaginaModel.Thesaurus.SharedCategories = CategoriasCompartidasIDs;

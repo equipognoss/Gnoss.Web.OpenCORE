@@ -1,0 +1,44 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista modal para avisar del usaurio que la propiedad introducida no existe
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+
+}
+
+<div id="modal-alert-user"
+     class="modal modal-top fade modal-confirmDelete"
+     role="dialog"
+     aria-modal="true">
+
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                @* Título del Modal *@
+                <p class="modal-title">
+                    <span class="material-icons">delete</span>
+                    @Html.GetText("DEVTOOLS", "ALERTAUSUARIO")
+                </p>
+                @* Cierre del Modal *@
+                <span class="material-icons cerrar"
+                      data-dismiss="modal"
+                      aria-label="Close">close</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="control-label nonExistentProp">@Html.GetText("DEVTOOLS", "PROPIEDADNOEXISTE")</label>
+                    <br/>
+                    <label class="control-label">@Html.GetText("DEVTOOLS", "CONFIRMARCONTINUAR")</label>
+                </div>
+                <div class="form-actions">
+                    <button data-dismiss="modal" class="btn btn-outline-primary btnRejectNonExistentProperty">@Html.GetText("COMMON", "NO")</button>
+                    <button class="btn btn-primary btnConfirmAddNonExistentProperty">@Html.GetText("COMMON", "SI")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

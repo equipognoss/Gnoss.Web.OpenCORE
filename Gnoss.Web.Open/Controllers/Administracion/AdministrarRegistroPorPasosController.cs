@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,11 +29,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// Controlador para administrar el registro por pasos
     /// </summary>
-    public class AdministrarRegistroPorPasosController : ControllerBaseWeb
-    {
-        public AdministrarRegistroPorPasosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarRegistroPorPasosController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarRegistroPorPasosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarRegistroPorPasosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -76,7 +82,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     listaBooleanos.Add(pasoRegistro.Obligatorio);
                 } 
                                
-                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                 List<ProyectoPestanyaMenu> listaProyectoPestanya = proyCN.ListaPestanyasMenuRegistro(ProyectoSeleccionado.Clave);
                 
                 for(int i = 0; i < ListaPestanyas.Count; i++)
@@ -152,7 +158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public AministrarRegistroPorPasosViewModel CargarModelo()
         {
             AministrarRegistroPorPasosViewModel adRegistro = new AministrarRegistroPorPasosViewModel();
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             List<PasoRegistroModel> listaAPasar = new List<PasoRegistroModel>();
             List<string> listaNombres = proyCN.ObtenerProyectoPasoRegistro(ProyectoSeleccionado.Clave);
             List<bool> listaObligatoriedad = proyCN.ObtenerListaObligatoriedadRegistros(ProyectoSeleccionado.Clave);

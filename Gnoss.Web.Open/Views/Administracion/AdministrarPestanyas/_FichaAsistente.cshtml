@@ -9,7 +9,8 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
-    TabModel.DashboardTabModel asistente = Model;    
+    TabModel.DashboardTabModel asistente = Model;  
+    bool comparando = ViewBag.ComparandoPestanya ?? false;
     // Id para usar en elementos únicos
     Guid newGuidId = @Guid.NewGuid();    
     //string collapseId = "panel_collapse_" + newGuidId.ToString().Substring(0, 5);
@@ -81,7 +82,7 @@ Variables
                                 </a>
                             </li>
                             <li>
-                                <a class="action-delete round-icon-button js-action-delete btnDeleteGraphAssistant" href="javascript: void(0);">
+                                <a class="action-delete round-icon-button js-action-delete btnDeleteGraphAssistant @(comparando ? "d-none" : "")" href="javascript: void(0);">
                                     <span class="material-icons eliminar elimAsis">delete</span>
                                 </a>
                             </li>
@@ -240,7 +241,7 @@ Variables
                         <input type="button" value="Añadir propiedad a consulta" name="btnAgregarPropiedad" />
                     </p>
                     *@
-                    <div class="panelButtonActions mb-3">
+                    <div class="panelButtonActions mb-3 @(comparando ? "d-none" : "")">
                         <input class="btn btn-outline-primary" type="button" value="Seleccionar variable" name="btnOpcionesLabels" />
                         <input class="btn btn-outline-primary" type="button" value="Seleccionar propiedad" name="btnOpcionesPropiedad" style="display:none" />
                         <input class="btn btn-outline-primary" type="button" value="Añadir propiedad a consulta" name="btnAgregarPropiedad" />
@@ -283,7 +284,7 @@ Variables
                     <div class="form-group mb-3">
                         <div class="datasets-header d-flex justify-content-between align-items-center">
                             <label class="control-label d-block font-weight-bold" style="font-size: 14px;">Datasets</label>
-                            <a href="javascript: void(0);" class="btnAgregarDataset btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+                            <a href="javascript: void(0);" class="btnAgregarDataset btn btn-outline-primary new @(comparando ? "d-none" : "")" style="display: flex; text-decoration: none;">
                                 <span class="material-icons">add</span>
                                 <span class="texto">Agregar Dataset</span>
                             </a>
@@ -334,7 +335,7 @@ Variables
                     <div class="form-group mb-3">
                         <div class="datasets-header d-flex justify-content-between align-items-center">
                             <label class="control-label d-block font-weight-bold" style="font-size: 14px;">Datasets</label>
-                            <a href="javascript: void(0);" class="btnAgregarDataset btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+                            <a href="javascript: void(0);" class="btnAgregarDataset btn btn-outline-primary new @(comparando ? "d-none" : "")" style="display: flex; text-decoration: none;">
                                 <span class="material-icons">add</span>
                                 <span class="texto">Agregar Dataset</span>
                             </a>
@@ -532,7 +533,7 @@ Variables
                 <div class="form-group mb-3">
                     <div class="datasets-header d-flex justify-content-between align-items-center mb-3">
                         <label class="control-label d-block font-weight-bold" style="font-size: 14px;">Previsualización del gráfico</label>
-                        <a href="javascript: void(0);" class="btnAddGraph btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+                        <a href="javascript: void(0);" class="btnAddGraph btn btn-outline-primary new @(comparando ? "d-none" : "")" style="display: flex; text-decoration: none;">
                             <span class="material-icons">add</span>
                             <span class="texto">Añadir gráfico</span>
                         </a>

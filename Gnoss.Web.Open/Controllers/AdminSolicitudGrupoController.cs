@@ -3,6 +3,7 @@ using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Solicitud;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Identidad;
@@ -11,15 +12,20 @@ using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.Web.MVC.Filters;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,14 +36,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     {
         const int NUM_RESULTADOS_PAGINA = 10;
         private bool mEsGrupoOrganizacion = false;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
-        public AdminSolicitudGrupoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public AdminSolicitudGrupoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdminSolicitudGrupoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
-
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
-
-        public ActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo } })]
+		public ActionResult Index()
         {
             if (!string.IsNullOrEmpty(RequestParams("grupoOrg")) && RequestParams("grupoOrg") == "true")
             {
@@ -48,13 +57,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     return GnossResultUrl(BaseURLIdioma + UrlPerfil + "home");
                 }
             }
-            else
-            {
-                if (!ProyectoSeleccionado.EsAdministradorUsuario(IdentidadActual.Persona.UsuarioID) && !(ParametrosGeneralesRow.SupervisoresAdminGrupos && EsIdentidadActualSupervisorProyecto))
-                {
-                    return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLPersonasYOrganizaciones(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, "", ""));
-                }
-            }
+          
 
             SolicitudesGrupoViewModel paginaModel = CargarSolicitudes();
 
@@ -65,7 +68,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             SolicitudesGrupoViewModel paginaModel = new SolicitudesGrupoViewModel();
 
-            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SolicitudCN>(), mLoggerFactory);
             DataWrapperSolicitud solicitudDW = solicitudCN.ObtenerSolicitudesGrupoPorProyecto(ProyectoSeleccionado.Clave);
             solicitudCN.Dispose();
 
@@ -121,7 +124,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             Dictionary<Guid, string> urlFotos = identCN.ObtenerSiListaIdentidadesTienenFoto(listaIdentidades);
             Dictionary<Guid, string> nombres = identCN.ObtenerNombresDeIdentidades(listaIdentidades);
             Dictionary<Guid, string> grupos = identCN.ObtenerNombresDeGrupos(listaGrupos);
@@ -160,7 +163,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return paginaModel;
         }
 
-        public ActionResult AcceptRequest(Guid IdentidadID, Guid GrupoID)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo } })]
+		public ActionResult AcceptRequest(Guid IdentidadID, Guid GrupoID)
         {
             if (!string.IsNullOrEmpty(RequestParams("grupoOrg")) && RequestParams("grupoOrg") == "true")
             {
@@ -171,15 +175,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     return GnossResultUrl(BaseURLIdioma + UrlPerfil + "home");
                 }
             }
-            else
-            {
-                if (!ProyectoSeleccionado.EsAdministradorUsuario(IdentidadActual.Persona.UsuarioID) && !(ParametrosGeneralesRow.SupervisoresAdminGrupos && EsIdentidadActualSupervisorProyecto))
-                {
-                    return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLPersonasYOrganizaciones(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, "", ""));
-                }
-            }
+           
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
 
             DataWrapperIdentidad identidadDW = new DataWrapperIdentidad();
 
@@ -197,13 +195,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 identidadCN.ActualizaIdentidades();
             }
 
-            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SolicitudCN>(), mLoggerFactory);
             bool aceptada = solicitudCN.AceptarSolicitudDeIdentidadEnGrupoProyecto(IdentidadID, GrupoID);
             solicitudCN.Dispose();
 
             string nombrecorto = identidadCN.ObtenerNombreCortoGrupoPorID(GrupoID);
             identidadCN.Dispose();
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             if (EsGrupoOrganizacion)
             {
                 identidadCL.InvalidarCacheMiembrosOrganizacionParaFiltroGrupos(IdentidadActual.OrganizacionID.Value);
@@ -224,7 +222,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-        public ActionResult RejectRequest(Guid IdentidadID, Guid GrupoID)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo } })]
+		public ActionResult RejectRequest(Guid IdentidadID, Guid GrupoID)
         {
             if (!string.IsNullOrEmpty(RequestParams("grupoOrg")) && RequestParams("grupoOrg") == "true")
             {
@@ -243,7 +242,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SolicitudCN>(), mLoggerFactory);
             bool rechazada = solicitudCN.RechazarSolicitudDeIdentidadEnGrupoProyecto(IdentidadID, GrupoID);
             solicitudCN.Dispose();
 

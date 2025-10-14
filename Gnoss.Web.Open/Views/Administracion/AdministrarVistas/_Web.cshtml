@@ -25,7 +25,7 @@ Variables
 }
 
 @* Pintado de cada Vistas Editadas *@
-@foreach (string vista in Model.ListEditedViews)
+@foreach (ManageViewsViewModel.EditedView model in Model.ListEditedViews)
 {		
 	// Indicar que es una vista editada para "_uploadWebView"
 	ViewBag.editedWebView = true;		
@@ -33,13 +33,13 @@ Variables
 	ViewBag.ViewType = "personalizada";
 	// Url de la request para las Vistas de tipo Web
 	ViewBag.UrlActionWeb = Model.UrlActionWeb;
-	@Html.PartialView("_partial-views/_editedWebView", vista)	
+	@Html.PartialView("_partial-views/_editedWebView", model)	
 	ViewBag.editedWebView = true;
 }
 
 
 @* Formulario semántico originales *@
-@if (Model.ListEditedFormsViews != null && Model.ListEditedFormsViews.Count > 0)
+@if (Model.ListOriginalFormsViews != null && Model.ListOriginalFormsViews.Count > 0)
 {
 	@foreach (string formulario in Model.ListOriginalFormsViews)
     {
@@ -55,7 +55,7 @@ Variables
 @* Formulario semántico a editar *@
 @if (Model.ListEditedFormsViews != null && Model.ListEditedFormsViews.Count > 0)
 {
-	@foreach (string formulario in Model.ListEditedFormsViews)
+	@foreach (ManageViewsViewModel.EditedView modelo in Model.ListEditedFormsViews)
 	{
 		// Indicar que es una vista editada para "_uploadWebView"
 		ViewBag.editedWebView = true;		
@@ -63,6 +63,6 @@ Variables
 		ViewBag.ViewType = "personalizada";
 		// Url de la request para las Vistas de tipo Web
 		ViewBag.UrlActionWeb = Model.UrlActionWeb;
-		@Html.PartialView("_partial-views/_editedFormView", formulario)
+		@Html.PartialView("_partial-views/_editedFormView", modelo)
 	}													
 }

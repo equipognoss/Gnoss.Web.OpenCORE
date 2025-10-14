@@ -14,12 +14,15 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,17 +33,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// 
     /// </summary>
-    public class AdministrarSeoGoogleController : ControllerBaseWeb
-    {
+    public class AdministrarSeoGoogleController : ControllerAdministrationWeb
+	{
         private AdministrarSeoGoogleViewModel mPaginaModel = null;
         private bool mConfigDeParametroProyecto = false;
         private bool mConfigGoogleDeParametroProyecto = false;
         private bool mScriptDeParametroGeneral = false;
         private string mMetaRobots = "all";
-
-        public AdministrarSeoGoogleController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarSeoGoogleController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSeoGoogleController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         /// <summary>
@@ -48,8 +54,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarSEOYGoogleAnalytics } })]
+		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -70,16 +76,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Guardar(AdministrarSeoGoogleViewModel pParametros)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarSEOYGoogleAnalytics } })]
+		public ActionResult Guardar(AdministrarSeoGoogleViewModel pParametros)
         {
             GuardarLogAuditoria();
-            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorSeoGoogle>(), mLoggerFactory);
 
             pParametros.CodigoGoogleAnalytics = HttpUtility.UrlDecode(pParametros.CodigoGoogleAnalytics);
             pParametros.ScriptGoogleAnalyticsPropio = HttpUtility.UrlDecode(pParametros.ScriptGoogleAnalyticsPropio);
             
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
 
             try
@@ -133,7 +139,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorSeoGoogle>(), mLoggerFactory);
                 //string valorCodigo = ControladorProyecto.ObtenerParametroString(ParametroProyecto, "CodigoGoogleAnalytics");
                 //comprobar si esta en ParametroProyecto
 
@@ -172,7 +178,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor,mServicesUtilVirtuosoAndReplication);
+                ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor,mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorSeoGoogle>(), mLoggerFactory);
 
                 string valorScript = contrSeoGoogle.FilaParametrosGenerales.ScriptGoogleAnalytics;
                 if (!string.IsNullOrEmpty(valorScript))

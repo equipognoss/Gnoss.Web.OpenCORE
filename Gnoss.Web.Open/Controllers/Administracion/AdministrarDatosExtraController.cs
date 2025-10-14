@@ -28,22 +28,33 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
+using Es.Riam.Gnoss.Elementos.Amigos;
 
 namespace Gnoss.Web.Open.Controllers.Administracion
 {
-    public class AdministrarDatosExtraController : ControllerBaseWeb
-    {
-        public AdministrarDatosExtraController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarDatosExtraController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarDatosExtraController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarDatosExtraController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
 		private AdministrarDatosExtraViewModel mPaginaModel = null;
 
         private DataWrapperProyecto mDatosExtraProyectoDataWrapperProyecto = null;
 
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public IActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarDatosExtraRegistroEcosistema} })]
+		public IActionResult Index()
         {
 			EliminarPersonalizacionVistas();
 			CargarPermisosAdministracionComunidadEnViewBag();
@@ -64,6 +75,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return View(PaginaModel);
         }
 
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
 		public IActionResult Guardar(string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
 			GuardarLogAuditoria();
@@ -159,13 +171,14 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
 			catch(Exception ex)
 			{
-				mLoggingService.GuardarLogError(ex.Message);
+				mLoggingService.GuardarLogError(ex.Message, mlogger);
 				return GnossResultERROR("Ha habido un error al guardar los datos");
 			}			
 
 			return GnossResultOK("El dato extra ha sido creado correctamente");
 		}
 
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
 		public IActionResult Editar(Guid pDatoExtraID, string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
             string error = ComprobarErrores(pNombre, pTipo, pOpciones, pNombreCorto);
@@ -285,13 +298,14 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex.Message);
+                mLoggingService.GuardarLogError(ex.Message, mlogger);
                 return GnossResultERROR("Ha habido un error al guardar los datos");
             }
 
             return GnossResultOK("El dato extra ha sido modificado correctamente");
 		}
 
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
 		public IActionResult Eliminar(Guid pDatoExtraID)
 		{
 			GuardarLogAuditoria();
@@ -339,14 +353,14 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
 			catch(Exception ex)
 			{
-				mLoggingService.GuardarLogError(ex.Message);
+				mLoggingService.GuardarLogError(ex.Message, mlogger);
 				return GnossResultERROR("Error al eliminar el dato extra");
 			}			
 
 			return GnossResultOK();
 		}
 
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
 		public IActionResult CargarModalEdicion(Guid pDatoID)
 		{
 			DatoExtraEditModel model = new DatoExtraEditModel();
@@ -439,7 +453,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarDatosExtraViewModel();
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 					mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 					mPaginaModel.IdiomaDefecto = IdiomaPorDefecto;
 					mPaginaModel.ListaDatosExtraVirtuoso = new List<DatoExtraVirtuosoModel>();
@@ -561,7 +575,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			{
 				if (mDatosExtraProyectoDataWrapperProyecto == null)
 				{
-					ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 					mDatosExtraProyectoDataWrapperProyecto = proyectoCN.ObtenerDatosExtraProyectoPorID(ProyectoSeleccionado.Clave);
 					proyectoCN.Dispose();
 				}

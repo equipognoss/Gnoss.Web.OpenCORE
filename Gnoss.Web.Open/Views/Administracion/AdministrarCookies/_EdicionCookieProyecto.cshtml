@@ -74,7 +74,18 @@ string tipoCookie = Html.ObtenerTextoIdiomaUsuario(Model.ListaCategoriaProyectoC
 						</div>
                         @* Fecha creación / actualización de cookie *@
 						<div class="component-fecha-wrap">
-							<span class="component-fecha">01 / 01 / 2022</span>
+							@if (cookie.FechaCreacion == cookie.FechaActualizacion && cookie.FechaCreacion.ToShortDateString().Equals("01/01/0001"))
+							{
+								<span class="component-fecha">01/01/2022</span>
+							}
+							else if (cookie.FechaCreacion < cookie.FechaActualizacion)
+							{
+								<span class="component-fecha">@cookie.FechaActualizacion.ToShortDateString() </span>
+							}
+							else
+							{
+								<span class="component-fecha">@cookie.FechaCreacion.ToShortDateString() </span>
+							}
 						</div>
 					</div>
                     @* Acciones de la cookie *@

@@ -84,13 +84,21 @@ Variables
 									aria-controls="configuracion-objeto_presentacion_@(ontolgyWithoutStrangeCharacters)"
 									aria-selected="false">@Html.GetText("DEVTOOLS","PRESENTACIONDERECURSOS")</a>
 							</li>
-						
+							@* autocompletado *@
+							<li class="nav-item">
+								<a class="nav-link nav-objetoConocimiento tabConfiguracionAtocompletadoObjetoConocimiento"
+								   data-toggle="tab"
+								   href="#configuracion-objeto_autocompletar_@(ontolgyWithoutStrangeCharacters)"
+								   role="tab"
+								   aria-controls="configuracion-objeto_autocompletar_@(ontolgyWithoutStrangeCharacters)"
+								   aria-selected="false">@Html.GetText("ADMINISTRACIONBASICA", "OPCIONESAUTOCOMPLETAR")</a>
+							</li>
 							@* Opciones avanzadas *@
 							<li class="nav-item">
 								<a
 									class="nav-link nav-objetoConocimiento tabConfiguracionAvanzadaObjetoConocimiento"								
 									data-toggle="tab"
-									href="#configuracion-objeto_avanzadas_@(ontolgyWithoutStrangeCharacters)"
+								   href="#configuracion-objeto_avanzadas_@(ontolgyWithoutStrangeCharacters)"
 									role="tab"
 									aria-controls="configuracion-objeto_avanzadas_@(ontolgyWithoutStrangeCharacters)"
 									aria-selected="false">@Html.GetText("ADMINISTRACIONBASICA","OPCIONESAVANZADAS")</a>
@@ -346,9 +354,32 @@ Variables
 									<div class="tab-pane fade PresentacionRelacionados" id="relacionados_@(Model.Ontologia)" role="tabpanel" aria-labelledby="relacionados_@(Model.Ontologia)">
 										@Html.PartialView("_FichaPresentacion", Model.PresentacionRelacionados)
 									</div>
+
 								</div>
 							</div>
-						
+							<div class="tab-pane fade" id="configuracion-objeto_autocompletar_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_autocompletar@(ontolgyWithoutStrangeCharacters)">
+								<h3>Propiedades configuradas en el autocompletado enriquecido</h3>
+								@* Mostrar autocompletado *@
+								@{
+									int i = 0; 
+									foreach (ObjetoConocimientoModel.AutocompletadoPresentacionModel autocompletadoPresentacionModel in Model.ListaAutocompletadoPresentacionModel)
+									{
+										<div class="form-group mb-3 div_propiedad-autocompletar">
+											<div class="custom-control custom-checkbox">
+												<input type="text" name="inpt_mostrar-autocompletado" value="@autocompletadoPresentacionModel.Propiedad" hidden/>
+												<input type="checkbox"
+												@(autocompletadoPresentacionModel.MostrarEnAutocompletar ? "checked" : "")
+													   class="custom-control-input"
+													   name="chb_mostrar-autocompletado"
+													   id="mostrar-autocompletado_@i" />
+												<label class="custom-control-label" for="mostrar-autocompletado_@i">@autocompletadoPresentacionModel.Propiedad</label>
+											</div>
+										</div>
+										i++;
+									}
+								}
+							</div>
+
 							@* Panel de opciones avanzadas *@
 							<div class="tab-pane fade" id="configuracion-objeto_avanzadas_@(ontolgyWithoutStrangeCharacters)" role="tabpanel" aria-labelledby="configuracion-objeto_avanzadas@(ontolgyWithoutStrangeCharacters)">
 								@* NombreTesauroExclusivo --> Ocultarlo por el momento

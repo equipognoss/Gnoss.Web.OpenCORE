@@ -8,8 +8,11 @@ using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System.Collections.Generic;
 using static Es.Riam.Gnoss.Web.MVC.Controllers.AdministrarUsuariosOrganizacionViewModel;
 
@@ -28,10 +31,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 base.ControllerBase = value;
             }
         }
-
-        public ControllerHeadBaseWeb(ControllerBaseGnoss pControllerBase, LoggingService loggingService, ConfigService configService, EntityContext entityContext, IHttpContextAccessor httpContextAccessor, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, EntityContextBASE entityContextBASE, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
-            : base(pControllerBase, loggingService, configService, entityContext, httpContextAccessor, redisCacheWrapper, gnossCache, virtuosoAD, entityContextBASE, servicesUtilVirtuosoAndReplication)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public ControllerHeadBaseWeb(ControllerBaseGnoss pControllerBase, LoggingService loggingService, ConfigService configService, EntityContext entityContext, IHttpContextAccessor httpContextAccessor, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, EntityContextBASE entityContextBASE, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, ILogger<ControllerHeadBaseWeb> logger, ILoggerFactory loggerFactory)
+            : base(pControllerBase, loggingService, configService, entityContext, httpContextAccessor, redisCacheWrapper, gnossCache, virtuosoAD, entityContextBASE, servicesUtilVirtuosoAndReplication,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         protected override void ObtenerListaInputsHidden()

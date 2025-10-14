@@ -18,7 +18,6 @@ CommunityModel Comunidad = Html.GetComunidad();
 
 @* Metas Layout *@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0" />
 
 @* Metas personalizadas para proyecto *@
@@ -67,9 +66,9 @@ CommunityModel Comunidad = Html.GetComunidad();
 @* Listado de Metas Adicionales *@
 @if (Html.GetListaMetas() != null)
 {
-    foreach (KeyValuePair<string, string> contentMeta in Html.GetListaMetas())
+    foreach (ViewMetaData contentMeta in Html.GetListaMetas())
     {
-        <meta name="@contentMeta.Key" content="@contentMeta.Value" />
+        <meta @contentMeta.AttributeName="@contentMeta.AttributeValue" content="@contentMeta.ContentAttributeValue"/>
     }
 }
 

@@ -1,0 +1,822 @@
+﻿@model RolModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    bool esEcosistema = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+    List<PermisoModel> permisosSeccionComunidad = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionEstructura = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionConfiguracion = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionGrafo = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionDescubrimiento = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionApariencia = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionMantenimiento = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionIC = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionAplicaciones = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionRecursos = new List<PermisoModel>();
+    List<PermisoModel> permisosSeccionEcosistema = new List<PermisoModel>();
+    if (esEcosistema)
+    {
+        permisosSeccionEcosistema = Model.ListaPermisos.Where(x => x.Seccion == "ECOSISTEMA").ToList();
+    }
+    else
+    {
+        permisosSeccionComunidad = Model.ListaPermisos.Where(x => x.Seccion == "COMUNIDAD").OrderBy(x => x.Nombre).ToList();
+        permisosSeccionEstructura = Model.ListaPermisos.Where(x => x.Seccion == "ESTRUCTURA").ToList();
+        permisosSeccionConfiguracion = Model.ListaPermisos.Where(x => x.Seccion == "CONFIGURACION").ToList();
+        permisosSeccionGrafo = Model.ListaPermisos.Where(x => x.Seccion == "GRAFO").ToList();
+        permisosSeccionDescubrimiento = Model.ListaPermisos.Where(x => x.Seccion == "DESCUBRIMIENTO").ToList();
+        permisosSeccionApariencia = Model.ListaPermisos.Where(x => x.Seccion == "APARIENCIA").ToList();
+        permisosSeccionMantenimiento = Model.ListaPermisos.Where(x => x.Seccion == "MANTENIMIENTO").ToList();
+        permisosSeccionIC = Model.ListaPermisos.Where(x => x.Seccion == "IC").ToList();
+        permisosSeccionAplicaciones = Model.ListaPermisos.Where(x => x.Seccion == "APLICACIONES").ToList();
+        permisosSeccionRecursos = Model.ListaPermisos.Where(x => x.Seccion == "RECURSOS").ToList();
+    }
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">edit</span>@Html.GetText("DEVTOOLS", "EDITARROL") - @Html.ObtenerTextoDeIdioma(Model.Nombre)
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div id="modal-body-editar-rol" class="modal-body">
+    <div class="formulario-edicion">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="informacion-tab" data-toggle="tab" href="#informacion" role="tab" aria-controls="informacion" aria-selected="true">@Html.GetText("DEVTOOLS", "INFORMACION")</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="permisos-tab" data-toggle="tab" href="#permisos" role="tab" aria-controls="permisos" aria-selected="false">@Html.GetText("ROLESYPERMISOS", "PERMISOS")</a>
+            </li>
+            @if (!Model.EsRolUsuario)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" id="usuarios-tab" data-toggle="tab" href="#usuarios" role="tab" aria-controls="usuarios" aria-selected="false">@Html.GetText("GRUPO", "MIEMBROS")</a>
+                </li>
+            }            
+        </ul>
+        <div class="tab-content pb-0">
+            <div class="tab-pane fade show active" id="informacion" role="tabpanel" aria-labelledby="informacion-tab">
+                <div id="panContenidoMultiIdioma" class="contenido-multiIdioma panContenidoMultiIdioma">
+                </div>
+                <div class="inputsMultiIdioma multiIdiomaContainer" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+                    <div class="form-group mb-4">
+                        <input data-labeltext="@Html.GetText("DEVTOOLS", "NOMBREROL")" type="text" name="txtNombreRol" id="txtNombreRol" class="form-control multiIdioma" value="@Model.Nombre">
+                    </div>
+                    <div class="form-group mb-4">
+                        <textarea id="txtDescripcionRol" rows="6"
+                                  name="txtDescripcionRol"
+                                  class="multiIdioma"
+                                  data-labeltext="@Html.GetText("DEVTOOLS", "DESCRIPCION")">@Model.Descripcion</textarea>
+                    </div>
+                </div>
+                @{
+                    if (!esEcosistema)
+                    {
+                        <div class="tab-content pt-2">
+                            <div class="form-group mb-4">
+                                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AMBITO")</label>
+                                <select id="tipoRol"
+                                        name="tipoRol"
+                                        class="js-select2"
+                                        tabindex="0"
+                                        aria-hidden="false">
+                                    <option value="0" @(Model.Tipo == 0 ? "selected" : "")>@Html.GetText("DEVTOOLS", "TIPOROLCOMUNIDAD")</option>
+                                    <option value="1" @(Model.Tipo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS", "TIPOROLECOSISTEMA")</option>
+                                </select>
+                                <small class="form-text text-muted">@Html.GetText("ROLESYPERMISOS", "DESCAMBITOCOMUNIDAD")</small>
+                            </div>
+                            @if (Model.EsRolUsuario)
+                            {
+                                <div id="infoUsuarios" class="alert alert-success" role="alert">
+                                    <span class="material-icons">info</span>
+                                    <p class="titulo">@Html.GetText("ROLESYPERMISOS", "INFOROLUSUARIOS")</p>
+                                </div>
+                            }
+                        </div>                        
+                    }
+                }
+            </div>
+            <div class="tab-pane fade" id="permisos" role="tabpanel" aria-labelledby="permisos-tab">
+                <div class="buscador">
+                    <form method="post" action="#">
+                        <div class="fieldsetGroup searchGroup">
+                            <div class="textoBusquedaPrincipalInput">
+                                <input type="text" id="txtBusquedaPermisosNuevoRol" class="not-outline text txtBusqueda autocompletar personalizado ac_input" placeholder="@Html.GetText("DEVTOOLS", "ESCRIBEALGO")" autocomplete="off">
+                                <span class="botonSearch">
+                                    <span class="material-icons">search</span>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                @if (esEcosistema)
+                {
+                    <div id="accordion" class="tabla-permisos">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-ecosistema">
+                                        <label class="custom-control-label" for="editar-ecosistema">@Html.GetText("DEVTOOLS", "TIPOROLECOSISTEMA")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosecosistema"
+                                            aria-expanded="false"
+                                            aria-controls="permisosecosistema">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosecosistema"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionEcosistema)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisoecosistema-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div id="accordion" class="tabla-permisos">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-comunidad">
+                                        <label class="custom-control-label" for="editar-comunidad">@Html.GetText("DEVTOOLS", "TIPOROLCOMUNIDAD")</label>
+                                    </div>
+                                    <button class="btn btn-link collapsed"
+                                            data-toggle="collapse"
+                                            data-target="#permisoscomunidad"
+                                            aria-expanded="false"
+                                            aria-controls="permisoscomunidad">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            @* Comunidad *@
+                            <div id="permisoscomunidad"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionComunidad)
+                                        {
+                                            if (!permiso.Nombre.ToUpper().Equals("GESTIONARTIPOSDECONTENIDOSYPERMISOS"))
+                                            {
+                                                <div class="custom-control custom-checkbox component-wrap permisocomunidad-row">
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                    <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                    <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                                </div>
+                                            }                                            
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Estructura *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-estructura">
+                                        <label class="custom-control-label" for="editar-estructura">@Html.GetText("DEVTOOLS", "ESTRUCTURA")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosestructura"
+                                            aria-expanded="false"
+                                            aria-controls="permisosestructura">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosestructura"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionEstructura)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisoestructura-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Configuración general *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-config">
+                                        <label class="custom-control-label" for="editar-config">@Html.GetText("DEVTOOLS", "CONFIGURACIONGENERAL")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosconfiguracion"
+                                            aria-expanded="false"
+                                            aria-controls="permisosconfiguracion">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosconfiguracion"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionConfiguracion)
+                                        {
+                                            <div class="custom-control custom-checkbox permisoconfiguracion-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Grafo de conocimiento *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-grafo">
+                                        <label class="custom-control-label" for="editar-grafo">@Html.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosgrafoconocimiento"
+                                            aria-expanded="false"
+                                            aria-controls="permisosgrafoconocimiento">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosgrafoconocimiento"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionGrafo)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisografo-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Descubrimiento y análisis *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-descubrimiento">
+                                        <label class="custom-control-label" for="editar-descubrimiento">@Html.GetText("DEVTOOLS", "DESCUBRIMIENTOYANALISIS")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosdescubrimiento"
+                                            aria-expanded="false"
+                                            aria-controls="permisosdescubrimiento">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosdescubrimiento"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionDescubrimiento)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisodescubrimiento-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Apariencia *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-apariencia">
+                                        <label class="custom-control-label" for="editar-apariencia">@Html.GetText("DEVTOOLS", "APARIENCIA")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosapariencia"
+                                            aria-expanded="false"
+                                            aria-controls="permisosapariencia">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosapariencia"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionApariencia)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisoapariencia-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Integración continua *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-ic">
+                                        <label class="custom-control-label" for="editar-ic">@Html.GetText("DEVTOOLS", "INTEGRACIONCONTINUA")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosic"
+                                            aria-expanded="false"
+                                            aria-controls="permisosic">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosic"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionIC)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisoic-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Mantenimiento *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-mantenimiento">
+                                        <label class="custom-control-label" for="editar-mantenimiento">@Html.GetText("DEVTOOLS", "MANTENIMIENTO")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosmantenimiento"
+                                            aria-expanded="false"
+                                            aria-controls="permisosmantenimiento">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosmantenimiento"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionMantenimiento)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisomantenimiento-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Aplicaciones específicas *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="editar-aplicaciones">
+                                        <label class="custom-control-label" for="editar-aplicaciones">@Html.GetText("DEVTOOLS", "APLICACIONESESPECIFICAS")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosaplicaciones"
+                                            aria-expanded="false"
+                                            aria-controls="permisosaplicaciones">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosaplicaciones"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control__group">
+                                    @{
+                                        foreach (PermisoModel permiso in permisosSeccionAplicaciones)
+                                        {
+                                            <div class="custom-control custom-checkbox component-wrap permisoaplicaciones-row">
+                                                <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</span>
+                                                <input type="checkbox" class="custom-control-input" id="@permiso.Nombre" @(permiso.Concedido ? "checked" : "") />
+                                                <label class="custom-control-label" for="@permiso.Nombre">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</label>
+                                            </div>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Recursos *@
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="recursos-nuevo-ecosistema">
+                                        <label class="custom-control-label" for="recursos-nuevo-ecosistema">@Html.GetText("DEVTOOLS", "RECURSOS")</label>
+                                    </div>
+                                    <button class="btn btn-link"
+                                            data-toggle="collapse"
+                                            data-target="#permisosrecursos"
+                                            aria-expanded="false"
+                                            aria-controls="permisosrecursos">
+                                        <span class="material-icons">keyboard_arrow_down</span>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div id="permisosrecursos"
+                                 class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <div class="custom-control custom-checkbox">
+                                        <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPONOTA")</span>
+                                        <input type="checkbox" class="custom-control-input" id="tipo-nota">
+                                        <label class="custom-control-label" for="tipo-nota">@Html.GetText("ROLESYPERMISOS", "TIPONOTA")</label>
+                                    </div>
+                                    <div class="custom-control__group">
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARNOTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="CrearNota" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("CrearNota")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="CrearNota">@Html.GetText("ROLESYPERMISOS", "ACCIONCREAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARNOTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EditarNota" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EditarNota")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EditarNota">@Html.GetText("ROLESYPERMISOS", "ACCIONEDITAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARNOTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarNota" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarNota")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarNota">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONNOTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="RestaurarVersionNota" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("RestaurarVersionNota")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="RestaurarVersionNota">@Html.GetText("ROLESYPERMISOS", "ACCIONRESTAURAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONNOTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarVersionNota" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarVersionNota")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarVersionNota">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINARVERSION")</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOLINK")</span>
+                                        <input type="checkbox" class="custom-control-input" id="tipo-link">
+                                        <label class="custom-control-label" for="tipo-link">@Html.GetText("ROLESYPERMISOS", "TIPOLINK")</label>
+                                    </div>
+                                    <div class="custom-control__group">
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOTIPOENLACE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="CrearRecursoTipoEnlace" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("CrearRecursoTipoEnlace")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="CrearRecursoTipoEnlace">@Html.GetText("ROLESYPERMISOS", "ACCIONCREAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOTIPOENLACE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EditarRecursoTipoEnlace" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EditarRecursoTipoEnlace")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EditarRecursoTipoEnlace">@Html.GetText("ROLESYPERMISOS", "ACCIONEDITAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOTIPOENLACE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarRecursoTipoEnlace" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarRecursoTipoEnlace")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarRecursoTipoEnlace">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONENLACE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="RestaurarVersionEnlace" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("RestaurarVersionEnlace")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="RestaurarVersionEnlace">@Html.GetText("ROLESYPERMISOS", "ACCIONRESTAURAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONENLACE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarVersionEnlace" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarVersionEnlace")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarVersionEnlace">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINARVERSION")</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOADJUNTO")</span>
+                                        <input type="checkbox" class="custom-control-input" id="tipo-adjunto">
+                                        <label class="custom-control-label" for="tipo-adjunto">@Html.GetText("ROLESYPERMISOS", "TIPOADJUNTO")</label>
+                                    </div>
+                                    <div class="custom-control__group">
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOTIPOADJUNTO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="CrearRecursoTipoAdjunto" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("CrearRecursoTipoAdjunto")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="CrearRecursoTipoAdjunto">@Html.GetText("ROLESYPERMISOS", "ACCIONCREAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOTIPOADJUNTO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EditarRecursoTipoAdjunto" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EditarRecursoTipoAdjunto")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EditarRecursoTipoAdjunto">@Html.GetText("ROLESYPERMISOS", "ACCIONEDITAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOTIPOADJUNTO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarRecursoTipoAdjunto" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarRecursoTipoAdjunto")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarRecursoTipoAdjunto">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONADJUNTO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="RestaurarVersionAdjunto" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("RestaurarVersionAdjunto")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="RestaurarVersionAdjunto">@Html.GetText("ROLESYPERMISOS", "ACCIONRESTAURAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONADJUNTO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarVersionAdjunto" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarVersionAdjunto")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarVersionAdjunto">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINARVERSION")</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOREFERENCIA")</span>
+                                        <input type="checkbox" class="custom-control-input" id="tipo-referencia">
+                                        <label class="custom-control-label" for="tipo-referencia">@Html.GetText("ROLESYPERMISOS", "TIPOREFERENCIA")</label>
+                                    </div>
+                                    <div class="custom-control__group">
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOTIPOREFERENCIAADOCUMENTOFISICO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="CrearRecursoTipoReferenciaADocumentoFisico" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("CrearRecursoTipoReferenciaADocumentoFisico")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="CrearRecursoTipoReferenciaADocumentoFisico">@Html.GetText("ROLESYPERMISOS", "ACCIONCREAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOTIPOREFERENCIAADOCUMENTOFISICO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EditarRecursoTipoReferenciaADocumentoFisico" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EditarRecursoTipoReferenciaADocumentoFisico")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EditarRecursoTipoReferenciaADocumentoFisico">@Html.GetText("ROLESYPERMISOS", "ACCIONEDITAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOTIPOREFERENCIAADOCUMENTOFISICO")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarRecursoTipoReferenciaADocumentoFisico" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarRecursoTipoReferenciaADocumentoFisico")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarRecursoTipoReferenciaADocumentoFisico">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONREFERENCIA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="RestaurarVersionReferencia" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("RestaurarVersionReferencia")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="RestaurarVersionReferencia">@Html.GetText("ROLESYPERMISOS", "ACCIONRESTAURAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONREFERENCIA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarVersionReferencia" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarVersionReferencia")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarVersionReferencia">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINARVERSION")</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOPREGUNTA")</span>
+                                        <input type="checkbox" class="custom-control-input" id="tipo-pregunta">
+                                        <label class="custom-control-label" for="tipo-pregunta">@Html.GetText("ROLESYPERMISOS", "TIPOPREGUNTA")</label>
+                                    </div>
+                                    <div class="custom-control__group">
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARPREGUNTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="CrearPregunta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("CrearPregunta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="CrearPregunta">@Html.GetText("ROLESYPERMISOS", "ACCIONCREAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARPREGUNTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EditarPregunta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EditarPregunta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EditarPregunta">@Html.GetText("ROLESYPERMISOS", "ACCIONEDITAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARPREGUNTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarPregunta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarPregunta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarPregunta">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONPREGUNTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="RestaurarVersionPregunta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("RestaurarVersionPregunta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="RestaurarVersionPregunta">@Html.GetText("ROLESYPERMISOS", "ACCIONRESTAURAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONPREGUNTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarVersionPregunta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarVersionPregunta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarVersionPregunta">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINARVERSION")</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPODEBATE")</span>
+                                        <input type="checkbox" class="custom-control-input" id="tipo-debate">
+                                        <label class="custom-control-label" for="tipo-debate">@Html.GetText("ROLESYPERMISOS", "TIPODEBATE")</label>
+                                    </div>
+                                    <div class="custom-control__group">
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARDEBATE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="CrearDebate" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("CrearDebate")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="CrearDebate">@Html.GetText("ROLESYPERMISOS", "ACCIONCREAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARDEBATE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EditarDebate" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EditarDebate")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EditarDebate">@Html.GetText("ROLESYPERMISOS", "ACCIONEDITAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARDEBATE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarDebate" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarDebate")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarDebate">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONDEBATE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="RestaurarVersionDebate" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("RestaurarVersionDebate")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="RestaurarVersionDebate">@Html.GetText("ROLESYPERMISOS", "ACCIONRESTAURAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONDEBATE")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarVersionDebate" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarVersionDebate")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarVersionDebate">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINARVERSION")</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOENCUESTA")</span>
+                                        <input type="checkbox" class="custom-control-input" id="tipo-encuesta">
+                                        <label class="custom-control-label" for="tipo-encuesta">@Html.GetText("ROLESYPERMISOS", "TIPOENCUESTA")</label>
+                                    </div>
+                                    <div class="custom-control__group">
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARENCUESTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="CrearEncuesta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("CrearEncuesta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="CrearEncuesta">@Html.GetText("ROLESYPERMISOS", "ACCIONCREAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARENCUESTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EditarEncuesta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EditarEncuesta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EditarEncuesta">@Html.GetText("ROLESYPERMISOS", "ACCIONEDITAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARENCUESTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarEncuesta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarEncuesta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarEncuesta">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONENCUESTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="RestaurarVersionEncuesta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("RestaurarVersionEncuesta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="RestaurarVersionEncuesta">@Html.GetText("ROLESYPERMISOS", "ACCIONRESTAURAR")</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONENCUESTA")</span>
+                                            <input type="checkbox" class="custom-control-input" id="EliminarVersionEncuesta" @(permisosSeccionRecursos.FirstOrDefault(x => x.Nombre.Equals("EliminarVersionEncuesta")).Concedido ? "checked" : "")>
+                                            <label class="custom-control-label" for="EliminarVersionEncuesta">@Html.GetText("ROLESYPERMISOS", "ACCIONELIMINARVERSION")</label>
+                                        </div>
+                                    </div>
+                                        
+                                    <div class="permisosRecursosSemanticos">
+                                        @{
+                                            int cont = 0;
+                                        }
+                                        @foreach (PermisoRecursoSemantico permisos in Model.ListaPermisosRecursosSemanticos)
+                                        {
+                                            <div class="custom-control custom-checkbox">
+                                                <span class="component-name" style="display: none;">@permisos.Nombre</span>
+                                                <input type="checkbox" class="custom-control-input" id="tipo_@permisos.OntologiaID">
+                                                <label class="custom-control-label" for="tipo_@permisos.OntologiaID" style="font-weight: 500;">@permisos.Nombre</label>
+                                            </div>
+                                            <div class="custom-control__group">
+                                                <div class="custom-control custom-checkbox CrearRecursoSemantico_@permisos.OntologiaID component-wrap permisorecurso-row">
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOSEMANTICO") - @permisos.Nombre</span>
+                                                    <input type="checkbox" class="custom-control-input" id="CrearRecursoSemantico_@permisos.OntologiaID" @(permisos.PermisoCrear ? "checked" : "") />
+                                                    <label class="custom-control-label" for="CrearRecursoSemantico_@permisos.OntologiaID">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOSEMANTICO") - @permisos.Nombre</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox EditarRecursoSemantico_@permisos.OntologiaID component-wrap permisorecurso-row">
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOSEMANTICO") - @permisos.Nombre</span>
+                                                    <input type="checkbox" class="custom-control-input" id="EditarRecursoSemantico_@permisos.OntologiaID" @(permisos.PermisoEditar ? "checked" : "") />
+                                                    <label class="custom-control-label" for="EditarRecursoSemantico_@permisos.OntologiaID">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOSEMANTICO") - @permisos.Nombre</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox EliminarRecursoSemantico_@permisos.OntologiaID component-wrap permisorecurso-row">
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOSEMANTICO") - @permisos.Nombre</span>
+                                                    <input type="checkbox" class="custom-control-input" id="EliminarRecursoSemantico_@permisos.OntologiaID" @(permisos.PermisoEliminar ? "checked" : "") />
+                                                    <label class="custom-control-label" for="EliminarRecursoSemantico_@permisos.OntologiaID">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOSEMANTICO") - @permisos.Nombre</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox RestaurarVersionRecursoSemantico_@permisos.OntologiaID component-wrap permisorecurso-row">
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONSEMANTICO") - @permisos.Nombre</span>
+                                                    <input type="checkbox" class="custom-control-input" id="RestaurarVersionRecursoSemantico_@permisos.OntologiaID" @(permisos.PermisoRestaurarVersion ? "checked" : "") />
+                                                    <label class="custom-control-label" for="RestaurarVersionRecursoSemantico_@permisos.OntologiaID">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONSEMANTICO") - @permisos.Nombre</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox EliminarVersionRecursoSemantico_@permisos.OntologiaID component-wrap permisorecurso-row">
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONSEMANTICO") - @permisos.Nombre</span>
+                                                    <input type="checkbox" class="custom-control-input" id="EliminarVersionRecursoSemantico_@permisos.OntologiaID" @(permisos.PermisoEliminarVersion ? "checked" : "") />
+                                                    <label class="custom-control-label" for="EliminarVersionRecursoSemantico_@permisos.OntologiaID">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONSEMANTICO") - @permisos.Nombre</label>
+                                                </div>
+                                            </div>                                            
+
+                                            cont++;
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            @{
+                if(!Model.EsRolUsuario)
+                {
+                    <div class="tab-pane fade" id="usuarios" role="tabpanel" aria-labelledby="usuarios-tab">
+                        @Html.PartialView("_partial-views/_members-tab", Model)
+                    </div>
+                }                
+            }                        
+            <div class="panelBotonera boton-modal-roles">
+                <a id="btnGuardarRol_@Model.RolID" class="btn btn-primary uppercase btnGuardarRol">@Html.GetText("COMMON", "GUARDAR")</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@* Carga de operativa *@
+<script>
+    (function ($) {
+
+        operativaGestionDeRoles.init();
+
+        const multiIdiomaConfig = {
+            numIdiomasVisibles: 3,
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
+        };
+        operativaMultiIdioma.init(multiIdiomaConfig);
+
+    })();
+</script>

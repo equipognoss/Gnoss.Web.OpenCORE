@@ -44,9 +44,12 @@
                         @foreach(ResourceModel doc in Model.OrderByDescending(recurso => recurso.Version))
                         {
                         <tr @(cont%2 == 0 ? "class=\"par\"" : "")>
+                            if(doc.TypeDocument != ResourceModel.DocumentType.Semantico)
+                            {
                             <td>
-                                <input type="checkbox" onclick="ComprobarChecks(this);" id="@doc.Key"></td>
-                            <td><a href="@doc.CompletCardLink">@doc.Version</a></td>
+                                <input type="checkbox" onclick="ComprobarChecks(this);" id="@doc.Key">
+                            </td>
+                            }
                             <td>@doc.PublishDate.ToString("HH:mm")</td>
                             <td>@doc.PublishDate.ToString("dd/MM/yyyy")</td>
                             <td>@doc.Publisher.NamePerson</td>
@@ -82,10 +85,13 @@
                     <p class="cerrar" style="display: block;"><a id="cerrarConfirmRestaurar" title="cerrar formulario">cerrar x</a></p>
                 </div>
             </div>
-            
-            <fieldset>
-                <p><input type="button" onclick="DesplegarComparar()" value="@Html.GetText("HISTORIALVERSIONES", "COMPARAR")"></p>
-            </fieldset>
+
+            @if (DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+            {
+                <fieldset>
+                    <p><input type="button" onclick="DesplegarComparar()" value="@Html.GetText("HISTORIALVERSIONES", "COMPARAR")"></p>
+                </fieldset>
+            }
 
             <div style="display:none" id="despleCompVer">
                 <div style="display: block;" class="stateShowForm" id="panels">

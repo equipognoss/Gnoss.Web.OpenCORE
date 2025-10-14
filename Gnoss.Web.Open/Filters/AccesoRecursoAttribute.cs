@@ -10,10 +10,12 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -36,15 +38,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private EntityContext mEntityContext;
         private RedisCacheWrapper mRedisCacheWrapper;
         private VirtuosoAD mVirtuosoAD;
-
-        public AccesoRecursoAttribute(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AccesoRecursoAttribute(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ILogger<AccesoRecursoAttribute> logger, ILoggerFactory loggerFactory)
         {
             mLoggingService = loggingService;
             mConfigService = configService;
             mEntityContext = entityContext;
             mRedisCacheWrapper = redisCacheWrapper;
             mVirtuosoAD = virtuosoAD;
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
 
             Rol = RolesAccesoRecurso.Lector;
         }
@@ -58,14 +63,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         protected override void RealizarComprobaciones(ActionExecutingContext pFilterContext)
         {
             string parametroDocumentoID = mControladorBase.RequestParams("docID");
+            string parametroDocumentoVersionID = mControladorBase.RequestParams("versionDocID");
             Guid documentoID;
+            Guid documentoVersionID;
+            Guid.TryParse(parametroDocumentoVersionID, out documentoVersionID);
+
 
             string urlRedirect = null;
 
             if (!string.IsNullOrEmpty(parametroDocumentoID) && (Guid.TryParse(parametroDocumentoID, out documentoID)))
             {
-                DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null);
+                DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
+                documentoID = documentoVersionID != Guid.Empty ? documentoVersionID : documentoID;
                 //TODO JUAN. Hay que meter aquí la comprobación de MyGNOSS o se hace en la ficha?
 
                 //Verifico si el recurso está compartido en la comunidad y no está eliminado
@@ -82,14 +92,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     {
                         if (!proyectoOriginalID.Equals(ProyectoAD.MetaProyecto))
                         {
-                            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, null);
+                            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 
                             string nombreCortoProy = proyCN.ObtenerNombreCortoProyecto(proyectoOriginalID);
 
                             pFilterContext.Result = new RedirectResult(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(Controlador(pFilterContext).BaseURLIdioma, Controlador(pFilterContext).UtilIdiomas, nombreCortoProy, "", mControladorBase.RequestParams("nombreRecurso"), documentoID, null, false));
                             return;
-                        }                   
-                    }                  
+                        }
+                    }
                 }
 
                 documentacionCN.Dispose();
@@ -113,7 +123,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             if (!string.IsNullOrEmpty(urlRedirect))
             {
                 Redireccionar(urlRedirect, pFilterContext);
-                //HttpContext.Current.Response.Redirect(urlRedirect);
             }
         }
 
@@ -135,7 +144,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 
                 //Si el documento no existe, o está eliminado, o no está compartido en esta comunidad, o es borrador, dar error 404
 
-                DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null);
+                DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
                 List<Guid> listaProyectos = new List<Guid>();
                 listaProyectos.Add(mControladorBase.ProyectoSeleccionado.Clave);
@@ -232,7 +241,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             }
             else
             {
-                DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null);
+                DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
                 //Compruebo si el usuario es editor del recurso
                 if (!documentacionCN.TieneUsuarioAccesoADocumentoEnProyecto(mControladorBase.ProyectoSeleccionado.Clave, pDocumentoID, mControladorBase.IdentidadActual.PerfilID, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, true, true))
@@ -254,7 +263,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             short tipo;
             
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             docCN.ObtenerTituloElementoVinculadoIDTipoDeRecurso(pDocumentoID, out titulo, out elementoVinculadoID, out tipo);
 
             return mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(mControladorBase.BaseURLIdioma, mControladorBase.UtilIdiomas, mControladorBase.ProyectoSeleccionado.NombreCorto, mControladorBase.UrlPerfil, titulo, pDocumentoID, elementoVinculadoID, (TiposDocumentacion)tipo, mControladorBase.IdentidadActual.TrabajaPersonaConOrganizacion);

@@ -11,6 +11,7 @@ using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos.CMS;
 using Es.Riam.Gnoss.Elementos.Notificacion;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.Notificacion;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
@@ -19,6 +20,7 @@ using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
@@ -33,6 +35,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,18 +63,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private ControladorCMS mControladorCMS;
 
+        private IAvailableServices mAvailableServices;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+
         #endregion
 
-        public CMSPaginaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public CMSPaginaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSPaginaController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger, loggerFactory)
         {
+            mAvailableServices = availableServices;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             TipoComponenteCMS? tipoComponenteCMSActual = null;
 
-            mControladorCMS = new ControladorCMS(this, ComponenteCMSPaginaActual, TipoUbicacionCMSPaginaActual, null, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, true);
+            mControladorCMS = new ControladorCMS(this, ComponenteCMSPaginaActual, TipoUbicacionCMSPaginaActual, null, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, true, mLoggerFactory.CreateLogger<ControladorCMS>(), mLoggerFactory);
 
             if (ComponenteCMSPaginaActual.HasValue && mControladorCMS.GestorCMSActual.ListaComponentes.ContainsKey(ComponenteCMSPaginaActual.Value))
             {
@@ -148,7 +158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 bool pintar = false;
                 bool.TryParse(RequestParams("pintar"), out pintar);
 
-				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 				Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                 if (string.IsNullOrEmpty(idiomaPedido) || !listaIdiomas.ContainsKey(idiomaPedido))
                 {
@@ -250,7 +260,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else if (!string.IsNullOrEmpty(RequestParams("ComponentName")))
                     {
-                        CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
 
                         Guid proyectoID = ProyectoSeleccionado.Clave;
                         
@@ -270,7 +280,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else if (!string.IsNullOrEmpty(RequestParams("eventoID")) && Guid.TryParse(RequestParams("eventoID"), out eventoID))
                     {
-                        ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                         DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerEventoProyectoPorEventoID(eventoID);
                         List<ProyectoEvento> filasEvento = dataWrapperProyecto.ListaProyectoEvento.Where(proy=>proy.EventoID.Equals(eventoID)).ToList();
 
@@ -330,7 +340,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public ActionResult LoadMoreActivity(int NumPeticion, Guid ComponentKey)
         {
             #region Actividad reciente
-            CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
             GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponentKey,ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext);
             cmsCN.Dispose();
 
@@ -369,10 +379,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 List<string> listaCorreos = new List<string>();
                 listaCorreos.Add(componente.DestinatarioCorreo);
 
-                GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(new DataWrapperNotificacion(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(new DataWrapperNotificacion(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
                 gestorNotificaciones.AgregarNotificacionGenerica(listaCorreos, mensaje, ProyectoSeleccionado.Nombre + "-" + componente.Titulo, UtilIdiomas.LanguageCode, ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave);
-                NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                notificacionCN.ActualizarNotificacion();
+                NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
+                notificacionCN.ActualizarNotificacion(mAvailableServices);
                 notificacionCN.Dispose();
 
 

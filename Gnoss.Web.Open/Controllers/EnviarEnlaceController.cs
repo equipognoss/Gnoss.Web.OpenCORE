@@ -20,6 +20,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Amigos;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -30,17 +31,26 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class EnviarEnlaceController : ControllerBaseWeb
     {
-        public EnviarEnlaceController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private IAvailableServices mAvailableServices;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public EnviarEnlaceController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EnviarEnlaceController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mAvailableServices = availableServices;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public ActionResult Index()
@@ -60,8 +70,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            ControladorAmigos contrAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-            contrAmigos.CargarAmigos(IdentidadActual, true);
+            ControladorAmigos contrAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorAmigos>(), mLoggerFactory);
+            contrAmigos.CargarAmigos(IdentidadActual, true, mAvailableServices);
 
             SendLinkViewModel paginaModel = new SendLinkViewModel();
 
@@ -72,12 +82,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid recursoID = Guid.Empty;
                 if (Guid.TryParse(RequestParams("docID"), out recursoID))
                 {
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     nombreEnlace = UtilCadenas.ObtenerTextoDeIdioma(docCN.ObtenerTituloDocumentoPorID(recursoID), IdiomaUsuario, null);
                 }
             }
 
-            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             Dictionary<TipoProyectoEventoAccion, string> listaEventos = ProyectoSeleccionado.ListaTipoProyectoEventoAccion;
             proyectoCL.Dispose();
             string accionEnvioEnlace = string.Empty;
@@ -111,27 +121,42 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string nombreEnlace = RequestParams("nombreElem");
 
+            Guid recursoID = Guid.Empty;
+            Guid recursoOriginalID = Guid.Empty;
+            bool ultimaVersion = false;
+
             if (!string.IsNullOrEmpty(RequestParams("tipo")) && RequestParams("tipo").Equals("recurso") && !string.IsNullOrEmpty(RequestParams("docID")))
             {
-                Guid recursoID = Guid.Empty;
                 if (Guid.TryParse(RequestParams("docID"), out recursoID))
                 {
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     nombreEnlace = UtilCadenas.ObtenerTextoDeIdioma(docCN.ObtenerTituloDocumentoPorID(recursoID), IdiomaUsuario, null);
+                    DataWrapperDocumentacion dwDocumentacion = docCN.ObtenerVersionesDocumentoPorID(recursoID);
+                    Guid recursoOrginalIDAux = dwDocumentacion.ListaVersionDocumento.FirstOrDefault().DocumentoOriginalID;
+                    recursoOriginalID = recursoOrginalIDAux == Guid.Empty ? recursoID : recursoOrginalIDAux;
+                    ultimaVersion = docCN.ObtenerDocumentoPorID(recursoID).ListaDocumento.FirstOrDefault().UltimaVersion;
                 }
             }
 
             string rutaEnlace = ViewBag.UrlPagina;
             rutaEnlace = rutaEnlace.Substring(0, rutaEnlace.LastIndexOf("/" + UtilIdiomas.GetText("URLSEM", "ENVIARPORCORREO")));
             rutaEnlace = HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + rutaEnlace;
+            if (recursoOriginalID != Guid.Empty && !ultimaVersion)
+            {
+                rutaEnlace = rutaEnlace.Replace(recursoID.ToString(), $"{recursoOriginalID}/{recursoID}");
+            }
+            if (ultimaVersion)
+            {
+                rutaEnlace = rutaEnlace.Replace(recursoID.ToString(), recursoOriginalID.ToString());
+            }
 
             if (!string.IsNullOrEmpty(pEnviarLinkModel.Receivers))
             {
                 string[] correos = pEnviarLinkModel.Receivers.Split(new string[] { "&" }, StringSplitOptions.RemoveEmptyEntries);
                 string notas = "";
-                if(!string.IsNullOrEmpty(pEnviarLinkModel.Message))
+                if (!string.IsNullOrEmpty(pEnviarLinkModel.Message))
                 {
-                    notas =  HttpUtility.UrlDecode(pEnviarLinkModel.Message.Replace("\n", "<br>"));
+                    notas = HttpUtility.UrlDecode(pEnviarLinkModel.Message.Replace("\n", "<br>"));
                 }
                 string idioma = pEnviarLinkModel.Lang;
 
@@ -148,9 +173,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="e">Argumentos del evento</param>
         private void EnviarCorreos(string[] pCorreos, string pNotas, string pIdioma, string pRutaEnlace, string pNombreEnlace)
         {
-            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
             DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
-            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
 
             List<Identidad> listaIdentidadesPersonasGnoss = new List<Identidad>();
             List<string> listaEmails = new List<string>();
@@ -158,10 +183,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             bool correoParaIdentidadesEnElMetaEspacio = false;
             List<Guid> listaPerfilesDestinatarios = new List<Guid>();
 
-            ControladorAmigos contrAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-            contrAmigos.CargarAmigos(IdentidadActual, EsAdministrador(IdentidadActual));
+            ControladorAmigos contrAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorAmigos>(), mLoggerFactory);
+            contrAmigos.CargarAmigos(IdentidadActual, EsAdministrador(IdentidadActual), mAvailableServices);
 
-            GestionCorreo gestionCorreo = new GestionCorreo(null, null, IdentidadActual.GestorIdentidades, IdentidadActual.GestorAmigos, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionCorreo gestionCorreo = new GestionCorreo(null, null, IdentidadActual.GestorIdentidades, IdentidadActual.GestorAmigos, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<GestionCorreo>(), mLoggerFactory);
             gestionCorreo.GestorNotificaciones = GestorNotificaciones;
             List<Guid> listaIdentidadesEnvioConjunto = new List<Guid>();
 
@@ -183,7 +208,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (listaIdentContactosYGrupos.Count > 0)
             {
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 List<Guid> listaIdentiadades = identidadCN.ObtenerIdentidadesDeMyGnossDeParticipantesDeGrupos(listaIdentContactosYGrupos);
                 DataWrapperIdentidad dataWrapperIdentidad = identidadCN.ObtenerIdentidadesPorID(listaIdentContactosYGrupos, true);
                 identidadCN.Dispose();
@@ -200,7 +225,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado)
                 {
-                    IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     listaIdentiadades = identCN.ObtenerIdentidadesIDDeMyGNOSSPorIdentidades(listaIdentiadades);
                     identCN.Dispose();
                 }
@@ -249,7 +274,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 correoID = EnviarEnlaceCorreoDestinaratarios(pRutaEnlace, pNombreEnlace, gestionCorreo, pNotas, listaIdentidadesEnvioConjunto);
             }
 
-            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             actualizarCN.ActualizarCorreo(gestionCorreo.CorreoDS);
 
             if (correoID != Guid.Empty)
@@ -265,7 +290,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 //Añadimos una línea al base para que la procese:
-                ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(correoID, IdentidadActual.IdentidadMyGNOSS.Clave, ProyectoSeleccionado.Clave, "base", destinatarios, null, Es.Riam.Gnoss.AD.BASE_BD.PrioridadBase.Alta);
+                ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(correoID, IdentidadActual.IdentidadMyGNOSS.Clave, ProyectoSeleccionado.Clave, "base", destinatarios, null, Es.Riam.Gnoss.AD.BASE_BD.PrioridadBase.Alta, mAvailableServices);
 
             }
 
@@ -304,7 +329,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (listaEmails.Count > 0 || listaIdentidadesPersonasGnoss.Count > 0 || correoParaIdentidadesEnElMetaEspacio)
             {
-                notificacionCN.ActualizarNotificacion();
+                notificacionCN.ActualizarNotificacion(mAvailableServices);
                 notificacionCN.Dispose();
             }
         }

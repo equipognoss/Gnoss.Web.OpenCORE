@@ -11,12 +11,14 @@ Variables
 *@
 
 @{
-TabModel.ExportacionSearchTabModel exportacion = Model;
-Guid exportationId = @Guid.NewGuid();
-string collapseId = "panel_collapse_" + exportationId.ToString().Substring(0,5);
-string addedExportationPropertyListId = "id-added-exportation-property-list_" + exportationId.ToString().Substring(0, 5);
-string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
-string idioma = Html.GetUtilIdiomas().LanguageCode;
+	Model.GruposPermiso = Model.GruposPermiso ?? new Dictionary<Guid, string>();
+	TabModel.ExportacionSearchTabModel exportacion = Model;
+	Guid exportationId = @Guid.NewGuid();
+	string collapseId = "panel_collapse_" + exportationId.ToString().Substring(0,5);
+	string addedExportationPropertyListId = "id-added-exportation-property-list_" + exportationId.ToString().Substring(0, 5);
+	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+	string idioma = Html.GetUtilIdiomas().LanguageCode;
+	bool comparando = ViewBag.ComparandoPestanya ?? false;
 }
 
 @*
@@ -80,10 +82,13 @@ string idioma = Html.GetUtilIdiomas().LanguageCode;
 								</li>
 								<li>
 									@* Acción de borrar el filtro *@
-									<a class="action-delete round-icon-button js-action-delete btnDeleteExportation"
-										href="javascript: void(0);">
-										<span class="material-icons">delete</span>
-									</a>
+									@if (!comparando)
+									{
+										<a class="action-delete round-icon-button js-action-delete btnDeleteExportation"
+										   href="javascript: void(0);">
+											<span class="material-icons">delete</span>
+										</a>
+									}
 								</li>
 							</ul>
 						</div>
@@ -111,7 +116,8 @@ string idioma = Html.GetUtilIdiomas().LanguageCode;
 						data-labeltext="Nombre"
 						placeholder="@Html.GetText("COMADMINPESTANYAS", "NOMBREEXPORTACION")"
 						class="form-control inputNombreExportacion multiIdioma"
-						value="@exportacion.Nombre">
+						value="@exportacion.Nombre"
+						@(comparando ? "readonly" : "")>
 					<small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS","NOMBREIDENTIFICATIVODELAEXPORTACION")</small>
 				</div>
 			</div>			
@@ -130,11 +136,16 @@ string idioma = Html.GetUtilIdiomas().LanguageCode;
 							   placeholder="@Html.GetText("DEVTOOLS","BUSCARUNGRUPOYPULSAAÑADIR")"
 							   id="privacidadGrupos_@exportacion.Key"
 							   class="form-control txtAutocomplete"														
-							   autocomplete="off" />
+							   autocomplete="off" 
+							   @(comparando ? "readonly" : "") />
 								
 
 						@* Botón de Añadir Privacidad Perfiles *@
-						<a id="btnAddPrivacidadGrupos_@(exportacion.Key)" class="btn btn-grey uppercase btnAddPrivacidadGrupos">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+						@if(!comparando)
+						{
+							<a id="btnAddPrivacidadGrupos_@(exportacion.Key)" class="btn btn-grey uppercase btnAddPrivacidadGrupos">@Html.GetText("ADMINISTRACIONBASICA", "AÑADIR")</a>
+						}
+						
 
 						@* Campo oculto _hack *@																										
 						<input type="hidden" id="privacidadGrupos_@(exportacion.Key)_Hack" class="valores privacidadGrupos" name="TabValoresPrivacidadGrupos" value="@listaIDsGrupos"/>
@@ -151,11 +162,14 @@ string idioma = Html.GetUtilIdiomas().LanguageCode;
 			<div class="form-group mb-4 edit-exportation-properties">		
 				<div class="propertyExportation-header d-flex justify-content-between align-items-center">
 				<label class="control-label d-block font-weight-bold" style="font-size:14px;">@Html.GetText("COMADMINPESTANYAS", "PROPIEDADES")</label>
-					@* Botón para añadir nuevas propiedades a la exportación *@
-					<a href="javascript: void(0);" class="linkAddPropertyExportation btn btn-outline-primary new" style="display: flex; text-decoration: none;">
-						<span class="material-icons">add</span>
-						<span class="texto">@Html.GetText("COMADMINPESTANYAS", "ADDPROPIEDAD")</span>
-					</a>
+					@if (!comparando && ViewBag.ModificarPaginaPermitido)
+					{
+						@* Botón para añadir nuevas propiedades a la exportación *@
+						<a href="javascript: void(0);" class="linkAddPropertyExportation btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+							<span class="material-icons">add</span>
+							<span class="texto">@Html.GetText("COMADMINPESTANYAS", "ADDPROPIEDAD")</span>
+						</a>
+					}
 				</div>
 
 				@* Listado de los filtros de Orden *@

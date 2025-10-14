@@ -26,6 +26,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -91,11 +93,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Gestor de identidades
         /// </summary>
         private GestionIdentidades mGestorIdentidades;
-        #endregion
 
-        public EnviarInvitacionOrgController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+
+        #endregion 
+
+        public EnviarInvitacionOrgController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EnviarInvitacionOrgController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+
         }
 
         /// <summary>
@@ -206,11 +216,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 PaginaModel.AllowPersonlizeMessage = false;
             }
 
-            AmigosCL amigosCL = new AmigosCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            AmigosCL amigosCL = new AmigosCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCL>(), mLoggerFactory);
             if (!amigosCL.EstanCargadosAmigos(IdentidadActual.Clave, false, false, false, false, false))
             {
-                ControladorAmigos contAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                contAmigos.CargarAmigos(IdentidadActual, false);
+                ControladorAmigos contAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorAmigos>(), mLoggerFactory);
+                contAmigos.CargarAmigos(IdentidadActual, false, mAvailableServices);
             }
         }
 
@@ -223,11 +233,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             Dictionary<Guid, Guid> listaInvitacionesPorIdentidad = null;
 
-            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
             DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
-            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
 
-            OrganizacionCN orgCN = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            OrganizacionCN orgCN = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<OrganizacionCN>(), mLoggerFactory);
             AD.EntityModel.Models.OrganizacionDS.Organizacion filaOrg = orgCN.ObtenerOrganizacionPorID(IdentidadActual.OrganizacionID.Value).ListaOrganizacion.FirstOrDefault();
 
             List<Identidad> listaIdentidades = new List<Identidad>();
@@ -291,7 +301,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             status = SendStatus.Ok;
             if (listaEmails.Count > 0 || listaIdentidades.Count > 0)
             {
-                notificacionCN.ActualizarNotificacion();
+                notificacionCN.ActualizarNotificacion(mAvailableServices);
                 notificacionCN.Dispose();
 
                 List<Guid> listaPerfilesInvitados = new List<Guid>();
@@ -304,7 +314,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (listaEmails.Count > 0)
                 {
-                    PeticionCN petCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    PeticionCN petCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
                     petCN.ActualizarBD();
                     petCN.Dispose();
                 }
@@ -332,7 +342,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private void CargarContactosPuedoInvitar()
         {
-            IdentidadCN IdenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN IdenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             DataWrapperIdentidad idenDW = IdenCN.ObtenerIdentidadesAmigosPuedoInvitarOrganizacion(IdentidadActual.OrganizacionID.Value, IdentidadActual.IdentidadMyGNOSS.Clave, " ");
             DataWrapperPersona dataWrapperPersona = new DataWrapperPersona();
             DataWrapperOrganizacion orgDW = new DataWrapperOrganizacion();
@@ -350,8 +360,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns></returns>
         private bool ComprobarCorreoEsValido(string pEmail, string pNombreCortoOrg)
         {
-            string[] emails = new string[] { pEmail };
-            PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            string[] emails = new string[] { pEmail.ToLower() };
+            PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             Dictionary<string, List<Guid>> dic = persCN.ObtenerUsuarioIDPerfilIDPorEmailYOrganizacion(pNombreCortoOrg, emails);
             persCN.Dispose();
 

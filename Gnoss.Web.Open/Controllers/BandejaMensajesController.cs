@@ -44,7 +44,9 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -60,13 +62,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         #region Miembros
 
         private MessageModel mMensaje = null;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #endregion
 
-        public BandejaMensajesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public BandejaMensajesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BandejaMensajesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
-
+            mAvailableServices = availableServices;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Metodos
@@ -237,8 +242,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string url = "&" + Request.QueryString.Value.Replace("?", "");
                 if (url.Contains("&responder") || url.Contains("&responderATodos") || url.Contains("&reenviar"))
                 {
-                    ControladorAmigos controlador = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                    controlador.CargarAmigos(IdentidadActual, EsIdentidadActualAdministradorOrganizacion, pSoloComprobar: true);
+                    ControladorAmigos controlador = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorAmigos>(), mLoggerFactory);
+                    controlador.CargarAmigos(IdentidadActual, EsIdentidadActualAdministradorOrganizacion, mAvailableServices, pSoloComprobar: true);
                     return View("EdicionMensaje", Mensaje);
                 }
 
@@ -246,12 +251,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (("&" + Request.Query.ToString()).Contains("&nuevo&") || RequestParams("nuevo") != null)
             {
-                ControladorAmigos controlador = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controlador.CargarAmigos(IdentidadActual, EsIdentidadActualAdministradorOrganizacion, pSoloComprobar: true);
+                ControladorAmigos controlador = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorAmigos>(), mLoggerFactory);
+                controlador.CargarAmigos(IdentidadActual, EsIdentidadActualAdministradorOrganizacion, mAvailableServices, pSoloComprobar: true);
                 return View("EdicionMensaje");
             }
 
-            PersonaCL personaCL = new PersonaCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCL personaCL = new PersonaCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCL>(), mLoggerFactory);
             string vista = personaCL.ObtenerVistaMenuMensajes(mControladorBase.UsuarioActual.PersonaID);
             bool compactView = !string.IsNullOrEmpty(vista) && (vista.Equals("compact") || vista.Equals("compactada"));
 
@@ -283,8 +288,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ResultadoModel listaResultados = cargadorResultados.CargarResultadosJSON(ProyectoAD.MyGnoss, mControladorBase.UsuarioActual.IdentidadID, mControladorBase.UsuarioActual.EsUsuarioInvitado, mControladorBase.DominoAplicacionConHTTP + this.Request.Path, mControladorBase.UsuarioActual.UsarMasterParaLectura, AdministradorQuiereVerTodasLasPersonas, VariableTipoBusqueda, grafo, parametroadicional, "", true, UtilIdiomas.LanguageCode, -1, "");
                 //List<Correo> listaResultados = GestionCorreo.ListaCorreosEnviados;
                 MemoryStream memStream = new MemoryStream();
-                BinaryFormatter serializer = new BinaryFormatter();
-                serializer.Serialize(memStream, listaResultados);
+
+                System.Text.Json.JsonSerializer.Serialize(memStream, listaResultados);
+
                 string respuesta = string.Empty;
 
                 memStream.Seek(0, SeekOrigin.Begin);
@@ -323,7 +329,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private void MarcarCorreoLeido(MessageModel pMessage)
         {
             //obtenemos el correo actual para marcarlo como parte de una conversacion
-            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
 
             if (IdentidadActual.IdentidadOrganizacion != null && IdentidadActual.IdentidadOrganizacion.Clave != null)
             {
@@ -338,7 +344,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             correoCN.Dispose();
 
 
-            FacetadoCN facetadoCN = new FacetadoCN("acidHome", UrlIntragnoss, mControladorBase.UsuarioActual.ProyectoID.ToString(), ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            FacetadoCN facetadoCN = new FacetadoCN("acidHome", UrlIntragnoss, mControladorBase.UsuarioActual.ProyectoID.ToString(), ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
             facetadoCN.ModificarPendienteLeerALeido(Grafo.ToString(), pMessage.Key.ToString());
             facetadoCN.Dispose();
 
@@ -367,7 +373,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 return new RedirectResult(BaseURLIdioma + UrlPerfil + "home");
             }
-            PersonaCL personaCL = new PersonaCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCL personaCL = new PersonaCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCL>(), mLoggerFactory);
             personaCL.ModificarVistaMenuMensajes(mControladorBase.UsuarioActual.PersonaID, defaultView);
 
             return new EmptyResult();
@@ -561,7 +567,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private void MarcarCorreosConversacion(Guid correoOrigenID, Guid nuevoCorreo)
         {
             //obtenemos el correo actual para marcarlo como parte de una conversacion
-            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
 
             if (IdentidadActual.IdentidadOrganizacion != null && IdentidadActual.IdentidadOrganizacion.Clave != null)
             {
@@ -670,7 +676,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private void Guardar(Guid pNuevoCorreo, Guid pDestinatarioCorreo, Guid? pMensajeOrigenID, Dictionary<Guid, bool> pListaDestinatarios)
         {
-            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             actualizarCN.ActualizarCorreo(GestionCorreo.CorreoDS);
 
             string destinatarios = "";
@@ -691,9 +697,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             //Añadimos una línea al base para que la procese:
-            ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(pNuevoCorreo, pDestinatarioCorreo, ProyectoSeleccionado.Clave, "base", destinatarios, pMensajeOrigenID, PrioridadBase.Alta);
-            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            notificacionCN.ActualizarNotificacion();
+            ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(pNuevoCorreo, pDestinatarioCorreo, ProyectoSeleccionado.Clave, "base", destinatarios, pMensajeOrigenID, PrioridadBase.Alta, mAvailableServices);
+            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
+            notificacionCN.ActualizarNotificacion(mAvailableServices);
         }
 
         /// <summary>
@@ -733,7 +739,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
 
                 Guid destinatarioID = Guid.Empty;
 
@@ -761,7 +767,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             pDestinatarios = pDestinatarios.Replace("/n", "").Replace(", ", ",").Replace(" , ", ",").Replace(" ,", ",");
 
             string[] arrayDestinatarios = pDestinatarios.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             DataWrapperIdentidad dataWrapperIdentidad = new DataWrapperIdentidad();
 
 
@@ -795,7 +801,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             GestionCorreo.GestorIdentidades = new GestionIdentidades(dataWrapperIdentidad, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
 
 
-            AmigosCL amigosCL = new AmigosCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            AmigosCL amigosCL = new AmigosCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCL>(), mLoggerFactory);
             DataWrapperAmigos amigosDW = new DataWrapperAmigos();
             DataWrapperIdentidad DataWrapperIdentidad2 = new DataWrapperIdentidad();
             if (!pRdbCuentaOrg)
@@ -811,13 +817,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 GestionCorreo.GestorAmigos = new GestionAmigos(amigosDW, new GestionIdentidades(DataWrapperIdentidad2, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
 
                 //Cargo la identidad de la organización porque es el autor del mensaje y si no no se manda email. 
-                IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 GestionCorreo.GestorIdentidades.DataWrapperIdentidad.Merge(identCN.ObtenerIdentidadDeOrganizacion(IdentidadActual.OrganizacionID.Value, ProyectoAD.MetaProyecto, true));
                 identCN.Dispose();
 
                 GestionCorreo.GestorIdentidades.RecargarHijos();
             }
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             var perfiles = GestionCorreo.GestorIdentidades.ListaPerfiles.Where(item => item.Value.PersonaID.HasValue);
             if (perfiles.Any())
             {
@@ -835,12 +841,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private bool ValidarDestinatarios(ref List<string> pListaDescartados, List<Guid> pListaPreferencias, string pDestinatarios, bool pEsRespuesta, ref Dictionary<Guid, bool> pListaDestinatarios)
         {
             List<string> listaProf = new List<string>();
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 			Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();
 
             foreach (string claveIdioma in idiomas.Keys)
             {
-                UtilIdiomas utilIdiomas = new UtilIdiomas(claveIdioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+                UtilIdiomas utilIdiomas = new UtilIdiomas(claveIdioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
                 //UtilIdiomas utilIdiomas = new UtilIdiomas(System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase + Path.DirectorySeparatorChar + "languages", new string[0], claveIdioma, ParametrosGeneralesRow, ParametrosAplicacionDS);
                 listaProf.Add(utilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESOR") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ");
                 listaProf.Add(utilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESORA") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ");
@@ -877,7 +883,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string javascriptDevolucion = "";
             int numSeleccionados = pListaCorreosSeleccionados.Count;
 
-            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             Guid? identidadOrg = null;
 
             if (IdentidadActual.IdentidadOrganizacion != null && EsIdentidadActualAdministradorOrganizacion)
@@ -888,11 +894,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             CorreoDS correoDS = new CorreoDS();
             correoCN.ObtenerCorreoPorListaIDs(pListaCorreosSeleccionados, IdentidadActual.IdentidadMyGNOSS.Clave, identidadOrg, ref correoDS);
 
-            GestionCorreo gestorCorreo = new GestionCorreo(correoDS, null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionCorreo gestorCorreo = new GestionCorreo(correoDS, null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<GestionCorreo>(), mLoggerFactory);
 
             //Caché de mensajes
-            FacetadoCL facCL = new FacetadoCL("acid", "bandeja", UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-
+            FacetadoCL facCL = new FacetadoCL("acid", "bandeja", UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+            List<string> filasAInsertar = new List<string>();
+            
+            BaseComunidadCN baseComunidadCN = new BaseComunidadCN("base", mEntityContext, mLoggingService, mEntityContextBASE, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<BaseComunidadCN>(), mLoggerFactory);
             foreach (Correo correo in gestorCorreo.ListaCorreosEliminados)
             {
                 correoCN.EliminarCorreoDefinitivamente(correo.Clave, correo.FilaCorreo.Autor, correo.FilaCorreo.Destinatario);
@@ -917,13 +925,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 FacetadoCN facetadoCN = null;
                 try
                 {
-                    facetadoCN = new FacetadoCN("acidHome_Master", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    facetadoCN = new FacetadoCN("acidHome_Master", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                     facetadoCN.BorrarRecurso(Grafo.ToString(), correo.Clave, 0);
                 }
-                catch (Exception ex) { mLoggingService.GuardarLogError(ex); }
+                catch (Exception ex) { mLoggingService.GuardarLogError(ex, mlogger); }
                 finally { if (facetadoCN != null) facetadoCN.Dispose(); }
 
-                FacetadoCN facetadoCN2 = new FacetadoCN("acidHome", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                FacetadoCN facetadoCN2 = new FacetadoCN("acidHome", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                 facetadoCN2.BorrarRecurso(Grafo.ToString(), correo.Clave, 0);
                 facetadoCN2.Dispose();
 
@@ -931,33 +939,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mControladorBase.UsuarioActual.UsarMasterParaLectura = true;
 
                 //Enviamos una fila al servicio windows encargado del refresco de la caché para que muestre el mensaje que se ha recibido.
-                BaseComunidadCN baseComunidadCN = new BaseComunidadCN("base", mEntityContext, mLoggingService, mEntityContextBASE, mConfigService, mServicesUtilVirtuosoAndReplication);
                 if (identidadOrg.HasValue)
                 {
-                    try
-                    {
-                        baseComunidadCN.InsertarFilaColaRefrescoCacheEnRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, identidadOrg.Value.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        GuardarLogError(ex, "Fallo al insertar en Rabbit, insertamos en la base de datos BASE, tabla colaRefrescoCache");
-                        baseComunidadCN.InsertarFilaEnColaRefrescoCache(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, identidadOrg.Value.ToString());
-                    }
+                    filasAInsertar.Add(baseComunidadCN.PreprarFilaColaRefrescoCacheRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, identidadOrg.Value.ToString()));
                 }
                 else
                 {
-                    try
-                    {
-                        baseComunidadCN.InsertarFilaColaRefrescoCacheEnRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, IdentidadActual.Clave.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        GuardarLogError(ex, "Fallo al insertar en Rabbit, insertamos en la base de datos BASE, tabla colaRefrescoCache");
-                        baseComunidadCN.InsertarFilaEnColaRefrescoCache(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, IdentidadActual.Clave.ToString());
-                    }
+                    filasAInsertar.Add(baseComunidadCN.PreprarFilaColaRefrescoCacheRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, IdentidadActual.Clave.ToString()));
                 }
-                baseComunidadCN.Dispose();
             }
+
+            baseComunidadCN.InsertarFilasColaRefrescoCacheEnRabbitMQ(filasAInsertar, TiposEventosRefrescoCache.CambiosBandejaDeMensajes);
+            baseComunidadCN.Dispose();
 
             facCL.Dispose();
             correoCN.Dispose();
@@ -974,7 +967,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             int numSeleccionados = pListaCorreosSeleccionados.Count;
 
-            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             Guid? identidadOrg = null;
 
             if (IdentidadActual.IdentidadOrganizacion != null && EsIdentidadActualAdministradorOrganizacion)
@@ -987,11 +980,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             GestionCorreo gestorCorreo = null;
 
             //Caché de mensajes
-            FacetadoCL facCL = new FacetadoCL("acid", "bandeja", UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            FacetadoCL facCL = new FacetadoCL("acid", "bandeja", UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
 
             if (pTipoBandeja == "recibidos")
             {
-                gestorCorreo = new GestionCorreo(correoDS, null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                gestorCorreo = new GestionCorreo(correoDS, null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<GestionCorreo>(), mLoggerFactory);
                 foreach (Correo correo in gestorCorreo.ListaCorreosRecibidos)
                 {
                     EliminarCorreoYLimpiarCache(correoCN, correo, facCL, pTipoBandeja, identidadOrg);
@@ -999,7 +992,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else if (pTipoBandeja == "enviados")
             {
-                gestorCorreo = new GestionCorreo(correoDS, null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                gestorCorreo = new GestionCorreo(correoDS, null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<GestionCorreo>(), mLoggerFactory);
                 foreach (Correo correo in gestorCorreo.ListaCorreosEnviados)
                 {
                     EliminarCorreoYLimpiarCache(correoCN, correo, facCL, pTipoBandeja, identidadOrg);
@@ -1021,14 +1014,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             FacetadoCN facetadoCN = null;
             try
             {
-                facetadoCN = new FacetadoCN("acidHome_Master", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                facetadoCN = new FacetadoCN("acidHome_Master", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                 //Intentamos eliminarlo directamente de virtuosomaster
                 facetadoCN.ModificarMensajeAEliminado(Grafo.ToString(), pCorreo.Clave.ToString());
             }
-            catch (Exception ex) { mLoggingService.GuardarLogError(ex); }
+            catch (Exception ex) { mLoggingService.GuardarLogError(ex, mlogger); }
             finally { if (facetadoCN != null) facetadoCN.Dispose(); }
 
-            FacetadoCN facetadoCN2 = new FacetadoCN("acidHome", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            FacetadoCN facetadoCN2 = new FacetadoCN("acidHome", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
             facetadoCN2.ModificarMensajeAEliminado(Grafo.ToString(), pCorreo.Clave.ToString());
             facetadoCN2.Dispose();
 
@@ -1041,12 +1034,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mControladorBase.UsuarioActual.UsarMasterParaLectura = true;
 
             //Enviamos una fila al servicio windows encargado del refresco de la caché para que muestre el mensaje que se ha recibido.
-            BaseComunidadCN baseComunidadCN = new BaseComunidadCN("base", mEntityContext, mLoggingService, mEntityContextBASE, mConfigService, mServicesUtilVirtuosoAndReplication);
+            BaseComunidadCN baseComunidadCN = new BaseComunidadCN("base", mEntityContext, mLoggingService, mEntityContextBASE, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<BaseComunidadCN>(), mLoggerFactory);
             if (pIdentidadOrg.HasValue && pCorreo.FilaCorreo.Destinatario.Equals(pIdentidadOrg.Value))
             {
                 try
                 {
-                    baseComunidadCN.InsertarFilaColaRefrescoCacheEnRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, pIdentidadOrg.Value.ToString());
+                    baseComunidadCN.InsertarFilaColaRefrescoCacheEnRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, pIdentidadOrg.Value.ToString(), mAvailableServices);
                 }
                 catch (Exception ex)
                 {
@@ -1059,7 +1052,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 try
                 {
-                    baseComunidadCN.InsertarFilaColaRefrescoCacheEnRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, IdentidadActual.Clave.ToString());
+                    baseComunidadCN.InsertarFilaColaRefrescoCacheEnRabbitMQ(ProyectoAD.MetaProyecto, TiposEventosRefrescoCache.CambiosBandejaDeMensajes, TipoBusqueda.Mensajes, IdentidadActual.Clave.ToString(), mAvailableServices);
                 }
                 catch (Exception ex)
                 {
@@ -1110,7 +1103,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             MessageModel mensaje = ControladorProyectoMVC.ObtenerMensajePorID(mensajeID, "", IdentidadPagina);
 
-            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             Guid? identidadOrganizacion = null;
             if (IdentidadActual.IdentidadOrganizacion != null)
             {
@@ -1165,7 +1158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mGestionCorreo == null || mGestionCorreo.IdentidadActual != IdentidadPagina)
                 {
-                    mGestionCorreo = new GestionCorreo(new CorreoDS(), null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    mGestionCorreo = new GestionCorreo(new CorreoDS(), null, null, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<GestionCorreo>(), mLoggerFactory);
                     mGestionCorreo.IdentidadActual = IdentidadPagina;
                 }
                 return mGestionCorreo;

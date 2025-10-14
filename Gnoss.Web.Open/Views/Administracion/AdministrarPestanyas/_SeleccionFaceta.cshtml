@@ -9,18 +9,18 @@ Variables
 *@
 
 @{
-List<FacetaModel> listaFacetas = Model.ListadoFacetas;
-TabModel.FacetasTabModel facetasPestanya = Model.FacetasPestanya;
-// Guid y id para gestionar cada una de las facetas
-Guid facetId = @Guid.NewGuid();	
-string collapseId = "panel_collapse_" + facetId.ToString().Substring(0,5);
+	List<FacetaModel> listaFacetas = Model.ListadoFacetas;
+	TabModel.FacetasTabModel facetasPestanya = Model.FacetasPestanya;
+	// Guid y id para gestionar cada una de las facetas
+	Guid facetId = @Guid.NewGuid();	
+	string collapseId = "panel_collapse_" + facetId.ToString().Substring(0,5);
 }
 
 @*
 ----------------------------------------------------------------
 -------------------- Vista que contiene la información de la nueva faceta a añadir --------------------
 *@
-	
+
 <li class="component-wrap facet-row" data-facetkey="@facetId" data-collapseid="@collapseId">
 	<div class="component">
 		<div class="component-header-wrap">
@@ -43,18 +43,18 @@ string collapseId = "panel_collapse_" + facetId.ToString().Substring(0,5);
 								<li>
 									@* Acción de editar la exportación *@
 									<a class="action-edit round-icon-button js-action-edit-component btnEditFacet"
-									   data-toggle="collapse" 
-									   data-target="#@collapseId"									   
-									   role="button" 
-									   aria-expanded="false" 
-									   aria-controls="@collapseId">									   
+									data-toggle="collapse" 
+									data-target="#@collapseId"									   
+									role="button" 
+									aria-expanded="false" 
+									aria-controls="@collapseId">									   
 										<span class="material-icons">edit</span>
 									</a>
 								</li>
 								<li>
 									@* Acción de borrar el filtro *@
 									<a class="action-delete round-icon-button js-action-delete btnDeleteFacet"
-										href="javascript: void(0);">
+									href="javascript: void(0);">
 										<span class="material-icons">delete</span>
 									</a>
 								</li>
@@ -71,19 +71,24 @@ string collapseId = "panel_collapse_" + facetId.ToString().Substring(0,5);
 		@* Indicación de que la faceta se ha eliminado *@
 		<input type="hidden" name="TabEliminada" value="false" />
 		<div class="card card-body">
-		
+
 			@* Select de la lista de facetas *@
 			<div class="form-group mb-2">
 				<label class="control-label d-block">@Html.GetText("DEVTOOLS","LISTADODEFACETAS")</label>
 				<select name="listaFacetas"
-						class="cmbListaFacetas js-select2"
-						tabindex="0"
-						aria-hidden="false">					
-				
-				@foreach (FacetaModel faceta in listaFacetas)
-				{
-					<option class="facetas" 
-							value="@(faceta.ClaveFaceta)" 
+				class="cmbListaFacetas js-select2"
+				tabindex="0"
+						aria-hidden="false" style="overflow: auto; height: 150px;">
+
+					@foreach (FacetaModel faceta in listaFacetas)
+					{
+						string clavefaceta = faceta.ClaveFaceta;
+						if (!string.IsNullOrEmpty(faceta.ClaveFacetaYReprocidad))
+						{
+							clavefaceta = faceta.ClaveFacetaYReprocidad;
+						}
+						<option class="facetas" 
+							value="@clavefaceta"
 							name="@(faceta.AgrupacionID)">
 							@faceta.Name
 					</option>
@@ -103,6 +108,19 @@ string collapseId = "panel_collapse_" + facetId.ToString().Substring(0,5);
 						@* Combobox que se rellenará vía JS dependiendo de la selección de listaFacetas *@
 				</select>
 				<small class="form-text text-muted">@Html.GetText("DEVTOOLS","SELECCIONAELOBJETODECONOCIMIENTOASOCIADOALAFACETAPREVIAMENTE")</small>
+			</div>
+
+			@* Incluir valores de la faceta en el autocompletar *@
+			<div class="form-group mb-2">
+				<label class="control-label d-block">@Html.GetText("DEVTOOLS", "AUTOCOMPLETADOFACETAPAGINA")</label>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input IncluirFacetaEnAutocompletar" type="radio" name="IncluirFacetaEnAutocompletar_@facetId" data-value="si" id="IncluirFacetaEnAutocompletar_SI_@facetId">
+					<label class="form-check-label" for="IncluirFacetaEnAutocompletar_SI_@facetId">Sí</label>
+				</div>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input IncluirFacetaEnAutocompletar" type="radio" name="IncluirFacetaEnAutocompletar_@facetId" data-value="no" checked="" id="IncluirFacetaEnAutocompletar_NO_@facetId">
+					<label class="form-check-label" for="IncluirFacetaEnAutocompletar_NO_@facetId">No</label>
+				</div>
 			</div>
 
 

@@ -1213,6 +1213,10 @@
 			<value>Busqueda</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,COMUNIDADES@@#@</key>
+			<value>Busqueda?comunidades=true</value>
+		</pagina>
+		<pagina>							  
 			<key>@#@@URLSEM,|,COMUNIDADES@@#@/{*searchInfo}</key>
 			<value>Busqueda?comunidades=true</value>
 		</pagina>
@@ -1374,6 +1378,10 @@
 			<value>Busqueda?contribuciones=true</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,MISRECURSOS@@#@</key>
+			<value>EspacioPersonal</value>
+		</pagina>
+		<pagina>							  
 			<key>@#@@URLSEM,|,MISRECURSOS@@#@/editcategories</key>
 			<value>EspacioPersonal/EditarCategorias?EditarRecursosPerfil=true</value>
 		</pagina>
@@ -1535,7 +1543,7 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@</key>
-			<value>AdministrarCategorias</value>
+			<value>AdministrarCategorias?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARDATOSEXTRAECOSISTEMA@@#@</key>
@@ -1559,13 +1567,29 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@/show-action/{typeAction}</key>
-			<value>AdministrarCategorias/MostrarAccion</value>
+			<value>AdministrarCategorias/MostrarAccion?ecosistema=true</value>
+	   </pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@/save-order</key>
+			<value>AdministrarCategorias/GuardarNuevoOrden?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@/action/{typeAction}</key>
-			<value>AdministrarCategorias/EjecutarAccion</value>
+			<value>AdministrarCategorias/EjecutarAccion?ecosistema=true</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@/save</key>
+			<value>AdministrarCategorias/Guardar?ecosistema=true</value>   
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@/load-modal-create-subcategory</key>
+			<value>AdministrarCategorias/CargarModalCrearCategoriaEnCategoria?ecosistema=true</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@/load-disable-multilenguage</key>
+			<value>AdministrarCategorias/LoadDisableMultilenguage?ecosistema=true</value>
+		</pagina>
+		<pagina>																					
 			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADBUZONCORREOECOSISTEMA@@#@</key>
 			<value>AdministrarOpcionesAvanzadas/IndexBuzonCorreo?ecosistema=true</value>
 		</pagina>
@@ -1587,15 +1611,15 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARSHAREPOINT@@#@</key>
-			<value>AdministrarSharepoint</value>
+			<value>AdministrarSharepoint?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARSHAREPOINT@@#@/save</key>
-			<value>AdministrarSharepoint/Guardar</value>
+			<value>AdministrarSharepoint/Guardar?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,MANUALSHAREPOINT@@#@</key>
-			<value>AdministrarSharepoint/Manual</value>
+			<value>AdministrarSharepoint/Manual?ecosistema=true</value>
 		</pagina>
 	</seccion>
 	<seccion name="acercaYaprende">
@@ -2152,18 +2176,34 @@
 			<value>Busqueda?Meta=true</value>
 		</pagina>
 		<pagina>
+		<key>@#@@URLSEM,|,RECURSOS@@#@</key>
+			<value>Busqueda?Recursos=true</value>
+		</pagina>
+		<pagina>							   
 			<key>@#@@URLSEM,|,RECURSOS@@#@/{*searchInfo}</key>
 			<value>Busqueda?Recursos=true</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,DEBATES@@#@</key>
+			<value>Busqueda?debates=true</value>
+		</pagina>
+		<pagina>						  
 			<key>@#@@URLSEM,|,DEBATES@@#@/{*searchInfo}</key>
 			<value>Busqueda?debates=true</value>
 		</pagina>
 		<pagina>
+			key>@#@@URLSEM,|,PREGUNTAS@@#@</key>
+			<value>Busqueda?preguntas=true</value>
+		</pagina>
+		<pagina>							
 			<key>@#@@URLSEM,|,PREGUNTAS@@#@/{*searchInfo}</key>
 			<value>Busqueda?preguntas=true</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,ENCUESTAS@@#@</key>
+			<value>Busqueda?encuestas=true</value>
+		</pagina>
+		<pagina>							
 			<key>@#@@URLSEM,|,ENCUESTAS@@#@/{*searchInfo}</key>
 			<value>Busqueda?encuestas=true</value>
 		</pagina>
@@ -2392,6 +2432,10 @@
 			<value>AdministrarCategorias/MostrarAccion</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASCOM@@#@/save-order</key>
+			<value>AdministrarCategorias/GuardarNuevoOrden</value>
+		</pagina>
+		<pagina>													  
 			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASCOM@@#@/action/{typeAction}</key>
 			<value>AdministrarCategorias/EjecutarAccion</value>
 		</pagina>
@@ -2411,6 +2455,10 @@
 			<key>@#@@URLSEM,|,ADMINMETAADMINOPTIONS@@#@/save</key>
 			<value>AdministrarOpcionesMetaAdministrador/Guardar</value>
 		</pagina>
+		 <pagina>
+			<key>@#@@URLSEM,|,ADMINMETAADMINOPTIONS@@#@/shutdown</key>
+			<value>AdministrarOpcionesMetaAdministrador/Shutdown</value>
+		</pagina> 
 
 
 
@@ -2558,6 +2606,10 @@
 			<value>AdministrarPestanyas/NuevaPropiedad</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/cargar-previsualizacion</key>
+			<value>AdministrarPestanyas/CargarPrevisualizacionPestanya</value>
+		</pagina>
+		<pagina>																  
 			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/cargarResultados</key>
 			<value>AdministrarPestanyas/CargarResultados</value>
 		</pagina>
@@ -2575,14 +2627,7 @@
 			<key>@#@@URLSEM,|,ADMINISTRARHEADESTILOS@@#@/get-custom-css</key>
 			<value>AdministrarHead/GetHojaDeEstilosPersonalizado</value>
 		</pagina>
-		<pagina>
-			<key>chequear-instalaciones</key>
-			<value>ChequearInstalaciones</value>
-		</pagina>
-		<pagina>
-			<key>chequear-instalaciones/get-servicio</key>
-			<value>ChequearInstalaciones/comprobarServicios</value>
-		</pagina>
+		
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCONTEXTOSCOM@@#@</key>
 			<value>AdministrarContextos</value>

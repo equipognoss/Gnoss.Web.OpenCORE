@@ -17,29 +17,30 @@ Dictionary<string, string> pageUrlDictionary = new Dictionary<string, string>();
 // Diccionario de nombre de la página para multiIdiomas
 Dictionary<string, string> pageNameDictionary = new Dictionary<string, string>();
 
-@* Toda la información de la página / pestaña*@
-TabModel tabModel = Model;
-// Url de la página
-string pageUrl = "/" + @Html.ObtenerTextoIdiomaUsuario(tabModel.Url);
-// Tipo de página 
-string pageType = Html.GetNombreTipoPaginaDevTools(tabModel);
-// Visible en el menú -> Activa --> Por defecto Si
-bool isVisibleInMenu = tabModel.Visible ? true : false;
-// Página publicada -> Activa --> Por defecto Sí (Ej: Si es de tipo Home siempre será activa)
-bool isPagePublishedOrActive = true;
-// Tipo de Privacidad de la página
-string privacyPageType = "";
-// Icono del tipo de privacidad de la página
-string privacyPageIcon = "";
-string textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPRIVADA");
-// Id para la llamada al modal para edición de la página
-string idModalPage = "modal-configuracion-pagina_" + tabModel.Key;
-//String idModalPageDelete = "modal-configuracion-pagina_delete" + tabModel.Key;
-string idModalPageDelete = "modal-delete-page";
-// Fecha de modificación. Al ser nueva, coger la fecha actual (Día de creación)
-string fechaModificacion = DateTime.Now.ToString("dd/MM/yyyy"); // tabModel.FechaModificacion.ToString("dd/MM/yyyy");
-// Id modal para mover "manualmente" una página
-string idModalMovePaginaFaceta = "modal-move-pagina";
+	@* Toda la información de la página / pestaña*@
+	TabModel tabModel = Model;
+	// Url de la página
+	string pageUrl = "/" + @Html.ObtenerTextoIdiomaUsuario(tabModel.Url);
+	// Tipo de página 
+	string pageType = Html.GetNombreTipoPaginaDevTools(tabModel);
+	// Visible en el menú -> Activa --> Por defecto Si
+	bool isVisibleInMenu = tabModel.Visible ? true : false;
+	// Página publicada -> Activa --> Por defecto Sí (Ej: Si es de tipo Home siempre será activa)
+	bool isPagePublishedOrActive = true;
+	// Tipo de Privacidad de la página
+	string privacyPageType = "";
+	// Icono del tipo de privacidad de la página
+	string privacyPageIcon = "";
+	string textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPRIVADA");
+	// Id para la llamada al modal para edición de la página
+	string idModalPage = "modal-configuracion-pagina_" + tabModel.Key;
+	//String idModalPageDelete = "modal-configuracion-pagina_delete" + tabModel.Key;
+	string idModalPageDelete = "modal-delete-page";
+	// Fecha de modificación. Al ser nueva, coger la fecha actual (Día de creación)
+	string fechaModificacion = DateTime.Now.ToString("dd/MM/yyyy"); // tabModel.FechaModificacion.ToString("dd/MM/yyyy");
+																	// Id modal para mover "manualmente" una página
+	string idModalMovePaginaFaceta = "modal-move-pagina";
+
 
 }
 

@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.Controles.Suscripcion;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
@@ -27,6 +28,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,10 +40,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     {
         private Suscripcion mSuscripcion;
         private GestionTesauro mGestorTesauro;
-
-        public EditarSuscripcionComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public EditarSuscripcionComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EditarSuscripcionComunidadController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public ActionResult Index()
@@ -161,12 +168,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="e"></param>
         protected void CrearSuscripcion()
         {
-            SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SuscripcionCN>(), mLoggerFactory);
             ControladorSuscripciones.CrearSuscripcionTesauroProyecto(IdentidadActual.GestorIdentidades.GestorSuscripciones, IdentidadActual.Clave, GestorTesauro.TesauroActualID, IdentidadActual.FilaIdentidad.OrganizacionID, ProyectoSeleccionado.Clave, PeriodicidadSuscripcion.Diaria);
             mSuscripcion = IdentidadActual.GestorIdentidades.GestorSuscripciones.ObtenerSuscripcionAProyecto(ProyectoSeleccionado.Clave);
 
             //TODO Alberto: Incorporo esta línea porque al suscribirse a las novedades de una comunidad, en numerosas ocasiones esta línea venía vacía... =S
-            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             DataWrapperPersona dataWrapperPersona = personaCN.ObtenerPersonaPorID(IdentidadActual.PersonaID.Value);
             GestionPersonas gestorPersona = new GestionPersonas(dataWrapperPersona, mLoggingService, mEntityContext);
             if (!dataWrapperPersona.ListaConfigGnossPersona.Any())
@@ -255,12 +262,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     mSuscripcion.GestorSuscripcion.EliminarSuscripcion(mSuscripcion.Clave);
                 }
 
-                SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SuscripcionCN>(), mLoggerFactory);
                 suscCN.ActualizarSuscripcion();
                 suscCN.Dispose();
 
-                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
 
                 ControladorIdentidades.AccionEnServicioExternoProyecto(TipoAccionExterna.Edicion, IdentidadActual.Persona, ProyectoSeleccionado.Clave, IdentidadActual.Clave, "", "", IdentidadActual.FilaIdentidad.FechaAlta, null);
             }
@@ -285,7 +292,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mSuscripcion == null)
                 {
-                    SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SuscripcionCN>(), mLoggerFactory);
                     DataWrapperSuscripcion suscDW = suscCN.ObtenerSuscripcionesDePerfil(IdentidadActual.FilaIdentidad.PerfilID, false);
                     IdentidadActual.GestorIdentidades.GestorSuscripciones = new GestionSuscripcion(suscDW, mLoggingService, mEntityContext);
                     suscCN.Dispose();
@@ -301,10 +308,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mGestorTesauro == null)
                 {
-                    TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
                     DataWrapperTesauro tesDW = tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave);
                     tesauroCL.Dispose();
-                    mGestorTesauro = new GestionTesauro(tesDW, mLoggingService, mEntityContext);
+                    mGestorTesauro = new GestionTesauro(tesDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 return mGestorTesauro;
             }

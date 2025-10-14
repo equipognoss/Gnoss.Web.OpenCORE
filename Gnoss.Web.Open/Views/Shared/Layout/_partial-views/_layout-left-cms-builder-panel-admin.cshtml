@@ -249,10 +249,10 @@ Variables
                         <div class="filtroRapido">
                             @* Filtro local o remoto siempre que haya más de 10 componentes en la comunidad *@
                             <input id="filtro-componentes" 
-                                   class="form-control ac_input @searchFetchRequestClassName" 
-                                   type="text" 
-                                   placeholder="@Html.GetText("DEVTOOLS","BUSCARCOMPONENTES")"
-                                   autocomplete="off">
+                            class="form-control ac_input @searchFetchRequestClassName" 
+                            type="text" 
+                            placeholder="@Html.GetText("DEVTOOLS","BUSCARCOMPONENTES")"
+                            autocomplete="off">
                             <span class="icon material-icons">search</span>
                         </div>
                     </div>
@@ -263,333 +263,336 @@ Variables
                 </div>
 
                 @* Componentes Nuevos a crear *@
-                <div class="builder-block">
-                    <label>Nuevo</label>
-                    <ul id="new-component-list" class="js-new-component-list builder-list no-list-style">                        
+                @if (ViewBag.CrearComponenteCMSPermitido != null && ViewBag.CrearComponenteCMSPermitido)
+                {
+                    <div class="builder-block">
+                        <label>Nuevo</label>
+                        <ul id="new-component-list" class="js-new-component-list builder-list no-list-style">
 
-                        @* Componentes nuevos disponibles a crear *@                       
-                        <li class="builder-item" 
-                            data-type="0"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "0")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "0")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONBASICA","HTMLLIBRE")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="1"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "1")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "1")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","DESTACADO")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="2"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "2")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "2")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","LISTADODINAMICO")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="3"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "3")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "3")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","LISTADOESTATICO")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="4"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "4")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "4")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","ACTIVIDADRECIENTE")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="5"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "5")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "5")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","GRUPODECOMPONENTES")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="6"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "6")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "6")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONSEMANTICA","TESAURO")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="8"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "8")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "8")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","DATOSDECOMUNIDAD")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="9"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "9")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "9")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","PERSONASRECOMENDADAS")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="10"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "10")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "10")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","CAJABUSCADOR")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="13"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "13")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "13")">                            
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONSEMANTICA","FACETA")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="14"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "14")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "14")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","LISTADODEUSUARIOS")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="15"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "15")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "15")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","LISTADODEPROYECTOS")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="16"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "16")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "16")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","RESUMENDEPERFIL")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="17"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "17")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "17")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("DEVTOOLS","MASVISITADOS")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="18"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "18")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "18")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","ENVIOCORREO")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="20"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "20")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "20")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","MENU")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="21"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "21")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "21")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","BUSCADOR")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="22"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "22")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "22")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","BUSQUEDASPARQL")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-
-                        <li class="builder-item" 
-                            data-type="23"
-                            id=""
-                            data-idcomponent=""
-                            data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "23")"
-                            data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "23")">
-                            <div class="builder-item-wrap">
-                                <div class="name">
-                                    <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS","NUEVOCOMPONENTE")</span>
-                                    <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS","ÚLTIMOSRECURSOSVISITADOS")</span>
-                                </div>
-                                <div class="handler"><span class="material-icons">drag_indicator</span></div>
-                            </div>
-                        </li>
-                        @* Lista de componentes privados *@
-                        @foreach (TipoComponenteCMS tipo in Model.ListaComponentesPrivados)
-                        {
-                            // Tipo de componente
-                            tipoComponent = (short)tipo;
-                                                      
-                            <li class="builder-item" 
-                                data-type="@tipo"
-                                data-id=""
+                            @* Componentes nuevos disponibles a crear *@                       
+                            <li class="builder-item"
+                                data-type="0"
+                                id=""
                                 data-idcomponent=""
-                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", tipoComponent.ToString())"
-                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", tipoComponent.ToString())">
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "0")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "0")">
                                 <div class="builder-item-wrap">
                                     <div class="name">
-                                        <span class="component-name">Componente privado</span>
-                                        <span class="type">@tipo</span>
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONBASICA", "HTMLLIBRE")</span>
                                     </div>
                                     <div class="handler"><span class="material-icons">drag_indicator</span></div>
                                 </div>
                             </li>
-                        }
-                    </ul>
-                </div>
+
+                            <li class="builder-item"
+                                data-type="1"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "1")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "1")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "DESTACADO")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="2"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "2")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "2")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "LISTADODINAMICO")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="3"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "3")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "3")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "LISTADOESTATICO")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="4"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "4")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "4")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "ACTIVIDADRECIENTE")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="5"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "5")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "5")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "GRUPODECOMPONENTES")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="6"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "6")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "6")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONSEMANTICA", "TESAURO")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="8"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "8")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "8")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "DATOSDECOMUNIDAD")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="9"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "9")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "9")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "PERSONASRECOMENDADAS")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="10"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "10")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "10")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "CAJABUSCADOR")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="13"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "13")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "13")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONSEMANTICA", "FACETA")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="14"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "14")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "14")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "LISTADODEUSUARIOS")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="15"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "15")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "15")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "LISTADODEPROYECTOS")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="16"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "16")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "16")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "RESUMENDEPERFIL")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="17"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "17")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "17")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("DEVTOOLS", "MASVISITADOS")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="18"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "18")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "18")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "ENVIOCORREO")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="20"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "20")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "20")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "MENU")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="21"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "21")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "21")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "BUSCADOR")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="22"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "22")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "22")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "BUSQUEDASPARQL")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+
+                            <li class="builder-item"
+                                data-type="23"
+                                id=""
+                                data-idcomponent=""
+                                data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", "23")"
+                                data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", "23")">
+                                <div class="builder-item-wrap">
+                                    <div class="name">
+                                        <span class="component-name">@Html.GetText("ADMINISTRACIONPAGINAS", "NUEVOCOMPONENTE")</span>
+                                        <span class="type">@Html.GetText("ADMINISTRACIONPAGINAS", "ÚLTIMOSRECURSOSVISITADOS")</span>
+                                    </div>
+                                    <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                </div>
+                            </li>
+                            @* Lista de componentes privados *@
+                            @foreach (TipoComponenteCMS tipo in Model.ListaComponentesPrivados)
+                            {
+                                // Tipo de componente
+                                tipoComponent = (short)tipo;
+
+                                <li class="builder-item"
+                                    data-type="@tipo"
+                                    data-id=""
+                                    data-idcomponent=""
+                                    data-urlsave="@urlSaveForNewComponent.Replace("COMPONENT_TYPE", tipoComponent.ToString())"
+                                    data-url="@urlEditForNewComponent.Replace("COMPONENT_TYPE", tipoComponent.ToString())">
+                                    <div class="builder-item-wrap">
+                                        <div class="name">
+                                            <span class="component-name">Componente privado</span>
+                                            <span class="type">@tipo</span>
+                                        </div>
+                                        <div class="handler"><span class="material-icons">drag_indicator</span></div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }                
             </div>
         </div>
     </div>

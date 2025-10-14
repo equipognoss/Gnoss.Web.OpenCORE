@@ -18,6 +18,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles.Amigos;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -29,6 +30,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -50,6 +52,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private bool? mPanelMensajeImportarContactos = null;
 
+
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         /// <summary>
         /// Enumeración para representar el estado del envio de invitaciones
         /// </summary>
@@ -58,9 +63,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             Ok, Ko, EnviadasAUsuariosYaAgnadidos
         }
 
-        public EnviarInvitacionComController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public EnviarInvitacionComController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EnviarInvitacionComController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -95,7 +102,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 paginaModel.Message = UtilIdiomas.GetText("INVITACIONES", "TEXTODEFECTOINVITACIONCLASE", IdentidadActual.Persona.NombreConApellidos, ProyectoSeleccionado.FilaProyecto.Nombre, NombreProyectoEcosistema);
             }
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerGruposDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCN.Dispose();
 
@@ -157,7 +164,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 paginaModel.Message = UtilIdiomas.GetText("INVITACIONES", "TEXTODEFECTOINVITACIONCLASE", IdentidadActual.Persona.NombreConApellidos, ProyectoSeleccionado.FilaProyecto.Nombre, NombreProyectoEcosistema);
             }
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerGruposDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCN.Dispose();
 
@@ -214,7 +221,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string notas = UtilIdiomas.GetText("INVITACIONES", "TEXTODEFECTOINVITACIONCOMUNIDAD", ProyectoSeleccionado.FilaProyecto.Nombre, UtilCadenas.EliminarEnlacesDeHtml(UtilCadenas.ObtenerTextoDeIdioma(ProyectoSeleccionado.FilaProyecto.Descripcion, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto)), NombreProyectoEcosistema);
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerGruposDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCN.Dispose();
 
@@ -285,9 +292,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 listaGrupos.Add(new Guid(grupo));
             }
 
-            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
             DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
-            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
 
             List<Identidad> listaIdentidades = new List<Identidad>();
             List<string> listaEmails = new List<string>();
@@ -366,10 +373,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (listaEmails.Count > 0 || listaIdentidades.Count > 0)
             {
-                notificacionCN.ActualizarNotificacion();
+                notificacionCN.ActualizarNotificacion(mAvailableServices);
                 notificacionCN.Dispose();
 
-                PeticionCN petCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                PeticionCN petCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
                 petCN.ActualizarBD();
                 petCN.Dispose();
 
@@ -439,7 +446,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>True si el correo es válido, False si no lo es.</returns>
         private bool ComprobarCorreoEsValido(string pEmail)
         {
-            PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             bool correoPerteneceAProyecto = persCN.ObtenerSiCorreoPerteneceAProyecto(ProyectoSeleccionado.Clave, pEmail);
             persCN.Dispose();
 

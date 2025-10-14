@@ -1,0 +1,40 @@
+﻿@model TabModel
+@{
+	String idModalPage = "#modal-configuracion-pagina_" + Model.Key;
+}
+<div id="modal-close-page_@Model.Key" style="z-index: 5000"
+	 class="modal modal-top fade modal-confirmClose"
+	 role="dialog"
+	 data-parent="@idModalPage">
+
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			@* Modal para controlar el cerrar el modal de edición*@
+			<div class="modal-header">
+				@* Título del Modal *@
+				<p class="modal-title">
+					<span class="material-icons">exit_to_app</span>
+					@Html.GetText("COMMON", "CERRAR")
+				</p>
+				@* Cierre del Modal *@
+				<span class="material-icons cerrar"
+					  data-dismiss="modal"
+					  aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label class="control-label">
+						@Html.GetText("DEVTOOLS", "DESEACERRAREDICIONSINGUARDAR")
+					</label>
+				</div>
+				<div class="form-actions">
+					<button data-dismiss="modal" class="btn btn-outline-primary btnNotConfirmCloseModal">@Html.GetText("COMMON", "NO")</button>
+					<button class="btn btn-primary btnConfirmCloseModal"
+							data-parent-id="modal-configuracion-pagina_@Model.Key">
+						@Html.GetText("COMMON", "SI")
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

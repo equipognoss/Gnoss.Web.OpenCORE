@@ -33,22 +33,34 @@ using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
 using Es.Riam.Util;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-    public class DescargarTraduccionesController : ControllerBaseWeb
-    {
-        public DescargarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class DescargarTraduccionesController : ControllerAdministrationWeb
+	{
+
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+
+        public DescargarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<DescargarTraduccionesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
-        /// <summary>
-        /// Muestra la pagina de descargar traducciones
-        /// </summary>
-        /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
-        public ActionResult Index()
+		/// <summary>
+		/// Muestra la pagina de descargar traducciones
+		/// </summary>
+		/// <returns>ActionResult</returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		public ActionResult Index()
         {
             // Controlar si es o no del ecosistema            
             bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
@@ -129,8 +141,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
-        public ActionResult subirFicheros(IFormFile file, bool validar)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		public ActionResult subirFicheros(IFormFile file, bool validar)
         {
             GuardarLogAuditoria();
             if (!validar)
@@ -185,7 +198,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                     else
                     {
-                        BaseDeDatos bd = new BaseDeDatos(ProyectoSeleccionado, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mRedisCacheWrapper, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
+                        BaseDeDatos bd = new BaseDeDatos(ProyectoSeleccionado, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mRedisCacheWrapper, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<BaseDeDatos>(), mLoggerFactory);
                         if (nombreTabla.Contains("tabla_"))
                         {
                             switch (nombreTabla)
@@ -227,15 +240,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         }
                         else if (nombreTabla.Contains("PrimaryOnto"))
                         {
-                            bd.ExcelToVirtuoso(tabla, UrlIntragnoss, listMStream, ProyectoSeleccionado.Clave);
+                            bd.ExcelToVirtuoso(tabla, UrlIntragnoss, listMStream, ProyectoSeleccionado.Clave, mAvailableServices);
                         }
                         else if (nombreTabla.Contains("SecondaryOnto"))
                         {
-                            bd.ExcelToVirtuoso(tabla, UrlIntragnoss, listMStream, ProyectoSeleccionado.Clave);
+                            bd.ExcelToVirtuoso(tabla, UrlIntragnoss, listMStream, ProyectoSeleccionado.Clave, mAvailableServices);
                         }
                         else if (nombreTabla.Contains("taxonomy"))
                         {
-                            bd.ExcelToVirtuoso(tabla, UrlIntragnoss, listMStream, ProyectoSeleccionado.Clave);
+                            bd.ExcelToVirtuoso(tabla, UrlIntragnoss, listMStream, ProyectoSeleccionado.Clave, mAvailableServices);
                         }
                         else if (nombreTabla.StartsWith("XML_"))
                         {
@@ -284,8 +297,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
-        public ActionResult validarHtml(IFormFile file)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		public ActionResult validarHtml(IFormFile file)
         {
             Stream ms = new MemoryStream();
 
@@ -353,14 +367,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Diseño })]
-        public ActionResult getDescargasFicheros(DescargarTraduccionesViewModel OpcionesDescarga)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		public ActionResult getDescargasFicheros(DescargarTraduccionesViewModel OpcionesDescarga)
         {
             //comprobar errores
-            BaseDeDatos bd = new BaseDeDatos(ProyectoSeleccionado, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mRedisCacheWrapper, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
+            BaseDeDatos bd = new BaseDeDatos(ProyectoSeleccionado, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mRedisCacheWrapper, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<BaseDeDatos>(), mLoggerFactory);
             XLWorkbook excel = new XLWorkbook();
             TraduccionXmlOntologias ontologiaXML = new TraduccionXmlOntologias();
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 			List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
 
             bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;

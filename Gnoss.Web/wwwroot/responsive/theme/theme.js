@@ -37,14 +37,14 @@ var bodyScrolling = {
                 this.body.removeClass("scrolling-up");
                 $(window).trigger("scrolling-down");
             }
-            
+
         } else {
             if (currentScrollTop >= 40) {
                 this.body.addClass("scrolling-up");
                 this.body.removeClass("scrolling-down");
                 $(window).trigger("scrolling-up");
             }
-            
+
         }
 
         // remove scrolling-up if scroll is on top
@@ -237,7 +237,7 @@ const botonDesplegarMenuClonado = {
         this.isLocalStorageAvailable = false;
         // Key del valor del estado del panel clonado
         this.keyIsDesplegado = 'isDesplegado';
-        
+
         this.tamayoDesplegado = $('#menuLateralUsuarioClonado').width();
         // Paneles o información que ocultaremos una vez esté contraido el menú
         this.menusOcultar = ["espacio", "comunidades", "gestionar", "identidades", "desconectar", "metaAdministrador"];
@@ -254,14 +254,14 @@ const botonDesplegarMenuClonado = {
         this.menuClonado.after(this.areaMenuClonado);
         // this.areaMenuClonado.append(this.button);
         this.areaMenuClonado.append(this.botonDesplegarMenuClonadoHTML);
-                      
+
         // Registro el botón menú clonado
         this.botonDesplegarMenu = $(`#${this.idBtnDesplegarMenuClonado}`);
 
         return;
     },
 
-        configEvents: function () {
+    configEvents: function () {
 
         const that = this;
         /* Configurar si se desea desplegar o no el menú */
@@ -326,15 +326,15 @@ const botonDesplegarMenuClonado = {
             // El storage está disponible   
             this.isLocalStorageAvailable = true;
             if (localStorage.getItem(this.keyIsDesplegado)) {
-                this.isDesplegado = JSON.parse(localStorage.getItem(this.keyIsDesplegado));                
+                this.isDesplegado = JSON.parse(localStorage.getItem(this.keyIsDesplegado));
             }
         }
-                
+
         // Establecer el menuClonado como valor inicial
         this.desplegarMenuClonado();
 
         // Por defecto el botón siempre será invisible
-        this.botonDesplegarMenu.css("display", "none");       
+        this.botonDesplegarMenu.css("display", "none");
 
         return;
     },
@@ -350,7 +350,7 @@ const botonDesplegarMenuClonado = {
     desplegarMenuClonado: function (hasClickedButton = false) {
         if (hasClickedButton) {
             if (this.isDesplegado) {
-                this.menuClonado.css("width", this.tamayoContraido);            
+                this.menuClonado.css("width", this.tamayoContraido);
             } else {
                 this.menuClonado.css("width", this.tamayoDesplegado);
             }
@@ -366,7 +366,7 @@ const botonDesplegarMenuClonado = {
         if (hasClickedButton == true) {
             this.isDesplegado = !this.isDesplegado;
         }
-               
+
         // Ocultar/Mostrar info dependiendo del estado del menú lateral
         this.mostrarOcultarOpcionesMenuClonado();
         // Establecer el icono del botón
@@ -381,7 +381,7 @@ const botonDesplegarMenuClonado = {
      * Mostrar u ocultar opciones del menú desplegado según el estado actual del mismo
      * @param {any} isDesplegado
      */
-     mostrarOcultarOpcionesMenuClonado: function () {
+    mostrarOcultarOpcionesMenuClonado: function () {
 
         const that = this;
 
@@ -405,10 +405,10 @@ const botonDesplegarMenuClonado = {
     /**
      * Establecer el icono y la posición del botón de contraer o desplegar menú
      * */
-    setBotonMenuClonado: function () {       
+    setBotonMenuClonado: function () {
         if (this.isDesplegado) {
             // Establezco el icono
-            this.iconoPlegarMenu = this.iconoPlegarMenuClonado;            
+            this.iconoPlegarMenu = this.iconoPlegarMenuClonado;
             // Establezco la posición            
             // this.botonDesplegarMenu.css({ left: this.posicionOriginalBoton });
         } else {
@@ -629,7 +629,7 @@ var metabuscador = {
         // Teclas que se ignorarán si se pulsan en el input para que no dispare la búsqueda (Flechas, Espacio, Windows, Ctrol, Alt, Bloq. Mayus, Inicio, Alt, Escape)
         this.ignoreKeysToBuscador = [37, 38, 39, 40, 32, 91, 17, 18, 20, 36, 18, 27];
         // Botón para cerrar panel de resultados de la home
-        this.btnCloseMetabuscador = this.body.find(".metabuscador-panel-close");        
+        this.btnCloseMetabuscador = this.body.find(".metabuscador-panel-close");
         // Nº de resultados que se mostrarán
         this.numResultadoPintar = 3;
         // Clases para columnas (responsive design)
@@ -656,7 +656,7 @@ var metabuscador = {
                 // Resultados encontrdos
                 if (newNodes.length > 0) {
                     // Ocultar loading del metabuscador home y mostrar el panel de resultados
-                    that.metabuscadorLoading.addClass("d-none") 
+                    that.metabuscadorLoading.addClass("d-none")
                     that.metabuscadorPanelResultados.removeClass("d-none");
 
                     // Buscar el nº de bloques añadidos para establecer el tamaño de columnas
@@ -670,7 +670,7 @@ var metabuscador = {
                             panelResultadoAdded.addClass(that.metabuscadorPanelResultadosBloqueCssMinResultados);
                             panelResultadoAdded.removeClass(that.metabuscadorPanelResultadosBloqueCssMaxResultados);
                         }
-                    })                   
+                    })
                 }
 
                 // Los resultados son eliminados (nueva posible búsqueda)
@@ -708,7 +708,7 @@ var metabuscador = {
 
             if (that.validarKeyPulsada(e) == true) {
                 clearTimeout(that.timer);
-                that.timer = setTimeout(function () {                    
+                that.timer = setTimeout(function () {
                     let val = that.input.val();
                     val = escapeHTML(val);
                     if (val.length > 2) {
@@ -722,7 +722,7 @@ var metabuscador = {
                         that.ocultarResultados();
                     }
                 }, that.timeWaitingForUserToType);
-            }            
+            }
         });
         /* Desactivado Buscador Home    
         that.buscadorTrigger.on("keydown", function (e) {
@@ -1104,7 +1104,7 @@ var metabuscador = {
                                 urlSearch = recursos[i].UrlSearch;
                             }
                         }
-                        
+
                     }
                     //Creo la lista para los resultados
                     devolver.push(
@@ -1116,15 +1116,15 @@ var metabuscador = {
                     // Hay resultados que pintar: Ocultar Panel sin resultados
                     that.mostrarPanelSinResultados(false);
                     that.PintarResultados(devolver[0], that.numResultadoPintar, val, buscadorHome, busqueda[0]);
-                }else{
+                } else {
                     // No se han encontrado resultados de una pestaña en concreto. Dar tiempo a posibles nuevas búsquedas pero mostrar el panel
                     setTimeout(() => {
-                        if (that.resultadosMetabuscadorAppend.children().length == 0){
+                        if (that.resultadosMetabuscadorAppend.children().length == 0) {
                             that.mostrarPanelSinResultados(true);
-                        }else{
+                        } else {
                             that.mostrarPanelSinResultados(false);
-                        }                                                                     
-                    },800)                                
+                        }
+                    }, 800)
                 }
                 //Tratar los resultados.
                 busqueda.shift();
@@ -1142,7 +1142,7 @@ var metabuscador = {
      * Mostrar u ocultar el panel que muestre error debido a que no se ha encontrado ningún resultado
      * @param {Bool} mostrarPanel
      */
-     mostrarPanelSinResultados: function(mostrarPanel){
+    mostrarPanelSinResultados: function (mostrarPanel) {
 
         // Vaciar posibles palabras anteriores
         $(`#${this.idPalabraBuscadaMetabuscador}`).text('');
@@ -1161,15 +1161,15 @@ var metabuscador = {
                 </div>
             </div>
         `;
-        
+
         if (mostrarPanel == true) {
             this.panelSinResultados.removeClass("d-none");
             this.panelSinResultados.html(panelSinResultadosContent);
             // Añadir la palabra buscada al panel de no encontrado
             $(`#${this.idPalabraBuscadaMetabuscador}`).text(cadenaBuscada);
         } else {
-            this.panelSinResultados.addClass("d-none");            
-        }    
+            this.panelSinResultados.addClass("d-none");
+        }
     },
 
     PintarResultados: function (resultados, numeroResultados, val, home, busqueda) {
@@ -1206,7 +1206,7 @@ var metabuscador = {
             that.cargarRecursos();
             tipo = 'recurso';
         }
-        
+
         /* Pintar el encabezado del resultado donde corresponda (MetaBuscador o Metabuscador panel derecho) */
         if (!home) {
             html = "<li class='bloque " + tipo + "s'><p class='title'>" + resultados.nombreBusqueda + "</p><ul>"
@@ -1216,7 +1216,7 @@ var metabuscador = {
                         <div class="metabuscador-panel-resultados-bloque-contenido">
                             <h2>${resultados.nombreBusqueda}</h2>
                                 <ul class="metabuscador-list-items">
-            `;            
+            `;
         }
 
         /* Pintar el bloque de resultados donde corresponda (MetaBuscador o Metabuscador panel derecho) */
@@ -1232,14 +1232,14 @@ var metabuscador = {
                 // Búsqueda realizada desde Home
                 html += `<li class="metabuscador-item ${tipo}"><a href="${recurso.url}">${recurso.nombre}</a></li>`;
             }
-            
+
         }
 
         if (resultados.recursos.length > numeroResultados) {
             if (esBusqueda) {
-                val += '&' + busqueda.pestanya.CampoFiltro.replace('|','&');
+                val += '&' + busqueda.pestanya.CampoFiltro.replace('|', '&');
             }
-            html += "<li class='con-icono-after ver-mas-icono ver-mas'><a href='" + resultados.urlSearch + "?search=" + val +"'>Ver más</a></li>";
+            html += "<li class='con-icono-after ver-mas-icono ver-mas'><a href='" + resultados.urlSearch + "?search=" + val + "'>Ver más</a></li>";
         }
 
         if (!home) {
@@ -1377,7 +1377,7 @@ var metabuscador = {
                 loader_container.hide();
                 resolve();
             }, tiempo * 1000);
-          });
+        });
     },
     cargarRecursos: function () {
         var that = this;
@@ -1482,7 +1482,7 @@ var metabuscador = {
 
 
         // Comprobar que el localStorache está disponible
-        if (!botonDesplegarMenuClonado.storageAvailable("localStorage")){
+        if (!botonDesplegarMenuClonado.storageAvailable("localStorage")) {
             return
         }
 
@@ -1499,7 +1499,7 @@ var metabuscador = {
         // Construir cada itemList con las búsquedas almacenadas en localStorage
         localSearchs.reverse().forEach((item) => {
             const itemValue = escapeHTML(item.search);
-            if (!containsEscapeHTML(itemValue)){
+            if (!containsEscapeHTML(itemValue)) {
                 searchListItems += `<li class="reciente con-icono-before icono-busqueda">
                 <a href="javascript: void(0);">${itemValue}</a>
                 </li>`;
@@ -1521,9 +1521,9 @@ var metabuscador = {
 
         try {
             localStorage.removeItem(this.KEY_LOCAL_SEARCHS);
-        } catch(e) {
+        } catch (e) {
             console.log("Error removing localSearchs from localStorage");
-        }        
+        }
     }
 };
 
@@ -1574,7 +1574,7 @@ var modificarCabeceraOnScrolling = {
         this.buscador = body.find(".col-buscador");
         this.colContenido = body.find(".col-contenido");
         this.accionesListado = body.find(".header-listado .acciones-listado");
-        this.filtros = body.find("#panFiltros").length > 0 ? body.find("#panFiltros") : body.find("#divFiltros") ;
+        this.filtros = body.find("#panFiltros").length > 0 ? body.find("#panFiltros") : body.find("#divFiltros");
         this.resultados = body.find(
             ".header-listado .h1-container .numResultados"
         );
@@ -1655,10 +1655,10 @@ var modificarCabeceraOnScrolling = {
     aplicarSombra: function () {
         // depende de si hay filtros o no hay que aplicar la sombra a
         // los filtros o a las acciones para que no se superponga una sombra con otra
-        if(this.filtros.length === 0 || this.filtros.is(':hidden')){
+        if (this.filtros.length === 0 || this.filtros.is(':hidden')) {
             this.filtros.removeClass('add-shadow')
             this.accionesListado.addClass('add-shadow');
-        }else{
+        } else {
             this.filtros.addClass('add-shadow');
             this.accionesListado.removeClass('add-shadow');
         }
@@ -1835,10 +1835,12 @@ var accionDropdownSelect = {
             var toggle = parent.find('.dropdown-toggle');
             var items = parent.find('.item-dropdown');
             toggle.html($(this).html());
+            toggle.children(".texto").prop("onclick", null);
             toggle.addClass('active');
             items.removeClass('activeView');
             $(this).addClass('activeView');
         });
+        operativaMisComunidades.init();
     }
 };
 
@@ -1870,7 +1872,7 @@ var modalCategorizarRecursos = {
             that.modal.attr('data-mostrar', 'categorias');            
         });*/
 
-        this.modal.attr('data-mostrar', 'categorias');        
+        this.modal.attr('data-mostrar', 'categorias');
     },
     comportamientoChecks: function () {
         const that = this;
@@ -1998,8 +2000,8 @@ var accionDropdownAutofocus = {
             $dropdown = $(this);
             $dropdown.find('input').first().focus()            
         });
-        */     
-       // Asignación de comportamiento a las facetas que se cargan de forma asíncrona   
+        */
+        // Asignación de comportamiento a las facetas que se cargan de forma asíncrona   
         $(document).on('.dropdown-autofocus').on('shown.bs.dropdown', function (e) {
             setTimeout(() => {
                 $dropdown = $(e.target);
@@ -2030,12 +2032,12 @@ var calcularFacetaDropdown = {
             var menu = $(this).parent().find('.dropdown-menu');
             const width = menu.parents('.faceta-name').find('.faceta-title').innerWidth();
 
-            setTimeout(function() {
+            setTimeout(function () {
                 var matrix = menu.css('transform');
                 var values = matrix.match(/-?[\d\.]+/g);
                 var x = parseInt(values[4]);
                 var y = parseInt(values[5]);
-                menu.css({'transform' : 'translate3d(' + -(width + 3) + 'px,' + y + 'px, 0px)'});
+                menu.css({ 'transform': 'translate3d(' + -(width + 3) + 'px,' + y + 'px, 0px)' });
                 menu.css('visibility', 'visible');
             });
         });
@@ -2055,16 +2057,21 @@ var cambioVistaListado = {
         return;
     },
     comportamiento: function () {
+        const that = this;
 
         var accionesListado = this.body.find('.acciones-listado');
         var visualizacion = accionesListado.find('.visualizacion');
-        var resourceList = this.body.find('.resource-list');
         var dropdownMenu = visualizacion.find('.dropdown-menu');
         var dropdownToggle = visualizacion.find('.dropdown-toggle');
         var dropdownToggleIcon = dropdownToggle.find('.material-icons');
         var modosVisualizacion = dropdownMenu.find('a');
 
         modosVisualizacion.on('click', function (e) {
+
+            var resourceList = that.body.find('.resource-list');
+            var listados = $('.content-properties .listado');
+            var mosaicos = $('.content-properties .mosaico');
+
             e.preventDefault();
             var item = $(this);
             var clase = item.data('class-resource-list');
@@ -2077,8 +2084,17 @@ var cambioVistaListado = {
                 dropdownToggleIcon.text(icon);
                 resourceList.removeClass('compacView listView mosaicView mapView graphView grafoView');
                 resourceList.addClass(clase);
+
+                if (clase === "listView" || clase === "compacView") {
+                    listados.removeClass('hidden').attr('hidden', false);
+                    mosaicos.addClass('hidden').attr('hidden', true);
+                } else if (clase === "mosaicView") {
+                    listados.addClass('hidden').attr('hidden', true);
+                    mosaicos.removeClass('hidden').attr('hidden', false);
+                }
+
                 if (clase != "graphView") {
-                    var charts = $("#divCharts");
+                    var charts = $("#divContChart");
                     if (charts.length != 0) {
                         charts.remove();
                         FiltrarPorFacetas(ObtenerHash2());
@@ -2150,7 +2166,7 @@ var plegarFacetasCabecera = {
     },
     comportamiento: function () {
         var that = this;
-        this.facetas = this.body.find('#panFacetas');
+        this.facetas = this.body.find('#panFacetas').length > 0 ? this.body.find('#panFacetas') : this.body.find('#divFac');
         var facetasTitle = this.facetas.find('.faceta-title');
 
         facetasTitle.off('click').on('click', function (e) {
@@ -2160,12 +2176,12 @@ var plegarFacetasCabecera = {
 
             if (target.hasClass('search-icon')) {
                 e.preventDefault();
-                e.stopPropagation();                
+                e.stopPropagation();
             } else {
                 that.mostrarOcultarFaceta(box);
             }
 
-	    // No establecer un tamaño automático. En caso de haber muchas facetas, genera un height excesivo
+            // No establecer un tamaño automático. En caso de haber muchas facetas, genera un height excesivo
             // alturizarBodyTamanoFacetas.init();
         });
     },
@@ -2219,7 +2235,7 @@ var comportamientosModalFacetas = {
         this.cambiarTituloModal();
     },
     comportamientoBotonesDesplegables: function () {
-        $(document).on('click', '.js-desplegar-facetas-modal', function (event) {        
+        $(document).on('click', '.js-desplegar-facetas-modal', function (event) {
             const button = $(this);
             const faceta_wrap = button.closest('.facetas-wrap');
             const action_buttons = button.closest('ul').find('li');
@@ -2229,7 +2245,7 @@ var comportamientosModalFacetas = {
             action_buttons.show();
             button.hide();
         });
-        $(document).on('click', '.js-plegar-facetas-modal', function (event) {        
+        $(document).on('click', '.js-plegar-facetas-modal', function (event) {
             const button = $(this);
             const faceta_wrap = button.closest('.facetas-wrap');
             const action_buttons = button.closest('ul').find('li');
@@ -2242,36 +2258,36 @@ var comportamientosModalFacetas = {
 
         $('.js-plegar-facetas-modal').hide();
     },
-        
-        /*
-         * Lógica de los botones creados en 'comportamientoFacetasPopup'
-           Lo incluyo en unificado.js para comportamiento de facetas
-         * 
-        $(document).on('click', '.js-anterior-facetas-modal', function (event) {        
+
+    /*
+     * Lógica de los botones creados en 'comportamientoFacetasPopup'
+       Lo incluyo en unificado.js para comportamiento de facetas
+     * 
+    $(document).on('click', '.js-anterior-facetas-modal', function (event) {        
+        $('.resultados-wrap .listadoFacetas').animate({
+            marginLeft: 30,
+            opacity: 0
+        }, 200, function () {
+            $('.resultados-wrap .listadoFacetas').css({ marginLeft: -30 });
             $('.resultados-wrap .listadoFacetas').animate({
                 marginLeft: 30,
-                opacity: 0
-            }, 200, function () {
-                $('.resultados-wrap .listadoFacetas').css({ marginLeft: -30 });
-                $('.resultados-wrap .listadoFacetas').animate({
-                    marginLeft: 30,
-                    opacity: 1
-                }, 200);
-            });
+                opacity: 1
+            }, 200);
         });
-        $(document).on('click', '.js-siguiente-facetas-modal', function (event) {        
+    });
+    $(document).on('click', '.js-siguiente-facetas-modal', function (event) {        
+        $('.resultados-wrap .listadoFacetas').animate({
+            marginLeft: -30,
+            opacity: 0
+        }, 200, function () {
+            $('.resultados-wrap .listadoFacetas').css({ marginLeft: 30 });
             $('.resultados-wrap .listadoFacetas').animate({
-                marginLeft: -30,
-                opacity: 0
-            }, 200, function () {
-                $('.resultados-wrap .listadoFacetas').css({ marginLeft: 30 });
-                $('.resultados-wrap .listadoFacetas').animate({
-                    marginLeft: 30,
-                    opacity: 1
-                }, 200);
-            });
+                marginLeft: 30,
+                opacity: 1
+            }, 200);
         });
-        */
+    });
+    */
     cambiarTituloModal: function () {
         $('#modal-resultados').on('show.bs.modal', function (e) {
             const modal = $(this);
@@ -2289,7 +2305,7 @@ var comportamientosModalFacetas = {
 const comportamientoCargaFacetasNewFront = {
     init: function () {
         // Longitud facetas por CSS
-		// limiteLongitudFacetas.init();
+        // limiteLongitudFacetas.init();
         facetedSearch.init();
         $('.verMasFacetas').each(function () {
             var enlace = $(this);
@@ -2580,23 +2596,23 @@ var customizarAvisoCookies = {
         return;
     },
     comportamientoAceptar: function () {
-		var that = this;
+        var that = this;
         var aceptar = $('#aceptarCookies');
 
-		aceptar.on('click', function (e) {
-			e.preventDefault();
-			that.guardarAceptarCookies();
-		});
+        aceptar.on('click', function (e) {
+            e.preventDefault();
+            that.guardarAceptarCookies();
+        });
         return;
     },
 
-     /**
-     * Guardado de cookie enviando petición al servidor (como se realiza en el anterior Front)
-     * */
+    /**
+    * Guardado de cookie enviando petición al servidor (como se realiza en el anterior Front)
+    * */
     guardarAceptarCookies: function () {
         var that = this;
 
-        const urlAcceptCookies = $("#inpt_baseUrlBusqueda").val() + `/aceptar-cookies`;
+        const urlAcceptCookies = document.location.origin + `/aceptar-cookies`;
 
         MostrarUpdateProgress();
         GnossPeticionAjax(
@@ -2609,10 +2625,10 @@ var customizarAvisoCookies = {
             // Ocultar panel de cookies
             that.avisoCookies.animate({ opacity: '0' }, 400, 'swing', function () {
                 that.avisoCookies.remove();
-            });            
+            });
         }).always(function () {
-            OcultarUpdateProgress();             
-        });       
+            OcultarUpdateProgress();
+        });
         return;
     },
     /**   
@@ -2620,8 +2636,8 @@ var customizarAvisoCookies = {
      * */
     mostrarErrorGuardado: function () {
         if (data) {
-            $('#modal-accept-coookie-wrapper').after('<div class="ko" style="display:block;">' + data + '</div>');            
-        } else {            
+            $('#modal-accept-coookie-wrapper').after('<div class="ko" style="display:block;">' + data + '</div>');
+        } else {
             $('#modal-accept-coookie-wrapper').after('<div class="ko" style="display:block;">Ha habido errores en el guardado</div>');
         }
     },
@@ -2641,9 +2657,6 @@ var customizarDonutChart = {
 
 var modalCerrarSesion = {
     init: function () {
-        //this.config();
-        //this.comportamiento();
-        // De momento no se realiza con modal
         this.startLoader();
     },
     config: function () {
@@ -2718,13 +2731,13 @@ var tooltipComunidad = {
     },
     lanzar: function () {
         var that = this;
-        this.icono.off('click').on('click', function() {
+        this.icono.off('click').on('click', function () {
             that.tooltip.toggleClass('show');
         });
     },
     acciones: function () {
         var that = this;
-        this.tooltip.find('.cerrar').off('click').on('click', function() {
+        this.tooltip.find('.cerrar').off('click').on('click', function () {
             that.tooltip.removeClass('show');
         });
 
@@ -2738,7 +2751,7 @@ var tooltipComunidad = {
 };
 
 var solicitarAccesoComunidad = {
-    init: function() {
+    init: function () {
         var solicitar = $('.solicitar-acceso');
 
         solicitar.find('.cerrar').off('click').on('click', function () {
@@ -2748,7 +2761,14 @@ var solicitarAccesoComunidad = {
         solicitar.find('.acceso').off('click').on('click', function () {
             $(this).parent().find('p:not(.titulo)').html('<p>Tu solicitud de acceso a la comunidad está siendo valorada.</p><p>En breve te informaremos de la resolución de la misma.</p>');
             $(this).removeClass('btn-primary acceso').addClass('btn-link').text('Acceso solicitado');
-            if ($('.tooltip.comunidad').length > 0) $('.tooltip.comunidad').find('.btn').trigger('click');
+            if ($('.solicitar-acceso').find('.cerrar').length > 0)
+            {
+                $('.solicitar-acceso').find('.cerrar').trigger('click');
+            }
+            if ($('.tooltip.comunidad').length > 0)
+            {
+                $('.tooltip.comunidad').find('.btn').trigger('click');
+            } 
         });
     }
 };
@@ -2760,7 +2780,7 @@ var solicitarAccesoComunidad = {
  * @param  {string} contenido 'Mensaje que se quiere mostrar'
  */
 var mostrarNotificacion = function (tipo, contenido) {
-    
+
     const $toast = toastr[tipo](contenido, '', {
         toastClass: 'toast themed',
         positionClass: "toast-bottom-center",
@@ -2770,7 +2790,7 @@ var mostrarNotificacion = function (tipo, contenido) {
         timeOut: 5000,
         escapeHtml: false,
         closeButton: true,
-    });    
+    });
     $toast.attr('role', 'status');
 };
 
@@ -2811,23 +2831,23 @@ function OcultarUpdateProgress() {
 
     $.imageDropArea = function (element, options) {
         var defaults = {
-          inputSelector: ".image-uploader__input",
-          dropAreaSelector: ".image-uploader__drop-area",
-          preview: ".image-uploader__preview",
-          previewImg: ".image-uploader__img",
-          errorDisplay: ".image-uploader__error",
-          urlUploadImage: document.location.href,
-          urlUploadImageType: 'ImagenRegistroUsuario', // Valor por defecto para la foto en el registro de usuario
+            inputSelector: ".image-uploader__input",
+            dropAreaSelector: ".image-uploader__drop-area",
+            preview: ".image-uploader__preview",
+            previewImg: ".image-uploader__img",
+            errorDisplay: ".image-uploader__error",
+            urlUploadImage: document.location.href,
+            urlUploadImageType: 'ImagenRegistroUsuario', // Valor por defecto para la foto en el registro de usuario
 
 
-          // funcionPrueba: function() {}
+            // funcionPrueba: function() {}
         };
         var plugin = this;
 
         // Objeto HTML del Loading que se mostraría mientras se esté realizando la carga de la imagen
         var loadingSpinnerHtml = "";
         loadingSpinnerHtml +=
-          '<div class="spinner-border texto-primario" role="status" style="position: absolute; top: 45%; left:40%">';
+            '<div class="spinner-border texto-primario" role="status" style="position: absolute; top: 45%; left:40%">';
         loadingSpinnerHtml += '<span class="sr-only">Cargando...</span>';
         loadingSpinnerHtml += "</div>";
 
@@ -2837,67 +2857,67 @@ function OcultarUpdateProgress() {
         var element = element;
 
         plugin.init = function () {
-          plugin.settings = $.extend({}, defaults, options);
-          plugin["input"] = $(plugin.settings.inputSelector);
-          plugin["dropAreaSelector"] = $(plugin.settings.dropAreaSelector);
-          plugin["preview"] = $(plugin.settings.preview);
-          plugin["previewImg"] = $(plugin.settings.previewImg);
-          plugin["errorDisplay"] = $(plugin.settings.errorDisplay);
-          onInputChange();
-          addDragAndDropEvents();
+            plugin.settings = $.extend({}, defaults, options);
+            plugin["input"] = $(plugin.settings.inputSelector);
+            plugin["dropAreaSelector"] = $(plugin.settings.dropAreaSelector);
+            plugin["preview"] = $(plugin.settings.preview);
+            plugin["previewImg"] = $(plugin.settings.previewImg);
+            plugin["errorDisplay"] = $(plugin.settings.errorDisplay);
+            onInputChange();
+            addDragAndDropEvents();
             // Añadir endPoint /save-image si la URL contiene editar-perfil
             if (plugin.settings.urlUploadImage.search('editar-perfil') != -1 || plugin.settings.urlUploadImage.search('editar-perfil-org') != -1) {
                 plugin.settings.urlUploadImage += '/save-image';
-                defaults.urlUploadImageType = "FicheroImagen";                
-            } 
+                defaults.urlUploadImageType = "FicheroImagen";
+            }
         };
 
         var onInputChange = function () {
-          plugin.input.change(function () {
-            var data = new FormData();
-            var files = plugin.input.get(0).files;
-            if (files.length > 0) {
-              // Mostrar spinner de carga de imagen
-              showLoadingImagePreview(true);
-              data.append(defaults.urlUploadImageType, files[0]);
-              $.ajax({
-                url: plugin.settings.urlUploadImage,
-                type: "POST",
-                processData: false,
-                contentType: false,
-                data: data,
-                success: function (response) {
-                  hideError();
-                  onSuccesResponse(response);
-                },
-                error: function (er) {
-                    displayError(er.statusText);
-                    showLoadingImagePreview(false);
-                },
-              });
-            }            
-          });
+            plugin.input.change(function () {
+                var data = new FormData();
+                var files = plugin.input.get(0).files;
+                if (files.length > 0) {
+                    // Mostrar spinner de carga de imagen
+                    showLoadingImagePreview(true);
+                    data.append(defaults.urlUploadImageType, files[0]);
+                    $.ajax({
+                        url: plugin.settings.urlUploadImage,
+                        type: "POST",
+                        processData: false,
+                        contentType: false,
+                        data: data,
+                        success: function (response) {
+                            hideError();
+                            onSuccesResponse(response);
+                        },
+                        error: function (er) {
+                            displayError(er.statusText);
+                            showLoadingImagePreview(false);
+                        },
+                    });
+                }
+            });
         };
 
         var displayError = function (error) {
-          plugin.errorDisplay.find(".ko").text(error);
-          plugin.errorDisplay.find(".ko").show();
-          plugin.preview.removeClass("show-preview");
+            plugin.errorDisplay.find(".ko").text(error);
+            plugin.errorDisplay.find(".ko").show();
+            plugin.preview.removeClass("show-preview");
         };
         var hideError = function () {
-          plugin.errorDisplay.find(".ko").hide();
+            plugin.errorDisplay.find(".ko").hide();
         };
 
         var onSuccesResponse = function (response) {
-          if (response.indexOf("imagenes/") === 0) {
-            showImagePreview(response);
-            showLoadingImagePreview(false);
-            // Mostrar botón para poder eliminar imagen
-            $('#btn_delete_profile_image').removeClass("d-none");
-          } else {
-            displayError(response);
-            showLoadingImagePreview(false);
-          }
+            if (response.indexOf("imagenes/") === 0) {
+                showImagePreview(response);
+                showLoadingImagePreview(false);
+                // Mostrar botón para poder eliminar imagen
+                $('#btn_delete_profile_image').removeClass("d-none");
+            } else {
+                displayError(response);
+                showLoadingImagePreview(false);
+            }
         };
 
         /**
@@ -2906,67 +2926,67 @@ function OcultarUpdateProgress() {
          * false: Quitar ese "loading" -> Fin carga de imagen
          */
         var showLoadingImagePreview = function (showLoading) {
-          // Mostrar loading
-          if (showLoading) {
-            // Quitar la imagen actual del preview
-            plugin.preview.attr("src", "");
-            // Mostrar un spinner dentro del preview.
-            plugin.preview.append(loadingSpinnerHtml);
-          } else {
-            // Quitar loading
-            $(".spinner-border").remove();
-          }
+            // Mostrar loading
+            if (showLoading) {
+                // Quitar la imagen actual del preview
+                plugin.preview.attr("src", "");
+                // Mostrar un spinner dentro del preview.
+                plugin.preview.append(loadingSpinnerHtml);
+            } else {
+                // Quitar loading
+                $(".spinner-border").remove();
+            }
         };
 
         var showImagePreview = function (response) {
             var urlContent = $('input.inpt_baseURLContent').val();
             plugin.previewImg.attr(
-            "src",
-            urlContent + "/" + response
+                "src",
+                urlContent + "/" + response
             );
             plugin.preview.addClass("show-preview");
         };
 
         var addDragAndDropEvents = function () {
-          plugin.dropAreaSelector
-            .off("dragenter dragover")
-            .on("dragenter dragover", function (e) {
-              e.preventDefault();
-              e.stopPropagation();
+            plugin.dropAreaSelector
+                .off("dragenter dragover")
+                .on("dragenter dragover", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+            plugin.dropAreaSelector.off("click").on("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                plugin.input.trigger("click");
             });
 
-          plugin.dropAreaSelector.off("click").on("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            plugin.input.trigger("click");
-          });
+            plugin.dropAreaSelector.off("dragleave").on("dragleave", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
 
-          plugin.dropAreaSelector.off("dragleave").on("dragleave", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          });
-
-          plugin.dropAreaSelector.off("drop").on("drop", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            let dt = e.originalEvent.dataTransfer;
-            let files = dt.files;
-            plugin.input.get(0).files = files;
-            plugin.input.trigger("change");
-          });
+            plugin.dropAreaSelector.off("drop").on("drop", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                let dt = e.originalEvent.dataTransfer;
+                let files = dt.files;
+                plugin.input.get(0).files = files;
+                plugin.input.trigger("change");
+            });
         };
         plugin.init();
-      };
+    };
 
-      // add the plugin to the jQuery.fn object
-      $.fn.imageDropArea = function (options) {
+    // add the plugin to the jQuery.fn object
+    $.fn.imageDropArea = function (options) {
         return this.each(function () {
-          if (undefined == $(this).data("imageDropArea")) {
-            var plugin = new $.imageDropArea(this, options);
-            $(this).data("imageDropArea", plugin);
-          }
+            if (undefined == $(this).data("imageDropArea")) {
+                var plugin = new $.imageDropArea(this, options);
+                $(this).data("imageDropArea", plugin);
+            }
         });
-      };
+    };
 })(jQuery);
 
 /**
@@ -2999,47 +3019,47 @@ var MenuComunidad = {
      * Asignar evento de resize siempre y cuando el tamaño de los items a mostrar sean más grandes que la pantalla     
      * En resize se añade un "debounce" para evitar que la función se ejecute continuamente durante el redimensionamiento rápido de la ventana del navegador            
      */
-    checkVisibilityMenuItems: function() {
+    checkVisibilityMenuItems: function () {
         const that = this;
 
         const menu = $('#community-menu');
 
-        if (menu.length <= 0){
+        if (menu.length <= 0) {
             return;
         }
 
-        const itemsMenu = menu.find("li").not(".showMore");                
+        const itemsMenu = menu.find("li").not(".showMore");
         // Calcular inicialmente el espacio disponible para los elementos del menú
         const menuRect = menu[0].getBoundingClientRect();
         const totalWidth = menuRect.width;
-        let itemsWidth = 0;        
+        let itemsWidth = 0;
 
         // Iterar sobre los elementos del menú para calcular su ancho total
-        itemsMenu.each(function() {
+        itemsMenu.each(function () {
             var itemRect = this.getBoundingClientRect();
             // Ancho del item incluyendo el margen derecho
             itemsWidth += itemRect.width + parseFloat(window.getComputedStyle(this).marginRight);
         })
 
         // Comprobar el tamaño inicialmente por si hiciera falta aplicar la operativa en "resize"
-        if (itemsWidth > totalWidth) {    
+        if (itemsWidth > totalWidth) {
             // Setup inicial
-            that.handleCheckVisibilityMenuItems();            
+            that.handleCheckVisibilityMenuItems();
             var resizeTimer;
-            $(window).on('resize', function() {
+            $(window).on('resize', function () {
                 clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
+                resizeTimer = setTimeout(function () {
                     that.handleCheckVisibilityMenuItems();
                 }, 250);
-            }); 
-        }              
-    },   
+            });
+        }
+    },
 
     /**
      * Controla la visibilidad de los elementos del menú en función del espacio disponible.
      * Muestra u oculta elementos del menú según el tamaño del contenedor.
-     */    
-    handleCheckVisibilityMenuItems: function(){
+     */
+    handleCheckVisibilityMenuItems: function () {
         const menu = $('#community-menu');
         const itemsMenu = menu.find("> ul > li").not(".showMore");;
         const showMoreButtonMenuItem = $('#community-menu .showMore');
@@ -3054,7 +3074,7 @@ var MenuComunidad = {
         let hiddenItems = [];
 
         // Iterar sobre los elementos del menú para calcular su ancho total
-        itemsMenu.each(function() {
+        itemsMenu.each(function () {
             var itemRect = this.getBoundingClientRect();
             // Ancho del item incluyendo el margen derecho
             itemsWidth += itemRect.width + parseFloat(window.getComputedStyle(this).marginRight);
@@ -3063,20 +3083,20 @@ var MenuComunidad = {
             if (itemsWidth + 80 > totalWidth) {
                 $(this).addClass("d-none");
                 // Clonar el item para no hacerlo desaparecer
-                hiddenItems.push($(this).clone());                                
+                hiddenItems.push($(this).clone());
             }
         });
-        
+
         // Si hay elementos ocultos, mostrar el botón "Mostrar Más" y añadir los items ocultos
         if (hiddenItems.length > 0) {
             // Vaciar todos de forma inicial
             showMoreButtonMenuContainerItems.empty();
             showMoreButtonMenuItem.removeClass("d-none");
             // Agregar los items al parent de "ShowMore"
-            hiddenItems.forEach(function(item) {
+            hiddenItems.forEach(function (item) {
                 $(item).removeClass("d-none");
                 showMoreButtonMenuContainerItems.append(item);
-            });        
+            });
         } else {
             showMoreButtonMenuItem.addClass("d-none");
         }
@@ -3098,7 +3118,7 @@ $(function () {
     // No clonar el menú del usuario si el body contiene la clase no-clonarMenuUsuario
     if (!body.hasClass('no-clonarMenuUsuario')) {
         clonarMenuUsuario.init();
-    }    
+    }
     menusLateralesManagement.init();
     // Operativa submenus de la comunidad
     MenuComunidad.init();
@@ -3111,21 +3131,21 @@ $(function () {
     accionDropdownAutofocus.init();
     // Operativa para búsquedas Facetas por Fecha
     operativaFechasFacetas.init();
-    
+
     // Operativa de Facetas PopUp / y Popup Plegados    
-    comportamientoFacetasPopUp.init();    
+    comportamientoFacetasPopUp.init();
     comportamientoFacetasPopUpPlegado.init();
     customizarDonutChart.init();
     tooltipComunidad.init();
     solicitarAccesoComunidad.init();
     // Operativa para búsquedas rápidas JS (Categorías en Índice)
-    operativaFiltroRapido.init();   
+    operativaFiltroRapido.init();
 
     // Operativa de UsuariosOrganizacion (Administrar organización)
     if (body.hasClass('usuariosOrganizacion')) {
         operativaUsuariosOrganizacion.init();
     }
-    
+
     if (body.hasClass('fichaRecurso') || body.hasClass('edicionRecurso')) {
         accionesRecurso.init();
         listadoRecursosAcciones.init();
@@ -3138,12 +3158,13 @@ $(function () {
 
     if (body.hasClass('listado')) {
         filtrarMovil.init();
-        buscadorSeccion.init();
-        cambioVistaListado.init();
-        listadoRecursosAcciones.init();        
+        buscadorSeccion.init();        
+        listadoRecursosAcciones.init();
         modificarCabeceraOnScrolling.init();
         calcularFacetaDropdown.init();
         comportamientoCargaFacetasComunidad();
+        accionDropdownSelect.init();
+        cambioVistaListado.init();
 
         if (body.hasClass('mensajes')) {
             listadoMensajesAcciones.init();
@@ -3155,20 +3176,16 @@ $(function () {
     }
 
     // Cargado de datos/resultados al hacer Scroll (Búsqueda)
-    if (body.hasClass('showResultsScrolling')){
+    if (body.hasClass('showResultsScrolling')) {
         scrollingListadoRecursos.init();
     }
 
     // Espacio personal del usuario
-    if (body.hasClass('espacio-personal')) {        
+    if (body.hasClass('espacio-personal')) {
         //modalCategorizarRecursos.init();
         operativaEspacioPersonalGnoss.init();
     }
 });
-
-
-
-
 
 /**
  * Controla la visibilidad de los elementos del menú en función del espacio disponible.
@@ -3190,7 +3207,7 @@ function controlarVisibilidadMenu() {
     var hiddenItems = [];
 
     // Iterar sobre los elementos del menú para calcular su ancho total
-    itemsMenu.each(function() {
+    itemsMenu.each(function () {
         var itemRect = this.getBoundingClientRect();
         // Ancho del item + 25px margin right
         itemsWidth += itemRect.width + 25;
@@ -3201,15 +3218,15 @@ function controlarVisibilidadMenu() {
             hiddenItems.push(this);
         }
     });
-    
+
     // Si hay elementos ocultos, mostrar el botón "Mostrar Más" y añadir los items ocultos
     if (hiddenItems.length > 0) {
         showMoreButtonMenuItem.removeClass("d-none");
         // Agregar los items al parent de "ShowMore"
-        hiddenItems.forEach(function(item) {
+        hiddenItems.forEach(function (item) {
             $(item).removeClass("d-none");
             showMoreButtonMenuContainerItems.append(item);
-        });        
+        });
     } else {
         showMoreButtonMenuItem.addClass("d-none");
     }

@@ -59,7 +59,7 @@ string isEcosistemaSinMetaProyecto = "false";
 // Construir la url a la que habrá que mandar la petición para enviar el link
 string urlSend = Html.GetUrlPagina();
 int position = urlSend.IndexOf("load-action");
-string newUrlSend = $"{urlSend.Substring(0,position)}enviar-enlace/save-changes";
+string newUrlSend = $"{urlSend.Substring(0, position)}{Html.GetText("URLSEM", "ENVIARPORCORREO")}/save-changes";
 
 // Mensaje informativo instrucciones para enviar a contactos
 string instrucciones = "";    

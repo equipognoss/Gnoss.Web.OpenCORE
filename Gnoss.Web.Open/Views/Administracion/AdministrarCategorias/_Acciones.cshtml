@@ -30,6 +30,26 @@
     }
 }
 
+
+@{
+    void ObtenerPCategoria(List<CategoryModel> listaCategorias,ref CategoryModel hija)
+    {
+        foreach (CategoryModel category in listaCategorias)
+        {
+            hija = category.Subcategories.FirstOrDefault(item => item.Key.Equals(Model.Categoria.Key));
+            if (hija != null)
+            {
+                return;
+            }          
+            ObtenerPCategoria(category.Subcategories, ref hija);    
+            if (hija != null)
+            {
+                return;
+            }
+        }
+    }
+}
+
 @{
     PintarComboAdministrarCategorias pintar = new PintarComboAdministrarCategorias();
     pintar.Thesaurus = Model.Thesaurus;
@@ -39,6 +59,23 @@
     pintar.Categoria = Model.Categoria;
     pintar.IdiomaTesauro = Model.IdiomaTesauro;
     pintar.IdiomaDefecto = Model.IdiomaDefecto;
+    pintar.pCategoria = new CategoryModel();
+    if (Model.CategoriasConImagen != null && Model.CategoriasConImagen.ContainsKey(Model.Categoria.Key))
+    {
+        pintar.pCategoria.Image = Model.CategoriasConImagen.Where(cat => cat.Key.Equals(Model.Categoria.Key)).FirstOrDefault().Value;
+    }
+    pintar.pCategoriaID = Model.Categoria.Key;
+    CategoryModel categoryModel = Model.Thesaurus.ThesaurusCategories.FirstOrDefault(item => item.Key.Equals(Model.Categoria.Key));
+    if (categoryModel == null)
+    {
+        CategoryModel hija = null; 
+        ObtenerPCategoria(Model.Thesaurus.ThesaurusCategories, ref hija);
+        categoryModel = hija;
+    }
+    if (categoryModel != null)
+    {
+        pintar.pCategoria = categoryModel;
+    }
 }
 
 @switch (Model.Action)

@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,11 +27,15 @@ using System.Xml;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-    public class CMSAdminDisenioController : ControllerBaseWeb
-    {
-        public CMSAdminDisenioController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class CMSAdminDisenioController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CMSAdminDisenioController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminDisenioController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -93,11 +98,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         sr.Dispose();
 
                         //proceso el XML
-                        ControladorProyectoCMS controladorEstructuraXML = new ControladorProyectoCMS(ProyectoSeleccionado.Clave, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                        ControladorProyectoCMS controladorEstructuraXML = new ControladorProyectoCMS(ProyectoSeleccionado.Clave, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyectoCMS>(), mLoggerFactory);
 
                         controladorEstructuraXML.ConfigurarCMSComunidadConXML(texto);
                         #region Guardo el XML en el historial
-                        GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+                        GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
                         gd.Url = UrlServicioWebDocumentacion;
                         
                         sw = LoggingService.IniciarRelojTelemetria();
@@ -150,7 +155,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult DownloadDynamicFile()
         {
             //obtengo el xml con la configuración almacenada para ese proyecto
-            ControladorProyectoCMS controladorEstructuraXML = new ControladorProyectoCMS(ProyectoSeleccionado.Clave, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorProyectoCMS controladorEstructuraXML = new ControladorProyectoCMS(ProyectoSeleccionado.Clave, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyectoCMS>(), mLoggerFactory);
             XmlDocument xml = controladorEstructuraXML.PintarEstructuraXMLCMS();
 
             MemoryStream memoryStream = new MemoryStream();
@@ -176,7 +181,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult DownloadFile(string fileName)
         {
-            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
             gd.Url = UrlServicioWebDocumentacion;
             byte[] buffer = gd.ObtenerDocumentoDeDirectorio("ConfiguracionCMS/" + ProyectoSeleccionado.Clave, fileName, ".xml");
             return File(buffer, "application/text", "plantilla_" + ProyectoSeleccionado.NombreCorto + fileName.Substring(fileName.IndexOf("_") + 1) + "_CMS.xml");
@@ -210,7 +215,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             paginaModel.ListXMLVersion = new SortedDictionary<DateTime, string>();
             if (pCargarHistorial)
             { 
-                GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+                GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
                 gd.Url = UrlServicioWebDocumentacion;
 
                 string[] listado = gd.ObtenerListadoDeDocumentosDeDirectorio("ConfiguracionCMS/" + ProyectoSeleccionado.Clave);

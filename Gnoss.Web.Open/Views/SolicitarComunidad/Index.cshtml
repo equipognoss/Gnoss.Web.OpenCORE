@@ -189,32 +189,22 @@
                         </ul>
                     </div>
 
+                    <!-- Idioma por defecto -->
 
-                   @* @if (Model.ComunidadesPrivadasAdministraUsuario.Count > 0)
-                    {
-                        <!-- Descripción reservada  -->
-                        <div style="display: none" id="@idPanParrafoAcceso3">
-                            <p>
-                                <strong>
-                                    @Html.GetText("COMADMIN", "CABECERARESERVADA")
-                                </strong>
-                            </p>
-                            <ul class="AdminComunidades">
-                                <li>
-                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA1"))
-                                </li>
-                                <li>
-                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA2", Html.GetNombreProyectoEcosistema()))
-                                </li>
-                                <li>
-                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA3", Html.GetNombreProyectoEcosistema()))
-                                </li>
-                                <li>
-                                    @Html.Raw(Html.GetText("COMADMIN", "RESERVADA4"))
-                                </li>
-                            </ul>
-                        </div>
-                    }*@
+                    <div class="form-group mb-5">
+                        <label for="defaultCommunityLanguge" class="control-label d-block">@Html.GetText("COMMON", "IDIOMA")</label>
+                        <select id="defaultCommunityLanguge"
+                                name="defaultCommunityLanguge"
+                                class="js-select2 form-control"
+                                data-select-search="true">
+                            @foreach (string idiomaKey in Model.ListaIdiomasPlataforma.Keys)
+                            {
+                                <option value="@idiomaKey" @Html.Raw(idiomaKey.Equals(Model.IdiomaPorDefecto) ? "selected=\"selected\"" : "")>@Model.ListaIdiomasPlataforma[idiomaKey]</option>
+                            }
+                        </select>
+                    </div>
+
+
 
                     <div class="ko" id="panError">
                         <p>

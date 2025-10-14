@@ -1,0 +1,100 @@
+﻿@model RolModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    bool esEcosistema = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">edit</span>@Html.GetText("DEVTOOLS", "VERROL") - @Html.ObtenerTextoDeIdioma(Model.Nombre)
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="informacion-tab" data-toggle="tab" href="#informacion" role="tab" aria-controls="informacion" aria-selected="true">@Html.GetText("DEVTOOLS", "INFORMACION")</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="permisos-tab" data-toggle="tab" href="#permisos" role="tab" aria-controls="permisos" aria-selected="false">@Html.GetText("ROLESYPERMISOS", "PERMISOS")</a>
+            </li>
+            @if (!Model.EsRolUsuario)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" id="usuarios-tab" data-toggle="tab" href="#usuarios" role="tab" aria-controls="usuarios" aria-selected="false">@Html.GetText("GRUPO", "MIEMBROS")</a>
+                </li>
+            }            
+        </ul>
+        <div class="tab-content pb-0">
+            <div class="tab-pane fade show active" id="informacion" role="tabpanel" aria-labelledby="informacion-tab">
+                <div id="panContenidoMultiIdioma" class="contenido-multiIdioma panContenidoMultiIdioma">
+                </div>
+                <div class="inputsMultiIdioma multiIdiomaContainer" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+                    <div class="form-group mb-4">
+                        <input data-labeltext="@Html.GetText("DEVTOOLS", "NOMBREROL")" type="text" name="txtNombreRol" id="txtNombreRol" class="form-control multiIdioma" value="@Model.Nombre" disabled>
+                    </div>
+                    <div class="form-group mb-4">
+                        <textarea id="txtDescripcionRol" rows="6"
+                                  name="txtDescripcionRol"
+                                  class="multiIdioma"
+                                  data-labeltext="@Html.GetText("DEVTOOLS", "DESCRIPCION")">@Model.Descripcion</textarea>
+                    </div>
+                </div>
+                @{
+                    if (!esEcosistema)
+                    {
+                        <div class="tab-content pt-2">
+                            <div class="form-group mb-4">
+                                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AMBITO")</label>
+                                <select id="tipoRol"
+                                        name="tipoRol"
+                                        class="js-select2"
+                                        tabindex="0"
+                                        aria-hidden="false">
+                                    <option value="0" @(Model.Tipo == 0 ? "selected" : "")>@Html.GetText("DEVTOOLS", "TIPOROLCOMUNIDAD")</option>
+                                    <option value="1" @(Model.Tipo == 1 ? "selected" : "")>@Html.GetText("DEVTOOLS", "TIPOROLECOSISTEMA")</option>
+                                </select>
+                                <small class="form-text text-muted">@Html.GetText("ROLESYPERMISOS", "DESCAMBITOCOMUNIDAD")</small>
+                            </div>
+                            @if (Model.EsRolUsuario)
+                            {
+                                <div id="infoUsuarios" class="alert alert-success" role="alert">
+                                    <span class="material-icons">info</span>
+                                    <p class="titulo">@Html.GetText("ROLESYPERMISOS", "INFOROLUSUARIOS")</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                }                
+            </div>
+            <div class="tab-pane fade" id="permisos" role="tabpanel" aria-labelledby="permisos-tab">
+                @Html.PartialView("_partial-views/_permits-see", Model)
+            </div>
+            @if (!Model.EsRolUsuario)
+            {
+                <div class="tab-pane fade" id="usuarios" role="tabpanel" aria-labelledby="usuarios-tab">
+                    @Html.PartialView("_partial-views/_members-tab", Model)
+                </div>
+            }            
+        </div>
+    </div>
+</div>
+
+
+@* Carga de operativa *@
+<script>
+    (function ($) {
+
+        operativaGestionDeRoles.init();
+
+        const multiIdiomaConfig = {
+            numIdiomasVisibles: 3,
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
+        };
+        operativaMultiIdioma.init(multiIdiomaConfig);
+
+    })();
+</script>

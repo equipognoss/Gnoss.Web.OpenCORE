@@ -213,8 +213,9 @@ bool containsUrlFoto = true;
                            </ul>
                        }
                        @* Contenedor de las acciones + Botón desplegar acciones: Mostrarlo sólo si el usuario dispone de permisos /  *@
-                       @if (IdentidadActual.IsProyectAdmin == true) { 
-                            <div class="acciones-recurso-listado">
+                    @if (IdentidadActual.IsProyectAdmin == true || IdentidadActual.CanManageUsers)
+                    {
+                        <div class="acciones-recurso-listado">
                                <div class="dropdown">
                                    <a href="#"
                                       class="dropdown-toggle"

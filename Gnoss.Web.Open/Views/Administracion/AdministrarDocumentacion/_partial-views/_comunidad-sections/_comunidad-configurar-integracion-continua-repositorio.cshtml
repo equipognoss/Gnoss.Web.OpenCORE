@@ -1,0 +1,46 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Integración continua - Seleccionar entorno copia inicial
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    // Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.
+    bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? (bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+    // Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+    bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? (bool.Parse(ViewBag.showDocumentationSection)) : false;
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="card">
+    <div class="card-header">
+        @* Título / Botón: Información General *@
+        <h3 class="mb-0">
+            <button class="btn btn-link"
+                    data-toggle="collapse"
+            @((showDocumentationByDefault && !showDocumentationSection) ? "data-target=#repositorio-copia-inicial" : null)
+            @((showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+                    aria-controls="repositorio-copia-inicial">
+                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARINTEGRACIONCONTINUA")
+            </button>
+        </h3>
+    </div>
+    @* Contenido: Información General *@
+    <div id="repositorio-copia-inicial"
+         class="collapse @( (showDocumentationSection) ? "show" : null)"
+         data-parent="#accordion">
+        <div class="card-body">
+            <p>En esta página debemos seleccionar cual será el entorno que la integración continua tome como referencia para la copia inicial de configuraciones al repositorio.</p>
+            <p>Del entorno que seleccionemos se extraerán todas las configuraciones y se subirán al repositorio, además en el caso de no ser desarrollo se desplegarán en dicho entorno.</p>
+            <p>Si por algún casual queremos usar el entorno de desarrollo y las configuraciones ya se encuentran en el repositorio, podemos omitir esta copia inicial marcando el check.</p>
+            <p>Por último, es importante verificar antes de esta primera copia que en la carpeta de estilos solo se encuentran los archivos imprescindibles, en ocasiones hay archivos que ya no se usan o copias de seguridad. Es importante limpiar estos ficheros ya que en el caso de ser muchos puede ralentizar esta primera copia, además de llenar el repositorio de ficheros innecesarios.</p>
+            <p>Tras pulsar el botón "Crear" seremos redirigidos a una página de espera mientras se hace la copia y tras ello finalmente podremos crear nuestra primera rama para empezar a trabajar.</p>
+        </div>
+    </div>
+</div>

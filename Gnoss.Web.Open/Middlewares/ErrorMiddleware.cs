@@ -25,6 +25,11 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using System.Web;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
+using Newtonsoft.Json;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 
 namespace Gnoss.Web.Middlewares
 {
@@ -33,12 +38,15 @@ namespace Gnoss.Web.Middlewares
         private readonly RequestDelegate _next;
         private readonly IHostingEnvironment _env;
         private ConfigService _configService;
-
-        public ErrorMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public ErrorMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService, ILogger<ErrorMiddleware> logger, ILoggerFactory loggerFactory)
         { 
             _next = next;
             _env = env;
             _configService = configService;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public async Task Invoke(HttpContext context, LoggingService loggingService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper)
@@ -64,17 +72,10 @@ namespace Gnoss.Web.Middlewares
         private void HandleExceptionAsync(HttpContext context, Exception ex, LoggingService loggingService, EntityContext entityContext)
         {
             var code = HttpStatusCode.InternalServerError;
-            context.Response.StatusCode = (int)code;
-
-            //filterContext.Result = new ViewResult
-            //{
-            //    ViewName = "~/Views/Error/Error500.cshtml",
-            //    ViewData = filterContext.Controller.ViewData
-            //};
-
+            context.Response.StatusCode = (int)code;                        
             string mensajeError = $" ERROR:  {ex.Message}\r\nStackTrace: {ex.StackTrace}";
 
-            loggingService.GuardarLogError(ex); //Enviar Excepción
+            loggingService.GuardarLogError(ex, mlogger); //Enviar Excepción
 
             if (ex.StackTrace.Contains(" _Page_Views") && !ex.StackTrace.Contains(" _Page_Views_Shared_Layout") && !ex.StackTrace.Contains(" ASP._Page_Views_Error") && !ex.StackTrace.Contains(" _Page_Views_Shared_Head__HojasDeEstilo"))
             {
@@ -82,7 +83,7 @@ namespace Gnoss.Web.Middlewares
                 // Es posible que haya un error en las vistas, guardo el log e intento invalidarlas
                 if (Directory.Exists(directorioLogErroresVistas))
                 {
-                    loggingService.GuardarLogError(loggingService.DevolverCadenaError(ex, "1.0.0.0"), $"{directorioLogErroresVistas}\\errorvista_{DateTime.Now.ToString("yyyyMMdd")}.log");
+                    loggingService.GuardarLogError(loggingService.DevolverCadenaError(ex, "1.0.0.0"), mlogger, $"{directorioLogErroresVistas}\\errorvista_{DateTime.Now.ToString("yyyyMMdd")}.log");
                 }
 
                 // Si la última vez que se invalidaron vistas por error fué hace menos de 30 minutos, no vuelvo a invalidar las vistas. El error probablemente no estará en la invalidación, hay otro tipo de error. 
@@ -105,10 +106,12 @@ namespace Gnoss.Web.Middlewares
             Dictionary<string, string> excep = new Dictionary<string, string>();
             excep.Add("Error", ex.Message);
             excep.Add("ErrorTrace", ex.StackTrace);
-            var binFormatter = new BinaryFormatter();
             var stream = new MemoryStream();
-            binFormatter.Serialize(stream, excep);
-            var bytes = stream.ToArray();
+            string json = JsonConvert.SerializeObject(excep);
+            var writer = new StreamWriter(stream, System.Text.Encoding.UTF8);
+            writer.Write(json);
+            writer.Flush();
+            stream.Position = 0;
             context.Request.Body = stream;
         }
 
@@ -119,22 +122,22 @@ namespace Gnoss.Web.Middlewares
             {
                 string rutaPedida = "";
                 string nombreCortoComunidad = "";
-                ProyectoCN proyectoCN = new ProyectoCN(entityContext, loggingService, _configService, null);
+                ProyectoCN proyectoCN = new ProyectoCN(entityContext, loggingService, _configService, null, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                 string dominio = _configService.ObtenerDominio();
                 string idioma = proyectoCN.ObtenerIdiomaPrincipalDominio(dominio);
-                UtilIdiomas utilIdiomas = new UtilIdiomas(idioma, loggingService, entityContext, _configService, redisCacheWrapper);
+                UtilIdiomas utilIdiomas = new UtilIdiomas(idioma, loggingService, entityContext, _configService, redisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
                 string comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
                 
 				if (segmentos[0].Length == 2)
 				{
-                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, _configService, null);
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, _configService, null, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
                     if (paramCL.ObtenerListaIdiomasDictionary().ContainsKey(segmentos[0]))
                     {
                         idioma = segmentos[0];
                     }
-                    utilIdiomas = new UtilIdiomas(idioma, loggingService, entityContext, _configService, redisCacheWrapper);
+                    utilIdiomas = new UtilIdiomas(idioma, loggingService, entityContext, _configService, redisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
                     comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
-                    if (!string.IsNullOrEmpty(segmentos[2]))
+                    if (segmentos.Length > 2 && !string.IsNullOrEmpty(segmentos[2]))
                     {
                         string comunidadSegmento = segmentos[1].ToLower();
                         if (comunidadSegmento.Equals(comunidadTxt))
@@ -183,6 +186,8 @@ namespace Gnoss.Web.Middlewares
                 if (!string.IsNullOrEmpty(nombreCortoComunidad))
                 {
                     Guid proyectoID = entityContext.Proyecto.Where(proyecto => proyecto.NombreCorto.Equals(nombreCortoComunidad)).Select(proyecto => proyecto.ProyectoID).FirstOrDefault();
+                    
+                    bool idiomasDisponibles = proyectoID == ProyectoAD.MetaProyecto ? entityContext.ParametroAplicacion.Where(item => item.Parametro.Equals("Idiomas")).Select(item => item.Valor).First().Split("&&&").Count() != 1 : entityContext.ParametroGeneral.Where(item => item.ProyectoID == proyectoID).Select(item => item.IdiomasDisponibles).First();
                     if (!proyectoID.Equals(Guid.Empty))
                     {
                         var listTabsDB = entityContext.ProyectoPestanyaMenu.Where(item => item.ProyectoID.Equals(proyectoID) && !string.IsNullOrEmpty(item.Ruta) && !item.TipoPestanya.Equals((short)TipoPestanyaMenu.EnlaceInterno) && !item.TipoPestanya.Equals((short)TipoPestanyaMenu.EnlaceExterno)).Select(item => new { item.PestanyaID, item.TipoPestanya, item.Ruta }).ToList();
@@ -214,7 +219,7 @@ namespace Gnoss.Web.Middlewares
                                 }
                             }
                         }
-                        if (listTabs.Exists(item => item.RutaPestanya.Equals(rutaPedida)))
+                        if ((listTabs.Exists(item => item.RutaPestanya.Equals(rutaPedida) && item.Idioma.Equals(idioma)) && idiomasDisponibles) || (listTabs.Exists(item => item.RutaPestanya.Equals(rutaPedida)) && !idiomasDisponibles))
                         {
                             RouteValueTransformer.EliminarRutasProyecto(nombreCortoComunidad);
                             string ruta = "http://";
@@ -239,6 +244,12 @@ namespace Gnoss.Web.Middlewares
                     }
                 }
             }
+            string rutaEjecucionWeb = _configService.ObtenerRutaEjecucionWeb();
+            if (!string.IsNullOrEmpty(rutaEjecucionWeb))
+            {
+                //return $"/{rutaEjecucionWeb}{context.Items["originalPath"].ToString().Trim('/')}";
+            }
+
             context.Items["statusCode"] = 404;
             return "/error";
         }

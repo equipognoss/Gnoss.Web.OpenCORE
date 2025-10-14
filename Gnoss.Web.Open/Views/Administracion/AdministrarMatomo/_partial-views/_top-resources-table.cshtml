@@ -1,0 +1,58 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista parcial que contiene una tabla donde se muestran los recursos destacados de la comunidad. Por defecto está vacía. Los datos son cargados de forma dinámica vía JS.
+
+Variables
+----------------------------------------------------------------
+*@
+
+<div class="table-responsive matomoContainer__table">
+	<div class="d-flex align-items-center justify-content-between">
+		<h3 class="matomoContainer__header">Recursos más visitados</h3>
+		<button id="parellelBtResources" class="parellelBtIndex btn btn-outline-primary matomoContainer__downloadButton">Descargar en CSV</button>
+	</div>
+	<hr>
+	<table id="table_top_resources" class="table table-bordered">
+		<thead>
+			<tr>
+				<th>Top</th>
+				<th>Recurso</th>
+				<th>Nº de visitas</th>
+				<th>Duración media</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>1</td>
+				<td id="top1ResourceName"></td>
+				<td id="top1ResourceVisits"></td>
+				<td id="top1ResourceVisitsTime"></td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td id="top2ResourceName"></td>
+				<td id="top2ResourceVisits"></td>
+				<td id="top2ResourceVisitsTime"></td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td id="top3ResourceName"></td>
+				<td id="top3ResourceVisits"></td>
+				<td id="top3ResourceVisitsTime"></td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td id="top4ResourceName"></td>
+				<td id="top4ResourceVisits"></td>
+				<td id="top4ResourceVisitsTime"></td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td id="top5ResourceName"></td>
+				<td id="top5ResourceVisits"></td>
+				<td id="top5ResourceVisitsTime"></td>
+			</tr>
+		</tbody>
+	</table>
+</div>

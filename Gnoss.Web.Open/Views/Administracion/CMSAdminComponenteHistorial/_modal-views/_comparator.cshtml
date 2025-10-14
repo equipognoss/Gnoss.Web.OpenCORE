@@ -1,0 +1,166 @@
+﻿@using Es.Riam.Gnoss.AD.EntityModel.Models.CMS
+@using Es.Riam.Gnoss.Elementos.CMS
+@model CMSAdminComparadorComponentesViewModel
+
+@{
+    HeaderModel cabecera = Html.GetCabecera();
+
+    CMSAdminComponenteVersionViewModel componenteVersion1 = Model.ComponenteVersion1;
+    CMSAdminComponenteVersionViewModel componenteVersion2 = Model.ComponenteVersion2;
+
+    CMSAdminComparadorComponenteViewModel modelo1 = new CMSAdminComparadorComponenteViewModel();
+    modelo1.ComponeteVersion = Model.ComponenteVersion1.Propiedades;
+    modelo1.DiferenciasPropiedadesCMS = Model.DiferenciasPropiedadesCMS;
+    modelo1.DiferenciasCamposComunesCMS = Model.DiferenciasCamposComunesCMS;
+    CMSAdminComparadorComponenteViewModel modelo2 = new CMSAdminComparadorComponenteViewModel();
+    modelo2.ComponeteVersion = Model.ComponenteVersion2.Propiedades;
+    modelo2.DiferenciasPropiedadesCMS = Model.DiferenciasPropiedadesCMS;
+    modelo2.DiferenciasCamposComunesCMS = Model.DiferenciasCamposComunesCMS;
+
+    // URL para añadir comentario a la restauracion
+    string urlAddCommentComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + Model.ComponenteVersion1.ComponenteID + "/addCommentRestore";
+    // Titulo del primer documento
+    string cabecera1 = $"{Html.GetText("HISTORIALVERSIONES", "VERSION")} {componenteVersion1.Version}";
+    // Titulo del segundo documento
+    string cabecera2 = $"{Html.GetText("HISTORIALVERSIONES", "VERSION")} {componenteVersion2.Version}";
+    // Contador del nº de pestañas listadas
+    int contNumPestañasVisibles = 0;
+    // Nº de pestañas de idiomas a visualizar en la sección Tab
+    int numMaxPestañasIdiomasVisibles = 3;
+
+}
+<input type="hidden" id="componentVersionRestoreData" data-component-id="@Model.ComponenteVersion1.ComponenteID" data-version-id="@Model.ComponenteVersion2.VersionID" />
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">compare</span>
+        @Html.GetText("HISTORIALVERSIONES", "COMPARARVERSIONES")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        @* Tabs de la cabecera si componente es multiidioma*@
+        @if (modelo1.ComponeteVersion.ListaIdiomas.Count > 1)
+        {
+            @* Tabs o cabecera de los idiomas *@
+            <ul class="nav nav-tabs edicionMultiIdioma" id="tabIdiomasComponentes" role="tablist">
+                @* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@			
+                @foreach (string idioma in modelo1.ComponeteVersion.ListaIdiomas.Keys)
+                {
+                    if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+                    {
+                        <li class="nav-item">
+                            <a class="tabIdiomaItem nav-link @Html.Raw(idioma.Equals(modelo1.ComponeteVersion.IdiomaPorDefecto) ? "active" : "")"
+                               id="@($"versiones_{idioma}")" data-toggle="tab" href="@($"#versiones_{idioma}_left")"
+                               data-language="@idioma"
+                               role="tab" aria-controls="@($"versiones_{idioma}_left")"
+                               aria-selected="true">@modelo1.ComponeteVersion.ListaIdiomas[idioma]@(idioma.Equals(modelo1.ComponeteVersion.IdiomaPorDefecto) ? " *" : "")</a>
+                        </li>
+                        contNumPestañasVisibles += 1;
+                    }
+                }
+                @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+                @if (contNumPestañasVisibles < cabecera.Languajes.Count)
+                {
+                    @* Dropdown para resto de categorías *@
+                    <li class="nav-item dropdown">
+                        @* Desplegable del dropdown *@
+                        <a class="nav-link dropdown-toggle languageOculto"
+                           data-toggle="dropdown"
+                           href="#"
+                           role="button"
+                           aria-haspopup="true"
+                           aria-expanded="false">
+                            @Html.GetText("DEVTOOLS", "OTROSIDIOMAS")
+                        </a>
+                        @* Sección para mostrar items del dropdown*@
+                        <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+                            @* Pintado del resto de pestañas en Dropdown *@									
+                                                                                        @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+                            {
+                                var item = cabecera.Languajes.ElementAt(i);
+                                var itemKey = item.Key;
+                                var itemValue = item.Value;
+
+                                @* Cada item del dropdown *@
+                                <a id="@("tab_" + itemKey)"
+                                   class="item-dropdown languageOcultoItem tabIdiomaItem @( modelo1.ComponeteVersion.IdiomaPorDefecto == itemKey ? "active" : null)"
+                                   data-toggle="tab"
+                                   role="tab"
+                                   href="@($"versiones_{itemKey}_left")"
+                                   data-language="@itemKey">
+                                    @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                </a>
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+        @* Formulario que contiene los datos de los componentes a comparar*@
+        @* <div class="tab-content"> *@
+        <div class="comparar-versiones__wrap">
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header pt-3">
+                    <p class="version">
+                        @cabecera1
+                        @if (componenteVersion1.VersionActual)
+                        {
+                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @componenteVersion1.Fecha.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body" id="@componenteVersion1.VersionID.ToString()">
+                    @{
+                        ViewBag.Side = "left";
+                    }
+                    <div class="comparar-version">
+                        @Html.PartialView("_modal-views/_comparator-item", modelo1)
+                    </div>
+                </div>
+            </div>
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header pt-3">
+                    <p class="version">
+                        @cabecera2
+                        @if (componenteVersion2.VersionActual)
+                        {
+                            <span class="badge-success badge-pill">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @componenteVersion2.Fecha.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body" id="@componenteVersion2.VersionID.ToString()">
+                    @{
+                        ViewBag.Side = "right";
+                    }
+                    <div class="comparar-version">
+                        @Html.PartialView("_modal-views/_comparator-item", modelo2)
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (Model.Restaurando)
+        {
+            <div class="panelBotonera">
+                <a class="btn btn-primary uppercase btnAgregarComentarioRestauracion"
+                   data-target="#modal-container"
+                   data-toggle="modal">@Html.GetText("HISTORIALVERSIONES", "RESTAURARVERSION") @cabecera2</a>
+            </div>
+        }
+        @* </div> *@
+    </div>
+</div>
+<script type="text/javascript">
+    (function ($) {
+        pParams = {
+            urlAddCommentComponentItem: "@urlAddCommentComponentItem"
+        }
+        operativaGestionComparadorCMS.init(pParams);
+    })();
+</script>

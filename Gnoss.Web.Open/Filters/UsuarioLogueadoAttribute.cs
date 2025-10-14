@@ -7,8 +7,11 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using static Es.Riam.Gnoss.Util.Seguridad.Capacidad.General;
 
 namespace Es.Riam.Gnoss.Web.MVC.Filters
@@ -33,17 +36,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private EntityContext mEntityContext;
         private RedisCacheWrapper mRedisCacheWrapper;
         private VirtuosoAD mVirtuosoAD;
-
-        public UsuarioLogueadoAttribute(RolesUsuario pRol, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public UsuarioLogueadoAttribute(RolesUsuario pRol, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ILogger<UsuarioLogueadoAttribute> logger, ILoggerFactory loggerFactory)
         {
             mLoggingService = loggingService;
             mConfigService = configService;
             mEntityContext = entityContext;
             mRedisCacheWrapper = redisCacheWrapper;
             mVirtuosoAD = virtuosoAD;
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
             Rol = pRol;
-            //Rol = RolesUsuario.Logueado;
         }
 
         public RolesUsuario Rol
@@ -54,8 +59,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 
         protected override void RealizarComprobaciones(ActionExecutingContext pFilterContext)
         {
-            
-            ControllerBaseWeb controlador = (ControllerBaseWeb)Controlador(pFilterContext);
+
+            ControllerBaseWeb controlador = Controlador(pFilterContext);
 
             string urlRedirectBase = mControladorBase.BaseURLIdioma + mControladorBase.UrlPerfil;
             if (mControladorBase.ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
@@ -70,7 +75,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     //login comunidad
                     string urlRedireccion = urlRedirectBase + mControladorBase.UtilIdiomas.GetText("URLSEM", "LOGIN") + mControladorBase.UrlParaLoginConRedirect;
                     Redireccionar(urlRedireccion, pFilterContext);
-                    //HttpContext.Current.Response.Redirect(urlRedireccion);
                 }
                 else if (Rol.Equals(RolesUsuario.MiembroComunidad) && (mControladorBase.UsuarioActual.EsIdentidadInvitada || mControladorBase.EstaUsuarioBloqueadoProyecto))
                 {
@@ -79,36 +83,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                 }
             }
 
-            if (Rol.Equals(RolesUsuario.SupervisorComunidad))
+            if (Rol.Equals(RolesUsuario.SupervisorComunidad) && !EsIdentidadActualSupervisorProyecto && !mControladorBase.ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
             {
-                if (!EsIdentidadActualSupervisorProyecto && !mControladorBase.ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
-                {
-                    //redirección a la home
-                    Redireccionar(urlRedirectBase, pFilterContext);
-                }
+                //redirección a la home
+                Redireccionar(urlRedirectBase, pFilterContext);
             }
 
-            if (Rol.Equals(RolesUsuario.AdministradorComunidad))
+            if (Rol.Equals(RolesUsuario.AdministradorComunidad) && !mControladorBase.ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
             {
-                if (!mControladorBase.ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
-                {
-                    //redirección a la home de la comunidad
-                    Redireccionar(urlRedirectBase, pFilterContext);
-                }
+                //redirección a la home de la comunidad
+                Redireccionar(urlRedirectBase, pFilterContext);
             }
 
-            if (Rol.Equals(RolesUsuario.AdministradorOrganizacion))
+            if (Rol.Equals(RolesUsuario.AdministradorOrganizacion) && mControladorBase.IdentidadActual.OrganizacionID != null && !mControladorBase.UsuarioActual.EstaAutorizadoEnOrganizacion((ulong)CapacidadesAdministrador.AdministrarGeneral, mControladorBase.IdentidadActual.OrganizacionID.Value))
             {
-                if (mControladorBase.IdentidadActual.OrganizacionID != null && !mControladorBase.UsuarioActual.EstaAutorizadoEnOrganizacion((ulong)CapacidadesAdministrador.AdministrarGeneral, mControladorBase.IdentidadActual.OrganizacionID.Value))
-                {
-                    //redirección a la home
-                    Redireccionar(urlRedirectBase, pFilterContext);
-                }
+                //redirección a la home
+                Redireccionar(urlRedirectBase, pFilterContext);
             }
 
             if (Rol.Equals(RolesUsuario.AdministradorMetaProyecto))
             {
-                Es.Riam.Gnoss.Logica.ServiciosGenerales.ProyectoCN proyCN = new Logica.ServiciosGenerales.ProyectoCN(mEntityContext, mLoggingService, mConfigService, null);
+                Logica.ServiciosGenerales.ProyectoCN proyCN = new Logica.ServiciosGenerales.ProyectoCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<Logica.ServiciosGenerales.ProyectoCN>(), mLoggerFactory);
                 bool esAdministradorMetaProyecto = proyCN.EsUsuarioAdministradorProyecto(mControladorBase.UsuarioActual.UsuarioID, ProyectoAD.MetaProyecto);
                 proyCN.Dispose();
                 if (!esAdministradorMetaProyecto)

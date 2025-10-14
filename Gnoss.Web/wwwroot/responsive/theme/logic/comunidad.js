@@ -545,7 +545,11 @@ const operativaInformacionGeneral = {
                 // Sin errores, proceder a obtener datos para guardarlos                
                 that.obtenerDatos();                                                                  
                 // Proceder a realizar el guardado de datos
-                that.guardarDatos();                                                            
+                if (that.Options['State.State'] == 4) {
+                    that.cerrarComunidad();
+                } else {
+                    that.guardarDatos();                                                            
+                }
             }
         });
     },
@@ -1228,6 +1232,28 @@ const operativaInformacionGeneral = {
             loadingOcultar();
         });
     },  
+    cerrarComunidad: function () {
+        const that = this;
+        const urlCloseCommunity = `${that.urlBase}/close-community`;
+
+        // Mostrar loading
+        loadingMostrar();
+
+        // Proceder a guardar los datos
+        GnossPeticionAjax(
+            urlCloseCommunity
+        ).done(function (data) {
+            // Guardado OK
+            mostrarNotificacion("success", "Se ha cerrado la comunidad correctamente");
+            window.location.reload();
+        }).fail(function (data) {
+            // Guardado KO
+            const error = data.split('|||');
+            mostrarNotificacion("error", "Se han producido errores durante el cierre de la comunidad.");
+        }).always(function () {
+            loadingOcultar();
+        });
+    }
 }
 
 
@@ -1936,6 +1962,7 @@ const operativaContenidosYPermisos = {
         this.btnGuardarEliminarCategory = $('#btnGuardarBorrarCategory');
         // Botón para guardar la categoría una vez se ha editado el nombre desde el modal
         this.btnGuardarNombreCategory = $('#btnGuardarNombreCategory');
+        this.btnEliminarImagenCategoria = $('#btnEliminarImagenCategoria');
         // Combo o select donde se indica la nueva categoría donde se moverán los recursos a la categoría destino desde el modal "Eliminar categoria
         this.cmbMoverATrasEliminar = $('#MoverATrasEliminar');
         // Combo o select donde se indica la categoría "padre" donde crear la nueva categoría
@@ -1946,7 +1973,15 @@ const operativaContenidosYPermisos = {
         this.btnSiDisableMultilenguageCategory = $('#btnSiDisableMultilenguageCategory');
         // Botón de No para No deshabilitar la edición multilenguaje de categorías
         this.btnNoDisableMultilenguageCategory = $('#btnNoDisableMultilenguageCategory');            
-    
+
+        //checkbox obligatorio / estructurante
+        //al editar categoria
+        this.chkObligatoria = $('#chkObligatoria');
+        this.chkEstructurante = $('#chkEstructurante');
+        //al crear categoria
+        this.chkObligatoria2 = $('#chkObligatoria2');
+        this.chkEstructurante2 = $('#chkEstructurante2');
+
         /* Guardado categorías */
         // Botón para buardar toda la gestión de categorías
         this.btnGuardarCategorias = $('#btnGuardarCategorias');
@@ -1955,9 +1990,31 @@ const operativaContenidosYPermisos = {
         this.modalContainer = $('#modal-container');        
 
         // Flag que indica si se está borrando una determinada Categoria
-        this.confirmDeleteCategory = false;        
-    },
+        this.confirmDeleteCategory = false; 
+     },
 
+    initImageDropArea: function () {
+         const that = this;
+         // Inicializar plugin al dropArea para la cabecera
+         this.dropareaImage.imageDropArea({
+             urlUploadImage: that.urlSubirImagen,
+             urlUploadImageType: "fileUpload",
+             panelAccionesImagen: undefined,
+             contenedorImagen: that.contenedorImagen,
+             previewImg: that.previewImg,
+             inputHiddenImageLoaded: that.imageMultimediaSrc,
+             panelVistaContenedor: undefined,
+             completion: that.onCompletionMultimediaItemUploaded,
+         });
+     },
+    onCompletionMultimediaItemUploaded: function (htmlResponse, success) {
+         if (htmlResponse.includes("Error") != true) {
+             // Subida correcta del fichero                    
+             mostrarNotificacion("success", htmlResponse);
+         } else {
+             mostrarNotificacion("error", htmlResponse);
+         }
+     },
     /**
      * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
      */
@@ -2091,7 +2148,7 @@ const operativaContenidosYPermisos = {
         });
 
         // Permitir el botón de guardar sólo cuando haya acciones pendientes
-        this.txtAccionesTesauroHack.val() != "" ? this.btnGuardarCategorias.prop('disabled', false) : this.btnGuardarCategorias.prop('disabled', true)
+        //this.txtAccionesTesauroHack.val() != "" ? this.btnGuardarCategorias.prop('disabled', false) : this.btnGuardarCategorias.prop('disabled', true)
                
         // Botón para aceptar las categoría sugerida
         this.btnAcceptCategorySuggested.off().on("click", function(e){
@@ -2177,7 +2234,8 @@ const operativaContenidosYPermisos = {
         // Url para obtener la url para realizar la petición del guardado de categoría
         this.urlCrearCategoria = `${this.urlBase}/action/create`;
         // Url para guardado de todas las categorías
-        this.urlGuardarCategorias = `${this.urlBase}/save`;
+        //this.urlGuardarCategorias = `${this.urlBase}/save`;
+        this.urlGuardarCategorias = `${this.urlBase}/save-order`;
         // Url para eliminar una categoría
         this.urlEliminarCategoria = `${this.urlBase}/show-action/delete`;
         // Url para eliminación definitiva de categoría desde Modal
@@ -2199,7 +2257,9 @@ const operativaContenidosYPermisos = {
         // Url para mover categorías. Se utiliza en la operativa 'operativaCategoriasSortable'
         this.urlMoveCategoria = `${this.urlBase}/action/move`;
         // Url para ordenar categorías. Se utiliza en la operativa 'operativaCategoriasSortable'
-        this.urlSortCategoria = `${this.urlBase}/action/order` 
+        this.urlSortCategoria = `${this.urlBase}/action/order`; 
+        this.urlSubirImagen = `${this.urlBase}/action/edit-image?pCategoriaID=`; 
+        this.urlEliminarImagen = `${this.urlBase}/action/delete-image?pCategoriaID=`; 
     },
 
 
@@ -2267,6 +2327,21 @@ const operativaContenidosYPermisos = {
             // Guardar el renombre de categoría            
             that.handleRenameCategory();
         });
+
+        that.btnEliminarImagenCategoria.on("click", function () {
+            that.handleDeleteCategoryImage();
+        });
+
+        this.dropareaImage = $('.js-image-uploader');
+        // Contenedor para poder hacer drag/drop de la imagen de la cabecera
+        this.contenedorImagen = $("#contenedorImagen");
+        // Imagen preview de la cabecera
+        this.previewImg = $(".image-uploader-multimedia-item");
+        // Id del Input oculto donde se guardará la imagen subida 
+        this.imageMultimediaSrc = "#image-multimedia-src";
+
+        // Inicializar operativa imageDropArea
+        that.initImageDropArea();
     },
 
     // Configurar elementos relativos a la operativa de Deshabilitar edición multilenguaje de Categorias cuando se lance el modal
@@ -2403,11 +2478,13 @@ const operativaContenidosYPermisos = {
         // Mostrar loading
         loadingMostrar();
         // Categoría padre donde crear la nueva categoría
-        const catPadre = createCategoryInCategory == false ? that.cmbCrearCategoriaEn.val() : parentCategoryId;
+        const catPadre = createCategoryInCategory == false ? 00000000-0000-0000-0000-000000000000 : parentCategoryId;
         // Nombre de la nueva categoría
         let nombreCat = "";
         // Permitir multilenguaje en categorías
         const esMultiIdioma = that.chkMultiIdioma.is(':checked');
+        const esObligatoria = that.chkObligatoria2.is(':checked');
+        const esEstructurante = that.chkEstructurante2.is(':checked');
         
         // Buscar los nombres de diferentes idiomas de la categoría
         that.inputIdioma.each(function () {
@@ -2426,11 +2503,22 @@ const operativaContenidosYPermisos = {
         that.obtenerParametrosComunes()
         that.parametrosComunes.name = nombreCat;        
         that.parametrosComunes.parentKey = catPadre; 
+        that.parametrosComunes.obligatoria = esObligatoria;
+        that.parametrosComunes.estructurante = esEstructurante;
+        const file = $("#pImagenCategoria").prop("files")[0];
+        that.parametrosComunes.pImagenCategoria = file;
+
+        var dataPost = new FormData();
+        dataPost.append("pImagenCategoria", file);
+        dataPost.append("name", nombreCat);
+        dataPost.append("parentKey", catPadre);
+        dataPost.append("obligatoria", esObligatoria);
+        dataPost.append("estructurante", esEstructurante);
         
         // Realizar el guardado de datos
-        GnossPeticionAjax(
+        this.requestAddCategory(
             that.urlCrearCategoria,
-            that.parametrosComunes,
+            dataPost,
             true
         ).done(function (data) {
             // OK                
@@ -2442,6 +2530,7 @@ const operativaContenidosYPermisos = {
             that.triggerEvents();
             // Ocultar el modal y mostrar mensaje común de guardado correctamente                                                 
             dismissVistaModal(); 
+            mostrarNotificacion("success", "Se ha guardado correctamente.") 
         }).fail(function (data) {
             mostrarNotificacion("error", data);            
         }).always(function () {
@@ -2449,7 +2538,75 @@ const operativaContenidosYPermisos = {
             loadingOcultar();
         });        
     },
- 
+
+    requestAddCategory: function(url, parametros, traerJson, redirectActive = true)
+    {
+        var defr = $.Deferred();
+
+        var esFormData = parametros instanceof FormData;
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            headers: {
+                Accept: traerJson ? 'application/json' : '*/*'
+            },
+            processData: !esFormData,
+            contentType: esFormData ? false : 'application/x-www-form-urlencoded',
+            data: parametros,
+            xhr: function () {
+                var xhr = new window.XMLHttpRequest();
+                // Handle progress
+                //Upload progress
+                xhr.upload.addEventListener("progress", function (evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = evt.loaded / evt.total;
+                        //Do something with upload progress
+                        defr.notify(Math.round(percentComplete * 100));
+                    }
+                }, false);
+
+                return xhr;
+            }
+        }).done(function (response) {
+            if (response == null || response.Status == undefined) {
+                defr.resolve(response);
+            }
+            if (response.Status == "NOLOGIN") {
+                //Hacer una peticion a la web, que nos devuelva la url del servicio de login + token
+                //Hacer la peticion al servicio de login a recuperar la sesion
+                //Si no estamos conectados, mostrar un panel de login
+                //Si estamos conectados, re-llamar a esta funcion
+                defr.reject("invitado");
+            }
+            else if (response.Status == "OK") {
+                if (response.UrlRedirect != null) {
+                    if (redirectActive) { location.href = response.UrlRedirect; }
+                    else { defr.resolve(response.UrlRedirect); }
+                }
+                else if (response.Html != null) {
+                    defr.resolve(response.Html);
+                }
+                else {
+                    defr.resolve(response.Message);
+                }
+            }
+            else if (response.Status == "Error") {
+                defr.reject(response.Message);
+            }
+        }).fail(function (er) {
+            //Comprobar el error
+            var newtWorkError = er.readyState == 0;// && er.statusText == "error";
+            if (newtWorkError) {
+                defr.reject("NETWORKERROR");
+            }
+            else {
+                defr.reject(er.statusText);
+            }
+        });
+
+        return defr;
+    },
     /**
      * Acción de crear una categoría dentro de una categoría padre
      * @param {*} categoryId 
@@ -2519,6 +2676,7 @@ const operativaContenidosYPermisos = {
                 that.configEvents();
                 that.triggerEvents();
             } 
+            mostrarNotificacion("success", "Se ha guardado correctamente.") 
         }).fail(function (data) {
             mostrarNotificacion("error", data);
         }).always(function () {
@@ -2574,7 +2732,55 @@ const operativaContenidosYPermisos = {
         }
     },
 
-    
+     handleDeleteCategoryImage: function () {
+         const that = this;
+         // Mostrar loading        
+         loadingMostrar();
+         // Seleccionar la categoría ID seleccionada a cambiar el nombre. Cogerla de txtHackC
+         const categoria = that.txtCategoriasSeleccionadas.val().slice(0, -1);
+
+         // Nombre de la nueva categoría
+         let nombreCat = "";
+         // Permitir multilenguaje en categorías
+         const esMultiIdioma = that.chkMultiIdioma.is(':checked');
+
+         that.inputIdioma.each(function () {
+             if (!esMultiIdioma) {
+                 if ($(this).attr('rel') == that.txtHackIdiomaTesauro.val()) {
+                     nombreCat = $(this).attr('rel') + "@@@" + $(this).val() + '$$$';
+                 }
+             }
+             else {
+                 nombreCat += $(this).attr('rel') + "@@@" + $(this).val() + '$$$';
+             }
+         });
+
+         nombreCat = nombreCat.substring(0, nombreCat.length - 3);
+         // Obtener los parámetros comunes
+         that.obtenerParametrosComunes();
+         that.parametrosComunes.name = nombreCat;
+         that.parametrosComunes.categoryKey = categoria;
+
+         // Realizar la petición
+         GnossPeticionAjax(that.urlEliminarImagen, that.parametrosComunes, true)
+             .done(function (data) {
+                 // OK                
+                 // Cargar los datos en el contenedor del tesauro
+                 that.panelTesauro.html(data);
+                 // Nuevos elementos del DOM insertados -> Resetear comportamientos
+                 that.config(that.pParams);
+                 that.configEvents();
+                 that.triggerEvents();
+                 // Ocultar el modal                                               
+                 dismissVistaModal();
+                 mostrarNotificacion("success", "Se ha guardado correctamente.") 
+             }).fail(function (data) {
+                 // KO
+                 mostrarNotificacion("error", data);
+             }).always(function () {
+                 loadingOcultar();
+             });
+     },
     /**
      * Acción para renombrar una categoría al pulsar "Renombrar" en el modal de "Renombrar categoria".
      */
@@ -2589,6 +2795,8 @@ const operativaContenidosYPermisos = {
         let nombreCat = "";
         // Permitir multilenguaje en categorías
         const esMultiIdioma = that.chkMultiIdioma.is(':checked');
+        const esObligatoria = that.chkObligatoria.is(':checked');
+        const esEstructurante = that.chkEstructurante.is(':checked');
 
         that.inputIdioma.each(function () {
             if (!esMultiIdioma) {
@@ -2606,7 +2814,8 @@ const operativaContenidosYPermisos = {
         that.obtenerParametrosComunes();
         that.parametrosComunes.name = nombreCat;
         that.parametrosComunes.categoryKey = categoria;
-
+        that.parametrosComunes.obligatoria = esObligatoria;
+        that.parametrosComunes.estructurante = esEstructurante;
         // Realizar la petición
         GnossPeticionAjax(that.urlCambiarNombreCategoria, that.parametrosComunes, true)
         .done(function (data) {                        
@@ -2619,6 +2828,7 @@ const operativaContenidosYPermisos = {
             that.triggerEvents();
             // Ocultar el modal                                               
             dismissVistaModal();   
+            mostrarNotificacion("success", "Se ha guardado correctamente.") 
         }).fail(function (data) {
             // KO
             mostrarNotificacion("error", data);
@@ -2656,7 +2866,8 @@ const operativaContenidosYPermisos = {
             that.configEvents();
             that.triggerEvents();
             // Ocultar el modal                                               
-            dismissVistaModal();         
+            dismissVistaModal();
+            mostrarNotificacion("success", "Se ha guardado correctamente.") 
         }).fail(function (data) {
             // KO
             mostrarNotificacion("error", data);            
@@ -2759,6 +2970,7 @@ const operativaContenidosYPermisos = {
             that.triggerEvents();
             // Ocultar el modal y mostrar mensaje común de guardado correctamente                                                 
             dismissVistaModal();
+            mostrarNotificacion("success", "Se ha guardado correctamente.") 
         }).fail(function (data) {            
             mostrarNotificacion("error", data);
         }).always(function () {
@@ -2816,30 +3028,44 @@ const operativaContenidosYPermisos = {
      */
     guardarGestionCategorias: function(){
         const that = this;
+        loadingMostrar();
+        const objCategorias = [];
+        const indice = document.querySelector('#id-added-categories-list');
+        const guidIndice = "00000000-0000-0000-0000-000000000000";
+        
+        function obtenerCategorias(lista, padreId) {
+            const items = lista.querySelectorAll(':scope > li.component-wrap.category-row');
+            items.forEach((li, index) => {
+                const componente = li.querySelector(':scope > .component');
+                const categoriaId = componente.getAttribute('data-id');
 
-        if (that.txtAccionesTesauroHack.val() != "") {
-            // Mostrar loading 
-            loadingMostrar();            
-            // Obtener los datos Parámetros comunes para guardado                
-            that.obtenerParametrosComunes();
+                objCategorias.push({
+                    CategoriaID: categoriaId,
+                    CategoriaPadreID: padreId,
+                    Orden: index
+                });
 
-            GnossPeticionAjax(that.urlGuardarCategorias, that.parametrosComunes, true).done(function (data) {
-                // OK                
-                // Cargar los datos en el contenedor del tesauro
-                that.panelTesauro.html(data);
-                // Nuevos elementos del DOM insertados -> Resetear comportamientos
-                that.config(that.pParams);
-                that.configEvents();
-                that.triggerEvents();   
-                // Mostrar guardado correcto
-                mostrarNotificacion("success", "Se ha guardado correctamente.")  
-            }).fail(function (data) {
-                // KO
-                mostrarNotificacion("error", data);                
-            }).always(function () {
-                loadingOcultar();
+                const hijosUl = componente.querySelector(':scope > .component-content > ul.js-community-categories-list');
+                if (hijosUl && hijosUl.children.length > 0) {
+                    obtenerCategorias(hijosUl, categoriaId);
+                }
             });
         }
+
+        obtenerCategorias(indice, guidIndice);
+
+        const dataPost = {
+            pListaOrden: objCategorias
+        }
+
+        GnossPeticionAjax(that.urlGuardarCategorias, dataPost, true)
+        .done(function () {
+            mostrarNotificacion("success", "Se ha guardado correctamente")
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+        });
     },
 }
 
@@ -3012,7 +3238,17 @@ const operativaGestionCertificacion = {
         // Inicializar operativa para ordenar (sortable) certificados
         operativaCertificadosSortable.init();
         // Reiniciar / Resetear ckeditor (Personalizar mensaje de Certificación en construcción)
-        ckEditorRecargarTodos();
+        //ckEditorRecargarTodos();
+        // Operativa multiIdiomas
+        // Parámetros para la operativa multiIdioma (helpers.js)
+        this.operativaMultiIdiomaParams = {
+            numIdiomasVisibles: 3,
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma"
+        };
+
+        // Inicializar operativa multiIdioma
+        operativaMultiIdioma.init(this.operativaMultiIdiomaParams);  
     },  
 
     /**
@@ -3072,6 +3308,11 @@ const operativaGestionCertificacion = {
         let createNewRow = false;
         // Orden o posición del certificado a crear
         let ordenCertificado = "";
+        //Idioma en el que está navegando el usuario
+        let idiomaNavegacion = $(".inpt_Idioma").val();
+        //Valor a mostrar en el html (Ej: Se guarda prueba@es|||test@en pero el usuario ve prueba)
+        let nombreMostrar = getLanguageValueByLanguageId(pName, idiomaNavegacion);
+
         // Calcular la nueva posición
         if (pOrden == undefined){
             ordenCertificado = that.panelListaCertificados.find('.component-wrap').length
@@ -3079,8 +3320,6 @@ const operativaGestionCertificacion = {
             ordenCertificado = pOrden;
         }
 
-        // Comprobar si el recurso es de reciente creación
-        let createdRecentlyProperty = "";
         if (pCreatedRecentlyWithouSaving == false && pOrden == undefined){
             // Nuevo certificado            
             createNewRow = true;                                       
@@ -3089,7 +3328,7 @@ const operativaGestionCertificacion = {
             const certificateRowEdited = $(that.panelListaCertificados.children()[pOrden]);
             // Cambiar parámetros para su correcta visualización
             certificateRowEdited.data("nombre", pName);
-            certificateRowEdited.find(".component-name").text(pName.substring(0, pName.indexOf('@')));
+            certificateRowEdited.find(".component-name").text(nombreMostrar);
         }
 
         if (createNewRow){    
@@ -3113,7 +3352,7 @@ const operativaGestionCertificacion = {
                                 <div class="component-header-left">
                                     <div class="component-name-wrap">
                                         <span class="component-icon"></span>
-                                        <span class="component-name">${pName}</span>
+                                        <span class="component-name">${nombreMostrar}</span>
                                     </div>
                                 </div>
                                 <div class="component-header-right">
@@ -3300,8 +3539,19 @@ const operativaGestionCertificacion = {
             contNiveles++;
         });
 
-        // Recoger la información del panel de política de certificación 
-        that.DatosGuardado[prefijo + '.PoliticaCertificacion'] = encodeURIComponent(that.txtPoliticaCertificacion.val());
+        // Recoger la información del panel de política de certificación
+        var politicaCertificacion = "";
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            // Obtención del Key del idioma
+            const idioma = this.key;
+            var textAreaPolitica = $(`#input_txtPoliticaCertificacion_${idioma}`);
+            
+            if (textAreaPolitica != null && textAreaPolitica != undefined) {
+                politicaCertificacion += textAreaPolitica.val() + "@" + idioma + "|||";
+            }
+        });
+
+        that.DatosGuardado[prefijo + '.PoliticaCertificacion'] = encodeURIComponent(politicaCertificacion);
 
         /* Acción de guardado de datos en backend */
         GnossPeticionAjax(
@@ -3369,6 +3619,10 @@ const operativaGestionMiembros = {
         this.urlLoadModalPagePermissions = `${this.urlBase}/load-modal-user-page-permissions`;
         this.urlSaveUserPagePermissions = `${this.urlBase}/save-user-page-permissions`;
         this.urlAddMemberAdmin = `${this.urlBase}/registro-usuario-admin`;
+        this.urlLoadModalChangeRol = `${this.urlBase}/cargar-modal-cambiar-rol?pIdentidadID=`;
+        this.urlLoadModalChangeRolGroup = `${this.urlBase}/cargar-modal-cambiar-rol-grupo?pGrupoID=`;
+        this.urlChangeRol = `${this.urlBase}/cambiar-roles-usuario`;
+        this.urlChangeRolGroup = `${this.urlBase}/cambiar-roles-grupo`;
     },
 
     /*
@@ -3396,7 +3650,8 @@ const operativaGestionMiembros = {
         // that.txtEmailId = document.getElementById("txtEmail").value;
         // that.txtContrasenyaId = document.getElementById("txtContrasenya").value;
         that.btnAddMemberId = "btnAddMemberAdmin";
-
+        that.formUserData = "formUserData";
+        that.btnExportDataCSV = "export_user_data_csv";
     },
 
     /**
@@ -3450,6 +3705,17 @@ const operativaGestionMiembros = {
 
         $(`#${this.btnAddMemberId}`).off().on("click", function(){
             that.handleAddNewMember();
+        });
+
+        $(`#${that.btnExportDataCSV}`).on("click", function () {
+            let campos = '';
+            $(`#${that.formUserData} input:checked`).each(function () {
+                let value = $(this).data('value');
+                campos += value + '|';
+            });
+            // Añadimos los campos seleccionados por el usuario al value del boton 
+            // para que se añadan como parámetro.
+            $(this).attr('value', campos);
         });
     },    
 
@@ -3615,7 +3881,13 @@ const operativaGestionMiembros = {
         // Realizar la petición para abrir la comunidad en definición
         that.handleAccionMiembro(url, dataPost);
     },
-    
+    cambiarRolGrupo: function (id) {
+        const that = this;
+
+        const url = that.urlLoadModalChangeRolGroup + id;
+
+        getVistaFromUrl(url, 'modal-dinamic-content', '', '');
+    },
     /**
      * Acción que se ejecuta cuando se pulsa sobre la acción de "Cambiar rol" disponible en un item/recurso de tipo "Perfil" encontrado por el buscador.  
      * @param {string} id: Identificador del recurso (en este caso de la persona) sobre el que se aplicará la acción 
@@ -3624,68 +3896,136 @@ const operativaGestionMiembros = {
      * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
      */
     cambiarRolMiembro: function (id, rol, urlPagina, namePerson, idModalPanel = "#modal-container") {
-        // Acción que se ejecutará al pulsar sobre el botón primario (Realizar la acción de cambiar rol)
-        const accion = "operativaGestionMiembros.handleCambiarRolMiembro('" + urlPagina + "', '" + id + "', '" + rol + "');";
-        // Permisos para pintar los checkbox a mostrar al usuario
-        let checkedAdmin = '';
-        let checkedSupervisor = '';
-        let checkedUsuario = '';
+        const that = this;
 
-        if (rol == 0) {
-            checkedAdmin = ' checked';
-        }
-        else if (rol == 1) {
-            checkedSupervisor = ' checked';
-        }
-        else if (rol == 2) {
-            checkedUsuario = ' checked';
-        }
+        const url = that.urlLoadModalChangeRol + id;
 
-        // Panel dinámico del modal padre donde se insertará la vista "hija"
-        const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
+        getVistaFromUrl(url, 'modal-dinamic-content', '', '');
 
-        // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
-        var plantillaPanelHtml = '';
-        // Cabecera del panel
-        plantillaPanelHtml += '<div class="modal-header">';
-            plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + accionesUsuarioAdminComunidad.cambiarRol + ' a '+ namePerson + '</p>';
-            plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
-        plantillaPanelHtml += '</div>';
-        // Cuerpo del panel
-        plantillaPanelHtml += '<div class="modal-body">';
-            plantillaPanelHtml += '<div class="formulario-edicion">';
-                plantillaPanelHtml += '<div class="form-group">';
-                    plantillaPanelHtml += '<label class="control-label">' + accionesUsuarioAdminComunidad.selecionaRol + '</label>';
-                plantillaPanelHtml += '</div>';
-                // Cuerpo del panel -> Opciones de checkbox a cargar
-                plantillaPanelHtml += '<div class="form-group">';
-                    plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
-                        plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_administrador' + id + '" value="0" class="custom-control-input"'+ checkedAdmin +'/>';
-                        plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_administrador' + id + '">'+ accionesUsuarioAdminComunidad.administrador +'</label>';
-                    plantillaPanelHtml += '</div>';
-                    plantillaPanelHtml += '<div name="cambiarRol' + id + '" class="themed primary custom-control custom-radio">';
-                        plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_supervisor' + id + '" value="1" class="custom-control-input"'+ checkedSupervisor +'/>';
-                        plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_supervisor' + id + '">'+ accionesUsuarioAdminComunidad.supervisor +'</label>';
-                    plantillaPanelHtml += '</div>';
-                    plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
-                        plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_usuario' + id + '" value="2" class="custom-control-input"'+ checkedUsuario +'/>';
-                        plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_usuario' + id + '">'+ accionesUsuarioAdminComunidad.usuario +'</label>';
-                    plantillaPanelHtml += '</div>';
-                plantillaPanelHtml += '</div>'; 
 
-            // Panel de botones para la acción
-            plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
-                plantillaPanelHtml += '<button class="btn btn-primary" onclick="'+ accion +'">' + accionesUsuarioAdminComunidad.cambiarRol + '</button>'            
-            plantillaPanelHtml += '</div>';
 
-        plantillaPanelHtml += '</div>';
+
+        //// Acción que se ejecutará al pulsar sobre el botón primario (Realizar la acción de cambiar rol)
+        //const accion = "operativaGestionMiembros.handleCambiarRolMiembro('" + urlPagina + "', '" + id + "', '" + rol + "');";
+        //// Permisos para pintar los checkbox a mostrar al usuario
+        //let checkedAdmin = '';
+        //let checkedSupervisor = '';
+        //let checkedUsuario = '';
+
+        //if (rol == 0) {
+        //    checkedAdmin = ' checked';
+        //}
+        //else if (rol == 1) {
+        //    checkedSupervisor = ' checked';
+        //}
+        //else if (rol == 2) {
+        //    checkedUsuario = ' checked';
+        //}
+
+        //// Panel dinámico del modal padre donde se insertará la vista "hija"
+        //const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
+
+        //// Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
+        //var plantillaPanelHtml = '';
+        //// Cabecera del panel
+        //plantillaPanelHtml += '<div class="modal-header">';
+        //    plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + accionesUsuarioAdminComunidad.cambiarRol + ' a '+ namePerson + '</p>';
+        //    plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
+        //plantillaPanelHtml += '</div>';
+        //// Cuerpo del panel
+        //plantillaPanelHtml += '<div class="modal-body">';
+        //    plantillaPanelHtml += '<div class="formulario-edicion">';
+        //        plantillaPanelHtml += '<div class="form-group">';
+        //            plantillaPanelHtml += '<label class="control-label">' + accionesUsuarioAdminComunidad.selecionaRol + '</label>';
+        //        plantillaPanelHtml += '</div>';
+        //        // Cuerpo del panel -> Opciones de checkbox a cargar
+        //        plantillaPanelHtml += '<div class="form-group">';
+        //            plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
+        //                plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_administrador' + id + '" value="0" class="custom-control-input"'+ checkedAdmin +'/>';
+        //                plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_administrador' + id + '">'+ accionesUsuarioAdminComunidad.administrador +'</label>';
+        //            plantillaPanelHtml += '</div>';
+        //            plantillaPanelHtml += '<div name="cambiarRol' + id + '" class="themed primary custom-control custom-radio">';
+        //                plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_supervisor' + id + '" value="1" class="custom-control-input"'+ checkedSupervisor +'/>';
+        //                plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_supervisor' + id + '">'+ accionesUsuarioAdminComunidad.supervisor +'</label>';
+        //            plantillaPanelHtml += '</div>';
+        //            plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
+        //                plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_usuario' + id + '" value="2" class="custom-control-input"'+ checkedUsuario +'/>';
+        //                plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_usuario' + id + '">'+ accionesUsuarioAdminComunidad.usuario +'</label>';
+        //            plantillaPanelHtml += '</div>';
+        //        plantillaPanelHtml += '</div>'; 
+
+        //    // Panel de botones para la acción
+        //    plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
+        //        plantillaPanelHtml += '<button class="btn btn-primary" onclick="'+ accion +'">' + accionesUsuarioAdminComunidad.cambiarRol + '</button>'            
+        //    plantillaPanelHtml += '</div>';
+
+        //plantillaPanelHtml += '</div>';
         
 
-        // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
-        // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
-        $modalDinamicContentPanel.html(plantillaPanelHtml);
+        //// Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
+        //// En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
+        //$modalDinamicContentPanel.html(plantillaPanelHtml);
     },
+    handleCambiarRolGrupo: function (id) {
+        const that = this;
 
+        loadingMostrar();
+
+        const selector = `.formulario_${id} input[type="checkbox"]:checked`;
+        const checkboxesMarcados = document.querySelectorAll(selector);
+        const idsMarcados = Array.from(checkboxesMarcados).map(cb => cb.id).join('|||');
+        const dataPost = {
+            pGrupoID: id,
+            pListaRoles: idsMarcados
+        };
+
+        GnossPeticionAjax(that.urlChangeRolGroup, dataPost, true)
+        .done(function (data) {
+            // Mostrar mensaje ok                
+            mostrarNotificacion("success", accionesUsuarioAdminComunidad.rolCambiado);
+            setTimeout(function () {
+                dismissVistaModal();
+                location.reload();
+            }, 500); 
+        }).fail(function (data) {
+            mostrarNotificacion("error", "Se ha producido un error al tratar de cambiar el rol");
+        }).always(function (data) {
+            // Ocultar loading
+            loadingOcultar();
+        }); 
+
+    },
+    handleCambiarRolUsuario: function (id) {
+        const that = this;
+
+        loadingMostrar();
+
+        const selector = `.formulario_${id} input[type="checkbox"]:checked`;
+        const checkboxesMarcados = document.querySelectorAll(selector);
+        const idsMarcados = Array.from(checkboxesMarcados).map(cb => cb.id).join('|||');
+        const dataPost = {
+            pIdentidadID: id,
+            pListaRoles: idsMarcados
+        };
+
+        GnossPeticionAjax(that.urlChangeRol, dataPost, true)
+        .done(function (data) {
+            // Cambiar el nombre al botón para que solo sea clickable una vez se recargue la página
+            that.cambiarTextoAndEliminarAtributos(id + '_CambiarRol', accionesUsuarioAdminComunidad.rolCambiado, ['onclick', 'data-target', 'data-toggle']);
+            // Mostrar mensaje ok                
+            mostrarNotificacion("success", accionesUsuarioAdminComunidad.rolCambiado)
+            setTimeout(function () {
+                dismissVistaModal();
+                location.reload();
+            }, 500); 
+        }).fail(function (data) {
+            mostrarNotificacion("error", "Se ha producido un error al tratar de cambiar el rol.");
+        }).always(function (data) {
+            // Ocultar loading
+            loadingOcultar();
+        }); 
+
+    },
      /**
      * Enviar la nueva petición del cambio de rol una vez se ha pulsado sobre el botón de "Cambiar rol"
      * @param {any} url: Url donde se lanzará la petición para cambiar el rol
@@ -3948,11 +4288,11 @@ handleCambiarPassword: function(urlUsuario){
             const keyId = $(this).attr('id');
             // Valores por defecto a mostrar en la tabla si no hay datos                                                
             const boletinValue = $(this).find(`#${keyId}_EnviarNewsletter`).data("value") != undefined ? $(this).find(`#${keyId}_EnviarNewsletter`).data("value") : "-";
-            const rolValue = $(this).find(`#${keyId}_CambiarRol`).data("value") != undefined ? $(this).find(`#${keyId}_CambiarRol`).data("value") : "-" ;
+            //const rolValue = $(this).find(`#${keyId}_CambiarRol`).data("value") != undefined ? $(this).find(`#${keyId}_CambiarRol`).data("value") : "-" ;
             const expulsadoValue = $(this).find(`#${keyId}_Expulsar`).data("value") != undefined ? $(this).find(`#${keyId}_Expulsar`).data("value") : "-" ;
             const bloqueadoValue = $(this).find(`#${keyId}_Bloquear`).data("value") != undefined ? $(this).find(`#${keyId}_Bloquear`).data("value") : "-" ;
             // Asignar los valores a la tabla
-            $(`#rol_${keyId}`).html(rolValue);
+            //$(`#rol_${keyId}`).html(rolValue);
             $(`#boletin_${keyId}`).html(boletinValue);
             $(`#expulsado_${keyId}`).html(expulsadoValue);
             $(`#bloqueado_${keyId}`).html(bloqueadoValue);
@@ -4476,7 +4816,885 @@ const operativaGestionIntegracionSharepoint = {
 
 }
 
+/**
+ * Operativa de funcionamiento de la administración de roles
+ */
+const operativaGestionDeRoles = {
 
+    /**
+    * Inicializar operativa
+    */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.triggerEvents();
+    },
+    config: function (pParams) {
+        // Urls de las acciones
+        this.urlBase = refineURL(); 
+        this.urlNuevoRol = `${this.urlBase}/load-modal-new-rol`;
+        this.urlGuardarNuevoRol = `${this.urlBase}/save-new-rol`;
+        this.urlCargarModalVerRol = `${this.urlBase}/load-modal-see-rol?pRolID=`;
+        this.urlCargarModalEditarRol = `${this.urlBase}/load-modal-edit-rol?pRolID=`;
+        this.urlCargarModalEliminarRol = `${this.urlBase}/load-modal-delete-rol?pRolID=`;
+        this.urlEliminarRol = `${this.urlBase}/delete-rol?pRolID=`;
+        this.urlGuardarRol = `${this.urlBase}/save-rol`;
+        this.urlGuardarConfigDescargar = `${this.urlBase}/save-config-download`;
+        this.urlEliminarMiembroDeRol = `${this.urlBase}/remove-member-rol`;
+
+        // Elementos del DOM
+        this.tabIdiomaItem = $(".tabIdiomaItem ");
+        this.labelLanguageComponentClassName = "language-component";
+        this.btnNuevoRol = $('#btnNuevoRol');
+        this.btnGuardarNuevoRol = $('#btnGuardarNuevoRol');
+        this.btnVerRol = $('.btnVerRol');
+        this.btnEditarRol = $('.btnEditarRol');
+        this.btnEliminarRol = $('.btnEliminarRol');
+        this.btnConfirmDeleteRol = $('.btnConfirmDeleteRol');
+        this.btnGuardarRol = $('.btnGuardarRol');
+        this.btnGuardarConfigDescargar = $('.btnGuardarPermitirDescargar');
+        this.buscador = $('#txtBuscarRol');
+        this.buscadorUsuario = $('#txtBusquedaUsuario');
+        this.buscadorPermiso = $('#txtBusquedaPermiso');
+        this.buscadorPermisosNuevoRol = $('#txtBusquedaPermisosNuevoRol');
+        this.btnEliminarMiembroRol= $('.btnEliminarMiembroRol')
+        this.btnConfirmarEliminarMiembroRol = $('#btnEliminarMiembroOk');
+        this.modlalCrearRol = $('#modal-nuevo-rol');
+        this.modlalVerRol = $('#modal-ver-roles');
+        this.modlalEditarRol = $('#modal-editar-rol');
+        this.modalBodyNuevo = $('#modal-body-nuevo-rol');
+        this.modalBodyEditar = $('#modal-body-editar-rol');
+    },
+    configEvents: function () {
+        const that = this;
+
+        this.tabIdiomaItem.off().on("click", function () {
+            that.handleViewPageLanguageInfo();
+        });
+
+        this.btnNuevoRol.off().on("click", function (e) {
+            that.handleDesplegarModalNuevoRol();
+        });
+
+        this.btnGuardarNuevoRol.off().on("click", function (e) {
+            that.handleGuardarNuevoRol();
+        });
+
+        this.btnVerRol.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleVerRol(jqueryElement);
+        });
+
+        this.btnEditarRol.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleEditarRol(jqueryElement);
+        });
+
+        this.btnEliminarRol.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleCargarModalEliminarRol(jqueryElement);
+        });
+
+        this.btnGuardarRol.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleGuardarRol(jqueryElement);
+        });
+
+        this.btnConfirmDeleteRol.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleEliminarRol(jqueryElement);
+        });
+
+        this.btnGuardarConfigDescargar.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleGuardarConfiguracionPermitirDescargar(jqueryElement);
+        });
+
+        this.buscador.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchRolByName();
+            }, 500);
+        });
+
+        this.buscadorUsuario.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchUser();
+            }, 500);
+        });
+
+        this.buscadorPermiso.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchPermission();
+            }, 500);
+        });
+
+        this.buscadorPermisosNuevoRol.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchPermissionNewRol();
+            }, 500);
+        });
+
+        this.btnEliminarMiembroRol.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleMostrarConformacionEliminarMiembroRol(jqueryElement);
+        });
+
+        this.btnConfirmarEliminarMiembroRol.off().on("click", function (e) {
+            const jqueryElement = $(e.currentTarget);
+            that.handleEliminarMiembroRol(jqueryElement);
+        });
+
+        this.modlalCrearRol.on('hidden.bs.modal', (e) => {
+            const jqueryElement = $(e.currentTarget);
+            resetearModalContainerWithId(jqueryElement);
+        });
+
+        this.modlalVerRol.on('hidden.bs.modal', (e) => {
+            const jqueryElement = $(e.currentTarget);
+            resetearModalContainerWithId(jqueryElement);
+        });
+
+        this.modlalEditarRol.on('hidden.bs.modal', (e) => {
+            const jqueryElement = $(e.currentTarget);
+            resetearModalContainerWithId(jqueryElement);
+        });
+
+        this.modalBodyNuevo.ready(function() {
+            that.selectAllRoles("modal-body-nuevo-rol");
+            that.selectRol("modal-body-nuevo-rol");
+        });
+        this.modalBodyEditar.ready(function () {
+            that.selectAllRoles("modal-body-editar-rol");
+            that.selectRol("modal-body-editar-rol");
+        });
+    },
+    triggerEvents: function () {
+        const that = this;
+        // Inicializar operativa multiIdioma
+        const multiIdiomaConfig = {
+            numIdiomasVisibles: 3,
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma"
+        };
+        operativaMultiIdioma.init(multiIdiomaConfig);
+    },    
+    obtenerPermisos: function(){
+        const that = this;
+
+        var permisos = "";
+
+        permisos += $('#GestionarInformacionGeneral').is(':checked') ? "1" : "0";
+        //permisos += $('#GestionarTiposDeContenidosYPermisos').is(':checked') ? "1" : "0";
+        permisos += "0";
+        permisos += $('#GestionarInteraccionesSociales').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarMiembros').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarSolicitudesDeAccesoAGrupo').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarNivelesDeCertificacion').is(':checked') ? "1" : "0";        
+        permisos += $('#GestionarPesosAutocompletado').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarRedirecciones').is(':checked') ? "1" : "0";
+        permisos += $('#DescargarConfiguracionOAuth').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarCookies').is(':checked') ? "1" : "0";
+        permisos += $('#AccederAlFTP').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarTraducciones').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarDatosExtraRegistro').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarTrazas').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarConfiguraciones').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarCache').is(':checked') ? "1" : "0";
+        permisos += $('#AdministrarSEOYGoogleAnalytics').is(':checked') ? "1" : "0";
+        permisos += $('#AccederAEstadisticasDeLaComunidad').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarClausulasDeRegistro').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarBuzonDeCorreo').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarServiciosExternos').is(':checked') ? "1" : "0";
+        permisos += $('#AccederAlEstadoDeLosServicios').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarOpcionesDelMetaadministrador').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarEventosExternos').is(':checked') ? "1" : "0";
+        permisos += $('#AccesoSparqlEndpoint').is(':checked') ? "1" : "0";
+        permisos += $('#ConsultarCargasMasivas').is(':checked') ? "1" : "0";
+        permisos += $('#EjecutarBorradoMasivo').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarSugerenciasDeBusqueda').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarInformacionContextual').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarParametrosDeBusquedaPersonalizados').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarMapa').is(':checked') ? "1" : "0";
+        permisos += $('#AdministrarGraficos').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarVistas').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarIntegracionContinua').is(':checked') ? "1" : "0";
+        permisos += $('#EjecutarReprocesadosDeRecursos').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarAplicacionesEspecificas').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarRolesYPermisos').is(':checked') ? "1" : "0";
+
+        return permisos;
+    },
+    obtenerPermisosContenidos: function () {
+        const that = this;
+
+        var permisos = "";
+
+        // Categorías
+        permisos += $('#VerCategorias').is(':checked') ? "1" : "0";
+        permisos += $('#AnyadirCategoria').is(':checked') ? "1" : "0";
+        permisos += $('#ModificarCategoria').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarCategoria').is(':checked') ? "1" : "0";
+
+        // Páginas
+        permisos += $('#VerPagina').is(':checked') ? "1" : "0";
+        permisos += $('#CrearPagina').is(':checked') ? "1" : "0";
+        permisos += $('#PublicarPagina').is(':checked') ? "1" : "0";
+        permisos += $('#EditarPagina').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarPagina').is(':checked') ? "1" : "0";
+
+        // Componentes CMS
+        permisos += $('#VerComponenteCMS').is(':checked') ? "1" : "0";
+        permisos += $('#CrearComponenteCMS').is(':checked') ? "1" : "0";
+        permisos += $('#EditarComponenteCMS').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarComponenteCMS').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarMultimediaCMS').is(':checked') ? "1" : "0";
+
+        // Objetos de conocimiento y secundarias
+        permisos += $('#GestionarOC').is(':checked') ? "1" : "0";
+        permisos += $('#AnyadirValorEntidadSecundaria').is(':checked') ? "1" : "0";
+        permisos += $('#ModificarValorEntidadSecundaria').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarValorEntidadSecundaria').is(':checked') ? "1" : "0";
+
+        // Tesauros semánticos
+        permisos += $('#VerTesauroSemantico').is(':checked') ? "1" : "0";
+        permisos += $('#AnyadirValorTesauro').is(':checked') ? "1" : "0";
+        permisos += $('#ModificarValorTesauro').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarValorTesauro').is(':checked') ? "1" : "0";
+
+        // Facetas
+        permisos += $('#VerFaceta').is(':checked') ? "1" : "0";
+        permisos += $('#CrearFaceta').is(':checked') ? "1" : "0";
+        permisos += $('#ModificarFaceta').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarFaceta').is(':checked') ? "1" : "0";
+
+        // version CMS
+        permisos += $('#RestaurarVersionCMS').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionCMS').is(':checked') ? "1" : "0";
+
+        // version pagina
+        permisos += $('#RestaurarVersionPagina').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionPagina').is(':checked') ? "1" : "0";
+
+        return permisos;
+    },
+    obtenerPermisosRecursos: function(){
+        const that = this;
+
+        var permisos = "";
+
+        // Adjunto
+        permisos += $('#CrearRecursoTipoAdjunto').is(':checked') ? "1" : "0";
+        permisos += $('#EditarRecursoTipoAdjunto').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarRecursoTipoAdjunto').is(':checked') ? "1" : "0";
+
+        // Documento fisico
+        permisos += $('#CrearRecursoTipoReferenciaADocumentoFisico').is(':checked') ? "1" : "0";
+        permisos += $('#EditarRecursoTipoReferenciaADocumentoFisico').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarRecursoTipoReferenciaADocumentoFisico').is(':checked') ? "1" : "0";
+
+        // Enlace
+        permisos += $('#CrearRecursoTipoEnlace').is(':checked') ? "1" : "0";
+        permisos += $('#EditarRecursoTipoEnlace').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarRecursoTipoEnlace').is(':checked') ? "1" : "0";
+
+        // Nota
+        permisos += $('#CrearNota').is(':checked') ? "1" : "0";
+        permisos += $('#EditarNota').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarNota').is(':checked') ? "1" : "0";
+
+        // Pregunta
+        permisos += $('#CrearPregunta').is(':checked') ? "1" : "0";
+        permisos += $('#EditarPregunta').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarPregunta').is(':checked') ? "1" : "0";
+
+        // Encuesta
+        permisos += $('#CrearEncuesta').is(':checked') ? "1" : "0"; 
+        permisos += $('#EditarEncuesta').is(':checked') ? "1" : "0"; 
+        permisos += $('#EliminarEncuesta').is(':checked') ? "1" : "0"; 
+
+        // Debate
+        permisos += $('#CrearDebate').is(':checked') ? "1" : "0";
+        permisos += $('#EditarDebate').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarDebate').is(':checked') ? "1" : "0";
+
+        // Semantico
+        permisos += "0";
+        permisos += "0";
+        permisos += "0";
+
+        // version enlace
+        permisos += $('#RestaurarVersionEnlace').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionEnlace').is(':checked') ? "1" : "0";
+
+        // version adjunto
+        permisos += $('#RestaurarVersionAdjunto').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionAdjunto').is(':checked') ? "1" : "0";
+
+        // version referencia
+        permisos += $('#RestaurarVersionReferencia').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionReferencia').is(':checked') ? "1" : "0";
+
+        // version nota
+        permisos += $('#RestaurarVersionNota').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionNota').is(':checked') ? "1" : "0";
+
+        // version pregunta
+        permisos += $('#RestaurarVersionPregunta').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionPregunta').is(':checked') ? "1" : "0";
+
+        // version encuesta
+        permisos += $('#RestaurarVersionEncuesta').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionEncuesta').is(':checked') ? "1" : "0";
+
+        // version debate
+        permisos += $('#RestaurarVersionDebate').is(':checked') ? "1" : "0";
+        permisos += $('#EliminarVersionDebate').is(':checked') ? "1" : "0";
+
+        return permisos;
+    },
+    obtenerPermisosEcosistema: function(){
+        const that = this;
+
+        var permisos = "";
+
+        permisos += $('#GestionarTraduccionesEcosistema').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarDatosExtraRegistroEcosistema').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarBuzonDeCorreoEcosistema').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarEventosExternosEcosistema').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarCategoriasDePlataforma').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarLaConfiguracionPlataforma').is(':checked') ? "1" : "0";
+        permisos += $('#ConfiguracionDeSharePoint').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarVistasEcosistema').is(':checked') ? "1" : "0";
+        permisos += $('#AdministrarIntegracionContinua').is(':checked') ? "1" : "0";
+        permisos += $('#AdministrarSolicitudesComunidad').is(':checked') ? "1" : "0";
+        permisos += $('#GestionarRolesYPermisosEcosistema').is(':checked') ? "1" : "0";
+        permisos += $('#AdministrarMiembrosEcosistema').is(':checked') ? "1" : "0";
+
+        return permisos;
+    },
+    handleDesplegarModalNuevoRol: function () {
+        const that = this;
+
+        getVistaFromUrl(that.urlNuevoRol, $('#modal-nuevo-rol .modal-content'), '', '');
+    },
+    handleGuardarNuevoRol: function () {
+        const that = this;
+
+        loadingMostrar();
+
+        var esEcosistema = $("#esEcosistema").val();
+        var permisos = "";
+        var permisosRecursos = "";
+        var permisosEcosistema = "";
+        var permisosContenidos = "";
+
+        if(esEcosistema == "true")
+        {
+            permisosEcosistema = that.obtenerPermisosEcosistema();
+        }
+        else
+        {
+            permisos = that.obtenerPermisos();
+            permisosRecursos = that.obtenerPermisosRecursos();
+            permisosContenidos = that.obtenerPermisosContenidos();
+        }
+        
+        var ambito = 0;
+        var ambitoInpt = $('#tipoNuevoRol');
+        if (ambitoInpt != null && ambitoInpt != undefined){
+            ambito = ambitoInpt.find(":selected").val();
+        }
+        var nombre = "";
+        var descripcion = "";
+
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            const idioma = this.key;
+            var inputNombre = $(`#input_txtNombreNuevoRol_${idioma}`);
+            
+            if (inputNombre != null && inputNombre != undefined && inputNombre.val() != '') {
+                nombre += inputNombre.val() + "@" + idioma + "|||";
+            }
+        });
+        
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            const idioma = this.key;
+            var inputDescripcion = $(`#input_txtDescripcionNuevoRol_${idioma}`);
+            
+            if (inputDescripcion != null && inputDescripcion != undefined && inputDescripcion.val() != '') {
+                descripcion += inputDescripcion.val() + "@" + idioma + "|||";
+            }
+        });
+
+        descripcion = encodeURIComponent(descripcion);
+
+        const permisosRecursosSemanticos = {};
+        document.querySelectorAll('.permisosRecursosSemanticos input[type="checkbox"]').forEach(cb => {
+            const id = cb.id;
+            const [tipoPermiso, docID] = id.split(/_(.+)/);
+
+            if (!permisosRecursosSemanticos[docID]) {
+                permisosRecursosSemanticos[docID] = {};
+            }
+
+            permisosRecursosSemanticos[docID][tipoPermiso] = cb.checked;
+        });
+
+        const dataPost = {
+            pNombre: nombre,
+            pDescripcion: descripcion,
+            pAmbito: ambito,
+            pPermisos: permisos,
+            pPermisosRecursos: permisosRecursos,
+            pPermisosEcosistema: permisosEcosistema,
+            pPermisosContenidos: permisosContenidos,
+            pPermisosRecursosSemanticos: JSON.stringify(permisosRecursosSemanticos)
+        };
+
+        GnossPeticionAjax(that.urlGuardarNuevoRol, dataPost, true)
+            .done(function (data) {
+                mostrarNotificacion("success", "El nuevo rol ha sido creado correctamente");
+                setTimeout(function () {
+                    window.location.reload();
+                }, 1500); 
+            })
+            .fail(function (data) {
+                mostrarNotificacion("error", data);
+            })
+            .always(function (data) {
+                loadingOcultar();
+                dismissVistaModal();
+        });
+    },
+    handleGuardarRol: function (element) {
+        const that = this;
+
+        loadingMostrar();
+
+        var esEcosistema = $("#esEcosistema").val();
+        var permisos = "";
+        var permisosRecursos = "";
+        var permisosEcosistema = "";
+        var permisosContenidos = "";
+
+        if(esEcosistema == "true")
+        {
+            permisosEcosistema = that.obtenerPermisosEcosistema();
+        }
+        else
+        {
+            permisos = that.obtenerPermisos();
+            permisosRecursos = that.obtenerPermisosRecursos();
+            permisosContenidos = that.obtenerPermisosContenidos();
+        }
+
+        var ambito = 0;
+        var ambitoInpt = $('#tipoRol');
+        if (ambitoInpt != null && ambitoInpt != undefined){
+            ambito = ambitoInpt.find(":selected").val();
+        }
+        var nombre = "";
+        var descripcion = "";
+
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            const idioma = this.key;
+            var inputNombre = $(`#input_txtNombreRol_${idioma}`);
+            
+            if (inputNombre != null && inputNombre != undefined && inputNombre.val() != '') {
+                nombre += inputNombre.val() + "@" + idioma + "|||";
+            }
+        });
+        
+        $.each(operativaMultiIdioma.listaIdiomas, function () {
+            const idioma = this.key;
+            var inputDescripcion = $(`#input_txtDescripcionRol_${idioma}`);
+            
+            if (inputDescripcion != null && inputDescripcion != undefined && inputDescripcion.val() != '') {
+                descripcion += inputDescripcion.val() + "@" + idioma + "|||";
+            }
+        });
+
+        const permisosRecursosSemanticos = {};
+        document.querySelectorAll('.permisosRecursosSemanticos input[type="checkbox"]').forEach(cb => {
+            const id = cb.id;
+            if (!id.includes('tipo_')) {
+                const [tipoPermiso, docID] = id.split(/_(.+)/);
+
+                if (!permisosRecursosSemanticos[docID]) {
+                    permisosRecursosSemanticos[docID] = {};
+                }
+
+                permisosRecursosSemanticos[docID][tipoPermiso] = cb.checked;
+            }                                    
+        });
+
+        descripcion = encodeURIComponent(descripcion);
+        var rolID = element.attr('id').replace("btnGuardarRol_", "");
+
+        const dataPost = {
+            pRolID: rolID,
+            pNombre: nombre,
+            pDescripcion: descripcion,
+            pAmbito: ambito,
+            pPermisos: permisos,
+            pPermisosRecursos: permisosRecursos,
+            pPermisosEcosistema: permisosEcosistema,
+            pPermisosContenidos: permisosContenidos,
+            pPermisosRecursosSemanticos: JSON.stringify(permisosRecursosSemanticos)
+        };
+
+        GnossPeticionAjax(that.urlGuardarRol, dataPost, true)
+            .done(function (data) {
+                mostrarNotificacion("success", data);
+                setTimeout(function () {
+                    window.location.reload();
+                }, 1500); 
+            })
+            .fail(function (data) {
+                mostrarNotificacion("error", data);
+            })
+            .always(function (data) {
+                loadingOcultar();
+                dismissVistaModal();
+            });
+    },
+    handleCargarModalEliminarRol: function (element) {
+        const that = this;
+
+        const rolID = element.attr('id').replace("eliminarRol_", "");
+        const url = that.urlCargarModalEliminarRol + rolID;
+
+        getVistaFromUrl(url, 'modal-dinamic-content', '', '');
+    },
+    handleEliminarRol: function (element) {
+        const that = this;
+
+        loadingMostrar();
+
+        const rolID = element.attr('id').replace("confirmarEliminarRol_", "");
+        const url = that.urlEliminarRol + rolID;
+
+        const dataPost = {};
+
+        GnossPeticionAjax(url, dataPost, true)
+            .done(function (data) {
+                mostrarNotificacion("success", data);
+                setTimeout(function () {
+                    window.location.reload();
+                }, 1500); 
+            })
+            .fail(function (data) {
+                mostrarNotificacion("error", data);
+            })
+            .always(function (data) {
+                loadingOcultar();
+                dismissVistaModal();
+            });
+    },
+    handleEditarRol: function (element) {
+        const that = this;
+
+        const rolID = element.attr('id').replace("editarRol_", "");
+        const url = that.urlCargarModalEditarRol + rolID;
+
+        getVistaFromUrl(url, $('#modal-editar-rol .modal-content'), '', '');
+    },
+    handleGuardarConfiguracionPermitirDescargar: function () {
+        const that = this;
+
+        loadingMostrar();
+
+        const dataPost = {
+            pPermitirDescargarDocUsuInvitado: $('#chkPermitirUsuNoLoginDescargDoc').is(':checked')
+        };
+
+        GnossPeticionAjax(that.urlGuardarConfigDescargar, dataPost, true)
+            .done(function (data) {
+                mostrarNotificacion("success", data);
+            })
+            .fail(function (data) {
+                mostrarNotificacion("error", data);
+            })
+            .always(function (data) {
+                loadingOcultar();
+                dismissVistaModal();
+            });
+    },
+    handleSearchRolByName: function () {
+        const that = this;
+        let cadena = this.buscador.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        // Cada una de las filas que muestran la página
+        const rowRoles = $("#js-community-roles-list").find(".component-wrap.rol-row");
+
+        // Buscar dentro de cada fila       
+        $.each(rowRoles, function (index) {
+            const rowRol = $(this);
+            // Seleccionamos el nombre del rol y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const rolName = $(this).find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+            if (rolName.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                rowRol.removeClass("d-none");
+                rowRol.parents("li.component-wrap").removeClass("d-none");
+            } else {
+                // Ocultar fila resultado
+                rowRol.addClass("d-none");
+            }
+        });
+    },
+    handleSearchUser: function () {
+        const that = this;
+        let cadena = this.buscadorUsuario.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        // Cada una de las filas que muestran la página
+        const rowUsuario = $(".tabla-miembros").find(".usuario-row");
+
+        // Buscar dentro de cada fila       
+        $.each(rowUsuario, function (index) {
+            const usuario = $(this);
+            // Seleccionamos el nombre del rol y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const nombre = $(this).find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+            if (nombre.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                usuario.removeClass("d-none");
+                usuario.parents("tr.component-wrap").removeClass("d-none");
+            } else {
+                // Ocultar fila resultado
+                usuario.addClass("d-none");
+            }
+        });
+    },
+    handleSearchPermission: function () {
+        const that = this;
+        let cadena = this.buscadorPermiso.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        // Cada una de las filas que muestran la página
+        const rowPermiso = $(".tabla-permisos").find(".permiso-row");
+
+        // Buscar dentro de cada fila       
+        $.each(rowPermiso, function (index) {
+            const permiso = $(this);
+            // Seleccionamos el nombre del rol y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const nombre = $(this).find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+            if (nombre.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                permiso.removeClass("d-none");
+                permiso.parents("tr.component-wrap").removeClass("d-none");
+            } else {
+                // Ocultar fila resultado
+                permiso.addClass("d-none");
+            }
+        });
+    },
+    handleSearchPermissionNewRol: function () {
+        const that = this;
+        let cadena = this.buscadorPermisosNuevoRol.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        this.buscarPermisoNuevoRol(cadena, "permisocomunidad-row", "permisoscomunidad");
+        this.buscarPermisoNuevoRol(cadena, "permisoestructura-row", "permisosestructura");
+        this.buscarPermisoNuevoRol(cadena, "permisoconfiguracion-row", "permisosconfiguracion");
+        this.buscarPermisoNuevoRol(cadena, "permisografo-row", "permisosgrafoconocimiento");
+        this.buscarPermisoNuevoRol(cadena, "permisodescubrimiento-row", "permisosdescubrimiento");
+        this.buscarPermisoNuevoRol(cadena, "permisoapariencia-row", "permisosapariencia");
+        this.buscarPermisoNuevoRol(cadena, "permisoic-row", "permisosic");
+        this.buscarPermisoNuevoRol(cadena, "permisomantenimiento-row", "permisosmantenimiento");
+        this.buscarPermisoNuevoRol(cadena, "permisoaplicaciones-row", "permisosaplicaciones");
+        this.buscarPermisoNuevoRol(cadena, "permisorecurso-row", "permisosrecursos");
+    },
+    buscarPermisoNuevoRol: function (cadena, clase, seccion) {
+        const that = this;
+
+        var cont = 0;
+        const rowPermiso = $(".tabla-permisos").find(`.${clase}`);
+        $.each(rowPermiso, function (index) {
+            const permiso = $(this);
+            // Seleccionamos el nombre del rol y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const nombre = $(this).find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+            if (nombre.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                permiso.removeClass("d-none");
+                permiso.parents("div.component-wrap").removeClass("d-none");
+                if (cont == 0) {
+                    permiso.parents(`#${seccion}`).addClass("show");
+                }
+                cont++;
+            } else {
+                // Ocultar fila resultado
+                permiso.addClass("d-none");
+                if (cont == 0) {
+                    permiso.parents(`#${seccion}`).removeClass("show");
+                }
+            }
+        });
+    },
+    handleViewPageLanguageInfo: function () {
+        const that = this;
+        // Comprobar el item que está activo en el tab obteniendo el data-language de la opción "active"
+        setTimeout(function () {
+            // Detectar el tab item activo para conocer el idioma en el que se desean mostrar las páginas
+            const tabLanguageActive = that.tabIdiomaItem.filter(".active");
+            // Obtener el idioma del tabLanguageActivo
+            const languageActive = tabLanguageActive.data("language");
+            // Ocultar todas las labels y mostrar únicamente las del idioma seleccionado
+            $(`.${that.labelLanguageComponentClassName}`).addClass("d-none");
+            // Mostrar sólo las labelsLanguageComponent del idioma seleccionado
+            $(`.${that.labelLanguageComponentClassName}`).filter(function () {
+                return $(this).data("languageitem") == languageActive;
+            }).removeClass("d-none");
+
+        }, 250);
+    },
+    handleVerRol: function (element) {
+        const that = this;
+
+        const rolID = element.attr('id').replace("verRol_", "");
+        const url = that.urlCargarModalVerRol + rolID;
+
+        getVistaFromUrl(url, $('#modal-ver-roles .modal-content'), '', '');
+    },
+    handleMostrarConformacionEliminarMiembroRol: function (element) {
+        let idRol = element.attr('data-rol');
+        let idMiembro = element.attr('data-miembro');
+        let nombreMiembro = element.attr('data-nombre-miembro')
+        let nombreRol = element.attr('data-nombre-rol')
+        let esGrupo = element.attr('data-esgrupo')
+
+        $('#nombre-miembro-eliminar').text(nombreMiembro);
+        $('#nombre-rol-eliminar').text(nombreRol);
+
+        this.btnConfirmarEliminarMiembroRol.attr('data-rol', idRol).attr('data-miembro', idMiembro).attr('data-esgrupo', esGrupo);
+    },
+    handleEliminarMiembroRol: function (element) {
+        const that = this;
+
+        const dataPost = {
+            pRolID: element.attr('data-rol'),
+            pMiembroID: element.attr('data-miembro'),
+            pEsGrupo: element.attr('data-esgrupo')
+        }
+
+        GnossPeticionAjax(that.urlEliminarMiembroDeRol, dataPost, true)
+            .done(function (data) {
+                mostrarNotificacion("success", data);
+                $('#miembro_' + dataPost.pMiembroID).remove();
+            })
+            .fail(function (data) {
+                mostrarNotificacion("error", data);
+            })
+            .always(function (data) {
+                loadingOcultar();
+            });
+    },
+    selectAllRoles: function (element) {
+        const that = this;
+        const cardHeader = $(`#${element}`).find('.card-header');
+        const checkboxes = cardHeader.find('.custom-checkbox input[type="checkbox"]');
+
+        checkboxes.off('change').on('change', (e) => {
+            const all = $(e.currentTarget).closest('.card').find('.card-body input[type="checkbox"]');
+            const isChecked = $(e.currentTarget).is(':checked');
+
+            if (all.length) {
+                all.each((i, item) => {
+                    $(item).prop('checked', isChecked);
+                });
+            }
+        });
+    },
+    selectRol: function (evt) {
+        const that = this;
+        const cardBody = $(evt.currentTarget).find('.card-body');
+        const checkboxes = cardBody.find('.custom-checkbox input[type="checkbox"]');
+
+        checkboxes.off('change').on('change', (e) => {
+            const group = $(e.currentTarget).parents('.custom-control').next('.custom-control__group');
+            const isChecked = $(e.currentTarget).is(':checked');
+
+            if (group.length) {
+                const childrens = group.find('input[type="checkbox"]');
+
+                childrens.each((i, item) => {
+                    $(item).prop('checked', isChecked);
+                });
+            }
+
+            const allCheckbox = $(e.currentTarget).parents('.card').find('.card-header input[type="checkbox"]');
+            const allChecked = checkboxes.length && checkboxes.filter(':checked').length === checkboxes.length;
+            allCheckbox.prop('checked', allChecked);
+        });
+    }
+}
+
+const operativaGestionDePermisos = {
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.triggerEvents();
+    },
+    config: function (pParams) {
+        // Urls de las acciones
+        this.urlBase = refineURL();
+
+        // Elementos del DOM
+        this.buscador = $('#txtBuscarPermiso');
+    },
+    configEvents: function () {
+        const that = this;
+
+        this.buscador.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchPermiso();
+            }, 500);
+        });
+
+    },
+    triggerEvents: function () {
+        const that = this;        
+    },
+    handleSearchPermiso: function () {
+        const that = this;
+        let cadena = this.buscador.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        // Cada una de las filas que muestran la página
+        const rowPermisos = $(".tabla-permisos").find(".permiso-row");
+
+        // Buscar dentro de cada fila       
+        $.each(rowPermisos, function (index) {
+            const rowPermiso = $(this);
+            // Seleccionamos el nombre del rol y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const permisoName = $(this).find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+            if (permisoName.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                rowPermiso.removeClass("d-none");
+                rowPermiso.parents("tr.component-wrap").removeClass("d-none");
+            } else {
+                // Ocultar fila resultado
+                rowPermiso.addClass("d-none");
+            }
+        });
+    }
+}
 
 /**
  ***************************************************************************************
@@ -4570,45 +5788,45 @@ const operativaGestionIntegracionSharepoint = {
                  
         if (catIdPadre != '') {
             // Mostrar loading en el tesauro
-            loadingMostrar();
+            //loadingMostrar();
 
             // Seleccionar las categoría a mover según el ID
-            const categorias = catIdMovida;
+            //const categorias = catIdMovida;
  
             // Obtener los parámetros comunes
-            operativaGestionCategorias.obtenerParametrosComunes();
+            //operativaGestionCategorias.obtenerParametrosComunes();
  
             // Construir objeto para mover categoría
-            operativaGestionCategorias.parametrosComunes.CategoriasSeleccionadas =  categorias;
-            operativaGestionCategorias.parametrosComunes.parentKey = catIdPadre;            
+            //operativaGestionCategorias.parametrosComunes.CategoriasSeleccionadas =  categorias;
+            //operativaGestionCategorias.parametrosComunes.parentKey = catIdPadre;            
  
-            GnossPeticionAjax(operativaGestionCategorias.urlMoveCategoria, operativaGestionCategorias.parametrosComunes, true)
-            .done(function (data) {
-                // OK                
-                // Cargar los datos en el contenedor del tesauro                
-                // operativaGestionCategorias.panelTesauro.html(data);
-                const htmlData = createElementFromHTML(data);
-                const txtAccionesTesauroHackValue = $(htmlData).find("#txtAccionesTesauroHack").val();
-                // Actualizar el input con las acciones del tesauro para su posterior guardado devueltas de Core/BackEnd
-                operativaGestionCategorias.txtAccionesTesauroHack.val(txtAccionesTesauroHackValue);
+            //GnossPeticionAjax(operativaGestionCategorias.urlMoveCategoria, operativaGestionCategorias.parametrosComunes, true)
+            //.done(function (data) {
+            //    // OK                
+            //    // Cargar los datos en el contenedor del tesauro                
+            //    // operativaGestionCategorias.panelTesauro.html(data);
+            //    const htmlData = createElementFromHTML(data);
+            //    const txtAccionesTesauroHackValue = $(htmlData).find("#txtAccionesTesauroHack").val();
+            //    // Actualizar el input con las acciones del tesauro para su posterior guardado devueltas de Core/BackEnd
+            //    operativaGestionCategorias.txtAccionesTesauroHack.val(txtAccionesTesauroHackValue);
 
-                // Nuevos elementos del DOM insertados -> Resetear comportamientos
-                operativaGestionCategorias.config(operativaCategoriasSortable.pParams);
-                operativaGestionCategorias.configEvents();
-                operativaGestionCategorias.triggerEvents();   
-                // Reiniciar comportamiento de operativaCategoriasSortable
-                operativaCategoriasSortable.init();
-                // La ejecución se ha realizado correctamente
-                completion(true);
-            }).fail(function (data) {                                
-                // Se ha producido algún error
-                mostrarNotificacion("error",data)                
-                loadingOcultar();
-                completion(false);
-            }).always(function () {
-                // No ocultar ocultar loading ya que se ocultará en handleSortCategory que se realiza justo después
-                // loadingOcultar();
-            });
+            //    // Nuevos elementos del DOM insertados -> Resetear comportamientos
+            //    operativaGestionCategorias.config(operativaCategoriasSortable.pParams);
+            //    operativaGestionCategorias.configEvents();
+            //    operativaGestionCategorias.triggerEvents();   
+            //    // Reiniciar comportamiento de operativaCategoriasSortable
+            //    operativaCategoriasSortable.init();
+            //    // La ejecución se ha realizado correctamente
+            //    completion(true);
+            //}).fail(function (data) {                                
+            //    // Se ha producido algún error
+            //    mostrarNotificacion("error",data)                
+            //    loadingOcultar();
+            //    completion(false);
+            //}).always(function () {
+            //    // No ocultar ocultar loading ya que se ocultará en handleSortCategory que se realiza justo después
+            //    // loadingOcultar();
+            //});
         }    
 
     },
@@ -4625,40 +5843,40 @@ const operativaGestionIntegracionSharepoint = {
         if (catIdSuperior != undefined) {
             // El loading sigue mostrándose desde handleMoveCategory -> No mostar nada
         
-            const categorias = catIdMovida;
+            //const categorias = catIdMovida;
 
             // Obtener los parámetros comunes
-            operativaGestionCategorias.obtenerParametrosComunes();
+            //operativaGestionCategorias.obtenerParametrosComunes();
  
             // Construir objeto para mover categoría
-            operativaGestionCategorias.parametrosComunes.CategoriasSeleccionadas =  categorias;
-            operativaGestionCategorias.parametrosComunes.parentKey = catIdSuperior; 
-            operativaGestionCategorias.parametrosComunes.newOrderCategory = newOrderCategory; 
+            //operativaGestionCategorias.parametrosComunes.CategoriasSeleccionadas =  categorias;
+            //operativaGestionCategorias.parametrosComunes.parentKey = catIdSuperior; 
+            //operativaGestionCategorias.parametrosComunes.newOrderCategory = newOrderCategory; 
 
-            GnossPeticionAjax(operativaGestionCategorias.urlSortCategoria, operativaGestionCategorias.parametrosComunes, true)
-            .done(function (data) {
-                // OK               
-                // Cargar los datos en el contenedor del tesauro. Obtener sólo los pasos anteriores                                
-                // operativaGestionCategorias.panelTesauro.html(data);
-                const htmlData = createElementFromHTML(data);
-                const txtAccionesTesauroHackValue = $(htmlData).find("#txtAccionesTesauroHack").val();
-                // Actualizar el input con las acciones del tesauro para su posterior guardado devueltas de Core/BackEnd
-                operativaGestionCategorias.txtAccionesTesauroHack.val(txtAccionesTesauroHackValue);
-                // Nuevos elementos del DOM insertados -> Resetear comportamientos
-                operativaGestionCategorias.config(operativaCategoriasSortable.pParams);
-                operativaGestionCategorias.configEvents();
-                operativaGestionCategorias.triggerEvents();   
-                // Reiniciar comportamiento de operativaCategoriasSortable
-                operativaCategoriasSortable.init();
-            }).fail(function (data) {
-                mostrarNotificacion("error", data);
-            }).always(function () {
-                // Ocultar loading
-                loadingOcultar();
-            });
+            //GnossPeticionAjax(operativaGestionCategorias.urlSortCategoria, operativaGestionCategorias.parametrosComunes, true)
+            //.done(function (data) {
+            //    // OK               
+            //    // Cargar los datos en el contenedor del tesauro. Obtener sólo los pasos anteriores                                
+            //    // operativaGestionCategorias.panelTesauro.html(data);
+            //    const htmlData = createElementFromHTML(data);
+            //    const txtAccionesTesauroHackValue = $(htmlData).find("#txtAccionesTesauroHack").val();
+            //    // Actualizar el input con las acciones del tesauro para su posterior guardado devueltas de Core/BackEnd
+            //    operativaGestionCategorias.txtAccionesTesauroHack.val(txtAccionesTesauroHackValue);
+            //    // Nuevos elementos del DOM insertados -> Resetear comportamientos
+            //    operativaGestionCategorias.config(operativaCategoriasSortable.pParams);
+            //    operativaGestionCategorias.configEvents();
+            //    operativaGestionCategorias.triggerEvents();   
+            //    // Reiniciar comportamiento de operativaCategoriasSortable
+            //    operativaCategoriasSortable.init();
+            //}).fail(function (data) {
+            //    mostrarNotificacion("error", data);
+            //}).always(function () {
+            //    // Ocultar loading
+            //    loadingOcultar();
+            //});
         }else{
             // Ocultar loading de la acción handleMoveCategory
-            loadingOcultar();
+            //loadingOcultar();
         }
     },
 };
@@ -4751,8 +5969,15 @@ const operativaGestionIntegracionSharepoint = {
               // Mostrar Loading
               loadingMostrar();              
               data.append(defaults.urlUploadImageType, files[0]);
+              var uploadImageURL = plugin.settings.urlUploadImage;
+              this.txtCategoriasSeleccionadas = $("#txtCategoriasSeleccionadas");
+              if (this.txtCategoriasSeleccionadas != undefined && this.txtCategoriasSeleccionadas.length > 0 && this.txtCategoriasSeleccionadas[0].value != "")
+              {
+                  var catID = this.txtCategoriasSeleccionadas[0].value.slice(0, -1);
+                  uploadImageURL = uploadImageURL + catID;
+              }
               $.ajax({
-                url: plugin.settings.urlUploadImage,
+                url: uploadImageURL,
                 type: "POST",
                 processData: false,
                 contentType: false,
@@ -4761,6 +5986,9 @@ const operativaGestionIntegracionSharepoint = {
                   // Subida de imagen correcta
                   //hideError();
                   onSuccesResponse(response);
+                  if (txtCategoriasSeleccionadas != undefined && txtCategoriasSeleccionadas.value != "") {
+                       dismissVistaModal();
+                  }                  
                 },
                 error: function (er) {
                     // Error en la subida de la imagen

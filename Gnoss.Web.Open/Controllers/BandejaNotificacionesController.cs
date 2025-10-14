@@ -2,14 +2,20 @@
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
+using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
+using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.Controles.Amigos;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
+using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -20,15 +26,22 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
+using System.Collections.Generic;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class BandejaNotificacionesController : ControllerBaseWeb
     {
-        public BandejaNotificacionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public BandejaNotificacionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BandejaNotificacionesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -65,6 +78,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string parametrosAdicionales = "Comentario;gnoss:PerfilID=gnoss:" + IdentidadActual.PerfilID.ToString().ToUpper();
             string javascriptAdicional = "primeraCargaDeFacetas = false;";
+
             if (mControladorBase.UsuarioActual.UsarMasterParaLectura)
             {
                 javascriptAdicional += " bool_usarMasterParaLectura = true;";
@@ -87,6 +101,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             modelo.UrlActionMarkReadComment = GnossUrlsSemanticas.GetURLBandejaComentarios(BaseURL, UtilIdiomas, IdentidadActual) + "/markRead";
 
             return View(modelo);
-        }        
+
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿@model String
+﻿@model ManageViewsViewModel.EditedView
 @*
 Descripción
 -----------------------------------------------
@@ -9,7 +9,7 @@ Variables
 *@
 @{
 
-	string nombreFormateado = Model.Replace("/ViewsAdministracion/", "").Replace("/Views/", "");
+	string nombreFormateado = Model.Name.Replace("/ViewsAdministracion/", "").Replace("/Views/", "");
 	// Tipo de vista (original/personalizadas) y de servicio (web, resultados, facetas)
 	string viewServiceType = ViewBag.ViewServiceType;
 	string viewType = ViewBag.ViewType; 
@@ -19,7 +19,7 @@ Variables
 	// Tipo de servicio al que corresponde la vista (Web, Resultados, Facetas)
 	string viewServiceTypeValue = "Web";
 	// Id para editar el modal de la vista "editada"
-	string idModalUploadVista = "modal-upload-view" + Model.Replace("/", "_").Replace(".", "_") + "_edited";		   
+	string idModalUploadVista = "modal-upload-view" + Model.Name.Replace("/", "_").Replace(".", "_") + "_edited";		   
 
 	if (viewServiceType == "facetas")
 	{
@@ -36,9 +36,21 @@ Variables
 	{
 		nombreFormateado = nombreFormateado.Substring(lastPositionCharacter + 1);
 	}
+
+	string fecha = string.Empty;
+	if(Model.FechaCreacion == Model.FechaModificacion && Model.FechaCreacion.ToShortDateString().Equals("01/01/0001"))
+	{
+		fecha = "01/01/2024";
+	}else if(Model.FechaModificacion > Model.FechaCreacion){
+		fecha = Model.FechaModificacion.ToShortDateString();
+	}
+	else
+	{
+		fecha = Model.FechaCreacion.ToShortDateString();
+	}
 }	
 
-@if (!string.IsNullOrEmpty(Model))
+@if (!string.IsNullOrEmpty(Model.Name))
 {
 	<li class="component-wrap row-vista" 
 		id="@nombreFormateado"
@@ -56,7 +68,7 @@ Variables
 									@nombreFormateado
 								</span>
 								<span class="component-name-subtitle">
-									@Model
+									@Model.Name
 								</span>									
 							</div>
 							@* Estado de la página *@
@@ -75,7 +87,7 @@ Variables
 							@* Fecha*@
 							<div class="component-fecha-wrap component-smaller">
 								<span class="component-fecha">
-									25/10/2022
+									@fecha
 								</span>
 							</div>
 						</div>
@@ -126,7 +138,7 @@ Variables
 												   data-toggle="modal" 
 												   data-action="@((short)ManageViewsViewModel.Action.Delete)"
 												   data-componentecms="PaginasPersonalizables"
-												   data-nombre="@Model"												   
+												   data-nombre="@Model.Name"												   
 												   data-url="@(ViewBag.UrlActionWeb)"
 												   data-target="#modal-delete-view">
 													<span class="material-icons">delete</span>
@@ -144,6 +156,6 @@ Variables
 		</div>
 		
 		@* Información detallada de la pestaña -> Modal *@
-		@Html.PartialView("_modal-views/_uploadWebView", Model)		
+		@Html.PartialView("_modal-views/_uploadWebView", Model.Name)		
 	</li>
 }

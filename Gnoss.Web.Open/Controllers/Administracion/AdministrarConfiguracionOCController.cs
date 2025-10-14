@@ -5,9 +5,11 @@ using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Faceta;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -22,6 +24,7 @@ using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Semantica.OWL;
 using Gnoss.Web.Open.Controllers.ControllerBase;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +33,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,7 +44,6 @@ using System.Xml.Serialization;
 using Universal.Common.Extensions;
 using VDS.RDF.Configuration;
 using VDS.RDF.Writing;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using XMLModel = Es.Riam.Gnoss.Web.MVC.Models.ConfiguracionOC.XMLModel;
 
 namespace Gnoss.Web.Open.Controllers.Administracion
@@ -59,12 +62,17 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                 mGnossCache.AgregarObjetoCacheLocal(ProyectoSeleccionado.Clave, "ListaOntologiasPropiedadesOC", value);
             }
         }
-        public AdministrarConfiguracionOCController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarConfiguracionOCController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarConfiguracionOCController> logger, ILoggerFactory loggerFactory) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
+
         [HttpGet]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
-        public ActionResult Index(Guid ontologiaID)
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		public ActionResult Index(Guid ontologiaID)
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -84,11 +92,11 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			ConfiguracionOCModel modelo = new ConfiguracionOCModel(xmlReaderXML, xmlReaderOntologia);
             ViewBag.HeaderTitle = "Configuración de " + modelo.XmlFile.ConfiguracionGeneral.Namespace;
 
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 			ViewBag.IdiomasComunidad = paramCL.ObtenerListaIdiomasDictionary();
 
             ListaOntologiasPropiedades = new Dictionary<string, Dictionary<string, List<string>>>();
-            DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
             documentacionCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, dataWrapperDocumentacion, false, true, false);
             
@@ -137,7 +145,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        public ActionResult CargarEntidades(string pOntologia)
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		public ActionResult CargarEntidades(string pOntologia)
         {
             List<string> entidades = new List<string>();
             foreach (KeyValuePair<string, Dictionary<string, List<string>>> fila in ListaOntologiasPropiedades)
@@ -155,7 +164,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        public ActionResult CargarPropiedades(string pOntologia, string pEntidad)
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		public ActionResult CargarPropiedades(string pOntologia, string pEntidad)
         {
             List<string> propiedades = new List<string>();
             if (string.IsNullOrEmpty(pOntologia) && string.IsNullOrEmpty(pEntidad))
@@ -204,7 +214,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return Json(propiedades);
         }
         [HttpPost]
-        public ActionResult Save(Guid ontologiaID)
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		public ActionResult Save(Guid ontologiaID)
         {
             GuardarLogAuditoria();
             XmlReader xmlReaderXML = ObtenerXmlReaderXML(ontologiaID);

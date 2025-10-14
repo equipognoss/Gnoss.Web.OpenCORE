@@ -9,6 +9,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosProyecto;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
@@ -30,6 +31,7 @@ using Es.Riam.Semantica.OWL;
 using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -52,12 +54,13 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
         private ControladorBase mControladorBase;
         private ControladorDocumentacion mControladorDocumentacion;
         private IServicesUtilVirtuosoAndReplication mServicesUtilVirtuosoAndReplication;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         /// <summary>
         /// Constructor a partir de la página que contiene al controlador
         /// </summary>
         /// <param name="pController">Controller</param>
-        public AccionesRecurso(ControllerBaseWeb pController, EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
+        public AccionesRecurso(ControllerBaseWeb pController, EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, ILogger<AccionesRecurso> logger, ILoggerFactory loggerFactory)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
@@ -69,7 +72,9 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
             mEntityContextBASE = entityContextBASE;
             mRedisCacheWrapper = redisCacheWrapper;
             mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            mLoggerFactory = loggerFactory;
+            mlogger = logger;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
         }
 
         protected ControladorDocumentacion ControladorDocumentacion
@@ -78,7 +83,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
             {
                 if(mControladorDocumentacion == null)
                 {
-                    mControladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    mControladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                 }
                 return mControladorDocumentacion;
             }
@@ -92,7 +97,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
                 listaProyectos.Add(proyectoID);
             }
 
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataSet datosProyectoDesplegarAcciones = proyCN.ObtenerDatosProyectosDesplegarAcciones(listaProyectos);
             proyCN.Dispose();
 
@@ -100,7 +105,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
             //Dictionary<Guid, bool> listaCompartirPermitidoProyectos = new Dictionary<Guid, bool>();
 
             //Cargamos el gestor documental con los datos necesarios de los recursos
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
 
             //cargamos la base de recursos del proyecto actual
@@ -116,11 +121,11 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
             }
 
             docCN.Dispose();
-            GestorDocumental gestorDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext);
+            GestorDocumental gestorDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
 
             if (ControllerBase != null && ControllerBase.IdentidadActual != null)
             {
-                IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 ControllerBase.IdentidadActual.GestorIdentidades.DataWrapperIdentidad.Merge(identCN.ObtenerGruposParticipaIdentidad(ControllerBase.IdentidadActual.Clave, false));
                 ControllerBase.IdentidadActual.GestorIdentidades.DataWrapperIdentidad.Merge(identCN.ObtenerGruposParticipaIdentidad(ControllerBase.IdentidadActual.IdentidadMyGNOSS.Clave, false));
 
@@ -140,8 +145,8 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
             //Cargamos el gestor de votos
             if (listaDocumentosVotaciones.Count > 0)
             {
-                VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                gestorDoc.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentosPorID(listaDocumentosVotaciones), gestorDoc, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
+                gestorDoc.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentosPorID(listaDocumentosVotaciones), gestorDoc, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionVotosDocumento>(), mLoggerFactory);
                 votoCN.Dispose();
                 gestorDoc.GestorVotos.RecargarVotos();
             }
@@ -155,7 +160,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
 
             Dictionary<Guid, Guid> listaBasesRecursoProyecto = new Dictionary<Guid, Guid>();
 
-            SuscripcionCN suscripcionCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            SuscripcionCN suscripcionCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SuscripcionCN>(), mLoggerFactory);
             List<Guid> suscripcionPorIdentidad = new List<Guid>();
 
             foreach (Guid proyectoID in pListaDocumentosProyecto.Keys)
@@ -214,12 +219,12 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
                     }
                     else
                     {
-                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-                        GestionProyecto gestProy = new GestionProyecto(proyCL.ObtenerProyectoPorID(proyectoID), mLoggingService, mEntityContext);
+                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
+                        GestionProyecto gestProy = new GestionProyecto(proyCL.ObtenerProyectoPorID(proyectoID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionProyecto>(), mLoggerFactory);
                         proy = gestProy.ListaProyectos[proyectoID];
                         listaProyectosDoc.Add(proyectoID, proy);
 
-                        ParametroGeneralCL paramCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        ParametroGeneralCL paramCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                         listaParametrosGeneralesDoc.Add(proyectoID, paramCL.ObtenerParametrosGeneralesDeProyecto(proyectoID).ListaParametroGeneral[0]);
                     }
                 }
@@ -231,7 +236,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
                     identidadEnProy = ControllerBase.IdentidadActual.GestorIdentidades.ListaIdentidades[ControllerBase.IdentidadActual.ObtenerIdentidadEnProyectoDeIdentidad(proyectoID)];
                 }
 
-                ControladorProyectoMVC controladorMVC = new ControladorProyectoMVC(ControllerBase.UtilIdiomas, ControllerBase.BaseURL, ControllerBase.BaseURLContent, ControllerBase.BaseURLStatic, proy, parametrosGenerales, identidadEnProy, ControllerBase.EsBot, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
+                ControladorProyectoMVC controladorMVC = new ControladorProyectoMVC(ControllerBase.UtilIdiomas, ControllerBase.BaseURL, ControllerBase.BaseURLContent, ControllerBase.BaseURLStatic, proy, parametrosGenerales, identidadEnProy, ControllerBase.EsBot, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyectoMVC>(), mLoggerFactory);
 
                 List<Guid> listaIdentidades = gestorDoc.ListaDocumentos.Values.Where(doc => pListaDocumentosProyecto[proyectoID].Contains(doc.Clave) && doc.IdentidadCompardido != null && doc.IdentidadCompardido.IdentidadPublicacionID.HasValue).Select(doc2 =>  doc2.IdentidadCompardido.IdentidadPublicacionID.Value).Distinct().ToList();
                 
@@ -398,7 +403,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
 
             if (pDocumento != null && pDocumento.TipoDocumentacion == TiposDocumentacion.Semantico)
             {
-                genPlantillasOWL = new SemCmsController(new SemanticResourceModel(), new Ontologia(), pDocumento, null, ControllerBase.ProyectoSeleccionado, ControllerBase.IdentidadActual, ControllerBase.UtilIdiomas, ControllerBase.BaseURL, ControllerBase.BaseURLIdioma, ControllerBase.BaseURLContent, ControllerBase.BaseURLStatic, ControllerBase.UrlIntragnoss, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mEntityContextBASE, mServicesUtilVirtuosoAndReplication).ObtenerControladorSemCMS(pDocumento, ControllerBase.ProyectoSeleccionado, ControllerBase.IdentidadActual, ControllerBase.BaseURLFormulariosSem, ControllerBase.UtilIdiomas, ControllerBase.BaseURL, ControllerBase.BaseURLIdioma, ControllerBase.BaseURLContent, ControllerBase.BaseURLStatic, ControllerBase.UrlIntragnoss, false, ControllerBase.ParametroProyecto, ControllerBase.Request.Query["paramsemcms"]);
+                genPlantillasOWL = new SemCmsController(new SemanticResourceModel(), new Ontologia(), pDocumento, null, ControllerBase.ProyectoSeleccionado, ControllerBase.IdentidadActual, ControllerBase.UtilIdiomas, ControllerBase.BaseURL, ControllerBase.BaseURLIdioma, ControllerBase.BaseURLContent, ControllerBase.BaseURLStatic, ControllerBase.UrlIntragnoss, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SemCmsController>(), mLoggerFactory).ObtenerControladorSemCMS(pDocumento, ControllerBase.ProyectoSeleccionado, ControllerBase.IdentidadActual, ControllerBase.BaseURLFormulariosSem, ControllerBase.UtilIdiomas, ControllerBase.BaseURL, ControllerBase.BaseURLIdioma, ControllerBase.BaseURLContent, ControllerBase.BaseURLStatic, ControllerBase.UrlIntragnoss, false, ControllerBase.ParametroProyecto, ControllerBase.Request.Query["paramsemcms"]);
             }
 
             bool bloqueadoPorOtroUsuario = pDocumento.FilaDocumento.IdentidadProteccionID.HasValue && !pDocumento.FilaDocumento.IdentidadProteccionID.Equals(mControladorBase.UsuarioActual.IdentidadID);
@@ -435,7 +440,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
             {
                 if (pDocumento.TipoDocumentacion != TiposDocumentacion.Semantico)
                 {
-                    pFichaRecurso.EditCardLink = ControllerBase.UrlsSemanticas.GetURLBaseRecursosEditarDocumento(ControllerBase.BaseURLIdioma, ControllerBase.UtilIdiomas, NombreProyEdicionRecurso(pDocumento), ControllerBase.UrlPerfil, pDocumento, 0, esIdentidadBrOrg);
+                    pFichaRecurso.EditCardLink = ControllerBase.UrlsSemanticas.GetURLBaseRecursosEditarDocumento(ControllerBase.BaseURLIdioma, ControllerBase.UtilIdiomas, NombreProyEdicionRecurso(pDocumento), ControllerBase.UrlPerfil, pDocumento, 1, esIdentidadBrOrg);
                 }
                 else
                 {

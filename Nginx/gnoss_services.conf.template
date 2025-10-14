@@ -1,5 +1,5 @@
 upstream web_service {
-	server web;
+	server web:8080;
 }
 
 server {
@@ -27,35 +27,6 @@ server {
 }
 
 
-#upstream apiservice {
-#	#server 127.0.0.1:8189;
-#    server api;
-#}
-#
-#server {
-#    listen 80;
-#    server_name ${api_domain}; 
-#    
-#    location / {
-#		try_files $uri @apiservice;
-#	}
-#
-#    location @apiservice {
-#		proxy_pass 			http://apiservice;
-#		proxy_set_header 	X-Real-IP $remote_addr;
-#		proxy_set_header 	Host $host;
-#		proxy_set_header 	X-Forwarded-For $proxy_add_x_forwarded_for;
-#		proxy_http_version 	1.1;
-#		proxy_set_header 	Upgrade $http_upgrade;
-#		proxy_set_header 	Connection "upgrade";
-#		
-#		proxy_buffer_size          128k;
-#		proxy_buffers              4 256k;
-#		proxy_busy_buffers_size    256k;
-#	}
-#}
-
-
 server {
     listen 80;
     server_name ${services_domain}; 
@@ -63,91 +34,105 @@ server {
     
     location /login/ {
         proxy_http_version 1.1;
-        proxy_pass         http://login/; 
+        proxy_pass         http://login:8080/; 
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /facetas/ {
         proxy_http_version 1.1;
-        proxy_pass         http://facetas/;
+        proxy_pass         http://facetas:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /resultados/ {
         proxy_http_version 1.1;
-        proxy_pass         http://resultados/;
+        proxy_pass         http://resultados:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /interno/ {
         proxy_http_version 1.1;
-        proxy_pass         http://interno/;
+        proxy_pass         http://interno:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /archivo/ {
         proxy_http_version 1.1;
-        proxy_pass         http://archivo/;
+        proxy_pass         http://archivo:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /documents/ {
         proxy_http_version 1.1;
-        proxy_pass         http://documents/;
+        proxy_pass         http://documents:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /autocompletar/ {
         proxy_http_version 1.1;
-        proxy_pass         http://autocompletar/;
+        proxy_pass         http://autocompletar:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /despliegues/ {
         proxy_http_version 1.1;
-        proxy_pass         http://despliegues/;
+        proxy_pass         http://despliegues:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /oauth/ {
         proxy_http_version 1.1;
-        proxy_pass         http://oauth/;
+        proxy_pass         http://oauth:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /lucene_autocomplete/ {
         proxy_http_version 1.1;
-        proxy_pass         http://lucene_autocomplete/;
+        proxy_pass         http://lucene_autocomplete:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /autocompletaretiquetas/ {
         proxy_http_version 1.1;
-        proxy_pass         http://autocompletaretiquetas/;
+        proxy_pass         http://autocompletaretiquetas:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
-	location /static/ {
+    location /static/ {
         proxy_http_version 1.1;
-        proxy_pass         http://static/;
+        proxy_pass         http://static:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;
     }
     location /api/ {
         proxy_http_version 1.1;
-        proxy_pass         http://api/;
+        proxy_pass         http://api:8080/;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Upgrade $http_upgrade;
+    }
+    location /check_service/ {
+        proxy_http_version 1.1;
+        proxy_pass         http://check_service:8080/;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Upgrade $http_upgrade;
+    }
+	location /integracioncontinua/ {
+        proxy_http_version 1.1;
+        proxy_pass         http://integracioncontinua:8080/;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Upgrade $http_upgrade;

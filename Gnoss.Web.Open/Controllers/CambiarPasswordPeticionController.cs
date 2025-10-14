@@ -18,6 +18,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Microsoft.AspNetCore.Hosting;
@@ -26,6 +27,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Linq;
 
@@ -50,10 +53,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
     public class CambiarPasswordPeticionController : ControllerBaseWeb
     {
-
-        public CambiarPasswordPeticionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CambiarPasswordPeticionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CambiarPasswordPeticionController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
 
@@ -83,14 +89,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid UsuarioID = new Guid(RequestParams("usuarioID"));
                 Guid PeticionID = new Guid(RequestParams("peticionID"));
 
-                PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext);
+                PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
+                GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionPeticiones>(), mLoggerFactory);
                 peticionCN.Dispose();
 
-                UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                 DataWrapperUsuario dataWrapperUsuario = usuCN.ObtenerUsuarioCompletoPorID(UsuarioID);
                 usuCN.Dispose();
-                GestionUsuarios gestorUsuario = new GestionUsuarios(dataWrapperUsuario, mLoggingService, mEntityContext, mConfigService);
+                GestionUsuarios gestorUsuario = new GestionUsuarios(dataWrapperUsuario, mLoggingService, mEntityContext, mConfigService, mLoggerFactory.CreateLogger<GestionUsuarios>(), mLoggerFactory);
 
                 if (!gestionPeticion.ListaPeticiones.ContainsKey(PeticionID) || gestorUsuario.DataWrapperUsuario.ListaUsuario.Count == 0)
                 {
@@ -119,8 +125,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     Guid UsuarioID = new Guid(RequestParams("usuarioID"));
                     Guid PeticionID = new Guid(RequestParams("peticionID"));
 
-                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
                     string email = personaCN.ObtenerEmailPersonalPorUsuario(UsuarioID);
                     //Comprobar si es menor
                     if (!string.IsNullOrEmpty(email))
@@ -167,11 +173,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (string.IsNullOrEmpty(error))
                     {
-                        PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext);
+                        PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
+                        GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionPeticiones>(), mLoggerFactory);
                         peticionCN.Dispose();
 
-                        UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                         DataWrapperUsuario dataWrapperUsuario = usuCN.ObtenerUsuarioCompletoPorID(UsuarioID);
                         usuCN.Dispose();
 
@@ -186,7 +192,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 JsonEstado jsonEstadoEditarPass = ControladorIdentidades.AccionEnServicioExternoEcosistema(TipoAccionExterna.EditarPassword, ProyectoSeleccionado.Clave, UsuarioID, "", "", User, Password, GestorParametroAplicacion, null, null, null, null);
 
                                 CambiarContrasenyaUsuario(dataWrapperUsuario, Password);
-                                UsuarioCL usuarioCL = new UsuarioCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                UsuarioCL usuarioCL = new UsuarioCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCL>(), mLoggerFactory);
                                 usuarioCL.DesbloquearUsuario(UsuarioID);
                                 usuarioCL.Dispose();
 
@@ -194,7 +200,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             }
                             catch (Exception ex)
                             {
-                                mLoggingService.GuardarLogError(ex);
+                                mLoggingService.GuardarLogError(ex, mlogger);
                             }
                         }
                     }
@@ -229,8 +235,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid UsuarioID = new Guid(RequestParams("usuarioID"));
                 Guid PeticionID = new Guid(RequestParams("peticionID"));
 
-                PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext);
+                PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
+                GestionPeticiones gestionPeticion = new GestionPeticiones(peticionCN.ObtenerPeticionPorUsuarioIDyTipo(UsuarioID, TipoPeticion.CambioPassword, true), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionPeticiones>(), mLoggerFactory);
 
                 Peticion peticion = gestionPeticion.ListaPeticiones[PeticionID];
                 peticion.FilaPeticion.FechaProcesado = DateTime.Now;
@@ -256,7 +262,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CambiarContrasenyaUsuario(DataWrapperUsuario pDataWrapperUsuario, string pNuevoPassword)
         {
-            UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
             usuarioCN.EstablecerPasswordPropioUsuario(pDataWrapperUsuario.ListaUsuario.FirstOrDefault(), pNuevoPassword);
             usuarioCN.Dispose();
         }

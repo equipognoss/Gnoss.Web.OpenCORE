@@ -15,10 +15,13 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.Controles.ParametroGeneralDSName;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -47,12 +50,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         protected EntityContext mEntityContext;
         protected LoggingService mLoggingService;
         private RedisCacheWrapper mRedisCacheWrapper;
-
-        public ControllerCabeceraBase(ControllerBaseWeb pControllerBase, IHttpContextAccessor httpContextAccessor, EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, GnossCache gnossCache)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public ControllerCabeceraBase(ControllerBaseWeb pControllerBase, IHttpContextAccessor httpContextAccessor, EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, GnossCache gnossCache, ILogger<ControllerCabeceraBase> logger, ILoggerFactory loggerFactory)
         {
             mControllerBase = pControllerBase;
             mHttpContextAccessor = httpContextAccessor;
-
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
             ViewBag = pControllerBase.ViewBag;
             mConfigService = configService;
             IdentidadActual = mControllerBase.IdentidadActual;
@@ -65,7 +70,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mRedisCacheWrapper = redisCacheWrapper;
             mEntityContext = entityContext;
             mLoggingService = loggingService;
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
         }
 
         private string RequestParams(string pParametro)
@@ -76,7 +81,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public void CargarDatosCabecera()
         {
             HeaderModel cabecera = new HeaderModel();
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, null);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, null, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
 			cabecera.UrlAdvancedSearch = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, mControllerBase.BaseURLIdioma, ProyectoVirtual.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "BUSQUEDAAVANZADA");
 
@@ -160,7 +165,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 pagActual = path.Substring(path.LastIndexOf("/") + 1);
             }
 
-            SearchSelectComboModel elementoSeleccionado = pListaOpciones.Where(item => item.Name.ToLower() == pagActual).FirstOrDefault();
+            SearchSelectComboModel elementoSeleccionado = pListaOpciones.Where(item => pagActual.ToLower().Contains(item.Name.ToLower())).FirstOrDefault();
             if (elementoSeleccionado != null)
             {
                 elementoSeleccionado.Selected = true;
@@ -351,6 +356,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (montarMetaBusquedaComunidad)
             {
                 ProyectoPestanyaMenu pestanyaBusquedaAvanzada = ProyectoVirtual.ListaPestanyasMenu.Values.FirstOrDefault(p => p.TipoPestanya.Equals(TipoPestanyaMenu.BusquedaAvanzada));
+                string searchPersonalizado = "search";
 
                 if (pestanyaBusquedaAvanzada != null && pestanyaBusquedaAvanzada.Activa && (pestanyaBusquedaAvanzada.FilaProyectoPestanyaBusqueda == null || pestanyaBusquedaAvanzada.FilaProyectoPestanyaBusqueda.MostrarEnComboBusqueda))
                 {
@@ -366,7 +372,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         nombrePestanya = UtilIdiomas.GetText("BUSCADORFACETADO", "TODALACOMUNIDAD");
                     }
                     
-                    pListaSelectCombo.Add(GenerarSearchComboModel(pestanyaBusquedaAvanzada.Clave.ToString(), nombrePestanya, rutaPestanya, !pestanyaDefecto.HasValue));
+
+                    if (pestanyaBusquedaAvanzada.FilaProyectoPestanyaBusqueda != null)
+                    {
+                        searchPersonalizado = pestanyaBusquedaAvanzada.FilaProyectoPestanyaBusqueda.SearchPersonalizado;
+                    }
+
+                    pListaSelectCombo.Add(GenerarSearchComboModel(pestanyaBusquedaAvanzada.Clave.ToString(), nombrePestanya, rutaPestanya, !pestanyaDefecto.HasValue,"","",-1, searchPersonalizado));
                 }
             }
 
@@ -384,8 +396,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string nombrePestanya = pPestanyaMenu.Nombre;
             string rutaPestanya = pPestanyaMenu.Ruta;
             string facetasAutocompletar = "";
+            string searchPersonalizado = "search";
             if (pPestanyaMenu.Activa && (pPestanyaMenu.FilaProyectoPestanyaBusqueda == null || pPestanyaMenu.FilaProyectoPestanyaBusqueda.MostrarEnComboBusqueda))
             {
+                short tipoAutocompletar = -1;
+				if (pPestanyaMenu.FilaProyectoPestanyaBusqueda != null)
+				{
+					tipoAutocompletar = (short)pPestanyaMenu.FilaProyectoPestanyaBusqueda.TipoAutocompletar;
+                    searchPersonalizado = pPestanyaMenu.FilaProyectoPestanyaBusqueda.SearchPersonalizado;
+                }                
                 switch (pPestanyaMenu.TipoPestanya)
                 {
                     case TipoPestanyaMenu.Recursos:
@@ -398,10 +417,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         if (string.IsNullOrEmpty(rutaPestanya))
                         {
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "RECURSOS");
-                        }
-                        
-                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Recursos, facetasAutocompletar));
-                        
+                        }                                              
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Recursos, facetasAutocompletar, tipoAutocompletar, searchPersonalizado));                        
                         #endregion
                         break;
                     case TipoPestanyaMenu.BusquedaSemantica:
@@ -411,8 +428,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             string extraJsProyOrigen = "";
                             string filtroPest = pPestanyaMenu.FilaProyectoPestanyaBusqueda.CampoFiltro.Replace("rdf:type=", "");
-
-                            pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, pPestanyaMenu.FilaProyectoPestanyaMenu.Ruta, facetasAutocompletar));
+                           
+                           
+                            pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, pPestanyaMenu.FilaProyectoPestanyaMenu.Ruta, facetasAutocompletar, tipoAutocompletar, searchPersonalizado));
 
                             if (mControllerBase.ProyectoOrigenBusquedaID != Guid.Empty)
                             {
@@ -434,7 +452,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "PREGUNTAS");
                         }
                         
-                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Preguntas, facetasAutocompletar));
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Preguntas, facetasAutocompletar, tipoAutocompletar));
                         
                         #endregion
                         break;
@@ -450,7 +468,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "ENCUESTAS");
                         }
 
-                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Encuestas, facetasAutocompletar));
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Encuestas, facetasAutocompletar, tipoAutocompletar));
                         
                         #endregion
                         break;
@@ -466,7 +484,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "DEBATES");
                         }
 
-                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Debates, facetasAutocompletar));
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.Debates, facetasAutocompletar, tipoAutocompletar));
 
                         #endregion
                         break;
@@ -489,7 +507,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             rutaPestanya = UtilIdiomas.GetText("URLSEM", "PERSONASYORGANIZACIONES");
                         }
                         
-                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.PersyOrg, facetasAutocompletar));
+                        pListaSelectCombo.Add(GenerarSearchComboModel(pPestanyaMenu.Clave.ToString(), nombrePestanya, rutaPestanya, pPestanyaDefecto.HasValue && pPestanyaDefecto.Value == pPestanyaMenu.Clave, AD.BASE_BD.OrigenAutocompletar.PersyOrg, facetasAutocompletar, tipoAutocompletar));
 
                         #endregion
                         break;
@@ -589,7 +607,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             foreach (SearchSelectComboModel combo in pListaCombos)
             {
                 combo.Name = UtilCadenas.ObtenerTextoDeIdioma(combo.Name, pUtilIdiomas.LanguageCode, pIdiomaDefecto);
-                combo.Url = $"{urlComunidad}{UtilCadenas.ObtenerTextoDeIdioma(combo.Url, pUtilIdiomas.LanguageCode, pIdiomaDefecto)}?search=";
+                combo.Url = $"{urlComunidad}{UtilCadenas.ObtenerTextoDeIdioma(combo.Url, pUtilIdiomas.LanguageCode, pIdiomaDefecto)}?{combo.SearchPersonalizado}=";
             }
         }
 
@@ -601,10 +619,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="pUrl">Url de la página en la que se realizará la búesqueda</param>
         /// <param name="pSelected">Si es o no el elemento seleccionado del combo</param>
         /// <param name="pAutocomplete">Nombre utilizado para el autocompletar del elemento. Puede ser nulo</param>
+        /// <param name="tipoAutocompletar">Indica el tipo de autocompletar que se va a usar en la pestaña</param>
         /// <returns></returns>
-        private SearchSelectComboModel GenerarSearchComboModel(string pId, string pName, string pUrl, bool pSelected, string pAutocomplete = "", string pFacetAutocomplete = "")
+        private SearchSelectComboModel GenerarSearchComboModel(string pId, string pName, string pUrl, bool pSelected, string pAutocomplete = "", string pFacetAutocomplete = "", short pTipoAutocompletar = -1, string pSearchPersonalizado = "search")
         {
-            return new SearchSelectComboModel() { ID = pId, Name = pName, Url = pUrl, Selected = pSelected, Autocomplete = pAutocomplete, FacetAutocomplete = pFacetAutocomplete };
+            return new SearchSelectComboModel() { ID = pId, Name = pName, Url = pUrl, Selected = pSelected, Autocomplete = pAutocomplete, FacetAutocomplete = pFacetAutocomplete, TipoAutocompletar = pTipoAutocompletar , SearchPersonalizado=pSearchPersonalizado };
         }
     }
 }

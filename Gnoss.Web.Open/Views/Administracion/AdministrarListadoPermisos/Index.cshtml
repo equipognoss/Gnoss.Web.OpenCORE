@@ -1,0 +1,414 @@
+﻿@using Gnoss.Web.Open.Controllers.Administracion
+@model ListadoPermisosViewModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    bool esEcosistema = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+    int numeroRoles = Model.ListaRoles.Count + 1;
+    int numPermisos = 0;
+    if (Model != null && Model.ListaPermisos != null)
+    {
+        numPermisos = Model.ListaPermisos.Count;
+    }
+    List<PermisoViewModel> permisosSeccionComunidad = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionEstructura = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionConfiguracion = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionGrafo = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionDescubrimiento = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionApariencia = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionMantenimiento = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionIC = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionAplicaciones = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionRecursos = new List<PermisoViewModel>();
+    List<PermisoViewModel> permisosSeccionEcosistema = new List<PermisoViewModel>();
+    if (esEcosistema)
+    {
+        permisosSeccionEcosistema = Model.ListaPermisos.Where(x => x.Seccion == "ECOSISTEMA").ToList();
+    }
+    else
+    {
+        permisosSeccionComunidad = Model.ListaPermisos.Where(x => x.Seccion == "COMUNIDAD").ToList();
+        permisosSeccionEstructura = Model.ListaPermisos.Where(x => x.Seccion == "ESTRUCTURA").ToList();
+        permisosSeccionConfiguracion = Model.ListaPermisos.Where(x => x.Seccion == "CONFIGURACION").ToList();
+        permisosSeccionGrafo = Model.ListaPermisos.Where(x => x.Seccion == "GRAFO").ToList();
+        permisosSeccionDescubrimiento = Model.ListaPermisos.Where(x => x.Seccion == "DESCUBRIMIENTO").ToList();
+        permisosSeccionApariencia = Model.ListaPermisos.Where(x => x.Seccion == "APARIENCIA").ToList();
+        permisosSeccionMantenimiento = Model.ListaPermisos.Where(x => x.Seccion == "MANTENIMIENTO").ToList();
+        permisosSeccionIC = Model.ListaPermisos.Where(x => x.Seccion == "IC").ToList();
+        permisosSeccionAplicaciones = Model.ListaPermisos.Where(x => x.Seccion == "APLICACIONES").ToList();
+        permisosSeccionRecursos = Model.ListaPermisos.Where(x => x.Seccion == "RECURSOS").ToList();
+    }
+}
+
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        @if (!esEcosistema)
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD")</a>
+            </li>
+        }
+        else
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+        }
+        <li>
+            @Html.GetText("DEVTOOLS", "LISTADOPERMISOS")
+        </li>
+    </ul>
+</div>
+
+<div class="formulario-edicion background-blanco">
+    <div class="tab-content">
+        <div id="panelListadoPermisos"
+             class="tab-pane fade show active"
+             role="tabpanel"
+             aria-labelledby="panelListadoPermisos">
+             <div class="row">
+                <div class="col col-12 header-listado">
+                    <div class="h1-container">
+                        <h1>
+                            @Html.GetText("DEVTOOLS", "LISTADOPERMISOS")
+                            <span id="numPermisos" class="numResultados">@numPermisos</span>
+                        </h1>
+                    </div>                    
+                </div>
+                @* Buscador de permisos *@
+                <div class="col col-12 header-buscador">
+                    <div class="wrapCol">
+                        <div class="col-buscador" style="width: 100%">
+                            @* Formulario para búsquedas de permisos *@
+                            <form id="formBuscadorRoles" onsubmit="return false;">
+                                <div class="finderUtils" id="divCajaBusqueda">
+                                    <div class="group finderSection">
+                                        @* Input para realizar la búsqueda de permisos *@
+                                        <input type="text"
+                                               id="txtBuscarPermiso"
+                                               class="not-outline finderSectionText"
+                                               autocomplete="off"
+                                               placeholder="@Html.GetText("DEVTOOLS", "BUSCARENLASECCION")" />
+                                        @* Botón para realizar la búsqueda *@
+                                        <input title="Buscar"
+                                               type="button"
+                                               class="findAction"
+                                               id="inputLupa" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+             </div>
+
+            <div class="col col-12 col-contenido">
+                <div class="wrapCol">
+                    <div class="table-responsive">
+                        <table class="display nowrap table table-sm tabla-permisos">
+                            <thead>
+                                <tr>
+                                    <th class="th-nombre">@Html.GetText("DEVTOOLS", "NOMBRE")</th>                                    
+                                     @foreach (string permiso in Model.ListaRoles)
+                                     {
+                                         <th>@permiso</th>
+                                     }                                                                            
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (esEcosistema)
+                                {
+                                    <tr>
+                                        <td data-toggle="collapse" data-target=".collapsePermissionOne" aria-expanded="true" aria-controls="collapsePermissionOne">
+                                            <span>
+                                                @Html.GetText("ROLESYPERMISOS", "ECOSISTEMA")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionEcosistema)
+                                    {
+                                        <tr class="collapse collapsePermissionOne show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionOne" aria-expanded="true" aria-controls="collapsePermissionOne">
+                                        <span>
+                                            @Html.GetText("DEVTOOLS", "TIPOROLCOMUNIDAD")
+                                        </span>
+                                    </td>
+                                    </tr>                                                                    
+                                    @foreach (PermisoViewModel permiso in permisosSeccionComunidad)
+                                    {
+                                        <tr class="collapse collapsePermissionOne show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }                                            
+                                    </tr>
+                                    }                                                                                                                                                                            
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionTwo" aria-expanded="true" aria-controls="collapsePermissionTwo">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "ESTRUCTURA")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionEstructura)
+                                    {
+                                        <tr class="collapse collapsePermissionTwo show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionThree" aria-expanded="true" aria-controls="collapsePermissionThree">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "CONFIGURACION")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionConfiguracion)
+                                    {
+                                        <tr class="collapse collapsePermissionThree show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionFour" aria-expanded="true" aria-controls="collapsePermissionFour">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "GRAFO")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionGrafo)
+                                    {
+                                        <tr class="collapse collapsePermissionFour show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionFive" aria-expanded="true" aria-controls="collapsePermissionFive">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "DESCUBRIMIENTO")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionDescubrimiento)
+                                    {
+                                        <tr class="collapse collapsePermissionFive show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionSix" aria-expanded="true" aria-controls="collapsePermissionSix">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "APARIENCIA")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionApariencia)
+                                    {
+                                        <tr class="collapse collapsePermissionSix show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionSeven" aria-expanded="true" aria-controls="collapsePermissionSeven">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "IC")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionIC)
+                                    {
+                                        <tr class="collapse collapsePermissionSeven show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionEight" aria-expanded="true" aria-controls="collapsePermissionEight">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "MANTENIMIENTO")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionMantenimiento)
+                                    {
+                                        <tr class="collapse collapsePermissionEight show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                <tr>
+                                    <td data-toggle="collapse" data-target=".collapsePermissionNine" aria-expanded="true" aria-controls="collapsePermissionNine">
+                                        <span>
+                                            @Html.GetText("ROLESYPERMISOS", "APLICACIONES")
+                                        </span>
+                                    </td>
+                                </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionAplicaciones)
+                                    {
+                                        <tr class="collapse collapsePermissionNine show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                    <tr>
+                                        <td data-toggle="collapse" data-target=".collapsePermissionTen" aria-expanded="true" aria-controls="collapsePermissionTen">
+                                            <span>
+                                                @Html.GetText("ROLESYPERMISOS", "RECURSOS")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @foreach (PermisoViewModel permiso in permisosSeccionRecursos)
+                                    {
+                                        <tr class="collapse collapsePermissionTen show component-wrap permiso-row">
+                                            <td class="component-name">
+                                                @permiso.Nombre
+                                                <button class="btn btn-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="@permiso.Descripcion">
+                                                    <span class="material-icons">help_outline</span>
+                                                </button>
+                                            </td>
+                                            @foreach (var rol in permiso.RolesAsignados.Keys)
+                                            {
+                                                <td data-valor="@permiso.RolesAsignados[rol].ToLower()">
+                                                    @permiso.RolesAsignados[rol]
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                }                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+         </div>
+    </div>
+</div>
+
+@section operativaScript {
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+
+            operativaGestionDePermisos.init();
+
+        })();
+
+
+    </script>
+}

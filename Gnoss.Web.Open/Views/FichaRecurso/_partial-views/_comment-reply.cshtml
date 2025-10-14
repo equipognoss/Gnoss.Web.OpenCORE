@@ -320,9 +320,20 @@ else
 
 <script lang="javascript" type="text/javascript">
     $(document).ready(function () {
-        let fechamoment = "@Model.PublishDate.ToString("yyyy-MM-dd")" + "T" + "@Model.PublishDate.ToString("HH:mm:ss")" + "Z";
-        var fechaServer = moment(fechamoment);
-        var fechaMsj = fechaServer.tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('YYYY/MM/DD HH:mm');
+        let fecha = "@Model.PublishDate.ToString("yyyy-MM-dd")" + "T" + "@Model.PublishDate.ToString("HH:mm:ss")" + "Z";
+        var fechaServer = new Date(fecha);
+        const formatter = new Intl.DateTimeFormat('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+        const dateParts = formatter.formatToParts(fechaServer);
+        const getPart = (type) => dateParts.find(p => p.type == type)?.value || '';
+
+        var fechaMsj = `${getPart('year')}/${getPart('month')}/${getPart('day')} ${getPart('hour')}:${getPart('minute')}`
         $("#@Model.Key .fecha-publicacion span").text(fechaMsj);
     });
 </script>

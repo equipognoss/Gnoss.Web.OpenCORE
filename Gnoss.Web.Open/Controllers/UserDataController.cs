@@ -3,8 +3,11 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
@@ -16,12 +19,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private EntityContext mEntityContext;
         private LoggingService mLoggingService;
         private ConfigService mConfigService;
-
-        public UserDataController(LoggingService loggingService, ConfigService configService, EntityContext entityContext)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public UserDataController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, ILogger<UserDataController> logger, ILoggerFactory loggerFactory)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
             mConfigService = configService;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         //
@@ -36,14 +42,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid usuarioID = ComprobarPermisosOauth();
                 if (!usuarioID.Equals(Guid.Empty))
                 {
-                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, null);
+                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
                     email = personaCN.ObtenerEmailPersonalPorUsuario(usuarioID);
                     personaCN.Dispose();
                 }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
             return Content(email);
@@ -68,7 +74,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
             return usuarioID;

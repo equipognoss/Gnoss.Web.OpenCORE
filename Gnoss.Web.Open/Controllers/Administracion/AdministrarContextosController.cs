@@ -9,6 +9,7 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
@@ -20,13 +21,16 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,12 +72,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// 
     /// </summary>
-    public class AdministrarContextosController : ControllerBaseWeb
-    {
-
-        public AdministrarContextosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarContextosController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarContextosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarContextosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -94,8 +101,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
+		public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -119,8 +126,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult NuevoGadget(TipoGadget TipoGadget)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
+		public ActionResult NuevoGadget(TipoGadget TipoGadget)
         {
             EliminarPersonalizacionVistas();
 
@@ -165,9 +172,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult Guardar(List<ContextoModel> ListaGadgets)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+		public ActionResult Guardar(List<ContextoModel> ListaGadgets)
         {
             GuardarLogAuditoria();
             bool iniciado = false;
@@ -181,12 +188,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
 
-            ControladorContextos contrContex = new ControladorContextos(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorContextos contrContex = new ControladorContextos(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorContextos>(), mLoggerFactory);
             
             string errores = contrContex.ComprobarErrores(ListaGadgets);
             if (string.IsNullOrEmpty(errores))
             {
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
                 bool transaccionIniciada = false;
                 try
                 {
@@ -266,7 +273,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             ViewBag.ListaComponentesCMS = new Dictionary<Guid, string>();
 
-            CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
             DataWrapperCMS cmsDW = cmsCN.ObtenerComponentesCMSDeProyecto(ProyectoSeleccionado.Clave);
             cmsCN.Dispose();
 
@@ -288,7 +295,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mDataWrapperProyecto == null)
                 {
                     mDataWrapperProyecto = new DataWrapperProyecto();
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     proyCN.ObtenerGadgetsProyecto(ProyectoSeleccionado.Clave, mDataWrapperProyecto);
                 }
                 return mDataWrapperProyecto;
@@ -303,7 +310,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     mPaginaModel = new AdministrarContextosViewModel();
 
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
 					mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 
@@ -325,7 +332,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     mPaginaModel.ListaGadgets = new List<ContextoModel>();
 
-                    ControladorContextos contrContex = new ControladorContextos(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorContextos contrContex = new ControladorContextos(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorContextos>(), mLoggerFactory);
 
                     foreach (ProyectoGadget filaGadget in DataWrapperProyecto.ListaProyectoGadget.Where(gadget => gadget.TipoUbicacion == (short)TipoUbicacionGadget.FichaRecursoComunidad))
                     {

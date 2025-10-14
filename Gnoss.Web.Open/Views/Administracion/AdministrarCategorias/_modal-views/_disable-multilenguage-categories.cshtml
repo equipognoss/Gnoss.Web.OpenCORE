@@ -1,4 +1,5 @@
-﻿@*
+﻿@model bool;
+@*
  Descripción
  -----------------------------------------------
  Vista modal que se usará dentro de un contenedor de bootstrap para poder deshabilitar si así se desea la edición multilenguaje de Categorías. 
@@ -8,7 +9,13 @@
  ----------------------------------------------------------------
 *@
 @{
-
+    string mensajeConfirmacion = @Html.GetText("DEVTOOLS", "ESTASSEGURODEQUEQUIERESDESACTIVARLAEDICIONENVARIOSIDIOMASDE");
+    string mensaje = Html.GetText("DEVTOOLS", "SILOHACES,SETOMARACOMOIDIOMADELACOMUNIDADELQUEHAYASELEGIDOPO");
+    if (Model)
+    {
+        mensajeConfirmacion = @Html.GetText("DEVTOOLS", "DESAACTIVAREDICIONMULTIIDIOMAECOSISTEMA");
+        mensaje = Html.GetText("DEVTOOLS", "SILOHACES,SETOMARACOMOIDIOMADELAPLATAFORMAQUEHAYASELEGIDOPO");
+    }
 }
 @*
  ----------------------------------------------------------------
@@ -17,7 +24,7 @@
 
 <div class="modal-header">
     <p class="modal-title">
-        <span class="material-icons">language</span>Desactivar edición multilenguaje
+        <span class="material-icons">language</span>@Html.GetText("COMADMINCATEGORIAS", "DESACTIVAREDICIONMULTIIDIOMA")
     </p>
     <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
 </div>
@@ -27,9 +34,9 @@
     <div class="formulario-edicion">
         <div class="form-group">              
             <label class="control-label">
-                @Html.GetText("DEVTOOLS","ESTASSEGURODEQUEQUIERESDESACTIVARLAEDICIONENVARIOSIDIOMASDE")
+                @mensajeConfirmacion
             </label>
-            <label class="control-label">@Html.GetText("DEVTOOLS","SILOHACES,SETOMARACOMOIDIOMADELACOMUNIDADELQUEHAYASELEGIDOPO")</label>
+            <label class="control-label">@mensaje</label>
         </div>
                     
         @* Sección botón de Sí/No *@

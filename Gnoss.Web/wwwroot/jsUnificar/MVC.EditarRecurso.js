@@ -1066,16 +1066,15 @@ function EliminarRespuestaEncuesta(boton) {
 function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, editandoFormSem) {
     $(document.body).prop('onBeforeUnload', 'ComprobarCambios();');
 
-    if (txtsTitulos == '') {
+    if (txtsTitulos == undefined || txtsTitulos == '') {
         txtsTitulos = 'txtTitulo';
     }
 
-    if (txtsDescripciones == '') {
+    if (txtsDescripciones == undefined || txtsDescripciones == '') {
         txtsDescripciones = 'txtDescripcion';
     }
 
     TxtTitulosSem = txtsTitulos;
-
    
     // Configurar etiquetado automático para Descripción cuando se cree el TinyMCE
     setTimeout(function(){        
@@ -1092,9 +1091,9 @@ function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, ed
 
     if (typeof ($('.calenFormSem').datepicker) != 'undefined') {
         // Preparar el .datePicker para que esté disponible en la web
-        const oldYear = moment().format('YYYY') - 110;        
-        const currentYear = moment().add(1, 'year').format('YYYY');
-        const maxYear = moment().add(100, 'year').format('YYYY');
+        const currentYear = new Date().getFullYear();
+        const oldYear = currentYear - 110;
+        const maxYear = currentYear + 100;
         $('.calenFormSem').datepicker({
             changeMonth: true,
             changeYear: true,
@@ -1103,9 +1102,9 @@ function InicializarModificarRecursoSemantico(txtsTitulos, txtsDescripciones, ed
     }
     if (typeof ($('.calenTimeFormSem').datetimepicker) != 'undefined') {
         // Preparar el .datePicker para que esté disponible en la web
-        const oldYear = moment().format('YYYY') - 110;                
-        const currentYear = moment().format('YYYY');   
-        const maxYear = moment().add(100, 'year').format('YYYY');
+        const currentYear = new Date().getFullYear();
+        const oldYear = currentYear - 110;  
+        const maxYear = currentYear + 100;
         $('.calenTimeFormSem').datetimepicker({
             format: 'd/m/Y H:i:s',
             defaultTime: '12:00',            
@@ -1148,6 +1147,18 @@ function AjustarHoraCalendario(ct, $i) {
     $i.val(valor.substring(0, valor.length - 2) + '00');
 }
 
+
+/**
+ * Enlaza el etiquetado automático para formularios semánticos, asociando eventos `blur` 
+ * tanto a inputs de texto como a editores TinyMCE relacionados.
+ * 
+ * @param {string} pTitulos - IDs de los campos de título separados por comas (ej. "txtTitulo1,txtTitulo2").
+ * @param {string} pDescripciones - IDs de los campos de descripción separados por comas (ej. "txtDesc1,txtDesc2").
+ * @param {string} pHackTit - ID del input oculto donde se almacenan las etiquetas del título.
+ * @param {string} pHackDesc - ID del input oculto donde se almacenan las etiquetas de la descripción.
+ * @param {string} pTags - ID del contenedor de tags sugeridos.
+ * @param {boolean} pEditandoFormSem - Indica si se está editando un formulario semántico ya existente.
+ */
 function EnlazarEtiquetadoAutoFormSem(pTitulos, pDescripciones, pHackTit, pHackDesc, pTags, pEditandoFormSem) {
     try {
         txtHackTagsTituloID = pHackTit;
@@ -1164,28 +1175,23 @@ function EnlazarEtiquetadoAutoFormSem(pTitulos, pDescripciones, pHackTit, pHackD
         var descrp = pDescripciones.split(',');
         for (var i = 0; i < descrp.length; i++) {
             if (descrp[i] != '' && $('#' + descrp[i]).length > 0) {
-                /* Cambiado para TinyMCE
-                CKEDITOR.instances[descrp[i]].on('blur', function () {
-                    var descripcion = $('#' + this.name).val();
-                    EtiquetadoAutomaticoDeRecursos('', descripcion, $('#' + txtHackTagsDescripcionID), false);
-                });
-                */
-                // Modificación para tinyMCE
-                // ID de la instancia de TinyMCE
                 const editors = tinymce.get();
                 const relatedTinyMCEId = $(`#${descrp[i]}`).data("editorrelated");
 
                 editors.forEach(function (editor) {
                     if (editor.id === relatedTinyMCEId) {
                         // Adjuntar un controlador de eventos para el evento blur
-                        editor.on('blur', function (e) {
-                            var descripcion = $('#txtDescripcion').val();
-                            EtiquetadoAutomaticoDeRecursos('', descripcion, $('#' + txtHackTagsDescripcionID), false);
+                        editor.on('blur', function () {
+                            try {
+                                const content = editor.getContent();
+                                EtiquetadoAutomaticoDeRecursos('', content, $('#' + txtHackTagsDescripcionID), false);
+                            } catch (e) {
+                                console.error('Error al leer el contenido:', e);
+                            }
                         });
                     }
                 });                                
             }
-
         }
     }
     catch (e) { }

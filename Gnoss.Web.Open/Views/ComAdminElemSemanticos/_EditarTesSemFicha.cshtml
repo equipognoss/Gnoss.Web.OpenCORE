@@ -1,4 +1,4 @@
-﻿@model Tuple<string, string, string>
+﻿@model Tuple<ComAdminSemanticThesaurusData, string, string>
 
 @*
 Descripción
@@ -12,6 +12,7 @@ Variables
 
 @{
 	string nombreTesauro = "";
+	string fecha = string.Empty;
 	string nombreOntologia = "";
 	string nombreFuenteOntologia = "";
 
@@ -21,17 +22,25 @@ Variables
 
 	if (Model != null)
 	{
-		nombreTesauro = Model.Item1;
+		nombreTesauro = Model.Item1.Nombre;
+		if (Model.Item1.FechaCreacion.ToShortDateString() == "01/01/0001")
+		{
+			fecha = "01/01/2024";
+		}
+		else
+		{
+			fecha = Model.Item1.FechaCreacion.ToShortDateString();
+		}
 		nombreOntologia = Model.Item2;
 		nombreFuenteOntologia = Model.Item3;		
 	}
 
 	// Id para los tabs multiIdioma para su correcta visualización al cambiar para ver otros idiomas
 	string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0,5);
-	
+
 	// Obtener el nombre y Url en formato diccionario con los multiIdiomas de Nombre para ser mostrados en la row del Tesauro
 	pageNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(nombreTesauro);
-	
+
 }
 
 <li class="component-wrap tesauro-row" data-ontology-url="@nombreOntologia|@nombreFuenteOntologia">
@@ -53,7 +62,7 @@ Variables
 							else
 							{																																												
 								@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
-									{
+								{
 									<span class="language-component component-name @( ViewBag.IdiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">
 										@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
 										@{
@@ -78,7 +87,7 @@ Variables
 						</div>
 						@* Fecha *@
 						<div class="component-fecha-wrap">
-							<span class="component-fecha">30/09/2022</span>
+							<span class="component-fecha">@fecha</span>
 						</div>												
 					</div>
 					@*Sección de acciones *@
@@ -87,34 +96,39 @@ Variables
 							@* Botón dropdown de acciones *@
 							<div class="dropdown">
 								<a
-									class="nav-link dropdown-toggle btn btn-outline-grey"
-									data-toggle="dropdown"
-									href="#"
-									role="button"
-									aria-haspopup="true"
-									aria-expanded="false">
+								class="nav-link dropdown-toggle btn btn-outline-grey"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false">
 									<span class="material-icons">create</span>
 									<span class="texto">Editar</span>
 								</a>
 								@* Panel dropdown con las acciones disponibles *@
 								<div
-									class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
+								class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
 									@* Acción Editar *@
-									<a
-										class="item-dropdown btnEditTesauro"
+									@if ((ViewBag.VerTesauro != null && ViewBag.VerTesauro) || (ViewBag.ModificarTesauro != null && ViewBag.ModificarTesauro))
+									{
+										<a class="item-dropdown btnEditTesauro"
 										data-toggle="modal"
 										data-ontology-url="@nombreOntologia|@nombreFuenteOntologia"
 										data-target="#modal-container">
-										<span class="material-icons">edit</span>
-										<span class="texto">Editar</span>
-									</a>
+											<span class="material-icons">edit</span>
+											<span class="texto">Editar</span>
+										</a>
+									}
 									@* Acción Borrar *@
-									<a class="item-dropdown btnDeleteTesauro"
-									   data-toggle="modal" 
-									   data-target="#modal-delete-tesauro">
-										<span class="material-icons">delete</span>
-										<span class="texto">Borrar</span>
-									</a>
+									@if (ViewBag.EliminarTesauro != null && ViewBag.EliminarTesauro)
+									{
+										<a class="item-dropdown btnDeleteTesauro"
+										   data-toggle="modal"
+										   data-target="#modal-delete-tesauro">
+											<span class="material-icons">delete</span>
+											<span class="texto">Borrar</span>
+										</a>
+									}									
 								</div>																												
 							</div>
 						</div>

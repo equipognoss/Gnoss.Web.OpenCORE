@@ -12,12 +12,15 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.MVC;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -35,17 +38,21 @@ namespace Gnoss.Web.Middlewares
         private ConfigService mConfigService;
         public static bool RecalculandoRutas { get; set; }
         private static ConcurrentDictionary<string, Guid?> ProyectoIDPorNombreCorto = new ConcurrentDictionary<string, Guid?>();
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
-        public GnossMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService)
+        public GnossMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService, ILogger<GnossMiddleware> logger, ILoggerFactory loggerFactory)
         {
             _next = next;
             mEnv = env;
             mConfigService = configService;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public async Task Invoke(HttpContext context, LoggingService loggingService, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, UtilTelemetry utilTelemetry, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, RouteConfig routeConfig, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
         {
-            ControladorBase controladorBase = new ControladorBase(loggingService, mConfigService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, servicesUtilVirtuosoAndReplication);
+            ControladorBase controladorBase = new ControladorBase(loggingService, mConfigService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
             Application_BeginRequest(entityContext, context, routeConfig, loggingService, redisCacheWrapper);
             AddHeaders(context);
             await _next(context);
@@ -75,7 +82,7 @@ namespace Gnoss.Web.Middlewares
         {
             if (pForzarComprobacion || LoggingService.HoraComprobacionCache == null || LoggingService.HoraComprobacionCache.AddSeconds(LoggingService.TiempoDuracionComprobacion) < DateTime.Now)
             {
-                GnossCacheCL gnossCacheCL = new GnossCacheCL(pEntityContext, pLoggingService, pRedisCacheWrapper, mConfigService, null);
+                GnossCacheCL gnossCacheCL = new GnossCacheCL(pEntityContext, pLoggingService, pRedisCacheWrapper, mConfigService, null, mLoggerFactory.CreateLogger<GnossCacheCL>(), mLoggerFactory);
                 bool? trazaHabilitada = gnossCacheCL.ObtenerDeCache($"traza_5.0.0_{pHttpContext.Request.Host}") as bool?;
 
                 if (trazaHabilitada.HasValue && trazaHabilitada.Value)
@@ -93,7 +100,7 @@ namespace Gnoss.Web.Middlewares
         }
         private void RegistrarRutas(Es.Riam.Gnoss.AD.EntityModel.EntityContext pEntityContext, HttpContext pHttpContextAccessor, RouteConfig pRouteConfig, LoggingService pLoggingService, IServicesUtilVirtuosoAndReplication pServicesUtilVirtuosoAndReplication)
         {
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(pEntityContext, pLoggingService, null, mConfigService, pServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(pEntityContext, pLoggingService, null, mConfigService, pServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
             Dictionary<string, string> listaIdiomasPlataforma = paramCL.ObtenerListaIdiomasDictionary();
             int indiceComunidad = 2;
             string url = $"{pHttpContextAccessor.Request.Scheme}://{pHttpContextAccessor.Request.Host}{pHttpContextAccessor.Request.Path}";
@@ -120,7 +127,7 @@ namespace Gnoss.Web.Middlewares
             Guid? proyectoID = null;
             if (new Uri(url).Segments.Length > indiceComunidad && new Uri(url).Segments[indiceComunidad].Length > 1)
             {
-                ProyectoCN proyCN = new ProyectoCN(pEntityContext, pLoggingService, mConfigService, null);
+                ProyectoCN proyCN = new ProyectoCN(pEntityContext, pLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                 string nombreCortoComunidad = new Uri(url).Segments[indiceComunidad];
 
                 if (ProyectoIDPorNombreCorto.ContainsKey(nombreCortoComunidad))
@@ -140,7 +147,7 @@ namespace Gnoss.Web.Middlewares
 
                 if (!proyectoID.HasValue)
                 {
-                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(pEntityContext, pLoggingService, mConfigService, pServicesUtilVirtuosoAndReplication);
+                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(pEntityContext, pLoggingService, mConfigService, pServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                     proyectoID = mConfigService.ObtenerProyectoConexion();
                     if (proyectoID == null || proyectoID.Equals(Guid.Empty))
                     {

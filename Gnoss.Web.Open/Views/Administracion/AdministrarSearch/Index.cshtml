@@ -99,10 +99,6 @@ Variables
 
     @* Contenido Central *@    
     <div class="formulario-edicion background-blanco">        
-		<div id="header-title" class="d-flex align-items-baseline justify-content-between">
-			<h2>@Html.GetText("DEVTOOLS","SUGERENCIASDEBUSQUEDA")</h2>
-			<a id="btnRegenerarAutocomplete" href="javascript: void(0);" class="btn btn-outline-primary">@Html.GetText("DEVTOOLS","REGENERARAUTOCOMPLETAR")</a>
-		</div>
         <p>@Html.GetText("DEVTOOLS","ENESTAPAGINASECONFIGURANLASPROPIEDADESDELAUTOCOMPLETADOYDELA")</p>
         <div class="background-gris">
             <h3>@Html.GetText("DEVTOOLS","PROPIEDADESPARAAUTOCOMPLETAR")</h3>
@@ -124,7 +120,7 @@ Variables
 								autocomplete="off" />																		
 
 						@* Botón de Añadir *@
-						<a id="btnAddPropiedadAutocompletar" class="btn btn-grey uppercase btnAddPropiedadAutocompletar">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+						<a id="btnAddPropiedadAutocompletar" class="btn btn-grey uppercase btnAddPropiedadAutocompletar" data-button="prop-ac">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
 
 						@* Campo oculto _hack *@													
 						<input type="hidden" id="txtPropiedadAutocompletar_Hack" class="valores propiedadesAutocompletar" name="PropiedadesAutocompletar" value="@tagsAutocompletar" />					
@@ -148,17 +144,17 @@ Variables
 				</label>
 				@* Contenedor del input + tags *@
 				<div class="autocompletar-tags form-group">
-				<div class="form-sticky-button autocompletar input-wrap">
+					<div class="form-sticky-button autocompletar input-wrap">
 						@* Input de Tags *@
 						<input type="text"
 								name="PropiedadPalabraTextoLibre"
 								placeholder="@Html.GetText("DEVTOOLS","INTRODUCEUNAPROPIEDADPARABUSQUEDAPORTEXTOLIBRE")"
 								id="txtPropiedadPalabrasTextoLibre"
 								class="form-control"														
-								autocomplete="off" />												
-
-						@* Botón de Añadir *@
-						<a id="btnAddPropiedadPalabrasTextolLibre" class="btn btn-grey uppercase btnPropiedadPalabrasTextolLibre">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
+								autocomplete="off"
+								data-avoid-autocomplete-with-enter-button="true" />
+					@* Botón de Añadir *@
+					<a id="btnAddPropiedadPalabrasTextolLibre" class="btn btn-grey uppercase btnPropiedadPalabrasTextolLibre" data-button="prop-txtFree">@Html.GetText("ADMINISTRACIONBASICA", "AÑADIR")</a>
 
 						@* Campo oculto _hack *@													
 						<input type="hidden" id="txtPropiedadPalabrasTextoLibre_Hack" class="valores propiedadPalabrasTextolLibre" name="PropiedadPalabrasTextoLibre" value="@tagsTextoLibre" />
@@ -177,7 +173,7 @@ Variables
 		<div class="panelBotonera mt-5">
 			<a id="btnGuardarAutocompletar" class="btn btn-primary uppercase">@Html.GetText("COMMON","GUARDAR")</a>
 		</div>
-							
+		@Html.PartialView("_modal-views/_alert-user")
     </div>
 
 
@@ -190,8 +186,12 @@ Variables
     <script type="text/javascript">
 
         (function ($) {
+			let params = {
+				txtSuccessfulInsert: "@Html.GetText("DEVTOOLS", "INSERTADOSEARCH")",
+				txtRejectedInsert: "@Html.GetText("COMMON","NO") @Html.GetText("DEVTOOLS", "INSERTADOSEARCH").ToLower()"
+			};
             // Operativa funcionamiento
-            operativaGestionSugerenciasDeBusqueda.init();
+            operativaGestionSugerenciasDeBusqueda.init(params);
         })();
     </script>
 }

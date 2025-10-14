@@ -11,29 +11,29 @@ Variables
 *@
 
 @{
-	CommunityModel Comunidad = Html.GetComunidad();
-	HeaderModel cabecera = Html.GetCabecera();	
-	// Nº de pestañas de idiomas a visualizar en la sección Tab
-	int numMaxPestañasIdiomasVisibles = 2;
-	// Contador del nº de pestañas listadas
-	int contNumPestañasVisibles = 0;
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    // Nº de pestañas de idiomas a visualizar en la sección Tab
+    int numMaxPestañasIdiomasVisibles = 2;
+    // Contador del nº de pestañas listadas
+    int contNumPestañasVisibles = 0;
 
 }
 @if (Comunidad.IntegracionContinuaActivada)
 {
-	<div class="alert alert-warning alert-dismissable">
-		<button type="button" class="close" data-dismiss="alert">&times;</button>
-		<span class="material-icons" alt="warning" title="warning" aria-label="warning">
-			warning
-		</span>
-		<strong>@Html.GetText("DEVTOOLS", "NOGUARDAINTEGRACIONCONTINUA")</strong>
-	</div>
+    <div class="alert alert-warning alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span class="material-icons" alt="warning" title="warning" aria-label="warning">
+            warning
+        </span>
+        <strong>@Html.GetText("DEVTOOLS", "NOGUARDAINTEGRACIONCONTINUA")</strong>
+    </div>
 }
 @* Migas de Pan *@
 <div class="col col-12 col-breadcrumb">
     <ul>
         <li>
-            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS","HOME")</a>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
         </li>
         <li>
             <a href="#">Grafo de conocimiento</a>
@@ -46,175 +46,190 @@ Variables
 
 @* Contenido Central *@
 <div class="formulario-edicion background-blanco">
+    @if (Html.ObtenerEdicionMultiIidoma())
+    {
+        @* Panel de idiomas *@
+        <ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasTesauros" role="tablist">
+            @* Títulos de Tabs con los diferentes idiomas a visualizar *@
+            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+            {
+                if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+                {
+                    <li class="nav-item">
+                        <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                        id="@("ver_tesauros_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                        data-language="@idioma.Key"
+                        role="tab" aria-controls="@("litVer" + idioma.Key)"
+                        aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                    </li>
+                    contNumPestañasVisibles += 1;
+                }
+            }
+            @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+            @if (contNumPestañasVisibles < cabecera.Languajes.Count)
+            {
+                @* Dropdown para resto de categorías *@
+                <li class="nav-item">
+                    <div class="dropdown">
+                        @* Desplegable del dropdown *@
+                        <a class="nav-link dropdown-toggle"
+                        data-toggle="dropdown"
+                        href="#"
+                        role="button"
+                        aria-haspopup="true"
+                        aria-expanded="false">@Html.GetText("DEVTOOLS", "OTROSIDIOMAS")</a>
+                        @* Sección para mostrar items del dropdown*@
+                        <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+                            <ul class="no-list-style">
+                                @* Pintado del resto de pestañas en Dropdown *@
+                                @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+                                {
+                                    var item = cabecera.Languajes.ElementAt(i);
+                                    var itemKey = item.Key;
+                                    var itemValue = item.Value;
 
-	@* Panel de idiomas *@
-	<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasTesauros" role="tablist">
-		@* Títulos de Tabs con los diferentes idiomas a visualizar *@
-		@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
-		{
-			if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
-			{
-				<li class="nav-item">
-					<a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
-					   id="@("ver_tesauros_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
-					   data-language="@idioma.Key"
-					   role="tab" aria-controls="@("litVer" + idioma.Key)"
-					   aria-selected="true">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
-				</li>
-				contNumPestañasVisibles += 1;
-			}
-		}
-		@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
-		@if (contNumPestañasVisibles < cabecera.Languajes.Count)
-		{
-			@* Dropdown para resto de categorías *@
-			<li class="nav-item">
-				<div class="dropdown">
-					@* Desplegable del dropdown *@
-					<a class="nav-link dropdown-toggle"
-					   data-toggle="dropdown"
-					   href="#"
-					   role="button"
-					   aria-haspopup="true"
-					   aria-expanded="false">@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
-					@* Sección para mostrar items del dropdown*@
-					<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
-						<ul class="no-list-style">
-							@* Pintado del resto de pestañas en Dropdown *@
-							@for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
-							{
-								var item = cabecera.Languajes.ElementAt(i);
-								var itemKey = item.Key;
-								var itemValue = item.Value;
+                                    @* Cada item del dropdown *@
+                                    <li>
+                                        <a id="@("ver_tesauros_" + itemKey)"
+                                        class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+                                        data-toggle="tab"
+                                        href="#@("litVer" + itemKey)"
+                                        data-language="@itemKey">
+                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        KeyValuePair<string, string>
+        idioma = new KeyValuePair<string, string>
+        ("es", "español");
+        <ul class="nav nav-tabs id="tabIdiomasPaginas" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                data-language="@idioma.Key"
+                role="tab"
+                aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+            </li>
+        </ul>
+    }
+    @* Contenido de información *@
+    <div id="panelListadoTesauros"
+    class="tab-pane fade show active tab-content"
+    role="tabpanel"
+    aria-labelledby="panelListadoTesauros">
 
-								@* Cada item del dropdown *@
-								<li>
-									<a id="@("ver_tesauros_" + itemKey)"
-									   class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
-									   data-toggle="tab"
-									   href="#@("litVer" + itemKey)"
-									   data-language="@itemKey">
-										@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
-									</a>
-								</li>
-							}
-						</ul>
-					</div>
-				</div>
-			</li>
-		}
-	</ul>
+        @* Contenedor del Título de la Sección + Buscador *@
+        <div class="row">
+            @* Título de la sección de cláusulas + Nº de páginas *@
+            <div class="col col-12 header-listado">
+                <div class="h1-container">
+                    <h1>
+                        @Html.GetText("COMADMINCOMUNIDAD", "ADMINTESSEM")
+                        <span id="numTesaurosSemanticos" class="numResultados"></span>
+                    </h1>
+                </div>
+                @* Botón para crear nuevo Tesauro *@
+                @if (ViewBag.CrearTesauro != null && ViewBag.CrearTesauro)
+                {
+                    <div class="acciones d-flex align-items-center">
+                        <a href="javascript: void(0);" id="btnNewTesauro" class="btn btn-outline-primary">@Html.GetText("ADMINISTRACIONSEMANTICA", "AÑADIRTESAURO")</a>
+                    </div>
+                }                
+            </div>
 
+            @* Buscador *@
+            <div class="col col-12 header-buscador">
+                <div class="wrapCol">
+                    <div class="col-buscador" style="width: 100%">
+                        @* Formulario para búsquedas *@
+                        <form id="panelListadoTesauros" onsubmit="return false;">
+                            <div class="finderUtils" id="divCajaBusqueda">
+                                <div class="group finderSection">
+                                    @* Input para realizar la búsqueda *@
+                                    <input type="text"
+                                           id="txtBuscarTesauro"
+                                           class="not-outline finderSectionText"
+                                           autocomplete="off"
+                                           placeholder="Buscar en sección" />
+                                    @* Botón para realizar la búsqueda *@
+                                    <input title="Buscar"
+                                           type="button"
+                                           class="findAction"
+                                           id="inputLupa" />
+                                    @* Botón para Facetas de la búsqueda *@
+                                    <a href="javascript: void(0);" class="btn-filtrar-movil">
+                                        <span class="material-icons">filter_list</span>
+                                        <span class="texto">Filtrar</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @* Contenido o tabla con las cargas *@
+            <div class="col col-12 col-contenido">
+                <div class="wrapCol">
+                    @* Cabecera del listado *@
+                    <ul id="id-header-tesauros-list" class="header-component-list component-list no-list-style">
+                        <li class="component-wrap">
+                            @* Cabecera *@
+                            <div class="component ">
+                                <div class="component-header-wrap">
+                                    <div class="component-header">
+                                        @* Sección títulos *@
+                                        <div class="component-header-content">
+                                            <div class="component-header-left">
+                                                <div class="component-name-wrap">
+                                                    <span class="component-nombre">@Html.GetText("COMMON", "NOMBRE")</span>
+                                                </div>
+                                                <div class="component-ontologia-wrap">
+                                                    <span class="component-ontologia">@Html.GetText("DEVTOOLS", "ONTOLOGIA")</span>
+                                                </div>
+                                                <div class="component-fuente-wrap">
+                                                    <span class="component-fuente">@Html.GetText("COMADMINFUENTE", "FUENTE")</span>
+                                                </div>
+                                                <div class="component-fecha-wrap">
+                                                    <span class="component-fecha">@Html.GetText("COMMON", "FECHA")</span>
+                                                </div>
+                                            </div>
+                                            @* Acciones *@
+                                            <div class="component-header-right">
+                                                <div class="component-actions-wrap">
+                                                    <span>@Html.GetText("COMMON", "ACCIONES")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
 
-	@* Contenido de información *@
-	<div id="panelListadoTesauros" 
-		class="tab-pane fade show active tab-content" 
-		role="tabpanel" 
-		aria-labelledby="panelListadoTesauros">
+                    @* Contenido *@
+                    <ul id="id-added-tesauros-list"
+                        class="js-community-tesauros-list component-list no-list-style">
 
-		@* Contenedor del Título de la Sección + Buscador *@
-		<div class="row">
-			@* Título de la sección de cláusulas + Nº de páginas *@
-			<div class="col col-12 header-listado">
-				<div class="h1-container">
-					<h1>@Html.GetText("COMADMINCOMUNIDAD", "ADMINTESSEM")
-						<span id="numTesaurosSemanticos" class="numResultados"></span>
-					</h1>						
-				</div>
-				@* Botón para crear nuevo Tesauro *@
-				<div class="acciones d-flex align-items-center">
-					<a href="javascript: void(0);" id="btnNewTesauro" class="btn btn-outline-primary">@Html.GetText("ADMINISTRACIONSEMANTICA","AÑADIRTESAURO")</a>							
-				</div>
-			</div>
-
-			@* Buscador *@
-			<div class="col col-12 header-buscador">
-				<div class="wrapCol">
-					<div class="col-buscador" style="width: 100%">					
-					@* Formulario para búsquedas *@
-						<form id="panelListadoTesauros" onsubmit="return false;">								
-							<div class="finderUtils" id="divCajaBusqueda">
-								<div class="group finderSection">
-									@* Input para realizar la búsqueda *@
-									<input
-										type="text"
-										id="txtBuscarTesauro"
-										class="not-outline finderSectionText"
-										autocomplete="off"
-										placeholder="Buscar en sección"
-									/>
-									@* Botón para realizar la búsqueda *@
-									<input
-										title="Buscar"
-										type="button"
-										class="findAction"
-										id="inputLupa"
-									/>
-									@* Botón para Facetas de la búsqueda *@
-									<a href="javascript: void(0);" class="btn-filtrar-movil">
-										<span class="material-icons">filter_list</span>
-										<span class="texto">Filtrar</span>											
-									</a>
-								</div>
-							</div>								
-						</form>
-					</div>
-				</div>
-			</div>
-			@* Contenido o tabla con las cargas *@
-			<div class="col col-12 col-contenido">
-				<div class="wrapCol">
-					@* Cabecera del listado *@
-					<ul id="id-header-tesauros-list" class="header-component-list component-list no-list-style">
-						<li class="component-wrap">
-							@* Cabecera *@
-							<div class="component ">
-								<div class="component-header-wrap">
-									<div class="component-header">
-										@* Sección títulos *@
-										<div class="component-header-content">
-											<div class="component-header-left">
-												<div class="component-name-wrap">
-													<span class="component-nombre">@Html.GetText("COMMON", "NOMBRE")</span>
-												</div>													
-												<div class="component-ontologia-wrap">																											
-													<span class="component-ontologia">@Html.GetText("DEVTOOLS", "ONTOLOGIA")</span>
-												</div>
-												<div class="component-fuente-wrap">
-													<span class="component-fuente">@Html.GetText("COMADMINFUENTE", "FUENTE")</span>
-												</div>
-												<div class="component-fecha-wrap">
-													<span class="component-fecha">@Html.GetText("COMMON", "FECHA")</span>
-												</div>
-											</div>
-											@* Acciones *@
-											<div class="component-header-right">
-												<div class="component-actions-wrap">
-													<span>@Html.GetText("COMMON", "ACCIONES")</span>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</li>
-					</ul>
-
-					@* Contenido *@
-					<ul id="id-added-tesauros-list" 
-						class="js-community-tesauros-list component-list no-list-style">
-		
-						@* Pintado de cada item *@ 							
-						@foreach (KeyValuePair<string, string> urlOnto in Model.SemanticThesaurus.SemanticThesaurusEditables.Keys)
-						{
-							Tuple<string, string, string> datosFicha = new Tuple<string, string, string>(Model.SemanticThesaurus.SemanticThesaurusEditables[urlOnto], urlOnto.Key, urlOnto.Value);
-							@Html.PartialView("_EditarTesSemFicha", datosFicha)
-						}
-					</ul>
-				</div>
-			</div>
-		</div>
-	</div>				    
+                        @* Pintado de cada item *@
+                        @foreach (KeyValuePair<string, string> urlOnto in Model.SemanticThesaurus.SemanticThesaurusEditables.Keys)
+                        {
+                            Tuple<ComAdminSemanticThesaurusData, string, string> datosFicha = new Tuple<ComAdminSemanticThesaurusData, string, string>(Model.SemanticThesaurus.SemanticThesaurusEditables[urlOnto], urlOnto.Key, urlOnto.Value);
+                            @Html.PartialView("_EditarTesSemFicha", datosFicha)
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @* Carga del modal para la creación de un Tesauro *@

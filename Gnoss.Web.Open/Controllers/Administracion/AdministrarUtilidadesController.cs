@@ -1,12 +1,11 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ParametrosProyecto;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
-using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
@@ -14,40 +13,44 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
-using Microsoft.AspNetCore.Hosting;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-
-    public class AdministrarUtilidadesController : ControllerBaseWeb
+    public class AdministrarUtilidadesController : ControllerAdministrationWeb
     {
-        public AdministrarUtilidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarUtilidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarUtilidadesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
-
-        /// <summary>
-        /// 
-        /// </summary>
+        
         private AdministrarComunidadUtilidades mPaginaModel = null;
 
         #endregion
 
         // GET: AdministrarUtilidades
-        [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Index()
+        [HttpGet]        
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos } })]
+		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -57,7 +60,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_TiposDeContenidoPermisos;
             // Establecer el título para el header de DevTools            
-            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");            
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");
             ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "TIPOSDECONTENIDO/PERMISOS");
 
             // Activar la visualización del icono de la documentación de la sección
@@ -73,7 +76,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public ActionResult IndexGestionCertificados()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		public ActionResult IndexGestionCertificados()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -92,10 +96,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.showDocumentationSection = "true";
 
             // Devolver la página para la gestión de certificados
-            return View("../AdministrarUtilidades/Index_NivelesCertificacion", PaginaModel);                   
+            return View("../AdministrarUtilidades/Index_NivelesCertificacion", PaginaModel);
         }
-
-
 
         /// <summary>
         /// Devolver la vista modal para ser insertada en un modal de bootstrap. Contiene las opciones para poder añadir Grupos para asignación de permisos
@@ -105,13 +107,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         public ActionResult LoadAddGroup()
         {
-            ActionResult partialView = View();
-            partialView = GnossResultHtml("../AdministrarUtilidades/_modal-views/_add-groups", null);
-                    
             // Devolver la sección de la home correspondiente
-            return partialView;
+            return GnossResultHtml("../AdministrarUtilidades/_modal-views/_add-groups", null);
         }
-
 
         /// <summary>
         /// Devolver la vista modal para editar o crear una nueva certificación        
@@ -120,14 +118,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         public ActionResult LoadCreateEditCertification(AdministrarUtilidadesCertificationModel pModel)
         {
-            ActionResult partialView = View();
-
-            // Construir el modelo y comprobar
-
-            partialView = GnossResultHtml("../AdministrarUtilidades/_modal-views/_add-edit-certifications", pModel);
-
             // Devolver la vista modal
-            return partialView;
+            return GnossResultHtml("../AdministrarUtilidades/_modal-views/_add-edit-certifications", pModel);
         }
 
         /// <summary>
@@ -137,22 +129,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         public ActionResult LoadConfirmDeleteCertification(AdministrarUtilidadesCertificationModel pModel)
         {
-            ActionResult partialView = View();
-
-            // Construir el modelo y comprobar
-            partialView = GnossResultHtml("../AdministrarUtilidades/_modal-views/_confirm-delete-certification", pModel);
-
             // Devolver la vista modal
-            return partialView;
+            return GnossResultHtml("../AdministrarUtilidades/_modal-views/_confirm-delete-certification", pModel);
         }
 
-
-
         // POST: Guardar AdministrarUtilidades
-        [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
+        [HttpPost]		
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos, (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+		public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
         {
             GuardarLogAuditoria();
             bool iniciado = false;
@@ -166,12 +151,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
 
-            ControladorUtilidades contrUtilidades = new ControladorUtilidades(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mEntityContextBASE, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorUtilidades contrUtilidades = new ControladorUtilidades(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mEntityContextBASE, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorUtilidades>(), mLoggerFactory);
             string errores = ComprobarErrores(DatosGuardado);
 
             if (string.IsNullOrEmpty(errores))
             {
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
                 bool transaccionIniciada = false;
 
                 try
@@ -188,7 +173,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
-                            throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                            throw new ExcepcionGeneral("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                         }
                     }
 
@@ -196,32 +181,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         mEntityContext.TerminarTransaccionesPendientes(true);
                     }
-
                 }
-
                 catch (Exception ex)
                 {
                     if (transaccionIniciada)
                     {
                         proyAD.TerminarTransaccion(false);
                     }
-
                     return GnossResultERROR(ex.Message);
                 }
 
-
-                contrUtilidades.InvalidarCache();
+                contrUtilidades.InvalidarCache(mAvailableServices);
                 return GnossResultOK();
             }
 
             return GnossResultERROR(errores);
         }
 
-
         // POST: Guardar exclusivamente los Certificados de la comunidad.
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult SaveCertifications(AdministrarComunidadUtilidades DatosGuardado)
         {
             GuardarLogAuditoria();
@@ -236,14 +216,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
 
-            ControladorUtilidades contrUtilidades = new ControladorUtilidades(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mEntityContextBASE, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-            
+            ControladorUtilidades contrUtilidades = new ControladorUtilidades(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mEntityContextBASE, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorUtilidades>(), mLoggerFactory);
+
             // Comprobar errores 
             string errores = ComprobarErrores(DatosGuardado);
 
             if (string.IsNullOrEmpty(errores))
             {
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
                 bool transaccionIniciada = false;
 
                 try
@@ -252,17 +232,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
 
                     // Guardar datos exclusivamente de certificados
-                    contrUtilidades.GuardarUtilidadesNivelesCertificacion(DatosGuardado);                    
+                    contrUtilidades.GuardarUtilidadesNivelesCertificacion(DatosGuardado);
 
                     if (iniciado)
                     {
-
                         contrUtilidades.CargarTiposYPermisos(DatosGuardado);
                         HttpResponseMessage resultado = InformarCambioAdministracion("Utilidades", JsonConvert.SerializeObject(DatosGuardado, Formatting.Indented));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
-                            throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                            throw new ExcepcionGeneral("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                         }
                     }
 
@@ -270,7 +249,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         mEntityContext.TerminarTransaccionesPendientes(true);
                     }
-
                 }
 
                 catch (Exception ex)
@@ -283,32 +261,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     return GnossResultERROR(ex.Message);
                 }
 
-
-                contrUtilidades.InvalidarCache();
+                contrUtilidades.InvalidarCache(mAvailableServices);
                 return GnossResultOK();
             }
 
             return GnossResultERROR(errores);
         }
 
-
         private string ComprobarErrores(AdministrarComunidadUtilidades DatosGuardado)
         {
-            string error = "";
+            string error = string.Empty;
 
             if (DatosGuardado.NivelesCertificacion != null)
             {
-                foreach (AdministrarComunidadUtilidades.NivelCertificacion nivelCertificacion in DatosGuardado.NivelesCertificacion)
+                foreach (AdministrarComunidadUtilidades.NivelCertificacion nivelCertificacion in DatosGuardado.NivelesCertificacion.Where(item => string.IsNullOrEmpty(item.Nombre)))
                 {
-                    if (string.IsNullOrEmpty(nivelCertificacion.Nombre))
-                    {
-                        error = "ERROR_NOMBRE_CERTIFICACION_VACIO";
-                    }
+                    error = "ERROR_NOMBRE_CERTIFICACION_VACIO";
                 }
             }
+
             return error;
         }
-
 
         private AdministrarComunidadUtilidades PaginaModel
         {
@@ -316,12 +289,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mPaginaModel == null)
                 {
-                    ControladorUtilidades contrUtilidades = new ControladorUtilidades(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mEntityContextBASE, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorUtilidades contrUtilidades = new ControladorUtilidades(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mEntityContextBASE, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorUtilidades>(), mLoggerFactory);
 
                     mPaginaModel = contrUtilidades.CargarUtilidades();
 
-                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+                    ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
+                    mPaginaModel.ListaIdiomas = parametroAplicacionCN.ObtenerListaIdiomasDictionary();
                     mPaginaModel.IdiomaDefecto = IdiomaPorDefecto;
 
                     //Si no hay videos de brightcove disponibles, deshabilito los checks de brightcove
@@ -354,7 +327,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-
         // Modelo de datos usado para editar un determinado recurso existente a través del modal de Crear/Editar certificado desde Administración
         public class AdministrarUtilidadesCertificationModel
         {
@@ -363,7 +335,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             // Nombre del certificado
             public string name { get; set; }
             // Posición en la que estará el certificado
-            public string position { get; set; }                      
+            public string position { get; set; }
         }
     }
 }

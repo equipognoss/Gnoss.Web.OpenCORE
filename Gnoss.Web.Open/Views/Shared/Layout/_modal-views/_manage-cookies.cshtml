@@ -41,7 +41,7 @@
                     {
                         case 0:
                             <div class="switch">
-                                <input type="checkbox" class="cookieAceptada" id="@categoriaCookie.CategoriaCookie.NombreCorto.ToLower()" value="@categoriaCookie.CategoriaCookie.NombreCorto.ToLower()" style="border: 0px; padding: 0px; margin-top: 0px;" />
+                                    <input type="checkbox" class="cookieAceptada" id="@categoriaCookie.CategoriaCookie.NombreCorto.ToLower()" value="@categoriaCookie.CategoriaCookie.NombreCorto.ToLower()" style="border: 0px; padding: 0px; margin-top: 0px;" />
                                 <label for="@categoriaCookie.CategoriaCookie.NombreCorto.ToLower()">@categoriaCookie.CategoriaCookie.Nombre</label>
                             </div>
                             break;
@@ -92,7 +92,9 @@
     function EngancharComportamientoGuardar() {
         $("#guardar").click(Guardar);
     }
-
+    function EngancharComportamientoRechazar() {
+        $("#rechazar").click(Rechazar);
+    }
     /** Acepta todas las cookies y las guarda */
     function AceptarTodo() {
         $('.cookieAceptada').prop("checked", true);
@@ -133,6 +135,34 @@
         });
     }
 
+    function Rechazar() {
+        var fecha = new Date();
+        fecha.setTime(fecha.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+        $('.cookieAceptada').each(function (indice, elemento) {
+            if ($(elemento).prop("id") == "tecnica") {
+                document.cookie = $(elemento).val() + "=yes;path=/; expires=" + fecha.toUTCString();
+            }else {
+                document.cookie = $(elemento).val() + "=no;path=/; expires=" + fecha.toUTCString();
+            }
+        });
+
+        MostrarUpdateProgress();
+        GnossPeticionAjax(
+            document.location.origin + '/aceptar-cookies',
+            null,
+            true
+        ).fail(function (data) {
+            mostrarErrorGuardado(data);
+        }).done(function () {
+        }).always(function () {
+            OcultarUpdateProgress();
+            $('#phAvisoCookie').hide();
+            $("#aviso-cookies").hide();
+            $("#modalAvisoCookies").hide();
+        });
+    }
+
     function EngancharComportamientoCerrar() {
         document.getElementById("close").addEventListener("click", function (event) {
             $('#modalAvisoCookies').modal('toggle');
@@ -149,5 +179,6 @@
         EngancharComportamientoCerrar();
         EngancharComportamientoAceptarTodo();
         EngancharComportamientoGuardar();
+        EngancharComportamientoRechazar();
     });
 </script>

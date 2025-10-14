@@ -76,7 +76,7 @@
                             </div>
                         </td>
                         @* VERSION *@
-                        <td><a href="@doc.CompletCardLink">@doc.Version</a></td>
+                        <td><a href="@doc.VersionCardLink">@doc.Version</a></td>
                         @* HORA *@
                         <td>@doc.PublishDate.ToString("HH:mm")</td>
                         @* FECHA *@
@@ -124,9 +124,12 @@
         </div>
 
         @* Acciones a realizar *@
-        <div class="form-actions">
-            <a onclick="DesplegarComparar()" class="btn btn-primary uppercase">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
-        </div>
+        @if(DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+        {
+            <div class="form-actions">
+                <a onclick="DesplegarComparar()" class="btn btn-primary uppercase">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
+            </div>
+        }
 
         @* Panel donde se mostrará la comparación de Versiones*@
         <div style="display:none" id="despleCompVer">

@@ -1,0 +1,149 @@
+﻿@model List<NotificacionesModel>
+
+@*
+Descripción
+-----------------------------------------------
+Vista que muestra la bandeja de las suscripciones de la comunidad.
+
+Variables
+----------------------------------------------------------------*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    UserProfileModel Perfil = Html.GetPerfil();
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista de Bandeja de notificaciones --------------------
+*@
+
+@{
+    Html.SetBodyClass("layout02 listadoMyGnoss listadoNotificaciones");
+}
+
+<div>
+    @* Breadcrumb / Migas de pan en la ficha del recurso *@
+    <div class="col col-12 col-breadcrumb" id="breadcrumb">
+        <ul>
+            <li><a href="@Comunidad.Url"><strong>@Html.GetText("COMMON", "HOME")</strong></a></li>
+            <li>@Html.GetText("MENU", "NOTIFICACIONES")</li>
+        </ul>
+    </div>
+    <div>
+        <h1>@Html.GetText("NOTIFICACIONESPERSONALIZADAS", "TITULO")</h1>
+        <br>
+    </div>
+    <table class="table table-bordered">
+        <thead class="thead-grey">
+            <tr scope="row">
+                <th scope="col">
+                    <div>
+                        @Html.GetText("NOTIFICACIONESPERSONALIZADAS", "CONTENIDO")
+                    </div>
+                </th>
+                <th scope="col">
+                    <div>
+                        @Html.GetText("NOTIFICACIONESPERSONALIZADAS", "FECHANOTI")
+                    </div>
+                </th>
+                <th scope="col">
+                    <div>
+                        @Html.GetText("NOTIFICACIONESPERSONALIZADAS", "LEIDA")
+                    </div>
+                </th>
+                <th scope="col">
+                    <div>
+                        @Html.GetText("NOTIFICACIONESPERSONALIZADAS", "MASINFO")
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        @foreach (NotificacionesModel item in Model)
+        {
+            string fecha = item.fechaNotificacion;
+            DateTime dt = DateTime.ParseExact(fecha, "yyyyMMddHHmmss", null);
+            <tr scope="row">
+                <td scope="col">@item.contenidoNotificacion</td>
+                <td scope="col">@dt.ToString("dd/MM/yy")</td>
+                <td scope="col">
+                    <form>
+                        <input type="checkbox"
+                               name="leida"
+                               class="leida-checkbox"
+                               data-id="@item.claveCache"
+                               @(item.leida ? "checked" : "") /> Leida
+                    </form>
+                </td>
+                <td scope="col">
+                    <button type="button" class="btn-primary vistaExtendida" data-id="@item.claveCache">Ver más</button>
+                </td>
+            </tr>
+        }
+    </table>
+    <div class="d-flex justify-content-end">
+        <button type="button" class="btn btn-lg btn-primary" id="guardarLeidos">Guardar</button>
+    </div>
+    <div id="contenedorVistaExtendida">
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        let notificacionesLeidasLista = [];
+        $('.leida-checkbox').change(function () {
+            var itemKey = $(this).data('id');
+            var isChecked = $(this).is(':checked');
+
+            if (isChecked) {
+                if (!notificacionesLeidasLista.includes(itemKey)) {
+                    notificacionesLeidasLista.push(itemKey);
+                }
+            } else {
+                notificacionesLeidasLista = notificacionesLeidasLista.filter(item => item !== itemKey);
+            }
+        });
+
+
+        $('#guardarLeidos').click(function() {
+            if (notificacionesLeidasLista.length == 0) {
+                alert('No hay notificaciones marcadas como leídas.');
+                return;
+            }
+            loadingMostrar();
+
+            
+            const dataPost = {
+                notificacionesLeidas: notificacionesLeidasLista,
+            };
+
+
+            GnossPeticionAjax(
+                `${location.href}/deleteRead`,
+                dataPost,
+                true
+              ).done(function (data) {
+                mostrarNotificacion("success", "Se ha guardado correctamente.")
+                location.reload()
+            }).fail(function (data) {
+                mostrarNotificacion("error", "Ha habido errores");
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        });
+
+        $('.vistaExtendida').click(function () {
+            var claveNotificacion = $(this).data('id');
+
+            $.ajax({
+                url: `${location.href}/VistaExtendida`,
+                type: 'GET',
+                data: { claveCache: claveNotificacion },
+                success: function (data) {
+                    $('#contenedorVistaExtendida').html(data);
+                },
+                error: function () {
+                    alert('Error al cargar la vista extendida.');
+                }
+            });
+        });
+    });
+</script>

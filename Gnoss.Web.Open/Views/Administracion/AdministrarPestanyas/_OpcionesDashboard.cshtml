@@ -14,13 +14,17 @@ Variables
     @* Guid para generar tabs únicos *@
     Guid newGuidId = @Guid.NewGuid();
     string idTabs = newGuidId.ToString().Substring(0, 5);
+    bool comparando = ViewBag.ComparandoPestanya ?? false;
 }
-		
-<p>
-	<a class="linkEditarOpcionesDashboard" href="javascript: void(0);">Editar opciones dashboard</a>
-</p>
 
-<section class="editarOpcionesDashboard mb-4" style="display:none">
+@if (!comparando && ViewBag.ModificarPaginaPermitido)
+{
+    <p>
+        <a class="linkEditarOpcionesDashboard" href="javascript: void(0);">Editar opciones dashboard</a>
+    </p>
+}
+
+<section class="editarOpcionesDashboard mb-4" style="@(!comparando ? "display:none" : opcionesDashboard.Count == 0 ? "display:none" : "")">
 
     @* Título de sección de Gráficos *@
     <div class="form-group">
@@ -29,7 +33,7 @@ Variables
         </div>
     </div>
 
-    <p>
+    <p class="@(comparando || !ViewBag.ModificarPaginaPermitido ? "d-none" : "")">
         Configura los gráficos con los datos necesarios y establece el orden que tendrán en la página desde la pestaña de Vista preliminar.
     </p>
 
@@ -41,7 +45,7 @@ Variables
                 <a class="tabIdiomaItem nav-link active" id="edicion_graficos_@(idTabs)" data-toggle="tab" href="#verEdicion_graficos_@(idTabs)" role="tab" aria-controls="verEdicion_graficos_@(idTabs)" aria-selected="true">Edición de gráficos</a>
             </li>
             <li class="nav-item">
-                <a class="tabIdiomaItem nav-link" id="preview_graficos_@(idTabs)" data-toggle="tab" href="#verPreview_graficos_@(idTabs)" role="tab" aria-controls="verPreview_graficos_@(idTabs)" aria-selected="true">Vista preliminar de los gráficos</a>
+                <a class="tabIdiomaItem nav-link @(comparando || !ViewBag.ModificarPaginaPermitido ? "d-none" : "")" id="preview_graficos_@(idTabs)" data-toggle="tab" href="#verPreview_graficos_@(idTabs)" role="tab" aria-controls="verPreview_graficos_@(idTabs)" aria-selected="true">Vista preliminar de los gráficos</a>
             </li>
         </ul>
 
@@ -50,10 +54,13 @@ Variables
             <div class="form-group">
                 <div class="graphics-header d-flex justify-content-between align-items-center">
                     <label class="control-label d-block font-weight-bold" style="font-size: 14px">Asistentes para la construcción de gráficos</label>
-                    <a href="javascript: void(0);" class="linkAgregarAsistente btn btn-outline-primary new" style="display: flex; text-decoration: none;">
-                        <span class="material-icons">add</span>
-                        <span class="texto">Agregar gráfico</span>
-                    </a>
+                    @if (!comparando && ViewBag.ModificarPaginaPermitido)
+                    {
+                        <a href="javascript: void(0);" class="linkAgregarAsistente btn btn-outline-primary new" style="display: flex; text-decoration: none;">
+                            <span class="material-icons">add</span>
+                            <span class="texto">Agregar gráfico</span>
+                        </a>
+                    }
                 </div>
             </div>
 

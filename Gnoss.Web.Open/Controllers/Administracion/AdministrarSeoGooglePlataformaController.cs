@@ -23,7 +23,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,14 +38,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// 
     /// </summary>
-    public class AdministrarSeoGooglePlataformaController : ControllerBaseWeb
-    {
+    public class AdministrarSeoGooglePlataformaController : ControllerAdministrationWeb
+	{
         private AdministrarSeoGooglePlataformaViewModel mPaginaModel = null;
         private bool mConfigDeParametroAplicacion = false;
         private string mMetaRobots = "all";
-        public AdministrarSeoGooglePlataformaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarSeoGooglePlataformaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSeoGooglePlataformaController> logger, ILoggerFactory loggerFactory)
+           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
         /// <summary>
         /// Index
@@ -76,12 +82,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult Guardar(AdministrarSeoGooglePlataformaViewModel pParametros)
         {
             GuardarLogAuditoria();
-            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorSeoGoogle>(), mLoggerFactory);
 
             pParametros.CodigoGoogleAnalytics = HttpUtility.UrlDecode(pParametros.CodigoGoogleAnalytics);
             pParametros.ScriptGoogleAnalytics = HttpUtility.UrlDecode(pParametros.ScriptGoogleAnalytics);
 
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
 
             try
@@ -203,7 +209,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void InvalidarCachesParametroAplicacion()
         {
-            ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
             parametroAplicacionCL.InvalidarCacheParametrosAplicacion();
         }
     }

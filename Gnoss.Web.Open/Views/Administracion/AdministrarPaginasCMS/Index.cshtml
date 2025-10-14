@@ -212,16 +212,19 @@ Variables
                                                                                 <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
                                                                                     <ul class="no-list-style">
                                                                                         @* Acción de Editar*@
-                                                                                        <li>
-                                                                                            <a class="item-dropdown js-edit-component btnEditComponentFromCMSBuilder" 
-                                                                                               data-target="#modal-container"
-                                                                                               data-urleditcomponent="@urlEditComponentItem"
-                                                                                               data-urlsave="@urlSaveComponent"
-                                                                                               data-toggle="modal">
-                                                                                                <span class="material-icons">create</span>
-                                                                                                <span class="texto">@Html.GetText("COMMON","EDITAR")</span>
-                                                                                            </a>
-                                                                                        </li>
+                                                                                        @if ((ViewBag.VerComponenteCMSPermitido != null && ViewBag.VerComponenteCMSPermitido) || (ViewBag.ModificarComponenteCMSPermitido != null && ViewBag.ModificarComponenteCMSPermitido))
+                                                                                        {
+                                                                                            <li>
+                                                                                                <a class="item-dropdown js-edit-component btnEditComponentFromCMSBuilder"
+                                                                                                   data-target="#modal-container"
+                                                                                                   data-urleditcomponent="@urlEditComponentItem"
+                                                                                                   data-urlsave="@urlSaveComponent"
+                                                                                                   data-toggle="modal">
+                                                                                                    <span class="material-icons">create</span>
+                                                                                                    <span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
+                                                                                                </a>
+                                                                                            </li>
+                                                                                        }                                                                                        
                                                                                         @* Acción de Eliminar componente*@
                                                                                         <li>
                                                                                             <a class="item-dropdown js-delete-component">

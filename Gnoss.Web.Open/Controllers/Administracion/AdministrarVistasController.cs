@@ -1,5 +1,4 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
 using Es.Riam.Gnoss.AD.CMS;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
@@ -18,6 +17,7 @@ using Es.Riam.Gnoss.CL.ParametrosProyecto;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.CMS;
 using Es.Riam.Gnoss.Elementos.ParametroGeneralDSEspacio;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
@@ -33,13 +33,14 @@ using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Web.Util;
+using Gnoss.Web.Open.Filters;
 using Gnoss.Web.Services.VirtualPathProvider;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -55,40 +56,39 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// 
     /// </summary>
-    public class AdministrarVistasController : ControllerBaseWeb
+    public class AdministrarVistasController : ControllerAdministrationWeb
     {
-        private string pathResourceDefault;
-        private string pathListResourcesDefault;
-        private string pathGroupComponentsDefault;
+        private readonly string pathResourceDefault;
+        private readonly string pathListResourcesDefault;
+        private readonly string pathGroupComponentsDefault;
 
         private const string comandoTraduccion = "Html.Translate(\"";
-        private ManageViewsViewModel paginaModel = new ManageViewsViewModel();
+        private readonly ManageViewsViewModel paginaModel = new ManageViewsViewModel();
         private DataWrapperVistaVirtual mVistaVirtualDW;
 
         private static List<string> listaVistasResultados;
         private static List<string> listaVistasFacetas;
-        private string mViews;
+        private readonly string mViews;
         private const string VIEWS_DIRECTORY = "Views";
-
-        public AdministrarVistasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarVistasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarVistasController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mViews = "Views";
-            /*if (!BaseURL.Contains("depuracion.net"))
-            {
-                mViews = "ViewsAdministracion";                
-            }*/
             pathResourceDefault = $"/{VIEWS_DIRECTORY}/CMSPagina/ListadoRecursos/Vistas/";
             pathListResourcesDefault = $"/{VIEWS_DIRECTORY}/CMSPagina/ListadoRecursos/";
             pathGroupComponentsDefault = $"/{VIEWS_DIRECTORY}/CMSPagina/GrupoComponentes/";
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         /// <summary>
         /// Index
         /// </summary>
         /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
-
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
         public ActionResult Index()
         {
 
@@ -98,14 +98,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas;
 
             // Establecer el título para el header de DevTools
-            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONBASICA", "APARIENCIA");
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "APARIENCIA");
             ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONVISTAS", "VISTAS");
 
             // Controlar si es o no del ecosistema            
             bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
-            if (isInEcosistemaPlatform) {
+            if (isInEcosistemaPlatform)
+            {
                 ViewBag.isInEcosistemaPlatform = "true";
-            }       
+            }
 
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -124,9 +125,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Accion">Acción a relizar</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult Web(string PaginasPersonalizables, string FormulariosSemanticos, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		public ActionResult Web(string PaginasPersonalizables, string FormulariosSemanticos, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             CargarDatos();
             string error = "";
@@ -174,7 +175,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
                 {
                     string fileName = pagina;
-                    
+
                     string htmlPagina = DescargarPagina(pagina, true, esRdfType);
                     if (!string.IsNullOrEmpty(htmlPagina))
                     {
@@ -229,7 +230,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         }
                         else
                         {
-                            error = $"Por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
+                            error = $"Por la seguiridad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
                         }
                     }
                     else
@@ -260,20 +261,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-		/// <summary>
-		/// Método para gestionar las vistas del servicio de resultados
-		/// </summary>
-		/// <param name="PaginasPersonalizables">Nombre de la página</param>
-		/// <param name="Fichero">Fichero con la vista</param>
-		/// <param name="Accion">Acción a relizar</param>
-		/// <returns>ActionResult</returns>
-		[HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult Resultados(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        /// <summary>
+        /// Método para gestionar las vistas del servicio de resultados
+        /// </summary>
+        /// <param name="PaginasPersonalizables">Nombre de la página</param>
+        /// <param name="Fichero">Fichero con la vista</param>
+        /// <param name="Accion">Acción a relizar</param>
+        /// <returns>ActionResult</returns>
+        [HttpPost]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+		public ActionResult Resultados(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             string PaginaResultados = PaginasPersonalizables;
-			CargarDatos();
+            CargarDatos();
             string error = "";
 
             if (string.IsNullOrEmpty(PaginaResultados))
@@ -309,10 +311,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
             {
                 string fileName = PaginaResultados;
-                /*if (mConfigService.EstaDesplegadoEnDocker())
-                {
-                    PaginaResultados = PaginaResultados.Replace("Views", "ViewsAdministracion");
-                }*/
                 string htmlPagina = DescargarPagina(PaginaResultados, true, false);
                 if (!string.IsNullOrEmpty(htmlPagina))
                 {
@@ -443,21 +441,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 
-		/// <summary>
-		/// Método para gestionar las vistas del servicio de facetas
-		/// </summary>
-		/// <param name="PaginasPersonalizables">Nombre de la página</param>
-		/// <param name="Fichero">Fichero con la vista</param>
-		/// <param name="Accion">Acción a relizar</param>
-		/// <returns>ActionResult</returns>
-		[HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult Facetas(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        /// <summary>
+        /// Método para gestionar las vistas del servicio de facetas
+        /// </summary>
+        /// <param name="PaginasPersonalizables">Nombre de la página</param>
+        /// <param name="Fichero">Fichero con la vista</param>
+        /// <param name="Accion">Acción a relizar</param>
+        /// <returns>ActionResult</returns>
+        [HttpPost]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+		public ActionResult Facetas(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             string PaginaFacetas = PaginasPersonalizables;
 
-			CargarDatos();
+            CargarDatos();
             string error = "";
             if (string.IsNullOrEmpty(PaginaFacetas))
             {
@@ -484,10 +483,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
             {
                 string fileName = PaginaFacetas;
-                /*if (mConfigService.EstaDesplegadoEnDocker())
-                {
-                    PaginaFacetas = PaginaFacetas.Replace("Views", "ViewsAdministracion");
-                }*/
 
                 string lineaSeguridad = $"@*[security|||{PaginaFacetas.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower()}|||{ProyectoSeleccionado.NombreCorto.ToLower()}]*@";
                 string htmlPagina = DescargarPagina(PaginaFacetas, true, false);
@@ -551,7 +546,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     else
                     {
                         error = $"Por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
-                    } 
+                    }
                 }
                 else
                 {
@@ -614,9 +609,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Accion">Acción a relizar</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult CMS(string ComponentePersonalizable, Guid idPersonalizacion, string Nombre, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+		public ActionResult CMS(string ComponentePersonalizable, Guid idPersonalizacion, string Nombre, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             CargarDatos();
             string error = "";
@@ -642,10 +638,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.DownloadOriginal)
             {
                 string fileName = ComponentePersonalizable;
-                /*if (mConfigService.EstaDesplegadoEnDocker())
-                {
-                    ComponentePersonalizable = ComponentePersonalizable.Replace("Views", "ViewsAdministracion");
-                }*/
                 string htmlPagina = DescargarComponenteCMS(ComponentePersonalizable, true, Guid.Empty);
                 if (!string.IsNullOrEmpty(htmlPagina))
                 {
@@ -736,9 +728,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult CMSExtra(string ComponentePersonalizable, Guid idPersonalizacion, bool ResourcesExtra, bool Identities, bool IdentitiesExtra, ManageViewsViewModel.Action Accion, IFormFile Fichero, string Nombre)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+		public ActionResult CMSExtra(string ComponentePersonalizable, Guid idPersonalizacion, bool ResourcesExtra, bool Identities, bool IdentitiesExtra, ManageViewsViewModel.Action Accion, IFormFile Fichero, string Nombre)
         {
             CargarDatos();
             string error = "";
@@ -751,7 +744,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 DatosExtra = $"{DatosExtra}&";
                 if (Identities)
-                {                   
+                {
                     DatosExtra = $"{DatosExtra}{DatosExtraVistas.Identidades.ToString()}";
                 }
                 DatosExtra = $"{DatosExtra}&";
@@ -783,7 +776,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             if (ComponentePersonalizable == pathResourceDefault || ComponentePersonalizable == pathListResourcesDefault || ComponentePersonalizable == pathGroupComponentsDefault)
                             {
                                 ComponentePersonalizable = $"{ComponentePersonalizable}_{Guid.NewGuid()}.cshtml";
-                            } 
+                            }
 
 
                             if (!GuardarComponenteCMS(ComponentePersonalizable, texto, Nombre, DatosExtra, idPersonalizacion))
@@ -804,7 +797,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         string HTML = vistaVirtualAnterior[0].HTML;
                         string NombreVista = vistaVirtualAnterior[0].Nombre;
-                        
+
                         if (!GuardarComponenteCMS(ComponentePersonalizable, HTML, NombreVista, DatosExtra, idPersonalizacion))
                         {
                             error = "Error al guardar los datos, intentalo de nuevo";
@@ -814,7 +807,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         error = $"El componente '{ComponentePersonalizable}' con id='{idPersonalizacion}' no existe";
                     }
-                }               
+                }
             }
 
             if (!string.IsNullOrEmpty(error))
@@ -831,10 +824,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
-        public ActionResult InvalidarVistas()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		public ActionResult InvalidarVistas()
         {
             LimpiarCacheVistaEntera();
 
@@ -842,93 +835,92 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.Personalizacion = string.Empty;
             ViewBag.PersonalizacionLayout = "";
             paginaModel.OKMessage = "Caches invalidadas correctamente";
-            return GnossResultOK("Caches invalidadas correctamente");            
-            //return GnossResultHtml("Index", paginaModel);
+            return GnossResultOK("Caches invalidadas correctamente");
         }
 
-		[HttpPost]
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
+        [HttpPost]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
 		public ActionResult CompartirVistasEnDominio(string pDominio)
-		{
+        {
             string error = string.Empty;
 
             bool yaCompartido = ComprobarDominioYaCompartido(pDominio.ToLower());
             if (!yaCompartido)
             {
-			    error = CompartirPersonalizacionEnDominio(pDominio.ToLower());
+                error = CompartirPersonalizacionEnDominio(pDominio.ToLower());
             }
             else
             {
                 error = $"La personalización de este proyecto ya está compartida en el dominio: {pDominio}";
             }
 
-			CargarDatos();
-			ViewBag.Personalizacion = string.Empty;
-			ViewBag.PersonalizacionLayout = "";
-			paginaModel.OKMessage = "Vistas compartidas correctamente";
+            CargarDatos();
+            ViewBag.Personalizacion = string.Empty;
+            ViewBag.PersonalizacionLayout = "";
+            paginaModel.OKMessage = "Vistas compartidas correctamente";
 
             if (!string.IsNullOrEmpty(error))
             {
-				return GnossResultERROR(error);
-			}
+                return GnossResultERROR(error);
+            }
             else
             {
-				return GnossResultOK("Vistas compartidas correctamente");
-			}		
-		}
+                return GnossResultOK("Vistas compartidas correctamente");
+            }
+        }
 
-		[HttpPost]
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionVistasPermitido" })]
+        [HttpPost]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
 		public ActionResult DejarDeCompartirVistasEnDominio(string pDominios)
         {
             string error = string.Empty;
 
             if (!string.IsNullOrEmpty(pDominios))
             {
-				string[] dominios = pDominios.Split(',');
+                string[] dominios = pDominios.Split(',');
 
-				foreach (string dominio in dominios)
-				{
-					bool estaCompartido = ComprobarDominioYaCompartido(dominio.ToLower());
+                foreach (string dominio in dominios)
+                {
+                    bool estaCompartido = ComprobarDominioYaCompartido(dominio.ToLower());
 
-					if (estaCompartido)
-					{
-						error = DejarDeCompartirPersonalizacionEnDominio(dominio.ToLower());
-					}
-					else
-					{
-						error = $"El dominio {dominio} no tiene la personalización compartida";
-					}
+                    if (estaCompartido)
+                    {
+                        error = DejarDeCompartirPersonalizacionEnDominio(dominio.ToLower());
+                    }
+                    else
+                    {
+                        error = $"El dominio {dominio} no tiene la personalización compartida";
+                    }
 
-					if (!string.IsNullOrEmpty(error))
-					{
-						break;
-					}
-				}
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        break;
+                    }
+                }
             }
             else
             {
                 error = $"No se ha seleccionado ningún dominio.";
             }
-            
-            
 
-			CargarDatos();
-			ViewBag.Personalizacion = string.Empty;
-			ViewBag.PersonalizacionLayout = "";
-			paginaModel.OKMessage = "La personalización se ha dejado compartir correctamente en los dominios.";
+            CargarDatos();
+            ViewBag.Personalizacion = string.Empty;
+            ViewBag.PersonalizacionLayout = "";
+            paginaModel.OKMessage = "La personalización se ha dejado compartir correctamente en los dominios.";
 
-			if (!string.IsNullOrEmpty(error))
-			{
-				return GnossResultERROR(error);
-			}
-			else
-			{
-				return GnossResultOK("La personalización se ha dejado compartir correctamente en los dominios seleccionados.");
-			}
-		}
+            if (!string.IsNullOrEmpty(error))
+            {
+                return GnossResultERROR(error);
+            }
+            else
+            {
+                return GnossResultOK("La personalización se ha dejado compartir correctamente en los dominios seleccionados.");
+            }
+        }
 
-		private string CompilarVista(string pHtml)
+        private string CompilarVista(string pHtml)
         {
             Guid testID = Guid.NewGuid();
             string vistaTemporal = $"/{VIEWS_DIRECTORY}/TESTvistaTEST/{testID}$$${testID}.cshtml";
@@ -952,7 +944,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     errorCompilando = BuscarTextoTraducir(pHtml);
 
-                    ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                     paramGeneralCL.InvalidarCacheParametrosGeneralesDeProyecto(ProyectoSeleccionado.Clave);
                 }
                 catch (Exception ex)
@@ -960,12 +952,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     errorCompilando = ex.Message;
                 }
             }
-
-            /*TODO Javier
-            if (MyVirtualPathProvider.ListaHtmlsTemporales.ContainsKey(testID))
-            {
-                MyVirtualPathProvider.ListaHtmlsTemporales.Remove(testID);
-            }*/
 
             return errorCompilando;
         }
@@ -980,7 +966,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             Guid personalizacionID = Guid.Empty;
             GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
             ParametroGeneralGBD parametroGeneralGBD = new ParametroGeneralGBD(mEntityContext);
-            ParametroGeneralCN parametroGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroGeneralCN parametroGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
 
             if (EsAdministracionEcosistema)
             {
@@ -989,7 +975,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else
             {
-                VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory);
                 DataWrapperVistaVirtual vistaVirtualDW = vistaVirtualCL.ObtenerVistasVirtualPorProyectoID(ProyectoSeleccionado.Clave, mControladorBase.PersonalizacionEcosistemaID, mControladorBase.ComunidadExcluidaPersonalizacionEcosistema);
                 if (vistaVirtualDW.ListaVistaVirtualProyecto.Count > 0)
                 {
@@ -1007,32 +993,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 while (indice > -1)
                 {
-                    aux = indice;
-                    indice = pHtml.IndexOf("\")", aux);
-                    texto = pHtml.Substring(aux, indice - aux);
-                    texto = texto.Replace(comandoTraduccion, "");
-
-                    int indiceTexto = 0;
-                    bool encontrado = false;
-                    while (indiceTexto > -1 && !encontrado)
+                    try
                     {
-                        indiceTexto++;
-                        indiceTexto = texto.IndexOf("\"", indiceTexto);
-                        if (indiceTexto > -1)
+                        aux = indice;
+                        indice = pHtml.IndexOf("\")", aux);
+                        texto = pHtml.Substring(aux, indice - aux);
+                        texto = texto.Replace(comandoTraduccion, "");
+
+                        int indiceTexto = 0;
+                        bool encontrado = false;
+                        while (indiceTexto > -1 && !encontrado)
                         {
-                            if (texto[indiceTexto - 1] != Path.DirectorySeparatorChar)
+                            indiceTexto++;
+                            indiceTexto = texto.IndexOf("\"", indiceTexto);
+                            if (indiceTexto > -1 && texto[indiceTexto - 1] != Path.DirectorySeparatorChar)
                             {
                                 encontrado = true;
                             }
                         }
+                        if (indiceTexto > -1)
+                        {
+                            texto = texto.Substring(0, indiceTexto);
+                        }
+                        if (texto.Length > 100)
+                        {
+                            return "ID del texto demasiado largo. En la sección de traducciones (*aquí su comunidad*/administrar-traducciones) cree una traducción con un ID más corto que podrá colocar en la vista, este será remplazado por el texto adecuado al idioma";
+                        }
                     }
-                    if (indiceTexto > -1)
+                    catch
                     {
-                        texto = texto.Substring(0, indiceTexto);
-                    }
-                    if (texto.Length > 100)
-                    {
-                        return "ID del texto demasiado largo. En la sección de traducciones (*aquí su comunidad*/administrar-traducciones) cree una traducción con un ID más corto que podrá colocar en la vista, este será remplazado por el texto adecuado al idioma";
+                        return "Ha ocurrido un error al buscar las claves de traducción. Revise que el todas las traducciones están correctamente escritas y no hay '\"' sin cerrar";
                     }
 
                     TextosPersonalizadosPersonalizacion traduccion = gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Find(textoPersonalizado => textoPersonalizado.PersonalizacionID.Equals(personalizacionID) && textoPersonalizado.TextoID.Equals(texto, StringComparison.CurrentCultureIgnoreCase) && textoPersonalizado.Language.Equals(idioma));
@@ -1069,21 +1059,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 try
                 {
-                    ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
                     parametroGeneralGBD.SaveChanges();
                 }
                 catch (Exception ex)
                 {
-                    
-                    string pattern = @"\((.*?), (.*?), (.*?)\)"; 
+
+                    string pattern = @"\((.*?), (.*?), (.*?)\)";
                     MatchCollection matches = Regex.Matches(ex.InnerException.ToString(), pattern);
-                    string traduccionVista = string.Empty;
-                    
-                    foreach (Match match in matches)
-                    {
-                        traduccionVista = match.Groups[2].Value;
-                        break;
-                    }
+                    string traduccionVista = matches.FirstOrDefault().Groups[2].Value;
 
                     if (!string.IsNullOrEmpty(traduccionVista))
                     {
@@ -1092,9 +1075,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         return $"Hay un problema con la traduccion \"{traduccionVista}\" de la vista. Revisa que el texto esté correctamente escrito, ya que en base de datos es: \"{traduccionBD}\"";
                     }
 
-                    return $"Revise las traducciones de la vista, hay algunas que no coinciden con las de base de datos.";                    
+                    return $"Revise las traducciones de la vista, hay algunas que no coinciden con las de base de datos.";
                 }
-                
+
             }
             else
             {
@@ -1105,9 +1088,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private bool ComprobarDominioYaCompartido(string pDominio)
         {
-			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
             return vistaVirtualCN.ComprobarPersonalizacionCompartidaEnDominio(pDominio, ProyectoSeleccionado.Clave);
-		}
+        }
 
         private string CompartirPersonalizacionEnDominio(string pDominio)
         {
@@ -1115,13 +1098,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             try
             {
-                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
                 vistaVirtualCN.CompartirPersonalizacionEnDominio(pDominio, ProyectoSeleccionado.Clave);
             }
             catch (Exception ex)
             {
-				error = $"Ha habido un error a la hora de compartir la personalización en el dominio: {pDominio}";
-				mLoggingService.GuardarLogError($"{error}. ERROR: {ex.Message}");            
+                error = $"Ha habido un error a la hora de compartir la personalización en el dominio: {pDominio}";
+                mLoggingService.GuardarLogError($"{error}. ERROR: {ex.Message}", mlogger);
             }
 
             return error;
@@ -1133,13 +1116,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             try
             {
-                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
                 vistaVirtualCN.DejarDeCompartirPersonalizacionEnDominio(pDominio, ProyectoSeleccionado.Clave);
             }
             catch (Exception ex)
             {
                 error = $"Ha habido un error al intentar dejar de compartir la personalización en el dominio: {pDominio}";
-                mLoggingService.GuardarLogError($"{error}. ERROR: {ex.Message}");
+                mLoggingService.GuardarLogError($"{error}. ERROR: {ex.Message}", mlogger);
             }
 
             return error;
@@ -1152,7 +1135,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             CargarVistaRecursos(VistaVirtualDW);
             CargarVistaResultados(VistaVirtualDW);
             CargarVistaFacetas(VistaVirtualDW);
-            CargarVistaCMS(VistaVirtualDW);
+            CargarVistaCMS();
             CargarDominiosCompartidos();
 
             string urlPagina = UtilIdiomas.GetText("URLSEM", "ADMINISTRARVISTAS");
@@ -1169,7 +1152,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mEntityContext.VistaVirtualPersonalizacion.Add(new VistaVirtualPersonalizacion() { PersonalizacionID = personalizacionID });
                     mEntityContext.SaveChanges();
 
-                    ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroAplicacionCL parametroAplicacionCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
                     parametroAplicacionCL.InvalidarCacheParametrosAplicacion();
 
                     mGnossCache.VersionarCacheLocal(ProyectoAD.MetaProyecto);
@@ -1186,7 +1169,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             paginaModel.UrlActionInvalidateViews = $"{urlPagina}/invalidateviews";
             paginaModel.UrlActionShareViews = $"{urlPagina}/compartir-vistas-en-dominio";
             paginaModel.UrlActionStopSharing = $"{urlPagina}/dejar-de-compartir";
-		} 
+        }
 
         private void CargarVistaVirtual(DataWrapperVistaVirtual pVistaVirtualDW)
         {
@@ -1197,22 +1180,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             List<string> listaVistas = ObtenerFicherosDeDirectorio(Path.Combine(rootPath, mViews));
 
-            paginaModel.ListEditedViews = new List<string>();
-            paginaModel.ListEditedViews.Insert(0, "");
+            paginaModel.ListEditedViews = new List<ManageViewsViewModel.EditedView>();
+            paginaModel.ListEditedViews.Insert(0, new ManageViewsViewModel.EditedView { Name=""});
             paginaModel.ListOriginalViews = new List<string>();
             paginaModel.ListOriginalViews.Insert(0, "");
             //Insertamos las vistas que no corresponden con componentes del CMS
             foreach (string nombreVista in listaVistas)
             {
-                //bool esVistaEdicionRecurso = nombreVista.StartsWith($"/{VIEWS_DIRECTORY}/EditarRecurso/_");
                 bool esVistaAdministracion = nombreVista.StartsWith($"/{VIEWS_DIRECTORY}/Administracion");
                 bool esVistaCMS = nombreVista.StartsWith($"/{VIEWS_DIRECTORY}/CMSPagina") && nombreVista.LongCount(letra => letra.ToString() == "/") > 3;
 
-                if (/*!esVistaEdicionRecurso && */ !esVistaAdministracion && !esVistaCMS && !nombreVista.StartsWith($"/Views/CargadorFacetas") && !nombreVista.StartsWith($"/Views/CargadorResultados") && !nombreVista.StartsWith($"/Views/Shared/_ResultadoMensaje.cshtml") && !nombreVista.StartsWith($"/Views/CargadorContextoMensajes/CargarContextoMensajes.cshtml"))
+                if (!esVistaAdministracion && !esVistaCMS && !nombreVista.StartsWith($"/Views/CargadorFacetas") && !nombreVista.StartsWith($"/Views/CargadorResultados") && !nombreVista.StartsWith($"/Views/Shared/_ResultadoMensaje.cshtml") && !nombreVista.StartsWith($"/Views/CargadorContextoMensajes/CargarContextoMensajes.cshtml"))
                 {
                     if (pVistaVirtualDW.ListaVistaVirtual.Any(item => item.TipoPagina.Equals(nombreVista)))
                     {
-                        paginaModel.ListEditedViews.Add(nombreVista);
+                        VistaVirtual vistaVirtual = pVistaVirtualDW.ListaVistaVirtual.First(item => item.TipoPagina.Equals(nombreVista));
+                        ManageViewsViewModel.EditedView vistaPersonalizada = new ManageViewsViewModel.EditedView();
+                        vistaPersonalizada.Name = nombreVista;
+                        vistaPersonalizada.FechaCreacion = vistaVirtual.FechaCreacion;
+                        vistaPersonalizada.FechaModificacion = vistaVirtual.FechaModificacion;
+                        paginaModel.ListEditedViews.Add(vistaPersonalizada);
                     }
                     paginaModel.ListOriginalViews.Add(nombreVista);
                 }
@@ -1220,27 +1207,31 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             foreach (VistaVirtual filaVistaVirtual in pVistaVirtualDW.ListaVistaVirtual)
             {
-                if (!paginaModel.ListEditedViews.Contains(filaVistaVirtual.TipoPagina) && !filaVistaVirtual.TipoPagina.StartsWith($"/Views/CargadorFacetas") && !filaVistaVirtual.TipoPagina.StartsWith($"/Views/CargadorResultados"))
+                if (!paginaModel.ListEditedViews.Any(item => item.Name.Contains(filaVistaVirtual.TipoPagina)) && !filaVistaVirtual.TipoPagina.StartsWith($"/Views/CargadorFacetas") && !filaVistaVirtual.TipoPagina.StartsWith($"/Views/CargadorResultados"))
                 {
-                    paginaModel.ListEditedViews.Add(filaVistaVirtual.TipoPagina);
+                    ManageViewsViewModel.EditedView vistaPersonalizada = new();
+                    vistaPersonalizada.Name = filaVistaVirtual.TipoPagina;
+                    vistaPersonalizada.FechaCreacion = filaVistaVirtual.FechaCreacion;
+                    vistaPersonalizada.FechaModificacion = filaVistaVirtual.FechaModificacion;
+                    paginaModel.ListEditedViews.Add(vistaPersonalizada);
                 }
             }
         }
 
-		private void CargarDominiosCompartidos()
-		{
-			VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-			paginaModel.ListDomainsShared = vistaVirtualCN.ObtenerDominiosEstaCompartidaPersonalizacion(ProyectoSeleccionado.Clave);
-		}
+        private void CargarDominiosCompartidos()
+        {
+            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
+            paginaModel.ListDomainsShared = vistaVirtualCN.ObtenerDominiosEstaCompartidaPersonalizacion(ProyectoSeleccionado.Clave);
+        }
 
-		private void CargarVistaRecursos(DataWrapperVistaVirtual pVistaVirtualDW)
+        private void CargarVistaRecursos(DataWrapperVistaVirtual pVistaVirtualDW)
         {
             if (!EsAdministracionEcosistema)
             {
                 List<string> listaFormularios = ObtenerFormulariosSemanticos();
-                paginaModel.ListEditedFormsViews = new List<string>();
-                paginaModel.ListEditedFormsViews.Insert(0, "");
-                paginaModel.ListOriginalFormsViews = new List<string>();
+                paginaModel.ListEditedFormsViews = new List<ManageViewsViewModel.EditedView>();
+				paginaModel.ListEditedViews.Insert(0, new ManageViewsViewModel.EditedView { Name = "" });
+				paginaModel.ListOriginalFormsViews = new List<string>();
                 paginaModel.ListOriginalFormsViews.Insert(0, "");
 
                 //Insertamos las vistas que no corresponden con componentes del CMS
@@ -1248,7 +1239,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     if (pVistaVirtualDW.ListaVistaVirtualRecursos.Any(item => item.RdfType.ToLower().Equals(nombreVista.ToLower())))
                     {
-                        paginaModel.ListEditedFormsViews.Add(nombreVista);
+                        VistaVirtualRecursos vista = pVistaVirtualDW.ListaVistaVirtualRecursos.First(item => item.RdfType.ToLower().Equals(nombreVista.ToLower()));
+                        ManageViewsViewModel.EditedView vistaPersonalizada = new ManageViewsViewModel.EditedView();
+                        vistaPersonalizada.Name = nombreVista;
+                        vistaPersonalizada.FechaCreacion = vista.FechaCreacion;
+                        vistaPersonalizada.FechaModificacion = vista.FechaModificacion;
+						paginaModel.ListEditedFormsViews.Add(vistaPersonalizada);
                     }
                     paginaModel.ListOriginalFormsViews.Add(nombreVista);
                 }
@@ -1257,72 +1253,93 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void CargarVistaResultados(DataWrapperVistaVirtual pVistaVirtualDW)
         {
-            List<string> listaVistasResultados = ObtenerVistasDeResultados();
-            paginaModel.ListEditedResultsServiceViews = new List<string>();
-            paginaModel.ListEditedResultsServiceViews.Insert(0, "");
-            paginaModel.ListOriginalResultsServiceViews = new List<string>();
+            List<string> vistasResultados = ObtenerVistasDeResultados();
+            paginaModel.ListEditedResultsServiceViews = new List<ManageViewsViewModel.EditedView>();
+			paginaModel.ListEditedViews.Insert(0, new ManageViewsViewModel.EditedView { Name = "" });
+			paginaModel.ListOriginalResultsServiceViews = new List<string>();
             paginaModel.ListOriginalResultsServiceViews.Insert(0, "");
 
-            foreach (string nombreVista in listaVistasResultados)
+            foreach (string nombreVista in vistasResultados)
             {
                 if (pVistaVirtualDW.ListaVistaVirtual.Any(item => item.TipoPagina.Equals(nombreVista)))
                 {
-                    paginaModel.ListEditedResultsServiceViews.Add(nombreVista);
+					VistaVirtual vistaVirtual = pVistaVirtualDW.ListaVistaVirtual.First(item => item.TipoPagina.Equals(nombreVista));
+					ManageViewsViewModel.EditedView vistaPersonalizada = new ManageViewsViewModel.EditedView();
+					vistaPersonalizada.Name = nombreVista;
+					vistaPersonalizada.FechaCreacion = vistaVirtual.FechaCreacion;
+                    vistaPersonalizada.FechaModificacion = vistaVirtual.FechaModificacion;
+					paginaModel.ListEditedResultsServiceViews.Add(vistaPersonalizada);
                 }
                 paginaModel.ListOriginalResultsServiceViews.Add(nombreVista);
             }
 
-            foreach(var elemento in pVistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.StartsWith("/Views/CargadorResultados") && !listaVistasResultados.Contains(item.TipoPagina)))
+            foreach (var elemento in pVistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.StartsWith("/Views/CargadorResultados") && !vistasResultados.Contains(item.TipoPagina)))
             {
-				paginaModel.ListEditedResultsServiceViews.Add(elemento.TipoPagina);
+				ManageViewsViewModel.EditedView vistaPersonalizada = new ManageViewsViewModel.EditedView();
+                vistaPersonalizada.Name = elemento.TipoPagina;
+				vistaPersonalizada.FechaCreacion = elemento.FechaCreacion;
+				vistaPersonalizada.FechaModificacion = elemento.FechaModificacion;
+				paginaModel.ListEditedResultsServiceViews.Add(vistaPersonalizada);
 			}
         }
 
         private void CargarVistaFacetas(DataWrapperVistaVirtual pVistaVirtualDW)
         {
-            List<string> listaVistasFacetas = ObtenerVistasDeFacetas();
-            paginaModel.ListEditedFacetedServiceViews = new List<string>();
-            paginaModel.ListEditedFacetedServiceViews.Insert(0, "");
+            List<string> vistasFacetas = ObtenerVistasDeFacetas();
+            paginaModel.ListEditedFacetedServiceViews = new List<ManageViewsViewModel.EditedView>();
+			paginaModel.ListEditedViews.Insert(0, new ManageViewsViewModel.EditedView { Name = "" }); 
             paginaModel.ListOriginalFacetedServiceViews = new List<string>();
             paginaModel.ListOriginalFacetedServiceViews.Insert(0, "");
 
-            foreach (string nombreVista in listaVistasFacetas)
+            foreach (string nombreVista in vistasFacetas)
             {
                 if (pVistaVirtualDW.ListaVistaVirtual.Any(item => item.TipoPagina.Equals(nombreVista)))
                 {
-                    paginaModel.ListEditedFacetedServiceViews.Add(nombreVista);
+					VistaVirtual vistaVirtual = pVistaVirtualDW.ListaVistaVirtual.First(item => item.TipoPagina.Equals(nombreVista));
+					ManageViewsViewModel.EditedView vistaPersonalizada = new ManageViewsViewModel.EditedView();
+					vistaPersonalizada.Name = nombreVista;
+					vistaPersonalizada.FechaCreacion = vistaVirtual.FechaCreacion;
+					vistaPersonalizada.FechaModificacion = vistaVirtual.FechaModificacion;
+					paginaModel.ListEditedFacetedServiceViews.Add(vistaPersonalizada);
                 }
                 paginaModel.ListOriginalFacetedServiceViews.Add(nombreVista);
             }
 
-			foreach (var elemento in pVistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.StartsWith("/Views/CargadorFacetas") && !listaVistasFacetas.Contains(item.TipoPagina)))
+			foreach (var elemento in pVistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.StartsWith("/Views/CargadorFacetas") && !vistasFacetas.Contains(item.TipoPagina)))
 			{
-				paginaModel.ListEditedFacetedServiceViews.Add(elemento.TipoPagina);
+				ManageViewsViewModel.EditedView vistaPersonalizada = new ManageViewsViewModel.EditedView();
+				vistaPersonalizada.Name = elemento.TipoPagina;
+				vistaPersonalizada.FechaCreacion = elemento.FechaCreacion;
+				vistaPersonalizada.FechaModificacion = elemento.FechaModificacion;
+				paginaModel.ListEditedFacetedServiceViews.Add(vistaPersonalizada);
 			}
 		}
 
-        private void CargarVistaCMS(DataWrapperVistaVirtual pVistaVirtualDW)
+        private void CargarVistaCMS()
         {
             string rootPath = mEnv.ContentRootPath;
             if (BaseURL.Contains("depuracion.net"))
             {
                 rootPath = rootPath + ".Open";
             }
+
             //Almacenamos en listaComponentesDisponibles los componentes disponibles de la comunidad que tienen vistas base
             List<TipoComponenteCMS> listaComponentesDisponibles = new List<TipoComponenteCMS>();
             foreach (TipoComponenteCMS tipoComponenteCMS in UtilComponentes.ListaComponentesPublicos)
             {
                 listaComponentesDisponibles.Add(tipoComponenteCMS);
             }
-            CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+
+            CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
             GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerConfiguracionCMSPorProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
             cmsCN.Dispose();
             foreach (TipoComponenteCMS tipoComponenteCMS in gestorCMS.ListaComponentesPrivadosProyecto)
             {
                 listaComponentesDisponibles.Add(tipoComponenteCMS);
             }
-            List<string> listaVistas = ObtenerFicherosDeDirectorio(Path.Combine(mEnv.ContentRootPath, $"{mViews}", "CMSPagina"));
-            mLoggingService.GuardarLogError($"La ruta obtenida es: {Path.Combine(mEnv.ContentRootPath, $"{mViews}", "CMSPagina")}");
+
+            List<string> listaVistas = ObtenerFicherosDeDirectorio(Path.Combine(rootPath, $"{mViews}", "CMSPagina"));
+            mLoggingService.GuardarLogError($"La ruta obtenida es: {Path.Combine(rootPath, $"{mViews}", "CMSPagina")}", mlogger);
             List<TipoComponenteCMS> listaComponentesDisponiblesAux = new List<TipoComponenteCMS>(listaComponentesDisponibles);
             foreach (TipoComponenteCMS componente in listaComponentesDisponiblesAux)
             {
@@ -1343,11 +1360,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     ManageViewsViewModel.CMSComponentViewModel componenteActual = new ManageViewsViewModel.CMSComponentViewModel();
                     componenteActual.PathName = vistaComponente;
                     componenteActual.Name = UtilIdiomas.GetText("COMADMINCMS", $"COMPONENTE_{componente.ToString().ToUpper()}");
-                    componenteActual.CustomizationName = new Dictionary<Guid, string>();
+                    // Diccionario con los componentes CMS personalizados
+                    componenteActual.CustomizationName = new Dictionary<Guid, ManageViewsViewModel.EditedView>();
 
                     foreach (VistaVirtualCMS filaVistaVirtualCMS in VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.TipoComponente.Equals(vistaComponente)))
                     {
-                        componenteActual.CustomizationName.Add(filaVistaVirtualCMS.PersonalizacionComponenteID, filaVistaVirtualCMS.Nombre);
+                        ManageViewsViewModel.EditedView vistaPersonalizada = new ManageViewsViewModel.EditedView();
+                        vistaPersonalizada.Name = filaVistaVirtualCMS.Nombre;
+                        vistaPersonalizada.FechaCreacion = filaVistaVirtualCMS.FechaCreacion;
+                        vistaPersonalizada.FechaModificacion = filaVistaVirtualCMS.FechaModificacion;
+                        componenteActual.CustomizationName.Add(filaVistaVirtualCMS.PersonalizacionComponenteID, vistaPersonalizada);
                     }
 
                     paginaModel.ListCMSComponents.Add(componenteActual);
@@ -1360,6 +1382,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             paginaModel.ListCMSResources = new List<ManageViewsViewModel.CMSResourceViewModel>();
             string vistaComponenteRecursos = pathResourceDefault;
             List<string> presentacionesRecursosCargadas = new List<string>();
+            // Seleccionamos las vistas por defecto
             foreach (TipoPresentacionRecursoCMS tipoPresentacion in Enum.GetValues(typeof(TipoPresentacionRecursoCMS)))
             {
                 //Presentaciones genéricas
@@ -1420,13 +1443,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (!presentacionesRecursosCargadas.Contains(filaVistaVirtualCMS.TipoComponente))
                 {
-                    //Presentaciones nuevas
-                    ManageViewsViewModel.CMSResourceViewModel presentacionRecursoActual = new ManageViewsViewModel.CMSResourceViewModel();
+					//Presentaciones nuevas
+					ManageViewsViewModel.CMSResourceViewModel presentacionRecursoActual = new ManageViewsViewModel.CMSResourceViewModel();
                     presentacionRecursoActual.PathName = filaVistaVirtualCMS.TipoComponente;
                     presentacionRecursoActual.Name = filaVistaVirtualCMS.Nombre;
                     presentacionRecursoActual.Generic = false;
                     presentacionRecursoActual.CustomizationID = filaVistaVirtualCMS.PersonalizacionComponenteID;
                     presentacionRecursoActual.ExtraInformation = new Dictionary<ManageViewsViewModel.ExtraInformation, bool>();
+                    presentacionRecursoActual.FechaCreacion = filaVistaVirtualCMS.FechaCreacion;
+                    presentacionRecursoActual.FechaModificacion = filaVistaVirtualCMS.FechaModificacion;
 
                     List<string> datosExtraList = new List<string>();
                     if (filaVistaVirtualCMS.DatosExtra != null)
@@ -1473,8 +1498,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             List<string> presentacionesListadoRecursosCargadas = new List<string>();
             foreach (TipoPresentacionListadoRecursosCMS tipoPresentacion in Enum.GetValues(typeof(TipoPresentacionListadoRecursosCMS)))
             {
-                //Presentaciones genéricas
-                ManageViewsViewModel.CMSListResourceViewModel presentacionListadoRecursoActual = new ManageViewsViewModel.CMSListResourceViewModel();
+				//Presentaciones genéricas
+				ManageViewsViewModel.CMSListResourceViewModel presentacionListadoRecursoActual = new ManageViewsViewModel.CMSListResourceViewModel();
                 presentacionListadoRecursoActual.PathName = $"{vistaComponenteListadoRecursos}_{tipoPresentacion}.cshtml";
                 List<VistaVirtualCMS> filasRecursos = VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.TipoComponente.Equals(presentacionListadoRecursoActual.PathName)).ToList();
                 presentacionListadoRecursoActual.Generic = true;
@@ -1495,12 +1520,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (!presentacionesListadoRecursosCargadas.Contains(filaVistaVirtualCMS.TipoComponente))
                 {
-                    //Presentaciones nuevas
-                    ManageViewsViewModel.CMSListResourceViewModel presentacionListadoRecursosActual = new ManageViewsViewModel.CMSListResourceViewModel();
+					//Presentaciones nuevas
+					ManageViewsViewModel.CMSListResourceViewModel presentacionListadoRecursosActual = new ManageViewsViewModel.CMSListResourceViewModel();
                     presentacionListadoRecursosActual.PathName = filaVistaVirtualCMS.TipoComponente;
                     presentacionListadoRecursosActual.Name = filaVistaVirtualCMS.Nombre;
                     presentacionListadoRecursosActual.Generic = false;
                     presentacionListadoRecursosActual.CustomizationID = filaVistaVirtualCMS.PersonalizacionComponenteID;
+                    presentacionListadoRecursosActual.FechaCreacion = filaVistaVirtualCMS.FechaCreacion;
+                    presentacionListadoRecursosActual.FechaModificacion = filaVistaVirtualCMS.FechaModificacion;
                     paginaModel.ListCMSListResources.Add(presentacionListadoRecursosActual);
                     presentacionesListadoRecursosCargadas.Add(presentacionListadoRecursosActual.PathName);
                 }
@@ -1516,8 +1543,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             List<string> presentacionesGrupoComponentesCargadas = new List<string>();
             foreach (TipoPresentacionGrupoComponentesCMS tipoPresentacion in Enum.GetValues(typeof(TipoPresentacionGrupoComponentesCMS)))
             {
-                //Presentaciones genéricas
-                ManageViewsViewModel.CMSGroupComponentViewModel presentacionGrupoComponentesActual = new ManageViewsViewModel.CMSGroupComponentViewModel();
+				//Presentaciones genéricas
+				ManageViewsViewModel.CMSGroupComponentViewModel presentacionGrupoComponentesActual = new ManageViewsViewModel.CMSGroupComponentViewModel();
                 presentacionGrupoComponentesActual.PathName = $"{vistaComponenteGrupoComponentes}_{tipoPresentacion}.cshtml";
                 List<VistaVirtualCMS> filasGruposComponentes = VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.TipoComponente.Equals(presentacionGrupoComponentesActual.PathName)).ToList();
                 presentacionGrupoComponentesActual.Generic = true;
@@ -1538,19 +1565,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (!presentacionesGrupoComponentesCargadas.Contains(filaVistaVirtualCMS.TipoComponente))
                 {
-                    //Presentaciones nuevas
-                    ManageViewsViewModel.CMSGroupComponentViewModel presentacionGrupoComponentesActual = new ManageViewsViewModel.CMSGroupComponentViewModel();
+					//Presentaciones nuevas
+					ManageViewsViewModel.CMSGroupComponentViewModel presentacionGrupoComponentesActual = new ManageViewsViewModel.CMSGroupComponentViewModel();
                     presentacionGrupoComponentesActual.PathName = filaVistaVirtualCMS.TipoComponente;
                     presentacionGrupoComponentesActual.Name = filaVistaVirtualCMS.Nombre;
                     presentacionGrupoComponentesActual.Generic = false;
                     presentacionGrupoComponentesActual.CustomizationID = filaVistaVirtualCMS.PersonalizacionComponenteID;
+                    presentacionGrupoComponentesActual.FechaCreacion = filaVistaVirtualCMS.FechaCreacion;
+                    presentacionGrupoComponentesActual.FechaModificacion = filaVistaVirtualCMS.FechaModificacion;
                     paginaModel.ListCMSGroupComponents.Add(presentacionGrupoComponentesActual);
                     presentacionesGrupoComponentesCargadas.Add(presentacionGrupoComponentesActual.PathName);
                 }
             }
 
             #endregion
-
         }
 
         private bool GuardarPagina(string pagina, string pHtml, bool pEsRdfType)
@@ -1568,13 +1596,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     throw;
                 }
 
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
                 bool transaccionIniciada = false;
                 try
                 {
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
-                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 
                     if (EsAdministracionEcosistema)
                     {
@@ -1598,7 +1626,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
-                            throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                            throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                         }
                     }
 
@@ -1608,21 +1636,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                     LimpiarCacheVista(pagina, pEsRdfType);
                 }
-                catch (Exception ex)
+                catch
                 {
                     if (transaccionIniciada)
                     {
                         proyAD.TerminarTransaccion(false);
                     }
                     throw;
-
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error en el guardado de vistas personalizadas. pagina: {pagina} ");
+                mLoggingService.GuardarLogError(ex, $"Error en el guardado de vistas personalizadas. pagina: {pagina} ", mlogger);
                 return false;
             }
         }
@@ -1642,13 +1669,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     throw;
                 }
 
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
                 bool transaccionIniciada = false;
                 try
                 {
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
-                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 
                     if (EsAdministracionEcosistema)
                     {
@@ -1672,7 +1699,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         HttpResponseMessage resultado = InformarCambioAdministracion("VistasCMS", JsonConvert.SerializeObject(modelo));
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
-                            throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                            throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                         }
                     }
 
@@ -1683,7 +1710,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         mEntityContext.TerminarTransaccionesPendientes(true);
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
                     if (transaccionIniciada)
                     {
@@ -1697,7 +1724,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error en el guardado de vistas personalizadas. pagina: {pagina}");
+                mLoggingService.GuardarLogError(ex, $"Error en el guardado de vistas personalizadas. pagina: {pagina}", mlogger);
                 return false;
             }
         }
@@ -1718,14 +1745,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     throw;
                 }
 
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
                 bool transaccionIniciada = false;
                 try
                 {
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
 
-                    Guid personalizacionID = Guid.Empty;
+                    Guid personalizacionID;
 
                     if (pEsRdfType)
                     {
@@ -1736,7 +1763,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         personalizacionID = VistaVirtualDW.ListaVistaVirtual.FirstOrDefault().PersonalizacionID;
                     }
 
-                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
                     vistaVirtualCN.EliminarHtmlParaVistaDeProyecto(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, personalizacionID, pagina, pEsRdfType);
 
                     if (iniciado)
@@ -1751,7 +1778,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         HttpResponseMessage resultado = InformarCambioAdministracion("Vistas", JsonConvert.SerializeObject(new KeyValuePair<string, string>(nombre, "")));
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
-                            throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                            throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                         }
                     }
 
@@ -1762,7 +1789,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         mEntityContext.TerminarTransaccionesPendientes(true);
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
                     if (transaccionIniciada)
                     {
@@ -1775,7 +1802,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error en el eliminado de vistas personalizadas. pagina: {pagina} ");
+                mLoggingService.GuardarLogError(ex, $"Error en el eliminado de vistas personalizadas. pagina: {pagina} ", mlogger);
                 return false;
             }
         }
@@ -1795,14 +1822,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     throw;
                 }
 
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
                 bool transaccionIniciada = false;
                 try
                 {
                     mEntityContext.NoConfirmarTransacciones = true;
                     transaccionIniciada = proyAD.IniciarTransaccion(true);
 
-                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
                     vistaVirtualCN.EliminarHtmlParaVistaDeComponenteCMSdeProyecto(VistaVirtualDW.ListaVistaVirtualCMS[0].PersonalizacionID, pPersonalizacionComponenteID, pVista);
 
                     if (iniciado)
@@ -1813,7 +1840,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
-                            throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                            throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                         }
                     }
 
@@ -1824,7 +1851,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         mEntityContext.TerminarTransaccionesPendientes(true);
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
                     if (transaccionIniciada)
                     {
@@ -1838,7 +1865,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error en el eliminado de vistas personalizadas de componentes CMS. pagina: {pVista}");
+                mLoggingService.GuardarLogError(ex, $"Error en el eliminado de vistas personalizadas de componentes CMS. pagina: {pVista}", mlogger);
                 return false;
             }
         }
@@ -1913,7 +1940,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void LimpiarCacheVista(string pVista, bool pEsRdfType)
         {
-            VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory);
 
             if (EsAdministracionEcosistema)
             {
@@ -1925,7 +1952,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             vistaVirtualCL.Dispose();
 
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             if (EsAdministracionEcosistema)
             {
                 proyCL.InvalidarTodasComunidadesMVC();
@@ -1949,7 +1976,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void LimpiarCacheComponenteCMS(Guid pPersonalizacionComponenteID)
         {
-            VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory);
 
             if (EsAdministracionEcosistema)
             {
@@ -1961,7 +1988,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             vistaVirtualCL.Dispose();
 
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             if (EsAdministracionEcosistema)
             {
                 proyCL.InvalidarTodasComunidadesMVC();
@@ -1992,7 +2019,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         string views = $"{Path.DirectorySeparatorChar}{mViews}{Path.DirectorySeparatorChar}";
                         int indiceViews = pagina.IndexOf(views);
 
-                        pagina = pagina.Substring(indiceViews);//.Replace("/ViewsAdministracion/", "/Views/");
+                        pagina = pagina.Substring(indiceViews);
                         pagina = pagina.Replace("\\", "/");
                         listaPaginasPersonalizables.Add(pagina);
                     }
@@ -2033,7 +2060,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private List<string> ObtenerFormulariosSemanticos()
         {
-            FacetaCN facetaCN = new FacetaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            FacetaCN facetaCN = new FacetaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetaCN>(), mLoggerFactory);
             List<OntologiaProyecto> listaOntologias = facetaCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, false, false);
             Dictionary<string, List<string>> ontologiasProyecto = FacetadoAD.ObtenerInformacionOntologias(listaOntologias);
 
@@ -2042,7 +2069,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return listaFormuariosSemanticos;
         }
 
-        public List<string> ObtenerVistasDeResultados()
+        public static List<string> ObtenerVistasDeResultados()
         {
             if (listaVistasResultados == null)
             {
@@ -2071,7 +2098,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return listaVistasResultados;
         }
 
-        public List<string> ObtenerVistasDeFacetas()
+        public static List<string> ObtenerVistasDeFacetas()
         {
             if (listaVistasFacetas == null)
             {
@@ -2091,7 +2118,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mVistaVirtualDW == null)
                 {
-                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 
                     if (EsAdministracionEcosistema)
                     {

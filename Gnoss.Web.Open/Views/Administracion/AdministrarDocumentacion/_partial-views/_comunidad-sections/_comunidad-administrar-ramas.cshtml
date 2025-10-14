@@ -1,0 +1,64 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Integración continua - Subir cambios
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    // Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.
+    bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? (bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+    // Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+    bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? (bool.Parse(ViewBag.showDocumentationSection)) : false;
+    
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="card">
+    <div class="card-header">
+        @* Título / Botón: Información General *@
+        <h3 class="mb-0">
+            <button class="btn btn-link"
+                    data-toggle="collapse"
+            @((showDocumentationByDefault && !showDocumentationSection) ? "data-target=#administrar-ramas" : null)
+            @((showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+                    aria-controls="administrar-ramas">
+                @Html.GetText("COMADMINCOMUNIDAD", "SUBIRCAMBIOSRAMA")
+            </button>
+        </h3>
+    </div>
+    @* Contenido: Información General *@
+    <div id="administrar-ramas"
+         class="collapse @( (showDocumentationSection) ? "show" : null)"
+         data-parent="#accordion">
+        <div class="card-body">
+            <p>Para poder trabajar con la integración continua siempre debemos tener una rama o una versión activa. Las ramas se crean para trabajar en el entorno de desarrollo, mientras que las versiones son ramas especiales de reléase para los despliegues a preproducción. </p>
+            <p>Antes de desplegar a producción puedes abrir y cerrar tantas ramas como desees, pero siempre deberás tener una activa, son un equivalente a las ramas “feature” dentro del flujo de trabajo GIT Flow.</p>
+            <p>Cuando termines un desarrollo deberás volver a esta pagina para cerrar la rama, esto hará que automáticamente le rama active se fusione con la rama base de desarrollo “develop”.</p>
+            <p>Para desplegar en preproducción después de cerrar la rama deberemos ir a la pagina de  <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESPLIEGUES")">despliegues</a></p>
+            <h3>Crear rama</h3>
+            <p>Para crear una rama debes introducir el nombre de la rama y pulsar el botón "Crear".</p>
+            <div class="text-center">
+                <figure class="figure">
+                    <img class="img-fluid" src="~/img/documentacionDevtools/ic/crear-rama.png" />
+                    <figcaption class="figure-caption">Formulario de creación de rama.</figcaption>
+                </figure>
+            </div>
+            <p>Tras crear la rama la y esperara a que la acción se complete, serás redirigido a la página de cerrar rama.</p>
+            <div class="alert alert-warning" role="alert">
+                <span class="material-icons">warning</span>
+                <p class="titulo"> Recuerda que el nombre de la rama no debe contener espacios, ni ninguna cadena de texto que contenga "release" o "hotfix" ya que crearía conflictos con esos tipos de ramas específicas.</p>
+            </div>
+            <h3>Cerrar rama</h3>
+            <p>Una vez terminado el desarrollo basta con que pulses el botón “Cerrar rama” para que esta se fusione con la rama “develop” y puedas crear una versión para desplegar en preproducción.</p>
+            <div class="text-center">
+                <figure class="figure">
+                    <img class="img-fluid" src="~/img/documentacionDevtools/ic/cerrar-rama.png" />
+                    <figcaption class="figure-caption">Solo en necesario pulsar en el botón</figcaption>
+                </figure>
+            </div>
+            <p></p>
+        </div>
+    </div>
+</div>

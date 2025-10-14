@@ -14,10 +14,13 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Filters
 {
@@ -31,14 +34,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private ControladorBase mControladorBase;
         private EntityContext mEntityContext;
         private RedisCacheWrapper mRedisCacheWrapper;
-
-		public AccesoPestanyaAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AccesoPestanyaAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, ILogger<AccesoPestanyaAttribute> logger, ILoggerFactory loggerFactory)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
             mConfigService = configService;
             mRedisCacheWrapper = redisCacheWrapper;
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
         }
 
         protected override void RealizarComprobaciones(ActionExecutingContext pFilterContext)
@@ -89,7 +95,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 				}
 			}
 
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, null);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, null, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 			if (pestanya != null && !pestanya.ListaIdiomasDisponibles(paramCL.ObtenerListaIdiomasDictionary()).Contains(mControladorBase.IdiomaUsuario))
             {
                 pFilterContext.Result = Controlador(pFilterContext).DevolverVista("../Shared/IndexNoIdioma", ((HeaderModel)(Controlador(pFilterContext).ViewBag.Cabecera)).MultiLingualLinks);
@@ -137,7 +143,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                             bool identidadActualPerteneceAAlgunGrupo = false;
                             if (mControladorBase.IdentidadActual != null)
                             {
-                                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, null);
+                                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                                 mControladorBase.IdentidadActual.GestorIdentidades.DataWrapperIdentidad.Merge(identidadCN.ObtenerGruposParticipaIdentidad(mControladorBase.IdentidadActual.Clave, true));
                                 if (mControladorBase.IdentidadActual.ModoParticipacion == TiposIdentidad.ProfesionalCorporativo || mControladorBase.IdentidadActual.ModoParticipacion == TiposIdentidad.ProfesionalPersonal)
                                 {

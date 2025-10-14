@@ -10,10 +10,12 @@ Variables
 *@
 @{
     CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
     Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
     // Controlar si no hay certificados, el mostrado del panel 'panelCertificationInProgressInformation'
     string showCreacionCertificadosClassName = "d-none";
     string idiomas = "";
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
 }
 
 @{
@@ -60,7 +62,7 @@ Variables
     </div>
 
     @* Contenido Central *@
-    <div class="formulario-edicion background-blanco">
+    <div class="formulario-edicion background-blanco">     
         @* Título + Descripción de la sección según el tipo de comunidad *@
         <h2>@Html.GetText("COMADMIN", "CERTIFICACION")</h2>
             <p>@Html.GetText("COMADMIN", "DESCRIPCIONNIVELES")</p>                       
@@ -110,15 +112,30 @@ Variables
             <div id="panelCustomCertificationInformation" class="custom-certification">                                               
                 <p>@Html.GetText("COMADMIN", "PERSONALIZARCERTIFICACION")</p>                
                 @* Panel personalizable de "Estamos elaborando la política de Certificación de la comunidad *@
-                <div id="panelCertificationInProgressInformation" class="form-group mb-3">                                     
-                    <textarea class="cke mensajes" id="txtPoliticaCertificacion" cols="20" rows="2" name="txtPoliticaCertificacion">@Model.PoliticaCertificacion</textarea>
+
+            @* Tabs de traducciones [Generadas automáticamente por operativaMultiIdioma] *@
+            <div id="panContenidoMultiIdioma" class="contenido-multiIdioma panContenidoMultiIdioma"></div>
+            @* Contenedor de inputs para multiIdioma *@
+            <div id="panelCertificationInProgressInformation" class="inputsMultiIdioma multiIdiomaContainer" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+                <div class="form-group mb-3">
+                    <textarea id="txtPoliticaCertificacion" cols="20" rows="2"
+                              name="txtPoliticaCertificacion"
+                              class="multiIdioma"
+                              data-labeltext="">@Model.PoliticaCertificacion</textarea>
                 </div>
-            </div>            
+            </div>
+                @* <div class="panContenidoMultiIdioma basicInfo">
+            </div>
+            <div id="panelCertificationInProgressInformation" class="form-group mb-3 inputsMultiIdioma multiIdiomaContainer basicInfo" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+                <textarea class="form-control multiIdioma" cols="20" rows="2" name="txtPoliticaCertificacion">@Model.PoliticaCertificacion</textarea>
+        
+                </div>
+            </div>  *@           
         </div>
         
         @* Botón para guardado de datos *@
-        <input id="btnGuardarCertificacionRecursos" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMADMINPESTANYAS", "GUARDARTODO")" />        
-    </div>
+    <input id="btnGuardarCertificacionRecursos" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMMON", "GUARDAR")" />
+</div>
 
     @* Modal de documentación de la sección *@
     @Html.PartialView("_modal-views/_documentation-section-niveles-certificacion")   

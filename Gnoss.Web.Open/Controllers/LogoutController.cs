@@ -12,19 +12,20 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
-using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -40,13 +41,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public string UrlIframe { get; set; }
         public string UrlRedirect { get; set; }
     }
+
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class LogoutController : ControllerBaseWeb
     {
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
-        public LogoutController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public LogoutController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<LogoutController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         /// <summary>
@@ -72,7 +78,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (EsGnossOrganiza)
             {
-                urlLogo = "/" + UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesProyectos + "/" + mControladorBase.ProyectoConexion.ToString().ToLower() + ".png";
+                urlLogo = $"/{UtilArchivos.ContentImagenes}/{UtilArchivos.ContentImagenesProyectos}/{mControladorBase.ProyectoConexion.ToString().ToLower()}.png";
             }
 
             Guid proyectoid = ProyectoAD.MetaProyecto;
@@ -94,27 +100,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 ParametroGeneral filaParametroGeneral = mControladorBase.ObtenerFilaParametrosGeneralesDeProyecto(proyectoid).ListaParametroGeneral[0];
 
-                if (filaParametroGeneral.VersionFotoImagenSupGrande!=null)
+                if (filaParametroGeneral.VersionFotoImagenSupGrande != null)
                 {
-                    urlLogo = "/" + UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesProyectos + "/" + proyectoid.ToString().ToLower() + ".png?v=" + filaParametroGeneral.VersionFotoImagenSupGrande;
+                    urlLogo = $"/{UtilArchivos.ContentImagenes}/{UtilArchivos.ContentImagenesProyectos}/{proyectoid.ToString().ToLower()}.png?v={filaParametroGeneral.VersionFotoImagenSupGrande}";
                     showPowered = true;
                 }
 
-                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 nombre = proyCL.ObtenerNombreDeProyectoID(proyectoid);
             }
 
             GnossIdentity usuario = Session.Get<GnossIdentity>("Usuario");
             if (usuario != null && !usuario.EsUsuarioInvitado)
             {
-                IdentidadCL identCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCL identCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
                 identCL.EliminarCacheGestorTodasIdentidadesUsuario(usuario.UsuarioID, usuario.PersonaID);
                 identCL.EliminarCacheIdentidadActualUsuario(usuario.UsuarioID);
             }
 
             string query = $"?dominio={BaseURL}&eliminar=true&proyecto={ProyectoSeleccionado.Clave}&idioma={IdiomaUsuario}";
 
-            Es.Riam.Gnoss.AD.EntityModel.ParametroAplicacion busqueda = ParametrosAplicacionDS.FirstOrDefault(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.LoginUnicoPorUsuario));
+            ParametroAplicacion busqueda = ParametrosAplicacionDS.Find(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.LoginUnicoPorUsuario));
             bool loginUnicoPorUsuario = busqueda != null && busqueda.Valor.Equals("1");
 
             if (loginUnicoPorUsuario && usuario != null)
@@ -127,12 +133,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //Elimino las cookies
             mControladorBase.ExpirarCookies(ExisteNombrePoliticaCookiesMetaproyecto, NombrePoliticaCookiesMetaproyecto, usuario);
 
-
             LogoutModel paginaModel = new LogoutModel();
             paginaModel.UrlLogo = urlLogo;
             paginaModel.NombreComunidad = nombre;
             paginaModel.ShowPowered = showPowered;
-            
+
             paginaModel.UrlIframe = $"{mControladorBase.UrlServicioLogin}/eliminarCookie{query}";
             paginaModel.UrlRedirect = UrlRedireccion;
 
@@ -142,16 +147,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         public ActionResult EliminarSesion()
         {
-            LogoutModel paginaModel = new LogoutModel();
             //Elimino del servicio de login la cookie actual para que no vuelva a loguearle
             if (Request.Query.ContainsKey("token"))
             {
                 Guid usuarioIDToken = Guid.Parse(Session.Get(Request.Query["token"]).ToString());
 
-                Es.Riam.Gnoss.AD.EntityModel.ParametroAplicacion busqueda = ParametrosAplicacionDS.FirstOrDefault(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.LoginUnicoPorUsuario));
-                //bool loginUnicoPorUsuario = ParametrosAplicacionDS.ParametroAplicacion.FindByParametro(TiposParametrosAplicacion.LoginUnicoPorUsuario) != null && ParametrosAplicacionDS.ParametroAplicacion.FindByParametro(TiposParametrosAplicacion.LoginUnicoPorUsuario).Valor.Equals("1");
-                bool loginUnicoPorUsuario = busqueda != null && busqueda.Valor.Equals("1");
+                ParametroAplicacion busqueda = ParametrosAplicacionDS.Find(parametro => parametro.Parametro.Equals(TiposParametrosAplicacion.LoginUnicoPorUsuario));
 
+                bool loginUnicoPorUsuario = busqueda != null && busqueda.Valor.Equals("1");
 
                 if (loginUnicoPorUsuario)
                 {
@@ -159,9 +162,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 Session.Clear();
-                //Session.Abandon();
             }
-            string url = $"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, NombreCortoProyectoConexion)}/login?eliminarsesion=true";
+            string url = $"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, NombreCortoProyectoConexion)}/{UtilIdiomas.GetText("URLSEM", "LOGIN")}?eliminarsesion=true";
             return Redirect(url);
         }
 
@@ -188,7 +190,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         string urlPaginaPresentadion = mConfigService.ObtenerUrlPaginaPresentacion();
                         if (!string.IsNullOrEmpty(urlPaginaPresentadion))
                         {
-                            //url = urlPaginaPresentadion;
                             url = ProyectoSeleccionado.UrlPropia(IdiomaUsuario);
                         }
                         else if (!ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
@@ -197,12 +198,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                         else
                         {
-                            url = BaseURLIdioma + "/" + UtilIdiomas.GetText("URLSEM", "HOME");
+                            url = $"{BaseURLIdioma}/{UtilIdiomas.GetText("URLSEM", "HOME")}";
                         }
                     }
                     else
                     {
-                        url = DominoAplicacionIdioma + "/" + RequestParams("redirect");
+                        url = $"{BaseURLIdioma}/{RequestParams("redirect")}";
                     }
                 }
 
@@ -219,6 +220,5 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         #endregion
-
     }
 }

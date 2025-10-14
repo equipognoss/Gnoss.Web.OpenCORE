@@ -16,6 +16,18 @@ Variables
     string externalServiceModal = $"modal-{externalServiceId}";
     bool isServiceNew = string.IsNullOrEmpty(Model.NombreServicio) ? true : false;
     string date = isServiceNew ? DateTime.Now.ToString("dd/MM/yyyy") : "01/01/2023";
+    if (Model.FechaCreacion == Model.FechaActualizacion && Model.FechaCreacion.ToShortDateString().Equals("01/01/0001"))
+    {
+        date = "01/01/2023";
+    }
+    else if (Model.FechaActualizacion > Model.FechaCreacion)
+    {
+        date = Model.FechaActualizacion.ToShortDateString();
+    }
+    else
+    {
+        date = Model.FechaCreacion.ToShortDateString();
+    }
 }
 
 <li class="component-wrap external-service-row @( isServiceNew ? "newExternalService" : null)" id="@externalServiceId">
@@ -134,7 +146,6 @@ Variables
                                    value="@Model.UrlServicio">
                             <small class="form-text text-muted mb-2">@Html.GetText("DEVTOOLS", "URLASOCIADOALSERVICIOESTAPROPIEDADESGENERADADEFORMAAUTOMATI")</small>
                         </div>
-
                         @* Botón para guardar *@
                         <div class="panelBotonera">
                             <a href="javascript: void(0)"

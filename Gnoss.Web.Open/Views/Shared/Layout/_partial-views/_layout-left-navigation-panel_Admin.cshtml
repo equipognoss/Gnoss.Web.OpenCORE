@@ -8,6 +8,7 @@ Variables
 *@
 @{
     CommunityModel Comunidad = Html.GetComunidad();
+    UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
     // Nombre de la sección en la que se encuentra el usuario
     AdministracionSeccionesDevTools.SeccionesDevTools seccionDevTools = Html.GetActiveSeccionDevTools();
     // Nombre de la subsección en la que se encuentra el usuario
@@ -16,31 +17,112 @@ Variables
     PermisosPaginasAdministracionViewModel permisosPaginas = ViewBag.PermisosPaginas;
     // Permisos para administrar aspectos relacionados con el diseño de la comunidad
     bool administrarDiseño = false;
+    List<PermisoComunidad> permisosAdministracion = ViewBag.ListaPermisosAdministracionIdentidad;
+    List<PermisoContenidos> permisosContenidos = ViewBag.ListaPermisosContenidosIdentidad;
+    List<PermisoEcosistema> permisosEcosistema = ViewBag.ListaPermisosAdministracionEcosistemaUsuario;
     // Permisos para administrar aspectos relacionados con el diseño de páginas
-    bool administrarPaginas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)));
-    // Permisos para administrar vistas
-    bool administrarVistas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
-    // Controlar visualización del botón para documentación    
-    bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? ( bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+    // Comunidad    
+    bool administrarInformacionGeneral = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarInformacionGeneral);
+    //bool administrarUtilidades = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarTiposDeContenidosYPermisos);
+    bool administrarUtilidades = false; // esta pagina va a desaparecer
+    bool administrarCategorias = permisosContenidos != null && (permisosContenidos.Contains(PermisoContenidos.VerCategorias) || permisosContenidos.Contains(PermisoContenidos.EliminarCategoria) || permisosContenidos.Contains(PermisoContenidos.ModificarCategoria) || permisosContenidos.Contains(PermisoContenidos.AnyadirCategoria));
+    bool administrarInteraccionSocial = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarInteraccionesSociales);
+    bool administrarMiembros = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarMiembros);
+    bool administrarSolicitudes = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo);
+    bool administrarNivelesCertificacion = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarNivelesDeCertificacion);
+    bool administrarRoles = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarRolesYPermisos);
+
+    // Estructura
+    bool administrarPaginas = permisosContenidos != null && (permisosContenidos.Contains(PermisoContenidos.VerPagina) || permisosContenidos.Contains(PermisoContenidos.EditarPagina) || permisosContenidos.Contains(PermisoContenidos.EliminarPagina) || permisosContenidos.Contains(PermisoContenidos.CrearPagina) || permisosContenidos.Contains(PermisoContenidos.PublicarPagina));
+    bool administrarPesos = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarPesosAutocompletado);
+    bool administrarRedirecciones = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarRedirecciones);
+    bool administrarCMS = permisosContenidos != null && (permisosContenidos.Contains(PermisoContenidos.VerComponenteCMS) || permisosContenidos.Contains(PermisoContenidos.EditarComponenteCMS) || permisosContenidos.Contains(PermisoContenidos.EliminarComponenteCMS) || permisosContenidos.Contains(PermisoContenidos.CrearComponenteCMS));
+    bool administrarMultimediaCMS = permisosContenidos != null && permisosContenidos.Contains(PermisoContenidos.GestionarMultimediaCMS);
+
+    // Configuracion general
+    bool administrarOAuth = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.DescargarConfiguracionOAuth);
+    bool administrarCookies = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarCookies);
+    bool administrarFTP = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.AccederAlFTP);
+    bool administrarTraducciones = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarTraducciones);
+    bool administrarDatosExtra = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarDatosExtraRegistro);
+    bool administrarTrazas = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarTrazas);
+    bool administrarDescargar = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarConfiguraciones);
+    bool administrarCache = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarCache);
+    bool administrarSEO = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.AdministrarSEOYGoogleAnalytics);
+    bool administrarEstadisticas = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.AccederAEstadisticasDeLaComunidad);
+    bool administrarClausulas = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarClausulasDeRegistro);
+    bool administrarBuzonCorreo = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarBuzonDeCorreo);
+    bool administrarServiciosExternos = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarServiciosExternos);
+    bool administrarEstadoSistemas = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.AccederAlEstadoDeLosServicios);
+    bool administrarOpcionesMetaAdmin = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarOpcionesDelMetaadministrador);
+    bool administrarEventos = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarEventosExternos);
+
+    // Grafo de conocimiento
+    bool administrarOC = permisosContenidos != null && (permisosContenidos.Contains(PermisoContenidos.ModificarValorEntidadSecundaria) || permisosContenidos.Contains(PermisoContenidos.EditarPagina) || permisosContenidos.Contains(PermisoContenidos.EliminarValorEntidadSecundaria) || permisosContenidos.Contains(PermisoContenidos.AnyadirValorEntidadSecundaria) || permisosContenidos.Contains(PermisoContenidos.GestionarOC));
+    bool administrarTesauros = permisosContenidos != null && (permisosContenidos.Contains(PermisoContenidos.AnyadirValorTesauro) || permisosContenidos.Contains(PermisoContenidos.VerTesauroSemantico) || permisosContenidos.Contains(PermisoContenidos.EliminarValorTesauro) || permisosContenidos.Contains(PermisoContenidos.ModificarValorTesauro));
+    bool administrarSPARQL = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.AccesoSparqlEndpoint);
+    bool administrarConsultasCargaMasiva = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.ConsultarCargasMasivas);
+    bool administrarBorradoMasivo = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.EjecutarBorradoMasivo);
+
+    // Descubrimiento y analisis
+    bool administrarFacetas = permisosContenidos != null && (permisosContenidos.Contains(PermisoContenidos.VerFaceta) || permisosContenidos.Contains(PermisoContenidos.ModificarFaceta) || permisosContenidos.Contains(PermisoContenidos.EliminarFaceta) || permisosContenidos.Contains(PermisoContenidos.CrearFaceta));
+    bool administrarSugerencias = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarSugerenciasDeBusqueda);
+    bool administrarContextos = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarInformacionContextual);
+    bool administrarParametrosBusqueda = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados);
+    bool administrarMapa = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarMapa);
+    bool administrarGraficos = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.AdministrarGraficos);
+
+    // Apariencia
+    bool administrarVistas = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarVistas);
+
+    // IC
+    bool administrarIC = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarIntegracionContinua);
+
+    // Mantenimiento
+    bool administrarReprocesar = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.EjecutarReprocesadosDeRecursos);
+
+    // Aplicaciones especificas
+    bool administrarAplicacionesEspecificas = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarAplicacionesEspecificas);
+
+
+    // Ecosistema
+    // Configuracion general
+    bool administrarTraduccionesEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarTraduccionesEcosistema);
+    bool administrarDatosExtraEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarDatosExtraRegistroEcosistema);
+    bool administrarBuzonCorreoEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarBuzonDeCorreoEcosistema);
+    bool administrarEventosExternosEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarEventosExternosEcosistema);
+    bool administrarConfiguracion = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarLaConfiguracionPlataforma);
+    bool administrarSharepoint = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.ConfiguracionDeSharePoint);
+    bool administrarMiembrosEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.AdministrarMiembrosEcosistema);
+
+    bool administrarVistasEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarVistasEcosistema);
+    bool administrarCategoriasPlataforma = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarCategoriasDePlataforma);
+    bool administrarICEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.AdministrarIntegracionContinua);
+    bool administrarSolicitudesComunidad = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.AdministrarSolicitudesComunidad);
+    bool administrarRolesEcosistema = permisosEcosistema != null && permisosEcosistema.Contains(PermisoEcosistema.GestionarRolesYPermisosEcosistema);
+
+    // Controlar visualización del botón para documentación
+    bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? (bool.Parse(ViewBag.showDocumentationByDefault)) : false;
     // Controlar si está en Administración de Plataforma (No visualizar otras opciones de configuración)
     // bool isInAdminPlatform = !string.IsNullOrEmpty(ViewBag.isInAdminPlatform) ? ( bool.Parse(ViewBag.isInAdminPlatform)) : false;
-    // Controlar si se está en Administración del Ecosistema (No visualizar otras opciones de configuración)    
-    bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;  
+    // Controlar si se está en Administración del Ecosistema (No visualizar otras opciones de configuración)
+    bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
     // Posibilidad de NO mostrar el panel lateral izquierdo de las DevTools
     bool hideLeftNavigationPanel = !string.IsNullOrEmpty(ViewBag.HideLeftNavigationPanel) ? (bool.Parse(ViewBag.HideLeftNavigationPanel)) : false;
     // Url para documentación
-    string urlSeccionDevToolsDocumentation = "";    
+    string urlSeccionDevToolsDocumentation = "";
     // Conocer los permisos del usuario para administrar una comunidad
     CommunityModel.PermissionsModel permisosComunidad = Comunidad.Permissions;
 
     @* Controlar la urlDocumentación *@
-    if ( seccionDevTools != AdministracionSeccionesDevTools.SeccionesDevTools.Home && seccionDevTools != AdministracionSeccionesDevTools.SeccionesDevTools.Documentacion )
+    if (seccionDevTools != AdministracionSeccionesDevTools.SeccionesDevTools.Home && seccionDevTools != AdministracionSeccionesDevTools.SeccionesDevTools.Documentacion)
     {
         urlSeccionDevToolsDocumentation = $"{Comunidad.Url}/{Html.GetText("URLSEM", "ADMINISTRARDOCUMENTACIONCOMUNIDAD")}?section={seccionDevTools}";
-    }else if (seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Home || showDocumentationByDefault == false)
+    }
+    else if (seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Home || showDocumentationByDefault == false)
     {
         showDocumentationByDefault = false;
-    }    
+    }
 }
 @*
 ----------------------------------------------------------------
@@ -99,115 +181,146 @@ Variables
                         @* Sección Comunidad *@
                         <div class="group-collapse comunidad">
                             <a href="#comunidad"
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad) ? "true" : "false" )"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad) ? "activo" : null) ">
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad) ? "true" : "false" )"
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad) ? "activo" : null) ">
                                 <span class="material-icons" alt="@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")" title="@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")" aria-label="@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")">language</span>
-                                <span class="texto">@Html.GetText("ADMINISTRACIONSEMANTICA","COMUNIDAD")</span>
+                                <span class="texto">@Html.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD")</span>
                                 @* Arrow down/up dependiendo (Activo /No activo) *@
                                 <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                             </a>
                             <div id="comunidad" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad) ? "show" : null) ">
                                 <ul class="pmd-sidebar-nav">
                                     @* Administrar Comunidad General *@
-                                    @if (permisosPaginas.EsAdministradorProyecto)
+                                    @if (administrarInformacionGeneral)
                                     {
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADGENERAL")"
-                                   data-searchable="Estado de la comunidad, cambiar nombre corto de la comunidad, tipo de acceso de la comunidad, nombre de la comunidad, descripción de la comunidad, imágenes de la comunidad, etiquetas de la comunidad, idiomas de la comunidad, multiidioma, multilingue"
-                                   class="info-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_InformacionGeneral) ? "activo" : null)">
+                                            data-searchable="Estado de la comunidad, cambiar nombre corto de la comunidad, tipo de acceso de la comunidad, nombre de la comunidad, descripción de la comunidad, imágenes de la comunidad, etiquetas de la comunidad, idiomas de la comunidad, multiidioma, multilingue"
+                                            class="info-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_InformacionGeneral) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADGENERAL")
                                             </a>
-                                        </li>
+                                        </li>                                        
+                                    }
+                                    @if (administrarUtilidades)
+                                    {
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADUTILIDADES")"
-                                   data-searchable="descarga de adjuntos, permisos, permisos a grupos"
-                                   class="permisos-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_TiposDeContenidoPermisos) ? "activo" : null)">
-                                                @Html.GetText("DEVTOOLS","TIPOSDECONTENIDO/PERMISOS")
+                                               data-searchable="descarga de adjuntos, permisos, permisos a grupos"
+                                               class="permisos-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_TiposDeContenidoPermisos) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "TIPOSDECONTENIDO/PERMISOS")
                                             </a>
                                         </li>
                                     }
-                                    @if (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Tesauro)))
+                                    @if (administrarCategorias)
                                     {
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCATEGORIASCOM")"
-                                   data-searchable="Categorías, crear categoria, editar categoria, borrar categoria, eliminar categoria, modificar categoría"
-                                   class="categorias-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Categorias) ? "activo" : null)">
+                                            data-searchable="Categorías, crear categoria, editar categoria, borrar categoria, eliminar categoria, modificar categoría"
+                                            class="categorias-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Categorias) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCATEGORIASCOM")
                                             </a>
                                         </li>
                                     }
-                                    @if (permisosPaginas.EsAdministradorProyecto)
+                                    @if (administrarInteraccionSocial)
                                     {
                                         @* Interacción social *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARINTERACCIONSOCIAL")"
-                                   data-searchable="Invitaciones, Votaciones, votaciones negativas, Comentarios disponibles, Permitir a los supervisores administrar los grupos, Los usuarios pueden compartir recursos de esta comunidad a otras comunidades, Los usuarios pueden crear recursos privados en la comunidad"
-                                   class="interaccion-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_InteraccionSocial) ? "activo" : null)">
-                                                @Html.GetText("DEVTOOLS","INTERACCIONSOCIAL")
+                                            data-searchable="Invitaciones, Votaciones, votaciones negativas, Comentarios disponibles, Permitir a los supervisores administrar los grupos, Los usuarios pueden compartir recursos de esta comunidad a otras comunidades, Los usuarios pueden crear recursos privados en la comunidad"
+                                            class="interaccion-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_InteraccionSocial) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "INTERACCIONSOCIAL")
                                             </a>
                                         </li>
-
+                                    }
+                                    @if(administrarMiembros)
+                                    {
                                         @* Miembros  *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "COMADMINCOMMIEMBROS")"
-                                   data-searchable="miembros, administrar miembros, usuarios, administrar usuarios"
-                                   class="miembros-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Miembros) ? "activo" : null)">
+                                            data-searchable="miembros, administrar miembros, usuarios, administrar usuarios"
+                                            class="miembros-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Miembros) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "COMADMINCOMMIEMBROS")
                                             </a>
                                         </li>
+                                    }
 
-                                        @* Solicitudes de acceso a la comunidad - Restringidas *@
-                                        @if (permisosComunidad.ManageRequestAccess)
-                                        {
-                                            int numRequestAccess = Comunidad.SolicitudesPendientes;
-                                            string classNewManageRequest = "";
-                                            if (numRequestAccess > 0) { classNewManageRequest = "nuevos"; }
 
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSOLICITUACCESOPROYECTO")"
-                                   data-searchable="solicitudes de acceso, acceso a la comunidad, acceso miembros"
-                                   class="solicitudes-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Solicitudes) ? "activo" : null)">
-                                                    @Html.GetText("SOLICITUDESACCESOPROYECTO", "TITULOPAGINA")
-                                                </a>
-                                            </li>
-                                        }
 
-                                        @* Solicitudes de acceso a grupos *@
-                                        @if (permisosComunidad.ManageRequestGroup)
-                                        {
-                                            int numRequestGroups = Comunidad.SolicitudesPendientes;
-                                            string classNewManageRequestGroup = "";
-                                            if (numRequestGroups > 0) { classNewManageRequestGroup = "nuevos"; }
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "GRUPOS")/@Html.GetText("URLSEM", "ADMINISTRARSOLICITUDES")"
-                                   data-searchable="solicitudes de acceso, acceso a la comunidad, acceso miembros"
-                                   class="solicitudes-comunidad-grupos @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Solicitudes_Grupos) ? "activo" : null)">
-                                                    @Html.GetText("QUEPUEDOHACER", "SOLICITUDESPERTENECERGRUPO")
-                                                </a>
-                                            </li>
-                                        }
+                                    @* Solicitudes de acceso a la comunidad - Restringidas *@
+                                    @if (permisosComunidad.ManageRequestAccess)
+                                    {
+                                        int numRequestAccess = Comunidad.SolicitudesPendientes;
+                                        string classNewManageRequest = "";
+                                        if (numRequestAccess > 0) { classNewManageRequest = "nuevos"; }
 
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSOLICITUACCESOPROYECTO")"
+                                            data-searchable="solicitudes de acceso, acceso a la comunidad, acceso miembros"
+                                            class="solicitudes-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Solicitudes) ? "activo" : null)">
+                                                @Html.GetText("SOLICITUDESACCESOPROYECTO", "TITULOPAGINA")
+                                            </a>
+                                        </li>
+                                    }
+
+                                    @* Solicitudes de acceso a grupos *@
+                                    @if (administrarSolicitudes)
+                                    {
+                                        int numRequestGroups = Comunidad.SolicitudesPendientes;
+                                        string classNewManageRequestGroup = "";
+                                        if (numRequestGroups > 0) { classNewManageRequestGroup = "nuevos"; }
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "GRUPOS")/@Html.GetText("URLSEM", "ADMINISTRARSOLICITUDES")"
+                                            data-searchable="solicitudes de acceso, acceso a la comunidad, acceso miembros"
+                                            class="solicitudes-comunidad-grupos @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Solicitudes_Grupos) ? "activo" : null)">
+                                                @Html.Raw(@Html.GetText("QUEPUEDOHACER", "SOLICITUDESPERTENECERGRUPO",""))
+                                            </a>
+                                        </li>
+                                    }
+
+                                    @if (administrarNivelesCertificacion)
+                                    {
                                         @* Niveles de certificación *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCERTIFICADOS")"
-                                   data-searchable="Niveles de certificación de la comunidad, Activar niveles de certificación de la comunidad,"
-                                   class="certificacion-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_NivelesDeCertificacion) ? "activo" : null)">
-                                                @Html.GetText("DEVTOOLS","NIVELESDECERTIFICACION")
+                                            data-searchable="Niveles de certificación de la comunidad, Activar niveles de certificación de la comunidad,"
+                                            class="certificacion-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_NivelesDeCertificacion) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "NIVELESDECERTIFICACION")
                                             </a>
                                         </li>
+                                    }
 
-                                        @* Integración con redes sociales *@
-                                        /*
+
+                                    @* Roles *@
+                                    @if (!isInEcosistemaPlatform && administrarRoles)
+                                    {
                                         <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARROLES")"
+                                            data-searchable="roles, permisos"
+                                            class="roles-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Roles) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "ROLESYPERMISOS")
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINLISTADOPERMISOS")"
+                                               data-searchable="roles, permisos"
+                                               class="roles-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Permisos) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "LISTADOPERMISOS")
+                                            </a>
+                                        </li>
+                                    }
+
+                                    @* Integración con redes sociales *@
+                                    @*
+                                    <li>
                                         <a href="javascript: void(0);"
                                         data-searchable="redes sociales, sociales, redes, twitter, facebook"
                                         class="redes-sociales-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_IntegracionRedesSociales) ? "activo" : null)">
-                                        @Html.GetText("DEVTOOLS","INTEGRACIONCONREDESSOCIALES")
+                                            @Html.GetText("DEVTOOLS","INTEGRACIONCONREDESSOCIALES")
                                         </a>
-                                        </li>
-                                        */
-                                    }
+                                    </li>
+                                    *@
+
                                 </ul>
                             </div>
                         </div>
@@ -215,60 +328,71 @@ Variables
                         @* Sección Estructura *@
                         <div class="group-collapse estructura">
                             <a href="#estructura"
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Estructura) ? "true" : "false" )"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Estructura) ? "activo" : null) ">
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Estructura) ? "true" : "false" )"
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Estructura) ? "activo" : null) ">
                                 <span class="material-icons" alt="@Html.GetText("DEVTOOLS","ESTRUCTURA")" title="@Html.GetText("DEVTOOLS","ESTRUCTURA")" aria-label="@Html.GetText("DEVTOOLS","ESTRUCTURA")">folder</span>
-                                <span class="texto">@Html.GetText("DEVTOOLS","ESTRUCTURA")</span>
+                                <span class="texto">@Html.GetText("DEVTOOLS", "ESTRUCTURA")</span>
                                 @* Arrow down/up dependiendo (Activo /No activo) *@
                                 <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Estructura) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                             </a>
 
                             <div id="estructura" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Estructura) ? "show" : null) ">
                                 <ul class="pmd-sidebar-nav">
-
-                                    @if (permisosPaginas.AdministracionPaginasPermitido)
+                                    @if(administrarPaginas)
                                     {
-                                        if (administrarPaginas || permisosPaginas.CMSActivado)
-                                        {
-                                            @* Administrar Páginas *@
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")"
-                                   data-searchable="Páginas, paginas, páginas de la comunidad"
-                                   class="paginas-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Paginas) ? "activo" : null)">
-                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARPESTANYASCOM")
-                                                </a>
-                                            </li>
-                                            @* Administrar Redirecciones *@
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARREDIRECCIONES")"
-                                   data-searchable="Redirecciones, redirección, url, urls"
-                                   class="redirecciones-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Redirecciones) ? "activo" : null)">
-                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARREDIRECCIONES")
-                                                </a>
-                                            </li>
+                                        @* Administrar Páginas *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")"
+                                            data-searchable="Páginas, paginas, páginas de la comunidad"
+                                            class="paginas-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Paginas) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARPESTANYASCOM")
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (administrarPesos)
+                                    {
+                                        @* Administrar Pesos de búsqueda *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCONFIGURACIONPESOBUSQUEDAS")"
+                                            data-searchable="pesos, autocompletado, weight, busqueda, search, pesos busqueda, pesos de busqueda, pesos autocompletar"
+                                            class="pesos-busqueda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_PesosBusqueda) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCONFIGURACIONPESOBUSQUEDAS")
+                                            </a>
+                                        </li>
+                                    }   
+                                    @if(administrarRedirecciones)
+                                    {
+                                        @* Administrar Redirecciones *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARREDIRECCIONES")"
+                                            data-searchable="Redirecciones, redirección, url, urls"
+                                            class="redirecciones-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Redirecciones) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARREDIRECCIONES")
+                                            </a>
+                                        </li>
+                                    }
 
-                                            @if (permisosPaginas.CMSActivado)
-                                            {
-                                                @* Administrar Componentes *@
-                                                <li>
-                                                    <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")"
-                                   data-searchable="Componentes, componentes de la comunidad, componente, cms, listado componentes CMS,"
-                                   class="componentes-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Componentes) ? "activo" : null)">
-                                                        @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")
-                                                    </a>
-                                                </li>
-
-                                                @* Administrar Componentes multimedia *@
-                                                <li>
-                                                    <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")"
-                                   data-searchable="Multimedia, multi, archivos, ficheros, cms, edición multimedia CMS"
-                                   class="multimedia-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Multimedia) ? "activo" : null)">
-                                                        @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")
-                                                    </a>
-                                                </li>
-                                            }
-                                        }
+                                    @if(administrarCMS){
+                                        @* Administrar Componentes *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")"
+                                            data-searchable="Componentes, componentes de la comunidad, componente, cms, listado componentes CMS,"
+                                            class="componentes-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Componentes) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (administrarMultimediaCMS)
+                                    {
+                                        @* Administrar Componentes multimedia *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")"
+                                            data-searchable="Multimedia, multi, archivos, ficheros, cms, edición multimedia CMS"
+                                            class="multimedia-estructura @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_Multimedia) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOMUNIDADCMSMULTIMEDIA")
+                                            </a>
+                                        </li>
                                     }
                                 </ul>
                             </div>
@@ -278,11 +402,11 @@ Variables
                     @* Sección Configuración (Comunidad) *@
                     <div class="group-collapse configuracion">
                         <a href="#configuracion"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion) ? "activo" : null) "
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion) ? "true" : "false" )">
+                        class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion) ? "activo" : null) "
+                        data-toggle="collapse"
+                        aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion) ? "true" : "false" )">
                             <span class="material-icons" alt="@Html.GetText("DEVTOOLS","CONFIGURACION")" title="@Html.GetText("DEVTOOLS","CONFIGURACIONGENERAL")" aria-label="@Html.GetText("DEVTOOLS","CONFIGURACIONGENERAL")">settings</span>
-                            <span class="texto">@Html.GetText("DEVTOOLS","CONFIGURACIONGENERAL")</span>
+                            <span class="texto">@Html.GetText("DEVTOOLS", "CONFIGURACIONGENERAL")</span>
                             @* Arrow down/up dependiendo (Activo /No activo) *@
                             <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                         </a>
@@ -291,284 +415,332 @@ Variables
                             <ul class="pmd-sidebar-nav">
                                 @if (permisosPaginas.AdministracionDesarrolladoresPermitido && !isInEcosistemaPlatform)
                                 {
-                                    administrarDiseño = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
-                                    if (administrarDiseño == true)
+                                    @if (administrarOAuth)
                                     {
-                                        @* Actualizar DLLs
-                        <li>
-                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ACTUALIZARDLLS")"
-                        data-searchable="actualizar dlls, dll, librerías"
-                        class="actualizar-dlls-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_CICD) ? "activo" : null)">
-                        @Html.GetText("COMADMINCOMUNIDAD", "ACTUALIZARDLLS")
-                        </a>
-                        </li>  *@
-
                                         @* Descargar OAuth *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "DESCARGAROAUTH")"
-                                   data-searchable="oauth, configuración oauth, descarga oauth, descargar"
-                                   class="oauth-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OAuth) ? "activo" : null)">
+                                            data-searchable="oauth, configuración oauth, descarga oauth, descargar"
+                                            class="oauth-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OAuth) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "DESCARGAROAUTH")
                                             </a>
                                         </li>
+                                    }
 
+                                    @if (administrarCookies)
+                                    {
                                         @* Administrar Cookies *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOOKIESCOM")"
-                                   data-searchable="cookies, configurar, configurar cookies"
-                                   class="cookies-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cookies) ? "activo" : null)">
+                                            data-searchable="cookies, configurar, configurar cookies"
+                                            class="cookies-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cookies) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARCOOKIESCOM")
                                             </a>
                                         </li>
-
+                                    }
+                                    @if(administrarFTP)
+                                    {
                                         @* Configurar FTP *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "CONFIGURAFTP")"
-                                   data-searchable="ftp, conexión ftp, conexión, subir, estilos, css"
-                                   class="ftp-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_AccesoFTP) ? "activo" : null)">
+                                            data-searchable="ftp, conexión ftp, conexión, subir, estilos, css"
+                                            class="ftp-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_AccesoFTP) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "CONFIGURAFTP")
+                                            </a>
+                                        </li>
+                                    }    
+                                }
+
+                                @* Administrar traducciones (Comunidad) *@
+                                @if (!isInEcosistemaPlatform && administrarTraducciones)
+                                {
+                                    @if (!string.IsNullOrEmpty(Comunidad.ShortName))
+                                    {
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")"
+                                            data-searchable="traducciones, multilenguaje, traducción, idiomas"
+                                            class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")
                                             </a>
                                         </li>
                                     }
                                 }
-
-                                @* Administrar traducciones (Comunidad) *@
-                                @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
-                                {
-                                    bool administrarTraducciones = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
-                                    if (administrarTraducciones)
-                                    {
-                                        @if (administrarTraducciones && !string.IsNullOrEmpty(Comunidad.ShortName))
-                                        {
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")"
-                                   data-searchable="traducciones, multilenguaje, traducción, idiomas"
-                                   class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad) ? "activo" : null)">
-                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")
-                                                </a>
-                                            </li>
-                                        }
-                                    }
-                                }
-                                else if (isInEcosistemaPlatform)
+                                else if (isInEcosistemaPlatform && administrarTraduccionesEcosistema)
                                 {
                                     @* Administrar traducciones (Ecosistema) *@
                                     <li>
                                         <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONESECOSISTEMA")"
-                                   data-searchable="traducciones, multilenguaje, traducción, idiomas"
-                                   class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad) ? "activo" : null)">
+                                        data-searchable="traducciones, multilenguaje, traducción, idiomas"
+                                        class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad) ? "activo" : null)">
                                             @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")
+                                        </a>
+                                    </li>
+                                }
+                                @if(isInEcosistemaPlatform && administrarRolesEcosistema){
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARROLESECOSISTEMA")"
+                                        data-searchable="roles, permisos"
+                                        class="roles-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_RolesEcosistema) ? "activo" : null)">
+                                            @Html.GetText("DEVTOOLS", "ROLESYPERMISOS")
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINLISTADOPERMISOSECOSISTEMA")"
+                                           data-searchable="roles, permisos"
+                                           class="roles-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_PermisosEcosistema) ? "activo" : null)">
+                                            @Html.GetText("DEVTOOLS", "LISTADOPERMISOS")
                                         </a>
                                     </li>
                                 }
                                 @* Administrar datos extra *@
                                 @if (isInEcosistemaPlatform)
                                 {
-                                    @* Administrar datos extra (Ecosistema) *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDATOSEXTRAECOSISTEMA")"
-                                   data-searchable="datos, extra, datosextra, registro, dato, datos registro,"
-                                   class="datosextra-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_DatosExtra) ? "activo" : null)">
-                                            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")
-                                        </a>
-                                    </li>
+                                    @if(administrarDatosExtraEcosistema){
+                                        @* Administrar datos extra (Ecosistema) *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDATOSEXTRAECOSISTEMA")"
+                                            data-searchable="datos, extra, datosextra, registro, dato, datos registro,"
+                                            class="datosextra-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_DatosExtra) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")
+                                            </a>
+                                        </li>
+                                    }
                                 }
                                 else
-                                {
-                                    bool administrarDatosExtra = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
-                                    if (administrarDatosExtra)
+                                {                                    
+
+                                    @if (administrarDatosExtra && !string.IsNullOrEmpty(Comunidad.ShortName))
                                     {
-                                        @if (administrarDatosExtra && !string.IsNullOrEmpty(Comunidad.ShortName))
-                                        {
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDATOSEXTRA")"
-                                   data-searchable="datos, extra, datosextra, registro, dato, datos registro"
-                                   class="datosextra-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_DatosExtra) ? "activo" : null)">
-                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")
-                                                </a>
-                                            </li>
-                                        }
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDATOSEXTRA")"
+                                            data-searchable="datos, extra, datosextra, registro, dato, datos registro"
+                                            class="datosextra-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_DatosExtra) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDATOSEXTRA")
+                                            </a>
+                                        </li>
                                     }
+
                                 }
 
                                 @* Administrar trazas (Comunidad) *@
-                                @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+
+
+                                @if (administrarTrazas && !string.IsNullOrEmpty(Comunidad.ShortName))
                                 {
-                                    bool administrarTrazas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
-                                    if (administrarTrazas)
-                                    {
-                                        @if (administrarTrazas && !string.IsNullOrEmpty(Comunidad.ShortName))
-                                        {
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRAZAS")"
-                                   data-searchable="traza, trazas"
-                                   class="trazas-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Trazas) ? "activo" : null)">
-                                                    @Html.GetText("DEVTOOLS","TRAZAS")
-                                                </a>
-                                            </li>
-                                        }
-                                    }
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRAZAS")"
+                                        data-searchable="traza, trazas"
+                                        class="trazas-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Trazas) ? "activo" : null)">
+                                            @Html.GetText("DEVTOOLS", "TRAZAS")
+                                        </a>
+                                    </li>
                                 }
 
 
-                                @* Administrar descargar configuraciones *@
-                                @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+
+
+                                @* Administrar descargar configuraciones *@                                    
+
+                                @if (administrarDescargar && !string.IsNullOrEmpty(Comunidad.ShortName))
                                 {
-                                    bool administrarDescargasConfiguracion = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
-                                    if (administrarDescargasConfiguracion)
-                                    {
-                                        @if (administrarDescargasConfiguracion && !string.IsNullOrEmpty(Comunidad.ShortName))
-                                        {
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESCARGARCONFIGURACION")"
-                                   data-searchable="configuracion, configuraciones"
-                                   class="descargar-configuraciones @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Descargar_Configuraciones) ? "activo" : null)">
-                                                    @Html.GetText("DEVTOOLS","DESCARGACONFIG")
-                                                </a>
-                                            </li>
-                                        }
-                                    }
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESCARGARCONFIGURACION")"
+                                        data-searchable="descarga, descargar, configuracion, configuraciones"
+                                        class="descargar-configuraciones @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Descargar_Configuraciones) ? "activo" : null)">
+                                            @Html.GetText("DEVTOOLS", "DESCARGACONFIG")
+                                        </a>
+                                    </li>
                                 }
 
 
-                                @* EstadoSistemas (Comunidad) Deshabilitado hasta asegurarse de qué añadir en la vista final. De momento funciona correctamente
-                        @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
-                        {
-                        bool estadoSistemas = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
-                        if (estadoSistemas)
-                        {
-                        @if (estadoSistemas && !string.IsNullOrEmpty(Comunidad.ShortName))
-                        {
-                        <li>
-                        <a href="@Comunidad.Url/system-status"
-                        data-searchable="comprobar, sistemas, instalaciones, estado, servicios,"
-                        class="estado-servicios @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Estado_Servicios) ? "activo" : null)">
-                        @Html.GetText("DEVTOOLS","ESTADODELOSSERVICIOS")
-                        </a>
-                        </li>
-                        }
-                        }
-                        }
-                        *@
 
                                 @* Administrar cache (Comunidad) *@
-                                @if (permisosPaginas.AdministracionVistasPermitido && permisosPaginas.VistasActivadas)
+
+
+                                @if (administrarCache && !string.IsNullOrEmpty(Comunidad.ShortName))
                                 {
-                                    bool administrarCache = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Texto)));
-                                    if (administrarCache)
-                                    {
-                                        @if (administrarCache && !string.IsNullOrEmpty(Comunidad.ShortName))
-                                        {
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCACHE")"
-                                   data-searchable="cache, caches"
-                                   class="cache-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cache) ? "activo" : null)">
-                                                    Cache
-                                                </a>
-                                            </li>
-                                        }
-                                    }
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCACHE")"
+                                        data-searchable="cache, caches"
+                                        class="cache-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cache) ? "activo" : null)">
+                                            Cache
+                                        </a>
+                                    </li>
                                 }
 
-                                @if (permisosPaginas.EsAdministradorProyecto && !isInEcosistemaPlatform)
+
+
+                                @if (!isInEcosistemaPlatform)
                                 {
-                                    @* Administrar SEO / Analytics *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSEOGOOGLE")"
-                                   data-searchable="seo, posicionamiento, configuracion seo"
-                                   class="seo-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_SEO) ? "activo" : null)">
-                                            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")
-                                        </a>
-                                    </li>
+                                    @if (administrarSEO)
+                                    {
+                                        @* Administrar SEO / Analytics *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSEOGOOGLE")"
+                                            data-searchable="seo, posicionamiento, configuracion seo"
+                                            class="seo-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_SEO) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSEOGOOGLE")
+                                            </a>
+                                        </li>
+                                    }
+                                    @if(administrarEstadisticas){
+                                        @* Estadísticas de la comunidad (Matomo) *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARMATOMO")"
+                                            data-searchable="seo, estadísticas, analytics, matomo"
+                                            class="estadisticas-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Matomo) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "ESTADISTICASDELACOMUNIDAD")
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (administrarClausulas)
+                                    {
+                                        @* Cláusulas Registro / Cláusulas Legales *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCLAUSULASREGISTRO")"
+                                            data-searchable="cláusulas, legales, cláusulas legales, legal, cláusula,"
+                                            class="clausulas-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ClausulasLegales) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCLAUSULASREGISTRO", "CLAUSULASREGISTRO")
+                                            </a>
+                                        </li> 
+                                    }
 
-                                    @* Estadísticas de la comunidad (Matomo) *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARMATOMO")"
-                                   data-searchable="seo, estadísticas, analytics, matomo"
-                                   class="estadisticas-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Matomo) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS","ESTADISTICASDELACOMUNIDAD")
-                                        </a>
-                                    </li>
+                                    @if(administrarBuzonCorreo){
+                                        @* Buzón de Correo *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADBUZONCORREO")"
+                                            data-searchable="correo, configurar correo, buzón, correo"
+                                            class="correo-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_BuzonDeCorreo) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "BUZONDECORREO")
+                                            </a>
+                                        </li>
+                                    }
 
-                                    @* Cláusulas Registro / Cláusulas Legales *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCLAUSULASREGISTRO")"
-                                   data-searchable="cláusulas, legales, cláusulas legales, legal, cláusula,"
-                                   class="clausulas-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ClausulasLegales) ? "activo" : null)">
-                                            @Html.GetText("COMADMINCLAUSULASREGISTRO", "CLAUSULASREGISTRO")
-                                        </a>
-                                    </li>
+                                    @if(administrarServiciosExternos){
+                                        @* Servicios externos *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRASERVICIOSEXTERNOS")"
+                                            data-searchable="servicios externos, servicio, externo"
+                                            class="servicioexterno-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ServiciosExternos) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "SERVICIOSEXTERNOS")
+                                            </a>
+                                        </li>
+                                    }
 
-                                    @* Buzón de Correo *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADBUZONCORREO")"
-                                   data-searchable="correo, configurar correo, buzón, correo"
-                                   class="correo-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_BuzonDeCorreo) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS","BUZONDECORREO")
-                                        </a>
-                                    </li>
+                                    @if(administrarEstadoSistemas){
+                                        @* Estado sistemas *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARESTADOSISTEMAS")"
+                                            data-searchable="estado sistemas, estado, sistemas, instalaciones, comprobar"
+                                            class="system-status @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EstadoSistemas) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "ADMINISTRARESTADOSISTEMAS")
+                                            </a>
+                                        </li>
+                                    }
 
-                                    @* Servicios externos *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRASERVICIOSEXTERNOS")"
-                                   data-searchable="servicios externos, servicio, externo"
-                                   class="servicioexterno-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_ServiciosExternos) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS","SERVICIOSEXTERNOS")
-                                        </a>
-                                    </li>
-
-                                    @* Estado sistemas *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARESTADOSISTEMAS")"
-                                   data-searchable="estado sistemas, estado, sistemas, instalaciones, comprobar"
-                                   class="system-status @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EstadoSistemas) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS","ADMINISTRARESTADOSISTEMAS")
-                                        </a>
-                                    </li>
                                 }
                                 else if (isInEcosistemaPlatform)
                                 {
-                                    @* Buzón de Correo Ecosistema *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADBUZONCORREOECOSISTEMA")"
-                                   data-searchable="correo, configurar correo, buzón, correo"
-                                   class="correo-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_BuzonDeCorreo) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS","BUZONDECORREO")
-                                        </a>
-                                    </li>
+                                    @if(administrarBuzonCorreoEcosistema){
+                                        @* Buzón de Correo Ecosistema *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADBUZONCORREOECOSISTEMA")"
+                                            data-searchable="correo, configurar correo, buzón, correo"
+                                            class="correo-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_BuzonDeCorreo) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "BUZONDECORREO")
+                                            </a>
+                                        </li>
+                                    }
+
                                 }
 
                                 @* Opciones MetaAdministrador*@
-                                @if (permisosPaginas.EsMetaAdministrador && !isInEcosistemaPlatform)
+                                @if (!isInEcosistemaPlatform && administrarOpcionesMetaAdmin)
                                 {
                                     <li>
                                         <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINMETAADMINOPTIONS")"
-                                   data-searchable="meta, metaadministrador, configurar, configurar, opciones, opciones metaadministrador, Permisos,Activar CMS,Permitir administración páginas,Permitir administración semantica,Permitir administración desarrolladores,Permitir administración de eventos,Permitir administración de vistas,Activar vistas personalizadas,Los usuarios pueden realizar cargas masivas de adjuntos,Ocultar la contraseña al cambiarla,Duplicar los recursos,Nombre de la Politica de Cookies,Permisos cms,Consulta Sparql,PreguntaTIC,Buscador SPARQL,Ficha descripción documento,Consulta SQLServer,Apariencia,Mostrar cabecera simplificada (Oculta el resto de identidades de la cabecera),Etiquetas enlazadas con Linked Open Data,Agrupar eventos de nuevos usuarios,La descarga de RDFs estará disponible en las páginas de búsqueda,Mostrar advertencia a los usuarios nuevos de que el sitio Web usa cookies,Versión CSS,VersiÓN JS,Copyright,Enlace que va a aparecer en el pie de página como contacto,Número de recursos relacionados,Tamaño al que deben hacerse las capturas de las miniaturas de las imágenes,Cargar los editores y lectores de los recursos en las páginas de búsqueda,Número de items a mostrar en la sección Actividad reciente,Usuarios,Los usuarios deben introducir su fecha de nacimiento en el registro obligatoriamente,Los usuarios pueden definir una biografía corta en su perfil,Los usuarios deben seleccionar el nivel de privacidad que quieren para su perfil obligatoriamente,Los usuarios pueden invitar a sus contactos a participar en la comunidad,Enviar boletín de suscripciones por correo electrónicoEl envío se realiza de forma diario o semanal según lo tenga configurado cada usuario,Los usuarios reciben la newsletter por defecto,Suscripción automática de cada usuario nuevo a todas las categorías de la comunidad,Permitir la descarga de adjuntos a usuarios no logueados,Caducidad de la contraseña,Sitemap,SiteMap activado,Los recursos se suben a Google Drive,Quitar la parte de la URL /comunidad/nombrecomunidad,Segundos que se dejan de intervalo entre un envío de newsletter y otro,Indica si esta permitida la replicación convencional de Gnoss,Semántica,Ocultar las facetas de objetos de conocimiento y mostrar sólo las comunes de recursos en las páginas de búsqueda donde aparezcan más de un objeto de conocimiento,Tercera petición de facetas trae las facetas plegadas Hasta que el usuario no pincha en cada faceta, no se despliega (Requiere personalizar las vistas para ver las facetas plegadas),Mostrar grafo Dbpedia en recursos,Mantener texto tesauro semántico invariable,Número de facetas que se pintan en la primera petición de facetas,Número de facetas que se pintan en la segunda petición de facetas,Propiedades que se desean usar en el algoritmo de personas recomendadas Cada propiedad lleva asociado su peso en el algoritmo,Lista de facetas lentas que se van a obtener de manera asíncrona para que la tercera petición de facetas llegue antes,Propiedad que especifica los idiomas en los que un recurso está descrito,Propiedad que si está activada, los usuarios que lleguen en un idioma que no está definido en un Componente del CMS, no podrán verlo,Propiedad que especifica los idiomas en los que un recurso está descrito,Condición para excluir recursos cuando se busque desde un móvil,Indica si se puden permitir las mayúsculas en el grafo de búsqueda,Redes sociales,Login con Facebook,Login con Google,Login con Twitter,Proyectos,Estilos,Configuración de la ruta de estilos,Service Bus,Segundos a esperar para la siguiente comprobación en ServiceBus,Número de reintentos para coger el fichero configurado con ServiceBus,"
-                                   class="meta-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OpcionesMetaAdministrador) ? "activo" : null)">
+                                        data-searchable="meta, metaadministrador, configurar, configurar, opciones, opciones metaadministrador, Permisos,Activar CMS,Permitir administración páginas,Permitir administración semantica,Permitir administración desarrolladores,Permitir administración de eventos,Permitir administración de vistas,Activar vistas personalizadas,Los usuarios pueden realizar cargas masivas de adjuntos,Ocultar la contraseña al cambiarla,Duplicar los recursos,Nombre de la Politica de Cookies,Permisos cms,Consulta Sparql,PreguntaTIC,Buscador SPARQL,Ficha descripción documento,Consulta SQLServer,Apariencia,Mostrar cabecera simplificada (Oculta el resto de identidades de la cabecera),Etiquetas enlazadas con Linked Open Data,Agrupar eventos de nuevos usuarios,La descarga de RDFs estará disponible en las páginas de búsqueda,Mostrar advertencia a los usuarios nuevos de que el sitio Web usa cookies,Versión CSS,VersiÓN JS,Copyright,Enlace que va a aparecer en el pie de página como contacto,Número de recursos relacionados,Tamaño al que deben hacerse las capturas de las miniaturas de las imágenes,Cargar los editores y lectores de los recursos en las páginas de búsqueda,Número de items a mostrar en la sección Actividad reciente,Usuarios,Los usuarios deben introducir su fecha de nacimiento en el registro obligatoriamente,Los usuarios pueden definir una biografía corta en su perfil,Los usuarios deben seleccionar el nivel de privacidad que quieren para su perfil obligatoriamente,Los usuarios pueden invitar a sus contactos a participar en la comunidad,Enviar boletín de suscripciones por correo electrónicoEl envío se realiza de forma diario o semanal según lo tenga configurado cada usuario,Los usuarios reciben la newsletter por defecto,Suscripción automática de cada usuario nuevo a todas las categorías de la comunidad,Permitir la descarga de adjuntos a usuarios no logueados,Caducidad de la contraseña,Sitemap,SiteMap activado,Los recursos se suben a Google Drive,Quitar la parte de la URL /comunidad/nombrecomunidad,Segundos que se dejan de intervalo entre un envío de newsletter y otro,Indica si esta permitida la replicación convencional de Gnoss,Semántica,Ocultar las facetas de objetos de conocimiento y mostrar sólo las comunes de recursos en las páginas de búsqueda donde aparezcan más de un objeto de conocimiento,Tercera petición de facetas trae las facetas plegadas Hasta que el usuario no pincha en cada faceta, no se despliega (Requiere personalizar las vistas para ver las facetas plegadas),Mostrar grafo Dbpedia en recursos,Mantener texto tesauro semántico invariable,Número de facetas que se pintan en la primera petición de facetas,Número de facetas que se pintan en la segunda petición de facetas,Propiedades que se desean usar en el algoritmo de personas recomendadas Cada propiedad lleva asociado su peso en el algoritmo,Lista de facetas lentas que se van a obtener de manera asíncrona para que la tercera petición de facetas llegue antes,Propiedad que especifica los idiomas en los que un recurso está descrito,Propiedad que si está activada, los usuarios que lleguen en un idioma que no está definido en un Componente del CMS, no podrán verlo,Propiedad que especifica los idiomas en los que un recurso está descrito,Condición para excluir recursos cuando se busque desde un móvil,Indica si se puden permitir las mayúsculas en el grafo de búsqueda,Redes sociales,Login con Facebook,Login con Google,Login con Twitter,Proyectos,Estilos,Configuración de la ruta de estilos,Service Bus,Segundos a esperar para la siguiente comprobación en ServiceBus,Número de reintentos para coger el fichero configurado con ServiceBus,"
+                                        class="meta-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OpcionesMetaAdministrador) ? "activo" : null)">
                                             @Html.GetText("COMADMINCOMUNIDAD", "ADMINMETAADMINOPTIONS")
                                         </a>
                                     </li>
                                 }
+                                @* Eventos Externos*@
+                                @if (isInEcosistemaPlatform)
+                                {
+                                    @if(administrarEventosExternosEcosistema){
+                                        @* Eventos Externos (Ecosistema) *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAREVENTOSEXTERNOSECOSISTEMA")"
+                                            data-searchable="eventos, evento, externos, eventos externos,"
+                                            class="eventosexternos-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EventosExternos) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "ADMINISTRAREVENTOSEXTERNOS")
+                                            </a>
+                                        </li>
+                                    }                                    
+                                }
+                                else
+                                {                                    
+                                    @if (administrarEventos && !string.IsNullOrEmpty(Comunidad.ShortName))
+                                    {
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAREVENTOSEXTERNOS")"
+                                            data-searchable="eventos, evento, externos, eventos externos,"
+                                            class="eventosexternos-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EventosExternos) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "ADMINISTRAREVENTOSEXTERNOS")
+                                            </a>
+                                        </li>
+                                    }
 
+                                }
+                                @* Administrar categorias plataforma *@
+                                @if (isInEcosistemaPlatform)
+                                {
+                                    @if (administrarCategoriasPlataforma)
+                                    {
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCATEGORIASECOSISTEMA")"
+                                            data-searchable="Categorías, crear categoria, editar categoria, borrar categoria, eliminar categoria, modificar categoría"
+                                            class="categorias-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Categorias) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "CATEGORIASPLATAFORMA")
+                                            </a>
+                                        </li>
+                                    }
+                                }
                                 @* Opciones de la plataforma *@
                                 @if (isInEcosistemaPlatform)
                                 {
-                                    <li>
-                                        <a href="@Comunidad.UrlMyGnoss/@Html.GetText("URLSEM", "ADMINOPCIONESPLATAFORMA")"
-                                   data-searchable="opciones avanzadas, plataforma"
-                                   class="configuracion-plataforma @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OpcionesAvanzadasPlataforma) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS","CONFIGURACIONDELAPLATAFORMA")
-                                        </a>
-                                    </li>
+                                    @if(administrarConfiguracion){
+                                        <li>
+                                            <a href="@Comunidad.UrlMyGnoss/@Html.GetText("URLSEM", "ADMINOPCIONESPLATAFORMA")"
+                                            data-searchable="opciones avanzadas, plataforma"
+                                            class="configuracion-plataforma @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OpcionesAvanzadasPlataforma) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "CONFIGURACIONDELAPLATAFORMA")
+                                            </a>
+                                        </li>
+                                    }
 
-                                    @* Integración Sharepoint *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSHAREPOINT")"
-                                   data-searchable="sharepoint, colaborativos, documentos, share, microsoft"
-                                   class="admin-sharepoint @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_IntegracionSharePoint) ? "activo" : null)">
-                                            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSHAREPOINT")
-                                        </a>
-                                    </li>
+                                    @if(administrarSharepoint){
+                                        @* Integración Sharepoint *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSHAREPOINT")"
+                                            data-searchable="sharepoint, colaborativos, documentos, share, microsoft"
+                                            class="admin-sharepoint @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_IntegracionSharePoint) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARSHAREPOINT")
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (administrarMiembrosEcosistema)
+                                    {
+                                        @* Administrar miembros ecosistema *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARMIEMBROSECOSISTEMA")"
+                                               data-searchable="miembros, administrar miembros, usuarios, administrar usuarios"
+                                               class="miembros-comunidad @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Miembros) ? "activo" : null)">
+                                                @Html.GetText("COMADMIN", "MIEMBROS")
+                                            </a>
+                                        </li>
+                                    }
                                 }
                             </ul>
                         </div>
@@ -580,82 +752,68 @@ Variables
                         @* Sección Descubrimiento y análisis *@
                         <div class="group-collapse grafo">
                             <a href="#grafo-de-conocimiento"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento) ? "activo" : null) "
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento) ? "true" : "false" )">
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento) ? "activo" : null) "
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento) ? "true" : "false" )">
                                 <span class="material-icons" alt="@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")" title="@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")" aria-label="@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")">blur_on</span>
-                                <span class="texto">@Html.GetText("DEVTOOLS","GRAFODECONOCIMIENTO")</span>
+                                <span class="texto">@Html.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO")</span>
                                 @* Arrow down/up dependiendo (Activo /No activo) *@
                                 <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                             </a>
 
                             <div id="grafo-de-conocimiento" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento) ? "show" : null) ">
                                 <ul class="pmd-sidebar-nav">
-                                    @* Configurar visibilidad de Administración Semántica *@
-                                    @if (permisosPaginas.AdministracionSemanticaPermitido && (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Semantica))))
-                                    {
+                                    @if(administrarOC){
                                         @* Opción Objetos de conocimiento/Ontologías *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")"
-                                   data-searchable="objetos de conocimiento, ontología, ontology, objetos, conocimiento"
-                                   class="objetos-conocimiento-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_ObjetosConocimiento_Ontologias) ? "activo" : null)">
-                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM") / Ontologías
+                                            data-searchable="objetos de conocimiento, ontología, ontology, objetos, conocimiento"
+                                            class="objetos-conocimiento-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_ObjetosConocimiento_Ontologias) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAROBJETOSCONOCIMIENTOCOM") / @Html.GetText("DEVTOOLS", "ONTOLOGIAS")
                                             </a>
                                         </li>
-
+                                    }
+                                    @if(administrarTesauros){
                                         @* Opción Tesauros semánticos *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINTESSEM")"
-                                   data-searchable="tesauros, semantico, semántico, tesauros semánticos"
-                                   class="tesauros-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_Tesauros_Semanticos) ? "activo" : null)">
+                                            data-searchable="tesauros, semantico, semántico, tesauros semánticos"
+                                            class="tesauros-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_Tesauros_Semanticos) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINTESSEM")
                                             </a>
                                         </li>
-
-                                        @* Opción Grafos simples - Desaparecería
-                        <li>
-                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINGRAFSIMPLE")"
-                        data-searchable="grafos simples, grafos, simples, graph"
-                        class="grafos-simples @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_GrafosSimples) ? "activo" : null)">
-                        @Html.GetText("COMADMINCOMUNIDAD", "ADMINGRAFSIMPLE")
-                        </a>
-                        </li>
-                        *@
                                     }
-
-                                    @if (permisosPaginas.AdministracionDesarrolladoresPermitido)
+                                    @if (administrarSPARQL)
                                     {
-                                        administrarDiseño = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
-                                        if (administrarDiseño)
-                                        {
-                                            @* Opción SparQL *@
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCONSULTASPARQL")"
-                                   data-searchable="sparql, consultas, consultas sparql"
-                                   class="sparql @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_SparQL) ? "activo" : null)">
-                                                    @Html.GetText("DEVTOOLS", "SPARQLENDPOINT")
-                                                </a>
-                                            </li>
-
-                                            @* Opción Carga masiva *@
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "CONSULTACARGAMASIVA")"
-                                   data-searchable="carga, carga masiva, masiva, datos"
-                                   class="carga-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_CargaMasiva) ? "activo" : null)">
-                                                    @Html.GetText("DEVTOOLS","CONSULTARCARGASMASIVAS")
-                                                </a>
-                                            </li>
-
-                                            @* Opción Borrado masivo *@
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRABORRADOMASIVO")"
-                                   data-searchable="borrar, borrado masivo, masivo"
-                                   class="borrado-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_BorradoMasivo) ? "activo" : null)">
-                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRABORRADOMASIVO")
-                                                </a>
-                                            </li>
-                                        }
+                                        @* Opción SparQL *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCONSULTASPARQL")"
+                                            data-searchable="sparql, consultas, consultas sparql"
+                                            class="sparql @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_SparQL) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "SPARQLENDPOINT")
+                                            </a>
+                                        </li>
+                                    }                                       
+                                    @if(administrarConsultasCargaMasiva){
+                                        @* Opción Carga masiva *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "CONSULTACARGAMASIVA")"
+                                            data-searchable="carga, carga masiva, masiva, datos"
+                                            class="carga-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_CargaMasiva) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "CONSULTARCARGASMASIVAS")
+                                            </a>
+                                        </li>
                                     }
+                                    @if(administrarBorradoMasivo){
+                                        @* Opción Borrado masivo *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRABORRADOMASIVO")"
+                                            data-searchable="borrar, borrado masivo, masivo"
+                                            class="borrado-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_BorradoMasivo) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRABORRADOMASIVO")
+                                            </a>
+                                        </li>
+                                    }     
                                 </ul>
                             </div>
                         </div>
@@ -665,90 +823,78 @@ Variables
                         @* Sección Descubrimiento y análisis *@
                         <div class="group-collapse insights">
                             <a href="#insights"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis) ? "activo" : null) "
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis) ? "true" : "false" )">
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis) ? "activo" : null) "
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis) ? "true" : "false" )">
                                 <span class="material-icons" alt="@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")" title="@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")" aria-label="@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")">insights</span>
-                                <span class="texto">@Html.GetText("DEVTOOLS","DESCUBRIMIENTOYANALISIS")</span>
+                                <span class="texto">@Html.GetText("DEVTOOLS", "DESCUBRIMIENTOYANALISIS")</span>
                                 @* Arrow down/up dependiendo (Activo /No activo) *@
                                 <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                             </a>
 
                             <div id="insights" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.DescubrimientoAnalisis) ? "show" : null) ">
                                 <ul class="pmd-sidebar-nav">
-                                    @* Configurar visibilidad *@
-                                    @if (permisosPaginas.AdministracionSemanticaPermitido && (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Semantica))))
-                                    {
+                                    @if(administrarFacetas){
                                         @* Facetas *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARFACETASCOM")"
-                                   data-searchable="facetas, búsquedas, buscar"
-                                   class="facetas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Facetas) ? "activo" : null)">
+                                            data-searchable="facetas, búsquedas, buscar"
+                                            class="facetas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Facetas) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFACETASCOM")
                                             </a>
                                         </li>
-
+                                    }
+                                    @if(administrarSugerencias){
                                         @* Indexación autoCompletar *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARSUGERENCIASBUSQUEDA")"
-                                   data-searchable="indexación, indexar, auto, autocompletar"
-                                   class="sugerencias-busqueda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Sugerencias_de_busqueda) ? "activo" : null)">
-                                                @Html.GetText("DEVTOOLS","SUGERENCIASDEBUSQUEDA")
+                                            data-searchable="indexación, indexar, auto, autocompletar"
+                                            class="sugerencias-busqueda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Sugerencias_de_busqueda) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "SUGERENCIASDEBUSQUEDA")
                                             </a>
                                         </li>
-                                    }
-
-                                    @if (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Pagina)))
-                                    {
+                                    }  
+                                    @if(administrarContextos){
                                         @* Información contextual *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCONTEXTOSCOM")"
-                                   data-searchable="contextos, información contextual, información, contexto, componentes, componentes en recursos"
-                                   class="informacion-contextual @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Informacion_Contextual) ? "activo" : null)">
-                                                @Html.GetText("DEVTOOLS","INFORMACIONCONTEXTUAL")
+                                            data-searchable="contextos, información contextual, información, contexto, componentes, componentes en recursos"
+                                            class="informacion-contextual @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Informacion_Contextual) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "INFORMACIONCONTEXTUAL")
+                                            </a>
+                                        </li>
+                                    }                                        
+                                    @* Opción Parámetros de búsqueda personalizados *@
+                                    @if(administrarParametrosBusqueda){
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAPARAMETROSBUSQUEDAPERSONALIZADOS")"
+                                            data-searchable="parametros, busqueda, búsqueda personalizada, personalizar"
+                                            class="personalizacion-consulta-busqueda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Personalizacion_Consulta_Busqueda) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAPARAMETROSBUSQUEDAPERSONALIZADOS")
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (administrarMapa)
+                                    {
+                                        @* Mapa *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARMAPA")"
+                                            data-searchable="mapas, map"
+                                            class="mapa @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Mapa) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARMAPA")
                                             </a>
                                         </li>
                                     }
 
-
-                                    @* Opción Parámetros de búsqueda personalizados *@
-                                    @if (permisosPaginas.AdministracionDesarrolladoresPermitido)
-                                    {
-                                        administrarDiseño = (permisosPaginas.EsAdministradorProyecto || (permisosPaginas.PaginasPermisosUsuarios != null && permisosPaginas.PaginasPermisosUsuarios.Contains(TipoPaginaAdministracion.Diseño)));
-                                        if (administrarDiseño)
-                                        {
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAPARAMETROSBUSQUEDAPERSONALIZADOS")"
-                                   data-searchable="parametros, busqueda, búsqueda personalizada, personalizar"
-                                   class="personalizacion-consulta-busqueda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Personalizacion_Consulta_Busqueda) ? "activo" : null)">
-                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAPARAMETROSBUSQUEDAPERSONALIZADOS")
-                                                </a>
-                                            </li>
-                                        }
-                                    }
-
-                                    @if (permisosPaginas.AdministracionPaginasPermitido)
-                                    {
-                                        if (administrarPaginas || permisosPaginas.CMSActivado)
-                                        {
-                                            @* Mapa *@
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARMAPA")"
-                                   data-searchable="mapas, map"
-                                   class="mapa @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Mapa) ? "activo" : null)">
-                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARMAPA")
-                                                </a>
-                                            </li>
-
-                                            @* Gráficos - Nueva implementación en Páginas *@
-                                            <li>
-                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARYCHARTS")"
-                                   data-searchable="graficos, graph"
-                                   class="graficos @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Graficos) ? "activo" : null)">
-                                                    @Html.GetText("DEVTOOLS", "ADMINISTRARGRAFICOS")
-                                                </a>
-                                            </li>
-                                        }
+                                    @if(administrarGraficos){
+                                        @* Gráficos - Nueva implementación en Páginas *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARYCHARTS")"
+                                            data-searchable="graficos, graph"
+                                            class="graficos @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.DescubrimientoAnalisis_Graficos) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "ADMINISTRARGRAFICOS")
+                                            </a>
+                                        </li>
                                     }
                                 </ul>
                             </div>
@@ -757,11 +903,11 @@ Variables
                         @* Sección Apariencia *@
                         <div class="group-collapse apariencia">
                             <a href="#apariencia"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "activo" : null) "
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
-                                <span class="material-icons" alt="@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")" title="@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")" aria-label="@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")">web</span>
-                                <span class="texto">@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")</span>
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "activo" : null) "
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
+                                <span class="material-icons" alt="@Html.GetText("DEVTOOLS","APARIENCIA")" title="@Html.GetText("DEVTOOLS","APARIENCIA")" aria-label="@Html.GetText("DEVTOOLS","APARIENCIA")">web</span>
+                                <span class="texto">@Html.GetText("DEVTOOLS", "APARIENCIA")</span>
                                 @* Arrow down/up dependiendo (Activo /No activo) *@
                                 <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                             </a>
@@ -773,21 +919,24 @@ Variables
                                     {
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARVISTAS")"
-                                   data-searchable="apariencia, vistas, views"
-                                   class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
+                                            data-searchable="apariencia, vistas, views"
+                                            class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")
                                             </a>
                                         </li>
                                     }
                                     else
                                     {
-                                        <li>
-                                            <a href="/@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARVISTASECOSISTEMA")"
-                                   data-searchable="apariencia, vistas, views"
-                                   class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
-                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")
-                                            </a>
-                                        </li>
+                                        @if (administrarVistasEcosistema)
+                                        {
+                                            <li>
+                                                <a href="/@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARVISTASECOSISTEMA")"
+                                                data-searchable="apariencia, vistas, views"
+                                                class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
+                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")
+                                                </a>
+                                            </li>
+                                        }                                    
                                     }
                                 </ul>
                             </div>
@@ -795,44 +944,41 @@ Variables
 
 
                         @* Sección Integración contínua *@
-                        @if (permisosPaginas.AdministracionIntegracionContinua && permisosPaginas.AdministracionDesarrolladoresPermitido)
+                        @if (administrarIC)
                         {
                             <div class="group-collapse integracionContinua">
                                 <a href="#ci-cd"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "activo" : null) "
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
+                                class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "activo" : null) "
+                                data-toggle="collapse"
+                                aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
                                     <span class="material-icons" alt="@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")" title="@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")" aria-label="@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")">published_with_changes</span>
-                                    <span class="texto">@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")</span>
+                                    <span class="texto">@Html.GetText("DEVTOOLS", "INTEGRACIONCONTINUA")</span>
                                     @* Arrow down/up dependiendo (Activo /No activo) *@
                                     <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                                 </a>
 
                                 <div id="ci-cd" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "show" : null) ">
                                     <ul class="pmd-sidebar-nav">
-
-                                        @if (permisosPaginas.AdministracionIntegracionContinua)
-                                        {
-                                            if (permisosPaginas.AdministracionIntegracionContinuaIniciada)
+                                            @if (permisosPaginas.AdministracionIntegracionContinuaIniciada)
                                             {
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARLISTACAMBIO")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, fusionar"
-                                   class="ci-cd-listar-cambios @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarCambios) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, fusionar"
+                                                    class="ci-cd-listar-cambios @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarCambios) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARLISTACAMBIO")
                                                     </a>
                                                 </li>
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESPLIEGUES")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, despliegues"
-                                   class="ci-cd-despliegues @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarDespliegues) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, despliegues"
+                                                    class="ci-cd-despliegues @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarDespliegues) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDESPLIEGUES")
                                                     </a>
                                                 </li>
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAINTEGRACIONCONTINUA")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, subir cambios"
-                                   class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, subir cambios"
+                                                    class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAINTEGRACIONCONTINUA")
                                                     </a>
                                                 </li>
@@ -841,13 +987,12 @@ Variables
                                             {
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARINTEGRACIONCONTINUA")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, crear integracion continua"
-                                   class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, crear integracion continua"
+                                                    class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARINTEGRACIONCONTINUA")
                                                     </a>
                                                 </li>
-                                            }
-                                        }
+                                            }                                        
                                     </ul>
                                 </div>
                             </div>
@@ -857,24 +1002,92 @@ Variables
                         @if (showDocumentationByDefault == true)
                         {
                             <a href="@urlSeccionDevToolsDocumentation"
-                   class="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Documentacion) ? "activo" : null)">
+                            class="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Documentacion) ? "activo" : null)">
                                 <span class="material-icons" alt="Documentación" title="Documentación" aria-label="Documentación">description</span>
                                 Documentación
                             </a>
                         }
                     }
 
+                    @*Sección Ayuda*@
+                    <div class="group-collapse ayuda">
+                        <a href="#ayuda"
+                        data-toggle="collapse"
+                        aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "true" : "false" )"
+                        class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "activo" : null) ">
+                            <span class="material-icons" alt="@Html.GetText("DEVTOOLS","AYUDA")" title="@Html.GetText("DEVTOOLS","AYUDA")" aria-label="@Html.GetText("DEVTOOLS","AYUDA")">
+                                contact_support
+                            </span>
+                            <span class="texto">@Html.GetText("DEVTOOLS", "AYUDA") (BETA)</span>
+                            @* Arrow down/up dependiendo (Activo /No activo) *@
+                            <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
+                        </a>
+                        <div id="ayuda" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "show" : null) ">
+                            <ul class="pmd-sidebar-nav">
+                                @* Diagnostico problemas *@
+                                @if (permisosPaginas.EsAdministradorProyecto)
+                                {
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "DIAGNOSTICOPROBLEMAS")"
+                                        data-searchable="diagnóstico, problemas, troubleshooting, ayuda, error, fallo"
+                                        class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Ayuda_DiagnosticoProblemas) ? "activo" : null)">
+                                            @Html.GetText("DEVTOOLS", "DIAGNOSTICOPROBLEMAS")
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+
+                    @* Sección mantenimiento *@
+                    <div class="group-collapse mantenimiento">
+                        <a href="#mantenimiento"
+                        data-toggle="collapse"
+                        aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "true" : "false" )"
+                        class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "activo" : null) ">
+                            <span class="material-icons" alt="@Html.GetText("DEVTOOLS","MANTENIMIENTO")" title="@Html.GetText("DEVTOOLS","MANTENIMIENTO")" aria-label="@Html.GetText("DEVTOOLS","MANTENIMIENTO")">
+                                pending_actions
+                            </span>
+                            <span class="texto">@Html.GetText("DEVTOOLS", "MANTENIMIENTO") (BETA)</span>
+                            @* Arrow down/up dependiendo (Activo /No activo) *@
+                            <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
+                        </a>
+                        <div id="mantenimiento" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "show" : null) ">
+                            <ul class="pmd-sidebar-nav">
+                                @if (administrarReprocesar)
+                                {
+                                    @* Regenerar recursos *@
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "REPROCESADORECURSOS")"
+                                        data-searchable="recursos, reprocesado, regenerar, índice"
+                                        class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_ReprocesadoRecursos) ? "activo" : null)">
+                                            @Html.GetText("DEVTOOLS", "REPROCESADORECURSOS")
+                                        </a>
+                                    </li>
+
+                                    @* Tareas en segundo plano *@
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "TAREASFONDO")"
+                                        data-searchable="fondo, segundo plano, tareas"
+                                        class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_TareasFondo) ? "activo" : null)">
+                                            @Html.GetText("DEVTOOLS", "TAREASSEGUNDOPLANO")
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
 
                     @* Sección Apariencia (Ecosistema) *@
                     @if (isInEcosistemaPlatform)
                     {
                         <div class="group-collapse apariencia">
                             <a href="#apariencia"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "activo" : null) "
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
-                                <span class="material-icons" alt="@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")" title="@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")" aria-label="@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")">web</span>
-                                <span class="texto">@Html.GetText("ADMINISTRACIONBASICA","APARIENCIA")</span>
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "activo" : null) "
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
+                                <span class="material-icons" alt="@Html.GetText("DEVTOOLS","APARIENCIA")" title="@Html.GetText("DEVTOOLS","APARIENCIA")" aria-label="@Html.GetText("DEVTOOLS","APARIENCIA")">web</span>
+                                <span class="texto">@Html.GetText("DEVTOOLS", "APARIENCIA")</span>
                                 @* Arrow down/up dependiendo (Activo /No activo) *@
                                 <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                             </a>
@@ -886,21 +1099,24 @@ Variables
                                     {
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARVISTAS")"
-                                   data-searchable="apariencia, vistas, views"
-                                   class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
+                                            data-searchable="apariencia, vistas, views"
+                                            class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")
                                             </a>
                                         </li>
                                     }
                                     else
                                     {
-                                        <li>
-                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARVISTASECOSISTEMA")"
-                                   data-searchable="apariencia, vistas, views"
-                                   class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
-                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")
-                                            </a>
-                                        </li>
+                                        @if(administrarVistasEcosistema)
+                                        {
+                                            <li>
+                                                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARVISTASECOSISTEMA")"
+                                                data-searchable="apariencia, vistas, views"
+                                                class="vistas @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Apariencia_Vistas) ? "activo" : null)">
+                                                    @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARVISTAS")
+                                                </a>
+                                            </li>
+                                        }                                        
                                     }
                                 </ul>
                             </div>
@@ -910,11 +1126,11 @@ Variables
                         {
                             <div class="group-collapse integracionContinua">
                                 <a href="#ci-cd"
-                       class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "activo" : null) "
-                       data-toggle="collapse"
-                       aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
+                                class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "activo" : null) "
+                                data-toggle="collapse"
+                                aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Apariencia) ? "true" : "false" )">
                                     <span class="material-icons" alt="@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")" title="@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")" aria-label="@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")">published_with_changes</span>
-                                    <span class="texto">@Html.GetText("DEVTOOLS","INTEGRACIONCONTINUA")</span>
+                                    <span class="texto">@Html.GetText("DEVTOOLS", "INTEGRACIONCONTINUA")</span>
                                     @* Arrow down/up dependiendo (Activo /No activo) *@
                                     <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
                                 </a>
@@ -922,29 +1138,36 @@ Variables
                                 <div id="ci-cd" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua) ? "show" : null) ">
                                     <ul class="pmd-sidebar-nav">
 
-                                        @if (permisosPaginas.AdministracionIntegracionContinua)
+                                        @if (administrarICEcosistema)
                                         {
                                             if (permisosPaginas.AdministracionIntegracionContinuaIniciada)
                                             {
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARLISTACAMBIOECOSISTEMA")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, fusionar"
-                                   class="ci-cd-listar-cambios @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarCambios) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, fusionar"
+                                                    class="ci-cd-listar-cambios @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarCambios) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARLISTACAMBIO")
                                                     </a>
                                                 </li>
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESPLIEGUESECOSISTEMA")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, despliegues"
-                                   class="ci-cd-despliegues @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarDespliegues) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, despliegues"
+                                                    class="ci-cd-despliegues @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarDespliegues) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDESPLIEGUES")
                                                     </a>
                                                 </li>
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRAINTEGRACIONCONTINUAECOSISTEMA")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, subir cambios"
-                                   class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, subir cambios"
+                                                    class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRAINTEGRACIONCONTINUA")
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="@Comunidad.Url/@Html.GetText("URLSEM", "DESPLEGARWEB")"
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, desplegar web"
+                                                    class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_DesplegarWeb) ? "activo" : null)">
+                                                        @Html.GetText("COMADMINCOMUNIDAD", "DESPLEGARWEB")
                                                     </a>
                                                 </li>
                                             }
@@ -952,8 +1175,8 @@ Variables
                                             {
                                                 <li>
                                                     <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARINTEGRACIONCONTINUAECOSISTEMA")"
-                                   data-searchable="cicd, mejora contínua, ci/cd, integración contínua, crear integración contínua"
-                                   class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
+                                                    data-searchable="cicd, mejora contínua, ci/cd, integración contínua, crear integración contínua"
+                                                    class="ci-cd-admininistrar-integracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua) ? "activo" : null)">
                                                         @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARINTEGRACIONCONTINUA")
                                                     </a>
                                                 </li>
@@ -965,7 +1188,17 @@ Variables
                         }
 
                     }
-
+                    @* Despliegue de aplicaciones especificas (BETA) *@
+                    @if (administrarAplicacionesEspecificas)
+                    {
+                        <div class="group-collapse aplicacionesespecificas">
+                            <a id="administrarAplicacionesEspecificas" href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARAPLICACIONESPECIFICA")" class="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion) ? "activo" : null) ">
+                                <span class="material-icons" alt="arrow_upward" title="arrow_upward" aria-label="arrow_upward">arrow_upward</span>
+                                @Html.GetText("DEVTOOLS", "APLICACIONESESPECIFICASBETA")
+                            </a>
+                        </div>
+                    }
+                    
                     @* Sección de cierre de sesión *@
                     <a href="@Html.GetUrlLogout()" id="usuario_salir">
                         <span class="material-icons" alt="@Html.GetText("MENU", "SALIR")" title="@Html.GetText("MENU", "SALIR")" aria-label="@Html.GetText("MENU", "SALIR")">logout</span>

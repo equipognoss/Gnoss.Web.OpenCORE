@@ -1,3 +1,4 @@
+
 /**
  ***************************************************************************************
  * Logica / Operativas de comportamiento JS para la sección de Grafos de conocimiento de la Comunidad del DevTools
@@ -51,7 +52,7 @@ const operativaGestionFacetas = {
         // Inicializar operativa multiIdioma
         operativaMultiIdioma.init(this.operativaMultiIdiomaParams);    
          
-        that.setupInputsFacetsForAutocomplete();
+        that.setupInputsFacetsForAutocompleteOnLoad();
     },   
 
     /**
@@ -149,8 +150,9 @@ const operativaGestionFacetas = {
         this.txtFacetaTypeClassName = "Type";
         this.chkReciprocaClassName = "chkReciproca";
         this.chkAutocompletarClassName = "chkAutocompletar";
+        this.chkMostrarContadorClassName = "chkMostrarContador"
         this.cmbSelectObjetosConocimientoClassName = "cmbSelectObjetosConocimiento";
-        this.contenedorObjetosConocimientoClassName = "contenedorObjetosConocimiento"
+        this.contenedorObjetosConocimientoClassName = "contenedorObjetosConocimiento";
         // Botón para quitar un item de tipo label
         this.tagRemoveGrupoClassName = "tag-remove-group";
         this.tagRemoveObjetoConocimientoClassName = "tag-remove-objeto-conocimiento";
@@ -398,11 +400,41 @@ const operativaGestionFacetas = {
             });	                        
         });
 
-        // Botón para guardar facetas        
+        // Botón para guardar facetas       
         configEventByClassName(`${that.btnSaveFacetaClassName}`, function(element){
             const $saveButton = $(element);
-            $saveButton.on("click", function(){   
-                that.handleSaveFacetas();                                                              
+            $saveButton.on("click", function () {  
+                // Input con el filtro de la faceta
+                const inputFaceta = that.filaFaceta.find(`.${that.txtClaveFaceta}`)
+                // Panel de objetos de conocimiento en edición
+                const currentPanelObjetosConocimiento = that.filaFaceta.find(`.${that.panObjetosConocimientoClassName}`);
+                // Obtener los objetos de conocimiento
+                const inputHack = currentPanelObjetosConocimiento.find("input[type=hidden]").first();
+                const itemsId = inputHack.val().split(",");
+                if (itemsId.length > 0) {
+                    itemsId.pop();
+                }
+
+                const dataPost = {
+                    pFiltro: inputFaceta.val(),
+                    pOntologiasSeleccionadas: itemsId
+                }
+
+                GnossPeticionAjax(
+                    `${that.urlBase}/validar-faceta`,
+                    dataPost,
+                    true,
+                ).done(function (data) {
+                    // OK - Faceta correcta
+
+                    
+                }).fail(function (data) {
+                    // Faceta mal configurada          
+                    mostrarNotificacion("warning", "Advetencia: "+data, 20000);
+
+                })  
+
+                that.handleSaveFacetas();  
             });	                        
         });
 
@@ -573,6 +605,9 @@ const operativaGestionFacetas = {
         });        
      },
 
+
+    //----------------------------------
+
      /**
       * Método para actualizar la lista de facetas en base al actual listado
       */
@@ -597,43 +632,92 @@ const operativaGestionFacetas = {
         // Agrega las opciones generadas dinámicamente al select        
         this.cmbListaFacetas.html(facetOptionHtml)        
         comportamientoInicial.iniciarSelects2();
-     },
+    },
 
     /**
-     * Método que se ejecuta al influir en el input faceta. Genera una lista de valores de autocompletado
-     * @param {*} inputFaceta 
+     * Método que configurará el input de la faceta a editar para el autocompletado cuando se añadan o eliminen objetos de conocimiento para hacer un filtrado más definido de autocomplete
+     * 
      */
-    setupInputsFacetsForAutocomplete: function () { 
+    setupInputFacetForAutocompleteOnChange: function () {
         const that = this;
 
-        const inputFaceta = $(`.${that.txtClaveFaceta}`);
-        inputFaceta.autocomplete(
+        // Input faceta donde se necesita aplicar el autocomplete
+        const inputFaceta = that.filaFaceta.find(`.${that.txtClaveFaceta}`);
+        // Panel de objetos de conocimiento que está siendo editado
+        const currentPanelObjetosConocimiento = that.filaFaceta.find(`.${that.panObjetosConocimientoClassName}`);
+        // Input oculto donde se añadirá el nuevo item seleccionado
+        const inputHack = currentPanelObjetosConocimiento.find("input[type=hidden]").first();
+        // Obtener los items los items que hay
+        const itemsId = inputHack.val().split(",");
+        if (itemsId.length > 0) {
+            itemsId.pop();
+        }
+        
+        inputFaceta.off().autocomplete(
             null,
             {
-                url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarOntologia",
+                url: `${that.urlBase}/autocompletar`,
                 delay: 0,
                 scroll: false,
                 selectFirst: false,
                 minChars: 1,
                 width: 300,
                 cacheLength: 0,
-                NoPintarSeleccionado: true,
+                NoPintarSeleccionado: false,
                 multiple: true,
                 extraParams: {
-                    grupo: '',
-                    identidad: $('#inpt_identidadID').val(),
-                    organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
-                    proyecto: $('#inpt_proyID').val()
+                    ontologias: itemsId,
                 }
             }
         );
 
+    },
 
-        //Comportamiento resultado cuando se selecciona una resultado de autocomplete 
-        inputFaceta.result(function (event, data, formatted) {             
-            $(this).val(data[0]);             
-        });        
+    /**
+     * Método que configurará el input de la faceta a editar para el autocompletado cuando se cargue la página o se cree una nueva faceta
+     * 
+     * @param {*} inputFaceta 
+     */
+    setupInputsFacetsForAutocompleteOnLoad: function () { 
+        const that = this;
+
+        const inputFacetas = $(`.${that.txtClaveFaceta}`);
         
+        $(inputFacetas).each(function () {
+            const inputFaceta = $(this);
+            const fila = inputFaceta.closest(`.${that.facetaListItemClassName}`);
+            const modalFaceta = fila.find(`.${that.modalFacetaClassName}`);
+            // Panel de objetos de conocimiento que está siendo editado
+            const currentPanelObjetosConocimiento = modalFaceta.find(`.${that.panObjetosConocimientoClassName}`);
+            // Input oculto donde se añadirá el nuevo item seleccionado
+            const inputHack = currentPanelObjetosConocimiento.find("input[type=hidden]");
+            const itemsId = inputHack.val().split(",");
+            if (itemsId.length>0) { 
+                itemsId.pop();
+            }
+            if (!inputFaceta.data("flagsetupautocomplete")) { // Si el autocompletado no ha sido configurado aún
+
+                // Autocomplete para cada input                
+                inputFaceta.off().autocomplete(
+                    null,
+                    {
+                        url: `${that.urlBase}/autocompletar`,
+                        delay: 0,
+                        scroll: false,
+                        selectFirst: false,
+                        minChars: 1,
+                        width: 300,
+                        cacheLength: 0,
+                        NoPintarSeleccionado: false,
+                        multiple: true,
+                        extraParams: {
+                            ontologias: itemsId,
+                        }
+                    }
+                );
+                inputFaceta.data("flagsetupautocomplete","true"); // Flag: el autocompletado de la faceta ya ha sido configurado. No será necesario volverlo a configurar cuando se cree una nueva faceta (pero sí cuando se añadan o eliminen objetos de conocimiento)
+            }
+        });     
     },
      
     
@@ -830,6 +914,9 @@ const operativaGestionFacetas = {
         const inputHack = currentPanelObjetosConocimiento.find("input[type=hidden]").first();
         // Añadido el id del item seleccionado al inputHack                
         inputHack.val(inputHack.val() + id + ',');
+
+        // Actualizar el filtrado de ontologias para el autocompletado
+        that.setupInputFacetForAutocompleteOnChange();
     },
     
 
@@ -862,6 +949,8 @@ const operativaGestionFacetas = {
         const selectItem = cmbSelectObjetosConocimiento.find(`[data-key='${key}']`);
         selectItem.prop('disabled', false);
 
+        // Actualizar las ontologias empleadas para filtrar las opciones de autocompletado
+        that.setupInputFacetForAutocompleteOnChange();
         // Eliminar el tag/item del panel de tags
         itemRemoved.remove();
     },
@@ -1419,6 +1508,7 @@ const operativaGestionFacetas = {
             that.ListaFacetas[prefijoClave + '.Presentacion'] = panelEdicion.find(`.${that.cmbPresentacionClassName}`).val();
             that.ListaFacetas[prefijoClave + '.Disenyo'] = panelEdicion.find(`.${that.cmbDisenyoClassName}`).val();
             that.ListaFacetas[prefijoClave + '.AlgoritmoTransformacion'] = panelEdicion.find(`.${that.cmbAlgoritmoTransformacionClassName}`).val();
+
             // Revisión de filtros de la faceta
             that.ListaFacetas[prefijoClave + '.Filtros'] = panelEdicion.find('[name="Filtros"]').val();             
             // Recorrer y obtener los filtros si es que los hay
@@ -1446,6 +1536,7 @@ const operativaGestionFacetas = {
             // Obtención de datos (Checkbox / Combobox)
             // Check de Autocompletar
             that.ListaFacetas[prefijoClave + '.Autocompletar'] = $(`#${that.chkAutocompletarClassName}_SI_${id}`).is(':checked'); // panelEdicion.find('[name="Autocompletar"]').is(':checked');
+            that.ListaFacetas[prefijoClave + '.MostrarContador'] = $(`#${that.chkMostrarContadorClassName}_SI_${id}`).is(':checked');
             // ComboBox de comportamiento
             that.ListaFacetas[prefijoClave + '.Comportamiento'] = panelEdicion.find(`.${that.cmbComportamientoClassName}`).val();
             that.ListaFacetas[prefijoClave + '.OcultaEnFacetas'] = $(`#${that.chkOcultaEnFacetasClassName}_SI_${id}`).is(':checked'); // panelEdicion.find('[name="OcultaEnFacetas"]').is(':checked');
@@ -2145,7 +2236,7 @@ const operativaGestionFacetas = {
             let textoMultiIdioma = "";
             // Comprobar que hay al menos un texto por defecto para el nombre
             let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val(); //panMultiIdioma.find('#edicion_' + that.IdiomaPorDefecto + ' input').val();
-            
+
             if (textoIdiomaDefecto == null || textoIdiomaDefecto == "") {
                 const fila = inputName.closest(".component-wrap.contexto-row");
                 that.mostrarErrorNombreVacio(fila, panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`));
@@ -2164,11 +2255,16 @@ const operativaGestionFacetas = {
                 }
                 // Escribir el nombre del multiIdioma en el campo Hidden
                 textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
-                
+
                 listaTextos.push({ "key": idioma, "value": textoIdioma });
-            });            
+            });
             inputName.val(textoMultiIdioma);
-        }               
+        } else {
+            // Sin multiIdioma.
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            // Establecer el nombre en el input correspondiente
+            inputName.val(textoIdiomaDefecto);
+        }
     },
 
     
@@ -2650,27 +2746,27 @@ const operativaGestionFacetas = {
   * Operativa para la gestión y configuración de Sugerencia de búsqueda (Autocompletado) de la comunidad desde "Sugerencias de búsqueda"
   */
 const operativaGestionSugerenciasDeBusqueda = {
-   /**
-    * Inicializar operativa
-    */
+    /**
+     * Inicializar operativa
+     */
     init: function (pParams) {
         this.pParams = pParams;
         this.config(pParams);
         this.configEvents();
-        this.configRutas(); 
-        this.triggerEvents();            
+        this.configRutas();
+        this.triggerEvents();
     },
 
     /**
      * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
      */
-    triggerEvents: function(){
+    triggerEvents: function () {
         const that = this;
-        
+
         // Configurar inputs para autocomplete
         that.setupInputForAutocomplete(that.txtPropiedadAutocompletar, that.inputPropiedadesAutocompletar);
         that.setupInputForAutocomplete(that.txtPropiedadPalabrasTextoLibre, that.inputTextoLibreAutocompletar);
-    },   
+    },
 
     /**
      * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
@@ -2678,15 +2774,15 @@ const operativaGestionSugerenciasDeBusqueda = {
     configRutas: function (pParams) {
         this.urlBase = refineURL();
         this.urlSave = `${this.urlBase}/save`;
-        this.urlRegenerar = `${this.urlBase}/regenerar`; 
+        this.urlRegenerar = `${this.urlBase}/regenerar`;
         // Objeto donde se guardarán los items para su guardado
         this.Options = {};
-    },  
+    },
 
     /*
     * Inicializar elementos de la vista
     * */
-    config: function (pParams) {        
+    config: function (pParams) {
         // Contenedor modal
         this.modalContainer = $("#modal-container");
 
@@ -2700,16 +2796,26 @@ const operativaGestionSugerenciasDeBusqueda = {
         this.btnAddPropiedadPalabrasTextolLibre = $("#btnAddPropiedadPalabrasTextolLibre");
         // Botón X para quitar un tag de tipo Propiedades autocompletar
         this.btnRemoveTagPropertyAutocompleteClassName = 'tag-remove-property-autocomplete';
-        this.btnRemoveTagTextAutocompleteClassName = 'tag-remove-text-autocomplete';        
+        this.btnRemoveTagTextAutocompleteClassName = 'tag-remove-text-autocomplete';
         // Input oculto que contendrá las propiedades autocompletar
         this.inputPropiedadesAutocompletar = $('[name="PropiedadesAutocompletar"]');
         // Input oculto que contendrá el texto libre para autocompletar
         this.inputTextoLibreAutocompletar = $('[name="PropiedadPalabrasTextoLibre"]');
-        // Botón para regenerar el autocompletar
-        this.btnRegenerarAutocomplete = $("#btnRegenerarAutocomplete");
         // Botón para guardar los cambios
         this.btnGuardarAutocompletar = $("#btnGuardarAutocompletar");
-    },   
+        // Modal de advertencia del usuario
+        this.modalUserAlert = $("#modal-alert-user");
+        // Botón para confirmar propiedad inexistente
+        this.btnConfirmAddNonExistentProperty = $(".btnConfirmAddNonExistentProperty");
+        // Botón para rechazar propiedad inexistente
+        this.btnRejectNonExistentProperty = $(".btnRejectNonExistentProperty");
+        // Texto de confirmacion de insercion
+        this.txtSuccessfulInsert = pParams.txtSuccessfulInsert;
+        // Texto negacion de insercion
+        this.txtRejectedInsert = pParams.txtRejectedInsert;
+        // Titulo modal
+        this.tituloModal = $(".nonExistentProp").text();
+    },
 
 
     /**
@@ -2730,84 +2836,157 @@ const operativaGestionSugerenciasDeBusqueda = {
         })
         .on('hidden.bs.modal', (e) => {
             // Vaciar el modal
-            resetearModalContainer(); 
+            resetearModalContainer();
         });
-                                                                  
+
+        this.modalUserAlert.on('show.bs.modal', (e) => {
+            that.triggerModalContainer = $(e.relatedTarget);
+
+            let label = $(".nonExistentProp");
+
+            if (that.triggerModalContainer.data("button") == 'prop-ac') {
+                label.text(label.text().replace("@1@", `"${that.txtPropiedadAutocompletar.val()}"`));
+            } else if (that.triggerModalContainer.data("button") == 'prop-txtFree') {
+                label.text(label.text().replace("@1@", `"${that.txtPropiedadPalabrasTextoLibre.val()}"`));
+            }
+
+        }).on('hide.bs.modal', () => {
+            // Acción de ocultar el modal
+            // Reseteamos el titulo para la futura propiedad
+            $(".nonExistentProp").text(that.tituloModal);
+        });
+
+        /**
+         * Se añade la tag que no existe en la ontologia por decision del usuario.
+         */
+        this.btnConfirmAddNonExistentProperty.on('click', function () {
+
+            // Si por alguna razón quiere añadirla igualmente se pintará la tag
+            if (that.triggerModalContainer.data("button") == 'prop-ac') {
+                that.handleSelectAutocompleteProperty()
+            } else if (that.triggerModalContainer.data("button") == 'prop-txtFree') {
+                that.handleSelectFreeTextProperty(that.txtPropiedadPalabrasTextoLibre.val(),true)
+            }
+
+            // Cerramos el modal
+            that.modalUserAlert.modal("hide");
+            // Notificamos al usuario
+            mostrarNotificacion("success", that.txtSuccessfulInsert);
+        });
+
+        this.btnRejectNonExistentProperty.on('click', function () {
+            // Cerramos el modal
+            that.modalUserAlert.modal("hide");
+            // Notificamos al usuario
+            if (that.triggerModalContainer.data("button") == 'prop-ac') {
+                that.txtPropiedadAutocompletar.val("");
+            } else if (that.triggerModalContainer.data("button") == 'prop-txtFree') {
+                that.txtPropiedadPalabrasTextoLibre.val("");
+            }
+            mostrarNotificacion("error", that.txtRejectedInsert);
+        });
+
         /**
          * Click en "Añadir etiqueta" que no se haya seleccionado vía "autocomplete"
          */
-        this.btnAddPropiedadAutocompletar.on("click", function(){
+        this.btnAddPropiedadAutocompletar.on("click", function () {
             // Añadir propiedad si se ha escrito algo
-            if (that.txtPropiedadAutocompletar.length > 0){
-                // Añadir tambien tag para TextoLibre
-                // that.txtPropiedadPalabrasTextoLibre.val(that.txtPropiedadAutocompletar.val());                
-                //PintarTags(that.txtPropiedadAutocompletar);
-                //PintarTags(that.txtPropiedadPalabrasTextoLibre);
-                that.handleSelectAutocompleteProperty($(this));
-            }            
-        });            
-            
+            if (that.txtPropiedadAutocompletar.length > 0) {
+                // Si existe la propiedad introducida se pintarán las tags tanto en la seccion
+                // de autocompletar como en la seccion de texto libre.
+                that.verificarPropiedad(that.txtPropiedadAutocompletar.val(), "autocompletar");
+            }
+        });
+
         /**
          * Comportamiento resultado cuando se selecciona una resultado de autocomplete de Propiedades para autocompletar
          */
-        this.txtPropiedadAutocompletar.result(function (event, data, formatted) {            
+        this.txtPropiedadAutocompletar.result(function (event, data, formatted) {
             const dataName = data[0];
-            const dataId = data[1];            
+            const dataId = data[1];
             const input = $(event.currentTarget);
             that.handleSelectAutocompleteAutocompleteProperty(input, dataName, dataId, true, true);
-        });       
+            mostrarNotificacion("success", "Se ha insertado correctamente.");
+        });
 
-        // Botón (X) para poder eliminar items desde el Tag                           
-        configEventByClassName(`${that.btnRemoveTagPropertyAutocompleteClassName}`, function(element){
+        // Botón (X) para poder eliminar items desde el Tag Autocompletar                          
+        configEventByClassName(`${that.btnRemoveTagPropertyAutocompleteClassName}`, function (element) {
             const $jqueryElement = $(element);
-            $jqueryElement.off().on("click", function(){                 
-                const $itemRemoved = $jqueryElement.parent().parent();                                                                              
-                that.handleClickBorrarTagAutocompleteProperty($itemRemoved, true, false);                
-            });	                        
-        }); 
-        
-        // Botón (X) para poder eliminar items desde el Tag                           
-        configEventByClassName(`${that.btnRemoveTagTextAutocompleteClassName}`, function(element){
+            $jqueryElement.off().on("click", function () {
+                const $itemRemoved = $jqueryElement.parent().parent();
+                that.handleClickBorrarTagAutocompleteProperty($itemRemoved, true, false);
+            });
+        });
+
+        // Botón (X) para poder eliminar items desde el Tag Texto libre             
+        configEventByClassName(`${that.btnRemoveTagTextAutocompleteClassName}`, function (element) {
             const $jqueryElement = $(element);
-            $jqueryElement.off().on("click", function(){                 
-                const $itemRemoved = $jqueryElement.parent().parent();                                                                              
-                that.handleClickBorrarTagAutocompleteProperty($itemRemoved, false, true);                
-            });	                        
-        });         
-        
+            $jqueryElement.off().on("click", function () {
+                const $itemRemoved = $jqueryElement.parent().parent();
+                that.handleClickBorrarTagAutocompleteProperty($itemRemoved, false, true);
+            });
+        });
+
         // Click en "Añadir etiqueta" que no se haya seleccionado vía "autocomplete" para texto libre
-        this.btnAddPropiedadPalabrasTextolLibre.on("click", function(){
+        this.btnAddPropiedadPalabrasTextolLibre.on("click", function () {
             // Añadir propiedad si se ha escrito algo
-            if (that.txtPropiedadPalabrasTextoLibre.length > 0){
-                PintarTags(that.txtPropiedadPalabrasTextoLibre, true);
-            }            
-        });  
+            if (that.txtPropiedadPalabrasTextoLibre.length > 0) {
+                var tag = that.txtPropiedadPalabrasTextoLibre.val().trim();
+
+                // Comprobamos que existe la propiedad introducida
+                that.verificarPropiedad(tag, "textoLibre");
+            }
+        });
 
         /**
          * Comportamiento resultado cuando se selecciona una resultado de autocomplete de para autocompletar
          */
-         this.txtPropiedadPalabrasTextoLibre.result(function (event, data, formatted) {            
+        this.txtPropiedadPalabrasTextoLibre.result(function (event, data, formatted) {
             const dataName = data[0];
-            const dataId = data[1];
-            const input = $(event.currentTarget);
-            that.handleSelectAutocompleteAutocompleteProperty(input, dataName, dataId, false, true);
+            that.handleSelectFreeTextProperty(dataName, true);
+            mostrarNotificacion("success", "Se ha insertado correctamente.");
         });
-     
-        // Botón para regenerar autoComplete
-        this.btnRegenerarAutocomplete.on("click", function(){
-            that.handleRegenerarAutocomplete();
-        });   
-        
-        // Click para guardar los datos en backend
-        this.btnGuardarAutocompletar.on("click", function(){
-            that.handleSave();
-        });      
-    },
 
+        // Click para guardar los datos en backend
+        this.btnGuardarAutocompletar.on("click", function () {
+            that.handleSave();
+        });
+    },
+    
+    verificarPropiedad: function (tag, origen) {
+        const that = this;
+        var datos = tag.trim();
+        const datapost = {
+            propertyValue: datos,
+            grupo: '',
+            identidad: $('#inpt_identidadID').val(),
+            organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+            proyecto: $('#inpt_proyID').val(),
+            lista: "",
+        }
+
+        GnossPeticionAjax(
+            `${location.href}/verify`,
+            datapost,
+            true
+        ).done(function (data) {
+            if (origen == 'textoLibre') {
+                that.handleSelectFreeTextProperty(datos, true);
+            } else {
+                that.handleSelectAutocompleteProperty();
+            }
+            mostrarNotificacion("success", "Se ha insertado correctamente.");
+        }).fail(function (data) {
+            const origenBtn = origen == 'autocompletar' ? that.btnAddPropiedadAutocompletar : that.btnAddPropiedadPalabrasTextolLibre;
+            that.modalUserAlert.modal("show", origenBtn);
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    },
     /**
      * Método para obtener los datos que serán guardados posteriormente en backend
      */
-    obtenerDatos: function(){
+    obtenerDatos: function () {
         const that = this;
 
         // Datos de Propiedades para autocompletar
@@ -2817,97 +2996,92 @@ const operativaGestionSugerenciasDeBusqueda = {
 
         // Datos a enviar a backEnd
         that.Options['TagsAutocompletar'] = stringAutocompletar;
-        that.Options['TagsTxtLibre'] = stringTxtLibre;        
-    },
-    
-    /**
-     * Método para regenear el autocomplete
-     */
-    handleRegenerarAutocomplete: function(){  
-        const that = this;                          
-        // Obtener los datos        
-        that.obtenerDatos();
-        
-        loadingMostrar();
-
-        // Hacer petición para regenerar los datos
-        GnossPeticionAjax(
-        that.urlRegenerar,
-        that.Options,
-        true
-        ).done(function (data) {
-            mostrarNotificacion("success", "El servicio de autocompletar se ha regenerado correctamente.");            
-        }).fail(function (data) {                        
-            mostrarNotificacion("error", "Se ha producido un error al regenerar el servicio de autocompletar. Contacta con el administrador."); 
-        }).always(function () {
-            loadingOcultar();
-        });
+        that.Options['TagsTxtLibre'] = stringTxtLibre;
     },
 
     /**
-     * Método para añadir un tag de Propiedades para autocompletar
+     * Método para añadir un tag de Propiedades para autocompletar y texto libre
      */
-    handleSelectAutocompleteProperty: function(){
+    handleSelectAutocompleteProperty: function () {
         const that = this;
-        
+
         // Añadir propiedad para autocompletar
         let propertyId = guidGenerator();
         const propertyValue = that.txtPropiedadAutocompletar.val().trim();
 
-        if (propertyValue.trim().length == 0){
+        if (propertyValue.length == 0) {
             return;
         }
 
         // Panel/Sección donde se ha realizado toda la operativa
-        let tagsSection = that.txtPropiedadAutocompletar.parent().parent();
-
-        // Contenedor de items donde se añadirá el nuevo seleccionado para su visualización
-        let tagContainer = tagsSection.find(".tag-list");
-        // Input oculto donde se añadirá el nuevo item seleccionado
-        let inputHack = tagsSection.find("input[type=hidden]").first();
-        // Añadido el id del item seleccionado al inputHack                
-        inputHack.val(inputHack.val() + propertyValue + ',');
-    
-        // Etiqueta del item seleccionado        
-        let autocompletePropertyTag = '';
-        autocompletePropertyTag += '<div class="tag" id="'+ propertyId +'" title="'+ propertyValue +'">';
-            autocompletePropertyTag += '<div class="tag-wrap">';
-                autocompletePropertyTag += '<span class="tag-text">' + propertyValue + '</span>';
-                autocompletePropertyTag += "<span class=\"tag-remove tag-remove-property-autocomplete material-icons\">close</span>";                
-            autocompletePropertyTag += '</div>';
-        autocompletePropertyTag += '</div>';
-
-        // Añadir el item en el contenedor de items para su visualización
-        tagContainer.append(autocompletePropertyTag);        
+        that.addTagContainer(propertyId, propertyValue, that.txtPropiedadAutocompletar, true);
 
         // Añadir texto libre autocompletar    
-        propertyId = guidGenerator();    
+        this.handleSelectFreeTextProperty(propertyValue);
+
+        // Vaciar el input donde se ha escrito 
+        that.txtPropiedadAutocompletar.val('');
+    },
+
+    /**
+     * Método para añadir una tag a la seccion de texto libre
+     * @param {any} pPropertyValue
+     * @returns
+     */
+    handleSelectFreeTextProperty: function (pPropertyValue, pEnableRemoveButton = false){
+        const that = this;
+
+        let propertyId = guidGenerator();
+
+        if (pPropertyValue.length == 0) {
+            return;
+        }
+
+        that.addTagContainer(propertyId, pPropertyValue, that.txtPropiedadPalabrasTextoLibre, pEnableRemoveButton);
+
+        that.txtPropiedadPalabrasTextoLibre.val('');
+    },
+
+    /**
+     * Método que agrega los valores del input a la seccion de tags
+     * @param {any} pPropertyID
+     * @param {any} pPropertyValue
+     * @param {any} pContainerSelector
+     * @param {any} pEnableRemoveButton
+     */
+    addTagContainer: function (pPropertyID, pPropertyValue, pContainerSelector, pEnableRemoveButton = false) {
 
         // Panel/Sección donde se ha realizado toda la operativa
-        tagsSection = that.txtPropiedadPalabrasTextoLibre.parent().parent();
+        let tagsSection = pContainerSelector.parent().parent();
 
         // Contenedor de items donde se añadirá el nuevo seleccionado para su visualización
-        tagContainer = tagsSection.find(".tag-list");
+        let tagContainer = tagsSection.find(".tag-list").first();
+
         // Input oculto donde se añadirá el nuevo item seleccionado
-        inputHack = tagsSection.find("input[type=hidden]").first();
-        // Añadido el id del item seleccionado al inputHack                
-        inputHack.val(inputHack.val() + propertyValue + ',');
+        let inputHack = tagsSection.find("input[type=hidden]").first();
+
+        // Añadido el id del item seleccionado al inputHack   
+        inputHack.val(`${inputHack.val()}${pPropertyValue},`);
+
+        let closeBox = '<span class="tag-remove tag-remove-property-autocomplete material-icons">close</span'
+        // Tipo de icono de cerrar
+        if (pContainerSelector.attr("name") == "PropiedadPalabraTextoLibre") {
+            closeBox = '<span class="tag-remove tag-remove-text-autocomplete material-icons remove">close</span>'
+        }
 
         // Etiqueta del item seleccionado        
-        autocompletePropertyTag = '';
-            autocompletePropertyTag += '<div class="tag" id="'+ propertyId +'" title="'+ propertyValue +'">';
-                autocompletePropertyTag += '<div class="tag-wrap">';
-                    autocompletePropertyTag += '<span class="tag-text">' + propertyValue + '</span>';
-                    // autocompletePropertyTag += "<span class=\"tag-remove tag-remove-property-autocomplete material-icons\">close</span>";
-                    autocompletePropertyTag += '<input type="hidden" value="'+ propertyId +'" />';
-                autocompletePropertyTag += '</div>';
-            autocompletePropertyTag += '</div>';
+        let autocompletePropertyTag = `
+            <div class="tag" id="${pPropertyID}" title="${pPropertyValue}">
+                <div class="tag-wrap">
+                    <span class="tag-text">${pPropertyValue}</span>
+                    ${pEnableRemoveButton ? closeBox : ''}
+                    <input type="hidden" value="${pPropertyID}" />
+                </div>
+            </div>
+        `;
 
         // Añadir el item en el contenedor de items para su visualización
         tagContainer.append(autocompletePropertyTag);
-
-        // Vaciar el input donde se ha escrito 
-        that.txtPropiedadAutocompletar.val('');         
     },
 
 

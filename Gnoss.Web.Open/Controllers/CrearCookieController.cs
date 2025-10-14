@@ -22,6 +22,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,9 +33,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class CrearCookieController : ControllerBaseWeb
     {
-        public CrearCookieController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CrearCookieController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CrearCookieController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -48,8 +54,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             bool redirigirAEntrando = false;
             string redirectValido = ComprobarRedirectValido(crearCookieLoginModel.redirect);
+            mLoggingService.GuardarLog($"Redirect: {crearCookieLoginModel.redirect} ||| RedirectValido: {redirectValido}", mlogger);
             if (!crearCookieLoginModel.redirect.Equals(redirectValido))
             {
+                mLoggingService.GuardarLog($"Se ha cambiado el redirect a {ProyectoSeleccionado.UrlPropia(IdiomaUsuario)}", mlogger);
                 crearCookieLoginModel.redirect = ProyectoSeleccionado.UrlPropia(IdiomaUsuario);
             }
             try
@@ -92,7 +100,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         Guid tokenRecibidoID = Guid.Empty;
                         if (Guid.TryParse(tokenRecibido, out tokenRecibidoID))
                         {
-                            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SolicitudCN>(), mLoggerFactory);
                             string login = solicitudCN.ObtenerLoginAPILoginDeToken(new Guid(tokenRecibido), true);
                             solicitudCN.Dispose();
 

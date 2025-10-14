@@ -24,8 +24,20 @@ Variables
 
 @{
 	@* Controlar el tipo de Contexto *@
-
-    nombreTipoGadget = Model.TipoGadget.ToString();
+	string fecha = string.Empty;
+	if(Model.FechaCreacion == Model.FechaModificacion && Model.FechaCreacion.ToShortDateString().Equals("01/01/0001"))
+	{
+		fecha = "01/01/2024";
+	}
+	else if (Model.FechaModificacion > Model.FechaCreacion)
+	{
+		fecha = Model.FechaModificacion.ToShortDateString();
+	}
+	else
+	{
+		fecha = Model.FechaCreacion.ToShortDateString();
+	}
+	nombreTipoGadget = Model.TipoGadget.ToString();
     switch (Model.TipoGadget)
     {
         case TipoGadget.HtmlIncrustado:
@@ -113,7 +125,7 @@ Variables
 						</div>						
 						@* Información: Fecha última actualización *@
 						<div class="component-fecha-wrap">
-							<span class="component-fecha">05/10/2022</span>
+							<span class="component-fecha">@fecha</span>
 						</div>
 					</div>
 					@*Sección de acciones del contexto *@

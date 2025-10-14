@@ -87,7 +87,18 @@ Variables
                         </div>                        
                         <div class="component-fecha-wrap">
                             @* Fecha de creación / Actualización de la cláusula *@
-                            <span class="component-fecha">01 / 01 / 2022</span>
+                            @if (Model.DateCreation == Model.DateModification && Model.DateModification.ToShortDateString().Equals("01/01/0001"))
+                            {
+                                <span class="component-fecha">01/01/2022</span>
+                            }
+                            else if (Model.DateCreation < Model.DateModification)
+                            {
+                                <span class="component-fecha">@Model.DateModification.ToShortDateString() </span>
+                            }
+                            else
+                            {
+                                <span class="component-fecha">@Model.DateCreation.ToShortDateString() </span>
+                            }
                         </div>
                     </div>
                     @* Acciones de la cláusula *@

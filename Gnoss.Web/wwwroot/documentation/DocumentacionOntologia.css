@@ -1,0 +1,78 @@
+﻿.cabecera-idiomas-volver {
+    display: flex;
+    justify-content: flex-end; /* Alinea los elementos al final (derecha) */
+    align-items: center; /* Centra verticalmente si hay varias líneas */
+    gap: 1rem; /* Espacio entre selector de idioma y el enlace */
+}
+
+/* Puedes conservar este estilo si ya lo usas */
+.idiomas {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Espacio interno entre texto y dropdown */
+}
+
+/* Opcional: para estilizar el enlace "Volver a Comunidad" */
+.cabecera-idiomas-volver a {
+    text-decoration: none;
+    color: #007bff;
+    transition: color 0.2s ease;
+}
+
+.cabecera-idiomas-volver a:hover {
+    color: #0056b3;
+}
+.idiomas > p {
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--c-texto-claro);
+    margin-bottom: 0;
+    margin-top: 0;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    unicode-bidi: isolate;
+}
+
+
+.idiomas .dropdown {
+    padding-left: 9px;
+}
+
+.dropdown, .dropleft, .dropright, .dropup {
+    position: relative;
+}
+
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+
+user agent stylesheet
+div {
+    display: block;
+    unicode-bidi: isolate;
+}
+
+element.style {
+    will-change: transform;
+    position: absolute;
+    transform: translate3d(-218px, -151px, 0px);
+    top: 0px;
+    left: 0px;
+}
+
+.idiomas .dropdown > .dropdown-menu {
+    width: 260px;
+}
+
+.basic-dropdown.dropdown-menu {
+    padding: 10px 0;
+    border-radius: 0;
+    background-color: var(--c-blanco);
+}
+
+.dropdown-menu.show {
+    display: block;
+}

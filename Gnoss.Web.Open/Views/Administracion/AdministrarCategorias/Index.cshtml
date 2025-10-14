@@ -12,6 +12,12 @@ Variables
 @{
     CommunityModel Comunidad = Html.GetComunidad();
     Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+    string infoCategorias = Html.GetText("DEVTOOLS", "EDICIONYCREACIONDECATEGORIASPARALACLASIFICACIONDELOSRECURSOS");
+    if (isInEcosistemaPlatform)
+    {
+        infoCategorias = Html.GetText("DEVTOOLS", "EDICIONYCREACIONDECATEGORIASPARALACLASIFICACIONDECOMUNIDADES");
+    }
 }
 
 @*
@@ -21,12 +27,21 @@ Variables
 @* Migas de Pan *@
 <div class="col col-12 col-breadcrumb">
     <ul>
-        <li>
-            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
-        </li>
-        <li>
-            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD")</a>
-        </li>
+        @if (!isInEcosistemaPlatform)
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/configuracion">@Html.GetText("DEVTOOLS", "CONFIGURACION")</a>
+            </li>
+        }
+        else
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+        }
         <li>
             @Html.GetText("ADMINISTRACIONBASICA", "CATEGORIAS")
         </li>
@@ -35,7 +50,7 @@ Variables
     <div class="col-breadcrumb__documentation" style="display: flex; align-items: center;">
         <button type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" data-toggle="modal" data-target="#right_modal_lg">
             <span class="material-icons texto-primario documentation__icon" data-toggle="modal" data-target="#right_modal_lg" style="cursor:pointer">description</span>
-            <span class="documentation__text" style="font-weight: 300;">Documentación</span>
+            <span class="documentation__text" style="font-weight: 300;">@Html.GetText("DEVTOOLS", "DOCUMENTACION")</span>
         </button>
     </div>
 </div>
@@ -44,18 +59,19 @@ Variables
 <div class="formulario-edicion background-blanco">
     @* Título de la sección *@
     <h2>@Html.GetText("ADMINISTRACIONBASICA", "CATEGORIAS")</h2>
-    <p>
-        @Html.GetText("DEVTOOLS", "EDICIONYCREACIONDECATEGORIASPARALACLASIFICACIONDELOSRECURSOS")
-    </p>
+    <p>@infoCategorias</p>
 
     @* Permitir multilenguaje de categorías *@
-    <div class="custom-control custom-checkbox mr-sm-2 mb-2">
-        <input type="checkbox" id="chkMultiIdioma"
-               name="chkMultiIdioma"
-               class="custom-control-input"
-        @Html.Raw(Model.MultiLanguaje ? "checked=\"checked\"" : "")>
-        <label class="custom-control-label" for="chkMultiIdioma">@Html.GetText("COMADMINCATEGORIAS", "ACTIVAREDICIONMULTIIDIOMA")</label>
-    </div>
+    @if ((ViewBag.CrearCategoriaPermitido != null && ViewBag.CrearCategoriaPermitido) || (ViewBag.ModificarCategoriaPermitido != null && ViewBag.ModificarCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+    {
+        <div class="custom-control custom-checkbox mr-sm-2 mb-2">
+            <input type="checkbox" id="chkMultiIdioma"
+                   name="chkMultiIdioma"
+                   class="custom-control-input"
+            @Html.Raw(Model.MultiLanguaje ? "checked=\"checked\"" : "")>
+            <label class="custom-control-label" for="chkMultiIdioma">@Html.GetText("COMADMINCATEGORIAS", "ACTIVAREDICIONMULTIIDIOMA")</label>
+        </div>
+    }    
 
     @* Contenido central de Tesauro de Categorías + Tabs de idiomas *@
     <div id="panTesauro">
@@ -63,15 +79,13 @@ Variables
     </div>
 
     @* Botón para guardado de datos *@
-    @if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+    @if ((ViewBag.ModificarCategoriaPermitido != null && ViewBag.ModificarCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
     {
-        @* No permitir guardar *@
-        <input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")" />
+        <input id="btnGuardarCategorias" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDARORDENCAT")" />
     }
     else
     {
-        @* Permitir guardar *@
-        <input id="btnGuardarCategorias" type="button" @(Model.PasosRealizados != "" ? "disabled" : "") class="btn btn-primary uppercase" value="@Html.GetText("COMMON", "GUARDAR")" />
+        <input id="btnNoGuardarCategorias" disabled type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDARORDENCAT")" />
     }
 </div>
 

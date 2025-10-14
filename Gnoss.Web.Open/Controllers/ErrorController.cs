@@ -13,6 +13,7 @@ using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.Routes;
@@ -29,6 +30,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -44,16 +47,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     public class ErrorController : ControllerBaseWeb
     {
         //private RouteConfig mRouteConfig;
-        public ErrorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public ErrorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ErrorController> logger, ILoggerFactory loggerFactory)
+             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             //mRouteConfig = routeConfig;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             #region Cargamos el proyecto seleccionado
-            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
             Guid? idProyecto = mConfigService.ObtenerProyectoConexion();
             if (idProyecto == null || idProyecto.Equals(Guid.Empty))
             {
@@ -95,7 +102,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (!string.IsNullOrEmpty(nompreCortoProy))
                 {
-                    ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                     base.ProyectoSeleccionadoError404 = proyectoCL.ObtenerProyectoIDPorNombreCorto(nompreCortoProy);
                     UtilIdiomas = null;
                     proyectoCL.Dispose();
@@ -129,7 +136,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string tituloInt = pControlador.UtilIdiomas.GetText("404", "TITULO");
 
             #region StatusCode
-            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
             Guid? idProyecto = mConfigService.ObtenerProyectoConexion();
             if (idProyecto == null || idProyecto.Equals(Guid.Empty))
             {
@@ -206,7 +213,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //Si es un ID, se trata de la url de recurso:
             if (Guid.TryParse(tempDocID, out docID))
             {
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
                 docCN.ObtenerDocumentoPorIDCargarTotal(docID, dataWrapperDocumentacion, true, false, null);
 

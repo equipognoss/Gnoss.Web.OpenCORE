@@ -1,0 +1,124 @@
+﻿@model CMSAdminComponenteHistorialViewModel
+@*
+    Descripción
+    -----------------------------------------------
+    Vista modal que servirá para ver el historial de un componente.
+
+    Variables
+    ----------------------------------------------------------------
+*@
+@{
+    CMSAdminComponenteVersionViewModel ComponenteActual = Model.Componentes.OrderByDescending(item => item.Fecha).First();
+    string urlCompareComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + ComponenteActual.ComponenteID + "/compare";
+    int version = Model.Componentes.Count();
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista Modal ver el historial de un Recurso --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">history</span>@Html.GetText("COMPARARVERSIONES", "HISTORIAL")
+    </p>
+    <span class="material-icons cerrar"
+          data-dismiss="modal"
+          aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    @* Tabla con las versiones del componente  *@
+    <table class="display nowrap table table-sm tabla-versiones" id="panHistorial_table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>@Html.GetText("HISTORIALVERSIONES", "VERSION")</th>
+                <th>@Html.GetText("HISTORIALVERSIONES", "REVISION")</th>
+                <th>@Html.GetText("HISTORIALVERSIONES", "EDITOR")</th>
+                <th>@Html.GetText("COMMON", "COMENTARIO")</th>
+                <th>@Html.GetText("COMMON", "ACCIONES")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (CMSAdminComponenteVersionViewModel componente in Model.Componentes.OrderByDescending(recurso => recurso.Fecha))
+            {
+                <tr>
+                    @* Columnas de DataTables*@
+                    @* REVISION *@
+                    <td>
+                        <div class="check-wrapper">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="@componente.VersionID">
+                                <label class="custom-control-label" for="@componente.VersionID"></label>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="pl-4">@version</td>
+                    @* FECHA*@
+                    <td>@componente.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                    @* AUTOR *@
+                    <td>@componente.Autor</td>
+                    <td>@componente.Comentario</td>
+                    @* RESTAURAR *@
+                    @if (componente.VersionID == ComponenteActual.VersionID)
+                    {
+                        <td>@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</td>
+                    }
+                    else
+                    {
+                        <td>
+                            <a class="btn btn-outline-grey btnRestoreVersionCMS" data-target="#modal-comparar-componentes"
+                               data-toggle="modal"  data-version-id="@componente.VersionID" data-version-actual-id="@ComponenteActual.VersionID">
+                                <span class="material-icons">restore</span>
+                                @Html.GetText("HISTORIALVERSIONES", "RESTAURAR")
+                            </a>
+                        </td>
+                    }
+                </tr>
+                version--;
+            }
+        </tbody>
+    </table>
+
+    @* Confirmación de Restaurar *@
+    <div class="confirmRestaurar">
+        <div style="display: none;" class="stateShowForm" id="panels">
+            <div class="loading" id="loading" style="display: none;">
+                <p><span class="spinner-border mr-2 texto-primario"></span>Cargando formulario, un momento por favor</p>
+            </div>
+            <div class="box form activeForm" id="action" style="display: block;">
+                <div id="panAccionDoc">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panelBotonera">
+        <a id="btnComparar" 
+            class="btn btn-primary uppercase"
+            data-target="#modal-comparar-componentes"
+            data-toggle="modal"
+            disabled>@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
+    </div>
+</div>
+
+@* Mensaje informativo del proceso*@
+<div id="despAccionRec_@ComponenteActual.ComponenteID">
+    <div>
+        <div id="menssages">
+            <div class="ok"></div>
+            <div class="ko"></div>
+        </div>
+    </div>
+</div>
+
+@* Input oculto para guardar los ids de los checks chequeados *@
+<input type="hidden" id="txtHackCheckSeleccionados" />
+<input type="hidden" id="txtComponenteActualID" data-componente-id="@ComponenteActual.ComponenteID" />
+<input type="hidden" id="txtUrlHistorialComponente" data-url="@($"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSHISTORIALCOMPONENTE")}/{ComponenteActual.ComponenteID}")" />
+
+<script type="text/javascript">
+    (function ($) {
+        operativaGestionHistorialCMS.init();
+    })();
+</script>

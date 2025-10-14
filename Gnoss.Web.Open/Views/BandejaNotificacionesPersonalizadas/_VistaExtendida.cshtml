@@ -1,0 +1,27 @@
+﻿@model NotificacionesModel
+<table class="table table-bordered">
+    <thead>
+        <tr scope="row">
+            <th scope="col">
+                <div>
+                    @Html.GetText("NOTIFICACIONESPERSONALIZADAS", "CONTENIDO")
+                </div>
+            </th>
+            <th scope="col">
+                <div>
+                    @Html.GetText("NOTIFICACIONESPERSONALIZADAS", "FECHANOTI")
+                </div>
+            </th>
+        </tr>
+    </thead>
+    @{string fecha = Model.fechaNotificacion;
+    DateTime dt = DateTime.ParseExact(fecha, "yyyyMMddHHmmss", null);}
+    <tr scope="row">
+        <td scope="col">
+            @Model.contenidoNotificacion
+        </td>
+        <td scope="col">
+            @dt.ToString("dd/MM/yy")
+        </td>
+    </tr>
+</table>

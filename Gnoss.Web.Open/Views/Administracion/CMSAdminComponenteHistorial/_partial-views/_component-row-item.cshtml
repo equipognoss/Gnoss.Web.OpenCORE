@@ -1,0 +1,55 @@
+@model string
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utilizará para pintar la fila de un componente que estará dentro de un contenedor de componentes.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	string componentId = Model;
+
+	CMSAdminComponenteEditarViewModel.PropiedadComponente PropiedadComponente = ViewBag.PropiedadComponente;
+	bool isGrupoComponentes = PropiedadComponente.TypeComponent == TipoComponenteCMS.GrupoComponentes ? true : false;	
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Fila de información de un componente dentro de un contenedor de componentes --------------------
+*@
+
+<li class="component-wrap component-row" data-componentid="@componentId" draggable="false">
+	<div class="component">
+		<div class="component-header-wrap">
+			@* Cabecera del componente *@
+            <div class="component-header">
+                @* Icono para arrastrar *@
+				<div class="component-sortable js-component-sortable-component">
+					<span class="material-icons-outlined sortable-icon">drag_handle</span>
+				</div>
+                @* Contenido del item *@
+				<div class="component-header-content">
+					<div class="component-header-left">                                    
+						<div class="component-name-wrap">
+                            @* Nombre del item *@
+							<span class="component-name">
+								@* Mostrar loading hasta que se muestre el nombre del componente *@
+								<span class="component-real-name">
+									<span class="spinner-border spinner-border-sm" role="status">
+										<span class="sr-only">Cargando...</span>
+									</span>
+								</span>
+								@* ID del componente *@
+                                <span class="component-name-id">
+									@componentId
+								</span>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</li>

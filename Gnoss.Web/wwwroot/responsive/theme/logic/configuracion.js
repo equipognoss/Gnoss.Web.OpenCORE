@@ -1,8 +1,954 @@
+
+
+//TFG LAYO
 /**
- ***************************************************************************************
- * Logica / Operativas de comportamiento JS para la sección de Configuración de páginas de la Comunidad del DevTools
- * *************************************************************************************
+ * Operativa para la gestión de asistente de despliegue de aplicaciones 
  */
+
+/***********************************************************************************************
+ 
+
+
+
+/*******************************************************************************************/
+function refineURL(url = undefined) {
+    //get full URL
+    const currURL = url == undefined ? window.location.href : url; //get current address
+
+    //Get the URL between what's after '/' and befor '?' 
+    //1- get URL after'/'
+    // const afterDomain= currURL.substring(currURL.lastIndexOf('/') + 1);
+    const afterDomain = currURL;
+    //2- get the part before '?'
+    const beforeQueryString = afterDomain.split("?")[0];
+
+    return beforeQueryString;
+}
+
+const operativaAplicacionEspecifica = {
+
+    /**
+   * Inicializar operativa
+   */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas();
+    },
+    /**
+   * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
+   */
+    configRutas: function (pParams) {
+        this.urlBase = refineURL();
+        //elimina un volumen compartido
+        this.urlDeleteVolumenCompartido = `${this.urlBase}/eliminarvolumencompartido`;
+        //edita una aplicacion especifica
+        this.urlSaveVolumenCompartido = `${this.urlBase}/editaplicacionespecifica`;
+        //obtiene los volumenes compartidos de una aplicacion
+        this.urlObtenerVolumenCompartidoAplicacion = `${this.urlBase}/obtenervolumencompartidoaplicacion`; 
+        this.urlCompilarAplicacionConDatos = `${this.urlBase}/Compilar-Aplicacion-Especifica-Con-Datos`; 
+    },
+    config: function (pParams) {
+
+        // Boton para guardar un volumen compartido
+        this.bton_guardarVolumenCompartido = $("#btn_anadir_vol");
+        //Span del desplegable para editar volumenes compartidos
+        this.spanEditarVolumenCompartido = $(".liEditarVolumenCompartido");
+        //Span del desplegable para eliminar volumenes compartidos
+        this.spanEliminarVolumenCompartido = $(".liEliminarVolumenCompartido");
+        //Boton NO en el modal de eliminar volumenes compartidos
+        this.btnNoEliminarVolumenCompartido = $("#btn_No_Eliminar_Volumen_Compartido_Modal");
+        //Boton SI en el modal de eliminar volumenes compartidos
+        this.btnSiEliminarVolumenCompartido = $("#btn_Si_Eliminar_Volumen_Compartido_Modal");
+        //Boton EDITAR en el modal de editar volumenes compartidos
+        this.btnEditarVolumenCompartido = $("#btn_editar_vol_comp");
+        //Span del desplegable para editar aplicaciones especificas
+        this.spanEditarAplicacionEspecifica = $(".liEditarAplicacionEspecifica");
+        //Span del desplegable para eliminar aplicaciones especificas
+        this.spanEliminarAplicacionEspecifica = $(".liEliminarAplicacionEspecifica");
+        //Boton NO en el modal de eliminar aplicaiones especificas
+        this.btnNoEliminarAplicacionEspecifica = $("#btn_No_Eliminar_Aplicacion_Especifica_Modal");
+        //Boton SI en el modal de eliminar aplicaciones especificas
+        this.btnSiEliminarAplicacionEspecifica = $("#btn_Si_Eliminar_Aplicacion_Especifica_Modal");
+        //Span para desplegar la aplicacion
+        this.btnDesplegarAplicacionEspecifica = $(".liDesplegarAplicacionEspecifica");
+        //Boton NO en el modal de desplegar aplicaiones especificas
+        this.btnNoDesplegarAplicacionEspecifica = $("#btn_No_Desplegar_Aplicacion_Especifica_Modal");
+        //Boton SI en el modal de desplegar aplicaciones especificas
+        this.btnSiDesplegarAplicacionEspecifica = $("#btn_Si_Desplegar_Aplicacion_Especifica_Modal");
+        //Boton NO en el modal de eliminar volumen compartido de manera individual
+        this.btnNoEliminarVolumenCompartidoAplicacion = $("#btn_No_Eliminar_Volumen_Compartido_Aplicacion_Modal");
+        //Boton SI en el modal de elimnar volumen compartido de manera individual
+        this.btnSiEliminarVolumenCompartidoAplicacion = $("#btn_Si_Eliminar_Volumen_Compartido_Aplicacion_Modal");
+        //Boton NO en el modal de eliminar volumen de la aplicacion de manera individual
+        this.btnNoEliminarVolumenIndividualAplicacion = $("#btn_No_Eliminar_Volumen_Individual_Aplicacion_Modal");
+        //Boton SI en el modal de elimnar volumen de la plicaion de manera individual
+        this.btnSiEliminarVolumenIndividualAplicacion = $("#btn_Si_Eliminar_Volumen_Individual_Aplicacion_Modal");
+        //Boton NO en el modal de eliminar variable de la aplicacion de manera individual
+        this.btnNoEliminarVariableIndividualAplicacion = $("#btn_No_Eliminar_Variable_Aplicacion_Modal");
+        //Boton SI en el modal de elimnar variable de la plicaion de manera individual
+        this.btnSiEliminarVariableIndividualAplicacion = $("#btn_Si_Eliminar_Variable_Aplicacion_Modal");
+        //Boton NO en el modal de desplegar aplicaiones especificas post compilado
+        this.btnNoDesplegarAplicacionEspecificaPostCompilado = $("#btn_No_Desplegar_Aplicacion_Especifica_Post_Compilado_Modal");
+        //Boton SI en el modal de desplegar aplicaciones especificas post compilado
+        this.btnSiDesplegarAplicacionEspecificaPostCompilado = $("#btn_Si_Desplegar_Aplicacion_Especifica_Post_Compilado_Modal");
+        //Span del desplegable para desplegar aplicaciones especificas compiladas correctamente
+        this.spanDesplegarAplicacionEspecificaPostCompilado = $(".liDesplegarAplicacionEspecificaPost");
+
+
+
+
+        // Objeto donde se guardará la configuración para su envío a "backend"
+        this.options = {};
+    },
+
+    /**
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+
+        // Botón para editar los volumeens en el desplegable
+        this.spanEditarVolumenCompartido.click(function () {
+            that.handleShowModalEditVol(this.id);
+        });
+        //Boton para eliminar volumenes compartidos
+        this.btnSiEliminarVolumenCompartido.click(function () {
+            that.handleDeleteVol();
+        });
+        //Boton que te muestra el modal de eliminar volumen compartido
+        this.spanEliminarVolumenCompartido.click(function () {
+            that.handleShowModalDeleteVol(this.id);
+        });
+        //Boton que te oculta el modal de eliminar volumen compartido
+        this.btnNoEliminarVolumenCompartido.click(function () {
+            that.handleHideModalDeleteVol();
+        });
+        //Boton que te oculta el modal de eliminar variable
+        this.btnNoEliminarVariableIndividualAplicacion.click(function () {
+            that.handleHideModalDeleteVar();
+        });
+        // Botón para mostrar el modal de editar las aplicaciones especificas
+        this.spanEditarAplicacionEspecifica.click(function () {
+            that.handleShowModalEditEspecificApp(this.id);
+        });
+        //Boton para eliminar aplicaciones especificas
+        this.btnSiEliminarAplicacionEspecifica.click(function () {
+            that.handleDeleteApp(this.id);
+        });
+        //Boton para ocultar el modal al eliminar las aplicaciones especificas
+        this.btnNoEliminarAplicacionEspecifica.click(function () {
+            that.handleHideModalDeleteApp();
+        });
+        //Boton para mostrar el modal para eliminar una aplicacion especifica
+        this.spanEliminarAplicacionEspecifica.click(function () {
+            that.handleShowModalDeleteEspecificApp(this.id);
+        });
+        //Boton para mostrar el modal para desplegar una aplicacion
+        this.btnDesplegarAplicacionEspecifica.click(function () {
+            that.handleShowModalDeployApp(this.id);
+        });
+        //Boton para despelgar aplicaciones especificas
+        this.btnSiDesplegarAplicacionEspecifica.click(function () {
+            that.handleDeployApp();
+        });
+        //Boton para ocultar el modal de desplegar las aplicaciones especificas
+        this.btnNoDesplegarAplicacionEspecifica.click(function () {
+            that.handleHideModalDeployApp();
+        });
+        //Boton para mostrar el modal para desplegar una aplicacion que se ha compilado correctamente
+        this.spanDesplegarAplicacionEspecificaPostCompilado.click(function () {
+            that.handleShowModalDeployPostApp(this.id);
+        });
+        //Boton para despelgar aplicaciones especificas compiladas a través del formulario (es dev)
+        this.btnSiDesplegarAplicacionEspecificaPostCompilado.click(function () {
+            that.handleDeployPostApp(false);
+        });
+        //Boton para ocultar el modal de desplegar las aplicaciones especificas compiladas correctamente
+        this.btnNoDesplegarAplicacionEspecificaPostCompilado.click(function () {
+            that.handleHideModalDeployPostApp();
+        });
+        //Boton ocultar modal de eliminar volumenes compartidos de manera individual
+        this.btnNoEliminarVolumenCompartidoAplicacion.click(function(){
+            that.handleHideModalDeleteSharedVolumeApp();
+        });
+        //Boton eliminar volumenes compartidos de manera individual
+        this.btnSiEliminarVolumenCompartidoAplicacion.click(function () {
+            that.handleDeleteSharedVolumeApp();
+        });
+        //Boton ocultar modal de eliminar volumenes de la app de manera individual
+        this.btnNoEliminarVolumenIndividualAplicacion.click(function () {
+            that.handleHideModalDeleteIndVolumeApp();
+        });
+        //Boton eliminar volumenes de la app de manera individual
+        this.btnSiEliminarVolumenIndividualAplicacion.click(function () {
+            that.handleDeleteIndVolumeApp();
+        });
+        //Boton eliminar variables de la app de manera individual
+        this.btnSiEliminarVariableIndividualAplicacion.click(function () {
+            that.handleDeleteVarApp();
+        });
+        
+
+
+    },
+
+    /**
+     * Método para guardar el id del volumen compartido . 
+     */
+    handleShowModalEditVol: function (id) {
+        var liEditar = $("#" + id);
+        var idVolumenCompartido = id.replace("li_Editar_", "");
+        var nombreVolumenAplicacion = $("#span_" + idVolumenCompartido).text();
+        $("#nombreVolCompEdicion").val(nombreVolumenAplicacion);
+        $('#VolumenCompartidoIdModalEditar').val(idVolumenCompartido);
+        $('#volumen_compartido_editar').modal('show');
+    },
+    /**
+     * Método para editar un volumen compartido. 
+     */
+    handleShowModalEditVol: function (id) {
+        var liEditar = $("#" + id);
+        var idVolumenCompartido = id.replace("li_Editar_", "");
+        var nombreVolumenAplicacion = $("#span_" + idVolumenCompartido).text();
+        $("#nombreVolCompEdicion").val(nombreVolumenAplicacion);
+        $('#VolumenCompartidoIdModalEditar').val(idVolumenCompartido);
+        $('#volumen_compartido_editar').modal('show');
+    },
+    /**
+     * Metodo para mostrar el modal al eliminar la aplicacion especifica
+     */
+    handleShowModalDeleteEspecificApp: function (id) {
+        var urlIC = $('#inpt_apiIntegracionContinua').val()
+        var that = this;
+        var liEditar = $("#" + id);
+        var idAplicacionEspecifica = id.replace("li_Eliminar_", "");
+        $('#AplicacionEspecificaIdModalEliminar').val(idAplicacionEspecifica); 
+        $('#modal-delete-page-aplicacion-especifica').modal('show');
+
+    },
+    /**
+     * Método para mostrar el modal de eliminar 
+     */
+    handleShowModalDeleteVol: function (id) {
+        var liEliminar = $("#" + id);
+        var idVolumenCompartido = id.replace("li_Eliminar_", "");
+        $('#VolumenCompartidoIdModalEliminar').val(idVolumenCompartido);
+        $('#modal-delete-page-volumen-compartido').modal('show');
+    },
+    /**
+     * Método para ocultar el modal de eliminar volumen compartido de una aplicacion. 
+     */
+    handleHideModalDeleteSharedVolumeApp: function () {
+        $('#modal-delete-page-volumen-compartido-aplicacion').modal('hide');
+    },
+    /**
+     * Método para ocultar el modal de eliminar variable de una aplicacion. 
+     */
+    handleHideModalDeleteVar: function () {
+        $('#modal-delete-page-variable-aplicacion').modal('hide');
+    },
+    /**
+    * Método para ocultar el modal de eliminar volumen individual de una aplicacion. 
+    */
+    handleHideModalDeleteIndVolumeApp: function () {
+        $('modal-delete-page-volumen-individual-aplicacion').modal('hide');
+    },
+    /**
+     * Método para ocultar el modal de eliminar aplicaion. 
+     */
+    handleHideModalDeleteApp: function () {
+        $('#modal-delete-page-aplicacion-especifica').modal('hide');
+    },
+    /**
+     * Método para ocultar el modal de eliminar volumen compartido. 
+     */
+    handleHideModalDeleteVol: function () {
+        $('modal-delete-page-volumen-compartido').modal('hide');
+    },
+    /**
+     * Método para eliminar un volumen compartido. 
+     */
+    handleDeleteVol: function () {
+        var idVolumenCompartido = $('#VolumenCompartidoIdModalEliminar').val()
+        var nombreVolumenAplicacion = $("#span_" + idVolumenCompartido).text();
+        //Post para eliminar el volumen compartido en base de datos
+        //Post a savevol para guardar el volumen creado en base de datos
+        var that = this;
+        var contador_aux_vol = 0;
+        that.ListaVolumenes = {};
+        that.ListaVolumenes['ListaVolumenes[' + contador_aux_vol + '].Tipo'] = true;
+        that.ListaVolumenes['ListaVolumenes[' + contador_aux_vol + '].Nombre'] = nombreVolumenAplicacion;
+        that.ListaVolumenes['ListaVolumenes[' + contador_aux_vol + '].VolumenID'] = document.getElementById("VolumenCompartidoIdModalEliminar").value;
+        loadingMostrar();
+        GnossPeticionAjax(
+            that.urlDeleteVolumenCompartido,
+            that.ListaVolumenes,
+            true
+        ).done(function (data) {
+            contador_aux_vol--;
+            pJqueryModalView = $("#volumen_compartido");
+            dismissVistaModal(pJqueryModalView);
+            location.reload(); //recargamos la pagina
+            mostrarNotificacion("success", "Volumen compartido eliminado con éxito.");
+            loadingOcultar();
+           
+
+        }).fail(function (data) {
+            loadingOcultar();
+            var error = data.split('|||');
+            if (error[0].startsWith("errorVolEliminado")) {
+                mostrarNotificacion("errorAlEliminarColCompartido", error[1])
+            }
+            else {
+                mostrarNotificacion("error", error[1]);
+            }
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+
+    },
+
+    /**
+* Método para enseñar el modal para editar una aplicacion específica. 
+*/
+    handleShowModalEditEspecificApp: function (id) {
+        //Eliminamos las fials antiguas
+        var tbody = document.getElementById("bodyVolumenesAnadirApp");
+
+        // Obtiene una referencia a todas las filas del tbody excepto la primera
+        var filas = tbody.getElementsByTagName("tr");
+
+        // Elimina todas las filas del tbody excepto la primera
+        for (var i = filas.length - 1; i > 0; i--) {
+            filas[i].parentNode.removeChild(filas[i]);
+        }
+
+
+        //Eliminamos las fials antiguas
+        var tbody = document.getElementById("bodyVariablesAnadirApp");
+
+        // Obtiene una referencia a todas las filas del tbody excepto la primera
+        var filas = tbody.getElementsByTagName("tr");
+
+        // Elimina todas las filas del tbody excepto la primera
+        for (var i = filas.length - 1; i > 0; i--) {
+            filas[i].parentNode.removeChild(filas[i]);
+        }
+        var urlIC = $('#inpt_apiIntegracionContinua').val()
+        var that = this;
+        var liEditar = $("#" + id);
+        var idAplicacionEspecifica = id.replace("li_Editar_", "");
+        var nombreAplicacionEspecifica = $("#spanNombre_" + idAplicacionEspecifica).text();
+        var nombreCortoAplicacionEspecifica = $("#spanNombreCorto_" + idAplicacionEspecifica).text();
+        var repositorioAplicacionEspecifica = $("#spanRepositorio_" + idAplicacionEspecifica).text();
+        var dockerfileAplicacionEspecifica = $("#spanDockerFile_" + idAplicacionEspecifica).text();
+        var tipoAplicacionEspecifica = $("#tipoApp_" + idAplicacionEspecifica).val();
+        var rutaAplicacionEspecifica = $("#rutaRelativa_" + idAplicacionEspecifica).val();
+        if (tipoAplicacionEspecifica=="value") {
+            checkBoxTipoApp.value = "Web"
+            var txtRutaRel = $("#txtRutaRelativa");
+            txtRutaRel.val(rutaAplicacionEspecifica);
+                /*const textRutaRelativa = document.createElement("input");
+                textRutaRelativa.setAttribute("id", "textRutaRelativa");
+                textRutaRelativa.setAttribute("type", "text");
+                textRutaRelativa.setAttribute("class", "form-control");
+                textRutaRelativa.setAttribute("value", rutaAplicacionEspecifica);
+                const labelRutaRelativa = document.createElement("label");
+                labelRutaRelativa.setAttribute("id", "labelRutaRelativa");
+                labelRutaRelativa.textContent = "Ruta Relativa:"
+                contenedorRutaRelativa.appendChild(labelRutaRelativa);
+                contenedorRutaRelativa.appendChild(textRutaRelativa);*/
+        }
+        $('#AplicacionIdModalEditar').val(idAplicacionEspecifica);
+        that.idAppEspecifica = idAplicacionEspecifica;
+        $("#nombre_servicio").val(nombreAplicacionEspecifica);
+        $("#git").val(repositorioAplicacionEspecifica);
+        $("#tokengit").val($("#tokenGit_"+idAplicacionEspecifica).val());
+        $("#dockerfile").val(dockerfileAplicacionEspecifica);
+        $("#rama").val($("#rama_" + idAplicacionEspecifica).val());
+        loadingMostrar();
+        var j = 0; //variable para luego seguir añadiendo en la tabla los volumenes de la applicacoin
+        var dataPost = {
+            aplicacionId: that.idAppEspecifica
+        }
+        GnossPeticionAjax(
+            //that.urlObtenerVolumenCompartidoAplicacion,
+            `${urlIC}/aplicaciones/obtener-volumen-compartido-aplicacion`,
+            //that.idAppEspecifica,
+            dataPost,
+            true
+        ).done(function (data) {
+            var volumencompartidoAplicacion = data
+            for (var i = 0; i < volumencompartidoAplicacion.length; i++) {
+                var rutaVol = volumencompartidoAplicacion[i].RutaVolumenCompartido
+                var nombreVol = volumencompartidoAplicacion[i].Volumen.Nombre
+
+                //Añadir boton eliminar y añadir a al tabla
+                const trFila = document.createElement("tr");
+                trFila.setAttribute("id", "trFila_" + contador_vol_modal);
+                //boton eliminar
+                const tdBotonEliminar = document.createElement("td");
+                tdBotonEliminar.setAttribute("id", "tdBotonEliminar_" + contador_vol_modal);
+                tdBotonEliminar.setAttribute("class", "tdBotonEliminar");
+                const botonEliminarVol = document.createElement("button");
+                botonEliminarVol.setAttribute("class", "btn btn-secondary btn_eliminar_vol_modal_anadirapp");
+                botonEliminarVol.setAttribute("id", "button_eliminar_vol_modal_anadirapp");
+                botonEliminarVol.setAttribute("data-contador", contador_vol_modal);
+                botonEliminarVol.setAttribute("name", "Eliminar");
+                botonEliminarVol.textContent = "Eliminar";
+                botonEliminarVol.setAttribute("type", "button");
+                botonEliminarVol.setAttribute("style", "float:right");
+               
+
+
+                //Añadir el input hidden con el id del volumen compartido
+                const inputId = document.createElement("input");
+                inputId.setAttribute("type", "hidden");
+                inputId.setAttribute("id", "selectId_" + contador_vol_modal);
+                inputId.setAttribute("value", volumencompartidoAplicacion[i].Volumen.VolumenID);
+                trFila.appendChild(inputId);
+                contenedor_volumenes.appendChild(trFila);
+
+                const tdNombre = document.createElement("td");
+                tdNombre.setAttribute("id", "tdNombre_" + contador_vol_modal);
+                const labelNombre = document.createElement("label");
+                labelNombre.setAttribute("id", "label_vol" + contador_vol_modal);
+                labelNombre.setAttribute("value", nombreVol);
+                labelNombre.setAttribute("class", "VolNombre");
+                labelNombre.appendChild(document.createTextNode(nombreVol));
+                tdNombre.appendChild(labelNombre);
+                trFila.appendChild(tdNombre);
+                contenedor_volumenes.appendChild(trFila);
+
+
+                const tdRuta = document.createElement("td");
+                tdRuta.setAttribute("id", "tdRuta_" + contador_vol_modal);
+                const labelRuta = document.createElement("label");
+                labelRuta.setAttribute("id", "labelRuta_vol" + contador_vol_modal);
+                labelRuta.setAttribute("value", rutaVol);
+                labelRuta.setAttribute("class", "VolRuta");
+                labelRuta.appendChild(document.createTextNode(rutaVol));
+                tdRuta.appendChild(labelRuta);
+                trFila.appendChild(tdRuta);
+                contenedor_volumenes.appendChild(trFila);
+
+                const tdTipo = document.createElement("td");
+                tdTipo.setAttribute("id", "tdTipo_" + contador_vol_modal);
+                const labelTipo = document.createElement("label");
+                labelTipo.setAttribute("id", "labelTipo_vol" + contador_vol_modal);
+                labelTipo.setAttribute("value", "Compartido");
+                labelTipo.setAttribute("class", "VolTipos");
+                labelTipo.appendChild(document.createTextNode("Compartido"));
+                tdTipo.appendChild(labelTipo);
+                trFila.appendChild(tdTipo);
+                contenedor_volumenes.appendChild(trFila);
+
+                for (var i = 0; i < combobox_vol.length; i++) {
+                    if (combobox_vol.options[i].value == nombreVol) {
+                        combobox_vol.remove(i);
+                    }
+                }
+                
+                botonEliminarVol.onclick = function () { //funcionamiento del boton eliminar volumen
+                    var fila = botonEliminarVol.closest('tr');
+                    // Buscar el elemento input dentro de la fila
+                    var input = fila.querySelector('input[type="hidden"]');
+                    // Obtener el valor del atributo id del input
+                    var valueInput = input.value;
+                    $('#VolumenCompartidoAplicacionIdVolumenModalEliminar').val(valueInput)
+                    $('#VolumenCompartidoAplicacionIdAplicacionModalEliminar').val(idAplicacionEspecifica)
+                    $('#modal-delete-page-volumen-compartido-aplicacion').modal('show');
+                    let contador_vol = $(this).data("contador");
+                    $('#contadorVolumenCompartidoEliminar').val(contador_vol)
+                    // var liEliminar = $("#" + id);
+                    //var idVolumenCompartido = id.replace("li_Eliminar_", "");
+                    //$('#VolumenCompartidoIdModalEliminar').val(idVolumenCompartido);
+                    //$('#modal-delete-page-volumen-compartido-aplicacion').show();
+                };
+
+                tdBotonEliminar.appendChild(botonEliminarVol);
+                trFila.appendChild(tdBotonEliminar);
+                contenedor_volumenes.appendChild(trFila);
+
+                contador_aux_vol_app++;
+                contador_checkboxes++;
+                contador_vol_modal++;
+                contadorQueSiempreAumentaVolumen++;
+                j = i;
+            }
+
+            GnossPeticionAjax(
+                //that.urlObtenerVolumenCompartidoAplicacion,
+                `${urlIC}/aplicaciones/obtener-volumen-aplicacion-y-variables`,
+                //that.idAppEspecifica,
+                dataPost,
+                true
+            ).done(function (data) {
+                var volumenAplicacion = data.Volumenes
+                for (var i = 0; i < volumenAplicacion.length; i++) {
+                    var nombreVolumenApp = volumenAplicacion[i].NombreVolumen;
+                    var rutaVolumenApp = volumenAplicacion[i].Ruta;
+                    const trFila = document.createElement("tr");
+                    trFila.setAttribute("id", "trFila_" + contador_vol_modal);
+                    const tdBotonEliminar = document.createElement("td");
+                    tdBotonEliminar.setAttribute("id", "tdBotonEliminar" + contador_vol_modal);
+                    const botonEliminarVol = document.createElement("button");
+                    botonEliminarVol.setAttribute("class", "btn btn-secondary btn_eliminar_vol_modal_anadirapp");
+                    botonEliminarVol.setAttribute("id", "button_eliminar_vol_modal_anadirapp");
+                    botonEliminarVol.setAttribute("data-contador", contador_vol_modal);
+                    botonEliminarVol.setAttribute("name", "Eliminar");
+                    botonEliminarVol.textContent = "Eliminar";
+                    botonEliminarVol.setAttribute("type", "button");
+                    botonEliminarVol.setAttribute("style", "float:right");
+                    botonEliminarVol.onclick = function () {
+                        var fila = botonEliminarVol.closest('tr');
+                        // Buscar el elemento input dentro de la fila
+                        var input = fila.querySelector('input[type="hidden"]');
+                        // Obtener el valor del atributo id del input
+                        var valueInput = input.value;
+                        $('#VolumenIndividualAplicacionIdVolumenModalEliminar').val(valueInput)
+                        $('#VolumenIndividualAplicacionIdAplicacionModalEliminar').val(idAplicacionEspecifica)
+                        $('#modal-delete-page-volumen-individual-aplicacion').modal('show');
+                        let contador_vol = $(this).data("contador");
+                        $('#contadorVolumenIndividualEliminar').val(contador_vol)
+                    };
+                    const inputId = document.createElement("input");
+                    inputId.setAttribute("type", "hidden");
+                    inputId.setAttribute("id", "selectId_" + contador_vol_modal);
+                    inputId.setAttribute("value", volumenAplicacion[i].VolumenID);
+                    trFila.appendChild(inputId);
+                    contenedor_volumenes.appendChild(trFila);
+                    const tdNombre = document.createElement("td");
+                    tdNombre.setAttribute("id", "tdNombre_" + contador_vol_modal);
+                    //const div_Nombre_Vol = document.getElementById("contenedor_variable_nombre"); // Obtener el div contenedor donde se agregará el label
+                    const labelNombre = document.createElement("label");
+                    labelNombre.setAttribute("id", "label_vol" + contador_vol_modal);
+                    labelNombre.setAttribute("value", nombreVolumenApp);
+                    labelNombre.setAttribute("class", "VolNombre");
+                    labelNombre.appendChild(document.createTextNode(nombreVolumenApp));
+                    tdNombre.appendChild(labelNombre);
+                    trFila.appendChild(tdNombre);
+                    contenedor_volumenes.appendChild(trFila);
+
+                    const tdRuta = document.createElement("td");
+                    tdRuta.setAttribute("id", "tdRuta_" + contador_vol_modal);
+                    //const div_Nombre_Vol = document.getElementById("contenedor_variable_nombre"); // Obtener el div contenedor donde se agregará el label
+                    const labelRuta = document.createElement("label");
+                    labelRuta.setAttribute("id", "labelRuta_vol" + contador_vol_modal);
+                    labelRuta.setAttribute("value", rutaVolumenApp);
+                    labelRuta.setAttribute("class", "VolRuta");
+                    labelRuta.appendChild(document.createTextNode(rutaVolumenApp));
+                    tdRuta.appendChild(labelRuta);
+                    trFila.appendChild(tdRuta);
+                    contenedor_volumenes.appendChild(trFila);
+
+                    const tdTipo = document.createElement("td");
+                    tdTipo.setAttribute("id", "tdTipo_" + contador_vol_modal);
+                    //const div_Nombre_Vol = document.getElementById("contenedor_variable_nombre"); // Obtener el div contenedor donde se agregará el label
+                    const labelTipo = document.createElement("label");
+                    labelTipo.setAttribute("id", "labelTipo_vol" + contador_vol_modal);
+                    labelTipo.setAttribute("value", "Individual");
+                    labelTipo.setAttribute("class", "VolTipos");
+                    labelTipo.appendChild(document.createTextNode("Individual"));
+                    tdTipo.appendChild(labelTipo);
+                    trFila.appendChild(tdTipo);
+                    contenedor_volumenes.appendChild(trFila);
+
+                    tdBotonEliminar.appendChild(botonEliminarVol);
+                    trFila.appendChild(tdBotonEliminar);
+                    contenedor_volumenes.appendChild(trFila);
+
+                    contador_vol_modal++;
+                    document.getElementById("nombre_vol_individual").value = "";
+                    document.getElementById("ruta_vol_ind_modal").value = "";
+
+                }
+
+                //Añadir variables de la aplicacion
+                var variableAplicacion = data.Variables
+                for (var i = 0; i < variableAplicacion.length; i++) {
+                    var nombreVariable = variableAplicacion[i].NombreVariable;
+                    var valorPre = variableAplicacion[i].ValorPreproduccion;
+                    var valorPro = variableAplicacion[i].ValorProduccion;
+                    var valorDev = variableAplicacion[i].ValorDesarrollo;
+                    /*let labelVariable = document.createElement("label");
+                    labelVariable.textContent = nombreVariable;
+                    labelVariable.setAttribute("id", "nombre_variable_" + contador_var_modal);
+                    labelVariable.setAttribute("class", "variablesNombre");
+                    labelVariable.setAttribute("for", "input_variable");*/
+
+                    //boton eliminar
+                    const trFila = document.createElement("tr");
+                    trFila.setAttribute("id", "trVariable_" + contador_var_modal);
+                    const inputId = document.createElement("input");
+                    inputId.setAttribute("type", "hidden");
+                    inputId.setAttribute("id", "selectId_" + contador_var_modal);
+                    inputId.setAttribute("value", variableAplicacion[i].VariableID);
+                    trFila.appendChild(inputId);
+
+                    contenedor_volumenes.appendChild(trFila);
+                    const tdBotonEliminar = document.createElement("td");
+                    tdBotonEliminar.setAttribute("id", "tdBotonEliminarVar_" + contador_var_modal);
+                    const botonEliminarVar = document.createElement("button");
+                    botonEliminarVar.setAttribute("class", "btn btn-secondary btn_eliminar_var_modal_anadirapp");
+                    botonEliminarVar.setAttribute("id", "btn_eliminar_var_modal_anadirapp");
+                    botonEliminarVar.setAttribute("data-contador", contador_var_modal);
+                    botonEliminarVar.setAttribute("name", "Eliminar");
+                    botonEliminarVar.textContent = "Eliminar";
+                    botonEliminarVar.setAttribute("type", "button");
+                    botonEliminarVar.onclick = function () { //funcionamiento del boton eliminar variable
+                        var fila = botonEliminarVar.closest('tr');
+                        // Buscar el elemento input dentro de la fila
+                        var input = fila.querySelector('input[type="hidden"]');
+                        // Obtener el valor del atributo id del input
+                        var valueInput = input.value;
+                        $('#IdVariableModalEliminar').val(valueInput)
+                        $('#IdAplicacionVariableModalEliminar').val(idAplicacionEspecifica)
+                        $('#modal-delete-page-variable-aplicacion').modal('show');
+                        let contador_vol = $(this).data("contador");
+                        $('#contadorVaraibleEliminar').val(contador_vol)
+                        /*let contador_var = $(this).data("contador");
+                        //const filaEliminar = $("#bodyVolumenes").find("tr")[contador_var];
+                        const filaEliminar = document.getElementById("trVariable_" + contador_var);
+                        contenedor_variables.removeChild(filaEliminar);
+                        contador_var_modal--;*/
+                    };
+                    tdBotonEliminar.appendChild(botonEliminarVar);
+                   
+                    var celdaNombreVariable = document.createElement("td");
+                    var txtNombreVariable = document.createElement("span");
+                    txtNombreVariable.setAttribute("id", "nombre_variable_" + contador_var_modal);
+                    txtNombreVariable.setAttribute("class", "variablesNombre language-component component-name");
+                    txtNombreVariable.textContent = nombreVariable;
+                    celdaNombreVariable.appendChild(txtNombreVariable);
+                    trFila.appendChild(celdaNombreVariable);
+
+                    //CONTENEDOR VARIABLES DESARROLLO
+                    const td_des_var = document.createElement("td");
+                    const divContenedor_des = document.getElementById("contenedor_variable_des");
+                    const textBoxVariableDes = document.createElement("input");
+                    textBoxVariableDes.setAttribute("type", "text");
+                    textBoxVariableDes.setAttribute("id", "input_variable_des_" + contador_var_modal);
+                    textBoxVariableDes.setAttribute("class", "variablesDesarrollo form-control");
+                    //añadir al input el valor de desarrollo
+                    textBoxVariableDes.setAttribute("value", valorDev);
+                    td_des_var.appendChild(textBoxVariableDes);
+                    trFila.appendChild(td_des_var);
+
+                    //CONTENEDOR VARIABLES PRE
+                    const td_pre_var = document.createElement("td");
+                    const textBoxVariablePre = document.createElement("input");
+                    textBoxVariablePre.setAttribute("type", "text");
+                    textBoxVariablePre.setAttribute("id", "input_variable_pre_" + contador_var_modal);
+                    textBoxVariablePre.setAttribute("class", "variablesPreproduccion form-control");
+                    textBoxVariablePre.setAttribute("value", valorPre);
+                    td_pre_var.appendChild(textBoxVariablePre);
+                    trFila.appendChild(td_pre_var);
+
+                    //CONTENEDOR VARIABLES PRO
+                    const td_pro_var = document.createElement("td");
+                    const textBoxVariablePro = document.createElement("input");
+                    textBoxVariablePro.setAttribute("type", "text");
+                    textBoxVariablePro.setAttribute("id", "input_variable_pro_" + contador_var_modal); 
+                    textBoxVariablePro.setAttribute("class", "variablesProduccion form-control");
+                    textBoxVariablePro.setAttribute("value", valorPro);
+
+                    td_pro_var.appendChild(textBoxVariablePro);
+                    trFila.appendChild(td_pro_var);
+                    //Añado bootn eliminar al final
+                    trFila.appendChild(tdBotonEliminar);
+                    contenedor_variables.appendChild(trFila);
+                    contador_var_modal++;
+                    contador_checkboxes++;
+
+                    document.getElementById("nombre_variable").value = "";
+                }
+
+                $('#anadir_app_modal').modal('show');
+
+            }).fail(function (data) {
+                loadingOcultar();
+                var error = data.split('|||');
+                if (error[0].startsWith("errorVolumenAplicacion")) {
+                    mostrarNotificacion("errorVolumenAplicacion", error[1])
+                }
+                else {
+                    mostrarNotificacion("error", error[1]);
+                }
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
+        }).fail(function (data) {
+            loadingOcultar();
+            var error = data.split('|||');
+            if (error[0].startsWith("errorVolumenCompartidoAplicacion")) {
+                mostrarNotificacion("errorVolumenCompartidoAplicacion", error[1])
+            }
+            else {
+                mostrarNotificacion("error", error[1]);
+            }
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+    
+        
+    },
+    /**
+   * Método para eliminar volumen compartido asociado a una aplicacion
+   */
+    handleDeleteSharedVolumeApp: function () {
+        var urlIC = $('#inpt_apiIntegracionContinua').val()
+        var dataVolPost = {
+            appId: $('#VolumenCompartidoAplicacionIdAplicacionModalEliminar').val(),
+            volumenId: $('#VolumenCompartidoAplicacionIdVolumenModalEliminar').val()
+        }
+        GnossPeticionAjax(
+            `${urlIC}/aplicaciones/eliminar-volumen-compartido-aplicacion`,
+            //that.idAppEspecifica,
+            dataVolPost,
+            true
+        ).done(function () {
+            var volumenIdEliminar = $('#VolumenCompartidoAplicacionIdVolumenModalEliminar').val()
+            contador_vol = $('#contadorVolumenCompartidoEliminar').val();
+            const filaEliminar = document.getElementById("trFila_" + contador_vol);
+            var nombre_volumen_compartido = document.getElementById("label_vol" + contador_vol).innerHTML;
+            var selectbox = document.getElementById("volumen");
+            var option = document.createElement('option');
+            option.text = nombre_volumen_compartido;
+            option.value = nombre_volumen_compartido;
+            option.id = volumenIdEliminar;
+            selectbox.appendChild(option);
+            contenedor_volumenes.removeChild(filaEliminar);
+            contador_vol_modal--;
+            mostrarNotificacion("success", "Volumen individual asociado a la aplicación eliminado con éxito.");
+            loadingOcultar();
+            $('#modal-delete-page-volumen-compartido-aplicacion').modal('hide');
+        }).fail(function (data) {
+
+            const error = data.split('|||');
+            mostrarNotificacion("error", error);
+
+        }).always(function () {
+            loadingOcultar();
+        });       
+     
+    },
+    /**
+ * Método para eliminar volumen asociado a una aplicacion de manera individual
+ */
+    handleDeleteIndVolumeApp: function () {
+        var urlIC = $('#inpt_apiIntegracionContinua').val()
+        var dataVolPost = {
+            appId: $('#VolumenIndividualAplicacionIdAplicacionModalEliminar').val(),
+            volumenId: $('#VolumenIndividualAplicacionIdVolumenModalEliminar').val()
+        }
+        GnossPeticionAjax(
+            `${urlIC}/aplicaciones/eliminar-volumen-aplicacion-individual`, 
+            //that.idAppEspecifica,
+            dataVolPost,
+            true
+        ).done(function () {
+            let contador_ind = $('#contadorVolumenIndividualEliminar').val();
+            const filaEliminar = document.getElementById("trFila_" + contador_ind);
+            contenedor_volumenes.removeChild(filaEliminar);
+            contador_vol_modal--;
+            mostrarNotificacion("success", "Volumen asociado a la aplicación eliminado con éxito.");
+            loadingOcultar();
+            $('#modal-delete-page-volumen-individual-aplicacion').modal('hide');
+        }).fail(function (data) {
+
+            const error = data.split('|||');
+            mostrarNotificacion("error", error);
+
+        }).always(function () {
+            loadingOcultar();
+        });
+
+    }, 
+       /**
+ * Método para eliminar variables de una aplicacion de manera individual
+ */
+    handleDeleteVarApp: function () {
+        var urlIC = $('#inpt_apiIntegracionContinua').val()
+        var dataVolPost = {
+            appId: $('#IdAplicacionVariableModalEliminar').val(),
+            VariableId: $('#IdVariableModalEliminar').val()
+        }
+        GnossPeticionAjax(
+            `${urlIC}/aplicaciones/eliminar-variable-aplicacion-individual`,
+            //that.idAppEspecifica,
+            dataVolPost,
+            true
+        ).done(function () {
+            let contador_ind = $('#contadorVaraibleEliminar').val();
+            const filaEliminar = document.getElementById("trVariable_" + contador_ind);
+            contenedor_variables.removeChild(filaEliminar);
+            contador_var_modal--;
+            mostrarNotificacion("success", "Variable asociado a la aplicación eliminado con éxito.");
+            loadingOcultar();
+            $('#modal-delete-page-variable-aplicacion').modal('hide');
+        }).fail(function (data) {
+
+            const error = data.split('|||');
+            mostrarNotificacion("error", error);
+
+        }).always(function () {
+            loadingOcultar();
+        });
+
+    },
+    /**
+     * Método para eliminar aplicaciones especificas. 
+     */
+    handleDeleteApp: function () {
+        var urlIC = $('#inpt_apiIntegracionContinua').val()
+        loadingMostrar();
+        var dataPost = {
+            aplicacionId: $('#AplicacionEspecificaIdModalEliminar').val()
+        }
+        GnossPeticionAjax(
+            that.urlPagina + '/removeapp',
+            dataPost,
+            true
+        ).done(function (data) {
+            location.reload(); //recargamos la pagina
+            mostrarNotificacion("success", "Aplicación específica eliminada con éxito.");
+            loadingOcultar();
+
+
+        }).fail(function (data) {
+            loadingOcultar();
+            var error = data.split('|||');
+            if (error[0].startsWith("errorAppEliminada")) {
+                mostrarNotificacion("errorAlEliminarAplicacionEspecifica", error[1])
+            }
+            else {
+                mostrarNotificacion("error", error[1]);
+            }
+        }).always(function () {
+            OcultarUpdateProgress();
+        });
+
+    },
+
+    /**Método para mostrar el modal de desplegar una aplicacion
+     * 
+     */
+    handleShowModalDeployApp: function (id) {
+        var liDesplegar = $("#" + id);
+        var idAplicacionEspecifica = id.replace("li_Desplegar_", "");
+        $('#AplicacionEspecificaIdModalDesplegar').val(idAplicacionEspecifica);
+        $('#modal-deploy-page-aplicacion-especifica').modal('show');
+    },
+    /**
+    * Método para ocultar el modal de desplegar una aplicacion especifica. 
+    */
+    handleHideModalDeployApp: function () {
+        $('#modal-deploy-page-aplicacion-especifica').modal('hide');
+    },
+    /**
+     * Metodo para compilar una aplicacion
+     */
+    handleDeployApp: function () {
+        var urlCompilar = that.urlPagina + '/Compilar-Aplicacion-Especifica-Con-Datos';
+        loadingMostrar();
+        var dataPost = {
+            AplicacionId: $('#AplicacionEspecificaIdModalDesplegar').val()
+        }
+        GnossPeticionAjax(
+            `${urlCompilar}`,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", "Error al compilar la aplicacion");
+        }).always(function (data) {
+            if (data == 'OK') {
+                mostrarNotificacion("success", "Aplicación específica compilada con éxito.");
+                loadingOcultar();
+                //metodo ajax para hacer dockercompose para cada proyecto se genera 1
+                GnossPeticionAjax(
+                    that.urlPagina + '/crear-docker-compose',
+                    true
+                ).done(function (dataDocker) { 
+                    location.reload();
+                    loadingOcultar();
+                }).fail(function (dataDocker) {
+                    loadingOcultar();
+                    mostrarNotificacion("error", "Error al hacer la peticion para generar el Docker Compose");
+                }).always(function (dataDocker) {
+                    if (dataDocker == 'OK') {
+                        mostrarNotificacion("success", "Docker compose del proyecto generado correctamente");
+                        loadingOcultar();
+                    } else {
+                        mostrarNotificacion("error", "Error al generar el docker compose");
+                    }
+                    OcultarUpdateProgress();
+                });
+            } else {
+                mostrarNotificacion("error", "Error al compilar la aplicacion");
+            }
+            OcultarUpdateProgress();
+        });
+
+
+    },
+    /**Método para mostrar el modal de desplegar una aplicacion
+     * 
+     */
+       handleShowModalDeployPostApp: function (id) {
+        var liDesplegar = $("#" + id);
+           var idAplicacionEspecifica = id.replace("li_DesplegarAppPostCompilado_", "");
+           $('#AplicacionEspecificaIdModalDesplegarPostCompilado').val(idAplicacionEspecifica);
+        $('#modal-deploy-post-compilation-page-aplicacion-especifica').modal('show');
+    },
+    /**
+    /**
+    * Método para ocultar el modal de desplegar una aplicacion especifica. 
+    */
+    handleHideModalDeployPostApp: function () {
+        $('#modal-deploy-post-compilation-page-aplicacion-especifica').modal('hide');
+    },
+    /**
+     * Metodo para desplegar una aplicacion
+     */
+    handleDeployPostApp: function (entorno) {
+        var urlIC = $('#inpt_apiIntegracionContinua').val()
+        loadingMostrar();
+        var dataPost = {
+            AplicacionId: $('#AplicacionEspecificaIdModalDesplegarPostCompilado').val(),
+            pDesplegarEntornoSuperior: entorno
+        }
+        GnossPeticionAjax(
+            that.urlPagina + '/deploy-app-post-compilation',
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("Error al desplegar la aplicación compilada", data);
+        }).always(function (data) {
+            if (data == 'OK') {
+                mostrarNotificacion("success", "Aplicación específica desplegada con éxito.");
+                $('#modal-deploy-post-compilation-page-aplicacion-especifica').modal('hide');
+                loadingOcultar();
+            } else {
+                mostrarNotificacion("error", "Error al desplegar la aplicacion");
+            }
+            OcultarUpdateProgress();
+        });
+
+
+    }
+
+}
 
  /**
   * Operativa para la gestión de SEO y Analytics de la Comunidad y Plataforma
@@ -2065,7 +3011,12 @@ const operativaGestionCache = {
         // Url para borrar caché item de tipo Recurso RDF
         this.urlDeleteCacheRdfResourceItem = `${this.urlBase}/borrar-RDF-recursos`;
         // Url para borrar caché de búsquedas
-        this.urlDeleteSearchCache = `${this.urlBase}/borrar-busquedas`
+        this.urlDeleteSearchCache = `${this.urlBase}/borrar-busquedas`;
+        // Url para guardar la configuración de las cachés de búsqueda activas
+        this.urlSaveCache = `${this.urlBase}/guardar-configuracion-cache`;
+        // Url para borrar caché seleccionado
+        this.urlDeleteSelectedCache = `${this.urlBase}/borrar-seleccionados`;
+
     },
 
     /*
@@ -2125,12 +3076,26 @@ const operativaGestionCache = {
         this.btnBorrarCacheBusquedasId = "btnBorrarCacheBusquedas"; 
         this.btnBorrarCacheBusquedas = $(`#${this.btnBorrarCacheBusquedasId}`);
 
+        this.btnGuardarCachesId = "btnGuardarConfiguracionCachesBusqueda";
+        this.btnGuardarCaches = $(`#${this.btnGuardarCachesId}`);
+
         // Flag para guardar el tipo de borrado a realizar (Selección o Todo). Por defecto, borrar todo
         this.deleteAllCommunityCache = true;
         // Flags para detectar el tipo de borrado a realizar
         this.typeDeleteCommunity = false;
         this.typeDeleteResources = false;
-        this.typeDeleteRdfResources = false;        
+        this.typeDeleteRdfResources = false;   
+        
+
+        //Botón para marcar todos los checkboxes
+        this.btnCheckAllSearchResultsId = "btnCheckAllSearchResultsId";
+     
+        //Botón para desmarcar todos los checkboxes
+        this.btnUncheckAllSearchResultsId = "btnUncheckAllSearchResultsId";
+     
+        //Botón para eliminar el cache seleccionado (checkbox marcados)
+        this.btnDeleteSelectedCacheId = "btnConfirmDeleteSelectedCache";
+       
     },
 
     /**
@@ -2191,7 +3156,14 @@ const operativaGestionCache = {
             $input.off().on("keyup", function(){                 
                 that.typeDeleteRdfResources = true;                          
             });	                
-        });                        
+        });    
+
+        configEventById(`${that.btnGuardarCachesId}`, function (element) {
+            const $input = $(element);
+            $input.off().on("click", function () {
+                that.handleSaveConfigCache();  
+            });
+        });
         
         // RadioButton para controlar la selección del borrado de caché de la Comunidad (Selección / Todo)
         configEventByClassName(`${that.radioButtonDeleteCacheCommunityClassName}`, function(element){
@@ -2216,7 +3188,46 @@ const operativaGestionCache = {
                 }, 500);                            
             });	                
         });        
-                    
+
+        const input = document.getElementById("vacio");
+        const divMostrar = document.getElementById("divCheck");
+
+        input.addEventListener("input", function () {
+            if (input.value.length === 0) {
+                divMostrar.style.display = "none";
+            } else {
+                divMostrar.style.display = "inline-block";
+            }
+        });
+
+        // Elemento para seleccionar todos los resultados de filtrado
+        $('#btnCheckAllSearchResultsId').change(function () {
+            if ($(this).prop('checked') == true) {
+                that.handleCheckAllSearchResults();
+            }
+            else {
+                that.handleUncheckAllSearchResults();
+            }
+
+        });
+
+        // Elemento para desmarcar todos los resultados de filtrado
+        configEventById(`${that.btnUncheckAllSearchResultsId}`, function (element) {
+            const $checkItem = $(element);
+            $checkItem.off().on("click", function () {
+                that.handleUncheckAllSearchResults();
+            });
+        });
+
+        // Elemento para eliminar todos los items seleccionados
+        configEventById(`${that.btnDeleteSelectedCacheId}`, function (element) {
+            const $checkItem = $(element);
+            $checkItem.off().on("click", function () {
+                let listaSeleccionados = that.handleGetSelectedItems();
+                that.handleDeleteCacheItemsSelected(listaSeleccionados);
+            });
+        });
+
         // Elemento para eliminar cada item caché listado en el modal
         configEventById(`${that.btnDeleteCommunityCacheElementClassName}`, function(element){
             const $deleteItem = $(element);
@@ -2316,6 +3327,41 @@ const operativaGestionCache = {
             mostrarNotificacion("error", data);
         }).always(function () {
             // Ocultar el loading
+            loadingOcultar();
+        });
+    },
+
+    handleSaveConfigCache: function () {
+        const that = this;
+
+        let cachesActivas = $('#CachesDeBusquedasActivas').is(":checked");
+        let cachesAnonimas = $('#CachesAnonimas').is(":checked");;
+        let duracionConsulta = $('#DuracionConsulta').val();
+        let tiempoExpiracion = $('#TiempoExpiracion').val();
+        let tiempoExpiracionCachesDeUsuario = $('#TiempoExpiracionCachesUsuarios').val();
+        let tiempoRecalcularCaches = $('#TiempoRecalcularCaches').val();
+
+        const dataPost = {
+            pCacheBusquedaActiva: cachesActivas,
+            pCachesAnonimas: cachesAnonimas,
+            pDuracionConsulta: duracionConsulta,
+            pTiempoExpiracion: tiempoExpiracion,
+            pTiempoExpiracionCachesDeUsuario: tiempoExpiracionCachesDeUsuario,
+            pTiempoRecalcularCaches: tiempoRecalcularCaches
+        }
+
+        loadingMostrar();
+        GnossPeticionAjax(
+            that.urlSaveCache,
+            dataPost,
+            true
+        ).done(function (data) {
+            setTimeout(function () {
+                mostrarNotificacion("success", "La configuración de las cachés se ha guardado correctamente.");
+            }, 1000);
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
             loadingOcultar();
         });
     },
@@ -2504,6 +3550,100 @@ const operativaGestionCache = {
             // Ocultar el loading
             loadingOcultar();
         });        
+    },
+
+    /**
+     * Método para eliminar un elemento item de una búsqueda realizada en concreto cuyo checkbox está marcado para su eliminación
+     */
+    handleDeleteCacheItemForChbx: function (deleteItem) {
+        const that = this;
+
+        // Url donde se realizará el borrado dependiendo del tipo de item seleccionado (Comunidad, Recurso, RecursoRDF)
+        let url = that.urlDeleteSelectedCache;
+       
+        //Recoger values de la lista de elementos
+        let valuesItems = [];
+        deleteItem.forEach(function (checkElement) {
+            valuesItems.push(checkElement.value);
+        });
+
+        // Construir el objeto para eliminación
+        const dataPost = {
+            claves: valuesItems,
+        };
+
+        let cacheRow;
+        //let $elementParse;
+        
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            //Eliminar todas las filas 
+            deleteItem.forEach(function (checkElement) {
+               
+                cacheRow = checkElement.closest(`.${that.elementRowClassName}`);
+                cacheRow.remove();
+            });
+            mostrarNotificacion("success", "Elementos de la caché han sido borrados correctamente.");
+
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            // Ocultar el loading
+            loadingOcultar();
+        });
+    },
+
+    /**
+     * Método para eliminar items seleccionados
+     */
+    handleDeleteCacheItemsSelected: function (selectedItems) {
+        const that = this;
+
+        if (selectedItems.length > 0) {
+            loadingMostrar();
+            that.handleDeleteCacheItemForChbx(selectedItems);
+           // mostrarNotificacion("success", "Elementos de la caché han sido borrados correctamente.");
+        } else {
+            mostrarNotificacion("error", "Ningún elemento seleccionado");
+        }
+                        
+    },
+    
+    /**
+     * Método para seleccionar/marcar todos los resultados de la búsqueda
+     */
+    handleCheckAllSearchResults: function() {
+        document.querySelectorAll('.id-added-element-list input[type=checkbox]').forEach(function (checkElement) {
+            checkElement.checked = true;
+        });
+    },
+
+    /**
+    * Método para desmarcar todos los resultados de la búsqueda
+    */
+    handleUncheckAllSearchResults: function() {
+        document.querySelectorAll('.id-added-element-list input[type=checkbox]').forEach(function (checkElement) {
+            checkElement.checked = false;
+        });
+    },
+
+    /**
+    * Método para recoger en lista todos los elementos con checkbox marcado
+    */
+    handleGetSelectedItems: function() {
+        let seleccionados = [];
+        document.querySelectorAll('.id-added-element-list input[type=checkbox]').forEach(function (checkElement) {
+
+            if (checkElement.checked == true) {
+                seleccionados.push(checkElement);
+            }
+
+        });
+
+        return seleccionados;
     },
 
     /**
@@ -2831,6 +3971,10 @@ const operativaDescargaConfiguracion = {
                         mostrarNotificacion("success", "Descarga completada");
                         loadingOcultar();
                     }
+                }
+                else if (this.status == 500)
+                {
+                    mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
                 }
             }
         };
@@ -5802,7 +6946,10 @@ operativaGestionConfiguracionPlataforma = {
         /* Datos del ecosistema */
         this.EcosistemaSinMetaproyecto = $("#EcosistemaSinMetaproyecto");
         
-        // Desaparece por uso de checkbox this.Idiomas = $("#Idiomas"); 
+        // Radio Button para el idioma por defecto
+        this.radioButtonIdiomas = $("input[type='radio'][name='defaultLanguage']")
+        // Variable que guarda el idioma por defecto seleccionado
+        this.defaultLanguage = $("input[name='defaultLanguage']:checked").data("language");
         // Checkbox con los diferentes idiomas
         this.checkBoxIdiomas = $(".languageOption");
         // Linea con los diferentes idiomas personalizados
@@ -5820,6 +6967,7 @@ operativaGestionConfiguracionPlataforma = {
         /* Urls de configuración */
         this.UrlIntragnoss = $("#UrlIntragnoss");
         this.UrlBaseService = $("#UrlBaseService");
+        this.DominioPaginasAdministracion = $("#DominioPaginasAdministracion");
         /* Comunidades excluidas de la personalización */
         this.ComunidadesExcluidaPersonalizacion = $("#ComunidadesExcluidaPersonalizacion");
         /* Versiones */
@@ -5899,8 +7047,37 @@ operativaGestionConfiguracionPlataforma = {
             that.handleSaveOpcionesPlataforma();
         });
 
+        this.radioButtonIdiomas.on("click", function () {
+            that.defaultLanguage = $("input[name='defaultLanguage']:checked").data("language");
+        });
+
         this.checkBoxIdiomas.on("click", function () {
             that.comprobarCambiosEnIdiomas();
+            let closestRadioButton = $(this).closest("ul").find("input[name='defaultLanguage']");
+            if ($(this).is(":checked")) {
+                closestRadioButton.removeAttr("disabled");
+                // Si no hay idioma por defecto seleccionado se marca este como idioma por defecto
+                if (that.defaultLanguage.length == 0) {
+                    closestRadioButton.attr("checked", true);
+                    that.defaultLanguage = closestRadioButton.data("language");
+                }
+            } else {
+                if (closestRadioButton.is(":checked")) {
+                    // Si tenia elegido este idioma por defecto, quitamos el checked de su radio button
+                    closestRadioButton.removeAttr("checked");
+
+                    // Se busca el idioma que este seleccionado mas próximo y se marca su radio button
+                    let closestLanguageAvailable = $($("#platform-languages li.component-wrap input[type='checkbox']:checked")[0])
+                    let newClosestRadioButton = closestLanguageAvailable.closest("ul").find("input[name='defaultLanguage']");
+                    newClosestRadioButton.attr("checked", true);
+
+                    // Se actualiza el idioma por defecto
+                    that.defaultLanguage = newClosestRadioButton.data("language") == undefined ? "" : newClosestRadioButton.data("language") 
+                }
+
+                // Se deshabilita su radio button para que no pueda ser seleccionado hasta que vuelva a marcar el checkbox
+                closestRadioButton.attr("disabled", true);
+            };
         });
 
         // Botón para abrir el modal para añadir un nuevo idioma personalizado
@@ -6212,20 +7389,25 @@ operativaGestionConfiguracionPlataforma = {
         // Tener en cuenta que si no hay idiomas, mandar los "por defecto"
         //that.Options['Idiomas'] = that.Idiomas.val().trim().length == 0 ? "es|Español&&&en|English&&&pt|Portuguese&&&ca|Català&&&eu|Euskera&&&gl|Galego&&&fr|Français&&&de|Deutsch&&&it|Italiano" : that.Idiomas.val().trim();
         // Recorrer checkbox y construir la cadena de idiomas
-        let idiomasValue = "";
+        let idiomasValue = '';
+        if (that.defaultLanguage != undefined) {
+            idiomasValue = `${that.defaultLanguage}&&&`;
+        }
         $.each(that.checkBoxIdiomas, function() {
             const $this = $(this);            
-            if($this.is(":checked")) {                
+            if($this.is(":checked") && !idiomasValue.includes($this.data("language"))) {                
                 idiomasValue += `${$this.data("language")}&&&`;
             }
         });
 
         $.each($(`.${that.customLanguageClassName}`), function () {
             const $this = $(this);
-            idiomasValue += `${$this.data("language")}&&&`;
+            if (!idiomasValue.includes($this.data("language"))) {
+                idiomasValue += `${$this.data("language")}&&&`;
+            }
         });
         // Eliminar los 3 últimos caracteres sobrantes (&&&) y establecer valor por defecto si no hay ninguno
-        that.Options['Idiomas'] = idiomasValue.trim().length > 0 ? idiomasValue.slice(0,-3) : "es|Español";
+        that.Options['Idiomas'] = idiomasValue.trim().length > 0 ? idiomasValue.slice(0,-3) : "";
 
         // Desaparece that.Options['LoginFacebook'] = that.LoginFacebook.val();
         // Desaparece that.Options['LoginGoogle'] = that.LoginGoogle.val();
@@ -6272,6 +7454,7 @@ operativaGestionConfiguracionPlataforma = {
         that.Options['UrlIntragnoss'] = that.UrlIntragnoss.val().trim();
         // Desaparece that.Options['UrlIntragnossServicios'] = that.UrlIntragnossServicios.val();
         that.Options['UrlBaseService'] = that.UrlBaseService.val().trim();
+        that.Options['DominioPaginasAdministracion'] = that.DominioPaginasAdministracion.val().trim();
         that.Options['ComunidadesExcluidaPersonalizacion'] = that.ComunidadesExcluidaPersonalizacion.val().trim();
         that.Options['VersionJSEcosistema'] = that.VersionJSEcosistema.val().trim();
         that.Options['VersionCSSEcosistema'] = that.VersionCSSEcosistema.val().trim();
@@ -6348,9 +7531,8 @@ operativaGestionConfiguracionPlataforma = {
                 mostrarNotificacion("success", "Los cambios se han guardado correctamente");
             }         
         }).fail(function (data) {
-            // KO Guardado
-            const error = data.split('|||');
-            mostrarNotificacion("error", "Se ha producido un error al guardar, inténtelo de nuevo más tarde.");
+            // KO Guardado          
+            mostrarNotificacion("error", data);
         }).always(function () {
             loadingOcultar();
         }); 
@@ -6380,9 +7562,6 @@ const operativaEstadoServicios = {
      */
     triggerEvents: function(){
         const that = this;
-
-        // Ejecutar peticiones para conocer el estado de los servicios que necesitan la creacion de un recurso para comprobarlos
-        that.handleCreateResourceAndCheckServices();
 
         // Mostrar los items según la selección
         that.handleShowServiceType();
@@ -6428,15 +7607,37 @@ const operativaEstadoServicios = {
         this.urlComprobarServicioDocumentos = `${this.urlBase}/comprobar-servicio-documentos`;
         this.urlComprobarApi = `${this.urlBase}/comprobar-api`;
         this.urlComprobarRelatedVirtuoso = `${this.urlBase}/comprobar-related-virtuoso`;
-        this.urlComprobarRabbitSearchGraphGenerator = `${this.urlBase}/comprobar-rabbit-search-graph-generator`;
+        this.urlComprobarSearchGraphGenerator = `${this.urlBase}/comprobar-search-graph-generator`;
         this.urlCrearRecurso = `${this.urlBase}/crear-recurso`;
         this.urlComprobarVirtuoso = `${this.urlBase}/comprobar-virtuoso`;
         this.urlComprobarReplicacionVirtuoso = `${this.urlBase}/comprobar-replicacion-virtuoso`;
         this.urlComprobarGeneradorMiniaturas = `${this.urlBase}/comprobar-generador-miniaturas`;
         this.urlComprobarAutocompleteApiLucene = `${this.urlBase}/comprobar-autocomplete-api-lucene`;
-        this.urlComprobarVisitas = `${this.urlBase}/comprobar-visitas`;
+        this.urlComprobarVisitRegistry = `${this.urlBase}/comprobar-visit-registry`;
+        this.urlComprobarVisitCluster = `${this.urlBase}/comprobar-visit-cluster`;
         this.urlEliminarRecurso = `${this.urlBase}/eliminar-recurso`;
         this.urlComprobarRedis = `${this.urlBase}/comprobar-redis`;
+        this.urlComprobarRabbitMQ = `${this.urlBase}/comprobar-rabbitmq`;
+        this.urlComprobarHaproxi = `${this.urlBase}/comprobar-haproxy`;
+        
+        this.urlComprobarAutocomplete =`${this.urlBase}/comprobar-autocomplete` ;
+        this.urlComprobarDeploy = `${this.urlBase}/comprobar-deploy`;
+        this.urlComprobarFacets = `${this.urlBase}/comprobar-facets` ;
+        this.urlComprobarIdentityServer = `${this.urlBase}/comprobar-identityserver`;
+        this.urlComprobarLabeler = `${this.urlBase}/comprobar-labeler` ;
+        this.urlComprobarLogin = `${this.urlBase}/comprobar-login`;
+        this.urlComprobarOauth = `${this.urlBase}/comprobar-oauth`;
+        this.urlComprobarResults = `${this.urlBase}/comprobar-results`;
+        this.urlComprobarCacheRefresh = `${this.urlBase}/comprobar-cacherefresh`;
+        this.urlComprobarCommunityWall = `${this.urlBase}/comprobar-communitywall`;
+        this.urlComprobarDistributor = `${this.urlBase}/comprobar-distributor`;
+        this.urlComprobarMail = `${this.urlBase}/comprobar-mail`;
+        this.urlComprobarSocialCacheRefresh = `${this.urlBase}/comprobar-socialcacherefresh`;
+        this.urlComprobarUserWall = `${this.urlBase}/comprobar-userwall`;
+        this.urlComprobarReplicacionBidireccional = `${this.urlBase}/comprobar-replicacion-bidireccional`;
+        this.urlComprobarAutocompleteGenerator = `${this.urlBase}/comprobar-autocomplete-generator`;
+
+
     },    
 
     /**
@@ -6569,19 +7770,74 @@ const operativaEstadoServicios = {
         that.handleCheckServiceStatus(that.urlComprobarServicioInterno);
         // Comprobar servicio RelatedVirtuoso
         that.handleCheckServiceStatus(that.urlComprobarRelatedVirtuoso);
-        // Comprobar Rabbit y servicio SearchGraphGenerator
-        GnossPeticionAjax(
-            that.urlComprobarRabbitSearchGraphGenerator,
-            null,
-            true
-        ).done(function (data) {
-            json = JSON.parse(data);
-            $.each(json, function () {
-                that.printServiceStatus(this);
-            });
-        });
+        // Comprobar servicio AutocompleteApiLucene
+        that.handleCheckServiceStatus(that.urlComprobarAutocompleteApiLucene);
+        // Comprobar servicio ReplicaciónVirtuoso
+        that.handleCheckServiceStatus(that.urlComprobarReplicacionVirtuoso);
+        // Comprobar servicio ThumbnailGenerator
+        that.handleCheckServiceStatus(that.urlComprobarGeneradorMiniaturas);
+        // Comprobar servicio Visit Registry
+        that.handleCheckServiceStatus(that.urlComprobarVisitRegistry); 
+        // Comprobar servicio Visit Cluster
+        that.handleCheckServiceStatus(that.urlComprobarVisitCluster); 
+        // Comprobar servicio Search Graph Generator
+        that.handleCheckServiceStatus(that.urlComprobarSearchGraphGenerator);
         // Comprobar servicio Redis
         that.handleCheckServiceStatus(that.urlComprobarRedis);
+        // Comprobar servicio Virtuoso
+        that.handleCheckServiceStatus(that.urlComprobarVirtuoso);
+        // Comprobar servicio RabbitMQ
+        that.handleCheckServiceStatus(that.urlComprobarRabbitMQ);
+        // Comprobar servicio Haproxy
+        that.handleCheckServiceStatus(that.urlComprobarHaproxi);
+
+        
+        // Comprobar servicio Autocomplete
+        that.handleCheckServiceStatus(that.urlComprobarAutocomplete);
+        // Comprobar servicio Deploy
+        that.handleCheckServiceStatus(that.urlComprobarDeploy);
+        // Comprobar servicio Facets
+        that.handleCheckServiceStatus(that.urlComprobarFacets);
+        // Comprobar servicio IdentityServer
+        that.handleCheckServiceStatus(that.urlComprobarIdentityServer);
+        // Comprobar servicio Labeler
+        that.handleCheckServiceStatus(that.urlComprobarLabeler);
+        // Comprobar servicio Login
+        that.handleCheckServiceStatus(that.urlComprobarLogin);
+        // Comprobar servicio Oauth
+        that.handleCheckServiceStatus(that.urlComprobarOauth);
+        // Comprobar servicio Results
+        that.handleCheckServiceStatus(that.urlComprobarResults);
+        
+        // Comprobar servicio CacheRefresh
+        that.handleCheckServiceStatus(that.urlComprobarCacheRefresh);
+        // Comprobar servicio CommunityWall
+        that.handleCheckServiceStatus(that.urlComprobarCommunityWall);
+        // Comprobar servicio Distributor
+        that.handleCheckServiceStatus(that.urlComprobarDistributor);
+        // Comprobar servicio Mail
+        that.handleCheckServiceStatus(that.urlComprobarMail);
+        // Comprobar servicio SocialCacheRefresh
+        that.handleCheckServiceStatus(that.urlComprobarSocialCacheRefresh);
+        // Comprobar servicio UserWall
+        that.handleCheckServiceStatus(that.urlComprobarUserWall);
+        // Comprobar servicio Replicacion Bidireccional
+        that.handleCheckServiceStatus(that.urlComprobarReplicacionBidireccional);
+        // Comprobar servicio Autocomplete Generator
+        that.handleCheckServiceStatus(that.urlComprobarAutocompleteGenerator);
+
+        
+        //// Comprobar Rabbit y servicio SearchGraphGenerator
+        //GnossPeticionAjax(
+        //    that.urlComprobarRabbitSearchGraphGenerator,
+        //    null,
+        //    true
+        //).done(function (data) {
+        //    json = JSON.parse(data);
+        //    that.printServiceStatus(json);
+        //});
+        //// Comprobar servicio Redis
+        //that.handleCheckServiceStatus(that.urlComprobarRedis);
     }, 
 
     /**
@@ -6613,64 +7869,7 @@ const operativaEstadoServicios = {
         $(`#${data.service}`).find(".statusDescription").html(data.description.replace(/\n/g, '<br/>'));
         $(`#${data.service}`).find(".loadingStatus").addClass("d-none");
     },
-
-    /**
-     * Método que crea un recurso para comprobar el estado de los servicios
-     */
-    handleCreateResourceAndCheckServices: function () {
-        const that = this;
-        let recursoID = "";
-        var json = "";
-
-        GnossPeticionAjax(
-            that.urlCrearRecurso,
-            null,
-            true
-        ).done(function (data) {
-            json = JSON.parse(data);
-            if (json.resourceID == "00000000-0000-0000-0000-000000000000") {
-                $.each(json.serviceStatusModelList, function () {
-                    that.printServiceStatus(this);
-                });
-            }
-            else {
-                recursoID = json.resourceID;
-                // Comprobar servicio Virtuoso
-                that.handleCheckServiceStatus(that.urlComprobarVirtuoso + "?recursoID=" + recursoID);
-
-                // Comprobar servicios Replicacion Virtuoso y HaProxy
-                GnossPeticionAjax(
-                    that.urlComprobarReplicacionVirtuoso + "?recursoID=" + recursoID,
-                    null,
-                    true
-                ).done(function (data) {
-                    json = JSON.parse(data);
-                    $.each(json, function () {
-                        that.printServiceStatus(this);
-                    });
-                });
-
-                // Comprobar servicio Thumbnail Generator
-                that.handleCheckServiceStatus(that.urlComprobarGeneradorMiniaturas + "?recursoID=" + recursoID);
-
-                // Comprobar servicios Lucene Autocomplete y Lucene API
-                that.handleCheckServiceStatus(that.urlComprobarAutocompleteApiLucene);
-
-                // Comprobar servicios Visitas
-                GnossPeticionAjax(
-                    that.urlComprobarVisitas + "?recursoID=" + recursoID,
-                    null,
-                    true
-                ).done(function (data) {
-                    json = JSON.parse(data);
-                    $.each(json, function () {
-                        that.printServiceStatus(this);
-                    });
-                });
-                that.handleDeleteResource(recursoID);
-            }
-        });
-    },
+     
 
     /**
      * Metodo para eliminar un recurso
@@ -6722,9 +7921,191 @@ const operativaEstadoServicios = {
         });        
     },
     
-
     
+}
 
+/**
+ * Operativa de funcionamiento Administrar Servicios Externos
+ */
+const operativaEventosExternos = {
+    /**
+     * Inicializar operativa
+     */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas();
+    },
 
+    configRutas: function () {
+        // Url para editar un certificado
+        this.urlBase = refineURL();
 
+        // Url para guardar los cambios de un evento
+        this.urlUpdateExternalEvent = `${this.urlBase}/save`
+
+        // Url para habilitar/deshabilitar la configuracion de proyecto
+        this.urlUpdateExternalEventConfig = `${this.urlBase}/save-config`
+
+        this.urlUpdateCredentials = `${this.urlBase}/save-creds`
+    },
+
+    config: function (pParams) {
+        // Boton que abre el modal de confirmacion
+        this.btnUpdateExternalEventClassName = 'btnUpdateExternalEvent'
+        // Boton para confirmar la actualizacion de una traza
+        this.btnConfirmUpdateExternalEventClassName = 'btnConfirmUpdateExternalEvent';
+        // Boton para actualizar la configuracion de eventos por proyecto
+        this.btnUpdateExternalEventConfigIdName = 'btnUpdateExternalEventProjectConfig';
+        // Boton para actualizar las credenciales de rabbit
+        this.btnGuardarCredencialesIdName = 'btnGuardarCredenciales';
+
+        // Id modal habilitar evento
+        this.idEnableEventModal = 'modal-enable-evento-externo';
+        // Id modal deshabilitar evento
+        this.idDisableEventModal = 'modal-disable-evento-externo';
+        // Id del input de usuario de rabbit
+        this.idUsuarioRabbitExterno = 'pUsuarioRabbitExterno';
+        // Id del input de contraseña de rabbit
+        this.idPasswordRabbitExterno = 'pPasswordRabbitExterno'
+
+        // Nombre del servicio actual
+        this.externalEventNameClassName = 'externalEventName';
+
+        // Clase de fila de evento
+        this.externalEventRowClassName = 'external-event-row';
+
+        // Flags para guaradr
+        // Nombre del evento a actualizar
+        this.externalEventName = undefined;
+    },
+
+    configEvents: function (pParams) {
+        const that = this;
+
+        // Boton de confirmacion de actualizacion de estado de un evento
+        configEventByClassName(`${that.btnConfirmUpdateExternalEventClassName}`, function (element) {
+            const $btnConfirmUpdateExternalEventClassName = $(element);
+            $btnConfirmUpdateExternalEventClassName.off().on("click", function () {
+                that.handleUpdateEvent();
+            });
+        });   
+
+        // Boton para guardar el evento selccionado
+        configEventByClassName(`${that.btnUpdateExternalEventClassName}`, function (element) {
+            const $btnUpdateExternalEvent = $(element);
+            $btnUpdateExternalEvent.off().on("click", function () {
+                var filaEvento = $btnUpdateExternalEvent.closest(`.${that.externalEventRowClassName}`);
+                // Nombre del evento que se va a actualizar              
+                // Ejemplo: Eventos de XXXX -> Necesitamos la ultima parte [XXXX]
+                that.externalEventName = filaEvento.find(`.${that.externalEventNameClassName}`).attr('value');
+            });
+        }); 
+
+        // Boton para habilitar/deshabilitar la configuracion de eventos de proyecto
+        configEventById(`${that.btnUpdateExternalEventConfigIdName}`, function (element) {
+            const $btnUpdateExternalEventoConfig = $(element);
+            $btnUpdateExternalEventoConfig.off().on("click", function () {
+                that.handleUpdateConfig();
+            });
+        }); 
+        // Boton para guardar las nuevas credenciales 
+        configEventById(`${that.btnGuardarCredencialesIdName}`, function (element) {
+            const $btnGuardarCredenciales = $(element);
+            $btnGuardarCredenciales.off().on("click", function () {
+                that.checkInputs();
+            });
+        })
+    },
+    handleUpdateEvent: function () {
+        const that = this;
+
+        // Mostrado de loading                   
+        loadingMostrar();
+
+        let dataPost = {
+            pEvento: that.externalEventName
+        }
+
+        // Realizar la petición para actualizar el campo
+        GnossPeticionAjax(
+            that.urlUpdateExternalEvent,
+            dataPost,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", "Se ha actualizado el evento seleccionado");
+        }).fail(function (data) {
+            mostrarNotificacion("error",data)
+        }).always(function () {
+            loadingOcultar();
+            location.reload();
+        })
+    },
+
+    handleUpdateConfig: function () {
+        const that = this;
+
+        // Mostrado de loading                   
+        loadingMostrar();
+
+        // Realizar la petición para actualizar el campo
+        GnossPeticionAjax(
+            that.urlUpdateExternalEventConfig,
+            null,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", "Se ha actualizado el evento seleccionado");
+        }).fail(function (data) {
+            mostrarNotificacion("error", data)
+        }).always(function () {
+            loadingOcultar();
+            location.reload();
+        })
+    },
+
+    checkInputs: function () {
+        const that = this;
+        let inputNombre = $(`#${that.idUsuarioRabbitExterno}`).val();
+
+        if (inputNombre == undefined || inputNombre.length == 0) {
+            mostrarNotificacion("error", "El nombre de usuario no puede estar vacio");
+            return
+        }
+
+        let inputPassword = $(`#${that.idPasswordRabbitExterno}`).val();
+
+        if (inputPassword == undefined || inputPassword.length == 0) {
+            mostrarNotificacion("error", "La contraseña no puede estar vacio");
+            return
+        }
+
+        var data = {
+            Usuario: inputNombre,
+            Password: inputPassword
+        }
+
+        that.handleUpdateCredentials(data);
+    },
+
+    handleUpdateCredentials: function (data) {
+        const that = this;
+
+        // Mostrado de loading                   
+        loadingMostrar();
+
+        // Realizar la petición para actualizar el campo
+        GnossPeticionAjax(
+            that.urlUpdateCredentials,
+            data,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", "Se han actualizado las credenciales correctamente");
+        }).fail(function (data) {
+            mostrarNotificacion("error", data)
+        }).always(function () {
+            loadingOcultar();
+            location.reload();
+        })
+    }
 }

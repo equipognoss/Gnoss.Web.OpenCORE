@@ -17,6 +17,7 @@ Variables
     HeaderModel cabecera = Html.GetCabecera();
     string idModalObjetoConocimiento = "modal-objeto_conocimiento_" + objetoConocimiento.Ontologia.Trim().Replace(" ", "_").Replace("(", "_").Replace(")", "_");
     string idModalObjetoConocimientoDelete = "modal-objeto_conocimiento_delete_" + objetoConocimiento.Ontologia.Trim().Replace(" ", "_").Replace("(", "_").Replace(")", "_");
+    string idModalCompartirOntologia = "modal-compartir-ontologia_" + objetoConocimiento.Ontologia.Trim().Replace(" ", "_").Replace("(", "_").Replace(")", "_");
     // Diccionario del contenido (En varios idiomas)
     Dictionary<string, string> objetoConocimientoNameDictionary = new Dictionary<string, string>();
     // Idioma por defecto de la comunidad
@@ -24,7 +25,15 @@ Variables
     // Tipo de objeto a mostrar (Primaro o Secundario)
     string tipoObjetoValue = Model.EsObjetoPrimario ? Html.GetText("DEVTOOLS", "PRINCIPAL") : Html.GetText("DEVTOOLS", "SECUNDARIO");
     // Fecha de creación/edición del objeto de conocimiento
-    string fechaObjetoConocimiento = "30/11/2022";
+    string fechaObjetoConocimiento = string.Empty;
+    @if (objetoConocimiento.FechaCreacion == objetoConocimiento.FechaModificacion)
+    {
+        fechaObjetoConocimiento = objetoConocimiento.FechaCreacion.ToShortDateString();
+    }
+    else
+    {
+        fechaObjetoConocimiento = objetoConocimiento.FechaModificacion.ToShortDateString();
+    }
     // Nombre del grafo actual
     string grafoActual = string.IsNullOrEmpty(Model.GrafoActual) ? "" : Model.GrafoActual;
     // Diccionario de shortNameOntology para multiIdiomas
@@ -41,11 +50,11 @@ Variables
 }
 
 <li class="component-wrap objetoConocimiento-row"
-    data-grafo-actual="@grafoActual"
-    data-oc="@objetoConocimiento.Ontologia"
-    id="@objetoConocimiento.Ontologia"
-    data-isprimary="@(objetoConocimiento.EsObjetoPrimario ? "true" : "false")"
-    data-documentid="@objetoConocimiento.DocumentoID">
+data-grafo-actual="@grafoActual"
+data-oc="@objetoConocimiento.Ontologia"
+id="@objetoConocimiento.Ontologia"
+data-isprimary="@(objetoConocimiento.EsObjetoPrimario ? "true" : "false")"
+data-documentid="@objetoConocimiento.DocumentoID">
 
     <div class="component">
         <div class="component-header-wrap">
@@ -109,7 +118,7 @@ Variables
                             }
                             else
                             {
-                                @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+                                /*@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
                                 {
                                     <span class="language-component component-shortNameOntology @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">
                                         @* Asegurarnos de que haya valor en el dictionary. Si no, dar un valor por defecto*@
@@ -122,8 +131,8 @@ Variables
                                             }
                                         }
                                     </span>
-                                }
-                            }
+                                }*/
+                                                                                                                                                            }
 
                         </div>
 
@@ -136,81 +145,194 @@ Variables
                         <div class="component-fecha-wrap">
                             <span class="component-fecha">@fechaObjetoConocimiento</span>
                         </div>
-
+                        <div class="component-compartida-wrap">
+                            <span class="component-compartida">@objetoConocimiento.NombreProyectoOntologiaCompartida</span>
+                        </div>
                     </div>
                     @*Sección de acciones *@
-                    <div class="component-header-right">
-                        <div class="component-actions-wrap">
-                            @* Botón dropdown de acciones *@
-                            <div class="dropdown">
-                                <a class="nav-link dropdown-toggle btn btn-outline-grey"
-                                   data-toggle="dropdown"
-                                   href="#"
-                                   role="button"
-                                   aria-haspopup="true"
-                                   aria-expanded="false">
-                                    <span class="material-icons">create</span>
-                                    <span class="texto">@Html.GetText("COMMON","EDITAR")</span>
-                                </a>
-                                @* Panel dropdown con las acciones disponibles *@
-                                <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
-                                    @* Acción Editar *@
-                                    <a class="item-dropdown btnEditObjetoConocimiento"
-                                       data-toggle="modal"
-                                       data-target="#@(idModalObjetoConocimiento)">
-                                        <span class="material-icons">edit</span>
-                                        <span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+                    @if (!objetoConocimiento.EsOntologiaCompartida)
+                    {
+                        <div class="component-header-right">
+                            <div class="component-actions-wrap">
+                                @* Botón dropdown de acciones *@
+                                <div class="dropdown">
+                                    <a class="nav-link dropdown-toggle btn btn-outline-grey"
+                                    data-toggle="dropdown"
+                                    href="#"
+                                    role="button"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
+                                        <span class="material-icons">create</span>
+                                        <span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
                                     </a>
+                                    @* Panel dropdown con las acciones disponibles *@
+                                    <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
+                                        @* Acción Editar *@
+                                        @if (Model.EsObjetoPrimario)
+                                        {
+                                            @if ((ViewBag.GestionarOC != null && ViewBag.GestionarOC))
+                                            {
+                                                <a class="item-dropdown btnEditObjetoConocimiento"
+                                                   data-toggle="modal"
+                                                   data-target="#@(idModalObjetoConocimiento)">
+                                                    <span class="material-icons">edit</span>
+                                                    <span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
+                                                </a>
+                                            } 
+                                        }
+                                        else
+                                        {
+                                            @if ((ViewBag.GestionarOC != null && ViewBag.GestionarOC) || (ViewBag.ModificarSecundaria != null && ViewBag.ModificarSecundaria))
+                                            {
+                                                <a class="item-dropdown btnEditObjetoConocimiento"
+                                                   data-toggle="modal"
+                                                   data-target="#@(idModalObjetoConocimiento)">
+                                                    <span class="material-icons">edit</span>
+                                                    <span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
+                                                </a>
+                                            } 
+                                        }
+                                                                               
+                                        @if (tipoObjetoValue == "Principal" && (ViewBag.GestionarOC != null && ViewBag.GestionarOC))
+                                        {
+                                            @* Acceso a Edición de Fichas *@
+                                            <a class="item-dropdown btnEditFichasObjetoConocimiento"
+                                            href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCONFIGURACIONOCVISTAS")/@Model.DocumentoID">
+                                                <span class="material-icons">edit_note</span>
+                                                <span class="texto">
+                                                    @Html.GetText("DEVTOOLS", "EDITARFICHASOC")
+                                                </span>
+                                            </a>
+                                        }
 
-                                    @if (tipoObjetoValue == "Principal")
-                                    {
-                                        @* Acceso a Edición de Fichas *@
-                                        <a class="item-dropdown btnEditFichasObjetoConocimiento"
-                                       href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCONFIGURACIONOCVISTAS")/@Model.DocumentoID">
-                                            <span class="material-icons">edit_note</span>
+                                        @*Acción configurar propiedades OC*@
+                                        @if (Model.EsObjetoPrimario)
+                                        {
+                                            @if ((ViewBag.GestionarOC != null && ViewBag.GestionarOC))
+                                            {
+                                                <a class="item-dropdown btnEditFichasObjetoConocimiento"
+                                                   href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCONFIGURACIONOC")/@Model.DocumentoID">
+                                                    <span class="material-icons">edit_note</span>
+                                                    <span class="texto">
+                                                        @Html.GetText("DEVTOOLS", "CONFIGURARPROPIEDADESOC")
+                                                    </span>
+                                                </a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @if ((ViewBag.GestionarOC != null && ViewBag.GestionarOC) || (ViewBag.ModificarSecundaria != null && ViewBag.ModificarSecundaria))
+                                            {
+                                                <a class="item-dropdown btnEditFichasObjetoConocimiento"
+                                                   href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCONFIGURACIONOC")/@Model.DocumentoID">
+                                                    <span class="material-icons">edit_note</span>
+                                                    <span class="texto">
+                                                        @Html.GetText("DEVTOOLS", "CONFIGURARPROPIEDADESOC")
+                                                    </span>
+                                                </a>
+                                            }
+                                        }
+
+                                        @* Acción Descargar archivo de configuración *@
+                                        <a class="item-dropdown btnDownloadConfigurationFileObjetoConocimiento"
+                                        href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@Model.DocumentoID&nombre=@(Model.Ontologia).xml&ext=.xml&ID=@Html.GetIdentidadActual().KeyIdentity">
+                                            <span class="material-icons">download</span>
                                             <span class="texto">
-                                                @Html.GetText("DEVTOOLS","EDITARFICHASOC")
+                                                @Html.GetText("DEVTOOLS", "DESCARGARARCHIVODECONFIGURACIONXML")
                                             </span>
                                         </a>
+
+                                        @* Acción Descargar ontología *@
+                                        <a class="item-dropdown btnDownloadTemplateObjetoConocimiento"
+                                        href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@Model.DocumentoID&nombre=@(Model.Ontologia).owl&ext=.owl&ID=@Html.GetIdentidadActual().KeyIdentity">
+                                            <span class="material-icons">download</span>
+                                            <span class="texto">@Html.GetText("DEVTOOLS", "DESCARGARPLANTILLAOWL")</span>
+                                        </a>
+                                        @if (Model.EsObjetoPrimario && (ViewBag.GestionarOC != null && ViewBag.GestionarOC))
+                                        {
+                                            @* Acción Compartir ontología*@
+                                            <a class="item-dropdown btnShareOntology"
+                                            data-toggle="modal"
+                                            data-target="#@(idModalCompartirOntologia)">
+                                                <span class="material-icons">share</span>
+                                                <span class="texto">@Html.GetText("COMMON", "COMPARTIRONTOLOGIA")</span>
+                                            </a>
                                     }
-
-                                    @*Acción configurar propiedades OC*@
-                                    <a class="item-dropdown btnEditFichasObjetoConocimiento"
-                                       href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRARCONFIGURACIONOC")/@Model.DocumentoID">
-                                        <span class="material-icons">edit_note</span>
-                                        <span class="texto">
-                                            @Html.GetText("DEVTOOLS","CONFIGURARPROPIEDADESOC")
-                                        </span>
-                                    </a>
-
-                                    @* Acción Descargar archivo de configuración *@
-                                    <a class="item-dropdown btnDownloadConfigurationFileObjetoConocimiento"
-                                       href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@Model.DocumentoID&nombre=@(Model.Ontologia).xml&ext=.xml&ID=@Html.GetIdentidadActual().KeyIdentity">
-                                        <span class="material-icons">download</span>
-                                        <span class="texto">
-                                            @Html.GetText("DEVTOOLS","DESCARGARARCHIVODECONFIGURACIONXML")
-                                        </span>
-                                    </a>
-
-                                    @* Acción Descargar ontología *@
-                                    <a class="item-dropdown btnDownloadTemplateObjetoConocimiento"
-                                       href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@Model.DocumentoID&nombre=@(Model.Ontologia).owl&ext=.owl&ID=@Html.GetIdentidadActual().KeyIdentity">
-                                        <span class="material-icons">download</span>
-                                        <span class="texto">@Html.GetText("DEVTOOLS","DESCARGARPLANTILLAOWL")</span>
-                                    </a>
-
-                                    
-                                    @* Acción Borrar *@
-                                    <a class="item-dropdown btnDeleteObjetoConocimiento"
-                                       data-toggle="modal"
-                                       data-target="#@(idModalObjetoConocimientoDelete)">
-                                        <span class="material-icons">delete</span>
-                                        <span class="texto">@Html.GetText("DEVTOOLS","BORRAR")</span>
-                                    </a>
+                                        @* Acción Borrar *@
+                                        @if (Model.EsObjetoPrimario)
+                                        {
+                                            @if (ViewBag.GestionarOC != null && ViewBag.GestionarOC)
+                                            {
+                                                <a class="item-dropdown btnDeleteObjetoConocimiento"
+                                                   data-toggle="modal"
+                                                   data-target="#@(idModalObjetoConocimientoDelete)">
+                                                    <span class="material-icons">delete</span>
+                                                    <span class="texto">@Html.GetText("DEVTOOLS", "BORRAR")</span>
+                                                </a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @if ((ViewBag.GestionarOC != null && ViewBag.GestionarOC) || (ViewBag.EliminarSecundaria != null && ViewBag.EliminarSecundaria))
+                                            {
+                                                <a class="item-dropdown btnDeleteObjetoConocimiento"
+                                                   data-toggle="modal"
+                                                   data-target="#@(idModalObjetoConocimientoDelete)">
+                                                    <span class="material-icons">delete</span>
+                                                    <span class="texto">@Html.GetText("DEVTOOLS", "BORRAR")</span>
+                                                </a>
+                                            }
+                                        }                                      
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <div class="component-header-right">
+                            <div class="component-actions-wrap">
+                                @* Botón dropdown de acciones *@
+                                <div class="dropdown">
+                                    <a class="nav-link dropdown-toggle btn btn-outline-grey"
+                                       data-toggle="dropdown"
+                                       href="#"
+                                       role="button"
+                                       aria-haspopup="true"
+                                       aria-expanded="false">
+                                        <span class="material-icons">create</span>
+                                        <span class="texto">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
+                                    </a>
+                                    @* Panel dropdown con las acciones disponibles *@
+                                    <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
+                                        <a class="item-dropdown btnDownloadConfigurationFileObjetoConocimiento"
+                                           href="@objetoConocimiento.UrlProyectoOntologiaCompartida">
+                                            <span class="material-icons">edit</span>
+                                            <span class="texto">@Html.GetText("DEVTOOLS", "EDITARONTOLOGIACOMUNIDADORIGINAL") @objetoConocimiento.NombreProyectoOntologiaCompartida</span>
+                                        </a>
+                                        @* Acción Descargar archivo de configuración *@
+                                        <a class="item-dropdown btnDownloadConfigurationFileObjetoConocimiento"
+                                           href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@Model.DocumentoID&nombre=@(Model.Ontologia).xml&ext=.xml&ID=@Html.GetIdentidadActual().KeyIdentity">
+                                            <span class="material-icons">download</span>
+                                            <span class="texto">
+                                                @Html.GetText("DEVTOOLS", "DESCARGARARCHIVODECONFIGURACIONXML")
+                                            </span>
+                                        </a>
+
+                                        @* Acción Descargar ontología *@
+                                        <a class="item-dropdown btnDownloadTemplateObjetoConocimiento"
+                                           href="@Html.GetComunidad().Url/download-file?tipo=Ontologia&proy=@Html.GetComunidad().Key&doc=@Model.DocumentoID&nombre=@(Model.Ontologia).owl&ext=.owl&ID=@Html.GetIdentidadActual().KeyIdentity">
+                                            <span class="material-icons">download</span>
+                                            <span class="texto">@Html.GetText("DEVTOOLS", "DESCARGARPLANTILLAOWL")</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+
+
                 </div>
             </div>
         </div>
@@ -218,4 +340,6 @@ Variables
 
     @* Información detallada de la pestaña -> Modal *@
     @Html.PartialView("_modal-views/_objetoConocimiento-detail-item", Model)
+    @* Modal compartir ontologías *@
+    @Html.PartialView("_modal-views/_share-ontologies", Model)
 </li>

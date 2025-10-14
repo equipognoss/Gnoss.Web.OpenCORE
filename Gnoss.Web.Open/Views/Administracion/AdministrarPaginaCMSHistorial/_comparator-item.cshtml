@@ -1,0 +1,77 @@
+﻿@model AdministrarPaginasCMSViewModel
+@{
+    int contadorFilas = 0;
+    AdministrarPaginaCMSComparadorViewModel comparador = ViewBag.Comparator;
+}
+<ul class="no-list-style">
+    @foreach (var row in Model.Rows)
+    {
+        int contadorColumnas = 0;
+        contadorFilas++;
+        <li class="cmsrow @(comparador.hasDiff(row.Key) ? "error" : "")">
+            <div class="cmsrow-wrap">
+                <div class="cmsrow-header">
+                    <div class="handler">
+                        <span class="material-icons">drag_indicator</span>
+                    </div>
+                    <div class="name">
+                        @Html.GetText("DEVTOOLS", "FILA")
+                        <span class="number">@contadorFilas</span>
+                    </div>
+                </div>
+                <div class="cmsrow-title">@Html.GetText("DEVTOOLS","ATRIBUTOS")</div>
+                <div class="cmsrow-content">
+                    @if (!string.IsNullOrWhiteSpace(row.Attributes))
+                    {
+                        <ul class="no-list-style">
+                            @foreach (string attribute in row.Attributes.Split("~~~", StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                string[] keyValue = attribute.Split("---");
+                                <li class="cmscomponent-wrap @(comparador.HasAttributeDif(row.Key, keyValue[0]) ? "error" : "")">
+                                    <div class="cmscomponent">
+                                        <span><strong>@keyValue[0]</strong></span>
+                                        <span>@keyValue[1]</span>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+                <div class="cmsrow-title">@Html.GetText("DEVTOOLS", "COMPONENTES")</div>
+                <div class="cmsrow-content">
+                    @foreach (var column in row.Cols)
+                    {
+                        contadorColumnas++;
+                        string tamaño = Html.GetValuesForGridColumnInCMSPage(column.Class).Item2.Replace("span", "").Trim().Insert(1, "/");
+
+                        <div class="cmscol">
+                            <div class="cmscol-title">
+                                @Html.GetText("DEVTOOLS", "COLUMNA")
+                                <span class="number">@contadorColumnas</span>
+                                <span class="cmssize @(comparador.hasColDiff(column.Key) ? "error" : "")"> @($"({tamaño})")</span>
+                            </div>
+                            <div class="cmscol-content">
+                                <ul class="no-list-style">
+
+                                    @foreach (var component in column.Components)
+                                    {
+                                        <li class="cmscomponent-wrap @(comparador.hasComponentDiff(component.Key) ? "error" : "") ">
+                                            <div class="cmscomponent @(comparador.ComponentDeleted(component.Key) ? "deleted" : "")">
+                                                <span>@component.Name</span>
+                                                <span>@component.Type</span>
+                                                @if (comparador.ComponentDeleted(component.Key))
+                                                {
+                                                    <span class="material-icons">web_asset_off</span>
+                                                }
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </li>
+    }
+</ul>

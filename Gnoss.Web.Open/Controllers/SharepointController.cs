@@ -31,6 +31,8 @@ using Es.Riam.AbstractsOpen;
 using Es.Riam.InterfacesOpen;
 using System.Linq;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 
 namespace Gnoss.Web.Controllers
 {
@@ -46,7 +48,8 @@ namespace Gnoss.Web.Controllers
         private bool mEsEnlaceSharepoint;
         private string urlFichero;
         private Guid documentoID;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         public string Token
         {
             get { return mToken; }
@@ -59,10 +62,12 @@ namespace Gnoss.Web.Controllers
             set { mTokenCreadorRecurso = value; }
         }
 
-        public SharepointController(string documentoID, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public SharepointController(string documentoID, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<SharepointController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
-            ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, servicesUtilVirtuosoAndReplication);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 
             tenantID = parametroAplicacionCN.ObtenerParametroAplicacion("SharepointTenantID");
             clientSecret = parametroAplicacionCN.ObtenerParametroAplicacion("SharepointClientSecret");
@@ -215,7 +220,7 @@ namespace Gnoss.Web.Controllers
 
             FileInfo archivoInfo = new FileInfo(nombreFichero);
             string extensionArchivo = Path.GetExtension(archivoInfo.Name).ToLower();
-            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
             gd.Url = UrlServicioWebDocumentacion;
             Stream streamFichero = webRequest.GetResponse().GetResponseStream();
             byte[] buffer1;
@@ -229,6 +234,44 @@ namespace Gnoss.Web.Controllers
             gd.AdjuntarDocumento(buffer1, TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, mControladorBase.UsuarioActual.OrganizacionID, mControladorBase.UsuarioActual.ProyectoID, documentoID, extensionArchivo);
 
             return nombreFichero;
+        }
+
+        public bool EliminarDocumentoDeSharepoint(string pUrl, bool pEsCreadorRecurso = false)
+        {
+            try
+            {
+				string token = !pEsCreadorRecurso ? mToken : mTokenCreadorRecurso;
+				string urlCodificada = CodificarUrl(pUrl);
+				string peticion = $"{baseUrl}shares/{urlCodificada}/root";
+
+				string response = UtilGeneral.WebRequest("GET", peticion, token, null);
+				if (string.IsNullOrEmpty(response))
+				{
+					return false;
+				}
+				dynamic respuestaObj = JsonConvert.DeserializeObject(response);
+				string idDocumentoSharepoint = respuestaObj.id;
+				string siteId = respuestaObj.parentReference.siteId;
+
+				using (HttpClient client = new HttpClient())
+				{
+					string peticionEliminar = $"{baseUrl}sites/{siteId}/drive/items/{idDocumentoSharepoint}";
+					client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+					HttpResponseMessage respuesta = client.DeleteAsync(peticionEliminar).GetAwaiter().GetResult();
+					if (respuesta.IsSuccessStatusCode)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al eliminar el documento de SharePoint. Url: {pUrl}", mlogger);
+                return false;
+            }
+            
         }
 
         public bool ComprobarSiEstaAlineadoConSharepoint(string url)
@@ -265,7 +308,7 @@ namespace Gnoss.Web.Controllers
             DateTime fechaModificacionSP = DateTime.Parse(fechaModificacionApi, System.Globalization.CultureInfo.InvariantCulture);
             long fechaModificacionSharepoint = fechaModificacionSP.Ticks;
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             long fechaCreacionVersion = docCN.ObtenerFechaCreacionDocumento(documentoID);
             return !(fechaModificacionSharepoint > fechaCreacionVersion);
         }

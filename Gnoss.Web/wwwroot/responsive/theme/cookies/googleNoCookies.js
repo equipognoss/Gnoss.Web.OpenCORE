@@ -20,27 +20,14 @@ function crearHash(clientIP) {
 }
 
 function lanzarAnalytics(googleId, clientHash) {
-    //ga('create', googleId, {
-    //    'storage': 'none',
-    //    'clientId': clientHash
-    //});
-    //ga('set', 'anonymizeIp', true);
-    //ga('send', 'pageview');
-
 
     (function (w, d, s, l, i) {
-    //    w[l] = w[l] || []; w[l].push({
-    //        'gtm.start':
-    //            new Date().getTime(), event: 'gtm.js'
-    //    });
-    //    //var f = d.getElementsByTagName(s)[0],
-    //    //    j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
-    //    //    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
-        var f = d.getElementsByTagName(s)[0],
+
+        let f = d.getElementsByTagName(s)[0],
             j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
                 'https://www.googletagmanager.com/gtag/js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', googleId);
-   
+
     window.dataLayer = window.dataLayer || [];
 
     function gtag() { dataLayer.push(arguments); }
@@ -50,11 +37,4 @@ function lanzarAnalytics(googleId, clientHash) {
     });
     gtag('js', new Date());
     gtag('config', googleId);
-}
-function contarVisitaNoCookie(googleId) {
-    $.get("https://servicios60.gnoss.com/gnosstoken/token?userId=" + $('.inpt_usuarioID').val(), function (data) {
-        var clientHash = data;
-        //cargarAnalytics(googleId);
-        lanzarAnalytics(googleId, clientHash);
-    });
 }

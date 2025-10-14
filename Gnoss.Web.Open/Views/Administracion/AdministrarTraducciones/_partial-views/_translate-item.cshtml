@@ -1,4 +1,4 @@
-﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel       
+﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TextoTraducidoModel
 @*
 Descripción
 -----------------------------------------------
@@ -9,12 +9,12 @@ Variables
 *@
 
 @{
-// Url de la traducción guardada temporalmente en ViewBag
-string urlEditTranslate = ViewBag.urlEditTranslate;
-// Identificador del texto
-string textoId = Model.TextoID;
-// Establecer en el ViewBag el idioma por defecto
-string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;            
+    // Url de la traducción guardada temporalmente en ViewBag
+    string urlEditTranslate = ViewBag.urlEditTranslate;
+    // Identificador del texto
+    string textoId = Model.TextoID;
+    // Establecer en el ViewBag el idioma por defecto
+    string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
 
 }
 
@@ -27,24 +27,36 @@ string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
 <li class="component-header-wrap component-wrap translate-row">
     <div class="component-header">
         <div class="component-header-content">
-            <div class="component-header-left">                
+            <div class="component-header-left">
                 @* Key de la traducción *@
                 <div class="component-name-wrap">
                     <span class="material-icons btnTranslateCopy pl-0" style="cursor: pointer" data-translateid="@textoId">content_copy</span>
-                    <span class="component-name">@textoId</span>                    
+                    <span class="component-name">@textoId</span>
                 </div>
-                
+
                 @* Literal o texto de la traducción *@
                 <div class="component-literal-wrap">
-                    @foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TraduccionModel traduccion in Model.Traducciones){                   
-                            <span class="component-literal language-component @(@traduccion.Idioma != idiomaPorDefecto ? "d-none" : "") " data-languageitem="@traduccion.Idioma">
-                                @traduccion.Texto
-                            </span>                    
+                    @foreach (Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones.TraduccionModel traduccion in Model.Traducciones)
+                    {
+                        <span class="component-literal language-component @(@traduccion.Idioma != idiomaPorDefecto ? "d-none" : "") " data-languageitem="@traduccion.Idioma">
+                            @traduccion.Texto
+                        </span>
                     }
                 </div>
                 @* Fecha de la traducción *@
                 <div class="component-fecha-wrap">
-                    <span class="component-fecha">01/01/2022</span>
+                    @if (Model.FechaCreacion == Model.FechaModificacion && Model.FechaCreacion.ToShortDateString().Equals("01/01/0001"))
+                    {
+                        <span class="component-fecha">01/01/2022</span>
+                    }
+                    else if (Model.FechaCreacion < Model.FechaModificacion)
+                    {
+                        <span class="component-fecha">@Model.FechaModificacion.ToShortDateString() </span>
+                    }
+                    else
+                    {
+                        <span class="component-fecha">@Model.FechaCreacion.ToShortDateString() </span>
+                    }
                 </div>
             </div>
             @* Acciones de la traducción *@
@@ -54,15 +66,15 @@ string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
                         <li>
                             @* Editar traducción - Edición vía Modal *@
                             <a class="action-edit round-icon-button js-action-edit-component btnEditTranslate"
-                                data-urledit="@urlEditTranslate"
-                                data-target="#modal-container" 
-                                data-toggle="modal">
+                               data-urledit="@urlEditTranslate"
+                               data-target="#modal-container"
+                               data-toggle="modal">
                                 <span class="material-icons">edit</span>
                             </a>
                         </li>
                         <li>
                             @* Eliminar traducción *@
-                            <a class="action-delete round-icon-button js-action-delete btnDeleteTranslate" 
+                            <a class="action-delete round-icon-button js-action-delete btnDeleteTranslate"
                                data-target="#modal-delete-translate"
                                data-translate-id="@textoId"
                                data-toggle="modal">

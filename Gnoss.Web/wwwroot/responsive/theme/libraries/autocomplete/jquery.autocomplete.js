@@ -11,7 +11,7 @@
  */
 
 ; (function($) {
-	
+
 $.fn.extend({
 	autocomplete: function(urlOrData, options) {
 		var isUrl = typeof urlOrData == "string";
@@ -89,7 +89,28 @@ $.Autocompleter = function(input, options) {
 
 	// Create $ object for input element
 	var $input = $(input).attr("autocomplete", "off").addClass(options.inputClass);
-
+		
+	function getUseCustomFill(){
+		// Verificamos si existe el objeto "extraParams"
+		if (options.extraParams) {
+			// Verificamos si existe la propiedad "pTipoAutocompletar"
+			if ('pTipoAutocompletar' in options.extraParams) {
+				const pTipoAutocompletar = options.extraParams.pTipoAutocompletar;
+				// Comprobamos el valor de "pTipoAutocompletar"
+				if (pTipoAutocompletar === 1) {
+					// Custom
+					return true;
+				} else if (pTipoAutocompletar == -1 || pTipoAutocompletar == 0) {
+					// Por defecto
+					return false;
+				}
+			}
+		}else{
+			return false;
+		}
+	}	
+	options.useCustomFill = getUseCustomFill();	
+	
     var cont = 0;
 	var timeout;
 	var previousValue = "";
@@ -168,7 +189,6 @@ $.Autocompleter = function(input, options) {
 					select.hide();
 					PintarTags($input);
 					break;
-				case KEY.TAB:
 				case KEY.RETURN:
 					cancelEvent(event);
 					if( selectCurrent() ) {
@@ -247,88 +267,97 @@ $.Autocompleter = function(input, options) {
             forzarClickBoton('', '');
 			return false;
 		}
-        
-        pintarSeleccionado($input, selected.result);
 		
-		hideResultsNow();
-		$input.trigger("result", [selected.data, selected.value]);
+		// Comportamiento para useCustomFill
+		if (options.useCustomFill) {
+			// Obtener la URL del recurso
+			const urlRecurso = selected.data.urlRecurso;
+			
+			// Verificar si la URL es válida
+			if (urlRecurso && urlRecurso.trim() !== '') {
+				// Redirigir a la URL del recurso
+				window.location.href = urlRecurso;
+				return false; // Previene cualquier acción adicional
+			}
+		}else{
+			pintarSeleccionado($input, selected.result);
+		
+			hideResultsNow();
+			$input.trigger("result", [selected.data, selected.value]);
+		}
+                
 			
         var faceta = '';
-		
-		if (selected.data.length > 2 /*&& selected.data[2] != ''*/)
-		{
-//		    var url = selected.data[2];
-//		    url = url.substring(url.indexOf('url=') + 4);
-//		    
-//		    if (url.indexOf('|||') != -1)
-//		    {
-//		        url = url.substring(0, url.indexOf('|||'));
-//		    }
-		    
-//		    if (selected.data[1] == 'foaf:firstName')
-//		    {
-//		        window.location.href = baseUrlBusqueda + '/' + urlRecursosBusqueda + '/' + url;
-//		    }
-//		    else if (selected.data[1] == 'gnoss:hasnombrecompleto')
-//		    {
-//		        url = url.replace('[perfil]',urlPerfilBusqueda).replace('[organizacion]',urlOrganizacionBusqueda).replace('[clase]',urlClaseBusqueda);
-//		        window.location.href = baseUrlBusqueda + '/' + url;
-//		    }
-//          else if (selected.data[1] == 'formSem')
-            if (selected.data[1] == 'formSem')
-            {
-                AgregarEntidadSeleccAutocompletar(selected.data);
-            }
-            else if (selected.data[1] == 'formSemGrafoDependiente')
-            {
-                AgregarValorGrafoDependienteAutocompletar(selected.data);
-            }
-            else if (selected.data[1] == 'formSemGrafoAutocompletar')
-            {
-                AgregarValorGrafoAutocompletar(selected.data);
-            }
-            else if (selected.data[1] == 'idioma' || selected.data[1].indexOf('[MultiIdioma]') != -1)
-            {
-                $input.val($input.val() + '@' + $('input.inpt_Idioma').val());
-            }            
-            else if (selected.data[1] == 'datoextraproyectovirtuoso')
-            {
-                $input.val($input.val());
-                $input.attr('aux',$input.val());
-                var inputHidden = $input.parent().find($('#'+$input.attr('id') + 'hack'));
-                if(typeof(inputHidden.attr('id')) != 'undefined')
-                {
-                    inputHidden.val(selected.data[2]);
-                    inputHidden.attr('aux',selected.data[2]);
-                }
-            }
-            else if (typeof (facetasCMS) != 'undefined' && facetasCMS)
-            {
-                var botonBuscar = document.getElementById(options.extraParams.botonBuscar);
-                if (botonBuscar.attributes['href'] != null)
-                {
-                    var urlRedirect = botonBuscar.attributes['href'].value;
 
-                    if (urlRedirect.indexOf('?') != -1)
-                    {
-                        urlRedirect = urlRedirect.substring(0, rlRedirect.indexOf('?'));
-                    }
-
-                    window.location =  urlRedirect + '?' + selected.data[1] + '=' + $input.val();
-                    return true;
-                }
-            }
-            else
-            {
-                forzarClickBoton('', selected.result);
-		        return true;
-            }
+		// Controlar selección de item
+		if (!options.useCustomFill){
+			// Comportamiento Normal
+			if (selected.data.length > 2 /*&& selected.data[2] != ''*/)
+			{
+				if (selected.data[1] == 'formSem')
+				{
+					AgregarEntidadSeleccAutocompletar(selected.data);
+				}
+				else if (selected.data[1] == 'formSemGrafoDependiente')
+				{
+					AgregarValorGrafoDependienteAutocompletar(selected.data);
+				}
+				else if (selected.data[1] == 'formSemGrafoAutocompletar')
+				{
+					AgregarValorGrafoAutocompletar(selected.data);
+				}
+				else if (selected.data[1] == 'idioma' || selected.data[1].indexOf('[MultiIdioma]') != -1)
+				{
+					$input.val($input.val() + '@' + $('input.inpt_Idioma').val());
+				}            
+				else if (selected.data[1] == 'datoextraproyectovirtuoso')
+				{
+					$input.val($input.val());
+					$input.attr('aux',$input.val());
+					var inputHidden = $input.parent().find($('#'+$input.attr('id') + 'hack'));
+					if(typeof(inputHidden.attr('id')) != 'undefined')
+					{
+						inputHidden.val(selected.data[2]);
+						inputHidden.attr('aux',selected.data[2]);
+					}
+				}
+				else if (typeof (facetasCMS) != 'undefined' && facetasCMS)
+				{
+					var botonBuscar = document.getElementById(options.extraParams.botonBuscar);
+					if (botonBuscar.attributes['href'] != null)
+					{
+						var urlRedirect = botonBuscar.attributes['href'].value;
+	
+						if (urlRedirect.indexOf('?') != -1)
+						{
+							urlRedirect = urlRedirect.substring(0, rlRedirect.indexOf('?'));
+						}
+	
+						window.location =  urlRedirect + '?' + selected.data[1] + '=' + $input.val();
+						return true;
+					}
+				}
+				else
+				{
+					forzarClickBoton('', selected.result);
+					return true;
+				}
+			}
+			else if (selected.data.length > 1)
+			{
+				// faceta = selected.data[1];
+			}
+		}else{
+			// Comportamiento useCustomFill	al haber hecho clic en item sin enlace		
+			if (selected.data && typeof selected.data === 'object' && Object.keys(selected.data).length > 0)
+			{
+				pintarSeleccionado($input, selected.value);		
+				hideResultsNow();
+				forzarClickBoton("", selected.value);
+				return true;
+			}			
 		}
-		else if (selected.data.length > 1)
-		{
-//		    faceta = selected.data[1];
-		}
-			
+					
 		forzarClickBoton(faceta, selected.result);
         
 		return true;
@@ -559,8 +588,10 @@ $.Autocompleter = function(input, options) {
 		    }
 		    else if (options.txtValoresSeleccID == null) {
 		        // 01-02-2022: Se elimina el último segmento por fallo en el servicio AutoCompletarLectoresEditoresConUsuarioID. Los datos ya son pasados vía parámetro '?q'
-				//extraParams["lista"] = $('#' + input.id + '_Hack').val().trim() + $input.val().trim();				
-				extraParams["lista"] = $('#' + input.id + '_Hack').val().trim();//a							
+				//extraParams["lista"] = $('#' + input.id + '_Hack').val().trim() + $input.val().trim();
+				if ($('#' + input.id + '_Hack').val() != null && $('#' + input.id + '_Hack').val() != undefined) {
+					extraParams["lista"] = $('#' + input.id + '_Hack').val().trim();//a		
+				}								
 		        //extraParams["lista"] = previousValue.trim();
 		    }
 		    else {
@@ -611,17 +642,24 @@ $.Autocompleter = function(input, options) {
 		    //    success(term, parsed);
 		    //}, "json");
 		}
-		else if (options.servicio != null) {
-		    
-
+		else if (options.servicio != null) {		    
             options.servicio.service = options.urlServicio(options);
-
+			
 		    options.servicio.call(options.metodo, extraParams, function(data) {
-	            if(extraParams.cont == cont && $('#' + extraParams.botonBuscar).prev().parent().css('display') != 'none')
-	            {
-				    var parsed = options.parse && options.parse(data) || parse(data);
-				    cache.add(term, parsed);
-				    success(term, parsed);
+				if (extraParams.cont == cont && $('#' + extraParams.botonBuscar).prev().parent().css('display') != 'none') {					
+					let parsed;
+					
+					if (options.parse) {
+						parsed = options.parse(data);
+					} else if (options.useCustomFill) {
+						// Parsear datos para customFill
+						parsed = parseForCustomFill(data);
+					} else {
+						// Parseo normal
+						parsed = parse(data);
+					}				
+					cache.add(term, parsed);
+					success(term, parsed);
 				}
 			});	
 		}
@@ -704,6 +742,73 @@ $.Autocompleter = function(input, options) {
 		return parsed;
 	};
 
+
+	/**
+	 * Parsea una cadena de datos en formato JSON y extrae información relevante para la funcionalidad de autocompletado.	 
+	 * Este método maneja una cadena JSON que contiene objetos JSON separados por delimitadores específicos. Cada objeto JSON es
+	 * procesado para extraer la información que se mostrará en la interfaz de autocompletado.
+	 * 
+	 * @param {string | Object} data - Cadena JSON o un objeto con una propiedad `d` que contiene la cadena de datos a parsear. 
+	 *                                 La cadena dentro de `d` o directamente pasada tiene la forma de un objeto JSON con objetos 
+	 *                                 separados por `|||` y divididos por líneas.
+	 * 
+	 * @returns {Array<Object>} - Un array de objetos, donde cada objeto contiene:
+	 *                            - `data` (Object): El objeto JSON parseado.
+	 *                            - `value` (string): Valor extraído del objeto JSON, típicamente utilizado para la visualización.
+	 *                            - `result` (string): Información adicional asociada con el objeto JSON, puede ser una faceta u otro dato.
+	 */
+	function parseForCustomFill(data) {		
+		let parsed = [];
+				
+		try {
+			// Paso 1: Extraer la propiedad 'd' si es un objeto con esa propiedad.
+			if (typeof data === 'object' && data.hasOwnProperty('d')) {
+				data = data.d;
+			}
+	
+			// Paso 2: Dividir la cadena por las líneas (en caso de que haya varias)
+			var rows = data.split(/\r?\n/);
+	
+			for (var i = 0; i < rows.length; i++) {
+				var row = rows[i].trim();
+				if (row) {
+					// Paso 3: Verificar si la fila contiene '|||'
+					if (row.indexOf('|||') !== -1) {
+						row = row.split('|||');
+					} else if (row.indexOf('|') !== -1) {
+						var valor = row.substring(0, row.lastIndexOf('|'));
+						var attControl = row.substring(row.lastIndexOf('|') + 1);
+						row = [valor, attControl];
+					} else {
+						row = [row];  // Para crear un array de un solo elemento
+					}
+	
+					// Paso 4: Parsear la cadena JSON
+					var jsonItem = JSON.parse(row[0]);
+	
+					// Paso 5: Construir un objeto con las propiedades del JSON
+					var parsedObject = {};
+					for (var key in jsonItem) {
+						if (jsonItem.hasOwnProperty(key)) {
+							parsedObject[key] = jsonItem[key];
+						}
+					}
+	
+					// Paso 6: Añadir el objeto parseado al array de resultados
+					parsed.push({
+						data: parsedObject,
+						value: parsedObject.titulo || parsedObject.nombre || Object.values(parsedObject)[0],
+						result: row[1] || ''
+					});
+				}
+			}
+		} catch (ex) {
+			console.error("Error parseando datos:", ex);
+		}
+		return parsed;
+	}
+	
+
 	function stopLoading() {
 		$input.removeClass(options.loadingClass);
 	};
@@ -731,7 +836,7 @@ function QuitarContadores(cadena)
 
 $.Autocompleter.defaults = {
 	inputClass: "ac_input",
-	resultsClass: "ac_results",
+	resultsClass: "ac_results",	
 	loadingClass: "ac_loading",
 	minChars: 1,
 	delay: 400,
@@ -753,7 +858,8 @@ $.Autocompleter.defaults = {
 		return value.replace(new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + term.replace(/([\^\$\(\)\[\]\{\}\*\.\+\?\|\\])/gi, "\\$1") + ")(?![^<>]*>)(?![^&;]+;)", "gi"), "<strong>$1</strong>");
 	},*/
     scroll: true,
-    scrollHeight: 180
+    scrollHeight: 180,
+	customResultsClass: "", // Clases adicionales si se necesita para personalizar el contenedor de resultados de autocomplete
 };
 
 $.Autocompleter.Cache = function(options) {
@@ -917,6 +1023,10 @@ $.Autocompleter.Select = function (options, input, select, pintar, config) {
 		.addClass(options.resultsClass)
 		.css("position", "absolute")
 		//.appendTo(document.body);
+		// Añadir identificador para poder personalizar vista customizada
+		options.useCustomFill && element.addClass("ac_custom_fill");
+		// Clase adicional para personalizar resultados de autocomplete
+		options.customResultsClass.length > 0 && element.addClass(options.customResultsClass);
 
         if (typeof panelContAutoComplet != 'undefined') {
             element.appendTo($("#" + panelContAutoComplet));
@@ -1013,17 +1123,37 @@ $.Autocompleter.Select = function (options, input, select, pintar, config) {
 			: available;
 	}
 	
+	/**
+	 * Llena la lista de resultados de autocompletado con los datos proporcionados.
+	 * La función permite personalizar el pintado de los ítems de la lista si se proporciona una función de pintado personalizada y la opción `useCustomFill` está activa.	 
+	 * @returns {void}
+	 */	
 	function fillList() {
 		list.empty();
 		var max = limitNumberOfItems(data.length);
-		for (var i=0; i < max; i++) {
-			if (!data[i])
+		for (var i=0; i < max; i++) {			
+			if (typeof autocompleteFillListItem === 'function' && options.useCustomFill){
+				// FillListItem personalizado
+				if (!data[i])
 				continue;
-			var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term);
-			if ( formatted === false )
+				// Delegar el pintado del item
+				if (i == 0 && data[i].data.tipoDato == -1) {
+					var li = $("<li/>").html(autocompleteFillListItem(data[i], term)).addClass("buttons-search-wrap").appendTo(list)[0];
+				}
+				else {
+					var li = $("<li/>").html(autocompleteFillListItem(data[i], term)).addClass(i % 2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
+					$.data(li, "ac_data", data[i]);
+				}
+			}else{			
+				// FillListItem por defecto
+				if (!data[i])
 				continue;
-			var li = $("<li/>").html( options.highlight(formatted, term) ).addClass(i%2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
-			$.data(li, "ac_data", data[i]);
+				var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term);
+				if ( formatted === false )
+					continue;
+				var li = $("<li/>").html( options.highlight(formatted, term) ).addClass(i%2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
+				$.data(li, "ac_data", data[i]);							
+			}			
 		}
 		listItems = list.find("li");
 		if ( options.selectFirst ) {
@@ -1468,9 +1598,9 @@ const operativaTagsEditable = {
 		// Sección input donde se editará el Tag
 		const inputHiddenTag = tagObject.find('input');
 		// Texto introducido para el tag
-		const tagText = $(tag).text().toLocaleLowerCase();
+		const tagText = $(tag).text().trim();
 		// Valor previo del Tag antes de modificarlo
-		const previousTagValue = inputHiddenTag.val().toLowerCase();
+		const previousTagValue = inputHiddenTag.val().trim();
 		// Lista de Tags añadidos (inputHack) separados por comas
 		const hack = this.tagsInputHack.val().trim();
 		// Tags actuales que se han añadido
@@ -1592,18 +1722,14 @@ function ActualizarTag(textBox, divTag, textBoxHack)
  */
 function EliminarTag(elemento, evento)
 {
-	// Cambiado por el nuevo Front
-    //var divAutocompletar = elemento.parents('.autocompletar');
 	var divAutocompletar = elemento.parent().siblings();
 
     if(divAutocompletar.find('input').length > 0)
     {
         var valorAnterior = elemento.attr('title');
-		// Cambiado por el nuevo Front
-		//var textBoxHack = divAutocompletar.find('input').last();
 		// Si hay otro input creado, descartalo
 		var textBoxHack = divAutocompletar.find('input').not("#txtHackDescartados").last();
-        textBoxHack.val(textBoxHack.val().replace(valorAnterior.toLowerCase() + ',', ''));
+        textBoxHack.val(textBoxHack.val().replace(valorAnterior + ',', ''));
         var ultimoElemento = divAutocompletar;
         if(divAutocompletar.next().hasClass('propuestos'))
         {
@@ -1622,8 +1748,6 @@ function EliminarTag(elemento, evento)
         descartarTag(elemento, ultimoElemento);
         
 		elemento.remove();
-		// Oculto el posicionar Textbox ya que en el nuevo Front no haría falta
-        //PosicionarTextBox(textBoxHack.prev());
     }
 }
 

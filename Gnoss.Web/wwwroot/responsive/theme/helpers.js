@@ -543,6 +543,38 @@ function resetearModalContainer(){
 };
 
 /**
+ * Función que reseteará o vaciará el contenido de un modal modal para que se quede como la vista inicial de "Loading ..."
+ * Este método se aconseja hacerlo una vez el modal, que es de dinámica creación, sea cerrado por el usuario o de forma automática.
+ */
+function resetearModalContainerWithId(pModalId) {
+	let modal = '';
+	if (pModalId instanceof jQuery) {
+		modal = pModalId;
+	} else {
+		modal = $("#" + pModalId);
+	}
+
+	// Añadir la clase por defecto para que se muestre en el top de la página
+	modal.addClass("modal-top");
+	// Panel que hay que resetear/rellenar con el initialContainerContent
+	let panelToReset = modal.find(".modal-content");
+	// HTML que cargaremos de nuevo una vez se cierre el formulario (resetearlo de inicio)
+	let initialContainerContent = '';
+	initialContainerContent += '<div id="content">';
+	initialContainerContent += '<div class="modal-header">';
+	initialContainerContent += '<p class="modal-title">';
+	initialContainerContent += '<span class="spinner-border white-color mr-2"></span>';
+	initialContainerContent += 'Cargando ...';
+	initialContainerContent += '</p>';
+	initialContainerContent += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
+	initialContainerContent += '</div>';
+	initialContainerContent += '<div class="modal-body"></div>';
+	initialContainerContent += '</div>';
+	// Incluir el panel inicial para ser reutilizado
+	panelToReset.html(initialContainerContent).fadeIn();
+}
+
+/**
  * Métodos o comportamientos necesarios en la carga de la página
  */
 const comportamientoInicial = {
@@ -689,7 +721,7 @@ function copyTextToClipBoard(text, notificacion = undefined){
 	notificacion === undefined && "ID copiado al portapapeles";
 
 	if (!navigator.clipboard) {
-		fallbackCopyTextToClipboard(text);
+		fallbackCopyTextToClipboard(text,notificacion);
 		return;
 	}
 	navigator.clipboard.writeText(text).then(
@@ -1103,7 +1135,18 @@ var ObteniendoAcciones = false;
 function ObtenerAccionesListadoMVC(pUrlPagina) {
 
 	const currentUrl = location.href;
-	if (currentUrl.includes("administrar-miembros")){
+	const dicc = {
+		'ca': 'administrar-membres',
+		'de': 'mitglieder-verwalten',
+		'en': 'manage-members',
+		'es': 'administrar-miembros',
+		'eu': 'kideak-administratu',
+		'fr': 'administrer-membres',
+		'gl': 'administrar-membros',
+		'it': 'amministra-membri',
+		'pt': 'administrar-membros'
+	}
+	if (currentUrl.includes(dicc[$("#inpt_Idioma").val()])){
 		pUrlPagina += "admin";
 	}
 
@@ -1227,6 +1270,7 @@ function ObtenerAccionesListadoMVC(pUrlPagina) {
 $(document).ready(function() {
     comportamientoInicial.iniciarSelects2();
 	comportamientoInicial.setCurrentLanguage();
+	operativaTinyMceConfig.init();
 });
 
 //****************************************************************************************************************/
@@ -1692,7 +1736,6 @@ const hideInputsWithErrors = function(input){
 	const errorMessage = input.siblings(".invalid-feedback");
 	errorMessage.length > 0 && errorMessage.remove();
 }
-
 
 //****************************************************************************************************************/
 // MENSAJES OK / MENSAJES KO // LOADING
@@ -3155,7 +3198,6 @@ function cambiarFormatoFecha(fecha) {
 /**
  * Clase jquery para poder gestionar las búsquedas de fechas en Facetas (Mes pasado, semana pasada, semestre pasado)
  * Calculará la fecha teniendo en cuenta la opción pulsada para escribir el valor en el input "Desde" y "Hasta"
- * Se utilizará la librería moment.js para el trabajo con fechas
  * @namespace operativaFechasFacetas
  * */
 const operativaFechasFacetas = {
@@ -3254,9 +3296,10 @@ const operativaFechasFacetas = {
         });				
 		
 
-		// Configuración de posibles "DatePicker"		
-		const oldYear = moment().format('YYYY') - 100;
-		const currentYear = moment().format('YYYY');
+		// Configuración de posibles "DatePicker"	
+		const currentYear = new Date().getFullYear();
+		const oldYear = currentYear - 100;
+		
 		// DatePicker normales
 		$('.hasDatepicker').datepicker({
 			changeMonth: true,
@@ -3280,29 +3323,40 @@ const operativaFechasFacetas = {
     /**
      * Calcular el plazo de tiempo deseado y establecerlo en los inputs "from" y "to"
      * */
-    getAndSetDate: function (item) {
-        let localLocale = moment();
-        moment.locale('es');
-        localLocale.locale(false);
+	getAndSetDate: function (item) {
+		let now = new Date();
+		let dateFormatter = new Intl.DateTimeFormat("es-ES", {
+			day: "2-digit",
+			month: "2-digit",
+			year: "numeric"
+		});
 
         // Fecha inicial
-        let startDate = '';
+        let startDate = new Date(now);
         // Fecha final (actual)
-        let endDate = localLocale.format('L');
+		let endDate = dateFormatter.format(now);
 
-        // Coger la última semana del día actual (-De momento se escogen por días)
-        //console.log(moment().subtract(1, 'weeks').startOf('isoWeek').format('L'));
-        //console.log(moment().subtract(1, 'weeks').endOf('isoWeek').format('L'));
+		// Calcularemos la fecha inicial segun el input del usuario
 
         if ($(item).hasClass(`facet-last-week`)) {
-            startDate = localLocale.subtract(7, "days");
+            startDate.setDate(startDate.getDate() - 7)
         } else if ($(item).hasClass(`facet-last-month`)) {
-            startDate = localLocale.subtract(30, "days");
+			startDate.setMonth(startDate.getMonth() - 1);
+			// Si salta el caso de que es 31 de Marzo y quiero ver el mes anterior
+			// Mostrará el 28/29 de Febrero en vez de una fecha incorrecta
+			if (startDate.getDate() !== now.getDate()) {
+				start.setDate(0);
+			}
         } else if ($(item).hasClass(`facet-last-semester`)) {
-            startDate = localLocale.subtract(180, "days");
+			startDate.setMonth(startDate.getMonth() - 6);
+			// Si estamos en un mes con 31 dias y 6 meses atrás acaba en un mes de 30 o 28 dias
+			// mostrará el ultimo dia de dicho mes. Y no una fecha incorrecta
+			if (startDate.getDate() !== now.getDate()) {
+				start.setDate(0);
+			}
         } else {
             // Selección del último año
-            startDate = localLocale.subtract(365, "days");
+			startDate.setFullYear(startDate.getFullYear() - 1);
         }
 
         // Botón para búsqueda,  inputs para establecer fechas
@@ -3311,7 +3365,7 @@ const operativaFechasFacetas = {
         const toDateValue = $(item).parent().parent().parent().find(`.${this.inputToDate}`);
 
         // Escribir las fechas en inputs
-        fromDateValue.val(startDate.format('L'));
+		fromDateValue.val(dateFormatter.format(startDate));
         toDateValue.val(endDate);
 
         // Hacer click en botón de búsqueda
@@ -3596,7 +3650,28 @@ function uploadImageFileFromInput(input, completion = undefined){
     Sortable.create(sortableList, sortable_options);        
 }
 
+/**
+ * Función para obtener el valor asociado con un idioma dado.
+ * 
+ * @param {string} languageString - Cadena con valores separados por '|||', en el formato "valor@idioma".
+ * @param {string} languageId - El código del idioma que se desea buscar (ej. 'es', 'en', etc.).
+ * @returns {string|null} - El valor asociado al idioma, o `null` si no se encuentra.
+ */
+function getLanguageValueByLanguageId(languageString, languageId) {
+	// Array a partir del delimitador
+	const languageArray = languageString.split('|||');
 
+	for (let i = 0; i < languageArray.length; i++) {
+		const [value, language] = languageArray[i].split('@');
+
+		if (language === languageId) {
+			return value;
+		}
+	}
+
+	// Si no se encuentra el idioma, devolvemos el valor inicial
+	return languageString;
+}
 
 /**
  * Comportamiento para gestionar el plegado/desplegado de categorías con hijos.  
@@ -4263,6 +4338,4 @@ const CkEditorCustomStyleSheets = (function () {
 		  return instance;
 		},
 	};	
-  })();
-
-
+})();

@@ -18,6 +18,7 @@ using Es.Riam.Gnoss.Elementos.CMS;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -39,6 +40,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -51,18 +53,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class HomeComunidadController : ControllerPestanyaBase
     {
-
-        public HomeComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public HomeComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<HomeComunidadController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
-
-        //public ActionResult ShowMoreActivity(int TypeActivity, int NumPeticion)
-        //{
-        //    ActividadRecienteController actividadRecienteController = new ActividadRecienteController(this);
-        //    return PartialView("ControlesMVC/_ActividadReciente", actividadRecienteController.ObtenerActividadReciente(NumPeticion, 10, (TipoActividadReciente)TypeActivity, null, false));
-        //}
-
 
         [TypeFilter(typeof(AccesoPestanyaAttribute))]
         public ActionResult Index()
@@ -94,7 +92,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     Guid gadgetID = new Guid(RequestParams("gadgetid"));
                     int numPagina = int.Parse(RequestParams("numPagina"));
 
-                    GadgetController gadgetControllerPaginado = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+                    GadgetController gadgetControllerPaginado = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GadgetController>(), mLoggerFactory);
                     return gadgetControllerPaginado.CargarGadgetHome(gadgetID, numPagina);
                 }
 
@@ -105,7 +103,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (!string.IsNullOrEmpty(RouteConfig.NombreProyectoSinNombreCorto))
             {
-				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 				Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
 
                 string idioma = UtilIdiomas.LanguageCode;
@@ -125,7 +123,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             idioma = idiomaNavegador;
                             if (UtilIdiomas.LanguageCode != idioma)
                             {
-                                UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+                                UtilIdiomas = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
                                 redirigirAIdioma = true;
                             }
                             break;
@@ -176,7 +174,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private ActionResult Index_HomeCMS()
         {
-            CMSCL cmsCL = new CMSCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CMSCL cmsCL = new CMSCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCL>(), mLoggerFactory);
             GestionCMS gestorCMS = new GestionCMS(cmsCL.ObtenerConfiguracionCMSPorProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
             cmsCL.Dispose();
 
@@ -209,7 +207,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (mostrarCMS)
             {
                 ViewBag.CargandoPaginaCMS = true;
-                ControladorCMS controladorCMS = new ControladorCMS(this, null, (short)tipoUbicacion, Comunidad, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, true);
+                ControladorCMS controladorCMS = new ControladorCMS(this, null, (short)tipoUbicacion, Comunidad, mHttpContextAccessor, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, true, mLoggerFactory.CreateLogger<ControladorCMS>(), mLoggerFactory);
                 List<CMSBlock> listaBloquesHome = controladorCMS.CargarBloquesPaginaCMS();
                 if (listaBloquesHome != null)
                 {
@@ -268,7 +266,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 List<string> listaFormSemanticos = informacionOntologias.Keys.ToList(); 
 
                 mensaje.AppendLine("Obtengo SeccionesHomeCatalogoDeProyecto");
-                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 DataWrapperProyecto dataWrapperProyeco = proyCL.ObtenerSeccionesHomeCatalogoDeProyecto(ProyectoSeleccionado.Clave);
                 mensaje.AppendLine("Obtenidas");
                 if (dataWrapperProyeco != null && dataWrapperProyeco.ListaSeccionProyCatalogo.Count > 0)
@@ -371,7 +369,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             string tituloFiltro = "";
 
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
             facetadoCL.InformacionOntologias = pInformacionOntologias;
             FacetadoDS facetadoDS = null;
 
@@ -435,7 +433,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Devuelve un DS con todoas las facetas del proyecto.</returns>
         private DataWrapperFacetas CargarFacetasProyecto()
         {
-            FacetaCL facetaCL = new FacetaCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            FacetaCL facetaCL = new FacetaCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetaCL>(), mLoggerFactory);
             DataWrapperFacetas facetaDW = new DataWrapperFacetas();
 
             facetaDW = facetaCL.ObtenerFacetasDeProyecto(null, ProyectoSeleccionado.Clave, true);
@@ -460,7 +458,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //paginaModel.NumberOfResources = numRecursos.Value;
             //paginaModel.NumberOfPersonOrganizations = numPerYOrg.Value;
 
-            ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyecto>(), mLoggerFactory);
 
             List<Identidad> ListaAdministradores = controladorProyecto.CargarAdministradoresProyecto(ProyectoSeleccionado);
 
@@ -484,7 +482,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             Dictionary<Guid, string> listaFotosIds = identCN.ObtenerSiListaIdentidadesTienenFoto(listaIds);
             identCN.Dispose();
 
@@ -512,10 +510,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 paginaModel.LastUsers.Add(usuario);
             }
 
-            ActividadReciente actividadReciente = new ActividadReciente(mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
+            ActividadReciente actividadReciente = new ActividadReciente(mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, mAvailableServices, mLoggerFactory.CreateLogger<ActividadReciente>(), mLoggerFactory);
             paginaModel.RecentActivity = actividadReciente.ObtenerActividadReciente(1, 10, TipoActividadReciente.HomeProyecto, null, false);
 
-            GadgetController gadgetController = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+            GadgetController gadgetController = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GadgetController>(), mLoggerFactory);
             paginaModel.Gadgets = gadgetController.CargarListaGadgetsHome(true, null);
 
             CommunityModel.TabModel pestanyaActiva = Comunidad.Tabs.Find(pestanya => pestanya.Url.ToLower().EndsWith((UtilIdiomas.GetText("URLSEM", "COMUNIDAD") + "/" + ProyectoSeleccionado.NombreCorto).ToLower()));
@@ -552,7 +550,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    GadgetController gadgetController = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+                    GadgetController gadgetController = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GadgetController>(), mLoggerFactory);
                     listaGadgets = gadgetController.CargarListaGadgetsHome(false, listaGadgetsSinCargar);
                 }
                 catch

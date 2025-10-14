@@ -75,6 +75,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Es.Riam.OpenArchivos", "..\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gnoss.Web.LabelerService", "..\Gnoss.Commons\Gnoss.Web.LabelerService\Gnoss.Web.LabelerService.csproj", "{D011DBEB-8033-4E30-81E3-9C828CAAD267}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Es.Riam.Gnoss.Web.UtilDownloadOntologyDlls", "..\Gnoss.Commons\Es.Riam.Web.UtilDownloadOntologyDlls\Es.Riam.Gnoss.Web.UtilDownloadOntologyDlls.csproj", "{F403C9E1-4D41-35DD-93C6-23D6E00BB69A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -225,6 +227,10 @@ Global
 		{D011DBEB-8033-4E30-81E3-9C828CAAD267}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D011DBEB-8033-4E30-81E3-9C828CAAD267}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D011DBEB-8033-4E30-81E3-9C828CAAD267}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F403C9E1-4D41-35DD-93C6-23D6E00BB69A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F403C9E1-4D41-35DD-93C6-23D6E00BB69A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F403C9E1-4D41-35DD-93C6-23D6E00BB69A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F403C9E1-4D41-35DD-93C6-23D6E00BB69A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

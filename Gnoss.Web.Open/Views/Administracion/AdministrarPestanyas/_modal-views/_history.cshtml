@@ -1,0 +1,94 @@
+﻿@model List<AdministrarPaginaVersionViewModel>
+@{
+    UserIdentityModel nombre = Html.GetIdentidadActual();
+    string urlModal = $"{Html.GetComunidad().Url}/{@Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")}/ComparePage";
+    bool puedeRestaurar = ViewBag.RestaurarVersionPaginaPermitido ?? false;
+    int versionCont = Model.Count;
+    bool allowSaveData = true;
+    string urlLoadStructHistory = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL") + "/load-history";
+    if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
+    {
+        allowSaveData = false;
+    }
+}
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">history</span>
+        @Html.GetText("DEVTOOLS", "HISTORIALCONFIGURACION")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <table class="display nowrap table table-sm tabla-versiones">
+        <thead>
+            <tr>
+                <th></th>
+                <th>@Html.GetText("HISTORIALVERSIONES", "VERSION")</th>
+                <th>@Html.GetText("DEVTOOLS", "REVISION")</th>
+                <th>@Html.GetText("DEVTOOLS", "EDITOR")</th>
+                <th>@Html.GetText("DEVTOOLS", "COMENTARIO")</th>
+                <th>@Html.GetText("DEVTOOLS", "RESTAURAR")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int cont = 1;
+                foreach (AdministrarPaginaVersionViewModel version in Model.OrderByDescending(item => item.FechaModificacion))
+                {
+                    string config = "configuracion" + version.VersionID + cont;
+                    string fechaversionMinuto = version.FechaModificacion.ToString("dd/MM/yyyy HH:mm");
+                    <tr>
+                        <td>
+                            <div class="check-wrapper">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox"
+                                           class="custom-control-input version-check" id="@config"
+                                           data-version-id="@version.VersionID" />
+                                    <label class="custom-control-label" for="@config"></label>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pl-4">@versionCont</td>
+                        <td>@fechaversionMinuto</td>
+                        <td>@nombre.PersonName</td>
+                        <td>@version.Comentario</td>
+                        @if (cont == 1)
+                        {
+                            <td data-version-id="@version.VersionID">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</td>
+                        }
+                        else if (puedeRestaurar)
+                        {
+                            <td>
+                                <a class="btn btn-outline-grey btnMostrarComparadorConfigPagina" data-version-id="@version.VersionID">
+                                    <span class="material-icons">restore</span>
+                                    @Html.GetText("HISTORIALVERSIONES", "RESTAURAR")
+                                </a>
+                            </td>
+                        }
+                    </tr>
+                    cont++;
+                    versionCont--;
+                }
+            }
+        </tbody>
+    </table>
+    <div class="panelBotonera">
+        <a class="btn btn-primary uppercase btnCompare" data-dismiss="modal" data-target="#modal-comparar-versiones" data-toggle="modal">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
+    </div>
+</div>
+<script type="text/javascript">
+
+    (function ($) {
+        // Permitir o no guardar datos
+        const pParams =
+        {
+            allowSaveData: "@allowSaveData",
+            urlLoadStructHistory: "@urlLoadStructHistory"
+        }
+
+        // Operativa funcionamiento de Páginas
+        operativaGestionPaginas.init(pParams);
+        // Operativa funcionamiento de filtros
+        operativaAsistenteFiltros.init();
+    })();
+</script>

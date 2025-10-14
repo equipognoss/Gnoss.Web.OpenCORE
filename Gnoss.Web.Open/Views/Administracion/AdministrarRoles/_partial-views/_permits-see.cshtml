@@ -1,0 +1,83 @@
+﻿@model RolModel
+@{
+    bool esEcosistema = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+    List<PermisoRecursoSemantico> permisosRecursosSemanticos = new List<PermisoRecursoSemantico>();
+    if (Model.ListaPermisosRecursosSemanticos != null)
+    {
+        permisosRecursosSemanticos = Model.ListaPermisosRecursosSemanticos;
+    }
+}
+<div class="tab-content">
+    <div class="buscador">
+        <form method="post" action="#">
+            <div class="fieldsetGroup searchGroup">
+                <div class="textoBusquedaPrincipalInput">
+                    <input type="text" id="txtBusquedaPermiso" class="not-outline text txtBusqueda autocompletar personalizado ac_input" placeholder="@Html.GetText("DEVTOOLS", "ESCRIBEALGO")" autocomplete="off">
+                    <span class="botonSearch">
+                        <span class="material-icons">search</span>
+                    </span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <table class="display nowrap table table-sm tabla-permisos">
+        <thead>
+            <tr>
+                <th>@Html.GetText("DEVTOOLS", "SECCION")</th>
+                <th>@Html.GetText("DEVTOOLS", "PERMISO")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (PermisoModel permiso in Model.ListaPermisos)
+            {
+                    if (permiso.Concedido)
+                    {
+                        <tr class="component-wrap permiso-row">
+                            <td>@Html.GetText("ROLESYPERMISOS", permiso.Seccion)</td>
+                            <td class="component-name">@Html.GetText("ROLESYPERMISOS", permiso.Nombre.ToUpper())</td>
+                        </tr>
+                    }                               
+            }
+
+            @foreach (PermisoRecursoSemantico permiso in permisosRecursosSemanticos)
+            {
+                if (permiso.PermisoCrear)
+                {
+                    <tr class="component-wrap permiso-row">
+                        <td>@Html.GetText("DEVTOOLS", "RECURSOSEMANTICO")</td>
+                        <td class="component-name">@Html.GetText("COMADMINCATEGORIAS", "CREAR") @permiso.Nombre</td>
+                    </tr>
+                }
+                if (permiso.PermisoEditar)
+                {
+                    <tr class="component-wrap permiso-row">
+                        <td>@Html.GetText("DEVTOOLS", "RECURSOSEMANTICO")</td>
+                        <td class="component-name">@Html.GetText("COMMON", "EDITAR") @permiso.Nombre</td>
+                    </tr>
+                }
+                if (permiso.PermisoEliminar)
+                {
+                    <tr class="component-wrap permiso-row">
+                        <td>@Html.GetText("DEVTOOLS", "RECURSOSEMANTICO")</td>
+                        <td class="component-name">@Html.GetText("COMMON", "ELIMINAR") @permiso.Nombre</td>
+                    </tr>
+                }
+                if (permiso.PermisoRestaurarVersion)
+                {
+                    <tr class="component-wrap permiso-row">
+                        <td>@Html.GetText("DEVTOOLS", "RECURSOSEMANTICO")</td>
+                        <td class="component-name">@Html.GetText("DEVTOOLS", "RESTAURARVERSION") @permiso.Nombre</td>
+                    </tr>
+                }
+                if (permiso.PermisoEliminarVersion)
+                {
+                    <tr class="component-wrap permiso-row">
+                        <td>@Html.GetText("DEVTOOLS", "RECURSOSEMANTICO")</td>
+                        <td class="component-name">@Html.GetText("DEVTOOLS", "ELIMINARVERSION") @permiso.Nombre</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
@@ -28,6 +29,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,10 +42,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     {
         private GrupoIdentidades mGrupo = null;
         private bool mEsGrupoOrganizacion = false;
-
-        public CrearGrupoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CrearGrupoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CrearGrupoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public ActionResult Index()
@@ -153,7 +159,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             List<Guid> listaIdentidades = identidadCN.ObtenerIdentidadesIDDePerfilEnProyecto(ProyectoSeleccionado.Clave, listaPerfiles);
 
             string descripcionDescodificada = HttpUtility.UrlDecode(Descripcion);
@@ -247,7 +253,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEntityContext.GrupoIdentidadesProyecto.Add(filaGrupoIdentidadesProyecto);
             }
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             Dictionary<Guid, string> listaNombresParticipantes = identidadCN.ObtenerNombresDeIdentidades(pListaParticipantes);
             
             foreach (Guid identidad in pListaParticipantes)
@@ -269,11 +275,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             EnviarMensajeMiembros(pListaParticipantes, pTitulo, nombreCortoGrupo, false);
 
-            mGrupo = new GrupoIdentidades(filaGrupoIdentidades, IdentidadActual.GestorIdentidades, mLoggingService);
+            mGrupo = new GrupoIdentidades(filaGrupoIdentidades, IdentidadActual.GestorIdentidades);
 
-            ControladorGrupos.ActualizarBase(ProyectoSeleccionado.Clave, Grupo.Clave);
+            ControladorGrupos.ActualizarBase(ProyectoSeleccionado.Clave, Grupo.Clave, mAvailableServices);
 
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             if (EsGrupoOrganizacion)
             {
                 identidadCL.InvalidarCacheMiembrosOrganizacionParaFiltroGrupos(IdentidadActual.OrganizacionID.Value);
@@ -321,7 +327,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             List<Guid> listaParticipantesNuevos = new List<Guid>();
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             Dictionary<Guid, string> listaNombresParticipantes = identidadCN.ObtenerNombresDeIdentidades(pListaParticipantes);
             
             foreach (Guid identidad in pListaParticipantes)
@@ -347,9 +353,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             EnviarMensajeMiembros(listaParticipantesEliminados, pTitulo, Grupo.NombreCorto, true);
             EnviarMensajeMiembros(listaParticipantesNuevos, pTitulo, Grupo.NombreCorto, false);
 
-            ControladorGrupos.ActualizarBase(ProyectoSeleccionado.Clave, Grupo.Clave, nombreViejoGrupo);
+            ControladorGrupos.ActualizarBase(ProyectoSeleccionado.Clave, Grupo.Clave, nombreViejoGrupo, mAvailableServices);
             
-            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             if (EsGrupoOrganizacion)
             {
                 identidadCL.InvalidarCacheMiembrosOrganizacionParaFiltroGrupos(IdentidadActual.OrganizacionID.Value);
@@ -381,8 +387,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             GestionPersonas gestPers = new GestionPersonas(dataWrapperPersona, mLoggingService, mEntityContext);
             GestionIdentidades gestIdent = new GestionIdentidades(dataWrapperIdentidad, gestPers, null, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
 
-            GestionCorreo gestionCorreo = new GestionCorreo(new CorreoDS(), gestPers, gestIdent, IdentidadActual.GestorAmigos, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
-            gestionCorreo.GestorNotificaciones = new GestionNotificaciones(new DataWrapperNotificacion(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionCorreo gestionCorreo = new GestionCorreo(new CorreoDS(), gestPers, gestIdent, IdentidadActual.GestorAmigos, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<GestionCorreo>(), mLoggerFactory);
+            gestionCorreo.GestorNotificaciones = new GestionNotificaciones(new DataWrapperNotificacion(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
 
             List<Guid> listaTodosDestinatarios = new List<Guid>();
 
@@ -392,7 +398,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (ident.Clave != IdentidadActual.Clave)
                 {
-                    UtilIdiomas utilIdiomasPersona = new UtilIdiomas(ident.Persona.FilaPersona.Idioma, ProyectoSeleccionado.Clave, Guid.Empty, Guid.Empty, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+                    UtilIdiomas utilIdiomasPersona = new UtilIdiomas(ident.Persona.FilaPersona.Idioma, ProyectoSeleccionado.Clave, Guid.Empty, Guid.Empty, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
 
                     string urlComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
 
@@ -429,7 +435,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     //1 -> NombrePersona 2 -> Nombre del grupo 3 -> url del Grupo 4 -> Nombre de la comunidad 5 -> url de la comunidad
 
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
 
                     List<Guid> lista = new List<Guid>();
                     lista.Add(identidadCN.ObtenerIdentidadIDDeMyGNOSSPorIdentidad(ident.Clave));
@@ -457,7 +463,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     //correo.FilaCorreo.EnPapelera = true;
                 }
             }
-            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             actualizarCN.ActualizarCorreo(gestionCorreo.CorreoDS);
 
             //ControladorCorreo.AgregarNotificacionCorreoNuevoAIdentidades(listaTodosDestinatarios);
@@ -488,7 +494,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             bool existe = true;
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             if (EsGrupoOrganizacion)
             {
                 existe = identidadCN.ExisteGrupoEnOrganizacionPorNombre(pNombreGrupo, pGrupoID, IdentidadActual.OrganizacionID.Value);
@@ -510,7 +516,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             bool existe = true;
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             if (EsGrupoOrganizacion)
             {
                 existe = identidadCN.ExisteGrupoEnOrganizacionPorNombreCorto(pNombreCortoGrupo, IdentidadActual.OrganizacionID.Value);
@@ -541,7 +547,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         string nombreCortoGrupo = HttpUtility.UrlDecode(RequestParams("grupo"));
 
-                        IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                         GestionIdentidades gestorIdentidades = null;
 
                         if (EsGrupoOrganizacion)

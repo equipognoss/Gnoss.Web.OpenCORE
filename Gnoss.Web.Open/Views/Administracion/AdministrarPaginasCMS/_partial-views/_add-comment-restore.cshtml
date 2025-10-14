@@ -1,0 +1,60 @@
+﻿@model Guid
+@{
+    DateTime fechaActual = DateTime.Now;
+    string urlRestorePaginaCMS = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARPAGINA")}/restore";
+    string autor = Html.GetIdentidadActual().PersonName;
+}
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">restore</span>
+        @Html.GetText("HISTORIALVERSIONES", "GUARDARHISTORIAL")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <div class="tab-content">
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label class="control-label d-block">@Html.GetText("HISTORIALVERSIONES", "FECHA")</label>
+                        <input type="text" class="form-control"
+                               value="@fechaActual.ToString("dd/MM/yyyy")" disabled />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label class="control-label d-block">@Html.GetText("HISTORIALVERSIONES", "HORA")</label>
+                        <input type="text" class="form-control"
+                               value="@fechaActual.ToString("hh:mm tt")" disabled />
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="control-label d-block">@Html.GetText("HISTORIALVERSIONES", "EDITOR")</label>
+                <input type="text" class="form-control"
+                       value="@autor" disabled />
+            </div>
+            <div>
+                @* Label del elemento Html*@
+                <label class="control-label d-block">@Html.GetText("COMMON", "DESCRIPCION")</label>
+                @* Elemento Html *@
+                <textarea id="txt_ComentarioVersionPaginaCMS" class="form-control" cols="20"></textarea>
+            </div>
+            <div class="panelBotonera">
+                <a class="btn btn-primary uppercase btnRestorePaginaCMS"
+                   data-dismiss="modal" data-version-id="@Model">@Html.GetText("COMMON", "GUARDAR")</a>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+<script type="text/javascript">
+    (function ($) {
+        pParams = {
+            urlRestorePaginaCMS: "@urlRestorePaginaCMS"
+        }
+        operativaGestionRestaurarPaginaCMS.init(pParams);
+    })();
+</script>

@@ -1,0 +1,89 @@
+﻿@*
+    Descripción
+    -----------------------------------------------
+    Vista que muestra la documentación de Comunidad - Roles y permisos
+
+    Variables
+    ----------------------------------------------------------------
+*@
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+
+    // Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.
+    bool showDocumentationByDefault = true;
+    // Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+    bool showDocumentationSection = true;
+    string urlAdministrarMiembros = $"{Comunidad.Url}/{Html.GetText("URLSEM", "COMADMINCOMMIEMBROS")}";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="mb-0">
+            <button class="btn btn-link"
+                    data-toggle="collapse"
+                    @((showDocumentationByDefault && !showDocumentationSection) ? "data-target=#tipo-contenido-permisos" : null)
+                    @((showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+                    aria-controls="roles-y-permisos">
+                @Html.GetText("DEVTOOLS", "ROLESYPERMISOS")
+            </button>
+        </h3>
+    </div>
+    <div id="roles-y-permisos"
+         class="collapse @( (showDocumentationSection) ? "show" : null)"
+         data-parent="#accordion">
+        <div class="card-body">
+            <ul>
+                <li>
+                    <p>Se pueden crear roles que serán asignados posteriormente a Grupos o Miembros de una comunidad desde la <a href="@urlAdministrarMiembros">página de administración de miembros</a>. Estos roles están formados por un conjunto de permisos que pueden ser de varios tipos:</p>
+                    <ul>
+                        <li>
+                            <span><strong>Permisos de la administración:</strong> Indican si se tiene acceso a las diferentes páginas de administración. Existe un permiso para cada una.</span>
+                        </li>
+                        <li>
+                            <span><strong>Permisos de la administración del Ecosistema:</strong> Indican si se tiene acceso a las diferentes páginas de administración del Ecosistema. Existe un permiso para cada una.</span>
+                        </li>
+                        <li>
+                            <span><strong>Permisos de recursos:</strong> Cada permiso controla una acción determinada(Ver, Editar, Eliminar, Restaurar versión y Eliminar versión) sobre un tipo de recurso en concreto, por ejemplo: "Crear un recurso de tipo nota" o "Eliminar un recurso de tipo Enlace". Para que un usuario pueda realizar cualquier acción sobre un tipo de recurso concreto se le deben asignar todos los permisos para ese tipo (Crear, Editar, Eliminar, Restaurar versión, Eliminar versión). <strong>Importante: si a un usuario concreto se le asigna como editor del recurso, tendrá prioridad sobre estos permisos, por lo que podrá realizar cualquier acción</strong>.</span>
+                        </li>
+                        <li>
+                            <span><strong>Permisos de contenidos:</strong> Cada permiso controla una acción determinada(Ver, Editar, Eliminar, Restaurar versión y Eliminar versión) sobre un tipo de contenido, por ejemplo: "Editar página" o "Eliminar categoría". Estos contenidos son: Páginas, Facetas, ComponentesCMS, Tesauros Semánticos, Secundarias y Categorías.</span>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <p>Por defecto existe un rol de Administrador que no puede ser modificado ni eliminado que tendrá asignados todos los permisos disponibles</p>
+                </li>
+                <li>
+                    <p>Para crear un nuevo rol le pulsaremos el botón de "Nuevo rol", mientras que para modificar uno ya existente, le daremos al botón de "Editar" en las acciones disponibles. Ambas opciones desplegarán un modal en el que podremos configurar las diferentes propiedades del rol, como el nombre, descripción, los permisos que tendrá asignados y el ámbito (si el ámbito es Ecosistema, este rol estará disponible en todas las comunidades, mientras que si es Comunidad solo estará disponible en esta comunidad en concreto). </p>
+                </li>
+                <li>
+                    <p>Para asignar un rol a un usuario o grupo, debemos ir a la <a href="@urlAdministrarMiembros">página de administración de miembros</a>. Una vez allí, seleccionamos la opción de Cambiar rol:</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img src="~/img/documentacionDevtools/01comunidad/cambiar-rol.png" />
+                            <figcaption class="figure-caption">Opción para cambiar los roles de un usuario o grupo de una comunidad.</figcaption>
+                        </figure>
+                    </div>
+                    <p>Esto desplegará un modal donde aparecerá un listado con todos los roles disponibles. Los roles que ya tenga asignados aparecerán como marcados</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img src="~/img/documentacionDevtools/01comunidad/modal-roles.png" />
+                            <figcaption class="figure-caption">Modal con la información de los roles de un usuario o grupo.</figcaption>
+                        </figure>
+                    </div>
+                </li>
+
+                <li>
+                    <span><strong>Descarga de ficheros:</strong> Esta opción de configuración permitirá (o no) la descarga de ficheros de la comunidad a usuarios no conectados o no logueados en la comunidad.</span>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img src="~/img/documentacionDevtools/01comunidad/descarga-ficheros.png" />
+                            <figcaption class="figure-caption">Permitir la descarga de ficheros en recursos a usuarios no logueados en la comunidad.</figcaption>
+                        </figure>
+                    </div>
+                    <p>Para el correcto guardado de esta opción es necesario pulsar el botón de Aceptar.</p>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

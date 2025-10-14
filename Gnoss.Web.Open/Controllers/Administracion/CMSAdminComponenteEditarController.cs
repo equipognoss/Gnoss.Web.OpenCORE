@@ -21,6 +21,7 @@ using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
@@ -28,13 +29,16 @@ using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,11 +52,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// 
     /// </summary>
-    public class CMSAdminComponenteEditarController : ControllerBaseWeb
-    {
-        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class CMSAdminComponenteEditarController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminComponenteEditarController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+
         }
 
         #region Miembros
@@ -68,11 +77,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerComponenteCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
+            CargarPermisosCMSViewBag();
 
             if (!ParametrosGeneralesRow.CMSDisponible)
             {
@@ -87,16 +97,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult CargarModal()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
-
-            ActionResult partialView = View();
+            CargarPermisosCMSViewBag();
 
             // Construir el modelo
-            partialView = GnossResultHtml("_modal-views/_index", PaginaModel);
+            ActionResult partialView = GnossResultHtml("_modal-views/_index", PaginaModel);
 
             // Devolver la vista modal
             return partialView;
@@ -107,270 +115,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
         public ActionResult CargarEliminarComponenteItem()
         {
-            ActionResult partialView = View();
+			CargarPermisosCMSViewBag();
 
             // Construir la vista que se devolverá
-            partialView = GnossResultHtml("_modal-views/_delete-component-item", null);
+            ActionResult partialView = GnossResultHtml("_modal-views/_delete-component-item", null);
 
             // Devolver la vista modal
             return partialView;
-        }        
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        [HttpPost]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
-        public ActionResult Guardar(CMSAdminComponenteEditarViewModel Componente)
-        {
-            GuardarLogAuditoria();
-            string error = "";
-
-            try
-            {
-
-                bool iniciado = false;
-                try
-                {
-                    iniciado = HayIntegracionContinua;
-                }
-                catch (Exception ex)
-                {
-                    GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
-                    return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
-                }
-
-
-                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
-                bool transaccionIniciada = false;
-
-                GestionCMS gestorCMS;
-                CMSComponente componenteEdicion = CMSComponente;
-
-                if (esEdicion)
-                {
-                    gestorCMS = CMSComponente.GestorCMS;
-
-                    componenteEdicion.Nombre = Componente.Name;
-                    componenteEdicion.Estilos = Componente.Styles;
-                    componenteEdicion.Activo = Componente.Active;
-                    componenteEdicion.TipoCaducidadComponenteCMS = Componente.CaducidadSeleccionada;
-                }
-                else
-                {
-                    using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication))
-                    {
-                        gestorCMS = new GestionCMS(cmsCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
-                    }
-                        
-                    componenteEdicion = gestorCMS.AgregarNuevoComponente(ProyectoSeleccionado, Componente.Name, Componente.Styles, Componente.Active, (short)TipoComponenteCMSActual, (short)Componente.CaducidadSeleccionada, new Dictionary<TipoPropiedadCMS, string>(), false);
-                }
-
-                Componente.Type = TipoComponenteCMSActual;
-                // Para IC Notificacion al repositorio.
-                Dictionary<TipoPropiedadCMS, bool> propiedadesComponente = UtilComponentes.PropiedadesDisponiblesPorTipoComponente[TipoComponenteCMSActual];
-                if (Componente.Properties.Count > 0)
-                {
-                    foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Componente.Properties)
-                    {
-                        propiedad.TypeComponent = TipoComponenteCMSActual;
-                        CMSAdminComponenteEditarViewModel.PropiedadComponente propiedadBIS = ObtenerPropiedad(propiedad.TipoPropiedadCMS, propiedadesComponente);
-                        propiedad.Required = propiedadBIS.Required;
-                        propiedad.MultiLang = propiedadBIS.MultiLang;
-                    }
-                }
-
-                Componente.Caducidades = new Dictionary<TipoCaducidadComponenteCMS, bool>();
-                if (UtilComponentes.CaducidadesDisponiblesPorTipoComponente[TipoComponenteCMSActual].Count > 1)
-                {
-                    foreach (TipoCaducidadComponenteCMS caducidad in UtilComponentes.CaducidadesDisponiblesPorTipoComponente[TipoComponenteCMSActual])
-                    {
-                        bool selected = false;
-
-                        if (CMSComponente != null && CMSComponente.TipoCaducidadComponenteCMS == caducidad)
-                        {
-                            selected = true;
-                            Componente.CaducidadSeleccionada = caducidad;
-                        }
-
-                        Componente.Caducidades.Add(caducidad, selected);
-                    }
-                }
-
-                if (Componente.Styles == null)
-                {
-                    Componente.Styles = "";
-                }
-                
-
-
-
-                if (string.IsNullOrEmpty(Componente.ShortName) || Componente.ShortName.Trim().Equals(string.Empty))
-                {
-                    Componente.ShortName = componenteEdicion.Clave.ToString();
-                }
-
-                if (gestorCMS.CMSDW.ListaCMSComponente.FirstOrDefault(filaComponente => filaComponente.NombreCortoComponente == Componente.ShortName && filaComponente.ComponenteID != componenteEdicion.Clave) != null)
-                {
-                    // Si hay otro componente con el mismo nombre corto
-                    error = "<p>" + UtilIdiomas.GetText("COMADMINCMS", "ERRORLISTADO_NOMBRECORTOREPETIDO") + "</p>";
-                    return GnossResultERROR(error);
-                }
-
-                ControladorComponenteCMS contrComponente = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, HayIntegracionContinua);
-
-                contrComponente.AgregarPropiedadesComponente(componenteEdicion, Componente, gestorCMS, UrlIntragnossServicios, BaseURLContent);
-
-                if (esEdicion)
-                {
-					error = contrComponente.ComprobarErrorConcurrencia(Componente, componenteEdicion);
-				}
-				
-
-				if (string.IsNullOrEmpty(error))
-                {
-                    Guid componenteIDparaRefresecar = componenteEdicion.Clave;
-
-                    if (bloqueContenedor.HasValue)
-                    {
-                        gestorCMS.AgregarComponenteABloque(ProyectoSeleccionado, bloqueContenedor.Value, componenteIDparaRefresecar);
-                    }
-
-                    try
-                    {
-                        mEntityContext.NoConfirmarTransacciones = true;
-                        transaccionIniciada = proyAD.IniciarTransaccion(true);
-
-                        contrComponente.GuardarComponente(componenteEdicion, Componente);
-
-                        if (iniciado)
-                        {
-                            foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in Componente.Properties.Where(x => x.TipoPropiedadCMS.Equals(TipoPropiedadCMS.Imagen)))
-                            {
-
-                                string valorPropiedad = HttpUtility.UrlDecode(propiedad.Value);
-								ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-								foreach (string idioma in paramCL.ObtenerListaIdiomasDictionary().Keys)
-                                {
-                                    string imagenIdioma = UtilCadenas.ObtenerTextoDeIdioma(valorPropiedad, idioma, null, true);
-
-                                    if (!string.IsNullOrEmpty(imagenIdioma))
-                                    {
-                                        string comienzoFile = "File:";
-                                        if (imagenIdioma.StartsWith(comienzoFile))
-                                        {
-                                            string cadenaControl = ";Data:";
-
-                                            string[] fichero = imagenIdioma.Split(new string[] { cadenaControl, comienzoFile }, StringSplitOptions.RemoveEmptyEntries);
-
-                                            string nombreFichero = UtilCadenas.RemoveAccentsWithRegEx(fichero[0]);
-                                            string base64Image = fichero[1];
-
-                                            List<string> listaExtensiones = new List<string>();
-                                            listaExtensiones.Add("jpg");
-                                            listaExtensiones.Add("jpeg");
-                                            listaExtensiones.Add("png");
-                                            listaExtensiones.Add("gif");
-
-                                            if (listaExtensiones.Contains(nombreFichero.Split('.').Last().ToLower()))
-                                            {
-                                                byte[] byteImage = Convert.FromBase64String(base64Image);
-                                                String ruta = UtilArchivos.ContentImagenesProyectos + "/personalizacion/" + ProyectoSeleccionado.Clave.ToString().ToLower() + "/cms/";
-                                                HttpResponseMessage resultadoImagen = InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(byteImage), nombreFichero);
-                                                if (!resultadoImagen.StatusCode.Equals(HttpStatusCode.OK))
-                                                {
-                                                    throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            HttpResponseMessage resultado = InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(componenteEdicion.Clave, Componente), Formatting.Indented));
-                            if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
-                            {
-                                throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
-                            }
-                        }
-
-                        contrComponente.InvalidarCache(componenteEdicion.Clave);
-
-                        contrComponente.CrearFilasPropiedadesIntegracionContinua(Componente);
-
-                        if (EntornoActualEsPruebas && iniciado)
-                        {
-                            //contrComponente.ModificarFilasIntegracionContinuaEntornoSiguiente(Componente, UrlApiDesplieguesEntornoSiguiente);
-
-                            contrComponente.ModificarFilasIntegracionContinuaEntornoSiguiente(Componente, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
-                            contrComponente.ModificarFilasIntegracionContinuaEntornoSiguiente(Componente, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);
-                        }
-
-                        if (transaccionIniciada)
-                        {
-                            mEntityContext.TerminarTransaccionesPendientes(true);
-                        }
-
-                        if (bloqueContenedor.HasValue)
-                        {
-                            return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/" + ((short)gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion).ToString());
-                        }
-                        else
-                        {
-                            if (!esEdicion)
-                            {
-                                // return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES"));                                                                
-                                // OK -> Nuevo componente creado. Devolver Ok, no redirigir e incluir el id del componente creado.
-                                string idSavedComponent = componenteEdicion.Clave.ToString();
-                                return GnossResultOK(idSavedComponent);
-                            }
-                        }
-                        
-                    }
-                    catch (Exception ex)
-                    {
-                        if (transaccionIniciada)
-                        {
-                            proyAD.TerminarTransaccion(false);
-                        }
-
-                        return GnossResultERROR(ex.Message);
-                    } 
-                }
-                else
-                {
-                    return GnossResultERROR(error);
-                }
-
-                string rutasImagenes = "";
-                if (componenteEdicion is CMSComponenteDestacado)
-                {
-                    rutasImagenes = ((CMSComponenteDestacado)componenteEdicion).Imagen;
-                }
-                return GnossResultOK(rutasImagenes);
-            }
-            catch
-            {
-                return GnossResultERROR("Ha habido un error al guardar el componente.");
-            }
         }
 
-
-       
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EditarComponenteCMS, (ulong)PermisoContenidos.CrearComponenteCMS } })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+        public ActionResult Guardar(CMSAdminComponenteEditarViewModel Componente)
+        {
+            return GuardarComponente(Componente);
+        }
 
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
         public ActionResult ComprobarLista(string[] listaIDs)
         {
+            CargarPermisosCMSViewBag();
             List<CMSAdminComponenteEditarCheckListViewModel> resultadoComprobacion = new List<CMSAdminComponenteEditarCheckListViewModel>();
 
             string errorNoExiste = "";
@@ -404,7 +179,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         if (TipoComponenteCMSActual == TipoComponenteCMS.ListadoProyectos)
                         {
-                            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 
                             if (Guid.TryParse(id, out idRecurso))
                             {
@@ -417,13 +192,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             {
                                 idRecurso = proyCN.ObtenerProyectoIDPorNombre(id);
                             }
-                            
+
                             proyCN.Dispose();
 
                             if (idRecurso.Equals(Guid.Empty))
                             {
-                                mLoggingService.GuardarLogError($"El proyecto {id} no existe.");
-                                throw new Exception($"El proyecto {id} no existe.");
+                                mLoggingService.GuardarLogError($"El proyecto {id} no existe.", mlogger);
+                                throw new ExcepcionWeb($"El proyecto {id} no existe.");
                             }
                         }
                         else
@@ -443,7 +218,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     catch (Exception)
                     {
                         error = errorNoExiste;
-                        mLoggingService.GuardarLogError($"{error}. ID: {id}");
+                        mLoggingService.GuardarLogError($"{error}. ID: {id}", mlogger);
                     }
                 }
 
@@ -456,72 +231,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (TipoComponenteCMSActual == TipoComponenteCMS.GrupoComponentes)
             {
-                CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionCMS gestionCMS = new GestionCMS(cmsCN.ObtenerComponentePorListaID(listaIdentificadores, ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext);
-                cmsCN.Dispose();
-
-                foreach (Guid componenteID in gestionCMS.ListaComponentes.Keys)
+                bool cargadoResultado = CargarResultadosComponentesComponenteCMS(listaIdentificadores, resultadoComprobacion);
+                
+                if(!cargadoResultado)
                 {
-                    CMSComponente componente = gestionCMS.ListaComponentes[componenteID];
-
-                    var resultados = resultadoComprobacion.Where(resultado => resultado.Identificador == componenteID);
-                    if(resultados.Any())
-                    {
-                        string enlace = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/{componente.Clave}";
-                        resultados.First().UrlEnlace = enlace;
-                        resultados.First().TextoEnlace = componente.Nombre;
-                        resultados.First().Error = string.Empty;
-                    }
+                    CargarResultadosRecursosComponenteCMS(listaIdentificadores, resultadoComprobacion);
                 }
             }
             else if (TipoComponenteCMSActual == TipoComponenteCMS.ListadoProyectos)
             {
-                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionProyecto gestorProy = new GestionProyecto(proyCN.ObtenerProyectosPorID(listaIdentificadores), mLoggingService, mEntityContext);
-                proyCN.Dispose();
-
-                foreach (Guid proyID in gestorProy.ListaProyectos.Keys)
-                {
-                    Proyecto proy = gestorProy.ListaProyectos[proyID];
-
-                    var resultados = resultadoComprobacion.Where(resultado => resultado.Identificador == proyID);
-                    if (resultados.Any())
-                    {
-                        string enlace = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, proy.NombreCorto);
-                        resultados.First().UrlEnlace = enlace;
-                        resultados.First().TextoEnlace = proy.Nombre;
-                        resultados.First().Error = string.Empty;
-                    }
-                }
+                CargarResultadosProyectosComponenteCMS(listaIdentificadores, resultadoComprobacion);
             }
             else
             {
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestorDocumental gestorDoc = new GestorDocumental(docCN.ObtenerDocumentosPorID(listaIdentificadores, true), mLoggingService, mEntityContext);
-                docCN.ObtenerBaseRecursosProyecto(gestorDoc.DataWrapperDocumentacion, ProyectoSeleccionado.Clave);
-                docCN.Dispose();
-
-                foreach (Guid docID in gestorDoc.ListaDocumentos.Keys)
-                {
-                    Documento doc = gestorDoc.ListaDocumentos[docID];
-
-                    var resultados = resultadoComprobacion.Where(resultado => resultado.Identificador == docID);
-                    if (resultados.Any())
-                    {
-                        string enlace = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, doc, false);
-                        resultados.First().UrlEnlace = enlace;
-                        resultados.First().TextoEnlace = UtilCadenas.ObtenerTextoDeIdioma(doc.Titulo, UtilIdiomas.LanguageCode, null);
-                        resultados.First().Error = string.Empty;
-                    }
-                }
+                CargarResultadosRecursosComponenteCMS(listaIdentificadores, resultadoComprobacion);
             }
+
             var options = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = null,
             };
-            var resultado = Json(resultadoComprobacion, options);            
+            var resultado = Json(resultadoComprobacion, options);
             return resultado;
-        }
+        }       
 
         /// <summary>
         /// 
@@ -529,33 +261,45 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="idComponente"></param>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarComponenteCMS } })]
         public ActionResult Delete(string idComponente)
         {
-            GuardarLogAuditoria();
-            Guid ComponenteID = Guid.Empty;
+			CargarPermisosCMSViewBag();
+			GuardarLogAuditoria();
+            Guid ComponenteID;
 
             if (Guid.TryParse(idComponente, out ComponenteID) && !ComponenteID.Equals(Guid.Empty))
             {
                 try
                 {
-                    using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication))
+                    using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory))
                     using (GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(ComponenteID, ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext))
                     {
-                        ControladorComponenteCMS contrCMS = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                        contrCMS.BorrarComponenteCrearFilasIntegracionContinua(ComponenteID, cmsCN, gestorCMS);
-                        CMSAdminComponenteEditarViewModel componente = null;
-                        HttpResponseMessage resultado = InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(ComponenteID, componente), Formatting.Indented));
-                        return GnossResultOK();
+                        ControladorComponenteCMS contrCMS = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorComponenteCMS>(), mLoggerFactory);
+                        if (!cmsCN.ComponenteCMSPerteneceGrupo(ComponenteID))
+                        {
+                            contrCMS.BorrarComponenteCrearFilasIntegracionContinua(ComponenteID, cmsCN, gestorCMS);
+                            CMSAdminComponenteEditarViewModel componente = null;
+                            InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(ComponenteID, componente), Formatting.Indented));
+                            return GnossResultOK();
+                        }
+                        else
+                        {
+                            throw new ErrorComponentePerteneceGrupoComponentes(UtilIdiomas.GetText("COMADMINCMS", "ELIMINARCOMPONENTEPERTENECEGRUPOCOMPONENTES"));
+                        }
                     }
                 }
-                catch(ErrorComponenteVinculadoPagina ex)
+                catch (ErrorComponenteVinculadoPagina ex)
                 {
                     return GnossResultERROR(ex.Message);
                 }
-                catch(Exception ex)
+                catch (ErrorComponentePerteneceGrupoComponentes ex)
                 {
-                    GuardarLogError(ex); 
+                    return GnossResultERROR(ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    GuardarLogError(ex);
                     return GnossResultERROR();
                 }
             }
@@ -570,35 +314,365 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="idComponente"></param>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
         public ActionResult Select(string idComponente)
         {
-            string idBloqueContenedor = RequestParams("idBloqueContenedor");
-            //string idComponente = RequestParams("idComponente");
+            CargarPermisosCMSViewBag();
+
+			string idBloqueContenedor = RequestParams("idBloqueContenedor");
 
             if (!string.IsNullOrEmpty(idBloqueContenedor) && !string.IsNullOrEmpty(idComponente))
             {
-                Guid bloqueID = Guid.Empty;
-                Guid ComponenteID = Guid.Empty;
+                Guid bloqueID;
+                Guid ComponenteID;
 
                 if (Guid.TryParse(idBloqueContenedor, out bloqueID) && !bloqueID.Equals(Guid.Empty) && Guid.TryParse(idComponente, out ComponenteID) && !ComponenteID.Equals(Guid.Empty))
                 {
-                    CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
                     GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
                     gestorCMS.AgregarComponenteABloque(ProyectoSeleccionado, bloqueID, ComponenteID);
                     cmsCN.ActualizarCMS(gestorCMS.CMSDW);
                     cmsCN.Dispose();
 
-                    return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/" + ((short)gestorCMS.ListaBloques[bloqueID].TipoUbicacion).ToString());
+                    return GnossResultUrl($"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA")}/{gestorCMS.ListaBloques[bloqueID].TipoUbicacion}");
                 }
             }
 
             return GnossResultERROR();
         }
 
+        [HttpPost]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EliminarVersionCMS } })]
+		public ActionResult Restore(Guid idComponente, Guid versionIdComponente)
+        {
+            CMSAdminComponenteEditarViewModel componenteRestaurar;
+
+            using (CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory))
+            {
+                componenteRestaurar = JsonConvert.DeserializeObject<CMSAdminComponenteEditarViewModel>(CMSCN.ObtenerVersionComponenteCMS(idComponente, versionIdComponente).ModeloJSON);
+                componenteRestaurar.FechaModificacion = DateTime.Now;
+            }
+
+            return GuardarComponente(componenteRestaurar, RequestParams("comentario"));
+        }
+
+        [HttpPost]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
+		public ActionResult AddCommentVersion(Guid pComponenteID, Guid pVersionID)
+        {
+            CMSAdminComponenteVersionViewModel modelo = new CMSAdminComponenteVersionViewModel();
+            modelo.ComponenteID = pComponenteID;
+            modelo.VersionID = pVersionID;
+            modelo.Autor = IdentidadActual.Nombre();
+            return GnossResultHtml("_modal-views/_add-version-comment", modelo);
+        }
+
+        private ActionResult GuardarComponente(CMSAdminComponenteEditarViewModel pComponente, string pComentario = null)
+        {
+            GuardarLogAuditoria();
+            string error = string.Empty;
+
+            try
+            {
+                bool iniciado = false;
+                try
+                {
+                    iniciado = HayIntegracionContinua;
+                }
+                catch (Exception ex)
+                {
+                    GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
+                    return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                }
+
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
+                bool transaccionIniciada = false;
+
+                GestionCMS gestorCMS;
+                CMSComponente componenteEdicion = CMSComponente;
+
+                if (esEdicion)
+                {
+                    gestorCMS = CMSComponente.GestorCMS;
+
+                    componenteEdicion.Nombre = pComponente.Name;
+                    componenteEdicion.Estilos = pComponente.Styles;
+                    componenteEdicion.Activo = pComponente.Active;
+                    componenteEdicion.TipoCaducidadComponenteCMS = pComponente.CaducidadSeleccionada;
+                }
+                else
+                {
+                    using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory))
+                    {
+                        gestorCMS = new GestionCMS(cmsCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                    }
+
+                    componenteEdicion = gestorCMS.AgregarNuevoComponente(ProyectoSeleccionado, pComponente.Name, pComponente.Styles, pComponente.Active, (short)TipoComponenteCMSActual, (short)pComponente.CaducidadSeleccionada, new Dictionary<TipoPropiedadCMS, string>(), false);
+                }
+
+                pComponente.Type = TipoComponenteCMSActual;
+                // Para IC Notificacion al repositorio.
+                Dictionary<TipoPropiedadCMS, bool> propiedadesComponente = UtilComponentes.PropiedadesDisponiblesPorTipoComponente[TipoComponenteCMSActual];
+                if (pComponente.Properties.Count > 0)
+                {
+                    foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in pComponente.Properties)
+                    {
+                        propiedad.TypeComponent = TipoComponenteCMSActual;
+                        CMSAdminComponenteEditarViewModel.PropiedadComponente propiedadBIS = ObtenerPropiedad(propiedad.TipoPropiedadCMS, propiedadesComponente);
+                        propiedad.Required = propiedadBIS.Required;
+                        propiedad.MultiLang = propiedadBIS.MultiLang;
+                    }
+                }
+
+                pComponente.Caducidades = new Dictionary<TipoCaducidadComponenteCMS, bool>();
+                if (UtilComponentes.CaducidadesDisponiblesPorTipoComponente[TipoComponenteCMSActual].Count > 1)
+                {
+                    foreach (TipoCaducidadComponenteCMS caducidad in UtilComponentes.CaducidadesDisponiblesPorTipoComponente[TipoComponenteCMSActual])
+                    {
+                        bool selected = false;
+
+                        if (CMSComponente != null && CMSComponente.TipoCaducidadComponenteCMS == caducidad)
+                        {
+                            selected = true;
+                            pComponente.CaducidadSeleccionada = caducidad;
+                        }
+
+                        pComponente.Caducidades.Add(caducidad, selected);
+                    }
+                }
+
+                if (pComponente.Styles == null)
+                {
+                    pComponente.Styles = string.Empty;
+                }
+
+                if (string.IsNullOrEmpty(pComponente.ShortName) || pComponente.ShortName.Trim().Equals(string.Empty))
+                {
+                    pComponente.ShortName = componenteEdicion.Clave.ToString();
+                }
+
+                if (gestorCMS.CMSDW.ListaCMSComponente.FirstOrDefault(filaComponente => filaComponente.NombreCortoComponente == pComponente.ShortName && filaComponente.ComponenteID != componenteEdicion.Clave) != null)
+                {
+                    // Si hay otro componente con el mismo nombre corto
+                    error = $"<p>{UtilIdiomas.GetText("COMADMINCMS", "ERRORLISTADO_NOMBRECORTOREPETIDO")}</p>";
+                    return GnossResultERROR(error);
+                }
+
+                ControladorComponenteCMS contrComponente = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorComponenteCMS>(), mLoggerFactory, HayIntegracionContinua);
+
+                contrComponente.AgregarPropiedadesComponente(componenteEdicion, pComponente, gestorCMS, UrlIntragnossServicios, BaseURLContent);
+
+                if (esEdicion)
+                {
+                    error = contrComponente.ComprobarErrorConcurrencia(pComponente, componenteEdicion);
+                }
+
+                if (string.IsNullOrEmpty(error))
+                {
+                    Guid componenteIDparaRefresecar = componenteEdicion.Clave;
+
+                    if (bloqueContenedor.HasValue)
+                    {
+                        gestorCMS.AgregarComponenteABloque(ProyectoSeleccionado, bloqueContenedor.Value, componenteIDparaRefresecar);
+                    }
+
+                    try
+                    {
+                        mEntityContext.NoConfirmarTransacciones = true;
+                        transaccionIniciada = proyAD.IniciarTransaccion(true);
+
+                        contrComponente.GuardarComponente(componenteEdicion, pComponente, mAvailableServices);
+
+                        if (iniciado)
+                        {
+                            foreach (CMSAdminComponenteEditarViewModel.PropiedadComponente propiedad in pComponente.Properties.Where(x => x.TipoPropiedadCMS.Equals(TipoPropiedadCMS.Imagen)))
+                            {
+                                string valorPropiedad = HttpUtility.UrlDecode(propiedad.Value);
+                                ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
+                                foreach (string idioma in paramCL.ObtenerListaIdiomasDictionary().Keys)
+                                {
+                                    string imagenIdioma = UtilCadenas.ObtenerTextoDeIdioma(valorPropiedad, idioma, null, true);
+
+                                    if (!string.IsNullOrEmpty(imagenIdioma))
+                                    {
+                                        string comienzoFile = "File:";
+                                        if (imagenIdioma.StartsWith(comienzoFile))
+                                        {
+                                            string cadenaControl = ";Data:";
+
+                                            string[] fichero = imagenIdioma.Split(new string[] { cadenaControl, comienzoFile }, StringSplitOptions.RemoveEmptyEntries);
+
+                                            string nombreFichero = UtilCadenas.RemoveAccentsWithRegEx(fichero[0]);
+                                            string base64Image = fichero[1];
+
+                                            List<string> listaExtensiones = new List<string>() { "jpg", "jpeg", "png", "gif" };
+
+                                            if (listaExtensiones.Contains(nombreFichero.Split('.').Last().ToLower()))
+                                            {
+                                                byte[] byteImage = Convert.FromBase64String(base64Image);
+                                                HttpResponseMessage resultadoImagen = InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(byteImage), nombreFichero);
+
+                                                if (!resultadoImagen.StatusCode.Equals(HttpStatusCode.OK))
+                                                {
+                                                    throw new ExcepcionWeb("Ha ocurrido un error al registrar los cambios con la integración continua.");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            HttpResponseMessage resultado = InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(componenteEdicion.Clave, pComponente), Formatting.Indented));
+                            if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
+                            {
+                                throw new ExcepcionWeb("Ha ocurrido un error al registrar los cambios con la integración continua.");
+                            }
+                        }
+
+                        contrComponente.InvalidarCache(componenteEdicion.Clave);
+
+                        contrComponente.CrearFilasPropiedadesIntegracionContinua(pComponente);
+
+                        if (EntornoActualEsPruebas && iniciado)
+                        {
+                            contrComponente.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponente, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
+                            contrComponente.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponente, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);
+                        }
+                        CMSAdminComponenteEditarViewModel versionado = CargarModelo(contrComponente.CargarComponente(componenteEdicion.Clave));
+
+                        contrComponente.GuardarVersionComponente(versionado, componenteEdicion.Clave, pComentario);
+
+                        if (transaccionIniciada)
+                        {
+                            mEntityContext.TerminarTransaccionesPendientes(true);
+                        }
+
+                        if (bloqueContenedor.HasValue)
+                        {
+                            return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/" + ((short)gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion).ToString());
+                        }
+                        else
+                        {
+                            if (!esEdicion)
+                            {
+                                string idSavedComponent = componenteEdicion.Clave.ToString();
+                                return GnossResultOK(idSavedComponent);
+                            }
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        if (transaccionIniciada)
+                        {
+                            proyAD.TerminarTransaccion(false);
+                        }
+
+                        return GnossResultERROR(ex.Message);
+                    }
+                }
+                else
+                {
+                    return GnossResultERROR(error);
+                }
+
+                string rutasImagenes = "";
+                if (componenteEdicion is CMSComponenteDestacado)
+                {
+                    rutasImagenes = ((CMSComponenteDestacado)componenteEdicion).Imagen;
+                }
+                return GnossResultOK(rutasImagenes);
+            }
+            catch
+            {
+                return GnossResultERROR("Ha habido un error al guardar el componente.");
+            }
+        }
+        /// <summary>
+        /// Carga los datos referentes a los proyectos basado en los identificadores pasados por parámetros
+        /// </summary>
+        /// <param name="pListaIdentificadores">Lista de identificadores de proyectos</param>
+        /// <param name="pResultadoComprobacion">Lista con los modelos a cargar</param>
+        private void CargarResultadosProyectosComponenteCMS(List<Guid> pListaIdentificadores, List<CMSAdminComponenteEditarCheckListViewModel> pResultadoComprobacion)
+        {
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            GestionProyecto gestorProy = new GestionProyecto(proyCN.ObtenerProyectosPorID(pListaIdentificadores), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionProyecto>(), mLoggerFactory);
+            proyCN.Dispose();
+
+            foreach (Guid proyID in gestorProy.ListaProyectos.Keys)
+            {
+                Proyecto proy = gestorProy.ListaProyectos[proyID];
+
+                var resultados = pResultadoComprobacion.Where(resultado => resultado.Identificador == proyID);
+                if (resultados.Any())
+                {
+                    string enlace = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, proy.NombreCorto);
+                    resultados.First().UrlEnlace = enlace;
+                    resultados.First().TextoEnlace = proy.Nombre;
+                    resultados.First().Error = string.Empty;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Carga los datos referentes a los componentes basado en los identificadores pasados por parámetros
+        /// </summary>
+        /// <param name="pListaIdentificadores">Lista de identificadores de componentes</param>
+        /// <param name="pResultadoComprobacion">Lista con los modelos a cargar</param>
+        /// <returns>True o false en función de si se ha cargado algo a partir de los datos proporcionados</returns>
+        private bool CargarResultadosComponentesComponenteCMS(List<Guid> pListaIdentificadores, List<CMSAdminComponenteEditarCheckListViewModel> pResultadoComprobacion)
+        {
+            bool cargado = false;
+            CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
+            GestionCMS gestionCMS = new GestionCMS(cmsCN.ObtenerComponentePorListaID(pListaIdentificadores, ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext);
+            cmsCN.Dispose();
+
+            foreach (Guid componenteID in gestionCMS.ListaComponentes.Keys)
+            {
+                CMSComponente componente = gestionCMS.ListaComponentes[componenteID];
+
+                var resultados = pResultadoComprobacion.Where(resultado => resultado.Identificador == componenteID);
+                if (resultados.Any())
+                {
+                    cargado = true;
+                    string enlace = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/{componente.Clave}";
+                    resultados.First().UrlEnlace = enlace;
+                    resultados.First().TextoEnlace = componente.Nombre;
+                    resultados.First().Error = string.Empty;
+                }
+            }
+
+            return cargado;
+        }
+
+
+        /// <summary>
+        /// Carga los datos referentes a los recursos basado en los identificadores pasados por parámetros
+        /// </summary>
+        /// <param name="pListaIdentificadores">Lista de identificadores de recursos</param>
+        /// <param name="pResultadoComprobacion">Lista con los modelos a cargar</param>
+        private void CargarResultadosRecursosComponenteCMS(List<Guid> pListaIdentificadores, List<CMSAdminComponenteEditarCheckListViewModel> pResultadoComprobacion)
+        {
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+            GestorDocumental gestorDoc = new GestorDocumental(docCN.ObtenerDocumentosPorID(pListaIdentificadores, true), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
+            docCN.ObtenerBaseRecursosProyecto(gestorDoc.DataWrapperDocumentacion, ProyectoSeleccionado.Clave);
+            docCN.Dispose();
+
+            foreach (Guid docID in gestorDoc.ListaDocumentos.Keys)
+            {
+                Documento doc = gestorDoc.ListaDocumentos[docID];
+
+                var resultados = pResultadoComprobacion.Where(resultado => resultado.Identificador == docID);
+                if (resultados.Any())
+                {
+                    string enlace = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, doc, false);
+                    resultados.First().UrlEnlace = enlace;
+                    resultados.First().TextoEnlace = UtilCadenas.ObtenerTextoDeIdioma(doc.Titulo, UtilIdiomas.LanguageCode, null);
+                    resultados.First().Error = string.Empty;
+                }
+            }
+        }
 
         #region Propiedades
-
 
         public CMSAdminComponenteEditarViewModel.PropiedadComponente ObtenerPropiedad(TipoPropiedadCMS tipoPropiedad, Dictionary<TipoPropiedadCMS, bool> propiedadesComponente)
         {
@@ -617,7 +691,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         listaProyectos.Add(new Guid(elemento));
                     }
 
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     Dictionary<Guid, string> listaNombresCortos = proyCN.ObtenerNombresCortosProyectos(listaProyectos);
                     proyCN.Dispose();
                     //Recorremos esta lista para que no nos cambie el orden de los proyectos.
@@ -638,10 +712,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return propiedad;
         }
 
-        private bool EsPropiedadMultiIdioma(TipoPropiedadCMS pTipoPropiedad)
+        private static bool EsPropiedadMultiIdioma(TipoPropiedadCMS pTipoPropiedad)
         {
             return UtilComponentes.ListaPropiedadesMultiIdioma.Contains(pTipoPropiedad);
         }
+
+        private void CargarPermisosCMSViewBag()
+        {
+			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+			ViewBag.VerComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.VerComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.CrearComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.CrearComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.EliminarComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.ModificarComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EditarComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.RestaurarVersionComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.EliminarVersionComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+		}
 
         private CMSAdminComponenteEditarViewModel PaginaModel
         {
@@ -649,105 +734,113 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mPaginaModel == null)
                 {
-                    ControladorComponenteCMS contrComponente = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorComponenteCMS contrComponente = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorComponenteCMS>(), mLoggerFactory);
 
                     mPaginaModel = contrComponente.CargarComponente(TipoComponenteCMSActual, CMSComponente);
-                    
-                    mPaginaModel.Personalizaciones = new Dictionary<Guid, string>();
-                    mPaginaModel.PersonalizacionSeleccionada = Guid.Empty;
-                    if (CMSComponente != null)
-                    {
-                        mPaginaModel.FechaModificacion = (DateTime)CMSComponente.FilaComponente.FechaUltimaActualizacion;
-                    }
-                    else
-                    {
-                        mPaginaModel.FechaModificacion = DateTime.Now;
-                    }
-                    
 
-                    VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    DataWrapperVistaVirtual vistaVirtualDW = vistaVirtualCL.ObtenerVistasVirtualPorProyectoID(ProyectoSeleccionado.Clave, mControladorBase.PersonalizacionEcosistemaID, mControladorBase.ComunidadExcluidaPersonalizacionEcosistema);
-                    vistaVirtualCL.Dispose();
-
-                    string tipoComponente = TipoComponenteCMSActual.ToString();
-                    string vistaComponente = $"/Views/CMSPagina/{tipoComponente}/_{tipoComponente}";
-
-                    List<VistaVirtualCMS> listaVistaVirtualCMS = vistaVirtualDW.ListaVistaVirtualCMS.Where(fila => fila.TipoComponente.StartsWith(vistaComponente)).ToList();
-
-                    if (listaVistaVirtualCMS.Any())
-                    {
-                        foreach (VistaVirtualCMS filaVistaVirtualCMS in listaVistaVirtualCMS)
-                        {
-                            string nombre = filaVistaVirtualCMS.Nombre;
-                            if (string.IsNullOrEmpty(nombre))
-                            {
-                                nombre = filaVistaVirtualCMS.PersonalizacionComponenteID.ToString();
-                            }
-                            mPaginaModel.Personalizaciones.Add(filaVistaVirtualCMS.PersonalizacionComponenteID, nombre);
-
-                            if (CMSComponente != null && CMSComponente.PropiedadesComponente.ContainsKey(TipoPropiedadCMS.Personalizacion) && CMSComponente.PropiedadesComponente[TipoPropiedadCMS.Personalizacion] == filaVistaVirtualCMS.PersonalizacionComponenteID.ToString())
-                            {
-                                mPaginaModel.PersonalizacionSeleccionada = filaVistaVirtualCMS.PersonalizacionComponenteID;
-                            }
-                        }
-                    }
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-					if (ParametrosGeneralesRow.IdiomasDisponibles)
-                    {
-                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
-                    }
-                    else
-                    {
-                        mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
-                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
-                    }
-
-                    if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma) || (ParametroProyecto.ContainsKey(ParametroAD.PropiedadCMSMultiIdioma) && ParametroProyecto[ParametroAD.PropiedadCMSMultiIdioma] == "1"))
-                    {
-                        mPaginaModel.ContenidoMultiIdioma = true;
-                        mPaginaModel.ListaIdiomasDisponibles = new List<string>();
-
-                        if (!string.IsNullOrEmpty(CMSComponente?.FilaComponente?.IdiomasDisponibles))
-                        {
-                            string[] idiomasDisponibles = CMSComponente.FilaComponente.IdiomasDisponibles.Split("|||", StringSplitOptions.RemoveEmptyEntries);
-                            foreach (string idioma in idiomasDisponibles)
-                            {
-                                string[] configuracionIdioma = idioma.Split("@");
-                                string estadoIdioma = configuracionIdioma[0];
-                                string claveIdioma = configuracionIdioma[1];
-                                if (estadoIdioma?.ToLower() == "true" && !mPaginaModel.ListaIdiomasDisponibles.Contains(claveIdioma))
-                                {
-                                    mPaginaModel.ListaIdiomasDisponibles.Add(claveIdioma);
-                                }
-							}
-                            
-                        }
-                    }
-
-                    mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
-                    mPaginaModel.EsEdicion = esEdicion;
-
-                    Uri urlVolver = null;
-                    if (!string.IsNullOrEmpty(Request.Headers["Referer"]))
-                    {
-                        urlVolver = new Uri(Request.Headers["Referer"]);
-                    }
-
-                    if (bloqueContenedor.HasValue)
-                    {
-                        CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
-                        cmsCN.Dispose();
-
-                        urlVolver = new Uri(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/" + ((short)gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion).ToString());
-                    }
-                    if (urlVolver != null)
-                    {
-                        mPaginaModel.UrlVuelta = urlVolver.ToString();
-                    }
+                    mPaginaModel = CargarModelo(mPaginaModel);
                 }
                 return mPaginaModel;
             }
+        }
+
+        private CMSAdminComponenteEditarViewModel CargarModelo(CMSAdminComponenteEditarViewModel pComponente)
+        {
+            pComponente.Personalizaciones = new Dictionary<Guid, string>();
+            pComponente.PersonalizacionSeleccionada = Guid.Empty;
+
+            if (CMSComponente != null)
+            {
+                pComponente.FechaModificacion = (DateTime)CMSComponente.FilaComponente.FechaUltimaActualizacion;
+            }
+            else
+            {
+                pComponente.FechaModificacion = DateTime.Now;
+            }
+
+
+            VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory);
+            DataWrapperVistaVirtual vistaVirtualDW = vistaVirtualCL.ObtenerVistasVirtualPorProyectoID(ProyectoSeleccionado.Clave, mControladorBase.PersonalizacionEcosistemaID, mControladorBase.ComunidadExcluidaPersonalizacionEcosistema);
+            vistaVirtualCL.Dispose();
+
+            string tipoComponente = TipoComponenteCMSActual.ToString();
+            string vistaComponente = $"/Views/CMSPagina/{tipoComponente}/_{tipoComponente}";
+
+            List<VistaVirtualCMS> listaVistaVirtualCMS = vistaVirtualDW.ListaVistaVirtualCMS.Where(fila => fila.TipoComponente.StartsWith(vistaComponente)).ToList();
+
+            if (listaVistaVirtualCMS.Any())
+            {
+                foreach (VistaVirtualCMS filaVistaVirtualCMS in listaVistaVirtualCMS)
+                {
+                    string nombre = filaVistaVirtualCMS.Nombre;
+                    if (string.IsNullOrEmpty(nombre))
+                    {
+                        nombre = filaVistaVirtualCMS.PersonalizacionComponenteID.ToString();
+                    }
+                    pComponente.Personalizaciones.Add(filaVistaVirtualCMS.PersonalizacionComponenteID, nombre);
+
+                    if (CMSComponente != null && CMSComponente.PropiedadesComponente.ContainsKey(TipoPropiedadCMS.Personalizacion) && CMSComponente.PropiedadesComponente[TipoPropiedadCMS.Personalizacion] == filaVistaVirtualCMS.PersonalizacionComponenteID.ToString())
+                    {
+                        pComponente.PersonalizacionSeleccionada = filaVistaVirtualCMS.PersonalizacionComponenteID;
+                    }
+                }
+            }
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
+            if (ParametrosGeneralesRow.IdiomasDisponibles)
+            {
+                pComponente.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+            }
+            else
+            {
+                pComponente.ListaIdiomas = new Dictionary<string, string>();
+                pComponente.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+            }
+
+            if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma) || (ParametroProyecto.ContainsKey(ParametroAD.PropiedadCMSMultiIdioma) && ParametroProyecto[ParametroAD.PropiedadCMSMultiIdioma] == "1"))
+            {
+                pComponente.ContenidoMultiIdioma = true;
+                pComponente.ListaIdiomasDisponibles = new List<string>();
+
+                if (!string.IsNullOrEmpty(CMSComponente?.FilaComponente?.IdiomasDisponibles))
+                {
+                    string[] idiomasDisponibles = CMSComponente.FilaComponente.IdiomasDisponibles.Split("|||", StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string idioma in idiomasDisponibles)
+                    {
+                        string[] configuracionIdioma = idioma.Split("@");
+                        string estadoIdioma = configuracionIdioma[0];
+                        string claveIdioma = configuracionIdioma[1];
+                        if (estadoIdioma?.ToLower() == "true" && !pComponente.ListaIdiomasDisponibles.Contains(claveIdioma))
+                        {
+                            pComponente.ListaIdiomasDisponibles.Add(claveIdioma);
+                        }
+                    }
+
+                }
+            }
+
+            pComponente.IdiomaPorDefecto = IdiomaPorDefecto;
+            pComponente.EsEdicion = esEdicion;
+
+            Uri urlVolver = null;
+            if (!string.IsNullOrEmpty(Request.Headers["Referer"]))
+            {
+                urlVolver = new Uri(Request.Headers["Referer"]);
+            }
+
+            if (bloqueContenedor.HasValue)
+            {
+                CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
+                GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                cmsCN.Dispose();
+
+                urlVolver = new Uri(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/" + ((short)gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion).ToString());
+            }
+            if (urlVolver != null)
+            {
+                pComponente.UrlVuelta = urlVolver.ToString();
+            }
+
+            return pComponente;
         }
 
         /// <summary>
@@ -761,7 +854,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     Guid idComponente = new Guid(RequestParams("idComponente"));
                     GestionCMS gestorCMS = null;
-                    using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication))
+                    using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory))
                     {
                         gestorCMS = new GestionCMS(cmsCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
                     }
@@ -817,24 +910,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (!string.IsNullOrEmpty(RequestParams("idBloqueContenedor")))
                 {
                     return new Guid(RequestParams("idBloqueContenedor"));
-                }
-                else
-                {
-                    return null;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Indica el tipo de componetne que contendra el contendor
-        /// </summary>
-        private TipoComponenteCMS? tipoComponenteContenedor
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(RequestParams("tipoComponente")))
-                {
-                    return (TipoComponenteCMS)short.Parse(RequestParams("tipoComponente"));
                 }
                 else
                 {

@@ -6,7 +6,9 @@ using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.CMS;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -21,6 +23,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -114,11 +118,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
     }
 
-    public class AdministrarEventosController : ControllerBaseWeb
-    {
-        public AdministrarEventosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarEventosController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarEventosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarEventosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -159,7 +167,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult Guardar(AdministrarEventosViewModel.EventModel evento)
         {
             GuardarLogAuditoria();
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto dataWrapperProyecto;
 
             Guid eventoID = evento.Key;
@@ -218,7 +226,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 filaEvento.ComponenteID = evento.ComponenteCMS;
 
                 //Comprobar si exsite el componente
-                CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
                 GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerComponentePorID(evento.ComponenteCMS, ProyectoSeleccionado.Clave, false), mLoggingService, mEntityContext);
                 cmsCN.Dispose();
                 if (!gestorCMS.ListaComponentes.ContainsKey(evento.ComponenteCMS))
@@ -236,7 +244,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult Delete(Guid eventoID)
         {
             GuardarLogAuditoria();
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerEventoProyectoPorEventoID(eventoID);
             ProyectoEvento filaEvento = dataWrapperProyecto.ListaProyectoEvento.First();
             mEntityContext.EliminarElemento(filaEvento);
@@ -254,7 +262,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult SelectInterno(Guid eventoID)
         {
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerEventosProyectoPorProyectoID(ProyectoSeleccionado.Clave);
 
             foreach (ProyectoEvento filaEvento in dataWrapperProyecto.ListaProyectoEvento)
@@ -283,7 +291,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult ChangeActive(Guid eventoID, bool Activar)
         {
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerEventoProyectoPorEventoID(eventoID);
             ProyectoEvento filaEvento = dataWrapperProyecto.ListaProyectoEvento.First();
             filaEvento.Activo = Activar;
@@ -302,7 +310,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult DownloadCSV(Guid eventoID)
         {
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerEventoProyectoPorEventoID(eventoID);
             dataWrapperProyecto.Merge(proyCN.ObtenerEventoProyectoParticipantesPorEventoID(eventoID));
             ProyectoEvento pFilaEvento = dataWrapperProyecto.ListaProyectoEvento.First();
@@ -439,14 +447,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     mPaginaModel = new AdministrarEventosViewModel();
 
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     DataWrapperProyecto dataWrapperProyecto = proyCN.ObtenerEventosProyectoPorProyectoID(ProyectoSeleccionado.Clave);
                     Dictionary<Guid, int> eventoMiembros = proyCN.ObtenerNumeroParticipantesEventosPorProyectoID(ProyectoSeleccionado.Clave);
                     proyCN.Dispose();
 
                     mPaginaModel.ListaComponentesCMS = new Dictionary<Guid, string>();
 
-                    CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
                     GestionCMS gestorCMSConFiltros = new GestionCMS(CMSCN.ObtenerComponentesCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
 
                     foreach (CMSComponente componente in gestorCMSConFiltros.ListaComponentes.Values)

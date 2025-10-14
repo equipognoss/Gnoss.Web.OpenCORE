@@ -4,6 +4,7 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -13,6 +14,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,14 +31,17 @@ namespace Gnoss.Web.App_Start
         private ConfigService _configService;
         private LoggingService mLoggingService;
         private EntityContext mEntityContext;
-
-        public CachedRouter(IRouter innerRouter, IApplicationBuilder applicationBuilder, ConfigService configService)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CachedRouter(IRouter innerRouter, IApplicationBuilder applicationBuilder, ConfigService configService, ILogger logger, ILoggerFactory loggerFactory)
         {
             _applicationBuilder = applicationBuilder;
             if (innerRouter == null)
                 throw new ArgumentNullException("innerRouter");
             _innerRouter = innerRouter;
             _configService = configService;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
 
@@ -61,9 +66,9 @@ namespace Gnoss.Web.App_Start
                     EntityContext entityContext = serviceScope.ServiceProvider.GetRequiredService<EntityContext>();
                     LoggingService loggingService = serviceScope.ServiceProvider.GetRequiredService<LoggingService>();
 					RedisCacheWrapper redisCacheWrapper = serviceScope.ServiceProvider.GetRequiredService<RedisCacheWrapper>();
-					UtilIdiomasFactory utilIdiomasFactory = new UtilIdiomasFactory(loggingService, entityContext, _configService, redisCacheWrapper);
+					UtilIdiomasFactory utilIdiomasFactory = new UtilIdiomasFactory(loggingService, entityContext, _configService, redisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomasFactory>(), mLoggerFactory);
                     UtilIdiomas utilIdiomas = utilIdiomasFactory.ObtenerUtilIdiomas(idioma);
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, null, _configService, null);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, null, _configService, null, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
                     if (paramCL.ObtenerListaIdiomas().Contains(argsPagina[0]))
                     {
                         idioma = argsPagina[0];

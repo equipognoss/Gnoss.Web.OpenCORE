@@ -1,0 +1,33 @@
+﻿@model MyCommunitiesViewModel
+@*
+    Descripción
+    --------------------------------------
+    Nueva vista que muestra el header de en la seccion "Mis comunidades" en derecha de la página web.
+    Esta contiene:
+    - Combobox para Ordenar (__resource-list-actions)
+    - Combobox para Visualizar (__resource-list-actions)
+
+    A la izquierda se encontrará el titulo de la pagina y el numero de comunidades.
+    ---------------------------------------------------
+*@
+@{
+    CommunityModel comunidad = Html.GetComunidad();
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Cabecera-Header de lista de recursos dentro de una comunidad --------------------
+*@
+
+
+@* Contenedor de la cabecera de resultados con recursos de la Comunidad *@
+<div class="col col-12 header-listado">
+    @* Título de Búsquedas *@
+    <div class="h1-container">
+        <h1>@Html.GetText("COMMON", "MISCOMUNIDADES") <span id="panNumResultados" class="numResultados">@Model.Communities.Count()</span></h1>
+    </div>
+
+    @* ComboBox disponibles para filtrado de resultados (Descargar, Ordenar, Visualizar) *@
+    @Html.PartialView("_partial-views/_list-header-actions", Model)
+
+</div>

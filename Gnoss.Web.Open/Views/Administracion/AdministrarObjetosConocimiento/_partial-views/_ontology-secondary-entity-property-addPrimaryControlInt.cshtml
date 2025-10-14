@@ -295,7 +295,7 @@ Variables
                                 @if (!string.IsNullOrEmpty(valorPropTexto)){
                                         <button type="button"
                                             class="btn downloadButton ml-4"
-                                            onclick="DownloadAchivoClick(event,'@idControl', '@tipoArchivo', this); event.stopPropagation(); event.preventDefault();">
+                                            onclick="DownloadAchivoClick(this); event.stopPropagation(); event.preventDefault();">
                                         <span class="material-icons pr-0">download</span>
                                     </button>
                                 }
@@ -437,7 +437,7 @@ Variables
         else
         {
             string claseTxt = classControl + " text big";
-            <input type="text" id="@idControl" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" data-property-name-represent-ontology-title-value="@mPropiedad.Nombre" data-property-name-represent-ontology-title-entity="@mPropiedad.ElementoOntologia.TipoEntidad" />
+            <input type="text" id="@idControl" @Html.Raw(onblurControl) class="@claseTxt" value="@valorPropTexto" @Html.Raw(disabledControl) onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}} else {return true;}" data-original-value="@valorPropTexto" data-property-name-represent-ontology-title-value="@mPropiedad.Nombre" data-property-name-represent-ontology-title-entity="@mPropiedad.ElementoOntologia.TipoEntidad" />
         }
     }
     else

@@ -26,15 +26,23 @@
 <div class="modal-body">
     <div class="formulario-edicion">
 		@* Título de la categoría -> Pintar caja multiidioma *@
-		@Html.PartialView("_PintarCajasMultiidioma", Model)        
+		@Html.PartialView("_PintarCajasMultiidioma", Model)
 
-		@* Sección bloque de la categoría padre a elegir *@
-		<div class="form-group mb-4">
+        <div class="form-check form-check-inline">
+            <input type="checkbox" class="chkObligatoria2 form-check-input" value="Obligatoria" id="chkObligatoria2" />
+            <label class="form-check-label" for="chkObligatoria2">Obligatoria</label>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <input type="checkbox" class="chkEstructurante2 form-check-input" value="Estructurante" id="chkEstructurante2" />
+            <label class="form-check-label" for="chkEstructurante2">Estructurante</label>
+        </div>
+        <br />
+        @* @* Sección bloque de la categoría padre a elegir *@
+        @*<div class="form-group mb-4">
             <label class="control-label d-block">
                 @Html.GetText("DEVTOOLS","SELECCIONALACATEGORIAPADRE")
-            </label>
-			@* Select + opciones de posibles categorías hijas *@
-            <select id="cmbCrearCategoriaEn" name="@("cmb" + Model.nombreCombo)" class="js-select2 form-control pmd-select2">
+            </label>*@
+        @* Select + opciones de posibles categorías hijas *@
+        @*<select id="cmbCrearCategoriaEn" name="@("cmb" + Model.nombreCombo)" class="js-select2 form-control pmd-select2">
                 <option value="@Guid.Empty.ToString()">@Html.GetText("PERFILBASE", "SELECCIONACAT")</option>
                 <option value="@Guid.Empty.ToString()">@Html.GetText("COMADMINCATEGORIAS", "CATEGORIARAIZ")</option>
                 @foreach (CategoryModel categoria in Model.Thesaurus.ThesaurusCategories.Where(cat => cat.ParentCategoryKey == Guid.Empty).OrderBy(cat2 => cat2.Order))
@@ -51,11 +59,21 @@
                     @Html.PartialView("../Administracion/AdministrarCategorias/_PintarComboCategoriasHijas", pintar)
                 }
             </select>
-
-		</div>
-		@* Sección botón de guardado y cierre del modal *@
-		<div class="panelBotonera">
-			<a id="btnGuardarCategory" class="btn btn-primary uppercase">@Html.GetText("COMMON","AÑADIR")</a>
+         </div>*@
+        <div class="form-group mb-4">
+            <label class="control-label d-block">@Html.GetText("DEVTOOLS","IMAGENCATEGORIA")</label>
+            <input type="file" id="pImagenCategoria" class="form-control" accept="image/*" max-size="20480">
+        </div>
+        @* Sección botón de guardado y cierre del modal *@        
+        <div class="panelBotonera">
+            @if ((ViewBag.CrearCategoriaPermitido != null && ViewBag.CrearCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+            {
+                <a id="btnGuardarCategory" class="btn btn-primary uppercase">@Html.GetText("COMMON","AÑADIR")</a>
+            }
+            else
+            {
+                <input type="button" disabled class="btn btn-primary uppercase btnGuardarCategory" value="@Html.GetText("COMMON","AÑADIR")" />
+            }			
 		</div>
 	</div>    
 </div>

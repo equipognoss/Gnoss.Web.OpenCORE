@@ -44,123 +44,129 @@ using static Es.Riam.Gnoss.Web.MVC.Models.Tesauro.TesauroModels;
 using AngleSharp.Text;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
+using Gnoss.Web.Open.Filters;
+using Es.Riam.Gnoss.Logica.Identidad;
+using Es.Riam.Gnoss.AD.EntityModel.Models.Roles;
+using Es.Riam.Gnoss.UtilServiciosWeb;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
-    /// <summary>
-    /// Controlador para la página de administrar elementos semánticos de la comunidad.
-    /// </summary>
-    public class ComAdminElemSemanticosController : ControllerBaseWeb
-    {
-        #region Miembros
+	/// <summary>
+	/// Controlador para la página de administrar elementos semánticos de la comunidad.
+	/// </summary>
+	public class ComAdminElemSemanticosController : ControllerAdministrationWeb
+	{
+		#region Miembros
 
-        /// <summary>
-        /// Modelo de la administración de elementos semánticos.
-        /// </summary>
-        private ComAdminSemanticElemModel mModelAdmin;
+		/// <summary>
+		/// Modelo de la administración de elementos semánticos.
+		/// </summary>
+		private ComAdminSemanticElemModel mModelAdmin;
+
+		private IAvailableServices mAvailableServices;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
         /// <summary>
         /// Mensaje para el administrador.
         /// </summary>
         private string mMensajeAdmin;
 
-        #region Tesauro semántico
+		#region Tesauro semántico
 
-        /// <summary>
-        /// Modelo de edición del tesauro.
-        /// </summary>
-        private EditSemanticThesaurusModel mEditTesModel;
+		/// <summary>
+		/// Modelo de edición del tesauro.
+		/// </summary>
+		private EditSemanticThesaurusModel mEditTesModel;
 
-        /// <summary>
-        /// DataSet de proyecto con los datos de los tesauros  semánticos cargados.
-        /// </summary>
-        private DataWrapperProyecto mProyTesSemDS;
+		/// <summary>
+		/// DataSet de proyecto con los datos de los tesauros  semánticos cargados.
+		/// </summary>
+		private DataWrapperProyecto mProyTesSemDS;
 
-        /// <summary>
-        /// Entidades del tesauro semántico.
-        /// </summary>
-        private List<ElementoOntologia> mEntidadesTesSem;
+		/// <summary>
+		/// Entidades del tesauro semántico.
+		/// </summary>
+		private List<ElementoOntologia> mEntidadesTesSem;
 
-        /// <summary>
-        /// IDs con las categorías que deben pintarse expandidas.
-        /// </summary>
-        private List<string> mCategoriasExpandidasStringIDs = new List<string>();
+		/// <summary>
+		/// IDs con las categorías que deben pintarse expandidas.
+		/// </summary>
+		private List<string> mCategoriasExpandidasStringIDs = new List<string>();
 
-        /// <summary>
-        /// IDs con las categorías que deben pintarse expandidas.
-        /// </summary>
-        private List<Guid> mCategoriasExpandidasIDs = new List<Guid>();
+		/// <summary>
+		/// IDs con las categorías que deben pintarse expandidas.
+		/// </summary>
+		private List<Guid> mCategoriasExpandidasIDs = new List<Guid>();
 
-        /// <summary>
-        /// IDs y tres objetos: modelo de categorías de tesauro semántico, Entidad de Categoría y nivel de la categoría.
-        /// </summary>
-        private Dictionary<string, object[]> mCategoriasModeloTesSem;
+		/// <summary>
+		/// IDs y tres objetos: modelo de categorías de tesauro semántico, Entidad de Categoría y nivel de la categoría.
+		/// </summary>
+		private Dictionary<string, object[]> mCategoriasModeloTesSem;
 
-        /// <summary>
-        /// Propiedades extra que tienen las categorías de un tesauro.
-        /// </summary>
-        private Dictionary<string, Propiedad> mPropiedadesExtraCategorias;
+		/// <summary>
+		/// Propiedades extra que tienen las categorías de un tesauro.
+		/// </summary>
+		private Dictionary<string, Propiedad> mPropiedadesExtraCategorias;
 
-        #endregion
+		#endregion
 
-        #region Entidades secundarias
+		#region Entidades secundarias
 
-        /// <summary>
-        /// Modelo de edición del tesauro.
-        /// </summary>
-        private EditSecondaryEntityModel mEditEntSecModel;
+		/// <summary>
+		/// Modelo de edición del tesauro.
+		/// </summary>
+		private EditSecondaryEntityModel mEditEntSecModel;
 
-        /// <summary>
-        /// Ontología secundaría que se está editando.
-        /// </summary>
-        private Ontologia mOntologia;
+		/// <summary>
+		/// Ontología secundaría que se está editando.
+		/// </summary>
+		private Ontologia mOntologia;
 
-        /// <summary>
-        /// Controlador de edición del SEMCMS.
-        /// </summary>
-        private SemCmsController mSemController;
+		/// <summary>
+		/// Controlador de edición del SEMCMS.
+		/// </summary>
+		private SemCmsController mSemController;
 
-        #endregion
+		#endregion
 
-        #region Grafos Simples
+		#region Grafos Simples
 
-        /// <summary>
-        /// Modelo de edición de grafos simples.
-        /// </summary>
-        private EditSimpleGraphModel mEditGrafoSimpleModel;
+		/// <summary>
+		/// Modelo de edición de grafos simples.
+		/// </summary>
+		private EditSimpleGraphModel mEditGrafoSimpleModel;
 
-        #endregion
+		#endregion
 
-        #endregion
+		#endregion
 
-        public ComAdminElemSemanticosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
-        {
+		public ComAdminElemSemanticosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ComAdminElemSemanticosController> logger, ILoggerFactory loggerFactory)
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+		{
+			mAvailableServices = availableServices;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
-        #region Acciones
+		#region Acciones
 
-        /// <summary>
-        /// Acción inicial del controlador.
-        /// </summary>
-        /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult Index()
-        {
-            ActionResult redireccion = ComprobarRedirecciones();
+		/// <summary>
+		/// Acción inicial del controlador.
+		/// </summary>
+		/// <returns>Acción resultante</returns>
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerTesauroSemantico, (ulong)PermisoContenidos.AnyadirValorTesauro, (ulong)PermisoContenidos.ModificarValorTesauro, (ulong)PermisoContenidos.EliminarValorTesauro } })]
+		public ActionResult Index()
+		{
+			EliminarPersonalizacionVistas();
+			CargarPermisosAdministracionComunidadEnViewBag();
+			CargarPermisosAdministrarTesauros();
 
-            if (redireccion != null)
-            {
-                return redireccion;
-            }
-
-
-            EliminarPersonalizacionVistas();
-            CargarPermisosAdministracionComunidadEnViewBag();
-
-            mModelAdmin = new ComAdminSemanticElemModel();
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			mModelAdmin = new ComAdminSemanticElemModel();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
 			// Carga los idiomas disponibles y el idioma por defecto
 			if (ParametrosGeneralesRow.IdiomasDisponibles)
@@ -176,151 +182,152 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 
 			if (RequestParams("tessem") == "true")
-            {
-                CargarInicial_TesSem();
-                // Añadir clase para el body del Layout
-                ViewBag.BodyClassPestanya = "grafo-de-conocimiento edicionObjetos edicionTesauros edicion no-max-width-container";
-                ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
-                ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_Tesauros_Semanticos;
-                // Establecer el título para el header de DevTools
-                ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO");
-                ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "TESAUROSSEMANTICOS");
+			{
+				CargarInicial_TesSem();
+				// Añadir clase para el body del Layout
+				ViewBag.BodyClassPestanya = "grafo-de-conocimiento edicionObjetos edicionTesauros edicion no-max-width-container";
+				ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
+				ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_Tesauros_Semanticos;
+				// Establecer el título para el header de DevTools
+				ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO");
+				ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "TESAUROSSEMANTICOS");
+            }
+			else if (RequestParams("entsecund") == "true")
+			{
+				CargarInicial_EntSecund();
+			}
+			else if (RequestParams("grafosimple") == "true")
+			{
+				CargarInicial_GrafoSimple();
+			}
+			else
+			{
+				mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.OntologiesAdmin;
+			}
 
-            }
-            else if (RequestParams("entsecund") == "true")
-            {
-                CargarInicial_EntSecund();
-            }
-            else if (RequestParams("grafosimple") == "true")
-            {
-                CargarInicial_GrafoSimple();
-            }
-            else
-            {
-                mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.OntologiesAdmin;
-            }
+			return View(mModelAdmin);
+		}
 
-            return View(mModelAdmin);
-        }
-
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult CrearLoadModal()
-        {
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerTesauroSemantico, (ulong)PermisoContenidos.AnyadirValorTesauro, (ulong)PermisoContenidos.ModificarValorTesauro } })]
+		public ActionResult CrearLoadModal()
+		{
 			ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
 			// return View("Editar", modelo);
+			CargarPermisosAdministrarTesauros();
+
 			return GnossResultHtml("_EditarTesSemFicha", null);
-        }
+		}
 
 
-        /// <summary>
-        /// Acción de eliminar un tesauro
-        /// </summary>
-        /// <param name="Source"></param>
-        /// <param name="Ontologia"></param>
-        /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult EliminarTesauro(string Source, string Ontologia)
-        {
-            EliminarPersonalizacionVistas();
+		/// <summary>
+		/// Acción de eliminar un tesauro
+		/// </summary>
+		/// <param name="Source"></param>
+		/// <param name="Ontologia"></param>
+		/// <returns>Acción resultante</returns>
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarValorTesauro } })]
+		public ActionResult EliminarTesauro(string Source, string Ontologia)
+		{
+			EliminarPersonalizacionVistas();
 
-            try
-            {
-                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                mProyTesSemDS = proyCN.ObtenerTesaurosSemanticosConfigEdicionDeProyecto(ProyectoSeleccionado.Clave);
-                //FindByProyectoIDUrlOntologiaSourceTesSem(ProyectoSeleccionado.Clave, Ontologia, Source);
-                ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.ProyectoID.Equals(ProyectoSeleccionado.Clave) && proy.UrlOntologia.Equals(Ontologia) && proy.SourceTesSem.Equals(Source));
-                mProyTesSemDS.ListaProyectoConfigExtraSem.Remove(filaConfig);
-                mEntityContext.EliminarElemento(filaConfig);
-                proyCN.ActualizarProyectos();
-                proyCN.Dispose();
+			try
+			{
+				CargarPermisosAdministrarTesauros();
+				ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+				mProyTesSemDS = proyCN.ObtenerTesaurosSemanticosConfigEdicionDeProyecto(ProyectoSeleccionado.Clave);
+				//FindByProyectoIDUrlOntologiaSourceTesSem(ProyectoSeleccionado.Clave, Ontologia, Source);
+				ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.ProyectoID.Equals(ProyectoSeleccionado.Clave) && proy.UrlOntologia.Equals(Ontologia) && proy.SourceTesSem.Equals(Source));
+				mProyTesSemDS.ListaProyectoConfigExtraSem.Remove(filaConfig);
+				mEntityContext.EliminarElemento(filaConfig);
+				proyCN.ActualizarProyectos();
+				proyCN.Dispose();
 
-                FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-                facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-                facetadoCL.Dispose();
+				FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+				facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+				facetadoCL.Dispose();
 
-                return GnossResultOK();
-            }
-            catch
-            {
-                return GnossResultERROR();
-            }
-        }
+				return GnossResultOK();
+			}
+			catch
+			{
+				return GnossResultERROR();
+			}
+		}
 
-        /// <summary>
-        /// Acción de añadir un tesauro
-        /// </summary>
-        /// <param name="Nombre"></param>
-        /// <param name="Idiomas"></param>
-        /// <param name="Ontologia"></param>
-        /// <param name="Prefijo"></param>
-        /// <param name="Source"></param>
-        /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult AddTesauro(string Nombre, string Ontologia, string Prefijo, string Source)
-        {
-            EliminarPersonalizacionVistas();
+		/// <summary>
+		/// Acción de añadir un tesauro
+		/// </summary>
+		/// <param name="Nombre"></param>
+		/// <param name="Idiomas"></param>
+		/// <param name="Ontologia"></param>
+		/// <param name="Prefijo"></param>
+		/// <param name="Source"></param>
+		/// <returns>Acción resultante</returns>
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorTesauro } })]
+		public ActionResult AddTesauro(string Nombre, string Ontologia, string Prefijo, string Source)
+		{
+			EliminarPersonalizacionVistas();
+			CargarPermisosAdministrarTesauros();
+			if (string.IsNullOrEmpty(Ontologia))
+			{
+				return GnossResultERROR("ONTOLOGIA_EMPTY");
+			}
+			else if (string.IsNullOrEmpty(Nombre) || string.IsNullOrEmpty(Prefijo) || string.IsNullOrEmpty(Source))
+			{
+				return GnossResultERROR("CAMPOS_EMPTY");
+			}
 
-            if (string.IsNullOrEmpty(Ontologia))
-            {
-                return GnossResultERROR("ONTOLOGIA_EMPTY");
-            }
-            else if (string.IsNullOrEmpty(Nombre) || string.IsNullOrEmpty(Prefijo) || string.IsNullOrEmpty(Source))
-            {
-                return GnossResultERROR("CAMPOS_EMPTY");
-            }
+			ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+			mProyTesSemDS = proyCN.ObtenerTesaurosSemanticosConfigEdicionDeProyecto(ProyectoSeleccionado.Clave);
+			if (mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.ProyectoID.Equals(ProyectoSeleccionado.Clave) && proy.UrlOntologia.Equals(Ontologia) && proy.SourceTesSem.Equals(Source)) != null)
+			{
+				return GnossResultERROR("SOURCE_REPETIDO");
+			}
 
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            mProyTesSemDS = proyCN.ObtenerTesaurosSemanticosConfigEdicionDeProyecto(ProyectoSeleccionado.Clave);
-            if (mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.ProyectoID.Equals(ProyectoSeleccionado.Clave) && proy.UrlOntologia.Equals(Ontologia) && proy.SourceTesSem.Equals(Source)) != null)
-            {
-                return GnossResultERROR("SOURCE_REPETIDO");
-            }
+			List<string> listaIdiomas = UtilCadenas.ObtenerTextoPorIdiomas(Nombre).Keys.ToList();
+			string idiomas = string.Empty;
 
-            List<string> listaIdiomas = UtilCadenas.ObtenerTextoPorIdiomas(Nombre).Keys.ToList();
-            string idiomas = string.Empty;
-            
-            foreach(string idioma in listaIdiomas)
-            {
-                idiomas += $"{idioma},";
-            }
+			foreach (string idioma in listaIdiomas)
+			{
+				idiomas += $"{idioma},";
+			}
 
-            if (!string.IsNullOrEmpty(idiomas)){
+			if (!string.IsNullOrEmpty(idiomas))
+			{
 				idiomas = idiomas.Substring(0, idiomas.Length - 1);
-			}            
+			}
 
-            ProyectoConfigExtraSem filaConfig = new ProyectoConfigExtraSem();
-            filaConfig.ProyectoID = ProyectoSeleccionado.Clave;
-            filaConfig.Tipo = 0;
-            filaConfig.Editable = true;
-            filaConfig.Nombre = Nombre;
-            filaConfig.SourceTesSem = Source;
-            filaConfig.PrefijoTesSem = Prefijo;
-            filaConfig.Idiomas = idiomas;
-            filaConfig.UrlOntologia = Ontologia;
+			ProyectoConfigExtraSem filaConfig = new ProyectoConfigExtraSem();
+			filaConfig.ProyectoID = ProyectoSeleccionado.Clave;
+			filaConfig.Tipo = 0;
+			filaConfig.Editable = true;
+			filaConfig.Nombre = Nombre;
+			filaConfig.SourceTesSem = Source;
+			filaConfig.PrefijoTesSem = Prefijo;
+			filaConfig.Idiomas = idiomas;
+			filaConfig.UrlOntologia = Ontologia;
+			filaConfig.FechaCreacion = DateTime.Now;
 
-            mProyTesSemDS.ListaProyectoConfigExtraSem.Add(filaConfig);
-            if (mEntityContext.ProyectoConfigExtraSem.FirstOrDefault(proy => proy.ProyectoID.Equals(filaConfig.ProyectoID) && proy.UrlOntologia.Equals(filaConfig.UrlOntologia) && proy.SourceTesSem.Equals(filaConfig.SourceTesSem)) == null)
-            {
-                mEntityContext.ProyectoConfigExtraSem.Add(filaConfig);
-            }
+			mProyTesSemDS.ListaProyectoConfigExtraSem.Add(filaConfig);
+			if (mEntityContext.ProyectoConfigExtraSem.FirstOrDefault(proy => proy.ProyectoID.Equals(filaConfig.ProyectoID) && proy.UrlOntologia.Equals(filaConfig.UrlOntologia) && proy.SourceTesSem.Equals(filaConfig.SourceTesSem)) == null)
+			{
+				mEntityContext.ProyectoConfigExtraSem.Add(filaConfig);
+			}
 
-            proyCN.ActualizarProyectos();
-            proyCN.Dispose();
+			proyCN.ActualizarProyectos();
+			proyCN.Dispose();
 
 			// Devolver el nombre en todos lo idiomas
-			Tuple<string, string, string> datosFicha = new Tuple<string, string, string>(filaConfig.Nombre, filaConfig.UrlOntologia, filaConfig.SourceTesSem);
-            
-			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
+			Tuple<ComAdminSemanticThesaurusData, string, string> datosFicha = new Tuple<ComAdminSemanticThesaurusData, string, string>(new ComAdminSemanticThesaurusData { Nombre = filaConfig.Nombre, FechaCreacion = filaConfig.FechaCreacion}, filaConfig.UrlOntologia, filaConfig.SourceTesSem);
+
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
 
 
-			FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+			FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
 
-            Thesaurus thesaurus = CrearThesaurus(Nombre, Ontologia, Prefijo, Source);
+			Thesaurus thesaurus = CrearThesaurus(Nombre, Ontologia, Prefijo, Source);
 
 			facetadoCN.InsertarTriplesCollection(thesaurus, UrlIntragnoss, ProyectoSeleccionado.Clave);
 
@@ -333,1733 +340,1741 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 			//return RedirectToAction("Index");
 		}
 
-        private Thesaurus CrearThesaurus(string pNombre, string pOntologia, string pPrefijo, string pSource)
-        {
+		private Thesaurus CrearThesaurus(string pNombre, string pOntologia, string pPrefijo, string pSource)
+		{
 			Thesaurus thesaurus = new Thesaurus();
 			thesaurus.Source = pSource;
 			thesaurus.Ontology = pOntologia;
 			thesaurus.CommunityShortName = ProyectoSeleccionado.NombreCorto;
-            thesaurus.Collection = new Collection();
-            thesaurus.Collection.Subject = pPrefijo;
-            thesaurus.Collection.ScopeNote = UtilCadenas.ObtenerTextoPorIdiomas(pNombre);
-			
-            return thesaurus;
+			thesaurus.Collection = new Collection();
+			thesaurus.Collection.Subject = pPrefijo;
+			thesaurus.Collection.ScopeNote = UtilCadenas.ObtenerTextoPorIdiomas(pNombre);
+
+			return thesaurus;
 		}
 
-        /// <summary>
-        /// Acción de modificar el tesauro.
-        /// </summary>
-        /// <param name="pModel">Modelo de la acción</param>
-        /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult EditarTesauro(EditSemanticThesaurusModel pModel)
-        {
-            EliminarPersonalizacionVistas();
-            try
-            {
-                mEditTesModel = pModel;
-                mEditTesModel.ActionsBackUp = HttpUtility.UrlDecode(mEditTesModel.ActionsBackUp);
-                mEditTesModel.CategoryExtraPropertiesValues = HttpUtility.UrlDecode(mEditTesModel.CategoryExtraPropertiesValues);
-                mEditTesModel.ExtraSemanticPropertiesValuesBK = HttpUtility.UrlDecode(mEditTesModel.ExtraSemanticPropertiesValuesBK);
-                ActionResult redireccion = ComprobarRedirecciones();
-
-                if (redireccion != null)
-                {
-                    return redireccion;
-                }
-
-                CargarInicial_TesSem();
-
-                if (!mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables.ContainsKey(new KeyValuePair<string, string>(pModel.OntologyUrl, pModel.SourceSemanticThesaurus)))
-                {
-                    return GnossResultERROR();
-                }
-
-                CargarTesauroBD();
-                CargarTesauro();
-
-                EjecutarAccionesBackup();
-
-                if (mEditTesModel.ActionsBackUp == null)
-                {
-                    mEditTesModel.ActionsBackUp = "";
-                }
-
-                if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.LoadThesaurus)
-                {
-                    // return PartialView("_AccionesTesSem", mModelAdmin);
-                    // Carga de la Vista para su edición vía modal
-                    mModelAdmin.IdiomaPorDefecto = IdiomaPorDefecto;
-                    return PartialView("_modal-views/_tesauro-details", mModelAdmin);
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.CreateCategory)
-                {
-                    return CrearCategoria();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.ReNameCategory)
-                {
-                    return RenombrarCategoria();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.PrepareMoveCategories)
-                {
-                    return PrepararMoverCategorias();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.MoveCategories)
-                {
-                    return MoverCategorias();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.PrepareOrderCategories)
-                {
-                    //return PrepararOrdenarCategorias();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.OrderCategories)
-                {
-                    //return OrdenarCategorias();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.DeleteCategories)
-                { 
-                    return EliminarCategorias();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.EditExtraProperties)
-                {
-                    return EditarPropiedadesExtraCategoria();
-                }
-                else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.SaveThesaurus)
-                {
-                    //return GuardarCategorias();
-                    return GnossResultOK();
-                }
-
-                return GnossResultERROR();
-            }
-            catch (Exception ex)
-            {
-                GuardarLogErrorAJAX(ex.ToString());
-                if (string.IsNullOrEmpty(mMensajeAdmin))
-                {
-                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ".");
-                }
-                else
-                {
-                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ":" + Environment.NewLine + mMensajeAdmin);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Acción de modificar el tesauro.
-        /// </summary>
-        /// <param name="pModel">Modelo de la acción</param>
-        /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult EditarEntSec(EditSecondaryEntityModel pModel)
-        {
-            try
-            {
-                mEditEntSecModel = pModel;
-                ActionResult redireccion = ComprobarRedirecciones();
-
-                if (redireccion != null)
-                {
-                    return redireccion;
-                }
-
-                CargarInicial_EntSecund();
-
-                if (!mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.ContainsKey(pModel.OntologyUrl))
-                {
-                    return GnossResultERROR();
-                }
-
-                if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.LoadInstances)
-                {
-                    CargarInstanciasOntologiaSecundaria();
-                    return PartialView("_EditarEntSecInstancias", mModelAdmin);
-                }
-                else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.CreateNewInstance)
-                {
-                    CrearEditarIntanciaOntologiaSecundaria();
-                    return PartialView("_EditarEntSecInstancias", mModelAdmin);
-                }
-                else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.EditInstance)
-                {
-                    CrearEditarIntanciaOntologiaSecundaria();
-                    return PartialView("_EditarEntSecInstancias", mModelAdmin);
-                }
-                else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.DeleteInstance)
-                {
-                    EliminarIntanciasOntologiaSecundaria();
-                    return PartialView("_EditarEntSecInstancias", mModelAdmin);
-                }
-                else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveNewInstance || mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveInstance)
-                {
-                    string tildes = "[áéíóúöüÁÉÍÓÚÖÜ]";
-                    if (pModel.EntitySubject != null)
-                    {
-                        bool tilde = Regex.IsMatch(pModel.EntitySubject, tildes);
-                        if (tilde)
-                        {
-                            return GnossResultERROR("No se pueden poner acentos");
-                        }
-                    }
-                    return GuardarIntanciaOntologiaSecundaria();
-                }
-
-                return GnossResultERROR();
-            }
-            catch (Exception ex)
-            {
-                GuardarLogErrorAJAX(ex.ToString());
-                if (string.IsNullOrEmpty(mMensajeAdmin))
-                {
-                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ".");
-                }
-                else
-                {
-                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ":" + Environment.NewLine + mMensajeAdmin);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Acción de modificar el tesauro.
-        /// </summary>
-        /// <param name="pModel">Modelo de la acción</param>
-        /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido" })]
-        public ActionResult EditarGrafoSimple(EditSimpleGraphModel pModel)
-        {
-            try
-            {
-                mEditGrafoSimpleModel = pModel;
-                ActionResult redireccion = ComprobarRedirecciones();
-
-                if (redireccion != null)
-                {
-                    return redireccion;
-                }
-
-                CargarInicial_GrafoSimple();
-
-                if (!mModelAdmin.SimpleGraphs.SimpleGraphsEditables.ContainsKey(pModel.Graph))
-                {
-                    return GnossResultERROR();
-                }
-
-                if (mEditGrafoSimpleModel.EditAction == EditSimpleGraphModel.Action.LoadInstances)
-                {
-                    CargarInstanciasGrafoSimple();
-                    return PartialView("_EditarGrafosSimplesInstancias", mModelAdmin);
-                }
-                else if (mEditGrafoSimpleModel.EditAction == EditSimpleGraphModel.Action.CreateNewInstance)
-                {
-                    CrearIntanciaGrafoSimple();
-                    return PartialView("_EditarGrafosSimplesInstancias", mModelAdmin);
-                }
-                else if (mEditGrafoSimpleModel.EditAction == EditSimpleGraphModel.Action.DeleteInstance)
-                {
-                    EliminarIntanciasGrafoSimple();
-                    return PartialView("_EditarGrafosSimplesInstancias", mModelAdmin);
-                }
-
-                return GnossResultERROR();
-            }
-            catch (Exception ex)
-            {
-                GuardarLogErrorAJAX(ex.ToString());
-                if (string.IsNullOrEmpty(mMensajeAdmin))
-                {
-                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ".");
-                }
-                else
-                {
-                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ":" + Environment.NewLine + mMensajeAdmin);
-                }
-            }
-        }
-
-        #endregion
-
-        #region Metodos auxiliares Editar Tesauro Semántico
-
-        /// <summary>
-        /// Acción de mover categorías.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult EliminarCategorias()
-        {
-            List<string> catSelecc = new List<string>();
-
-            foreach (string catTesID in mEditTesModel.SelectedCategories.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                catSelecc.Add(catTesID);
-            }
-
-
-            if (catSelecc.Count == 0)
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
-            }
-
-            EliminarCategoriasTesauro(catSelecc);
-
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
-
-            return GnossResultOK();
-        }
-
-        /// <summary>
-        /// Eliminar una serie de categorías del tesauro.
-        /// </summary>
-        /// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
-        /// <param name="pListaCategoriasAEliminar">Lista de categorías a eliminar</param>
-        private void EliminarCategoriasTesauro(List<string> pListaCategoriasAEliminar)
-        {
-            foreach (string catID in pListaCategoriasAEliminar)
-            {
-                CategoryModel catHijaM = (CategoryModel)mCategoriasModeloTesSem[catID][0];
-                ElementoOntologia catHija = (ElementoOntologia)mCategoriasModeloTesSem[catID][1];
-
-                if (catHijaM.ParentCategoryKey == Guid.Empty)
-                {
-                    mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem).LimpiarValor(catHija.ID);
-                }
-                else
-                {
-                    ((ElementoOntologia)mCategoriasModeloTesSem[catHijaM.ParentCategoryStringKey][1]).ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).LimpiarValor(catHija.ID);
-                    catHija.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).LimpiarValor();
-                }
-            }
-
-            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-
-            foreach (string catEliminar in pListaCategoriasAEliminar)
-            {
-                ControladorDocumentacion.EliminarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, BaseURLFormulariosSem, catEliminar, docOnto, null, false, ProyectoSeleccionado.Clave);
-            }
-        }
-
-        /// <summary>
-        /// Acción de mover categorías.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult MoverCategorias()
-        {
-            List<string> catSelecc = new List<string>();
-
-            foreach (string catTesID in mEditTesModel.SelectedCategories.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                catSelecc.Add(catTesID);
-            }
-
-            if (catSelecc.Count == 0)
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
-            }
-
-            if (string.IsNullOrEmpty(mEditTesModel.SelectedCategory))
-            {
-                return GnossResultERROR();
-            }
-
-            mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, (short)mEditTesModel.EditAction, "|_|", mEditTesModel.SelectedCategory);
-
-
-            List<Guid> IDCatSeleccionadas = new List<Guid>();
-
-            foreach (string catTesID in catSelecc)
-            {
-                mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, "|_|", catTesID.ToString());
-            }
-
-            mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, "|,|");
-
-            MoverCategoriasTesauro(mEditTesModel.SelectedCategory, catSelecc);
-
-            mCategoriasExpandidasStringIDs.Add(mEditTesModel.SelectedCategory);
-
-            CargarTesauro();
-
-            mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
-
-            // return PartialView("_AccionesTesSem", mModelAdmin);
-            // Devolver la vista parcial/modal que muestra solo el tesauro o los detalles del mismo
-            return PartialView("_modal-views/_tesauro-details-items", mModelAdmin);
-        }
-
-        /// <summary>
-        /// Mueve una serie de categorías del tesauro.
-        /// </summary>
-        /// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
-        /// <param name="pCategoriaPadre">Nueva categoría padre</param>
-        /// <param name="pCategoriasAMover">Categorías que movemos</param>
-        private void MoverCategoriasTesauro(string pCategoriaPadre, List<string> pCategoriasAMover)
-        {
-            List<string> pathPadre = null;
-            CategoryModel catPadreM = null;
-
-            if (pCategoriaPadre == "[RAIZ]")
-            {
-                pathPadre = new List<string>();
-            }
-            else
-            {
-                catPadreM = (CategoryModel)mCategoriasModeloTesSem[pCategoriaPadre][0];
-                pathPadre = GenerarPathPadresCategorias(catPadreM);
-            }
-
-            foreach (string catID in pCategoriasAMover)
-            {
-                CategoryModel catHijaM = (CategoryModel)mCategoriasModeloTesSem[catID][0];
-                ElementoOntologia catHija = (ElementoOntologia)mCategoriasModeloTesSem[catID][1];
-
-                if (catHijaM.ParentCategoryKey == Guid.Empty)
-                {
-                    mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem).LimpiarValor(catHija.ID);
-                }
-                else
-                {
-                    ((ElementoOntologia)mCategoriasModeloTesSem[catHijaM.ParentCategoryStringKey][1]).ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).LimpiarValor(catHija.ID);
-                    catHija.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).LimpiarValor();
-                }
-
-                catHija.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).LimpiarValor();
-
-
-                if (pCategoriaPadre == "[RAIZ]")
-                {
-                    catHijaM.ParentCategoryKey = Guid.Empty;
-                    catHijaM.ParentCategoryStringKey = null;
-
-                    mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem).AgregarValor(catHija);
-                    catHija.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor("1");
-                }
-                else
-                {
-                    if (catPadreM != null)
-                    {
-                        catHijaM.ParentCategoryKey = catPadreM.Key;
-                        catHijaM.ParentCategoryStringKey = catPadreM.StringKey;
-
-                        ElementoOntologia catPadre = (ElementoOntologia)mCategoriasModeloTesSem[catHijaM.ParentCategoryStringKey][1];
-                        catPadre.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).AgregarValor(catHija);
-                        catHija.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).AgregarValor(catPadre);
-                        catHija.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor((pathPadre.Count + 1).ToString());
-                    }
-                }
-            }
-
-            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-
-            foreach (string catMover in pCategoriasAMover)
-            {
-                ControladorDocumentacion.MoverCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, catMover, pathPadre.ToArray(), docOnto, null, false, ProyectoSeleccionado.Clave);
-            }
-        }
-
-        /// <summary>
-        /// Genera una lista con la jerarquia de padres de una categoría.
-        /// </summary>
-        /// <param name="pCatPadre">Categoría</param>
-        /// <returns>Lista con la jerarquia de padres de una categoría</returns>
-        private List<string> GenerarPathPadresCategorias(CategoryModel pCatPadre)
-        {
-            List<string> pathPadre = null;
-
-            if (pCatPadre.ParentCategoryKey != Guid.Empty)
-            {
-                pathPadre = GenerarPathPadresCategorias((CategoryModel)mCategoriasModeloTesSem[pCatPadre.ParentCategoryStringKey][0]);
-            }
-            else
-            {
-                pathPadre = new List<string>();
-            }
-
-            pathPadre.Add(pCatPadre.StringKey);
-
-            return pathPadre;
-        }
-
-        /// <summary>
-        /// Prepara la acción de mover categorías.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult PrepararMoverCategorias()
-        {
-            mModelAdmin.SemanticThesaurus.CategoryNamesToMove = new List<string>();
-            List<string> catSelecc = new List<string>();
-            List<Guid> catGuidSelecc = new List<Guid>();
-
-            foreach (string catTesID in mEditTesModel.SelectedCategories.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                CategoryModel categoriaM = (CategoryModel)mCategoriasModeloTesSem[catTesID][0];
-                catGuidSelecc.Add(categoriaM.Key);
-                catSelecc.Add(catTesID);
-                mCategoriasExpandidasStringIDs.Add(catTesID);
-                mModelAdmin.SemanticThesaurus.CategoryNamesToMove.Add(categoriaM.Name);
-            }
-
-            if (catSelecc.Count != 1)
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
-            }
-
-            mModelAdmin.SemanticThesaurus.ParentCategoriesForMoveCategories = new Dictionary<string, string>();
-            mModelAdmin.SemanticThesaurus.ParentCategoriesForMoveCategories.Add("[RAIZ]", UtilIdiomas.GetText("TESAURO", "INDICE"));
-
-            foreach (ElementoOntologia entidadPrinc in mEntidadesTesSem)
-            {
-                Propiedad propMember = entidadPrinc.ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
-                foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propMember.ValoresUnificados.Values)))
-                {
-                    CargarCategoriasHijasOmitiendoCatEnLista(categoria, string.Empty, catSelecc, mModelAdmin.SemanticThesaurus.ParentCategoriesForMoveCategories);
-                }
-            }
-
-            //CargarTesauro(); NO CARGAR, CAMBIARÍAN IDs
-            mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.SelectedCategories = catGuidSelecc;
-            mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
-            return PartialView("_AccionesTesSem", mModelAdmin);
-        }
-
-        /// <summary>
-        /// Gestiona el cambio de nombre de una categoría.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult RenombrarCategoria()
-        {
-            string catSeleccID = mEditTesModel.SelectedCategory;
-
-            if (string.IsNullOrEmpty(mEditTesModel.NewCategoryName))
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_NOMBRE"));
-            }
-
-            mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, ((short)mEditTesModel.EditAction).ToString(), "|_|", catSeleccID.ToString(), "|_|", mEditTesModel.NewCategoryName, "|,|");
-
-            RenombrarCategoria(catSeleccID, mEditTesModel.NewCategoryName);
-            mCategoriasExpandidasStringIDs.Add(catSeleccID);
-            CargarTesauro();
-
-            mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
+		/// <summary>
+		/// Acción de modificar el tesauro.
+		/// </summary>
+		/// <param name="pModel">Modelo de la acción</param>
+		/// <returns>Acción resultante</returns>
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerTesauroSemantico, (ulong)PermisoContenidos.ModificarValorTesauro } })]
+		public ActionResult EditarTesauro(EditSemanticThesaurusModel pModel)
+		{
+			EliminarPersonalizacionVistas();
+			CargarPermisosAdministrarTesauros();
+			try
+			{
+				mEditTesModel = pModel;
+				mEditTesModel.ActionsBackUp = HttpUtility.UrlDecode(mEditTesModel.ActionsBackUp);
+				mEditTesModel.CategoryExtraPropertiesValues = HttpUtility.UrlDecode(mEditTesModel.CategoryExtraPropertiesValues);
+				mEditTesModel.ExtraSemanticPropertiesValuesBK = HttpUtility.UrlDecode(mEditTesModel.ExtraSemanticPropertiesValuesBK);
+
+				ActionResult redireccion = ComprobarPermisos(pModel.EditAction);
+
+				if (redireccion != null)
+				{
+					return redireccion;
+				}
+
+				CargarInicial_TesSem();
+
+				if (!mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables.ContainsKey(new KeyValuePair<string, string>(pModel.OntologyUrl, pModel.SourceSemanticThesaurus)))
+				{
+					return GnossResultERROR();
+				}
+
+				CargarTesauroBD();
+				CargarTesauro();
+
+				EjecutarAccionesBackup();
+
+				if (mEditTesModel.ActionsBackUp == null)
+				{
+					mEditTesModel.ActionsBackUp = "";
+				}
+
+				if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.LoadThesaurus)
+				{
+					// return PartialView("_AccionesTesSem", mModelAdmin);
+					// Carga de la Vista para su edición vía modal
+					mModelAdmin.IdiomaPorDefecto = IdiomaPorDefecto;
+					return PartialView("_modal-views/_tesauro-details", mModelAdmin);
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.CreateCategory)
+				{
+					return CrearCategoria();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.ReNameCategory)
+				{
+					return RenombrarCategoria();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.PrepareMoveCategories)
+				{
+					return PrepararMoverCategorias();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.MoveCategories)
+				{
+					return MoverCategorias();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.PrepareOrderCategories)
+				{
+					//return PrepararOrdenarCategorias();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.OrderCategories)
+				{
+					//return OrdenarCategorias();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.DeleteCategories)
+				{
+					return EliminarCategorias();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.EditExtraProperties)
+				{
+					return EditarPropiedadesExtraCategoria();
+				}
+				else if (mEditTesModel.EditAction == EditSemanticThesaurusModel.Action.SaveThesaurus)
+				{
+					//return GuardarCategorias();
+					return GnossResultOK();
+				}
+
+				return GnossResultERROR();
+			}
+			catch (Exception ex)
+			{
+				GuardarLogErrorAJAX(ex.ToString());
+				if (string.IsNullOrEmpty(mMensajeAdmin))
+				{
+					return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ".");
+				}
+				else
+				{
+					return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ":" + Environment.NewLine + mMensajeAdmin);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Acción de modificar el tesauro.
+		/// </summary>
+		/// <param name="pModel">Modelo de la acción</param>
+		/// <returns>Acción resultante</returns>
+		[TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+		public ActionResult EditarEntSec(EditSecondaryEntityModel pModel)
+		{
+			try
+			{
+				mEditEntSecModel = pModel;
+				CargarPermisosAdministrarTesauros();
+				CargarInicial_EntSecund();
+
+				if (!mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.ContainsKey(pModel.OntologyUrl))
+				{
+					return GnossResultERROR();
+				}
+
+				if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.LoadInstances)
+				{
+					CargarInstanciasOntologiaSecundaria();
+					return PartialView("_EditarEntSecInstancias", mModelAdmin);
+				}
+				else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.CreateNewInstance)
+				{
+					CrearEditarIntanciaOntologiaSecundaria();
+					return PartialView("_EditarEntSecInstancias", mModelAdmin);
+				}
+				else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.EditInstance)
+				{
+					CrearEditarIntanciaOntologiaSecundaria();
+					return PartialView("_EditarEntSecInstancias", mModelAdmin);
+				}
+				else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.DeleteInstance)
+				{
+					EliminarIntanciasOntologiaSecundaria();
+					return PartialView("_EditarEntSecInstancias", mModelAdmin);
+				}
+				else if (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveNewInstance || mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveInstance)
+				{
+					string tildes = "[áéíóúöüÁÉÍÓÚÖÜ]";
+					if (pModel.EntitySubject != null)
+					{
+						bool tilde = Regex.IsMatch(pModel.EntitySubject, tildes);
+						if (tilde)
+						{
+							return GnossResultERROR("No se pueden poner acentos");
+						}
+					}
+					return GuardarIntanciaOntologiaSecundaria();
+				}
+
+				return GnossResultERROR();
+			}
+			catch (Exception ex)
+			{
+				GuardarLogErrorAJAX(ex.ToString());
+				if (string.IsNullOrEmpty(mMensajeAdmin))
+				{
+					return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ".");
+				}
+				else
+				{
+					return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ":" + Environment.NewLine + mMensajeAdmin);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Acción de modificar el tesauro.
+		/// </summary>
+		/// <param name="pModel">Modelo de la acción</param>
+		/// <returns>Acción resultante</returns>
+		[TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+		public ActionResult EditarGrafoSimple(EditSimpleGraphModel pModel)
+		{
+			try
+			{
+				mEditGrafoSimpleModel = pModel;
+
+				CargarPermisosAdministrarTesauros();
+				CargarInicial_GrafoSimple();
+
+				if (!mModelAdmin.SimpleGraphs.SimpleGraphsEditables.ContainsKey(pModel.Graph))
+				{
+					return GnossResultERROR();
+				}
+
+				if (mEditGrafoSimpleModel.EditAction == EditSimpleGraphModel.Action.LoadInstances)
+				{
+					CargarInstanciasGrafoSimple();
+					return PartialView("_EditarGrafosSimplesInstancias", mModelAdmin);
+				}
+				else if (mEditGrafoSimpleModel.EditAction == EditSimpleGraphModel.Action.CreateNewInstance)
+				{
+					CrearIntanciaGrafoSimple();
+					return PartialView("_EditarGrafosSimplesInstancias", mModelAdmin);
+				}
+				else if (mEditGrafoSimpleModel.EditAction == EditSimpleGraphModel.Action.DeleteInstance)
+				{
+					EliminarIntanciasGrafoSimple();
+					return PartialView("_EditarGrafosSimplesInstancias", mModelAdmin);
+				}
+
+				return GnossResultERROR();
+			}
+			catch (Exception ex)
+			{
+				GuardarLogErrorAJAX(ex.ToString());
+				if (string.IsNullOrEmpty(mMensajeAdmin))
+				{
+					return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ".");
+				}
+				else
+				{
+					return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS") + ":" + Environment.NewLine + mMensajeAdmin);
+				}
+			}
+		}
+
+		#endregion
+
+		#region Metodos auxiliares Editar Tesauro Semántico
+
+		/// <summary>
+		/// Acción de mover categorías.
+		/// </summary>
+		/// <returns>Acción de respuesta</returns>
+		private ActionResult EliminarCategorias()
+		{
+			List<string> catSelecc = new List<string>();
+
+			foreach (string catTesID in mEditTesModel.SelectedCategories.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				catSelecc.Add(catTesID);
+			}
+
+
+			if (catSelecc.Count == 0)
+			{
+				return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
+			}
+
+			EliminarCategoriasTesauro(catSelecc);
+
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
+
+			return GnossResultOK();
+		}
+
+		/// <summary>
+		/// Eliminar una serie de categorías del tesauro.
+		/// </summary>
+		/// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
+		/// <param name="pListaCategoriasAEliminar">Lista de categorías a eliminar</param>
+		private void EliminarCategoriasTesauro(List<string> pListaCategoriasAEliminar)
+		{
+			foreach (string catID in pListaCategoriasAEliminar)
+			{
+				CategoryModel catHijaM = (CategoryModel)mCategoriasModeloTesSem[catID][0];
+				ElementoOntologia catHija = (ElementoOntologia)mCategoriasModeloTesSem[catID][1];
+
+				if (catHijaM.ParentCategoryKey == Guid.Empty)
+				{
+					mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem).LimpiarValor(catHija.ID);
+				}
+				else
+				{
+					((ElementoOntologia)mCategoriasModeloTesSem[catHijaM.ParentCategoryStringKey][1]).ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).LimpiarValor(catHija.ID);
+					catHija.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).LimpiarValor();
+				}
+			}
+
+			Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+
+			foreach (string catEliminar in pListaCategoriasAEliminar)
+			{
+				ControladorDocumentacion.EliminarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, BaseURLFormulariosSem, catEliminar, docOnto, null, false, ProyectoSeleccionado.Clave, mAvailableServices);
+			}
+		}
+
+		/// <summary>
+		/// Acción de mover categorías.
+		/// </summary>
+		/// <returns>Acción de respuesta</returns>
+		private ActionResult MoverCategorias()
+		{
+			List<string> catSelecc = new List<string>();
+
+			foreach (string catTesID in mEditTesModel.SelectedCategories.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				catSelecc.Add(catTesID);
+			}
+
+			if (catSelecc.Count == 0)
+			{
+				return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
+			}
+
+			if (string.IsNullOrEmpty(mEditTesModel.SelectedCategory))
+			{
+				return GnossResultERROR();
+			}
+
+			mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, (short)mEditTesModel.EditAction, "|_|", mEditTesModel.SelectedCategory);
+
+
+			List<Guid> IDCatSeleccionadas = new List<Guid>();
+
+			foreach (string catTesID in catSelecc)
+			{
+				mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, "|_|", catTesID.ToString());
+			}
+
+			mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, "|,|");
+
+			MoverCategoriasTesauro(mEditTesModel.SelectedCategory, catSelecc);
+
+			mCategoriasExpandidasStringIDs.Add(mEditTesModel.SelectedCategory);
+
+			CargarTesauro();
+
+			mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
+			mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
+
+			// return PartialView("_AccionesTesSem", mModelAdmin);
+			// Devolver la vista parcial/modal que muestra solo el tesauro o los detalles del mismo
+			return PartialView("_modal-views/_tesauro-details-items", mModelAdmin);
+		}
+
+		/// <summary>
+		/// Mueve una serie de categorías del tesauro.
+		/// </summary>
+		/// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
+		/// <param name="pCategoriaPadre">Nueva categoría padre</param>
+		/// <param name="pCategoriasAMover">Categorías que movemos</param>
+		private void MoverCategoriasTesauro(string pCategoriaPadre, List<string> pCategoriasAMover)
+		{
+			List<string> pathPadre = null;
+			CategoryModel catPadreM = null;
+
+			if (pCategoriaPadre == "[RAIZ]")
+			{
+				pathPadre = new List<string>();
+			}
+			else
+			{
+				catPadreM = (CategoryModel)mCategoriasModeloTesSem[pCategoriaPadre][0];
+				pathPadre = GenerarPathPadresCategorias(catPadreM);
+			}
+
+			foreach (string catID in pCategoriasAMover)
+			{
+				CategoryModel catHijaM = (CategoryModel)mCategoriasModeloTesSem[catID][0];
+				ElementoOntologia catHija = (ElementoOntologia)mCategoriasModeloTesSem[catID][1];
+
+				if (catHijaM.ParentCategoryKey == Guid.Empty)
+				{
+					mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem).LimpiarValor(catHija.ID);
+				}
+				else
+				{
+					((ElementoOntologia)mCategoriasModeloTesSem[catHijaM.ParentCategoryStringKey][1]).ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).LimpiarValor(catHija.ID);
+					catHija.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).LimpiarValor();
+				}
+
+				catHija.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).LimpiarValor();
+
+
+				if (pCategoriaPadre == "[RAIZ]")
+				{
+					catHijaM.ParentCategoryKey = Guid.Empty;
+					catHijaM.ParentCategoryStringKey = null;
+
+					mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem).AgregarValor(catHija);
+					catHija.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor("1");
+				}
+				else
+				{
+					if (catPadreM != null)
+					{
+						catHijaM.ParentCategoryKey = catPadreM.Key;
+						catHijaM.ParentCategoryStringKey = catPadreM.StringKey;
+
+						ElementoOntologia catPadre = (ElementoOntologia)mCategoriasModeloTesSem[catHijaM.ParentCategoryStringKey][1];
+						catPadre.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).AgregarValor(catHija);
+						catHija.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).AgregarValor(catPadre);
+						catHija.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor((pathPadre.Count + 1).ToString());
+					}
+				}
+			}
+
+			Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+
+			foreach (string catMover in pCategoriasAMover)
+			{
+				ControladorDocumentacion.MoverCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, null, UrlIntragnoss, catMover, pathPadre.ToArray(), docOnto, null, false, ProyectoSeleccionado.Clave, mAvailableServices);
+			}
+		}
+
+		/// <summary>
+		/// Genera una lista con la jerarquia de padres de una categoría.
+		/// </summary>
+		/// <param name="pCatPadre">Categoría</param>
+		/// <returns>Lista con la jerarquia de padres de una categoría</returns>
+		private List<string> GenerarPathPadresCategorias(CategoryModel pCatPadre)
+		{
+			List<string> pathPadre = null;
+
+			if (pCatPadre.ParentCategoryKey != Guid.Empty)
+			{
+				pathPadre = GenerarPathPadresCategorias((CategoryModel)mCategoriasModeloTesSem[pCatPadre.ParentCategoryStringKey][0]);
+			}
+			else
+			{
+				pathPadre = new List<string>();
+			}
+
+			pathPadre.Add(pCatPadre.StringKey);
+
+			return pathPadre;
+		}
+
+		/// <summary>
+		/// Prepara la acción de mover categorías.
+		/// </summary>
+		/// <returns>Acción de respuesta</returns>
+		private ActionResult PrepararMoverCategorias()
+		{
+			mModelAdmin.SemanticThesaurus.CategoryNamesToMove = new List<string>();
+			List<string> catSelecc = new List<string>();
+			List<Guid> catGuidSelecc = new List<Guid>();
+
+			foreach (string catTesID in mEditTesModel.SelectedCategories.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				CategoryModel categoriaM = (CategoryModel)mCategoriasModeloTesSem[catTesID][0];
+				catGuidSelecc.Add(categoriaM.Key);
+				catSelecc.Add(catTesID);
+				mCategoriasExpandidasStringIDs.Add(catTesID);
+				mModelAdmin.SemanticThesaurus.CategoryNamesToMove.Add(categoriaM.Name);
+			}
+
+			if (catSelecc.Count != 1)
+			{
+				return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
+			}
+
+			mModelAdmin.SemanticThesaurus.ParentCategoriesForMoveCategories = new Dictionary<string, string>();
+			mModelAdmin.SemanticThesaurus.ParentCategoriesForMoveCategories.Add("[RAIZ]", UtilIdiomas.GetText("TESAURO", "INDICE"));
+
+			foreach (ElementoOntologia entidadPrinc in mEntidadesTesSem)
+			{
+				Propiedad propMember = entidadPrinc.ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
+				foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propMember.ValoresUnificados.Values)))
+				{
+					CargarCategoriasHijasOmitiendoCatEnLista(categoria, string.Empty, catSelecc, mModelAdmin.SemanticThesaurus.ParentCategoriesForMoveCategories);
+				}
+			}
+
+			//CargarTesauro(); NO CARGAR, CAMBIARÍAN IDs
+			mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.SelectedCategories = catGuidSelecc;
+			mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
+			mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
+			return PartialView("_AccionesTesSem", mModelAdmin);
+		}
+
+		/// <summary>
+		/// Gestiona el cambio de nombre de una categoría.
+		/// </summary>
+		/// <returns>Acción de respuesta</returns>
+		private ActionResult RenombrarCategoria()
+		{
+			string catSeleccID = mEditTesModel.SelectedCategory;
+
+			if (string.IsNullOrEmpty(mEditTesModel.NewCategoryName))
+			{
+				return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_NOMBRE"));
+			}
+
+			mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, ((short)mEditTesModel.EditAction).ToString(), "|_|", catSeleccID.ToString(), "|_|", mEditTesModel.NewCategoryName, "|,|");
+
+			RenombrarCategoria(catSeleccID, mEditTesModel.NewCategoryName);
+			mCategoriasExpandidasStringIDs.Add(catSeleccID);
+			CargarTesauro();
+
+			mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
+			mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
 
 			// return PartialView("_AccionesTesSem", mModelAdmin);
 			// Devolver la vista actualizada del tesauro
 			return PartialView("_modal-views/_tesauro-details-items", mModelAdmin);
 		}
 
-        /// <summary>
-        /// Renombra una categoria.
-        /// </summary>
-        /// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
-        /// <param name="pIdCategoria">ID de la categoría</param>
-        /// <param name="pNombreCategoria">Nombre de la categoría</param>
-        private void RenombrarCategoria(string pIdCategoria, string pNombreCategoria)
-        {
-            ElementoOntologia categoriaSel = (ElementoOntologia)mCategoriasModeloTesSem[pIdCategoria][1];
-            Propiedad propNombre = categoriaSel.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem);
-            propNombre.LimpiarValor();
+		/// <summary>
+		/// Renombra una categoria.
+		/// </summary>
+		/// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
+		/// <param name="pIdCategoria">ID de la categoría</param>
+		/// <param name="pNombreCategoria">Nombre de la categoría</param>
+		private void RenombrarCategoria(string pIdCategoria, string pNombreCategoria)
+		{
+			ElementoOntologia categoriaSel = (ElementoOntologia)mCategoriasModeloTesSem[pIdCategoria][1];
+			Propiedad propNombre = categoriaSel.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem);
+			propNombre.LimpiarValor();
 
-            if (pNombreCategoria.Contains("|||") && pNombreCategoria.Contains("@"))
-            {
-                Dictionary<string, string> idiomaValor = UtilCadenas.ObtenerTextoPorIdiomas(pNombreCategoria);
+			if (pNombreCategoria.Contains("|||") && pNombreCategoria.Contains("@"))
+			{
+				Dictionary<string, string> idiomaValor = UtilCadenas.ObtenerTextoPorIdiomas(pNombreCategoria);
 
-                foreach (string idioma in idiomaValor.Keys)
-                {
-                    propNombre.AgregarValorConIdioma(idiomaValor[idioma], idioma);
-                }
-            }
-            else
-            {
-                propNombre.AgregarValor(pNombreCategoria);
-            }
+				foreach (string idioma in idiomaValor.Keys)
+				{
+					propNombre.AgregarValorConIdioma(idiomaValor[idioma], idioma);
+				}
+			}
+			else
+			{
+				propNombre.AgregarValor(pNombreCategoria);
+			}
 
-            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-            ControladorDocumentacion.RenombrarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, pIdCategoria, pNombreCategoria, docOnto, false, ProyectoSeleccionado.Clave);
-            docOnto.GestorDocumental.Dispose();
-        }
+			Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+			ControladorDocumentacion.RenombrarCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, pIdCategoria, pNombreCategoria, docOnto, false, ProyectoSeleccionado.Clave);
+			docOnto.GestorDocumental.Dispose();
+		}
 
-        /// <summary>
-        /// Gestiona el cambio de las propiedades extra de una categoría.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult EditarPropiedadesExtraCategoria()
-        {
-            string catSeleccID = mEditTesModel.SelectedCategory;
+		/// <summary>
+		/// Gestiona el cambio de las propiedades extra de una categoría.
+		/// </summary>
+		/// <returns>Acción de respuesta</returns>
+		private ActionResult EditarPropiedadesExtraCategoria()
+		{
+			string catSeleccID = mEditTesModel.SelectedCategory;
 
-            mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, ((short)mEditTesModel.EditAction).ToString(), "|_|", catSeleccID, "|_|", mEditTesModel.CategoryExtraPropertiesValues, "|,|");
+			mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, ((short)mEditTesModel.EditAction).ToString(), "|_|", catSeleccID, "|_|", mEditTesModel.CategoryExtraPropertiesValues, "|,|");
 
-            if (!string.IsNullOrEmpty(mEditTesModel.CategoryExtraPropertiesValues))
-            {
-                if (mEditTesModel.ExtraSemanticPropertiesValuesBK.Contains(catSeleccID + "|"))
-                {
-                    string extraAux = mEditTesModel.ExtraSemanticPropertiesValuesBK.Substring(0, mEditTesModel.ExtraSemanticPropertiesValuesBK.IndexOf(catSeleccID + "|"));
-                    mEditTesModel.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK.Substring(mEditTesModel.ExtraSemanticPropertiesValuesBK.IndexOf(catSeleccID + "|"));
-                    mEditTesModel.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK.Substring(mEditTesModel.ExtraSemanticPropertiesValuesBK.IndexOf("[|||]") + 5);
-                    mEditTesModel.ExtraSemanticPropertiesValuesBK = extraAux + mEditTesModel.ExtraSemanticPropertiesValuesBK;
-                }
+			if (!string.IsNullOrEmpty(mEditTesModel.CategoryExtraPropertiesValues))
+			{
+				if (mEditTesModel.ExtraSemanticPropertiesValuesBK.Contains(catSeleccID + "|"))
+				{
+					string extraAux = mEditTesModel.ExtraSemanticPropertiesValuesBK.Substring(0, mEditTesModel.ExtraSemanticPropertiesValuesBK.IndexOf(catSeleccID + "|"));
+					mEditTesModel.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK.Substring(mEditTesModel.ExtraSemanticPropertiesValuesBK.IndexOf(catSeleccID + "|"));
+					mEditTesModel.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK.Substring(mEditTesModel.ExtraSemanticPropertiesValuesBK.IndexOf("[|||]") + 5);
+					mEditTesModel.ExtraSemanticPropertiesValuesBK = extraAux + mEditTesModel.ExtraSemanticPropertiesValuesBK;
+				}
 
-                mEditTesModel.ExtraSemanticPropertiesValuesBK = string.Concat(mEditTesModel.ExtraSemanticPropertiesValuesBK, catSeleccID, "|", mEditTesModel.CategoryExtraPropertiesValues, "[|||]");
-            }
+				mEditTesModel.ExtraSemanticPropertiesValuesBK = string.Concat(mEditTesModel.ExtraSemanticPropertiesValuesBK, catSeleccID, "|", mEditTesModel.CategoryExtraPropertiesValues, "[|||]");
+			}
 
-            EditarPropiedadesExtraCategoria(false, catSeleccID, mEditTesModel.CategoryExtraPropertiesValues);
-            mCategoriasExpandidasStringIDs.Add(catSeleccID);
-            CargarTesauro();
+			EditarPropiedadesExtraCategoria(false, catSeleccID, mEditTesModel.CategoryExtraPropertiesValues);
+			mCategoriasExpandidasStringIDs.Add(catSeleccID);
+			CargarTesauro();
 
-            mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
-            return PartialView("_AccionesTesSem", mModelAdmin);
-        }
+			mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
+			mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
+			return PartialView("_AccionesTesSem", mModelAdmin);
+		}
 
-        /// <summary>
-        /// Edita las propiedades extra de una categoria.
-        /// </summary>
-        /// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
-        /// <param name="pIdCategoria">ID de la categoría</param>
-        /// <param name="pCategoryExtraPropertiesValues">Valor de las propiedades extra de la categoría</param>
-        private void EditarPropiedadesExtraCategoria(bool pGuardarEnBD, string pIdCategoria, string pCategoryExtraPropertiesValues)
-        {
-            ElementoOntologia categoriaSel = (ElementoOntologia)mCategoriasModeloTesSem[pIdCategoria][1];
-            List<string> propsExtra = ExtraerValoresExtraPropsCategorias(categoriaSel, pCategoryExtraPropertiesValues);
+		/// <summary>
+		/// Edita las propiedades extra de una categoria.
+		/// </summary>
+		/// <param name="pGuardarEnBD">Indica si hay que llevar los cambios a la BD</param>
+		/// <param name="pIdCategoria">ID de la categoría</param>
+		/// <param name="pCategoryExtraPropertiesValues">Valor de las propiedades extra de la categoría</param>
+		private void EditarPropiedadesExtraCategoria(bool pGuardarEnBD, string pIdCategoria, string pCategoryExtraPropertiesValues)
+		{
+			ElementoOntologia categoriaSel = (ElementoOntologia)mCategoriasModeloTesSem[pIdCategoria][1];
+			List<string> propsExtra = ExtraerValoresExtraPropsCategorias(categoriaSel, pCategoryExtraPropertiesValues);
 
-            if (pGuardarEnBD)
-            {
-                Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-                ControladorDocumentacion.EditarPropiedadesExtraCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, pIdCategoria, categoriaSel, propsExtra, docOnto, false, ProyectoSeleccionado.Clave);
-                docOnto.GestorDocumental.Dispose();
-            }
-        }
+			if (pGuardarEnBD)
+			{
+				Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+				ControladorDocumentacion.EditarPropiedadesExtraCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, pIdCategoria, categoriaSel, propsExtra, docOnto, false, ProyectoSeleccionado.Clave);
+				docOnto.GestorDocumental.Dispose();
+			}
+		}
 
-        /// <summary>
-        /// Gestiona la creación de una nueva categoría controlando que no exista ya otra con ese nombre y añadiendo la acción a la lista de acciones.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult CrearCategoria()
-        {
-            if (string.IsNullOrEmpty(mEditTesModel.NewCategoryName) || string.IsNullOrEmpty(mEditTesModel.SelectedCategory) || string.IsNullOrEmpty(mEditTesModel.NewCategoryIdentifier))
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_NOMBRE"));
-            }
+		/// <summary>
+		/// Gestiona la creación de una nueva categoría controlando que no exista ya otra con ese nombre y añadiendo la acción a la lista de acciones.
+		/// </summary>
+		/// <returns>Acción de respuesta</returns>
+		private ActionResult CrearCategoria()
+		{
+			if (string.IsNullOrEmpty(mEditTesModel.NewCategoryName) || string.IsNullOrEmpty(mEditTesModel.SelectedCategory) || string.IsNullOrEmpty(mEditTesModel.NewCategoryIdentifier))
+			{
+				return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_NOMBRE"));
+			}
 
-            Uri uriAux = null;
-            if (mEditTesModel.NewCategoryIdentifier.Contains(" ") || mEditTesModel.NewCategoryIdentifier.Contains(":") || mEditTesModel.NewCategoryIdentifier.Contains("/") || mEditTesModel.NewCategoryIdentifier.Contains("|") || !Uri.TryCreate(UrlIntragnoss + mEditTesModel.NewCategoryIdentifier, UriKind.RelativeOrAbsolute, out uriAux))
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "FORMATOURIINCORRECTO", mEditTesModel.NewCategoryIdentifier));
-            }
+			Uri uriAux = null;
+			if (mEditTesModel.NewCategoryIdentifier.Contains(" ") || mEditTesModel.NewCategoryIdentifier.Contains(":") || mEditTesModel.NewCategoryIdentifier.Contains("/") || mEditTesModel.NewCategoryIdentifier.Contains("|") || !Uri.TryCreate(UrlIntragnoss + mEditTesModel.NewCategoryIdentifier, UriKind.RelativeOrAbsolute, out uriAux))
+			{
+				return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "FORMATOURIINCORRECTO", mEditTesModel.NewCategoryIdentifier));
+			}
 
-            ProyectoConfigExtraSem filaConfig = ObtenerFilaConfigExtraSemActual();
-            string prefijo = filaConfig.PrefijoTesSem;
+			ProyectoConfigExtraSem filaConfig = ObtenerFilaConfigExtraSemActual();
+			string prefijo = filaConfig.PrefijoTesSem;
 
-            if (prefijo[prefijo.Length - 1] != '_')
-            {
-                prefijo += "_";
-            }
+			if (prefijo[prefijo.Length - 1] != '_')
+			{
+				prefijo += "_";
+			}
 
-            string identificadorNuevaCat = UrlIntragnoss + "items/" + prefijo + mEditTesModel.NewCategoryIdentifier;
-            //FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD);
-            //List<string> propiedades = new List<string>();
-            //propiedades.Add(EstiloPlantilla.Identifier_TesSem);//identifier
-            //FacetadoDS dataSetCategorias = facCN.ObtenerValoresPropiedadesEntidad(mEditTesModel.OntologyUrl, identificadorNuevaCat, propiedades);
-            //facCN.Dispose();
+			string identificadorNuevaCat = UrlIntragnoss + "items/" + prefijo + mEditTesModel.NewCategoryIdentifier;
+			//FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD);
+			//List<string> propiedades = new List<string>();
+			//propiedades.Add(EstiloPlantilla.Identifier_TesSem);//identifier
+			//FacetadoDS dataSetCategorias = facCN.ObtenerValoresPropiedadesEntidad(mEditTesModel.OntologyUrl, identificadorNuevaCat, propiedades);
+			//facCN.Dispose();
 
-            //if (dataSetCategorias.Tables[0].Rows.Count > 0)
-            if (mCategoriasModeloTesSem.ContainsKey(identificadorNuevaCat))
-            {
-                return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_ID_DIFERENTE"));
-            }
+			//if (dataSetCategorias.Tables[0].Rows.Count > 0)
+			if (mCategoriasModeloTesSem.ContainsKey(identificadorNuevaCat))
+			{
+				return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_ID_DIFERENTE"));
+			}
 
-            //dataSetCategorias.Dispose();
+			//dataSetCategorias.Dispose();
 
-            mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, ((short)mEditTesModel.EditAction).ToString(), "|_|", mEditTesModel.SelectedCategory, "|_|", mEditTesModel.NewCategoryName, "|_|", identificadorNuevaCat, "|_|", mEditTesModel.CategoryExtraPropertiesValues, "|,|");
+			mEditTesModel.ActionsBackUp = string.Concat(mEditTesModel.ActionsBackUp, ((short)mEditTesModel.EditAction).ToString(), "|_|", mEditTesModel.SelectedCategory, "|_|", mEditTesModel.NewCategoryName, "|_|", identificadorNuevaCat, "|_|", mEditTesModel.CategoryExtraPropertiesValues, "|,|");
 
-            if (!string.IsNullOrEmpty(mEditTesModel.CategoryExtraPropertiesValues))
-            {
-                mEditTesModel.ExtraSemanticPropertiesValuesBK = string.Concat(mEditTesModel.ExtraSemanticPropertiesValuesBK, identificadorNuevaCat, "|", mEditTesModel.CategoryExtraPropertiesValues, "[|||]");
-            }
+			if (!string.IsNullOrEmpty(mEditTesModel.CategoryExtraPropertiesValues))
+			{
+				mEditTesModel.ExtraSemanticPropertiesValuesBK = string.Concat(mEditTesModel.ExtraSemanticPropertiesValuesBK, identificadorNuevaCat, "|", mEditTesModel.CategoryExtraPropertiesValues, "[|||]");
+			}
 
-            CrearCategoriaTesauro(mEditTesModel.SelectedCategory, identificadorNuevaCat, mEditTesModel.NewCategoryName.Trim(), prefijo, mEditTesModel.CategoryExtraPropertiesValues);
-            mCategoriasExpandidasStringIDs.Add(identificadorNuevaCat);
-            CargarTesauro();
+			CrearCategoriaTesauro(mEditTesModel.SelectedCategory, identificadorNuevaCat, mEditTesModel.NewCategoryName.Trim(), prefijo, mEditTesModel.CategoryExtraPropertiesValues);
+			mCategoriasExpandidasStringIDs.Add(identificadorNuevaCat);
+			CargarTesauro();
 
-            mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
+			mModelAdmin.SemanticThesaurus.ActionsBackUp = mEditTesModel.ActionsBackUp;
+			mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = mEditTesModel.ExtraSemanticPropertiesValuesBK;
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
 			// return PartialView("_AccionesTesSem", mModelAdmin);
 			return PartialView("_modal-views/_tesauro-details-items", mModelAdmin);
 		}
 
-        /// <summary>
-        /// Crea una categoría en el tesauro
-        /// </summary>
-        /// <param name="pIdCategoriaPadre">Id de la categoría padre en la que se crea la nueva categoría</param>
-        /// <param name="pIdNuevaCategoria">Id de la nueva categoría</param>
-        /// <param name="pNombreCategoria">Nombre de la nueva categoría</param>
-        /// <param name="pGuardarEnBD">Indica si se debe guardar en la BD</param>
-        private void CrearCategoriaTesauro(string pIdCategoriaPadre, string pIdNuevaCategoria, string pNombreCategoria, string pPrefijoCategoria, string pExtraPropertiesValues)
-        {
-            ElementoOntologia nuevaCat = mEntidadesTesSem[0].Ontologia.GetEntidadTipo(EstiloPlantilla.Concept_TesSem, true);
-            nuevaCat.ID = pIdNuevaCategoria.Substring(pIdNuevaCategoria.LastIndexOf("/") + 1);
+		/// <summary>
+		/// Crea una categoría en el tesauro
+		/// </summary>
+		/// <param name="pIdCategoriaPadre">Id de la categoría padre en la que se crea la nueva categoría</param>
+		/// <param name="pIdNuevaCategoria">Id de la nueva categoría</param>
+		/// <param name="pNombreCategoria">Nombre de la nueva categoría</param>
+		/// <param name="pGuardarEnBD">Indica si se debe guardar en la BD</param>
+		private void CrearCategoriaTesauro(string pIdCategoriaPadre, string pIdNuevaCategoria, string pNombreCategoria, string pPrefijoCategoria, string pExtraPropertiesValues)
+		{
+			ElementoOntologia nuevaCat = mEntidadesTesSem[0].Ontologia.GetEntidadTipo(EstiloPlantilla.Concept_TesSem, true);
+			nuevaCat.ID = pIdNuevaCategoria.Substring(pIdNuevaCategoria.LastIndexOf("/") + 1);
 
-            if (pIdCategoriaPadre == "[RAIZ]")
-            {
-                Propiedad member = mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
-                member.ListaValores.Add(nuevaCat.ID, nuevaCat);
-                mEntidadesTesSem[0].EntidadesRelacionadas.Add(nuevaCat);
+			if (pIdCategoriaPadre == "[RAIZ]")
+			{
+				Propiedad member = mEntidadesTesSem[0].ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
+				member.ListaValores.Add(nuevaCat.ID, nuevaCat);
+				mEntidadesTesSem[0].EntidadesRelacionadas.Add(nuevaCat);
 
-                nuevaCat.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor("1");
-            }
-            else
-            {
-                ElementoOntologia categoriaPadre = (ElementoOntologia)mCategoriasModeloTesSem[pIdCategoriaPadre][1];
-                Propiedad propHijo = categoriaPadre.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem);
-                propHijo.ListaValores.Add(nuevaCat.ID, nuevaCat);
-                categoriaPadre.EntidadesRelacionadas.Add(nuevaCat);
+				nuevaCat.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor("1");
+			}
+			else
+			{
+				ElementoOntologia categoriaPadre = (ElementoOntologia)mCategoriasModeloTesSem[pIdCategoriaPadre][1];
+				Propiedad propHijo = categoriaPadre.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem);
+				propHijo.ListaValores.Add(nuevaCat.ID, nuevaCat);
+				categoriaPadre.EntidadesRelacionadas.Add(nuevaCat);
 
-                nuevaCat.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).AgregarValor(pIdCategoriaPadre);
-                nuevaCat.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor(((int)mCategoriasModeloTesSem[pIdCategoriaPadre][2] + 1).ToString());
-            }
+				nuevaCat.ObtenerPropiedad(EstiloPlantilla.Broader_TesSem).AgregarValor(pIdCategoriaPadre);
+				nuevaCat.ObtenerPropiedad(EstiloPlantilla.Symbol_TesSem).AgregarValor(((int)mCategoriasModeloTesSem[pIdCategoriaPadre][2] + 1).ToString());
+			}
 
-            //nuevaCat.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).AgregarValor(pIdNuevaCategoria.Substring(pIdNuevaCategoria.LastIndexOf("_") + 1));
-            nuevaCat.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).AgregarValor(pIdNuevaCategoria.Substring(pIdNuevaCategoria.LastIndexOf(pPrefijoCategoria) + pPrefijoCategoria.Length));
+			//nuevaCat.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).AgregarValor(pIdNuevaCategoria.Substring(pIdNuevaCategoria.LastIndexOf("_") + 1));
+			nuevaCat.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).AgregarValor(pIdNuevaCategoria.Substring(pIdNuevaCategoria.LastIndexOf(pPrefijoCategoria) + pPrefijoCategoria.Length));
 
-            if (pNombreCategoria.Contains("|||") && pNombreCategoria.Contains("@"))
-            {
-                Dictionary<string, string> idiomaValor = UtilCadenas.ObtenerTextoPorIdiomas(pNombreCategoria);
-                Propiedad propNombre = nuevaCat.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem);
+			if (pNombreCategoria.Contains("|||") && pNombreCategoria.Contains("@"))
+			{
+				Dictionary<string, string> idiomaValor = UtilCadenas.ObtenerTextoPorIdiomas(pNombreCategoria);
+				Propiedad propNombre = nuevaCat.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem);
 
-                foreach (string idioma in idiomaValor.Keys)
-                {
-                    propNombre.AgregarValorConIdioma(idiomaValor[idioma], idioma);
-                }
-            }
-            else
-            {
-                nuevaCat.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).AgregarValor(pNombreCategoria);
-            }
+				foreach (string idioma in idiomaValor.Keys)
+				{
+					propNombre.AgregarValorConIdioma(idiomaValor[idioma], idioma);
+				}
+			}
+			else
+			{
+				nuevaCat.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).AgregarValor(pNombreCategoria);
+			}
 
-            nuevaCat.ObtenerPropiedad(EstiloPlantilla.Source_TesSem).AgregarValor(mEditTesModel.SourceSemanticThesaurus);
+			nuevaCat.ObtenerPropiedad(EstiloPlantilla.Source_TesSem).AgregarValor(mEditTesModel.SourceSemanticThesaurus);
 
-            List<string> propsExtra = ExtraerValoresExtraPropsCategorias(nuevaCat, pExtraPropertiesValues);
+			List<string> propsExtra = ExtraerValoresExtraPropsCategorias(nuevaCat, pExtraPropertiesValues);
 
-            List<string> padres = new List<string>();
+			List<string> padres = new List<string>();
 
-            if (pIdCategoriaPadre != "[RAIZ]")
-            {
-                padres.Add(pIdCategoriaPadre);
-            }
+			if (pIdCategoriaPadre != "[RAIZ]")
+			{
+				padres.Add(pIdCategoriaPadre);
+			}
 
-            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
-            ControladorDocumentacion.CrearCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, nuevaCat, padres, docOnto, false, propsExtra, ProyectoSeleccionado.Clave);
-            docOnto.GestorDocumental.Dispose();
-        }
+			Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditTesModel.OntologyUrl, ProyectoSeleccionado.Clave);
+			ControladorDocumentacion.CrearCategoriaTesauroSemantico(UrlIntragnoss + mEditTesModel.OntologyUrl, UrlIntragnoss, nuevaCat, padres, docOnto, false, propsExtra, ProyectoSeleccionado.Clave);
+			docOnto.GestorDocumental.Dispose();
+		}
 
-        /// <summary>
-        /// Extrae los valores de las propiedades extra que tengan las categorías.
-        /// </summary>
-        /// <param name="pCategorias">Categoría editada</param>
-        /// <param name="pExtraPropertiesValues">Valores de las propiedades extra</param>
-        /// <returns>Nombre de las propiedades extra</returns>
-        private List<string> ExtraerValoresExtraPropsCategorias(ElementoOntologia pCategorias, string pExtraPropertiesValues)
-        {
-            if (string.IsNullOrEmpty(pExtraPropertiesValues))
-            {
-                return null;
-            }
+		/// <summary>
+		/// Extrae los valores de las propiedades extra que tengan las categorías.
+		/// </summary>
+		/// <param name="pCategorias">Categoría editada</param>
+		/// <param name="pExtraPropertiesValues">Valores de las propiedades extra</param>
+		/// <returns>Nombre de las propiedades extra</returns>
+		private List<string> ExtraerValoresExtraPropsCategorias(ElementoOntologia pCategorias, string pExtraPropertiesValues)
+		{
+			if (string.IsNullOrEmpty(pExtraPropertiesValues))
+			{
+				return null;
+			}
 
-            List<string> propsExtra = new List<string>();
+			List<string> propsExtra = new List<string>();
 
-            foreach (string propValor in pExtraPropertiesValues.Split(new string[] { "[||]" }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                string propSem = propValor.Split('|')[0];
-                Propiedad propiedad = pCategorias.ObtenerPropiedad(propSem);
+			foreach (string propValor in pExtraPropertiesValues.Split(new string[] { "[||]" }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				string propSem = propValor.Split('|')[0];
+				Propiedad propiedad = pCategorias.ObtenerPropiedad(propSem);
 
-                if (propiedad != null)
-                {
-                    if (!propsExtra.Contains(propSem))
-                    {
-                        propsExtra.Add(propSem);
-                        propiedad.LimpiarValor();
-                    }
+				if (propiedad != null)
+				{
+					if (!propsExtra.Contains(propSem))
+					{
+						propsExtra.Add(propSem);
+						propiedad.LimpiarValor();
+					}
 
-                    string valor = propValor.Substring(propValor.IndexOf("|") + 1);
+					string valor = propValor.Substring(propValor.IndexOf("|") + 1);
 
-                    if (valor.EndsWith("|||") && valor.Contains("@"))
-                    {
-                        string idioma = valor.Substring(valor.LastIndexOf("@") + 1);
-                        idioma = idioma.Replace("|||", "");
-                        valor = valor.Substring(0, valor.LastIndexOf("@"));
+					if (valor.EndsWith("|||") && valor.Contains("@"))
+					{
+						string idioma = valor.Substring(valor.LastIndexOf("@") + 1);
+						idioma = idioma.Replace("|||", "");
+						valor = valor.Substring(0, valor.LastIndexOf("@"));
 
-                        if (!string.IsNullOrEmpty(valor))
-                        {
-                            propiedad.AgregarValorConIdioma(valor, idioma);
-                        }
-                    }
-                    else if (!string.IsNullOrEmpty(valor))
-                    {
-                        propiedad.AgregarValor(valor);
-                    }
-                }
-            }
+						if (!string.IsNullOrEmpty(valor))
+						{
+							propiedad.AgregarValorConIdioma(valor, idioma);
+						}
+					}
+					else if (!string.IsNullOrEmpty(valor))
+					{
+						propiedad.AgregarValor(valor);
+					}
+				}
+			}
 
-            return propsExtra;
-        }
+			return propsExtra;
+		}
 
-        /// <summary>
-        /// Ejecuta todas las acciones que se van realizando sobre el tesauro anteriormente.
-        /// </summary>
-        /// <param name="pGuardarEnBD">Indica si se debe guardar en la BD</param>
-        private void EjecutarAccionesBackup()
-        {
-            //Si hay acciones a realizar, se realizan
-            if (!string.IsNullOrEmpty(mEditTesModel.ActionsBackUp))
-            {
-                ProyectoConfigExtraSem filaConfig = ObtenerFilaConfigExtraSemActual();
-                string prefijo = filaConfig.PrefijoTesSem;
+		/// <summary>
+		/// Ejecuta todas las acciones que se van realizando sobre el tesauro anteriormente.
+		/// </summary>
+		/// <param name="pGuardarEnBD">Indica si se debe guardar en la BD</param>
+		private void EjecutarAccionesBackup()
+		{
+			//Si hay acciones a realizar, se realizan
+			if (!string.IsNullOrEmpty(mEditTesModel.ActionsBackUp))
+			{
+				ProyectoConfigExtraSem filaConfig = ObtenerFilaConfigExtraSemActual();
+				string prefijo = filaConfig.PrefijoTesSem;
 
-                if (prefijo[prefijo.Length - 1] != '_')
-                {
-                    prefijo += "_";
-                }
+				if (prefijo[prefijo.Length - 1] != '_')
+				{
+					prefijo += "_";
+				}
 
-                //Obtenemos las acciones
-                string[] acciones = mEditTesModel.ActionsBackUp.Split(new string[] { "|,|" }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string accion in acciones)
-                {
-                    string[] accion2 = accion.Split(new string[] { "|_|" }, StringSplitOptions.RemoveEmptyEntries);
-                    short tipoAccion = short.Parse(accion2[0]);
+				//Obtenemos las acciones
+				string[] acciones = mEditTesModel.ActionsBackUp.Split(new string[] { "|,|" }, StringSplitOptions.RemoveEmptyEntries);
+				foreach (string accion in acciones)
+				{
+					string[] accion2 = accion.Split(new string[] { "|_|" }, StringSplitOptions.RemoveEmptyEntries);
+					short tipoAccion = short.Parse(accion2[0]);
 
-                    if ((short)EditThesaurusPersonalSpaceModel.Action.CreateCategory == tipoAccion)
-                    {//crear
-                        string idPadre = accion2[1];
-                        string idNuevaCategoria = accion2[3];
-                        string nombreNuevaCat = accion2[2];
-                        string extraPropValores = null;
+					if ((short)EditThesaurusPersonalSpaceModel.Action.CreateCategory == tipoAccion)
+					{//crear
+						string idPadre = accion2[1];
+						string idNuevaCategoria = accion2[3];
+						string nombreNuevaCat = accion2[2];
+						string extraPropValores = null;
 
-                        if (accion2.Length > 4)
-                        {
-                            extraPropValores = accion2[4];
-                        }
+						if (accion2.Length > 4)
+						{
+							extraPropValores = accion2[4];
+						}
 
-                        CrearCategoriaTesauro(idPadre, idNuevaCategoria, nombreNuevaCat.Trim(), prefijo, extraPropValores);
-                        CargarTesauro();
-                    }
-                    else if ((short)EditThesaurusPersonalSpaceModel.Action.ReNameCategory == tipoAccion)
-                    {//cambiarnombre
-                        string idCategoria = accion2[1];
-                        string nombreCategoria = accion2[2];
-                        RenombrarCategoria(idCategoria, nombreCategoria);
-                    }
-                    else if ((short)EditThesaurusPersonalSpaceModel.Action.MoveCategories == tipoAccion)
-                    {//MoverCategorias
-                        string idNuevoPadre = accion2[1];
-                        List<string> idCat = new List<string>();
-                        for (int i = 2; i < accion2.Length; i++)
-                        {
-                            idCat.Add(accion2[i]);
-                        }
-                        MoverCategoriasTesauro(idNuevoPadre, idCat);
-                    }
-                    //NO BORRAR, EN BREVE SE VA A EVOLUCIONAR LA PÁGINA PARA QUE USE ÉSTO
-                    //else if ((short)EditThesaurusPersonalSpaceModel.Action.OrderCategories == tipoAccion)
-                    //{//OrdenarCategoria
-                    //    int ordenDestino = int.Parse(accion2[1]);
-                    //    List<Guid> idCategoriasOrdenar = new List<Guid>();
-                    //    for (int i = 2; i < accion2.Length; i++)
-                    //    {
-                    //        idCategoriasOrdenar.Add(new Guid(accion2[i]));
-                    //    }
-                    //    //OrdenarCategoriasTesauro(ordenDestino, idCategoriasOrdenar);
-                    //}
-                    else if ((short)EditThesaurusPersonalSpaceModel.Action.DeleteCategories == tipoAccion)
-                    {//EliminarCategoria                        
-                        string idCategoriaVincular = accion2[1];
-                        List<string> idCategorias = new List<string>();
-                        for (int i = 2; i < accion2.Length; i++)
-                        {
-                            idCategorias.Add(accion2[i]);
-                        }
-                        EliminarCategoriasTesauro(idCategorias);
-                    }
-                    else if ((short)EditThesaurusPersonalSpaceModel.Action.EditExtraProperties == tipoAccion)
-                    {//cambiarnombre
-                        string idCategoria = accion2[1];
-                        string extraProp = accion2[2];
-                        EditarPropiedadesExtraCategoria();
-                    }
-                }
-            }
-        }
+						CrearCategoriaTesauro(idPadre, idNuevaCategoria, nombreNuevaCat.Trim(), prefijo, extraPropValores);
+						CargarTesauro();
+					}
+					else if ((short)EditThesaurusPersonalSpaceModel.Action.ReNameCategory == tipoAccion)
+					{//cambiarnombre
+						string idCategoria = accion2[1];
+						string nombreCategoria = accion2[2];
+						RenombrarCategoria(idCategoria, nombreCategoria);
+					}
+					else if ((short)EditThesaurusPersonalSpaceModel.Action.MoveCategories == tipoAccion)
+					{//MoverCategorias
+						string idNuevoPadre = accion2[1];
+						List<string> idCat = new List<string>();
+						for (int i = 2; i < accion2.Length; i++)
+						{
+							idCat.Add(accion2[i]);
+						}
+						MoverCategoriasTesauro(idNuevoPadre, idCat);
+					}
+					//NO BORRAR, EN BREVE SE VA A EVOLUCIONAR LA PÁGINA PARA QUE USE ÉSTO
+					//else if ((short)EditThesaurusPersonalSpaceModel.Action.OrderCategories == tipoAccion)
+					//{//OrdenarCategoria
+					//    int ordenDestino = int.Parse(accion2[1]);
+					//    List<Guid> idCategoriasOrdenar = new List<Guid>();
+					//    for (int i = 2; i < accion2.Length; i++)
+					//    {
+					//        idCategoriasOrdenar.Add(new Guid(accion2[i]));
+					//    }
+					//    //OrdenarCategoriasTesauro(ordenDestino, idCategoriasOrdenar);
+					//}
+					else if ((short)EditThesaurusPersonalSpaceModel.Action.DeleteCategories == tipoAccion)
+					{//EliminarCategoria                        
+						string idCategoriaVincular = accion2[1];
+						List<string> idCategorias = new List<string>();
+						for (int i = 2; i < accion2.Length; i++)
+						{
+							idCategorias.Add(accion2[i]);
+						}
+						EliminarCategoriasTesauro(idCategorias);
+					}
+					else if ((short)EditThesaurusPersonalSpaceModel.Action.EditExtraProperties == tipoAccion)
+					{//cambiarnombre
+						string idCategoria = accion2[1];
+						string extraProp = accion2[2];
+						EditarPropiedadesExtraCategoria();
+					}
+				}
+			}
+		}
 
-        /// <summary>
-        /// Establece diversos parámetros del tesauro.
-        /// </summary>
-        private void EstablecerParametrosTesauro()
-        {
-            ProyectoConfigExtraSem filaConfig = ObtenerFilaConfigExtraSemActual();
-            mModelAdmin.SemanticThesaurus.SemThesaurusLanguajes = new Dictionary<string, string>();
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+		/// <summary>
+		/// Establece diversos parámetros del tesauro.
+		/// </summary>
+		private void EstablecerParametrosTesauro()
+		{
+			ProyectoConfigExtraSem filaConfig = ObtenerFilaConfigExtraSemActual();
+			mModelAdmin.SemanticThesaurus.SemThesaurusLanguajes = new Dictionary<string, string>();
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
 			Dictionary<string, string> idiomasEntorno = paramCL.ObtenerListaIdiomasDictionary();
 
-            if (!string.IsNullOrEmpty(filaConfig.Idiomas))
-            {
-                foreach (string idioma in filaConfig.Idiomas.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (idiomasEntorno.ContainsKey(idioma))
-                    {
-                        mModelAdmin.SemanticThesaurus.SemThesaurusLanguajes.Add(idioma, idiomasEntorno[idioma]);
-                    }
-                }
-            }
+			if (!string.IsNullOrEmpty(filaConfig.Idiomas))
+			{
+				foreach (string idioma in filaConfig.Idiomas.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+				{
+					if (idiomasEntorno.ContainsKey(idioma))
+					{
+						mModelAdmin.SemanticThesaurus.SemThesaurusLanguajes.Add(idioma, idiomasEntorno[idioma]);
+					}
+				}
+			}
 
-            mModelAdmin.SemanticThesaurus.OntologyUrl = mEditTesModel.OntologyUrl;
-            mModelAdmin.SemanticThesaurus.SourceSemanticThesaurus = mEditTesModel.SourceSemanticThesaurus;
-        }
+			mModelAdmin.SemanticThesaurus.OntologyUrl = mEditTesModel.OntologyUrl;
+			mModelAdmin.SemanticThesaurus.SourceSemanticThesaurus = mEditTesModel.SourceSemanticThesaurus;
+		}
 
-        /// <summary>
-        /// Obtiene la fila de configuración de elemento semánticos que se está usando ahora.
-        /// </summary>
-        /// <returns>Fila de configuración de elemento semánticos que se está usando ahora</returns>
-        private ProyectoConfigExtraSem ObtenerFilaConfigExtraSemActual()
-        {
-            //Select("UrlOntologia='" + mEditTesModel.OntologyUrl + "' AND SourceTesSem='" + mEditTesModel.SourceSemanticThesaurus + "'")[0];
-            ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditTesModel.OntologyUrl) && proy.SourceTesSem.Equals(mEditTesModel.SourceSemanticThesaurus));
+		/// <summary>
+		/// Obtiene la fila de configuración de elemento semánticos que se está usando ahora.
+		/// </summary>
+		/// <returns>Fila de configuración de elemento semánticos que se está usando ahora</returns>
+		private ProyectoConfigExtraSem ObtenerFilaConfigExtraSemActual()
+		{
+			//Select("UrlOntologia='" + mEditTesModel.OntologyUrl + "' AND SourceTesSem='" + mEditTesModel.SourceSemanticThesaurus + "'")[0];
+			ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditTesModel.OntologyUrl) && proy.SourceTesSem.Equals(mEditTesModel.SourceSemanticThesaurus));
 
-            return filaConfig;
-        }
+			return filaConfig;
+		}
 
-        /// <summary>
-        /// Carga el tesauro del perfil de la base de datos.
-        /// </summary>
-        private void CargarTesauroBD()
-        {
-            try
-            {
-                mEntidadesTesSem = ControladorDocumentacion.ObtenerEntidadesTesauroSemantico(mEditTesModel.OntologyUrl, mEditTesModel.SourceSemanticThesaurus, UrlIntragnoss, ProyectoSeleccionado.Clave, BaseURLFormulariosSem, UtilIdiomas.LanguageCode);
-            }
-            catch (Exception ex)
-            {
-                GuardarLogErrorAJAX(ex.ToString());
-                mMensajeAdmin = "La ontología del tesauro semántico no es correcta.";
-                throw new Exception(mMensajeAdmin);
-            }
-        }
+		/// <summary>
+		/// Carga el tesauro del perfil de la base de datos.
+		/// </summary>
+		private void CargarTesauroBD()
+		{
+			try
+			{
+				mEntidadesTesSem = ControladorDocumentacion.ObtenerEntidadesTesauroSemantico(mEditTesModel.OntologyUrl, mEditTesModel.SourceSemanticThesaurus, UrlIntragnoss, ProyectoSeleccionado.Clave, BaseURLFormulariosSem, UtilIdiomas.LanguageCode);
+			}
+			catch (Exception ex)
+			{
+				GuardarLogErrorAJAX(ex.ToString());
+				mMensajeAdmin = "La ontología del tesauro semántico no es correcta.";
+				throw new Exception(mMensajeAdmin);
+			}
+		}
 
-        private void ExtraerPropiedadesExtraCategoria()
-        {
-            ElementoOntologia entidadCat = mEntidadesTesSem[0].Ontologia.GetEntidadTipo(EstiloPlantilla.Concept_TesSem, false);
-            mPropiedadesExtraCategorias = new Dictionary<string, Propiedad>();
+		private void ExtraerPropiedadesExtraCategoria()
+		{
+			ElementoOntologia entidadCat = mEntidadesTesSem[0].Ontologia.GetEntidadTipo(EstiloPlantilla.Concept_TesSem, false);
+			mPropiedadesExtraCategorias = new Dictionary<string, Propiedad>();
 
-            foreach (Propiedad propiedad in entidadCat.Propiedades)
-            {
-                if (propiedad.Nombre != EstiloPlantilla.Identifier_TesSem && propiedad.Nombre != EstiloPlantilla.Source_TesSem && propiedad.Nombre != EstiloPlantilla.Broader_TesSem && propiedad.Nombre != EstiloPlantilla.Narrower_TesSem && propiedad.Nombre != EstiloPlantilla.PrefLabel_TesSem && propiedad.Nombre != EstiloPlantilla.Symbol_TesSem)
-                {
-                    mPropiedadesExtraCategorias.Add(propiedad.Nombre, propiedad);
-                    propiedad.ElementoOntologia = entidadCat;
-                }
-            }
+			foreach (Propiedad propiedad in entidadCat.Propiedades)
+			{
+				if (propiedad.Nombre != EstiloPlantilla.Identifier_TesSem && propiedad.Nombre != EstiloPlantilla.Source_TesSem && propiedad.Nombre != EstiloPlantilla.Broader_TesSem && propiedad.Nombre != EstiloPlantilla.Narrower_TesSem && propiedad.Nombre != EstiloPlantilla.PrefLabel_TesSem && propiedad.Nombre != EstiloPlantilla.Symbol_TesSem)
+				{
+					mPropiedadesExtraCategorias.Add(propiedad.Nombre, propiedad);
+					propiedad.ElementoOntologia = entidadCat;
+				}
+			}
 
-            mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.ExtraPropertiesCategories = mPropiedadesExtraCategorias;
-        }
+			mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.ExtraPropertiesCategories = mPropiedadesExtraCategorias;
+		}
 
-        /// <summary>
-        /// Carga el tesauro del perfil.
-        /// </summary>
-        private void CargarTesauro()
-        {
-            try
-            {
-                mModelAdmin.SemanticThesaurus.ThesaurusEditorModel = new ThesaurusEditorModel();
-                mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.HideTreeListSelector = true;
-                ExtraerPropiedadesExtraCategoria();
-                mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.ThesaurusCategories = CargarTesauroPorTesauroSemantico(mEntidadesTesSem);
-                mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.SelectedCategories = new List<Guid>();
-                mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.ExpandedCategories = mCategoriasExpandidasIDs;
-                //DeshabilidatarCategoriasEspeciales();
-                //RecargarComboPadresParaCreacionCategoria();
-                EstablecerParametrosTesauro();
-            }
-            catch (Exception ex)
-            {
-                GuardarLogErrorAJAX(ex.ToString());
-                mMensajeAdmin = "La ontología del tesauro semántico no es correcta.";
-                throw new Exception(mMensajeAdmin);
-            }
-        }
+		/// <summary>
+		/// Carga el tesauro del perfil.
+		/// </summary>
+		private void CargarTesauro()
+		{
+			try
+			{
+				mModelAdmin.SemanticThesaurus.ThesaurusEditorModel = new ThesaurusEditorModel();
+				mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.HideTreeListSelector = true;
+				ExtraerPropiedadesExtraCategoria();
+				mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.ThesaurusCategories = CargarTesauroPorTesauroSemantico(mEntidadesTesSem);
+				mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.SelectedCategories = new List<Guid>();
+				mModelAdmin.SemanticThesaurus.ThesaurusEditorModel.ExpandedCategories = mCategoriasExpandidasIDs;
+				//DeshabilidatarCategoriasEspeciales();
+				//RecargarComboPadresParaCreacionCategoria();
+				EstablecerParametrosTesauro();
+			}
+			catch (Exception ex)
+			{
+				GuardarLogErrorAJAX(ex.ToString());
+				mMensajeAdmin = "La ontología del tesauro semántico no es correcta.";
+				throw new Exception(mMensajeAdmin);
+			}
+		}
 
-        /// <summary>
-        /// Genera un modelo de tesauro a partir de las entidaes de un tesauro semántico.
-        /// </summary>
-        /// <param name="pEntidadesTesSem">Entidaes de un tesauro semántico</param>
-        /// <returns>Modelo de tesauro a partir de las entidaes de un tesauro semántico</returns>
-        private List<CategoryModel> CargarTesauroPorTesauroSemantico(List<ElementoOntologia> pEntidadesTesSem)
-        {
-            List<CategoryModel> categoryModel = new List<CategoryModel>();
-            mCategoriasModeloTesSem = new Dictionary<string, object[]>();
-            mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories = new Dictionary<string, string>();
-            mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories.Add("[RAIZ]", UtilIdiomas.GetText("TESAURO", "INDICE"));
-            mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = "";
+		/// <summary>
+		/// Genera un modelo de tesauro a partir de las entidaes de un tesauro semántico.
+		/// </summary>
+		/// <param name="pEntidadesTesSem">Entidaes de un tesauro semántico</param>
+		/// <returns>Modelo de tesauro a partir de las entidaes de un tesauro semántico</returns>
+		private List<CategoryModel> CargarTesauroPorTesauroSemantico(List<ElementoOntologia> pEntidadesTesSem)
+		{
+			List<CategoryModel> categoryModel = new List<CategoryModel>();
+			mCategoriasModeloTesSem = new Dictionary<string, object[]>();
+			mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories = new Dictionary<string, string>();
+			mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories.Add("[RAIZ]", UtilIdiomas.GetText("TESAURO", "INDICE"));
+			mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = "";
 
-            foreach (ElementoOntologia entidadPrinc in pEntidadesTesSem)
-            {
-                short orden = 0;
-                Propiedad propMember = entidadPrinc.ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
+			foreach (ElementoOntologia entidadPrinc in pEntidadesTesSem)
+			{
+				short orden = 0;
+				Propiedad propMember = entidadPrinc.ObtenerPropiedad(EstiloPlantilla.Member_TesSem);
 
-                foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propMember.ValoresUnificados.Values)))
-                {
-                    CargarCategoriaTesSem(categoria, orden, 1, null, categoryModel);
-                    CargarCategoriasHijasOmitiendoCatEnLista(categoria, string.Empty, null, mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories);
-                    orden++;
-                }
-            }
+				foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propMember.ValoresUnificados.Values)))
+				{
+					CargarCategoriaTesSem(categoria, orden, 1, null, categoryModel);
+					CargarCategoriasHijasOmitiendoCatEnLista(categoria, string.Empty, null, mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories);
+					orden++;
+				}
+			}
 
-            return categoryModel;
-        }
+			return categoryModel;
+		}
 
-        /// <summary>
-        /// Devuelve una lista de categorías semánticas ordenadas por su identificador.
-        /// </summary>
-        /// <param name="pCategorias">lista de categorías semánticas</param>
-        /// <returns>Lista de categorías semánticas ordenadas por su identificador</returns>
-        private List<ElementoOntologia> CategoriasTesauroSemOrdenadasTesSem(List<ElementoOntologia> pCategorias)
-        {
-            SortedDictionary<string, List<ElementoOntologia>> nuevaLista = new SortedDictionary<string, List<ElementoOntologia>>();
+		/// <summary>
+		/// Devuelve una lista de categorías semánticas ordenadas por su identificador.
+		/// </summary>
+		/// <param name="pCategorias">lista de categorías semánticas</param>
+		/// <returns>Lista de categorías semánticas ordenadas por su identificador</returns>
+		private List<ElementoOntologia> CategoriasTesauroSemOrdenadasTesSem(List<ElementoOntologia> pCategorias)
+		{
+			SortedDictionary<string, List<ElementoOntologia>> nuevaLista = new SortedDictionary<string, List<ElementoOntologia>>();
 
-            foreach (ElementoOntologia elem in pCategorias)
-            {
-                if (elem != null)
-                {
-                    string orden = elem.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad;
-                    if (!nuevaLista.ContainsKey(orden))
-                    {
-                        nuevaLista.Add(orden, new List<ElementoOntologia>());
-                    }
+			foreach (ElementoOntologia elem in pCategorias)
+			{
+				if (elem != null)
+				{
+					string orden = elem.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad;
+					if (!nuevaLista.ContainsKey(orden))
+					{
+						nuevaLista.Add(orden, new List<ElementoOntologia>());
+					}
 
-                    nuevaLista[orden].Add(elem);
-                }
-            }
+					nuevaLista[orden].Add(elem);
+				}
+			}
 
-            List<ElementoOntologia> elementos = new List<ElementoOntologia>();
+			List<ElementoOntologia> elementos = new List<ElementoOntologia>();
 
-            foreach (List<ElementoOntologia> elems in nuevaLista.Values)
-            {
-                elementos.AddRange(elems);
-            }
+			foreach (List<ElementoOntologia> elems in nuevaLista.Values)
+			{
+				elementos.AddRange(elems);
+			}
 
-            return elementos;
-        }
+			return elementos;
+		}
 
-        /// <summary>
-        /// Crea un categoría semántica en el modelo para las vistas.
-        /// </summary>
-        /// <param name="pCategoria">Categoría semántica</param>
-        /// <param name="pOrden">Orden</param>
-        /// <param name="pNivel">Nivel en el tesauro</param>
-        /// <param name="pCategoriaPadre">ID de la categoría padre</param>
-        /// <param name="categoryModel">Lista para las categorías del modelo</param>
-        private void CargarCategoriaTesSem(ElementoOntologia pCategoria, short pOrden, int pNivel, string pCategoriaPadre, List<CategoryModel> categoryModel)
-        {
-            CategoryModel categoriaTesauro = new CategoryModel();
-            categoriaTesauro.Key = Guid.NewGuid();
-            categoriaTesauro.StringKey = pCategoria.Uri;
-            categoriaTesauro.Name = pCategoria.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode) + " (" + pCategoria.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad + ")";
-            categoriaTesauro.LanguageName = pCategoria.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode) + " (" + pCategoria.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad + ")";
-            categoriaTesauro.Order = pOrden;
+		/// <summary>
+		/// Crea un categoría semántica en el modelo para las vistas.
+		/// </summary>
+		/// <param name="pCategoria">Categoría semántica</param>
+		/// <param name="pOrden">Orden</param>
+		/// <param name="pNivel">Nivel en el tesauro</param>
+		/// <param name="pCategoriaPadre">ID de la categoría padre</param>
+		/// <param name="categoryModel">Lista para las categorías del modelo</param>
+		private void CargarCategoriaTesSem(ElementoOntologia pCategoria, short pOrden, int pNivel, string pCategoriaPadre, List<CategoryModel> categoryModel)
+		{
+			CategoryModel categoriaTesauro = new CategoryModel();
+			categoriaTesauro.Key = Guid.NewGuid();
+			categoriaTesauro.StringKey = pCategoria.Uri;
+			categoriaTesauro.Name = pCategoria.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode) + " (" + pCategoria.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad + ")";
+			categoriaTesauro.LanguageName = pCategoria.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode) + " (" + pCategoria.ObtenerPropiedad(EstiloPlantilla.Identifier_TesSem).PrimerValorPropiedad + ")";
+			categoriaTesauro.Order = pOrden;
 
-            categoryModel.Add(categoriaTesauro);
-            mCategoriasModeloTesSem.Add(pCategoria.Uri, new object[] { categoriaTesauro, pCategoria, pNivel });
+			categoryModel.Add(categoriaTesauro);
+			mCategoriasModeloTesSem.Add(pCategoria.Uri, new object[] { categoriaTesauro, pCategoria, pNivel });
 
-            if (!string.IsNullOrEmpty(pCategoriaPadre))
-            {
-                categoriaTesauro.ParentCategoryStringKey = pCategoriaPadre;
-                categoriaTesauro.ParentCategoryKey = ((CategoryModel)mCategoriasModeloTesSem[pCategoriaPadre][0]).Key;
-            }
+			if (!string.IsNullOrEmpty(pCategoriaPadre))
+			{
+				categoriaTesauro.ParentCategoryStringKey = pCategoriaPadre;
+				categoriaTesauro.ParentCategoryKey = ((CategoryModel)mCategoriasModeloTesSem[pCategoriaPadre][0]).Key;
+			}
 
-            AgregarPropiedadesExtraCategorias(pCategoria);
+			AgregarPropiedadesExtraCategorias(pCategoria);
 
-            Propiedad propHijos = pCategoria.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem);
-            if (propHijos.ValoresUnificados.Count > 0)
-            {
-                short orden = 0;
+			Propiedad propHijos = pCategoria.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem);
+			if (propHijos.ValoresUnificados.Count > 0)
+			{
+				short orden = 0;
 
-                foreach (ElementoOntologia elem in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propHijos.ValoresUnificados.Values)))
-                {
-                    CargarCategoriaTesSem(elem, orden, (pNivel + 1), categoriaTesauro.StringKey, categoryModel);
-                    orden++;
-                }
-            }
+				foreach (ElementoOntologia elem in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(propHijos.ValoresUnificados.Values)))
+				{
+					CargarCategoriaTesSem(elem, orden, (pNivel + 1), categoriaTesauro.StringKey, categoryModel);
+					orden++;
+				}
+			}
 
-            if (mCategoriasExpandidasStringIDs.Contains(pCategoria.Uri))
-            {
-                ExpandirCategoriaYPadres(categoriaTesauro);
-            }
-        }
+			if (mCategoriasExpandidasStringIDs.Contains(pCategoria.Uri))
+			{
+				ExpandirCategoriaYPadres(categoriaTesauro);
+			}
+		}
 
-        /// <summary>
-        /// Agrega las propiedades extra de una categoría a la variable que las guarda.
-        /// </summary>
-        /// <param name="pCategoria">Categoría</param>
-        private void AgregarPropiedadesExtraCategorias(ElementoOntologia pCategoria)
-        {
-            if (mPropiedadesExtraCategorias.Count == 0)
-            {
-                return;
-            }
+		/// <summary>
+		/// Agrega las propiedades extra de una categoría a la variable que las guarda.
+		/// </summary>
+		/// <param name="pCategoria">Categoría</param>
+		private void AgregarPropiedadesExtraCategorias(ElementoOntologia pCategoria)
+		{
+			if (mPropiedadesExtraCategorias.Count == 0)
+			{
+				return;
+			}
 
-            string valores = "";
+			string valores = "";
 
-            foreach (string prop in mPropiedadesExtraCategorias.Keys)
-            {
-                Propiedad propiedad = pCategoria.ObtenerPropiedad(prop);
+			foreach (string prop in mPropiedadesExtraCategorias.Keys)
+			{
+				Propiedad propiedad = pCategoria.ObtenerPropiedad(prop);
 
-                if (propiedad.ListaValoresIdioma.Count > 0)
-                {
-                    foreach (string idioma in propiedad.ListaValoresIdioma.Keys)
-                    {
-                        foreach (string valor in propiedad.ListaValoresIdioma[idioma].Keys)
-                        {
-                            valores += prop + "|" + valor + "@" + idioma + "|||[||]";
-                        }
-                    }
-                }
-                else if (propiedad.ValoresUnificados.Count > 0)
-                {
-                    foreach (string valor in propiedad.ValoresUnificados.Keys)
-                    {
-                        string val = valor;
+				if (propiedad.ListaValoresIdioma.Count > 0)
+				{
+					foreach (string idioma in propiedad.ListaValoresIdioma.Keys)
+					{
+						foreach (string valor in propiedad.ListaValoresIdioma[idioma].Keys)
+						{
+							valores += prop + "|" + valor + "@" + idioma + "|||[||]";
+						}
+					}
+				}
+				else if (propiedad.ValoresUnificados.Count > 0)
+				{
+					foreach (string valor in propiedad.ValoresUnificados.Keys)
+					{
+						string val = valor;
 
-                        if (propiedad.Tipo == TipoPropiedad.ObjectProperty && !val.StartsWith("http"))
-                        {
-                            val = "http://" + val;
-                        }
+						if (propiedad.Tipo == TipoPropiedad.ObjectProperty && !val.StartsWith("http"))
+						{
+							val = "http://" + val;
+						}
 
-                        valores += prop + "|" + val + "[||]";
-                    }
-                }
-            }
+						valores += prop + "|" + val + "[||]";
+					}
+				}
+			}
 
-            if (!string.IsNullOrEmpty(valores))
-            {
-                mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = string.Concat(mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK, pCategoria.Uri, "|", valores, "[|||]");
-            }
-        }
+			if (!string.IsNullOrEmpty(valores))
+			{
+				mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK = string.Concat(mModelAdmin.SemanticThesaurus.ExtraSemanticPropertiesValuesBK, pCategoria.Uri, "|", valores, "[|||]");
+			}
+		}
 
-        /// <summary>
-        /// Recarga el combo de categorías padres para la creación de nuevas.
-        /// </summary>
-        /// <param name="pCategoria">Categoría</param>
-        /// <param name="pEspacios">Cadena de espacios según nivel de la categoría</param>
-        /// <param name="pListaCategoriasOmitir">Lista de categorías a omitir de la lista final</param>
-        /// <param name="pListaCats">Lista final para el combo</param>
-        private void CargarCategoriasHijasOmitiendoCatEnLista(ElementoOntologia pCategoria, string pEspacios, List<string> pListaCategoriasOmitir, Dictionary<string, string> pListaCats)
-        {
-            if (pListaCategoriasOmitir == null || !pListaCategoriasOmitir.Contains(pCategoria.Uri))
-            {
-                pListaCats.Add(pCategoria.Uri, pEspacios + pCategoria.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode));
+		/// <summary>
+		/// Recarga el combo de categorías padres para la creación de nuevas.
+		/// </summary>
+		/// <param name="pCategoria">Categoría</param>
+		/// <param name="pEspacios">Cadena de espacios según nivel de la categoría</param>
+		/// <param name="pListaCategoriasOmitir">Lista de categorías a omitir de la lista final</param>
+		/// <param name="pListaCats">Lista final para el combo</param>
+		private void CargarCategoriasHijasOmitiendoCatEnLista(ElementoOntologia pCategoria, string pEspacios, List<string> pListaCategoriasOmitir, Dictionary<string, string> pListaCats)
+		{
+			if (pListaCategoriasOmitir == null || !pListaCategoriasOmitir.Contains(pCategoria.Uri))
+			{
+				pListaCats.Add(pCategoria.Uri, pEspacios + pCategoria.ObtenerPropiedad(EstiloPlantilla.PrefLabel_TesSem).ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode));
 
-                pEspacios += UtilCadenas.HtmlDecode("&nbsp;&nbsp;&nbsp;");
+				pEspacios += UtilCadenas.HtmlDecode("&nbsp;&nbsp;&nbsp;");
 
-                foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(pCategoria.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).ValoresUnificados.Values)))
-                {
-                    CargarCategoriasHijasOmitiendoCatEnLista(categoria, pEspacios, pListaCategoriasOmitir, pListaCats);
-                }
-            }
-        }
+				foreach (ElementoOntologia categoria in CategoriasTesauroSemOrdenadasTesSem(new List<ElementoOntologia>(pCategoria.ObtenerPropiedad(EstiloPlantilla.Narrower_TesSem).ValoresUnificados.Values)))
+				{
+					CargarCategoriasHijasOmitiendoCatEnLista(categoria, pEspacios, pListaCategoriasOmitir, pListaCats);
+				}
+			}
+		}
 
-        private void ExpandirCategoriaYPadres(CategoryModel pCategoriaTesauro)
-        {
-            mCategoriasExpandidasIDs.Add(pCategoriaTesauro.Key);
+		private void ExpandirCategoriaYPadres(CategoryModel pCategoriaTesauro)
+		{
+			mCategoriasExpandidasIDs.Add(pCategoriaTesauro.Key);
 
-            if (pCategoriaTesauro.ParentCategoryKey != Guid.Empty)
-            {
-                ExpandirCategoriaYPadres((CategoryModel)mCategoriasModeloTesSem[pCategoriaTesauro.ParentCategoryStringKey][0]);
-            }
-        }
+			if (pCategoriaTesauro.ParentCategoryKey != Guid.Empty)
+			{
+				ExpandirCategoriaYPadres((CategoryModel)mCategoriasModeloTesSem[pCategoriaTesauro.ParentCategoryStringKey][0]);
+			}
+		}
 
-        ///// <summary>
-        ///// Recarga el combo de categorías padres para la creación de nuevas.
-        ///// </summary>
-        //private void RecargarComboPadresParaCreacionCategoria()
-        //{
-        //    mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories = new Dictionary<string, string>();
+		///// <summary>
+		///// Recarga el combo de categorías padres para la creación de nuevas.
+		///// </summary>
+		//private void RecargarComboPadresParaCreacionCategoria()
+		//{
+		//    mModelAdmin.SemanticThesaurus.ParentCategoriesForCreateNewsCategories = new Dictionary<string, string>();
 
-        //    //foreach (CategoriaTesauro catTes in mGestorTesauro.ListaCategoriasTesauroPrimerNivel.Values)
-        //    //{
-        //    //    cargarCategoriasHijas(catTes, string.Empty, mAdminCatModel.ParentCategoriesForCreateNewsCategories);
-        //    //}
-        //}
+		//    //foreach (CategoriaTesauro catTes in mGestorTesauro.ListaCategoriasTesauroPrimerNivel.Values)
+		//    //{
+		//    //    cargarCategoriasHijas(catTes, string.Empty, mAdminCatModel.ParentCategoriesForCreateNewsCategories);
+		//    //}
+		//}
 
-        /// <summary>
-        /// Carga inicial de la edición de tesauros semánticos.
-        /// </summary>
-        private void CargarInicial_TesSem()
-        {
-            if (mModelAdmin == null)
-            {
-                mModelAdmin = new ComAdminSemanticElemModel();
-            }
+		/// <summary>
+		/// Carga inicial de la edición de tesauros semánticos.
+		/// </summary>
+		private void CargarInicial_TesSem()
+		{
+			if (mModelAdmin == null)
+			{
+				mModelAdmin = new ComAdminSemanticElemModel();
+			}
 
-            mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition;
-            mModelAdmin.SemanticThesaurus = new ComAdminEditSemanticThesaurus();
-            mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables = new Dictionary<KeyValuePair<string, string>, string>();
+			mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.SemanticThesaurusEdition;
+			mModelAdmin.SemanticThesaurus = new ComAdminEditSemanticThesaurus();
+			mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables = new Dictionary<KeyValuePair<string, string>, ComAdminSemanticThesaurusData>();
 
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            mProyTesSemDS = proyCN.ObtenerTesaurosSemanticosConfigEdicionDeProyecto(ProyectoSeleccionado.Clave);
-            proyCN.Dispose();
+			ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+			mProyTesSemDS = proyCN.ObtenerTesaurosSemanticosConfigEdicionDeProyecto(ProyectoSeleccionado.Clave);
+			proyCN.Dispose();
 
-            foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Editable == true))
-            {
+			foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Editable == true))
+			{
 				/* Cargar Tesauros con todos los posibles idiomas en bruto
                 mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables.Add(new KeyValuePair<string, string>(filaConfig.UrlOntologia, filaConfig.SourceTesSem), UtilCadenas.ObtenerTextoDeIdioma(filaConfig.Nombre, UtilIdiomas.LanguageCode, null));
                 */
-
-				mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables.Add(new KeyValuePair<string, string>(filaConfig.UrlOntologia, filaConfig.SourceTesSem), filaConfig.Nombre);			
+				mModelAdmin.SemanticThesaurus.SemanticThesaurusEditables.Add(new KeyValuePair<string, string>(filaConfig.UrlOntologia, filaConfig.SourceTesSem), new ComAdminSemanticThesaurusData { Nombre = filaConfig.Nombre, FechaCreacion = filaConfig.FechaCreacion });
 			}
 
-            mModelAdmin.SemanticThesaurus.ListaOntologias = new Dictionary<string, string>();
+			mModelAdmin.SemanticThesaurus.ListaOntologias = new Dictionary<string, string>();
 
-            DataWrapperDocumentacion documentacionDW = new DataWrapperDocumentacion();
-            DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            documentacionCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, documentacionDW, false, true, true);
-            documentacionCN.Dispose();
+			DataWrapperDocumentacion documentacionDW = new DataWrapperDocumentacion();
+			DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+			documentacionCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, documentacionDW, false, true, true);
+			documentacionCN.Dispose();
 
-            List<AD.EntityModel.Models.Documentacion.Documento> filasDoc = documentacionDW.ListaDocumento.Where(doc => doc.Tipo.Equals((short)TiposDocumentacion.OntologiaSecundaria)).ToList();
+			List<AD.EntityModel.Models.Documentacion.Documento> filasDoc = documentacionDW.ListaDocumento.Where(doc => doc.Tipo.Equals((short)TiposDocumentacion.OntologiaSecundaria)).ToList();
 
-            foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc)
-            {
-                mModelAdmin.SemanticThesaurus.ListaOntologias.Add(filaDoc.Enlace, filaDoc.Titulo);
-            }
-        }
+			foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc)
+			{
+				mModelAdmin.SemanticThesaurus.ListaOntologias.Add(filaDoc.Enlace, filaDoc.Titulo);
+			}
+		}
 
-        /// <summary>
-        /// Comprueba si hay que redireccionar y si es así devuelve la redirección.
-        /// </summary>
-        /// <returns>Redirección resultante</returns>
-        private ActionResult ComprobarRedirecciones()
-        {
-            if (mControladorBase.UsuarioActual.EsIdentidadInvitada || !ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
-            {
-                return Redirect(BaseURLIdioma);
-            }
+		private void CargarPermisosAdministrarTesauros()
+		{
+			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+			ViewBag.VerTesauro = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.VerTesauroSemantico, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.CrearTesauro = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.AnyadirValorTesauro, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.ModificarTesauro = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarValorTesauro, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.EliminarTesauro = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarValorTesauro, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+		}
 
-            return null;
-        }
+		/// <summary>
+		/// Comprueba si hay que redireccionar y si es así devuelve la redirección.
+		/// </summary>
+		/// <returns>Redirección resultante</returns>
+		private ActionResult ComprobarPermisos(EditSemanticThesaurusModel.Action pAccion)
+		{
+			bool tienePermisoPagina = false;
+			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
 
-        #endregion
+			if (pAccion.Equals(EditSemanticThesaurusModel.Action.LoadThesaurus))
+			{
+				tienePermisoPagina = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.VerTesauroSemantico, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			}
+			else
+			{
+				tienePermisoPagina = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarValorTesauro, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			}
 
-        #region Métodos auxiliares Editar Entidades Secundarias
+			if (!ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID) && !tienePermisoPagina)
+			{
+				return Redirect(BaseURLIdioma);
+			}
 
-        /// <summary>
-        /// Elimina una serie de instancias de la ontología secundaria.
-        /// </summary>
-        private void EliminarIntanciasOntologiaSecundaria()
-        {
-            CargarInstanciasOntologiaSecundaria();
-            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditEntSecModel.OntologyUrl, ProyectoSeleccionado.Clave);
-            FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+			return null;
+		}
 
-            foreach (string sujeto in mEditEntSecModel.SelectedInstances.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                string idHasEntidadPrincipal = sujeto;
-                List<string> sujetos = facCN.ObtenerSujetosConObjetoDePropiedad(mEditEntSecModel.OntologyUrl, idHasEntidadPrincipal, "http://gnoss/hasEntidad");
+		#endregion
 
-                if (sujetos.Count > 0 && sujetos[0].Contains("entidadsecun_"))
-                {
-                    idHasEntidadPrincipal = sujetos[0].Substring(sujetos[0].IndexOf("entidadsecun_"));
-                }
-                else
-                {
-                    if (idHasEntidadPrincipal.Contains("/"))
-                    {
-                        idHasEntidadPrincipal = idHasEntidadPrincipal.Substring(idHasEntidadPrincipal.LastIndexOf("/") + 1);
-                    }
+		#region Métodos auxiliares Editar Entidades Secundarias
 
-                    if (idHasEntidadPrincipal.Contains("#"))
-                    {
-                        idHasEntidadPrincipal = idHasEntidadPrincipal.Substring(idHasEntidadPrincipal.LastIndexOf("#") + 1);
-                    }
+		/// <summary>
+		/// Elimina una serie de instancias de la ontología secundaria.
+		/// </summary>
+		private void EliminarIntanciasOntologiaSecundaria()
+		{
+			CargarInstanciasOntologiaSecundaria();
+			Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditEntSecModel.OntologyUrl, ProyectoSeleccionado.Clave);
+			FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
 
-                    idHasEntidadPrincipal = "entidadsecun_" + idHasEntidadPrincipal.ToLower();
-                }
+			foreach (string sujeto in mEditEntSecModel.SelectedInstances.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				string idHasEntidadPrincipal = sujeto;
+				List<string> sujetos = facCN.ObtenerSujetosConObjetoDePropiedad(mEditEntSecModel.OntologyUrl, idHasEntidadPrincipal, "http://gnoss/hasEntidad");
 
-                //Comprobamos en cada proyecto donde está compartida la ontología si se usa la entidad:
-                foreach (Guid proyectoID in docOnto.ListaProyectos)
-                {
-                    FacetadoDS facDS = facCN.ObtenerTripletasConObjeto(proyectoID.ToString(), sujeto.ToLower());
+				if (sujetos.Count > 0 && sujetos[0].Contains("entidadsecun_"))
+				{
+					idHasEntidadPrincipal = sujetos[0].Substring(sujetos[0].IndexOf("entidadsecun_"));
+				}
+				else
+				{
+					if (idHasEntidadPrincipal.Contains("/"))
+					{
+						idHasEntidadPrincipal = idHasEntidadPrincipal.Substring(idHasEntidadPrincipal.LastIndexOf("/") + 1);
+					}
 
-                    foreach (DataRow fila in facDS.Tables[0].Rows)
-                    {
-                        if ((string)fila[1] != "http://gnoss/hasEntidad")
-                        {
-                            mMensajeAdmin = UtilIdiomas.GetText("COMADMIN", "ENTIDADSECUNDNOBORRABLE", sujeto, mEditEntSecModel.OntologyUrl);
-                            throw new Exception(mMensajeAdmin);
-                        }
-                    }
+					if (idHasEntidadPrincipal.Contains("#"))
+					{
+						idHasEntidadPrincipal = idHasEntidadPrincipal.Substring(idHasEntidadPrincipal.LastIndexOf("#") + 1);
+					}
 
-                    facDS.Dispose();
-                }
+					idHasEntidadPrincipal = "entidadsecun_" + idHasEntidadPrincipal.ToLower();
+				}
 
-                ControladorDocumentacion.BorrarRDFDeVirtuoso(idHasEntidadPrincipal, mEditEntSecModel.OntologyUrl, UrlIntragnoss, "acid", ProyectoSeleccionado.Clave, true);
+				//Comprobamos en cada proyecto donde está compartida la ontología si se usa la entidad:
+				foreach (Guid proyectoID in docOnto.ListaProyectos)
+				{
+					FacetadoDS facDS = facCN.ObtenerTripletasConObjeto(proyectoID.ToString(), sujeto.ToLower());
 
-                foreach (Guid proyectoID in docOnto.ListaProyectos)
-                {
-                    ControladorDocumentacion.BorrarRDFDeVirtuoso(idHasEntidadPrincipal, proyectoID.ToString().ToLower(), UrlIntragnoss, "acid", ProyectoSeleccionado.Clave, true);
-                    facCN.BorrarTripleta(proyectoID.ToString().ToLower(), "<" + UrlIntragnoss + mEditEntSecModel.OntologyUrl.ToLower() + ">", "<http://gnoss/hasEntidad>", "<" + UrlIntragnoss + idHasEntidadPrincipal + ">", true);
-                }
+					foreach (DataRow fila in facDS.Tables[0].Rows)
+					{
+						if ((string)fila[1] != "http://gnoss/hasEntidad")
+						{
+							mMensajeAdmin = UtilIdiomas.GetText("COMADMIN", "ENTIDADSECUNDNOBORRABLE", sujeto, mEditEntSecModel.OntologyUrl);
+							throw new Exception(mMensajeAdmin);
+						}
+					}
 
-                if (mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.ContainsKey(sujeto))
-                {
-                    mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Remove(sujeto);
-                }
-            }
+					facDS.Dispose();
+				}
 
-            facCN.Dispose();
-        }
+				ControladorDocumentacion.BorrarRDFDeVirtuoso(idHasEntidadPrincipal, mEditEntSecModel.OntologyUrl, UrlIntragnoss, "acid", ProyectoSeleccionado.Clave, true);
 
-        /// <summary>
-        /// Guarda una instancia secundaría.
-        /// </summary>
-        /// <returns>Acción resultado</returns>
-        private ActionResult GuardarIntanciaOntologiaSecundaria()
-        {
-            bool creandoNuevo = (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveNewInstance);
-            CrearEditarIntanciaOntologiaSecundaria();
-            List<ElementoOntologia> entidadesGuardar = mSemController.RecogerValoresRdf(HttpUtility.HtmlDecode(mEditEntSecModel.RdfValue), null);
+				foreach (Guid proyectoID in docOnto.ListaProyectos)
+				{
+					ControladorDocumentacion.BorrarRDFDeVirtuoso(idHasEntidadPrincipal, proyectoID.ToString().ToLower(), UrlIntragnoss, "acid", ProyectoSeleccionado.Clave, true);
+					facCN.BorrarTripleta(proyectoID.ToString().ToLower(), "<" + UrlIntragnoss + mEditEntSecModel.OntologyUrl.ToLower() + ">", "<http://gnoss/hasEntidad>", "<" + UrlIntragnoss + idHasEntidadPrincipal + ">", true);
+				}
 
-            if (string.IsNullOrEmpty(mEditEntSecModel.EntitySubject))
-            {
-                return GnossResultERROR("El Sujeto no puede ser vacío.");
-            }
+				if (mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.ContainsKey(sujeto))
+				{
+					mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Remove(sujeto);
+				}
+			}
 
-            if (creandoNuevo)
-            {
-                entidadesGuardar[0].ID = mEditEntSecModel.EntitySubject;
-            }
+			facCN.Dispose();
+		}
 
-            Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditEntSecModel.OntologyUrl, ProyectoSeleccionado.Clave);
+		/// <summary>
+		/// Guarda una instancia secundaría.
+		/// </summary>
+		/// <returns>Acción resultado</returns>
+		private ActionResult GuardarIntanciaOntologiaSecundaria()
+		{
+			bool creandoNuevo = (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveNewInstance);
+			CrearEditarIntanciaOntologiaSecundaria();
+			List<ElementoOntologia> entidadesGuardar = mSemController.RecogerValoresRdf(HttpUtility.HtmlDecode(mEditEntSecModel.RdfValue), null);
 
-            try
-            {
-                ControladorDocumentacion.GuardarRDFEntidadSecundaria(entidadesGuardar, UrlIntragnoss, mEditEntSecModel.OntologyUrl, ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, docOnto, !creandoNuevo);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.StartsWith("Ya existe una entidad secundaria con"))
-                {
-                    mMensajeAdmin = ex.Message;
-                }
+			if (string.IsNullOrEmpty(mEditEntSecModel.EntitySubject))
+			{
+				return GnossResultERROR("El Sujeto no puede ser vacío.");
+			}
 
-                throw;
-            }
+			if (creandoNuevo)
+			{
+				entidadesGuardar[0].ID = mEditEntSecModel.EntitySubject;
+			}
 
-            CargarInstanciasOntologiaSecundaria();
+			Documento docOnto = ControladorDocumentacion.ObtenerOntologiaDeEntidadSecundaria(mEditEntSecModel.OntologyUrl, ProyectoSeleccionado.Clave);
 
-            if (!mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.ContainsKey(entidadesGuardar[0].Uri))
-            {
-                mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Add(entidadesGuardar[0].Uri, entidadesGuardar[0].Uri);
-            }
+			try
+			{
+				ControladorDocumentacion.GuardarRDFEntidadSecundaria(entidadesGuardar, UrlIntragnoss, mEditEntSecModel.OntologyUrl, ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, docOnto, !creandoNuevo);
+			}
+			catch (Exception ex)
+			{
+				if (ex.Message.StartsWith("Ya existe una entidad secundaria con"))
+				{
+					mMensajeAdmin = ex.Message;
+				}
 
-            if (!string.IsNullOrEmpty(mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key))
-            {
-                Propiedad propRep = entidadesGuardar[0].ObtenerPropiedad(mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key);
+				throw;
+			}
 
-                if (propRep != null)
-                {
-                    string repres = propRep.ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode);
-                    mModelAdmin.SecondaryEntities.SecondaryInstancesEditables[entidadesGuardar[0].Uri] = repres;
-                }
-            }
+			CargarInstanciasOntologiaSecundaria();
 
-            mModelAdmin.SecondaryEntities.SemanticResourceModel = null;
-            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
-            facetadoCL.Dispose();
-            return PartialView("_EditarEntSecInstancias", mModelAdmin);
-        }
+			if (!mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.ContainsKey(entidadesGuardar[0].Uri))
+			{
+				mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Add(entidadesGuardar[0].Uri, entidadesGuardar[0].Uri);
+			}
 
-        /// <summary>
-        /// Carga el formulario de edición para crear una instación de una ontología secundaria.
-        /// </summary>
-        private void CrearEditarIntanciaOntologiaSecundaria()
-        {
-            bool crearnuevaInstancia = (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.CreateNewInstance || mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveNewInstance);
+			if (!string.IsNullOrEmpty(mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key))
+			{
+				Propiedad propRep = entidadesGuardar[0].ObtenerPropiedad(mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key);
 
-            ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditEntSecModel.OntologyUrl));//("UrlOntologia='" + mEditEntSecModel.OntologyUrl + "'")[0];
-            Guid ontologiaID = new Guid(filaConfig.SourceTesSem);
-            mOntologia = ObtenerOntologia(ontologiaID);
-            SemCmsController.ApanyarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
-            mModelAdmin.SecondaryEntities.SemanticResourceModel = new SemanticResourceModel();
+				if (propRep != null)
+				{
+					string repres = propRep.ObtenerPrimerValorDeIdiomaOSinEl(UtilIdiomas.LanguageCode);
+					mModelAdmin.SecondaryEntities.SecondaryInstancesEditables[entidadesGuardar[0].Uri] = repres;
+				}
+			}
 
-            List<ElementoOntologia> instanciaPinc = null;
-            mModelAdmin.SecondaryEntities.CreatingNewInstance = crearnuevaInstancia;
+			mModelAdmin.SecondaryEntities.SemanticResourceModel = null;
+			FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
+			facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);
+			facetadoCL.Dispose();
+			return PartialView("_EditarEntSecInstancias", mModelAdmin);
+		}
 
-            if (!crearnuevaInstancia)
-            {
-                instanciaPinc = ObtenerInstanciasRDFDeEntidad();
-            }
+		/// <summary>
+		/// Carga el formulario de edición para crear una instación de una ontología secundaria.
+		/// </summary>
+		private void CrearEditarIntanciaOntologiaSecundaria()
+		{
+			bool crearnuevaInstancia = (mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.CreateNewInstance || mEditEntSecModel.EditAction == EditSecondaryEntityModel.Action.SaveNewInstance);
 
-            mSemController = new SemCmsController(mModelAdmin.SecondaryEntities.SemanticResourceModel, mOntologia, Guid.Empty, instanciaPinc, ProyectoSeleccionado, IdentidadActual, UtilIdiomas, BaseURL, BaseURLIdioma, BaseURLContent, BaseURLStatic, UrlIntragnoss, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditEntSecModel.OntologyUrl));//("UrlOntologia='" + mEditEntSecModel.OntologyUrl + "'")[0];
+			Guid ontologiaID = new Guid(filaConfig.SourceTesSem);
+			mOntologia = ObtenerOntologia(ontologiaID);
+			SemCmsController.ApanyarRepeticionPropiedades(mOntologia.ConfiguracionPlantilla, mOntologia.Entidades);
+			mModelAdmin.SecondaryEntities.SemanticResourceModel = new SemanticResourceModel();
+
+			List<ElementoOntologia> instanciaPinc = null;
+			mModelAdmin.SecondaryEntities.CreatingNewInstance = crearnuevaInstancia;
+
+			if (!crearnuevaInstancia)
+			{
+				instanciaPinc = ObtenerInstanciasRDFDeEntidad();
+			}
+
+			mSemController = new SemCmsController(mModelAdmin.SecondaryEntities.SemanticResourceModel, mOntologia, Guid.Empty, instanciaPinc, ProyectoSeleccionado, IdentidadActual, UtilIdiomas, BaseURL, BaseURLIdioma, BaseURLContent, BaseURLStatic, UrlIntragnoss, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SemCmsController>(), mLoggerFactory);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
 			if (mOntologia.ConfiguracionPlantilla.MultiIdioma && !(ParametrosGeneralesRow.IdiomaDefecto == null) && !string.IsNullOrEmpty(ParametrosGeneralesRow.IdiomaDefecto))
-            {//Es multiidioma:
-                mSemController.IdiomaDefecto = ParametrosGeneralesRow.IdiomaDefecto;
-                mSemController.IdiomasDisponibles = paramCL.ObtenerListaIdiomasDictionary();
-            }
+			{//Es multiidioma:
+				mSemController.IdiomaDefecto = ParametrosGeneralesRow.IdiomaDefecto;
+				mSemController.IdiomasDisponibles = paramCL.ObtenerListaIdiomasDictionary();
+			}
 
-            try
-            {
-                mSemController.ObtenerModeloSemCMSEdicion(IdentidadActual.Clave);
-            }
-            catch (Exception e)
-            {
-                if (string.IsNullOrEmpty(mModelAdmin.SecondaryEntities.SemanticResourceModel.AdminGenerationError) || !ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
-                {
-                    throw;
-                }
-            }
+			try
+			{
+				mSemController.ObtenerModeloSemCMSEdicion(IdentidadActual.Clave);
+			}
+			catch (Exception e)
+			{
+				if (string.IsNullOrEmpty(mModelAdmin.SecondaryEntities.SemanticResourceModel.AdminGenerationError) || !ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+				{
+					throw;
+				}
+			}
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            mModelAdmin.SecondaryEntities.SecondaryOntologyNameSelected = docCN.ObtenerTituloDocumentoPorID(ontologiaID);
-            docCN.Dispose();
-        }
+			DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+			mModelAdmin.SecondaryEntities.SecondaryOntologyNameSelected = docCN.ObtenerTituloDocumentoPorID(ontologiaID);
+			docCN.Dispose();
+		}
 
-        /// <summary>
-        /// Obtiene las instancias de la entidad secundaria seleccionada.
-        /// </summary>
-        /// <returns></returns>
-        private List<ElementoOntologia> ObtenerInstanciasRDFDeEntidad()
-        {
-            string idHasEntidadPrincipal = mEditEntSecModel.SelectedInstances.Split(',')[0];
-            FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            List<string> sujetos = facCN.ObtenerSujetosConObjetoDePropiedad(mEditEntSecModel.OntologyUrl, idHasEntidadPrincipal, "http://gnoss/hasEntidad");
-            facCN.Dispose();
+		/// <summary>
+		/// Obtiene las instancias de la entidad secundaria seleccionada.
+		/// </summary>
+		/// <returns></returns>
+		private List<ElementoOntologia> ObtenerInstanciasRDFDeEntidad()
+		{
+			string idHasEntidadPrincipal = mEditEntSecModel.SelectedInstances.Split(',')[0];
+			FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+			List<string> sujetos = facCN.ObtenerSujetosConObjetoDePropiedad(mEditEntSecModel.OntologyUrl, idHasEntidadPrincipal, "http://gnoss/hasEntidad");
+			facCN.Dispose();
 
-            if (sujetos.Count > 0 && sujetos[0].Contains("entidadsecun_"))
-            {
-                idHasEntidadPrincipal = sujetos[0].Substring(sujetos[0].IndexOf("entidadsecun_"));
-            }
-            else
-            {
-                idHasEntidadPrincipal = "entidadsecun_" + idHasEntidadPrincipal.Substring(idHasEntidadPrincipal.LastIndexOf("/") + 1).ToLower();
-            }
+			if (sujetos.Count > 0 && sujetos[0].Contains("entidadsecun_"))
+			{
+				idHasEntidadPrincipal = sujetos[0].Substring(sujetos[0].IndexOf("entidadsecun_"));
+			}
+			else
+			{
+				idHasEntidadPrincipal = "entidadsecun_" + idHasEntidadPrincipal.Substring(idHasEntidadPrincipal.LastIndexOf("/") + 1).ToLower();
+			}
 
-            GestionOWL gestorOWL = new GestionOWL();
-            gestorOWL.UrlOntologia = BaseURLFormulariosSem + "/Ontologia/" + mEditEntSecModel.OntologyUrl + "#";
-            gestorOWL.NamespaceOntologia = GestionOWL.NAMESPACE_ONTO_GNOSS;
+			GestionOWL gestorOWL = new GestionOWL();
+			gestorOWL.UrlOntologia = BaseURLFormulariosSem + "/Ontologia/" + mEditEntSecModel.OntologyUrl + "#";
+			gestorOWL.NamespaceOntologia = GestionOWL.NAMESPACE_ONTO_GNOSS;
 
-            byte[] rdfVirtuoso = ControladorDocumentacion.ObtenerRDFDeVirtuoso(idHasEntidadPrincipal, mEditEntSecModel.OntologyUrl, UrlIntragnoss, mEditEntSecModel.OntologyUrl, gestorOWL.NamespaceOntologia, mOntologia, null, false);
+			byte[] rdfVirtuoso = ControladorDocumentacion.ObtenerRDFDeVirtuoso(idHasEntidadPrincipal, mEditEntSecModel.OntologyUrl, UrlIntragnoss, mEditEntSecModel.OntologyUrl, gestorOWL.NamespaceOntologia, mOntologia, null, false);
 
-            if (rdfVirtuoso.Length == 0)
-            {
-                mMensajeAdmin = "El recurso " + idHasEntidadPrincipal + " no tiene datos en virtuoso.";
-                throw new ExcepcionGeneral(mMensajeAdmin);
-            }
+			if (rdfVirtuoso.Length == 0)
+			{
+				mMensajeAdmin = "El recurso " + idHasEntidadPrincipal + " no tiene datos en virtuoso.";
+				throw new ExcepcionGeneral(mMensajeAdmin);
+			}
 
-            MemoryStream buffer = new MemoryStream(rdfVirtuoso);
+			MemoryStream buffer = new MemoryStream(rdfVirtuoso);
 
-            StreamReader reader = new StreamReader(buffer);
-            string rdfTexto = reader.ReadToEnd();
-            reader.Close();
-            reader.Dispose();
+			StreamReader reader = new StreamReader(buffer);
+			string rdfTexto = reader.ReadToEnd();
+			reader.Close();
+			reader.Dispose();
 
-            List<ElementoOntologia> instanciasPrincipales = null;
+			List<ElementoOntologia> instanciasPrincipales = null;
 
-            try
-            {
-                instanciasPrincipales = gestorOWL.LeerFicheroRDF(mOntologia, rdfTexto, true);
-            }
-            catch (Exception ex)
-            {
-                mMensajeAdmin = "El RDF del recurso " + idHasEntidadPrincipal + " no es correcto: " + Environment.NewLine + ex.Message;
-                throw;
-            }
+			try
+			{
+				instanciasPrincipales = gestorOWL.LeerFicheroRDF(mOntologia, rdfTexto, true);
+			}
+			catch (Exception ex)
+			{
+				mMensajeAdmin = "El RDF del recurso " + idHasEntidadPrincipal + " no es correcto: " + Environment.NewLine + ex.Message;
+				throw;
+			}
 
-            return instanciasPrincipales;
-        }
+			return instanciasPrincipales;
+		}
 
-        private bool EsOracle()
-        {
-            string tipoBD = mConfigService.ObtenerTipoBD();
+		private bool EsOracle()
+		{
+			string tipoBD = mConfigService.ObtenerTipoBD();
 
-            if (!string.IsNullOrEmpty(tipoBD) && tipoBD.Equals("1"))
-            {
-                return true;
-            }
-            return false;
-        }
+			if (!string.IsNullOrEmpty(tipoBD) && tipoBD.Equals("1"))
+			{
+				return true;
+			}
+			return false;
+		}
 
-        /// <summary>
-        /// Carga las instacias principales de una ontología secundaría.
-        /// </summary>
-        private void CargarInstanciasOntologiaSecundaria()
-        {
-            ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditEntSecModel.OntologyUrl));
-            Guid ontologiaID = new Guid();
-            if (EsOracle())
-            {
-                ontologiaID = new Guid(Gnoss.Util.General.UtilOracle.FormatearGuid(new Guid(filaConfig.SourceTesSem), true));
-            }
-            else
-            {
-                ontologiaID = new Guid(filaConfig.SourceTesSem);
-            }
+		/// <summary>
+		/// Carga las instacias principales de una ontología secundaría.
+		/// </summary>
+		private void CargarInstanciasOntologiaSecundaria()
+		{
+			ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.UrlOntologia.Equals(mEditEntSecModel.OntologyUrl));
+			Guid ontologiaID = new Guid();
+			if (EsOracle())
+			{
+				ontologiaID = new Guid(Gnoss.Util.General.UtilOracle.FormatearGuid(new Guid(filaConfig.SourceTesSem), true));
+			}
+			else
+			{
+				ontologiaID = new Guid(filaConfig.SourceTesSem);
+			}
 
-            mOntologia = ObtenerOntologia(ontologiaID);
+			mOntologia = ObtenerOntologia(ontologiaID);
 
-            List<ElementoOntologia> entidadesPrinc = GestionOWL.ObtenerElementosContenedorSuperiorOHerencias(mOntologia.Entidades);
+			List<ElementoOntologia> entidadesPrinc = GestionOWL.ObtenerElementosContenedorSuperiorOHerencias(mOntologia.Entidades);
 
-            mModelAdmin.SecondaryEntities.SecondaryInstancesEditables = new SortedDictionary<string, string>();
-            FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+			mModelAdmin.SecondaryEntities.SecondaryInstancesEditables = new SortedDictionary<string, string>();
+			FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
 
-            if (string.IsNullOrEmpty(mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key))
-            {
-                foreach (string sujeto in facCN.ObjeterSujetosDePropiedadPorValor(mEditEntSecModel.OntologyUrl, FacetadoAD.RDF_TYPE, new List<string>(new string[] { entidadesPrinc[0].TipoEntidad })))
-                {
-                    mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Add(sujeto, sujeto);
-                }
-            }
-            else
-            {
-                FacetadoDS facDS = facCN.ObtenerRDFXMLSelectorEntidadFormulario(mEditEntSecModel.OntologyUrl, null, null, entidadesPrinc[0].TipoEntidad, new List<string>(new string[] { mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key }));
+			if (string.IsNullOrEmpty(mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key))
+			{
+				foreach (string sujeto in facCN.ObjeterSujetosDePropiedadPorValor(mEditEntSecModel.OntologyUrl, FacetadoAD.RDF_TYPE, new List<string>(new string[] { entidadesPrinc[0].TipoEntidad })))
+				{
+					mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Add(sujeto, sujeto);
+				}
+			}
+			else
+			{
+				FacetadoDS facDS = facCN.ObtenerRDFXMLSelectorEntidadFormulario(mEditEntSecModel.OntologyUrl, null, null, entidadesPrinc[0].TipoEntidad, new List<string>(new string[] { mOntologia.ConfiguracionPlantilla.PropiedadTitulo.Key }));
 
-                foreach (DataRow fila in facDS.Tables[0].Rows)
-                {
-                    string sujeto = (string)fila[0];
-                    if (!mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.ContainsKey(sujeto))
-                    {
-                        mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Add(sujeto, (string)fila[2]);
-                    }
-                    else if (fila.Table.Columns.Count > 3 && !fila.IsNull(3) && (string)fila[3] == UtilIdiomas.LanguageCode)
-                    {
-                        mModelAdmin.SecondaryEntities.SecondaryInstancesEditables[sujeto] = (string)fila[2];
-                    }
-                }
+				foreach (DataRow fila in facDS.Tables[0].Rows)
+				{
+					string sujeto = (string)fila[0];
+					if (!mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.ContainsKey(sujeto))
+					{
+						mModelAdmin.SecondaryEntities.SecondaryInstancesEditables.Add(sujeto, (string)fila[2]);
+					}
+					else if (fila.Table.Columns.Count > 3 && !fila.IsNull(3) && (string)fila[3] == UtilIdiomas.LanguageCode)
+					{
+						mModelAdmin.SecondaryEntities.SecondaryInstancesEditables[sujeto] = (string)fila[2];
+					}
+				}
 
-            }
+			}
 
-            facCN.Dispose();
+			facCN.Dispose();
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            mModelAdmin.SecondaryEntities.SecondaryOntologyNameSelected = docCN.ObtenerTituloDocumentoPorID(ontologiaID);
-            docCN.Dispose();
-        }
+			DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+			mModelAdmin.SecondaryEntities.SecondaryOntologyNameSelected = docCN.ObtenerTituloDocumentoPorID(ontologiaID);
+			docCN.Dispose();
+		}
 
-        /// <summary>
-        /// Obtiene y lee una ontología.
-        /// </summary>
-        /// <param name="pOntologiaID">ID de ontología</param>
-        /// <returns>Ontología leida</returns>
-        private Ontologia ObtenerOntologia(Guid pOntologiaID)
-        {
-            Ontologia ontologia = null;
-            Dictionary<string, List<EstiloPlantilla>> listaEstilos = null;
-            byte[] arrayOnto = null;
+		/// <summary>
+		/// Obtiene y lee una ontología.
+		/// </summary>
+		/// <param name="pOntologiaID">ID de ontología</param>
+		/// <returns>Ontología leida</returns>
+		private Ontologia ObtenerOntologia(Guid pOntologiaID)
+		{
+			Ontologia ontologia = null;
+			Dictionary<string, List<EstiloPlantilla>> listaEstilos = null;
+			byte[] arrayOnto = null;
 
-            try
-            {
-                arrayOnto = ControladorDocumentacion.ObtenerOntologia(pOntologiaID, out listaEstilos, ProyectoSeleccionado.Clave);
-            }
-            catch (Exception ex)
-            {
-                mMensajeAdmin = "Error al leer el XML de la ontología con ID " + pOntologiaID + ":" + Environment.NewLine + ex.ToString();
-                GuardarLogErrorAJAX(mMensajeAdmin);
-                throw;
-            }
+			try
+			{
+				arrayOnto = ControladorDocumentacion.ObtenerOntologia(pOntologiaID, out listaEstilos, ProyectoSeleccionado.Clave);
+			}
+			catch (Exception ex)
+			{
+				mMensajeAdmin = "Error al leer el XML de la ontología con ID " + pOntologiaID + ":" + Environment.NewLine + ex.ToString();
+				GuardarLogErrorAJAX(mMensajeAdmin);
+				throw;
+			}
 
-            if (arrayOnto == null)
-            {
-                mMensajeAdmin = "No ha sido posible gererar el formulario porque el array de la ontología es nulo";
-                throw new Exception(mMensajeAdmin);
-            }
+			if (arrayOnto == null)
+			{
+				mMensajeAdmin = "No ha sido posible gererar el formulario porque el array de la ontología es nulo";
+				throw new Exception(mMensajeAdmin);
+			}
 
-            try
-            {
-                ontologia = new Ontologia(arrayOnto, true);
-                ontologia.LeerOntologia();
-                ontologia.EstilosPlantilla = listaEstilos;
-                ontologia.IdiomaUsuario = IdiomaUsuario;
-                ontologia.OntologiaID = pOntologiaID;
-            }
-            catch (Exception ex)
-            {
-                mMensajeAdmin = "La ontología con ID " + pOntologiaID + " no es correcta:" + Environment.NewLine + ex.ToString();
-                GuardarLogErrorAJAX(mMensajeAdmin);
-                throw;
-            }
+			try
+			{
+				ontologia = new Ontologia(arrayOnto, true);
+				ontologia.LeerOntologia();
+				ontologia.EstilosPlantilla = listaEstilos;
+				ontologia.IdiomaUsuario = IdiomaUsuario;
+				ontologia.OntologiaID = pOntologiaID;
+			}
+			catch (Exception ex)
+			{
+				mMensajeAdmin = "La ontología con ID " + pOntologiaID + " no es correcta:" + Environment.NewLine + ex.ToString();
+				GuardarLogErrorAJAX(mMensajeAdmin);
+				throw;
+			}
 
-            if (ontologia.ConfiguracionPlantilla.ListaIdiomas.Count == 0)
-            {
-                ontologia.ConfiguracionPlantilla.ListaIdiomas.Add(IdiomaUsuario);
-            }
+			if (ontologia.ConfiguracionPlantilla.ListaIdiomas.Count == 0)
+			{
+				ontologia.ConfiguracionPlantilla.ListaIdiomas.Add(IdiomaUsuario);
+			}
 
-            return ontologia;
-        }
+			return ontologia;
+		}
 
-        /// <summary>
-        /// Carga inicial de la edición de entidades secundarias.
-        /// </summary>
-        private void CargarInicial_EntSecund()
-        {
-            if (mModelAdmin == null)
-            {
-                mModelAdmin = new ComAdminSemanticElemModel();
-            }
+		/// <summary>
+		/// Carga inicial de la edición de entidades secundarias.
+		/// </summary>
+		private void CargarInicial_EntSecund()
+		{
+			if (mModelAdmin == null)
+			{
+				mModelAdmin = new ComAdminSemanticElemModel();
+			}
 
-            mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.SecondaryEntitiesEdition;
-            mModelAdmin.SecondaryEntities = new ComAdminEditSecondaryEntities();
-            mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables = new Dictionary<string, string>();
+			mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.SecondaryEntitiesEdition;
+			mModelAdmin.SecondaryEntities = new ComAdminEditSecondaryEntities();
+			mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables = new Dictionary<string, string>();
 
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            mProyTesSemDS = proyCN.ObtenerConfiguracionSemanticaExtraDeProyecto(ProyectoSeleccionado.Clave);
-            Guid proyectoOntologiasID = Guid.Empty;
-            //Obtener las del proyecto padre.
-            if (ParametroProyecto.ContainsKey(ParametroAD.ProyectoIDPatronOntologias))
-            {
-                proyectoOntologiasID = new Guid(ParametroProyecto[ParametroAD.ProyectoIDPatronOntologias]);
-            }
-            if (proyectoOntologiasID != Guid.Empty)
-            {
-                mProyTesSemDS.ListaProyectoConfigExtraSem.AddRange(proyCN.ObtenerConfiguracionSemanticaExtraDeProyecto(proyectoOntologiasID).ListaProyectoConfigExtraSem);
-            }
-            proyCN.Dispose();
+			ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+			mProyTesSemDS = proyCN.ObtenerConfiguracionSemanticaExtraDeProyecto(ProyectoSeleccionado.Clave);
+			Guid proyectoOntologiasID = Guid.Empty;
+			//Obtener las del proyecto padre.
+			if (ParametroProyecto.ContainsKey(ParametroAD.ProyectoIDPatronOntologias))
+			{
+				proyectoOntologiasID = new Guid(ParametroProyecto[ParametroAD.ProyectoIDPatronOntologias]);
+			}
+			if (proyectoOntologiasID != Guid.Empty)
+			{
+				mProyTesSemDS.ListaProyectoConfigExtraSem.AddRange(proyCN.ObtenerConfiguracionSemanticaExtraDeProyecto(proyectoOntologiasID).ListaProyectoConfigExtraSem);
+			}
+			proyCN.Dispose();
 
-            foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Tipo.Equals((short)TipoConfigExtraSemantica.EntidadSecundaria)).ToList())
-            {
-                if (!mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.ContainsKey(filaConfig.UrlOntologia))
-                {
-                    mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.Add(filaConfig.UrlOntologia, UtilCadenas.ObtenerTextoDeIdioma(filaConfig.Nombre, UtilIdiomas.LanguageCode, null));
-                }
-            }
+			foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Tipo.Equals((short)TipoConfigExtraSemantica.EntidadSecundaria)).ToList())
+			{
+				if (!mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.ContainsKey(filaConfig.UrlOntologia))
+				{
+					mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.Add(filaConfig.UrlOntologia, UtilCadenas.ObtenerTextoDeIdioma(filaConfig.Nombre, UtilIdiomas.LanguageCode, null));
+				}
+			}
 
-            foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Tipo.Equals((short)TipoConfigExtraSemantica.TesauroSemantico)).ToList())
-            {
-                mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.Remove(filaConfig.UrlOntologia);
-            }
-        }
+			foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Tipo.Equals((short)TipoConfigExtraSemantica.TesauroSemantico)).ToList())
+			{
+				mModelAdmin.SecondaryEntities.SecondaryEntitiesEditables.Remove(filaConfig.UrlOntologia);
+			}
+		}
 
-        #endregion
+		#endregion
 
-        #region Métodos auxiliares de grafos simples
+		#region Métodos auxiliares de grafos simples
 
-        /// <summary>
-        /// Elimina una instancia de un grafo simple.
-        /// </summary>
-        private void EliminarIntanciasGrafoSimple()
-        {
-            Dictionary<string, List<string>> valoresGrafos = new Dictionary<string, List<string>>();
-            valoresGrafos.Add(mEditGrafoSimpleModel.Graph.ToLower(), new List<string>());
+		/// <summary>
+		/// Elimina una instancia de un grafo simple.
+		/// </summary>
+		private void EliminarIntanciasGrafoSimple()
+		{
+			Dictionary<string, List<string>> valoresGrafos = new Dictionary<string, List<string>>();
+			valoresGrafos.Add(mEditGrafoSimpleModel.Graph.ToLower(), new List<string>());
 
-            foreach (string sujeto in mEditGrafoSimpleModel.SelectedInstances.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                valoresGrafos[mEditGrafoSimpleModel.Graph.ToLower()].Add(sujeto);
-            }
+			foreach (string sujeto in mEditGrafoSimpleModel.SelectedInstances.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				valoresGrafos[mEditGrafoSimpleModel.Graph.ToLower()].Add(sujeto);
+			}
 
-            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCN.BorrarValoresGrafos(valoresGrafos, 0);
-            facetadoCN.Dispose();
+			FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+			facetadoCN.BorrarValoresGrafos(valoresGrafos, 0);
+			facetadoCN.Dispose();
 
-            CargarInstanciasGrafoSimple();
-        }
+			CargarInstanciasGrafoSimple();
+		}
 
-        /// <summary>
-        /// Crea una instancia en un grafo simple.
-        /// </summary>
-        private void CrearIntanciaGrafoSimple()
-        {
-            if (string.IsNullOrEmpty(mEditGrafoSimpleModel.NewElement))
-            {
-                throw new Exception("El nuevo elemento no puede estar vacío");
-            }
+		/// <summary>
+		/// Crea una instancia en un grafo simple.
+		/// </summary>
+		private void CrearIntanciaGrafoSimple()
+		{
+			if (string.IsNullOrEmpty(mEditGrafoSimpleModel.NewElement))
+			{
+				throw new Exception("El nuevo elemento no puede estar vacío");
+			}
 
-            Dictionary<string, List<string>> valoresGrafos = new Dictionary<string, List<string>>();
-            valoresGrafos.Add(mEditGrafoSimpleModel.Graph.ToLower(), new List<string>(new string[] { mEditGrafoSimpleModel.NewElement }));
+			Dictionary<string, List<string>> valoresGrafos = new Dictionary<string, List<string>>();
+			valoresGrafos.Add(mEditGrafoSimpleModel.Graph.ToLower(), new List<string>(new string[] { mEditGrafoSimpleModel.NewElement }));
 
-            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            facetadoCN.InsertarValoresGrafos(valoresGrafos, 0);
-            facetadoCN.Dispose();
+			FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+			facetadoCN.InsertarValoresGrafos(valoresGrafos, 0);
+			facetadoCN.Dispose();
 
-            CargarInstanciasGrafoSimple();
-        }
+			CargarInstanciasGrafoSimple();
+		}
 
-        /// <summary>
-        /// Carga las instacias principales de una ontología secundaría.
-        /// </summary>
-        private void CargarInstanciasGrafoSimple()
-        {
-            mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables = new List<string>();
-            FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-            List<string> propsBus = new List<string>();
-            propsBus.Add("http://gnoss/has" + mEditGrafoSimpleModel.Graph.ToLower());
-            FacetadoDS facDS = facCN.ObtenerRDFXMLSelectorEntidadFormulario(mEditGrafoSimpleModel.Graph, null, propsBus[0], null, propsBus);
-            facCN.Dispose();
+		/// <summary>
+		/// Carga las instacias principales de una ontología secundaría.
+		/// </summary>
+		private void CargarInstanciasGrafoSimple()
+		{
+			mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables = new List<string>();
+			FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+			List<string> propsBus = new List<string>();
+			propsBus.Add("http://gnoss/has" + mEditGrafoSimpleModel.Graph.ToLower());
+			FacetadoDS facDS = facCN.ObtenerRDFXMLSelectorEntidadFormulario(mEditGrafoSimpleModel.Graph, null, propsBus[0], null, propsBus);
+			facCN.Dispose();
 
-            foreach (DataRow fila in facDS.Tables[0].Rows)
-            {
-                if (!mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables.Contains((string)fila[2]))
-                {
-                    mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables.Add((string)fila[2]);
-                }
-            }
+			foreach (DataRow fila in facDS.Tables[0].Rows)
+			{
+				if (!mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables.Contains((string)fila[2]))
+				{
+					mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables.Add((string)fila[2]);
+				}
+			}
 
-            mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables.Sort();
-            facDS.Dispose();
+			mModelAdmin.SimpleGraphs.SimpleGraphsInstancesEditables.Sort();
+			facDS.Dispose();
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            mModelAdmin.SimpleGraphs.SimpleGraphsNameSelected = mEditGrafoSimpleModel.Graph;
-            docCN.Dispose();
-        }
+			DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+			mModelAdmin.SimpleGraphs.SimpleGraphsNameSelected = mEditGrafoSimpleModel.Graph;
+			docCN.Dispose();
+		}
 
-        /// <summary>
-        /// Carga inicial de la edición de entidades secundarias.
-        /// </summary>
-        private void CargarInicial_GrafoSimple()
-        {
-            if (mModelAdmin == null)
-            {
-                mModelAdmin = new ComAdminSemanticElemModel();
-            }
+		/// <summary>
+		/// Carga inicial de la edición de entidades secundarias.
+		/// </summary>
+		private void CargarInicial_GrafoSimple()
+		{
+			if (mModelAdmin == null)
+			{
+				mModelAdmin = new ComAdminSemanticElemModel();
+			}
 
-            mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.SimpleGraphsEdition;
-            mModelAdmin.SimpleGraphs = new ComAdminEditSimpleGraphs();
-            mModelAdmin.SimpleGraphs.SimpleGraphsEditables = new Dictionary<string, string>();
+			mModelAdmin.PageType = ComAdminSemanticElemModel.ComAdminSemanticElemPage.SimpleGraphsEdition;
+			mModelAdmin.SimpleGraphs = new ComAdminEditSimpleGraphs();
+			mModelAdmin.SimpleGraphs.SimpleGraphsEditables = new Dictionary<string, string>();
 
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            mProyTesSemDS = proyCN.ObtenerConfiguracionSemanticaExtraDeProyecto(ProyectoSeleccionado.Clave);
-            proyCN.Dispose();
+			ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+			mProyTesSemDS = proyCN.ObtenerConfiguracionSemanticaExtraDeProyecto(ProyectoSeleccionado.Clave);
+			proyCN.Dispose();
 
-            foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Tipo.Equals((short)TipoConfigExtraSemantica.GrafoSimple)).ToList())
-            {
-                if (!mModelAdmin.SimpleGraphs.SimpleGraphsEditables.ContainsKey(filaConfig.SourceTesSem))
-                {
-                    mModelAdmin.SimpleGraphs.SimpleGraphsEditables.Add(filaConfig.SourceTesSem, filaConfig.SourceTesSem + " (" + UtilCadenas.ObtenerTextoDeIdioma(filaConfig.Nombre, UtilIdiomas.LanguageCode, null) + ")");
-                }
-            }
-        }
+			foreach (ProyectoConfigExtraSem filaConfig in mProyTesSemDS.ListaProyectoConfigExtraSem.Where(proy => proy.Tipo.Equals((short)TipoConfigExtraSemantica.GrafoSimple)).ToList())
+			{
+				if (!mModelAdmin.SimpleGraphs.SimpleGraphsEditables.ContainsKey(filaConfig.SourceTesSem))
+				{
+					mModelAdmin.SimpleGraphs.SimpleGraphsEditables.Add(filaConfig.SourceTesSem, filaConfig.SourceTesSem + " (" + UtilCadenas.ObtenerTextoDeIdioma(filaConfig.Nombre, UtilIdiomas.LanguageCode, null) + ")");
+				}
+			}
+		}
 
-        #endregion
+		#endregion
 
-    }
+	}
 }

@@ -2,6 +2,7 @@
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
@@ -12,13 +13,16 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,12 +36,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// Controlador de la página de de modificar la consultas SPARQL de la tabla ProyectoSearchPersonalizado
     /// </summary>
-    public class AdministrarParametrosBusquedaPersonalizadosController : ControllerBaseWeb
-    {
-        public AdministrarParametrosBusquedaPersonalizadosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarParametrosBusquedaPersonalizadosController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarParametrosBusquedaPersonalizadosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarParametrosBusquedaPersonalizadosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
-            proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, servicesUtilVirtuosoAndReplication);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
         }
 
         #region Miembros
@@ -54,8 +62,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados } })]
+		public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -74,9 +82,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult CrearLoadModal()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados } })]
+		public ActionResult CrearLoadModal()
         {
             // Creo un parámetro "nuevo/vacío" para la construcción correcta posterioro del modal
             ParametroBusquedaPersonalizadoModel param = new ParametroBusquedaPersonalizadoModel();
@@ -90,9 +97,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="ListaPestanyas"></param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Guardar(List<ParametroBusquedaPersonalizadoModel> ListaPestanyas)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+		public ActionResult Guardar(List<ParametroBusquedaPersonalizadoModel> ListaPestanyas)
         {
             GuardarLogAuditoria();
             bool iniciado = false;
@@ -117,7 +124,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                     }
                 }
-                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 proyCL.InvalidarFilaProyecto(ProyectoSeleccionado.Clave);
                 proyCL.Dispose();
                 mGnossCache.VersionarCacheLocal(ProyectoSeleccionado.Clave);

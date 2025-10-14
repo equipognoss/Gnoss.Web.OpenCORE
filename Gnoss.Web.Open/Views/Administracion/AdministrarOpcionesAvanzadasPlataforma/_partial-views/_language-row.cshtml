@@ -1,0 +1,73 @@
+﻿@model string
+@{
+    string languageKey = Model.Split("|")[0];
+    string languageValue = Model.Split("|")[1];
+    string languageData = $"{languageKey}|{languageValue}";
+    bool defaulLanguage = Model.Contains("default");
+    bool selectedLanguage = Model.Contains("checked");
+    bool customLanguage = Model.Contains("custom");
+    string estilos = "mr-3 mt-2 pt-1";
+    if (customLanguage)
+    {
+        estilos = "mt-3 pt-1";
+    }
+}
+<li class="component-wrap @(customLanguage ? "custom-language-row": "language-row")" data-language="@languageData">
+    <div class="component">
+        <div class="component-header-wrap">
+            <div class="component-header">
+                <div class="component-header-content">
+                    <div class="component-header-left">
+                        <div class="component-name-wrap">
+                            <span class="@(customLanguage ? "component-customLanguageName": "component-LanguageName")">@languageValue</span>
+                        </div>
+                    </div>
+                    <div class="component-header-right">
+                        <div class="component-actions-wrap">
+                            <ul class="no-list-style component-actions">
+                                <li class="align-self-center @(customLanguage ? "pt-2" : "")">
+                                    <input type="radio"
+                                           name="defaultLanguage"
+                                           data-language="@languageData"
+                                           class="form-check-input m-0"
+                                    @(selectedLanguage ? "" : customLanguage ? "" : "disabled")
+                                    @(defaulLanguage ? "checked" : "") />
+                                </li>
+                                <li>
+                                    <div class="custom-control custom-checkbox @estilos">
+                                        <input type="checkbox"
+                                               id="languageOption-@languageKey"
+                                               data-language="@languageData"
+                                               class="custom-control-input languageOption position-static"
+                                        @(selectedLanguage ? "checked" : customLanguage ? "disabled checked" : "") 
+                                        />
+                                        <label class="custom-control-label" for="languageOption-@languageKey"></label>
+                                    </div>
+                                </li>
+                                @if (customLanguage)
+                                {
+                                    <li class="align-self-center">
+                                        <a class="action-edit round-icon-button js-action-edit-component btnEditCustomLanguageRow collapsed"
+                                           data-toggle="modal"
+                                           data-target="#modal-add-language"
+                                           role="button"
+                                           aria-expanded="false">
+                                            <span class="material-icons">edit</span>
+                                        </a>
+                                    </li>
+                                    <li class="align-self-center">
+                                        <a class="action-delete round-icon-button js-action-delete btnDeleteCustomLanguage"
+                                           href="javascript: void(0);">
+                                            <span class="material-icons">delete</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+

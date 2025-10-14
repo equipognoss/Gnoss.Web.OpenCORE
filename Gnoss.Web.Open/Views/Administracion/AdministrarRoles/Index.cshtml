@@ -1,0 +1,269 @@
+﻿@model AdministrarRolesViewModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    bool esEcosistema = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+    int numRoles = Model.ListaRoles.Count;
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+    int contNumPestanyasVisibles = 0;
+    // Nº de pestañas de idiomas a visualizar en la sección Tab
+    int numMaxPestanyasIdiomasVisibles = 2;
+    string idiomas = "";
+    foreach (string idiomaKey in Model.ListaIdiomas.Keys)
+    {
+        idiomas += $"{idiomaKey}|{Model.ListaIdiomas[idiomaKey]}&&&";
+    }
+}
+
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" value="@Model.IdiomaPorDefecto" id="idiomaDefecto" />
+<input type="hidden" value="@(esEcosistema ? "true" : "false")" id="esEcosistema" />
+
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        @if (!esEcosistema)
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+            <li>
+                <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD")</a>
+            </li>
+        }
+        else
+        {
+            <li>
+                <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARECOSISTEMAHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+            </li>
+        }
+        <li>
+            @Html.GetText("DEVTOOLS", "ROLESYPERMISOS")
+        </li>
+    </ul>
+    @* Botón de documentación *@
+    <div class="col-breadcrumb__documentation" style="display: flex; align-items: center;">
+        <button type="button" class="btn btn-light border rounded-pill shadow-sm mb-1" data-toggle="modal" data-target="#right_modal_lg">
+            <span class="material-icons texto-primario documentation__icon" data-toggle="modal" data-target="#right_modal_lg" style="cursor:pointer">description</span>
+            <span class="documentation__text" style="font-weight: 300;">@Html.GetText("DEVTOOLS", "DOCUMENTACION")</span>
+        </button>
+    </div>
+</div>
+
+<div class="formulario-edicion background-blanco">
+    @* Panel de idiomas *@	
+    @if (Html.ObtenerEdicionMultiIidoma())
+    {
+        <ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasRoles" role="tablist">
+            @* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
+            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+            {
+                if (contNumPestanyasVisibles < numMaxPestanyasIdiomasVisibles)
+                {
+                    <li class="nav-item" role="presentation">
+                        <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                           id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                           data-language="@idioma.Key"
+                           role="tab"
+                           aria-selected="@(contNumPestanyasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                    </li>
+                    contNumPestanyasVisibles += 1;
+                }
+            }
+            @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+            @if (contNumPestanyasVisibles < cabecera.Languajes.Count)
+            {
+                @* Dropdown para resto de categorías *@
+                <li class="nav-item">
+                    <div class="dropdown">
+                        @* Desplegable del dropdown *@
+                        <a class="nav-link dropdown-toggle"
+                           data-toggle="dropdown"
+                           href="#"
+                           role="button"
+                           aria-haspopup="true"
+                           aria-expanded="false">@Html.GetText("DEVTOOLS", "OTROSIDIOMAS")</a>
+                        @* Sección para mostrar items del dropdown*@
+                        <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+                            <ul class="no-list-style">
+                                @* Pintado del resto de pestanyas en Dropdown *@									
+                                        @for (int i = contNumPestanyasVisibles; i < cabecera.Languajes.Count; i++)
+                                {
+                                    var item = cabecera.Languajes.ElementAt(i);
+                                    var itemKey = item.Key;
+                                    var itemValue = item.Value;
+
+                                    @* Cada item del dropdown *@
+                                    <li role="presentation">
+                                        <a id="@("ver_paginas_" + itemKey)"
+                                           class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+                                           data-toggle="tab"
+                                           href="#@("litVer" + itemKey)"
+                                           data-language="@itemKey">
+                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        KeyValuePair<string, string>
+        idioma = new KeyValuePair<string, string>
+        ("es", "español");
+        <ul class="nav nav-tabs" id="tabIdiomasPaginas" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
+                   data-language="@idioma.Key"
+                   role="tab"
+                   aria-selected="@(contNumPestanyasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+            </li>
+        </ul>
+    }
+
+    <div class="tab-content">
+        <div id="panelListadoRoles"
+             class="tab-pane fade show active"
+             role="tabpanel"
+             aria-labelledby="panelListadoRoles">
+            <div class="row">
+                @* Título de la sección de roles + Nº de roles *@
+                <div class="col col-12 header-listado">
+                    <div class="h1-container">
+                        <h1>
+                            @Html.GetText("DEVTOOLS", "ROLESYPERMISOS")
+                            <span id="numRoles" class="numResultados">@numRoles</span>
+                        </h1>
+                    </div>
+                    @* Botón para crear un rol *@						
+                    <div class="acciones d-flex align-items-center">
+                        <a class="btn btn-outline-primary dropdown-toggle no-flecha"
+                           id="btnNuevoRol"
+                           data-toggle="modal"
+                           data-target="#modal-nuevo-rol"
+                           aria-haspopup="true"
+                           aria-expanded="true">
+                            <span class="material-icons">add</span>
+                            <span>@Html.GetText("DEVTOOLS", "NUEVOROL")</span>
+                        </a>
+                    </div>
+                </div>
+                @* Buscador de roles *@
+                <div class="col col-12 header-buscador">
+                    <div class="wrapCol">
+                        <div class="col-buscador" style="width: 100%">
+                            @* Formulario para búsquedas de roles *@
+                            <form id="formBuscadorRoles" onsubmit="return false;">
+                                <div class="finderUtils" id="divCajaBusqueda">
+                                    <div class="group finderSection">
+                                        @* Input para realizar la búsqueda de roles *@
+                                        <input type="text"
+                                               id="txtBuscarRol"
+                                               class="not-outline finderSectionText"
+                                               autocomplete="off"
+                                               placeholder="@Html.GetText("DEVTOOLS", "BUSCARENLASECCION")" />
+                                        @* Botón para realizar la búsqueda *@
+                                        <input title="Buscar"
+                                               type="button"
+                                               class="findAction"
+                                               id="inputLupa" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Tabla *@
+            <div class="col col-12 col-contenido">
+                <div class="wrapCol">
+                    @* Header *@
+                    <ul id="id-roles-list" class="header-component-list component-list no-list-style">
+                        <li class="component-wrap">
+                            <div class="component">
+                                <div class="component-header-wrap">
+                                    <div class="component-header">
+                                        <div class="component-header-content">
+                                            <div class="component-header-left">
+                                                <div class="component-name component-w-20">
+                                                    <span class="component-name">@Html.GetText("ADMINISTRACIONBASICA", "NOMBRE")</span>
+                                                </div>
+                                                <div class="component-descripcion component-w-60">
+                                                    <span class="component-descripcion">@Html.GetText("DEVTOOLS", "DESCRIPCION")</span>
+                                                </div>
+                                                <div class="component-tipo component-w-15">
+                                                    <span class="component-tipo">@Html.GetText("DEVTOOLS", "AMBITO")</span>
+                                                </div>
+                                                <div class="component-fecha component-w-15">
+                                                    <span class="component-fecha">@Html.GetText("COMMON", "FECHA")</span>
+                                                </div>
+                                            </div>
+                                            <div class="component-header-right">
+                                                <div class="component-actions-wrap">
+                                                    <span>@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    @* Contenido de roles *@
+                    <ul id="js-community-roles-list" class="js-community-roles-list component-list no-list-style ui-sortable edicionObjetos">
+                        @foreach (RolModel rol in Model.ListaRoles)
+                        {
+                            @Html.PartialView("_partial-views/_FilaRol", rol)
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @if (!esEcosistema)
+        {
+            <br />
+            <div id="panDescargaDoc">
+                <h3>@Html.GetText("COMADMIN", "DESCARGAFICH")</h3>
+                <div class="form-group mb-5">
+                    <div class="custom-control custom-checkbox">
+                        <input id="chkPermitirUsuNoLoginDescargDoc"
+                               class="custom-control-input"
+                               type="checkbox"
+                               @(Model.PermitirDescargarDocUsuInvitado ? "checked=\"checked\"" : "")>
+                        <label class="custom-control-label" for="chkPermitirUsuNoLoginDescargDoc">@Html.GetText("COMADMIN", "PERMITIRDESCARCHUSUNOLOGIN")</label>
+                    </div>
+                </div>
+                <div class="panelBotonera">
+                    <a id="btnGuardarPermitirDescargar" class="btn btn-primary uppercase btnGuardarPermitirDescargar">@Html.GetText("COMMON", "GUARDAR")</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@Html.PartialView("_modal-views/_documentation-section")
+@Html.PartialView("_modal-views/_new-rol")
+@Html.PartialView("_modal-views/_see-rol")
+@Html.PartialView("_modal-views/_edit-rol")
+@Html.PartialView("_modal-views/_remove-member-confirmation")
+
+@section operativaScript {
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript">
+
+        (function ($) {
+
+            operativaGestionDeRoles.init();
+
+        })();
+
+
+    </script>
+}

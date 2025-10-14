@@ -243,6 +243,12 @@ const operativaGestionVistas = {
             that.filaVista = undefined;                 
         });
 
+        // Comportamiento del modal para editar/crear un componente personalizado 
+        $(`.${this.modalUploadViewClassName}`).on('hidden.bs.modal', (e) => {
+            that.filaVista = undefined;
+        });
+
+
         // Botón para Sobreescribir la vista original (fila)                        
         configEventByClassName(`${that.btnUploadOriginalVistaClassName}`, function(element){
             const $jqueryElement = $(element);
@@ -937,7 +943,7 @@ const operativaGestionVistas = {
             },1000); 
         }).fail(function (response) {            
             // KO
-            mostrarNotificacion("error", "Se ha producido un error al tratar de guardar los cambios. Contacta con el administrador");
+            mostrarNotificacion("error", response);
         }).always(function () {
             // Ocultar loading de la petición
             loadingOcultar();

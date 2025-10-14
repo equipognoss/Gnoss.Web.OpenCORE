@@ -23,6 +23,7 @@ Variables
 	// Nombre de la faceta activa. Por defecto "Faceta"
 	string facetaName = Html.GetText("COMADMINFACETAS", "FACETA");
 	string currentActiveFacet = "";
+	bool comparando = ViewBag.ComparandoPestanya ?? false;
 }
 
 @*
@@ -33,11 +34,10 @@ Variables
 
 @foreach (var p in listaFacetasPestanya)
 {
-
 	@* Obtener el nombre de la faceta activa *@
 	@foreach (FacetaModel faceta in listadoFacetas)
 	{
-		if (faceta.ClaveFaceta.Equals(p.Faceta))
+		if (faceta.ClaveFaceta.Equals(p.Faceta) || (!string.IsNullOrEmpty(faceta.ClaveFacetaYReprocidad) && faceta.ClaveFacetaYReprocidad.Equals(p.Faceta)))
 		{
 			currentActiveFacet = Html.ObtenerTextoIdiomaUsuario(faceta.Name);
 		}
@@ -47,6 +47,14 @@ Variables
 	@* Generar id automáticos para cada faceta *@
 	Guid facetId = @Guid.NewGuid();	
 	collapseId = "panel_collapse_" + facetId.ToString().Substring(0,5);
+
+	string checkedSi = string.Empty;
+	string checkedNo = "checked";
+	if (p.AutocompletarEnriquecido)
+	{
+		checkedSi = "checked";
+		checkedNo = string.Empty;
+	}
 
 	<li class="component-wrap facet-row" data-facetkey="@facetId" data-collapseid="@collapseId">
 		<div class="component">
@@ -87,11 +95,14 @@ Variables
 										</a>
 									</li>
 									<li>
-										@* Acción de borrar el filtro *@
-										<a class="action-delete round-icon-button js-action-delete btnDeleteFacet"
-											href="javascript: void(0);">
-											<span class="material-icons">delete</span>
-										</a>
+										@if (!comparando)
+										{
+											@* Acción de borrar el filtro *@
+											<a class="action-delete round-icon-button js-action-delete btnDeleteFacet"
+											   href="javascript: void(0);">
+												<span class="material-icons">delete</span>
+											</a>
+										}
 									</li>
 								</ul>
 							</div>
@@ -137,7 +148,7 @@ Variables
 					<select class="selectObjetosConocimiento cmbListaOC js-select2" 
 							name="ListaOC">
 						@{
-							foreach (string objetoConocimiento in listadoFacetas.Where(x => x.ClaveFaceta.Equals(p.Faceta)).First().ObjetosConocimiento)
+							foreach (string objetoConocimiento in listadoFacetas.Where(x => x.ClaveFaceta.Equals(p.Faceta) || (!string.IsNullOrEmpty(x.ClaveFacetaYReprocidad) && x.ClaveFacetaYReprocidad.Equals(p.Faceta))).First().ObjetosConocimiento)
 							{
 								if (objetoConocimiento.Equals(p.ObjetoConocimiento))
 								{
@@ -151,6 +162,19 @@ Variables
 						}
 						
 					</select>			
+				</div>
+
+				@* Incluir valores de la faceta en el autocompletar *@
+				<div class="form-group mb-2">
+					<label class="control-label d-block">@Html.GetText("DEVTOOLS", "AUTOCOMPLETADOFACETAPAGINA")</label>
+					<div class="form-check form-check-inline">
+						<input class="form-check-input IncluirFacetaEnAutocompletar" type="radio" name="IncluirFacetaEnAutocompletar_@facetId" data-value="si" @checkedSi id="IncluirFacetaEnAutocompletar_SI_@facetId">
+						<label class="form-check-label" for="IncluirFacetaEnAutocompletar_SI_@facetId">Sí</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<input class="form-check-input IncluirFacetaEnAutocompletar" type="radio" name="IncluirFacetaEnAutocompletar_@facetId" data-value="no" @checkedNo id="IncluirFacetaEnAutocompletar_NO_@facetId">
+						<label class="form-check-label" for="IncluirFacetaEnAutocompletar_NO_@facetId">No</label>
+					</div>
 				</div>
 
 				@* Select de objetos de conocimiento hidden para la faceta *@

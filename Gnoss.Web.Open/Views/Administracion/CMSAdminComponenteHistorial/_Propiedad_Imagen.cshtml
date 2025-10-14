@@ -1,0 +1,40 @@
+﻿@model CMSAdminPropiedadComponenteViewModel
+
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato Imagen. Se podrá subir al servidor una imagen 
+la cual se añadirá al componente.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.Propiedad.TipoPropiedadCMS);
+    string valorPropiedad = Model.Propiedad.Value;
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+        valorPropiedad = Html.ObtenerTextoDeIdioma(Model.Propiedad.Value, idiomaPanel, null, true);
+    }
+
+    string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.Propiedad.TipoPropiedadCMS);
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo Imagen --------------------
+*@
+
+
+<div id="contenedorPrincipal_@idPanel" class="form-group d-flex pb-5 flex-column @(Model.DiferenciasPropiedadesCMS[idiomaPanel] ? "error" : "")">
+    @* Título del componente *@
+    <label class="control-label d-block">
+        @Html.GetText("DEVTOOLS","IMAGEN")@(Model.Propiedad.Required ? " *" : "")</label>
+    @* Contenedor para el input y botón de subida de fichero adjunto *@
+    <input type="text" class="form-control" placeholder="@Html.GetText("DEVTOOLS", "IMAGEN")" name="imagen" value="@valorPropiedad">
+</div>

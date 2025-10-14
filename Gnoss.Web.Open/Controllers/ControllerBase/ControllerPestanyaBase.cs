@@ -10,26 +10,29 @@ using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.Tesauro;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Tesauro;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Exportaciones;
 using Es.Riam.Gnoss.Web.Controles.Facetas;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Metagnoss.ExportarImportar;
 using Es.Riam.Util;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -44,21 +47,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         protected GestionTesauro mGestorTesauroProyectoActual;
         private UtilSemCms mUtilSemCms;
-        private SemCmsController mSemCmsController;
         private UtilExportaciones mUtilExportaciones;
         private UtilServiciosFacetas mUtilServiciosFacetas;
         private ControladorFacetas mControladorFacetas;
-
-        protected ControllerPestanyaBase(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        protected ControllerPestanyaBase(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerPestanyaBase> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public void OnActionExecuting(ActionExecutingContext filterContext, bool pOmitirRedireccionAPrimeraPagina)
         {
             if (ProyectoSeleccionado == null)
             {
-                filterContext.Result = Redirect("/error?errorCode=404&lang=" + RequestParams("lang") + "&urlAcceso=" + "/comunidad/" + RequestParams("nombreProy"));
+                filterContext.Result = Redirect($"/error?errorCode=404&lang={RequestParams("lang")}&urlAcceso=/comunidad/{RequestParams("nombreProy")}");
                 return;
             }
 
@@ -79,7 +84,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (ProyectoPestanyaActual != null)
             {
-                ViewBag.BodyClassPestanya = ProyectoPestanyaActual.CSSBodyClassPestanya;                
+                ViewBag.BodyClassPestanya = ProyectoPestanyaActual.CSSBodyClassPestanya;
                 ViewBag.MetaDescriptionPestanya = UtilCadenas.ObtenerTextoDeIdioma(ProyectoPestanyaActual.MetaDescription, IdiomaUsuario, "es");
             }
         }
@@ -88,9 +93,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             get
             {
-                if(mUtilServiciosFacetas == null)
+                if (mUtilServiciosFacetas == null)
                 {
-                    mUtilServiciosFacetas = new UtilServiciosFacetas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    mUtilServiciosFacetas = new UtilServiciosFacetas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UtilServiciosFacetas>(), mLoggerFactory);
                 }
                 return mUtilServiciosFacetas;
             }
@@ -100,9 +105,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             get
             {
-                if(mUtilExportaciones == null)
+                if (mUtilExportaciones == null)
                 {
-                    mUtilExportaciones = new UtilExportaciones(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mServicesUtilVirtuosoAndReplication);
+                    mUtilExportaciones = new UtilExportaciones(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UtilExportaciones>(), mLoggerFactory);
                 }
                 return mUtilExportaciones;
             }
@@ -117,9 +122,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             get
             {
-                if(mControladorFacetas == null)
+                if (mControladorFacetas == null)
                 {
-                    mControladorFacetas = new ControladorFacetas(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService);
+                    mControladorFacetas = new ControladorFacetas(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mLoggerFactory.CreateLogger<ControladorFacetas>(), mLoggerFactory);
                 }
                 return mControladorFacetas;
             }
@@ -129,9 +134,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             get
             {
-                if(mUtilSemCms == null)
+                if (mUtilSemCms == null)
                 {
-                    mUtilSemCms = new UtilSemCms(mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    mUtilSemCms = new UtilSemCms(mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UtilSemCms>(), mLoggerFactory);
                 }
                 return mUtilSemCms;
             }
@@ -139,15 +144,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private ActionResult RedirigirAPrimeraPagina()
         {
-            //if (ParametrosGeneralesRow.PestanyaRecursosVisible)
-            //{
-            //    Response.Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "RECURSOS"));
-            //}
             if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
             {
                 return new RedirectResult(BaseURLIdioma);
             }
-            //Where("PestanyaPadreID IS NULL", "Orden ASC");
+
             List<AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu> filasPestanyas = ProyectoVirtual.GestorProyectos.DataWrapperProyectos.ListaProyectoPestanyaMenu.Where(proy => !proy.PestanyaPadreID.HasValue).OrderBy(proy => proy.Orden).ToList();
             if (filasPestanyas.Count > 0)
             {
@@ -156,7 +157,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu filaPestanya = fila;
                     if (!filaPestanya.TipoPestanya.Equals((short)TipoPestanyaMenu.EnlaceExterno))
                     {
-                        string rutaPestanya = "";
+                        string rutaPestanya = string.Empty;
                         switch (filaPestanya.TipoPestanya)
                         {
                             case (short)TipoPestanyaMenu.Indice:
@@ -188,7 +189,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             rutaPestanya = UtilCadenas.ObtenerTextoDeIdioma(filaPestanya.Ruta, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                         }
-                        return new RedirectResult(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + rutaPestanya);
+
+                        return new RedirectResult($"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto)}/{rutaPestanya}");
                     }
                 }
             }
@@ -209,13 +211,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (ProyectoPestanyaActual != null)
             {
-				ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-				Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+                ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
+                Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
                 Dictionary<string, KeyValuePair<bool, string>> listaEnlacesMultiIdioma = new Dictionary<string, KeyValuePair<bool, string>>();
                 foreach (string idioma in listaIdiomas.Keys)
                 {
-                    Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-                    string rutaComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(utilIdiomasActual, BaseURLIdioma, ProyectoVirtual.NombreCorto);
+                    if(!ParametrosGeneralesRow.IdiomasDisponibles && idioma != IdiomaPorDefecto)
+                    {
+                        continue;
+                    }
+                    Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<Recursos.UtilIdiomas>(), mLoggerFactory);
                     string rutaPestanya = "";
                     switch (ProyectoPestanyaActual.TipoPestanya)
                     {
@@ -244,27 +249,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             rutaPestanya = utilIdiomasActual.GetText("URLSEM", "BUSQUEDAAVANZADA");
                             break;
                         case TipoPestanyaMenu.Comunidades:
+                            rutaPestanya = utilIdiomasActual.GetText("URLSEM", "COMUNIDADES");
+                            break;
                         case TipoPestanyaMenu.Borradores:
                         case TipoPestanyaMenu.Contribuciones:
                             base.CargarEnlacesMultiIdioma();
                             return;
                     }
-                    if (!string.IsNullOrEmpty(ProyectoPestanyaActual.Ruta))
-                    {
-                        rutaPestanya = UtilCadenas.ObtenerTextoDeIdioma(ProyectoPestanyaActual.Ruta, utilIdiomasActual.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
-                    }
-                    if (!string.IsNullOrEmpty(rutaPestanya))
-                    {
-                        rutaComunidad += "/" + rutaPestanya;
-                    }
+
+                    string rutaComunidad = GenerarUrlComunidad(rutaPestanya, utilIdiomasActual);
+
                     bool disponible = true;
-                    if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma))
+                    if (ParametroProyecto.ContainsKey(ParametroAD.PropiedadContenidoMultiIdioma) && !ProyectoPestanyaActual.ListaIdiomasDisponibles(listaIdiomas).Contains(idioma))
                     {
-                        if (!ProyectoPestanyaActual.ListaIdiomasDisponibles(listaIdiomas).Contains(idioma))
-                        {
-                            disponible = false;
-                        }
+                        disponible = false;
                     }
+
                     listaEnlacesMultiIdioma.Add(idioma, new KeyValuePair<bool, string>(disponible, rutaComunidad));
                 }
                 ListaEnlacesMultiIdioma = listaEnlacesMultiIdioma;
@@ -274,23 +274,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ListaEnlacesMultiIdioma = new Dictionary<string, KeyValuePair<bool, string>>();
                 if (RequestParams("Comunidades") != null && RequestParams("Comunidades").Equals("true"))
                 {
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-					List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
+                    List<string> listaIdiomas = paramCL.ObtenerListaIdiomas();
                     foreach (string idioma in listaIdiomas)
                     {
-                        Recursos.UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+                        UtilIdiomas utilIdiomasActual = new UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
                         ListaEnlacesMultiIdioma.Add(idioma, new KeyValuePair<bool, string>(true, $"{BaseURL}/{utilIdiomasActual.GetText("URLSEM", "COMUNIDADES")}"));
                     }
                 }
-
             }
         }
 
         protected override void CargarTituloPagina()
         {
-            string tituloPagina = "";
-            string metaDescripcion = "";
-            ProyectoPestanyaMenu i;
+            string tituloPagina = string.Empty;
+            string metaDescripcion = string.Empty;
 
             if (ProyectoPestanyaActual != null)
             {
@@ -338,10 +336,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (metaDescripcion.Length > 160)
                     {
-                        metaDescripcion = metaDescripcion.Substring(0, 160) + "...";
+                        metaDescripcion = $"{metaDescripcion.Substring(0, 160)}...";
                     }
 
-                    ViewBag.ListaMetas.Add(new KeyValuePair<string, string>("description", metaDescripcion));
+                    ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "description", ContentAttributeValue = metaDescripcion });
                 }
             }
         }
@@ -368,6 +366,32 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         /// <summary>
+        /// Genera la URL de la comunidad para la pestaña actual en el idioma indicado a partir de la ruta de la pestaña
+        /// </summary>
+        /// <param name="pRutaPestanya">Ruta de la pestaña que queremos utilizar para construir la ruta de la comunidad</param>
+        /// <param name="pUtilIdiomas">UtilIdiomas del idioma del cual queremos obtener la URL</param>
+        /// <returns>Devuelve la ruta de la comunidad para la pestaña e idioma indicado</returns>
+        private string GenerarUrlComunidad(string pRutaPestanya, UtilIdiomas pUtilIdiomas)
+        {
+            string rutaComunidad = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(pUtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto); ;
+
+            if (!string.IsNullOrEmpty(ProyectoPestanyaActual.Ruta))
+            {
+                pRutaPestanya = UtilCadenas.ObtenerTextoDeIdioma(ProyectoPestanyaActual.Ruta, pUtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+            }
+            if (!string.IsNullOrEmpty(pRutaPestanya))
+            {
+                rutaComunidad += $"/{pRutaPestanya}";
+            }
+            if (mHttpContextAccessor.HttpContext.Request.QueryString.HasValue)
+            {
+                rutaComunidad += $"{mHttpContextAccessor.HttpContext.Request.QueryString.Value}";
+            }
+
+            return rutaComunidad;
+        }
+
+        /// <summary>
         /// Obtiene el proyecto seleccionado
         /// </summary>
         public ProyectoPestanyaMenu ProyectoPestanyaActual
@@ -386,7 +410,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (mGestorTesauroProyectoActual == null)
                 {
-                    mGestorTesauroProyectoActual = new GestionTesauro(new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                    mGestorTesauroProyectoActual = new GestionTesauro(new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory).ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 return mGestorTesauroProyectoActual;
             }

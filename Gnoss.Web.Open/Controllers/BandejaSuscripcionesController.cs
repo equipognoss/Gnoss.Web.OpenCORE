@@ -5,9 +5,11 @@ using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Suscripcion;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.Live;
+using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Suscripcion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -24,6 +26,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,10 +35,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class BandejaSuscripcionesController : ControllerBaseWeb
     {
-
-        public BandejaSuscripcionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public BandejaSuscripcionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BandejaSuscripcionesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -65,29 +71,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     int numPeticion = int.Parse(RequestParams("numPeticion"));
 
-                    ActividadReciente actividadRecienteController = new ActividadReciente(true, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
+                    ActividadReciente actividadRecienteController = new ActividadReciente(true, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, mAvailableServices, mLoggerFactory.CreateLogger<ActividadReciente>(), mLoggerFactory);
                     return PartialView("ControlesMVC/_ActividadReciente", actividadRecienteController.ObtenerActividadReciente(numPeticion, 10, TipoActividadReciente.Suscripcion, null, false));
                 }
                 return new EmptyResult();
             }
-            ActividadReciente actividadReciente = new ActividadReciente(true, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
+            ActividadReciente actividadReciente = new ActividadReciente(true, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, mAvailableServices, mLoggerFactory.CreateLogger<ActividadReciente>(), mLoggerFactory);
             RecentActivity actividad = null;
 
-            LiveCN liveCN = new LiveCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            LiveCN liveCN = new LiveCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<LiveCN>(), mLoggerFactory);
             liveCN.ResetearContadorNuevasSuscripciones(IdentidadActual.PerfilID);
             liveCN.Dispose();
-
-            //https://riamgnoss.atlassian.net/browse/CORE-3414 No hay un devmyunikemia
             actividad = actividadReciente.ObtenerActividadReciente(1, 10, TipoActividadReciente.Suscripcion, null, false);
-            //if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
-            //{
-            //    actividad = actividadReciente.ObtenerActividadReciente(1, 10, TipoActividadReciente.Suscripcion, null, false);
-            //}
-            //else
-            //{
-            //    actividad = actividadReciente.ObtenerActividadReciente(1, 10, TipoActividadReciente.SuscripcionProyecto, null, false);
-            //}
-
 
             return View(actividad);
         }
@@ -104,9 +99,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<Guid> listaUsuarios = new List<Guid>();
             List<Guid> listaIdentidades = new List<Guid>();
             List<Guid> listaIdsIdentidadesOrg = new List<Guid>();
-            List<Guid> listaIdsBlogs = new List<Guid>();
 
-            SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            SuscripcionCN suscCN = new SuscripcionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SuscripcionCN>(), mLoggerFactory);
             DataWrapperSuscripcion suscDW = suscCN.ObtenerSuscripcionesDePerfil(IdentidadActual.FilaIdentidad.PerfilID, false);
             GestionSuscripcion gestorSuscripciones = new GestionSuscripcion(suscDW, mLoggingService, mEntityContext);
             suscCN.Dispose();
@@ -131,8 +125,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             listaIdentidades.Add(identidadID);
                         }
                         listaUsuarios.Add(UsuarioID);
-                        
-                        //listaUsuarios.Lista.Add(susc);
                         break;
                     case AD.Suscripcion.TipoSuscripciones.Organizacion:
                         Guid organizacionID = ((AD.EntityModel.Models.Suscripcion.SuscripcionTesauroOrganizacion)susc.FilaRelacion).OrganizacionID;
@@ -147,7 +139,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string urlBase = BaseURLIdioma + UrlPerfil;
 
-            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             List<Guid> identidadesMyGnoss = identCN.ObtenerIdentidadesIDPorUsuariosIDEnProyecto(listaUsuarios, ProyectoAD.MetaProyecto).Values.ToList();
             identidadesMyGnoss.AddRange(identCN.ObtenerIdentidadesIDDeMyGNOSSPorIdentidades(listaIdentidades));
             ManageSuscriptionsViewModel paginaModel = new ManageSuscriptionsViewModel();
@@ -157,7 +149,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             paginaModel.Organizations = ControladorProyectoMVC.ObtenerIdentidadesPorID(listaIdsIdentidadesOrg);
 
-            //return View(paginaModel);
             return View("Manage", paginaModel);
         }
     }

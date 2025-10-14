@@ -1,0 +1,61 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Integración continua - Despligues
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    // Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.
+    bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? (bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+    // Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+    bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? (bool.Parse(ViewBag.showDocumentationSection)) : false;
+}
+
+<div class="card">
+    <div class="card-header">
+        @* Título / Botón: Información General *@
+        <h3 class="mb-0">
+            <button class="btn btn-link"
+                    data-toggle="collapse"
+            @((showDocumentationByDefault && !showDocumentationSection) ? "data-target=#administrar-despliegues" : null)
+            @((showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+                    aria-controls="administrar-despliegues">
+                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARDESPLIEGUES")
+            </button>
+        </h3>
+    </div>
+    @* Contenido: Información General *@
+    <div id="administrar-despliegues"
+         class="collapse @( (showDocumentationSection) ? "show" : null)"
+         data-parent="#accordion">
+        <div class="card-body">
+            <p>Desde esta pagina se puede crear una versión nueva como desplegar una existente. La creación de una versión solo se encuentra en el entorno de desarrollo, la de despliegue en un entorno superior se encuentra disponible en "Desarrollo" y "Producción".</p>
+            <h3>Crear versión</h3>
+            <p>Para poder crear una nueva versión primero es necesario la rama en la que nos encontremos trabajando.</p>
+            <p>Una vez cerrada la rama podremos crear una nueva versión, lo que nos permitirá desplegar nuestros cambios en el entorno superior. Para crear una versión lo único que debemos proporcionar es un nombre de versión y pulsar el botón "Crear versión".</p>
+            <div class="text-center">
+                <figure class="figure">
+                    <img class="img-fluid" src="~/img/documentacionDevtools/ic/crear-version.png" />
+                    <figcaption class="figure-caption">Formulario de creación de una versión.</figcaption>
+                </figure>
+            </div>
+            <div class="alert alert-warning" role="alert">
+                <span class="material-icons">warning</span>
+                <p class="titulo"> Recuerda, el nombre de la versión debe tener tres dígitos separados por punto, por ejemplo: "3.5.1".</p>
+            </div>
+            <h3>Desplegar versión</h3>
+            <p>Desplegar una versión permite transferir todos los cambios de la versión a el entrono superior, se puede desplegar tanto la versión en la que te encuentras actualmente como versiones anteriores.</p>
+            <div class="text-center">
+                <figure class="figure">
+                    <img class="img-fluid" src="~/img/documentacionDevtools/ic/dsplegar-version.png" />
+                    <figcaption class="figure-caption">Elegimos la versión y pulsamos en el botón.</figcaption>
+                </figure>
+            </div>
+            <p>Tras elegir una versión y pulsar el botón de desplegar se nos mostrará una página de espera mientras que el despliegue tiene lugar.</p>
+            <p>Una versión se mantiene viva hasta que no cerremos la rama asociada a elle, esta rama tendrá un nombre del estilo “release_x.y.z”, mientras que este activa podremos realizar modificaciones y desplegar todas las veces que necesitemos en preproducción.</p>
+            <p> Sin embargo, si la desplegamos en producción la versión se cerrara automáticamente.</p>
+        </div>
+    </div>
+</div>

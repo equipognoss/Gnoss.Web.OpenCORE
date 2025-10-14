@@ -33,6 +33,9 @@ using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
 using Es.Riam.Gnoss.AD.Cookie;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Es.Riam.Gnoss.Elementos.Amigos;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -157,8 +160,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// Controlador de administrar cookies
     /// </summary>
-    public class AdministrarCookiesController : ControllerBaseWeb
-    {
+    public class AdministrarCookiesController : ControllerAdministrationWeb
+	{
         private AdministrarCookiesViewModel mPaginaModel = null;
         private UtilIdiomas utilIdiomasEspanyol = null;
         private UtilIdiomas utilIdiomasCatalan = null;
@@ -169,19 +172,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private UtilIdiomas utilIdiomasGallego = null;
         private UtilIdiomas utilIdiomasEuskera = null;
         private UtilIdiomas utilIdiomasPortugues = null;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
-        public AdministrarCookiesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public AdministrarCookiesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarCookiesController> logger, ILoggerFactory loggerFactory)
+             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
-            utilIdiomasEspanyol = new UtilIdiomas("es", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasCatalan = new UtilIdiomas("ca", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasIngles = new UtilIdiomas("en", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasAleman = new UtilIdiomas("de", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasItaliano = new UtilIdiomas("it", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasFrances = new UtilIdiomas("fr", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasGallego = new UtilIdiomas("gl", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasEuskera = new UtilIdiomas("eu", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
-            utilIdiomasPortugues = new UtilIdiomas("pt", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            utilIdiomasEspanyol = new UtilIdiomas("es", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasCatalan = new UtilIdiomas("ca", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasIngles = new UtilIdiomas("en", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasAleman = new UtilIdiomas("de", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasItaliano = new UtilIdiomas("it", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasFrances = new UtilIdiomas("fr", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasGallego = new UtilIdiomas("gl", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasEuskera = new UtilIdiomas("eu", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
+            utilIdiomasPortugues = new UtilIdiomas("pt", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
         }
 
         /// <summary>
@@ -189,8 +196,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult Index()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -214,12 +221,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public bool CrearCookiesTecnicasDelProyecto()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public bool CrearCookiesTecnicasDelProyecto()
         {
             try
             {
-                CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
                 cookieCN.CrearCookiesInicialesProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.Organizacion.Clave);
 
                 EliminarPersonalizacionVistas();
@@ -238,9 +245,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult PintarCookiesMetaproyecto()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public ActionResult PintarCookiesMetaproyecto()
         {
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             List<ProyectoCookie> listaCookiesProyecto = cookieCN.ObtenerCookiesDeProyecto(new Guid("11111111-1111-1111-1111-111111111111"));
             List<CategoriaProyectoCookie> listaCategoriaCookiesMetaproyecto = cookieCN.ObtenerCategoriasProyectoCookie(new Guid("11111111-1111-1111-1111-111111111111"));
 
@@ -258,9 +266,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult PintarCategoriasCookiesMetaproyecto()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public ActionResult PintarCategoriasCookiesMetaproyecto()
         {
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             List<CategoriaProyectoCookie> listaCategoriaCookiesMetaproyecto = cookieCN.ObtenerCategoriasProyectoCookie(new Guid("11111111-1111-1111-1111-111111111111"));
 
             List<CategoriaCookieModel> listaCategoriaCookieModel = new List<CategoriaCookieModel>();
@@ -279,9 +288,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Categoria"></param>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult AddCookie(string Categoria)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public ActionResult AddCookie(string Categoria)
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             ProyectoCookie cookie = new ProyectoCookie();
             string[] categoria = Categoria.Split('_');
             cookie.CategoriaID = new Guid(categoria[0]);
@@ -308,15 +318,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult PintarCookiesAnaliticas()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public ActionResult PintarCookiesAnaliticas()
         {
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             if (!cookieCN.ExistenCookiesAnaliticas())
             {
                 CategoriaProyectoCookie categoriaGoogleAnalytics = cookieCN.ObtenerCategoriaPorNombreCorto("Analiticas", ProyectoSeleccionado.Clave);
                 if (categoriaGoogleAnalytics == null)
                 {
-                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     categoriaGoogleAnalytics = new CategoriaProyectoCookie();
                     categoriaGoogleAnalytics.ProyectoID = ProyectoSeleccionado.Clave;
                     categoriaGoogleAnalytics.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoriaGoogleAnalytics.ProyectoID);
@@ -343,15 +354,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult PintarCookiesYoutube()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public ActionResult PintarCookiesYoutube()
         {
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             if (!cookieCN.ExistenCookiesYoutube())
             {
                 CategoriaProyectoCookie categoriaRedesSociales = cookieCN.ObtenerCategoriaPorNombreCorto("Redes sociales", ProyectoSeleccionado.Clave);
                 if (categoriaRedesSociales == null)
                 {
-                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     categoriaRedesSociales = new CategoriaProyectoCookie();
                     categoriaRedesSociales.ProyectoID = ProyectoSeleccionado.Clave;
                     categoriaRedesSociales.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoriaRedesSociales.ProyectoID);
@@ -379,16 +391,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="ListaCookies"></param>
         [HttpPost]
-        public void SaveCookies(CookieEditModel[] ListaCookies)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public void SaveCookies(CookieEditModel[] ListaCookies)
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            List<CookiesModel> lista = new List<CookiesModel>();
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
+            DateTime fechaActual = DateTime.Now;
 
             foreach (CookieEditModel cookieProyecto in ListaCookies)
             {
                 CookiesModel cookieModel = new CookiesModel();
-
                 bool esEliminada = false;
                 if (cookieProyecto.Deleted != null && bool.Parse(cookieProyecto.Deleted))
                 {
@@ -418,6 +430,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     proyectoCookie.EsEditable = !EsCookieTecnica(cookieProyecto.Nombre);
                     proyectoCookie.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(proyectoCookie.ProyectoID);
                     proyectoCookie.Tipo = ObtenerTipoPorNombre(cookieProyecto.Tipo);
+                    proyectoCookie.FechaCreacion = fechaActual;
+                    proyectoCookie.FechaActualizacion = fechaActual;
                     mEntityContext.ProyectoCookie.Add(proyectoCookie);
                     cookieProyecto.CookieID = proyectoCookie.CookieID.ToString();
                 }
@@ -426,12 +440,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     proyectoCookie.CategoriaID = new Guid(cookieProyecto.Categoria);
                     proyectoCookie.Descripcion = cookieProyecto.Descripcion;
                     proyectoCookie.Nombre = cookieProyecto.Nombre;
+                    proyectoCookie.FechaActualizacion = fechaActual;
                 }
                 else if (esEliminada)
                 {
                     mEntityContext.ProyectoCookie.Remove(proyectoCookie);
                 }
-
                 if (proyectoCookie != null)
                 {
                     CategoriaProyectoCookie categoriaProyectoCookie = ObtenerCategoriaDeCookie(proyectoCookie.CategoriaID);
@@ -446,7 +460,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     cookieModel.Descripcion = proyectoCookie.Descripcion;
                     cookieModel.Nombre = proyectoCookie.Nombre;
                     cookieModel.Tipo = proyectoCookie.Tipo;
-                    lista.Add(cookieModel);
+                    cookieModel.FechaModificacion = fechaActual;
                 }
             }
             mEntityContext.SaveChanges();
@@ -493,6 +507,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     cookieModel.Deleted = esEliminada;
                     cookieModel.EsModificada = esEditada;
                     cookieModel.Descripcion = cookie.Descripcion;
+                    cookieModel.FechaCreacion = cookieModel.FechaCreacion;
+                    cookieModel.FechaModificacion = cookieModel.FechaModificacion;
 
                     if (!categoriasYCookies.Cookies.Contains(cookieModel))
                     {
@@ -533,10 +549,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="ListaCategorias">Lista de categorías a guardar en base de datos</param>
         [HttpPost]
-        public void SaveCategories(CategoryEditModel[] ListaCategorias)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public void SaveCategories(CategoryEditModel[] ListaCategorias)
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             foreach (CategoryEditModel categoriaCookie in ListaCategorias)
             {
                 bool esEliminada = false;
@@ -588,7 +605,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             mEntityContext.SaveChanges();
 
-            CookieCL cookieCL = new CookieCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CookieCL cookieCL = new CookieCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCL>(), mLoggerFactory);
             cookieCL.InvalidarCategoriaProyectoCookie(ProyectoSeleccionado.Clave);
 
             // TODO: IC
@@ -653,6 +670,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         cookieModel.OrganizacionID = cookie.OrganizacionID;
                         cookieModel.EsModificada = false;
                         cookieModel.Tipo = cookie.Tipo;
+                        cookieModel.FechaCreacion = cookie.FechaCreacion;
+                        cookieModel.FechaModificacion = cookie.FechaActualizacion;
 
                         if (!categoriasYCookies.Cookies.Contains(cookieModel))
                         {
@@ -674,9 +693,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public ActionResult AddCategory() 
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		public ActionResult AddCategory() 
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CategoriaProyectoCookie categoriaProyectoCookie = new CategoriaProyectoCookie();
             categoriaProyectoCookie.CategoriaID = Guid.NewGuid();
             categoriaProyectoCookie.Descripcion = "Descripcion";
@@ -685,6 +705,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             categoriaProyectoCookie.NombreCorto = "";
             categoriaProyectoCookie.ProyectoID = ProyectoSeleccionado.Clave;
             categoriaProyectoCookie.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoriaProyectoCookie.ProyectoID);
+            // Añadir campos fechas cuando se realice la migracion
 
             CategoriaCookieModel categoriaCookieModel = new CategoriaCookieModel();
             categoriaCookieModel.CategoriaProyectoCookie = categoriaProyectoCookie;
@@ -700,38 +721,39 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         private List<CookieModel> GenerarCookiesAnaliticas(Guid pCategoriaID)
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DateTime fechaActual = DateTime.Now;
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             Guid organizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(ProyectoSeleccionado.Clave);
             List<CategoriaProyectoCookie> listaCategoriasCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
 
             List<CookieModel> listaCookiesAnaliticas = new List<CookieModel>();
 
-            ProyectoCookie cookieGa = new ProyectoCookie() { Nombre = "_ga", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Distinguir a los usuarios para análisis de uso: Habilita la función de control de visitas únicas. La primera vez que un usuario entre en la web se instalará esta cookie. Cuando este usuario vuelva a entrar con el mismo navegador la cookie considerará que es el mismo usuario.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieGa = new ProyectoCookie() { Nombre = "_ga", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Distinguir a los usuarios para análisis de uso: Habilita la función de control de visitas únicas. La primera vez que un usuario entre en la web se instalará esta cookie. Cuando este usuario vuelva a entrar con el mismo navegador la cookie considerará que es el mismo usuario.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelGa = new CookieModel() { ProyectoCookie = cookieGa, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesAnaliticas.Add(cookieModelGa);
 
-            ProyectoCookie cookieUtma = new ProyectoCookie() { Nombre = "__utma", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Distinguir a los usuarios para análisis de uso: Habilita la función de control de visitas únicas. La primera vez que un usuario entre en la web se instalará esta cookie. Cuando este usuario vuelva a entrar con el mismo navegador la cookie considerará que es el mismo usuario.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieUtma = new ProyectoCookie() { Nombre = "__utma", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Distinguir a los usuarios para análisis de uso: Habilita la función de control de visitas únicas. La primera vez que un usuario entre en la web se instalará esta cookie. Cuando este usuario vuelva a entrar con el mismo navegador la cookie considerará que es el mismo usuario.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelUtma = new CookieModel() { ProyectoCookie = cookieUtma, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesAnaliticas.Add(cookieModelUtma);
 
-            ProyectoCookie cookieUtmt = new ProyectoCookie() { Nombre = "__utmt", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para limitar el porcentaje de solicitudes.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieUtmt = new ProyectoCookie() { Nombre = "__utmt", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para limitar el porcentaje de solicitudes.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelUtmt = new CookieModel() { ProyectoCookie = cookieUtmt, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesAnaliticas.Add(cookieModelUtmt);
 
-            ProyectoCookie cookieUtmb = new ProyectoCookie() { Nombre = "__utmb", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para determinar nuevas sesiones o visitas. La cookie se crea cuando se ejecuta la biblioteca de JavaScript y no hay ninguna cookie __utmb. La cookie se actualiza cada vez que se envían datos a Google Analytics.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieUtmb = new ProyectoCookie() { Nombre = "__utmb", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para determinar nuevas sesiones o visitas. La cookie se crea cuando se ejecuta la biblioteca de JavaScript y no hay ninguna cookie __utmb. La cookie se actualiza cada vez que se envían datos a Google Analytics.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelUtmb = new CookieModel() { ProyectoCookie = cookieUtmb, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesAnaliticas.Add(cookieModelUtmb);
 
-            ProyectoCookie cookieUtmc = new ProyectoCookie() { Nombre = "__utmc", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para conocer el tiempo de navegación. Comprueba si se debe mantener la sesión abierta o se debe crear una sesión nueva. Se elimina automáticamente al cambiar de web o al cerrar el navegador.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieUtmc = new ProyectoCookie() { Nombre = "__utmc", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para conocer el tiempo de navegación. Comprueba si se debe mantener la sesión abierta o se debe crear una sesión nueva. Se elimina automáticamente al cambiar de web o al cerrar el navegador.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelUtmc = new CookieModel() { ProyectoCookie = cookieUtmc, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesAnaliticas.Add(cookieModelUtmc);
 
-            ProyectoCookie cookieUtmv = new ProyectoCookie() { Nombre = "__utmv", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para almacenar datos de variables personalizadas a nivel de visitante.  La cookie se actualiza cada vez que se envían datos a Google Analytics.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieUtmv = new ProyectoCookie() { Nombre = "__utmv", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se usa para almacenar datos de variables personalizadas a nivel de visitante.  La cookie se actualiza cada vez que se envían datos a Google Analytics.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelUtmv = new CookieModel() { ProyectoCookie = cookieUtmv, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesAnaliticas.Add(cookieModelUtmv);
 
-            ProyectoCookie cookieUtmz = new ProyectoCookie() { Nombre = "__utmz", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Almacena la fuente de tráfico o la campaña que explica cómo ha llegado el usuario al sitio web. La cookie se crea cuando se ejecuta la biblioteca de JavaScript y se actualiza cada vez que se envían datos a Google Analytics.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieUtmz = new ProyectoCookie() { Nombre = "__utmz", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Almacena la fuente de tráfico o la campaña que explica cómo ha llegado el usuario al sitio web. La cookie se crea cuando se ejecuta la biblioteca de JavaScript y se actualiza cada vez que se envían datos a Google Analytics.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelUtmz = new CookieModel() { ProyectoCookie = cookieUtmz, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesAnaliticas.Add(cookieModelUtmz);
 
@@ -745,26 +767,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         private List<CookieModel> GenerarCookiesYoutube(Guid pCategoriaID)
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DateTime fechaActual = DateTime.Now;
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             Guid organizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(ProyectoSeleccionado.Clave);
             List<CategoriaProyectoCookie> listaCategoriasCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
 
             List<CookieModel> listaCookiesYoutube = new List<CookieModel>();
 
-            ProyectoCookie cookieNid = new ProyectoCookie() { Nombre = "NID", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Esta cookie contiene un ID único que Google utiliza para recordar tus preferencias y otra información, como tu idioma preferido, el número de resultados de búsqueda que quieres que se muestren por página (por ejemplo, 10 o 20) y si quieres que el filtro Búsqueda Segura de Google esté activado o desactivado. La cookie \"NID\" caduca 6 meses después de su último uso.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieNid = new ProyectoCookie() { Nombre = "NID", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Esta cookie contiene un ID único que Google utiliza para recordar tus preferencias y otra información, como tu idioma preferido, el número de resultados de búsqueda que quieres que se muestren por página (por ejemplo, 10 o 20) y si quieres que el filtro Búsqueda Segura de Google esté activado o desactivado. La cookie \"NID\" caduca 6 meses después de su último uso.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelNid = new CookieModel() { ProyectoCookie = cookieNid, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesYoutube.Add(cookieModelNid);
 
-            ProyectoCookie cookieVisitor = new ProyectoCookie() { Nombre = "VISITOR_INFO1_LIVE", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se utiliza para detectar y resolver problemas con el servicio. Habilita las recomendaciones personalizadas en YouTube, que están basadas en las visualizaciones y búsquedas que haya hecho el usuario.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieVisitor = new ProyectoCookie() { Nombre = "VISITOR_INFO1_LIVE", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se utiliza para detectar y resolver problemas con el servicio. Habilita las recomendaciones personalizadas en YouTube, que están basadas en las visualizaciones y búsquedas que haya hecho el usuario.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelVisitor = new CookieModel() { ProyectoCookie = cookieVisitor, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesYoutube.Add(cookieModelVisitor);
 
-            ProyectoCookie cookiePref = new ProyectoCookie() { Nombre = "PREF", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Para almacenar información como la configuración de página o las preferencias de reproducción del usuario (por ejemplo, la reproducción automática, la reproducción aleatoria de contenido y el tamaño del reproductor). En YouTube Music, estas preferencias incluyen el volumen, el modo de repetición y la reproducción automática. Esta cookie caduca 8 meses después de su último uso.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookiePref = new ProyectoCookie() { Nombre = "PREF", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Para almacenar información como la configuración de página o las preferencias de reproducción del usuario (por ejemplo, la reproducción automática, la reproducción aleatoria de contenido y el tamaño del reproductor). En YouTube Music, estas preferencias incluyen el volumen, el modo de repetición y la reproducción automática. Esta cookie caduca 8 meses después de su último uso.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelPref = new CookieModel() { ProyectoCookie = cookiePref, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesYoutube.Add(cookieModelPref);
 
-            ProyectoCookie cookieYsc = new ProyectoCookie() { Nombre = "YSC", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se utiliza en YouTube para recordar lo que introducen los usuarios y asociar sus acciones. Esta cookie dura mientras los usuarios mantienen el navegador abierto.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party };
+            ProyectoCookie cookieYsc = new ProyectoCookie() { Nombre = "YSC", NombreCorto = "", CategoriaID = pCategoriaID, CookieID = Guid.NewGuid(), Descripcion = "Se utiliza en YouTube para recordar lo que introducen los usuarios y asociar sus acciones. Esta cookie dura mientras los usuarios mantienen el navegador abierto.", EsEditable = true, ProyectoID = ProyectoSeleccionado.Clave, OrganizacionID = organizacionID, Tipo = (short)TipoCookies.Third_Party, FechaCreacion = fechaActual, FechaActualizacion = fechaActual };
             CookieModel cookieModelYsc = new CookieModel() { ProyectoCookie = cookieYsc, Modificada = true, ListaCategoriaProyectoCookie = listaCategoriasCookie };
             listaCookiesYoutube.Add(cookieModelYsc);
 
@@ -810,7 +833,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         private CategoriaProyectoCookie ObtenerCategoriaDeCookie(Guid pCategoriaID)
         {
-            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             CategoriaProyectoCookie categoria = cookieCN.ObtenerCategoriaPorId(pCategoriaID, ProyectoSeleccionado.Clave);
             if (categoria == null)
             {
@@ -851,7 +874,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarCookiesViewModel();
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
 					mPaginaModel.EsAdministracionEcosistema = EsAdministracionEcosistema;
 
@@ -874,7 +897,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mPaginaModel.ListaProyectoCookie = new List<CookieModel>();
                     mPaginaModel.ListaCategoriaProyectoCookie = new List<CategoriaCookieModel>();
 
-                    CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
                     List<CategoriaProyectoCookieViewModel> listaCategoriaProyectoCookieViewModel = new List<CategoriaProyectoCookieViewModel>();
                     List<CategoriaProyectoCookie> listaCategoriaProyectoCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
                     List<ProyectoCookie> listaProyectoCookie = cookieCN.ObtenerCookiesDeProyecto(ProyectoSeleccionado.Clave);

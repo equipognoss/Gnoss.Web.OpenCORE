@@ -8,6 +8,7 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Tesauro;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
@@ -24,20 +25,26 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-    public class AdministrarComunidadCategoriasMetaproyectoController : ControllerBaseWeb
-    {
+    public class AdministrarComunidadCategoriasMetaproyectoController : ControllerAdministrationWeb
+	{
         private AdministrarComunidadGeneralModel mPaginaModel;
         private GestionTesauro mGestorTesauroMetaproyecto;
-
-        public AdministrarComunidadCategoriasMetaproyectoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarComunidadCategoriasMetaproyectoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarComunidadCategoriasMetaproyectoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+
         }
 
         /// <summary>
@@ -45,7 +52,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -59,7 +65,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Options"></param>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(AdministrarComunidadGeneralModel Options)
         {
             GuardarLogAuditoria();
@@ -70,8 +75,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR(error);
             }
 
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            GestionProyecto gestProy = new GestionProyecto(proyCN.ObtenerProyectoPorID(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+            GestionProyecto gestProy = new GestionProyecto(proyCN.ObtenerProyectoPorID(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionProyecto>(), mLoggerFactory);
             Elementos.ServiciosGenerales.Proyecto Proy = gestProy.ListaProyectos[ProyectoSeleccionado.Clave];
 
             GuardarCategorizacion(Proy, Options.SelectedCategories);
@@ -87,11 +92,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (Proy.Estado.Equals((short)EstadoProyecto.Abierto))
                 {
-                    ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                    controladorProyecto.ActualizarModeloBase(Proy.Clave, PrioridadBase.Alta);
+                    ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyecto>(), mLoggerFactory);
+                    controladorProyecto.ActualizarModeloBase(Proy.Clave, PrioridadBase.Alta, mAvailableServices);
                 }
                 
-                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 proyCL.InvalidarFilaProyecto(Proy.Clave);
             }
             catch (Exception)
@@ -224,11 +229,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mGestorTesauroMetaproyecto == null)
                 {
-                    TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
                     DataWrapperTesauro tesauroDW = tesauroCN.ObtenerTesauroDeProyecto(ProyectoAD.MetaProyecto);
                     tesauroCN.Dispose();
 
-                    mGestorTesauroMetaproyecto = new GestionTesauro(tesauroDW, mLoggingService, mEntityContext);
+                    mGestorTesauroMetaproyecto = new GestionTesauro(tesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 return mGestorTesauroMetaproyecto;
             }

@@ -32,9 +32,7 @@ Variables
 	bool disableActionButtons = pAdministrarPaginasCMSViewModel.Rows.Count == 0 ? true : false;
 
 	// Url para volver
-	string refererUrl = string.IsNullOrEmpty(Context.Request.Headers["Referer"].ToString())
-	? $"{Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")}"
-	: Context.Request.Headers["Referer"].ToString();
+	string refererUrl = $"{Comunidad.Url}/{@Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")}";
 }
 @*
 ----------------------------------------------------------------

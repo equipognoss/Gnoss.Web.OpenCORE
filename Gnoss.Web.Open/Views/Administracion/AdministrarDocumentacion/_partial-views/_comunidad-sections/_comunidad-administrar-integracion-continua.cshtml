@@ -1,0 +1,250 @@
+﻿@*
+Descripción
+-----------------------------------------------
+Vista que muestra la documentación de Integración continua - Crear Integración continua
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+    // Indica si se desea mostrar la documentación por defecto. Es decir, la carga de la documentación es parcial, no desde la página de documentación de la sección Padre.
+    bool showDocumentationByDefault = !string.IsNullOrEmpty(ViewBag.showDocumentationByDefault) ? (bool.Parse(ViewBag.showDocumentationByDefault)) : false;
+    // Indica si sólo se desea visualizar la documentación por secciones (Ej: Mostrar la documentación en el modal con el contenido desplegado/plegado)
+    bool showDocumentationSection = !string.IsNullOrEmpty(ViewBag.showDocumentationSection) ? (bool.Parse(ViewBag.showDocumentationSection)) : false;
+}
+
+@using Microsoft.AspNetCore.Http
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="card">
+    <div class="card-header">
+        @* Título / Botón: Información General *@
+        <h3 class="mb-0">
+            <button class="btn btn-link"
+                    data-toggle="collapse"
+            @((showDocumentationByDefault && !showDocumentationSection) ? "data-target=#crear-integracion-continua" : null)
+            @((showDocumentationByDefault && !showDocumentationSection) ? "aria-expanded=true" : null)
+                    aria-controls="crear-integracion-continua">
+                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARINTEGRACIONCONTINUA")
+            </button>
+        </h3>
+    </div>
+    @* Contenido: Información General *@
+    <div id="crear-integracion-continua"
+         class="collapse @( (showDocumentationSection) ? "show" : null)"
+         data-parent="#accordion">
+        <div class="card-body">
+            <p>Desde esta sección de las DevTools de una comunidad se puede configurar la Integración Continua. Para poder emplear dicha funcionalidad deberemos configurar dos secciones:</p>
+            <ul>
+                <li><strong>Servicios de despliegues:</strong>URL del servicio de despliegues en cada entorno, en función de numero de entornos que tenga el proyecto tendrás que configurar 1, 2 o 3 URLS</li>
+                <li><strong>Repositorio:</strong> repositorio GIT que se va a utilizar para versionar todos los cambios que realizados en las configuraciones del proyecto. Tambien las credenciales de acceso para que la aplicación de Integración Continua pueda conectarse.</li>
+            </ul>
+            <h3>Servicios de despliegues</h3>
+            <p>El primer paso es indicar el numero de entornos disponibles en el proyecto. Se puede comenzar con un solo entorno, si aun no se tienen los entornos superiores, e ir añadiendo los entornos a posterior. Tambien se pueden configurar proyectos que solo tengan dos entornos, los cuales serían desarrollo y producción, posteriormente se puede añadir preproducción.</p>
+            <p>Una vez seleccionado el número de entornos aparecerán las correspondientes cajas de texto para introducir la URL de los servicios de despliegues en cada uno de los entornos.</p>
+            <p>Si ya se han configurado los entornos en otra comunidad estos datos aparecerán rellenos, ya que son datos que se comparten entre todas las comunidades del ecosistema.</p>
+            <h3>Rpositorio</h3>
+            <p>La integración continua necesita un repositorio vacío que debe contener las ramas "develop" y "master". Para crear dicho repositorio puedes seguir los pasos que se indican a continuación.</p>
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    <button class="nav-link active" id="nav-repository-github-tab" data-toggle="tab" data-target="#nav-repository-github" type="button" role="tab" aria-controls="nav-repository-github" aria-selected="true">GitHub</button>
+                    <button class="nav-link" id="nav-repository-gitlab-tab" data-toggle="tab" data-target="#nav-repository-gitlab" type="button" role="tab" aria-controls="nav-repository-gitlab" aria-selected="false">GitLab</button>
+                </div>
+            </nav>
+            <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-repository-github" role="tabpanel" aria-labelledby="nav-repository-github-tab">
+                    <p>En GitHub se puede crear un repositorio desde varios sitios como pueden ser:</p>
+                    <ul>
+                        <li>
+                            Dashboard
+                            <div class="text-center">
+                                <figure class="figure">
+                                    <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/crear-repositorio-dashboard.png" />
+                                    <figcaption class="figure-caption">En la página principal el botón "New" se encuentra en el menú izquierdo, junto a los repositorios populares.</figcaption>
+                                </figure>
+                            </div>
+                        </li>
+                        <li>
+                            Lista de repositorios del perfil o una organización
+                            <div class="text-center">
+                                <figure class="figure">
+                                    <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/crear-repositorio-perfil.png" />
+                                    <figcaption class="figure-caption">Sobre el listado de repositorios podemos encontrar el botón "New" Junto a los filtros de búsqueda.</figcaption>
+                                </figure>
+                            </div>
+                        </li>
+                        <li>
+                            Página principal de una organización
+                            <div class="text-center">
+                                <figure class="figure">
+                                    <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/crear-repositorio-organizacion.png" />
+                                    <figcaption class="figure-caption">Bajo los repositorios anclado, justo encima de la lista de repositorios podemos encontrar el botón "New"</figcaption>
+                                </figure>
+                            </div>
+                        </li>
+                    </ul>
+                    <p>Tras pulsar el botón verde "New" nos llevara a la página de creación de un nuevo repositorio.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/crear-repositorio.png" />
+                            <figcaption class="figure-caption">Formulario para crear un repositorio</figcaption>
+                        </figure>
+                    </div>
+                    <p>En el formulario deberemos seleccionar en que organización deseamos crear el repositorio, en caso de tener varias, el nombre que va a tener el repositorio e importante la privacidad (debe ser privado).</p>
+                    <p>Una vez introducidos los datos podemos pulsar en el botón "Create repository"" y el repositorio estará creado, siendo redirigidos al mismo.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/nuevo-repositorio.png" />
+                            <figcaption class="figure-caption">Nuevo repositorio creado</figcaption>
+                        </figure>
+                    </div>
+                    <p>Ahora podremos obtener la URL necesaria para la configuración desplegando las opciones del botón verde "Code" y haciendo click en el botón de copiar a l portapapeles.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/url-repositorio.png" />
+                            <figcaption class="figure-caption">Enlace del repositorio necesari para configurar la integración continua</figcaption>
+                        </figure>
+                    </div>
+                    <p>Esta URL debemos incluirla en la página de administración de GNOSS en el campo “Repositorio”.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/configurar-repositorio.png" />
+                            <figcaption class="figure-caption">Enlace del repositorio necesario para configurar la integración continua</figcaption>
+                        </figure>
+                    </div>
+                    <p>No debemos olvidarnos de crear las ramas necesarias en el repositorio. Ya contaremos con una rama principal, pero deberemos crear una nueva, la "develop". Podemos crearla desde la propia interfaz web o desde nuestro cliente de GIT favorito.</p>
+                    <div class="alert alert-warning" role="alert">
+                        <span class="material-icons">warning</span>
+                        <p class="titulo"> Ahora GIT llama a la rama principal que crea por defecto "main", para que la IC funcione correctamente es necesario renombrarla al antiguo nombre "master"</p>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="nav-repository-gitlab" role="tabpanel" aria-labelledby="nav-repository-gitlab-tab">
+                    <p>En GitLab podemos crear un nuevo proyecto/repositorio desde la pagina principal pulsando el botón "New project"</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/crear-proyecto-dashboard.png" />
+                            <figcaption class="figure-caption">En la página principal el botón "New project" se encuentra sobre la lista de proyectos, a la derecha.</figcaption>
+                        </figure>
+                    </div>
+                    <p>Tras pulsarlo tendremos a nuestra disposición el  formulario de creación del proyecto donde deberemos introducir un nombre, el perfil o grupo en el que queremos crear el proyecto y su privacidad (debe ser privado).</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/crear-proyecto.png" />
+                            <figcaption class="figure-caption">Formulario de creación del proyecto.</figcaption>
+                        </figure>
+                    </div>
+                    <p>Con los datos rellenos pulsamos el botón "Create project" y seremos redirigidos a nuestro nuevo proyecto recién creado.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/nuevo-proyecto.png" />
+                            <figcaption class="figure-caption">Nuevo repositorio inicializado con un README</figcaption>
+                        </figure>
+                    </div>
+                    <p>Pulsando el botón de copiar "Copy URL to clipboard" podemos obtener la URL necesaria para configurar el repositorio en nuestra IC.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/url-repositorio.png" />
+                            <figcaption class="figure-caption">El botón se encuentra bajo el titulo del repositorio junto a la URL.</figcaption>
+                        </figure>
+                    </div>
+                    <p>Esta URL debemos incluirla en la página de administración de GNOSS en el campo “Repositorio”.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/configurar-repositorio.png" />
+                            <figcaption class="figure-caption">Enlace del repositorio necesario para configurar la integración continua</figcaption>
+                        </figure>
+                    </div>
+                    <p>No debemos olvidarnos de crear las ramas necesarias en el repositorio. Ya contaremos con una rama principal, pero deberemos crear una nueva, la "develop". Podemos crearla desde la propia interfaz web o desde nuestro cliente de GIT favorito.</p>
+                </div>
+            </div>
+            <p>Tambien es necesario crear unas claves de acceso Oauth que serán las empleadas por los servicios para interactuar con el repositorio. A continuación, indicamos como crear dichas claves en cada uno de los proveedores de repositorios.</p>
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    <button class="nav-link active" id="nav-token-github-tab" data-toggle="tab" data-target="#nav-token-github" type="button" role="tab" aria-controls="nav-token-github" aria-selected="true">GitHub</button>
+                    <button class="nav-link" id="nav-token-gitlab-tab" data-toggle="tab" data-target="#nav-token-gitlab" type="button" role="tab" aria-controls="nav-token-gitlab" aria-selected="false">GitLab</button>
+                </div>
+            </nav>
+            <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-token-github" role="tabpanel" aria-labelledby="nav-token-github-tab">
+                    <p>Para obtener unas claves OAuth en GitHub es necesario crear una OAuthApp lo cual se puede hacer desde Settings>Developer Settings, pulsando sobre el boton verde "New OAuth app"</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/crear-app.png" />
+                            <figcaption class="figure-caption">Mediante el botón central verde "New OAuth app" podemos crear una nueva app</figcaption>
+                        </figure>
+                    </div>
+                    <p>Tras pulsarlo seremos redirigidos a la página de creación de una nueva app</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/crear-app-form.png" />
+                            <figcaption class="figure-caption">Formulario en el que introducir los datos de la app</figcaption>
+                        </figure>
+                    </div>
+                    <p>Los datos que tendremos que introducir serán los siguientes:</p>
+                    <ul>
+                        <li><strong>Application name:</strong> el nombre que tendrá nuestra aplicación para poder identificarla en la lista de aplicaciones.</li>
+                        <li><strong>Homepage URL:</strong> la URL completa a la home de nuestro proyecto.</li>
+                        <li><strong>Authorization callback URL:</strong> URL del servicio de integración continua donde la app llamara tras autorizar a un usuario, esta URL se encuentra en la pagina de administración en el campo "URL de redirección".</li>
+                    </ul>
+                    <p>Tras introducir todos los datos obligatorios y pulsar el botón "Register application"" seremos redireccionados a la ficha de nuestra nueva app</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/nueva-app.png" />
+                            <figcaption class="figure-caption">App recien creada</figcaption>
+                        </figure>
+                    </div>
+                    <p>Podemos observar que en esta pagina ya contamos con uno de los datos que necesitamos el "Client ID", pero aun necesitamos crear un Secret. Esto lo podemos hacer pulsando el botón "Generate new client secret".</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/secret-app.png" />
+                            <figcaption class="figure-caption">Secret creado tras pulsar el boton "Generate new client secret".</figcaption>
+                        </figure>
+                    </div>
+                    <div class="alert alert-warning" role="alert">
+                        <span class="material-icons">warning</span>
+                        <p class="titulo">Es muy importante copiar esta clave ya que una vez recarguemos la página nunca más podremos volver a verla, tendríamos que generar una nueva.</p>
+                    </div>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/secret-hidden-app.png" />
+                            <figcaption class="figure-caption">Clave oculta y que no podremos volver a ver.</figcaption>
+                        </figure>
+                    </div>
+                    <p>Ahora que tenemos el "Client Id" y el "Secret" debemos introducirlo en la pagina de administración en los campos "Clave/applicationID" y "Secret".</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/github/app-configured.png" />
+                            <figcaption class="figure-caption">Claves OAuth configuradas en la administración de integración continua.</figcaption>
+                        </figure>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="nav-token-gitlab" role="tabpanel" aria-labelledby="nav-token-gitlab-tab">
+                    <p>Para obtener unas claves OAuth en GitLab deberemos acceder a Settings>Applications</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/crear-app.png" />
+                            <figcaption class="figure-caption">Formulario para la creación de una nueva app.</figcaption>
+                        </figure>
+                    </div>
+                    <p>Tras introducir el nombre de la aplicación y la URL de redirección, que es la del servicio de integración continua que se encuentra en la página de administración en el campo "URL de redirección", podemos hacer click en el botón "Save application", lo que guardara la aplicación y nos llevara a su ficha.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/nueva-app.png" />
+                            <figcaption class="figure-caption">Información de la nueva aplicación.</figcaption>
+                        </figure>
+                    </div>
+                    <p>En esta página podemos observar ya las dos claves que necesitamos para incluirlas en la configuración de IC, solo debemos copiarlas e introducirlas en los campos correspondiente de la pagina de administración.</p>
+                    <div class="text-center">
+                        <figure class="figure">
+                            <img class="img-fluid" src="~/img/documentacionDevtools/ic/gitlab/app-configured.png" />
+                            <figcaption class="figure-caption">Claves OAuth configuradas en la administración de integración continua.</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+            <p>Si se desean guardar todos los posibles cambios acometidos, será suficiente con pulsar el botón de "Crear" para confirmar el guardado.</p>
+        </div>
+    </div>
+</div>

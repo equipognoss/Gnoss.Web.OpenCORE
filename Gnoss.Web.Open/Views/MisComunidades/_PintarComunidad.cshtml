@@ -3,8 +3,6 @@
 @{
     @* Tipo de la comunidad (Abierta, Privada...)*@
     string communityType = "";
-    @* Logo de la comunidad *@
-    bool hasLogo = false;
 
     switch ((CommunityModel.TypeAccessProject)Model.communityModel.AccessType)
     {
@@ -21,41 +19,98 @@
             communityType = Html.GetText("COMUNIDADES", "COMUNIDADRESTRINGIDA");
             break;
     }
-
-    @* Logo de la comunidad *@
-    if (!String.IsNullOrEmpty(Model.communityModel.Logo))
-    {
-        hasLogo = true;
-    }
 }
-<div id="card-community-@Model.communityModel.Key" class="col-md-4 card-community">
-    <div class="card p-3 mb-2">
-        <div class="d-flex justify-content-between">
-            <div class="d-flex flex-row align-items-center">
-                <div class="user-miniatura" style="align-items: center">
-                    <div class="imagen-usuario-wrap">
-                        <a href="@Model.communityModel.Url">
-                            <div class="imagen @( !hasLogo ? "sinImagen" : null) ">
-                                @if (hasLogo)
-                                {
-                                    <span style="background-image: url(@Model.communityModel.Logo);"></span>
-                                }
-                                else
-                                {
-                                    <span class="material-icons">language</span>
-                                }
-                            </div>
+
+<div id="card-community-@Model.communityModel.Key" class="resource card-community">
+    <div class="card">
+        <div class="down-wrap">
+            <div class="card-community-img">
+                <a href="@Model.communityModel.Url">
+                    <img src="@Model.communityModel.Logo"></img>
+                </a>
+            </div>
+        </div>
+        <div class="card-wrapper">
+            <div class="card-body">
+                @* Nombre de la comunidad *@
+                <a href="@Model.communityModel.Url">
+                    <p class="card-title text-dark font-weight-bold name" data-name="@Model.communityModel.Name">@Model.communityModel.Name</p>
+                </a>
+                @* Privacidad de la Comunidad *@
+                <span class="text-muted">@Html.Raw(communityType)</span>
+
+                @*Seccion solo visible en la vista mosiaco y listado*@
+                @* Descripcion de la comunidad*@
+                <div class="down-wrap mb-3">
+                    <div class="community-card-description">
+                        @Html.Raw(Model.communityModel.Description)
+                    </div>
+                </div>
+                @* Estadisticas de la comunidad*@
+                <div class="social">
+                    <div class="personas">
+                        <span class="material-icons pr-2">person</span>
+                        <a class="text-reset" href="@Model.communityModel.Url/@Html.GetText("URLSEM", "PERSONASYORGANIZACIONES")/@Html.GetText("URLSEM", "PERSONAS")">
+                            <span class="number persons"
+                                  data-persons="@Model.communityModel.Persons">@Model.communityModel.Persons</span>
                         </a>
                     </div>
-                    <div class="nombre-usuario-wrap">
-                        <a href="@Model.communityModel.Url">
-                            @* Nombre de la comunidad *@
-                            <p class="nombre">@Model.communityModel.Name</p>
-                            @* Privacidad de la Comunidad *@
-                            <span class="text-muted">@Html.Raw(communityType)</span>
+                    <div class="organizaciones">
+                        <span class="material-icons pr-2">domain</span>
+                        <a class="text-reset" href="@Model.communityModel.Url/@Html.GetText("URLSEM", "PERSONASYORGANIZACIONES")/@Html.GetText("URLSEM", "ORGANIZACIONES")">
+                            <span class="number organizations"
+                                  data-organizations="@Model.communityModel.Organizations">@Model.communityModel.Organizations</span>
+                        </a>
+                    </div>
+                    <div class="recursos">
+                        <span class="material-icons pr-2">description</span>
+                        <a class="text-reset" href="@Model.communityModel.Url/@Html.GetText("URLSEM", "RECURSOS")">
+                            <span class="number resources"
+                                  data-resources="@Model.communityModel.Resources">@Model.communityModel.Resources</span>
                         </a>
                     </div>
                 </div>
+                @*Seccion solo visible en la vista mosiaco y listado*@
+                <div class="down-wrap mt-3">
+                    @*Etiquetas y categorías del proyecto*@
+                    @if (Model.communityModel.Categories != null && Model.communityModel.Categories.Count > 0)
+                    {
+                        <div class="categorias">
+                            <p>@Html.GetText("LISTARECURSOS", "CATEGORIAS")</p>
+                            <ul class="no-list-style d-flex align-items-center">
+                                @foreach (CategoryModel categoria in Model.communityModel.Categories)
+                                {
+                                    <li class="tag" title="@categoria.Name">
+                                        <a property="skos:prefLabel" typeof="skos:Concept">
+                                            @categoria.Name
+                                        </a>
+                                    </li>
+                                }
+
+                            </ul>
+                        </div>
+                    }
+                    @if (Model.communityModel.Tags != null && Model.communityModel.Tags.Count > 0)
+                    {
+                        <div class="etiquetas">
+                            <p>@Html.GetText("LISTARECURSOS", "ETIQUETAS")</p>
+                            <ul class="no-list-style d-flex align-items-center">
+                                @foreach (string tag in Model.communityModel.Tags)
+                                {
+                                    <li class="tag" title="@tag">
+                                        <a>@tag</a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="card-footer">
+                @* Fecha de creacion de la Comunidad*@
+                <small class="text-body-secondary creationdate" data-creationdate="@Model.communityModel.CreationDate.ToShortDateString()">
+                    @Model.communityModel.CreationDate.ToShortDateString()
+                </small>
             </div>
         </div>
     </div>

@@ -5,6 +5,7 @@ using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.Tesauro;
 using Es.Riam.Gnoss.Logica.Documentacion;
@@ -26,6 +27,8 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -90,13 +93,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// IDs de los documentos afectados por la edición de las categorías.
         /// </summary>
         private List<Guid> mDocumentosAfectadosID;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #endregion
 
 
-        public AdminCatEspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public AdminCatEspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdminCatEspacioPersonalController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
 
@@ -362,7 +368,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             ActualizarCategoriasModeloBaseUsuario();
 
             mAdminCatModel.ActionsBackUp = "";
-            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             CargarTesauro();
 
             return GnossResultHtml("_AdminTesauro", mAdminCatModel);
@@ -378,9 +384,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mMoverCategoriasActualizarBase = new Dictionary<Guid, List<Guid>>();
             }
 
-            ControladorDocumentacion.AgregarEliminacionCategoriasModeloBaseUsuario(EliminarCategoriasActualizarBaseTodo, true, PrioridadBase.Alta);
-            ControladorDocumentacion.AgregarEliminacionCategoriasModeloBaseUsuario(EliminarCategoriasActualizarBaseSoloHuerfanos, false, PrioridadBase.Alta);
-            ControladorDocumentacion.AgregarMoverCategoriasModeloBaseUsuario(mMoverCategoriasActualizarBase, PrioridadBase.Alta);
+            ControladorDocumentacion.AgregarEliminacionCategoriasModeloBaseUsuario(EliminarCategoriasActualizarBaseTodo, true, PrioridadBase.Alta, mAvailableServices);
+            ControladorDocumentacion.AgregarEliminacionCategoriasModeloBaseUsuario(EliminarCategoriasActualizarBaseSoloHuerfanos, false, PrioridadBase.Alta, mAvailableServices);
+            ControladorDocumentacion.AgregarMoverCategoriasModeloBaseUsuario(mMoverCategoriasActualizarBase, PrioridadBase.Alta, mAvailableServices);
 
             foreach (Guid documentoID in DocumentosAfectadosID)
             {
@@ -442,7 +448,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ExpandirTesauroHastaCategoria(categoriaSustitutaID);
 
-            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             CargarTesauro();
             mAdminCatModel.ActionsBackUp = mEditTesModel.ActionsBackUp;
 
@@ -457,7 +463,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="pMoverSoloLoJusto">Indica si solo se debe recatigarizar aquellas cosas que de lo contrario quedarían huérfanas</param>
         private void EliminarCategoriasTesauro(Guid pIDCategoriaVincularm, List<Guid> pListaCategoriasAEliminar, bool pMoverSoloLoJusto)
         {
-            TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
             bool tieneRecursosAsociados = tesCN.EstanVinculadasCategoriasTesauro(mGestorTesauro.TesauroActualID, pListaCategoriasAEliminar);
             tesCN.Dispose();
 
@@ -490,7 +496,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 pListaCategoriasParaSustituirIDs.Add(pCategoriaSustitutaID);
             }
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             DataWrapperDocumentacion dataWrapperDocumentacion = docCN.ObtenerVinculacionDocumentosDeCategoriasTesauro(pListaCategoriasParaSustituirIDs, mGestorTesauro.TesauroActualID);
             docCN.Dispose();
             List<AD.EntityModel.Models.Documentacion.DocumentoWebAgCatTesauro> listaDocumentoWebAgCatTesauroBorrar = dataWrapperDocumentacion.ListaDocumentoWebAgCatTesauro.ToList();
@@ -581,7 +587,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return GnossResultERROR(UtilIdiomas.GetText("PERFILBASE", "ERROR_CAT_DEBE_SER_SELECT"));
             }
 
-            TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
             bool tieneRecursosAsociados = tesCN.EstanVinculadasCategoriasTesauro(mGestorTesauro.TesauroActualID, catSelecc);
             tesCN.Dispose();
 
@@ -609,7 +615,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            TesauroCN tesCN2 = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            TesauroCN tesCN2 = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
             mAdminCatModel.ResourcesOfCategoriesDeletingAreNotOrphans = tesCN2.ObtenerSiExistenElementosNoHuerfanos(mGestorTesauro.TesauroActualID, catSelecc);
             tesCN2.Dispose();
 
@@ -704,7 +710,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ExpandirTesauroHastaCategoria(catSelecc[0]);
             }
 
-            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             CargarTesauro();
             mAdminCatModel.ActionsBackUp = mEditTesModel.ActionsBackUp;
 
@@ -925,7 +931,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ExpandirTesauroHastaCategoria(categoriaPadreNueva.Clave);
 
-            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             CargarTesauro();
             mAdminCatModel.ActionsBackUp = mEditTesModel.ActionsBackUp;
 
@@ -956,7 +962,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     mGestorTesauro.ListaCategoriasTesauro[guidCat].Padre.Hijos.Remove(mGestorTesauro.ListaCategoriasTesauro[guidCat]);
                     mGestorTesauro.DesasignarSubcategoriaDeCategoria(mGestorTesauro.ListaCategoriasTesauro[guidCat], (CategoriaTesauro)mGestorTesauro.ListaCategoriasTesauro[guidCat].Padre);
-                    mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+                    mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 else
                 {
@@ -1071,7 +1077,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             mGestorTesauro.ListaCategoriasTesauro[catSeleccID].FilaCategoria.Nombre = mEditTesModel.NewCategoryName;
 
-            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             mAdminCatModel.ActionsBackUp = mEditTesModel.ActionsBackUp;
             ExpandirTesauroHastaCategoria(catSeleccID);
 
@@ -1123,7 +1129,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ExpandirTesauroHastaCategoria(guidPadre);
 
-            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+            mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             mAdminCatModel.ActionsBackUp = mEditTesModel.ActionsBackUp;
 
             CargarTesauro();
@@ -1247,7 +1253,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         EliminarCategoriasTesauro(idCategoriaVincular2, idCategorias2, true);
                     }
 
-                    mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext);
+                    mGestorTesauro = new GestionTesauro(mGestorTesauro.TesauroDW, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
             }
         }

@@ -1,4 +1,5 @@
-﻿using Es.Riam.AbstractsOpen;
+﻿using DocumentFormat.OpenXml.Bibliography;
+using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
@@ -25,6 +26,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
@@ -39,7 +41,9 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -83,11 +87,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private string mUrlServicioWebDocumentacion;
 
+
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+
         #endregion
 
-        public EspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        public EspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EspacioPersonalController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Propiedades
@@ -131,7 +142,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             ObtenerGrafoBusqueda();
 
             CargarComponerPanelSidebar();
-            
+
             CargarTitulosYMenus();
             redireccion = ObtenerResultados();
 
@@ -175,9 +186,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (recursos.Length == 1)
                 {
                     DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     docCN.ObtenerDocumentoWebPorIDWEB(new Guid(recursos[0]), dataWrapperDocumentacion);
-                    
+
 
                     Guid baseRecursosID = Guid.Empty;
                     if (RequestParams("organizacion") != null && RequestParams("organizacion").Equals("true"))
@@ -191,7 +202,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     docCN.Dispose();
 
-                    foreach (AD.EntityModel.Models.Documentacion.DocumentoWebAgCatTesauro filaDocAgCatTes in dataWrapperDocumentacion.ListaDocumentoWebAgCatTesauro.Where(docWebAg=>docWebAg.BaseRecursosID.Equals(baseRecursosID)))
+                    foreach (AD.EntityModel.Models.Documentacion.DocumentoWebAgCatTesauro filaDocAgCatTes in dataWrapperDocumentacion.ListaDocumentoWebAgCatTesauro.Where(docWebAg => docWebAg.BaseRecursosID.Equals(baseRecursosID)))
                     {
                         CategoriaTesauro categoria = gestorTes.ListaCategoriasTesauro[filaDocAgCatTes.CategoriaTesauroID];
 
@@ -258,7 +269,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
 
                     if (RequestParams("organizacion") != null && RequestParams("organizacion").Equals("true"))
@@ -270,7 +281,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         docCN.ObtenerBaseRecursosUsuario(dataWrapperDocumentacion, mControladorBase.UsuarioActual.UsuarioID);
                     }
 
-                    GestorDocumental gestorDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext);
+                    GestorDocumental gestorDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
                     gestorDoc.GestorTesauro = CargarGestorTesauroBRActual();
 
                     foreach (string documentoTextoID in recursos)
@@ -281,7 +292,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         if ((gestorDoc.ListaDocumentos.ContainsKey(documentoID)) && (gestorDoc.ListaDocumentos[documentoID].TipoEntidadVinculada == TipoEntidadVinculadaDocumento.Web))
                         {
-                            DocumentoWeb documentoWeb = new DocumentoWeb(gestorDoc.ListaDocumentos[documentoID].FilaDocumento, gestorDoc, mLoggingService);
+                            DocumentoWeb documentoWeb = new DocumentoWeb(gestorDoc.ListaDocumentos[documentoID].FilaDocumento, gestorDoc);
 
                             if (listaCatSeleccionadas.Count > 0)
                             {
@@ -312,7 +323,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 gestorDoc.VincularDocumentoACategorias(listaCategoriasNuevas, documentoWeb, UsuarioActual.IdentidadID, UsuarioActual.ProyectoID);
                                 gestorDoc.DesvincularDocumentoDeCategorias(documentoWeb, listaCategoriasEliminadas, UsuarioActual.IdentidadID, UsuarioActual.ProyectoID);
                                 ControladorDocumentacion.EstablecePrivacidadRecursoEnMetaBuscador(documentoWeb, IdentidadActual, false);
-                                ControladorDocumentacion.AgregarRecursoModeloBaseSimple(documentoID, ProyectoSeleccionado.Clave, (short)documentoWeb.TipoDocumentacion, PrioridadBase.Alta);
+                                ControladorDocumentacion.AgregarRecursoModeloBaseSimple(documentoID, ProyectoSeleccionado.Clave, (short)documentoWeb.TipoDocumentacion, PrioridadBase.Alta, mAvailableServices);
                             }
                             else
                             {
@@ -329,6 +340,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     string tripletas = "";
 
+                    Dictionary<Guid, int> elementos = new Dictionary<Guid, int>();
+                    Dictionary<Guid, string> elementosInfoExtra = new Dictionary<Guid, string>();
                     foreach (string documentoTextoID in recursos)
                     {
                         Guid documentoID = new Guid(documentoTextoID);
@@ -338,8 +351,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             infoExtra = IdentidadActual.PerfilID.ToString();
                         }
-
-                        ControladorDocumentacion.ActualizarGnossLive(mControladorBase.UsuarioActual.ProyectoID, documentoID, AccionLive.Editado, (int)TipoLive.Recurso, false, "live", PrioridadLive.Alta, infoExtra);
+                        elementos.Add(documentoID, (short)TipoLive.Recurso);
+                        elementosInfoExtra.Add(documentoID, infoExtra);
                         ControladorDocumentacion.BorrarCacheControlFichaRecursos(documentoID);
 
                         string sujeto = "<http://gnoss/" + documentoID.ToString().ToUpper() + "> ";
@@ -351,13 +364,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
+                    // Actualizamos el live con una sola conexion
+                    ControladorDocumentacion.ActualizarGnossLive(mControladorBase.UsuarioActual.ProyectoID, elementos, elementosInfoExtra, AccionLive.Editado, false, "live", PrioridadLive.Alta);
+
                     try
                     {
-                        FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, IdentidadActual.PerfilID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        FacetadoCN facCN = new FacetadoCN(UrlIntragnoss, IdentidadActual.PerfilID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                         facCN.InsertaTripletas(IdentidadActual.PerfilID.ToString(), tripletas, (short)PrioridadBase.Alta, false);
                         facCN.Dispose();
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         GuardarLogErrorAJAX("Error al guardar directamente en virtuoso: " + ex.ToString());
                     }
@@ -410,7 +426,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
 
                     if (RequestParams("organizacion") != null && RequestParams("organizacion").Equals("true"))
@@ -424,10 +440,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (recursosID != null && recursosID.Count > 0)
                     {
-                        dataWrapperDocumentacion.Merge(docCN.ObtenerDocumentosPorID(recursosID));
+                        docCN.ObtenerDocumentosPorIDCargarTotal(recursosID, dataWrapperDocumentacion, true, true, null);
                     }
 
-                    GestorDocumental gestorDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext);
+                    GestorDocumental gestorDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
                     docCN.Dispose();
 
                     foreach (Guid recurso in recursosID)
@@ -443,15 +459,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             {
                                 if (doc.TipoDocumentacion == TiposDocumentacion.FicheroServidor)
                                 {
-                                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+                                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
                                     gd.Url = UrlServicioWebDocumentacion;
 
                                     espacioArchivo = gd.ObtenerEspacioDocumentoDeBaseRecursosUsuario(TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, mControladorBase.UsuarioActual.PersonaID, recurso, Path.GetExtension(doc.Enlace));
-                                    
+
                                 }
                                 else if (doc.TipoDocumentacion == TiposDocumentacion.Imagen)
                                 {
-                                    ServicioImagenes sI = new ServicioImagenes(mLoggingService, mConfigService);
+                                    ServicioImagenes sI = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                                     sI.Url = UrlIntragnossServicios;
 
                                     espacioArchivo = sI.ObtenerEspacioImagenDocumentoPersonal(recurso.ToString(), ".jpg", mControladorBase.UsuarioActual.PersonaID);
@@ -459,7 +475,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 else if (doc.TipoDocumentacion == TiposDocumentacion.Video)
                                 {
 
-                                    ServicioVideos sV = new ServicioVideos(mConfigService, mLoggingService);
+                                    ServicioVideos sV = new ServicioVideos(mConfigService, mLoggingService, mLoggerFactory.CreateLogger<ServicioVideos>(), mLoggerFactory);
 
                                     espacioArchivo = sV.ObtenerEspacioVideoPersonal(recurso, mControladorBase.UsuarioActual.PersonaID);
 
@@ -524,8 +540,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 infoExtra = IdentidadActual.PerfilID.ToString();
                             }
 
-                            ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], doc.Clave, AccionLive.Eliminado, tipo, false, "live", PrioridadLive.Alta, infoExtra);
-                            ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], doc.ObtenerPublicadorEnBR(baseRecursosID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta);
+                            ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], doc.Clave, AccionLive.Eliminado, tipo, false, "live", PrioridadLive.Alta, infoExtra, mAvailableServices);
+                            ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], doc.ObtenerPublicadorEnBR(baseRecursosID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta, mAvailableServices);
                         }
 
                         #endregion
@@ -541,13 +557,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         try
                         {
-                            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                            FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
                             facetadoCL.InvalidarResultadosYFacetasDeBusquedaEnProyecto(ProyectoSeleccionado.Clave, TipoBusqueda.EditarRecursosPerfil.ToString());
                         }
                         catch (Exception)
                         {
                         }
-                        
+
                         FacetadoCN facetadoCN = null;
                         try
                         {
@@ -558,11 +574,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 grafoBorrar = IdentidadOrganizacion.OrganizacionID.Value.ToString();
                             }
 
-                            facetadoCN = new FacetadoCN(UrlIntragnoss, mControladorBase.UsuarioActual.ProyectoID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
-                            facetadoCN.BorrarRecurso(grafoBorrar, doc.Clave);
+                            facetadoCN = new FacetadoCN(UrlIntragnoss, mControladorBase.UsuarioActual.ProyectoID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+                            facetadoCN.BorrarRecurso(grafoBorrar, doc.VersionOriginalID);
                         }
-                        catch (Exception ex) { mLoggingService.GuardarLogError(ex); }
-                        finally {
+                        catch (Exception ex) { mLoggingService.GuardarLogError(ex, mlogger); }
+                        finally
+                        {
                             if (facetadoCN != null)
                                 facetadoCN.Dispose();
                         }
@@ -674,7 +691,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else
                 {
-                    FacetaCN tablasCN = new FacetaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    FacetaCN tablasCN = new FacetaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetaCN>(), mLoggerFactory);
                     string nombreRealFaceta = tablasCN.ObtenerNombreFacetaRedireccion(filtro[0]);
 
                     if (nombreRealFaceta != null && nombreRealFaceta != "")
@@ -693,7 +710,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
             }
-            
+
             if (EsEcosistemaSinMetaProyecto && ProyectoVirtual != null)
             {
                 parametrosAdicionales = "proyectoVirtualID=" + ProyectoVirtual.Clave + "|" + parametrosAdicionales;
@@ -701,7 +718,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             //string javascriptAdicional = "primeraCargaDeFacetas = false;";
 
-            string instruccionesExtra = "var filtroDePag = ''; var filtrosDeInicio = ''; filtrosPeticionActual = '';";
+            string instruccionesExtra = "var filtroDePag = ''; var filtrosDeInicio = ObtenerHash2(); filtrosPeticionActual = '';";
 
             if (!string.IsNullOrEmpty(argumentos))
             {
@@ -808,7 +825,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         mLoggingService.AgregarEntradaDependencia("Error al llamar al servicio de resultados", false, "EspacioPersonalController.CargarResultadosYFacetas", sw, false);
                         GuardarLogError(" ERROR: " + ex.Message + "\r\nStackTrace: " + ex.StackTrace);
                     }
-                    catch (Exception) { } 
+                    catch (Exception) { }
                 }
             });
 
@@ -861,9 +878,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private void CargarComponerPanelSidebar()
         {
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
-            
+
             if (RequestParams("organizacion") != null && RequestParams("organizacion").Equals("true"))
             {
                 docCN.ObtenerBaseRecursosOrganizacion(dataWrapperDocumentacion, IdentidadActual.OrganizacionPerfil.Clave);
@@ -874,7 +891,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             docCN.Dispose();
-            GestorDocumental gestDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext);
+            GestorDocumental gestDoc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
 
             mPerSpaceModel.UsedMegaBytes = (decimal)Math.Round(new decimal(gestDoc.EspacioActualBaseRecursos), 2);
             mPerSpaceModel.FreeMegaBytes = (decimal)Math.Round(new decimal((gestDoc.EspacioMaximoBaseRecursos - gestDoc.EspacioActualBaseRecursos)), 2);
@@ -883,7 +900,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             FacetadoDS facetDS = new FacetadoDS();
             //ObtenerGrafoBusqueda();
 
-            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, true, "perfil/" + mGrafo, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, true, "perfil/" + mGrafo, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
             facetadoCN.ObtieneNumeroResultados(facetDS, "RecursosBusqueda", new Dictionary<string, List<string>>(), new List<string>(), new List<string>(), TiposAlgoritmoTransformacion.Ninguno, UsuarioActual.ProyectoID, IdentidadActual.EsIdentidadInvitada, UsuarioActual.EsUsuarioInvitado, IdentidadActual.Clave);
             facetadoCN.Dispose();
 
@@ -913,7 +930,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
 
                 Guid identidadID = Guid.Empty;
 
@@ -945,7 +962,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     //else if (IdentidadActual.Tipo == TiposIdentidad.ProfesionalPersonal)
                     //{
-                        //mGrafo = IdentidadActual.PerfilID.ToString();
+                    //mGrafo = IdentidadActual.PerfilID.ToString();
                     //}
                     else
                     {

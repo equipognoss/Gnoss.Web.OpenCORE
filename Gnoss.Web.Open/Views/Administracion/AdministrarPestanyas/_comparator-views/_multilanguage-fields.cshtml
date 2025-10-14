@@ -1,0 +1,72 @@
+﻿@model TabModel
+@{
+    string idioma = ViewBag.CurrentLang;
+    TabModel pestanya = Model;
+    bool esPestanyaBusqueda = pestanya.Type == TipoPestanyaMenu.Recursos || pestanya.Type == TipoPestanyaMenu.Preguntas || pestanya.Type == TipoPestanyaMenu.Debates || pestanya.Type == TipoPestanyaMenu.Encuestas || pestanya.Type == TipoPestanyaMenu.PersonasYOrganizaciones || pestanya.Type == TipoPestanyaMenu.BusquedaSemantica || pestanya.Type == TipoPestanyaMenu.BusquedaAvanzada;
+}
+
+@* Título/Nombre de la página *@
+<div class="form-group @(Model.ComparacionesMultiIdioma["title"][idioma] ? "error" : "")">
+    <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "NOMBRE")</label>
+    <input type="text"
+           class="form-control"
+           data-language="@idioma"
+           value="@Html.ObtenerTextoDeIdioma(pestanya.Name, idioma, null)" 
+           readonly />
+    <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "NOMBRELAPAGINA")</small>
+
+    @* Nombre por defecto *@
+    @if (pestanya.EsNombrePorDefecto)
+    {
+        <input type="text" class="tabNameAux d-none" value="@Html.ObtenerTextoIdiomaUsuario(pestanya.Name)" disabled />
+    }
+</div>
+
+@* Ruta / Url de la página *@
+<div class="form-group @(Model.ComparacionesMultiIdioma["url"][idioma] ? "error" : "")">
+
+    @if (pestanya.Type.Equals(TipoPestanyaMenu.Home))
+    {
+        <input type="hidden" name="TabUrl" value="" disabled />
+        <input type="checkbox" class="d-none" name="TabOpenInNewWindow" />
+    }
+    else
+    {
+        <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "RUTA")</label>
+        <input type="text"
+               class="form-control"
+               data-language="es"
+               id="input_1185a5e1-2f38-4966-dd65-6bba98c1f00f_es"
+               value="@Html.ObtenerTextoDeIdioma(pestanya.Url, idioma, null)" readonly/>
+        <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "RUTAOENLACEPARAACCEDERALAPAGINA")</small>
+        @* EsUrl por defecto *@
+        @if (pestanya.EsUrlPorDefecto)
+        {
+            <input type="text" class="tabUrlAux form-control d-none" value="@Html.ObtenerTextoIdiomaUsuario(pestanya.Url)" disabled />
+        }
+    }
+</div>
+
+@* Metadescripción *@
+<div class="form-group @(Model.ComparacionesMultiIdioma["metaDescription"][idioma] ? "error" : "")">
+    <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "METADESCRIPTION")</label>
+    <textarea type="text"
+              class="form-control"
+              id="input_373de9d8-964c-c5d1-1207-b95f8bbd75dd_es"
+              readonly>@Html.ObtenerTextoDeIdioma(pestanya.MetaDescription, idioma, null)</textarea>
+    <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "DESCRIPCIONDELCONTENIDODELAPAGINARECOMENDABLE155CARACTERES")</small>
+</div>
+
+@* Añadir TextoDefectoBuscador para páginas de tipo Búsqueda *@
+@if (esPestanyaBusqueda)
+{
+    @* Texto defecto buscador *@
+    <div class="form-group @(Model.ComparacionesMultiIdioma["defaultText"][idioma] ? "error" : "")">
+        <label class="control-label d-block">@Html.GetText("COMADMINPESTANYAS", "TEXTODEFECTOBUSCADOR")</label>
+        <input type="text"
+               class="form-control"
+               value="@Html.ObtenerTextoDeIdioma(@pestanya.OpcionesBusqueda.TextoDefectoBuscador, idioma, null)"
+               readonly />
+        <small class="form-text text-muted">@Html.GetText("AYUDACOMADMINPESTANYAS", "TEXTODEFECTOBUSCADOR")</small>
+    </div>
+}

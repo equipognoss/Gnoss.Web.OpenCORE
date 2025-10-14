@@ -1,24 +1,30 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Elementos.CMS;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -175,11 +181,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public Guid CMSContainerBlockID;
     }
 
-    public class CMSAdminListadoComponentesController : ControllerBaseWeb
-    {
-        public CMSAdminListadoComponentesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class CMSAdminListadoComponentesController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public CMSAdminListadoComponentesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminDisenioController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -189,7 +199,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         #endregion
 
         #region Métodos públicos
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Pagina, "AdministracionPaginasPermitido" })]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerComponenteCMS, (ulong)PermisoContenidos.EliminarComponenteCMS, (ulong)PermisoContenidos.CrearComponenteCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
         public ActionResult Index(string tipoComponente, string idBloqueContenedor, string pagina, string search, string numusos)
         {
             // Añadir clase para el body del Layout
@@ -202,6 +212,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
+            CargarPermisosCMSViewBag();
 
             if (!ParametrosGeneralesRow.CMSDisponible)
             {
@@ -235,7 +246,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         mPaginaModel.CMSContainerBlockID = BloqueID;
                     }
 
-                    CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
                     GestionCMS gestorCMSConFiltros = null;
                     if (TipoComponente == -1)
                     {
@@ -263,7 +274,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             componentesDisponibles.Add(tipoComponenteCMS);
                         }
                     }
-                    CMSCN.Dispose();
 
                     Dictionary<Guid, int> componenteApariciones = new Dictionary<Guid, int>();
                     //Inicializamos
@@ -354,6 +364,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 ficha.Title = componente.Nombre;
                                 ficha.Key = componente.Clave;
                                 ficha.CMSComponentType = componente.TipoComponenteCMS;
+                                ficha.Versionado = CMSCN.ObtenerVersionesComponenteCMS(componente.Clave).Count > 0;
                                 if (componente.FilaComponente.FechaUltimaActualizacion.HasValue)
                                 {
                                     ficha.EditionDate = componente.FilaComponente.FechaUltimaActualizacion.Value;
@@ -375,6 +386,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             diccionarioFacetasTiposComponentes[componente.TipoComponenteCMS]++;
                         }
                     }
+
+                    CMSCN.Dispose();
                                                             
                     #region Facetas                            
                     
@@ -557,7 +570,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        private void RecogerParametros(string tipoComponente, string idBloqueContenedor, string pagina, string search, string numusos)
+		private void CargarPermisosCMSViewBag()
+		{
+			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+			ViewBag.VerComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.VerComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.CrearComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.CrearComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.EliminarComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.ModificarComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EditarComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.RestaurarVersionComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+			ViewBag.EliminarVersionComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+		}
+
+		private void RecogerParametros(string tipoComponente, string idBloqueContenedor, string pagina, string search, string numusos)
         {
             if (!string.IsNullOrEmpty(pagina))
             {

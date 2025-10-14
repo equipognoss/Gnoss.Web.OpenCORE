@@ -15,6 +15,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -27,6 +28,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -38,9 +40,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     public class PeticionesAJAXController : ControllerBaseWeb
     {
-        public PeticionesAJAXController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public PeticionesAJAXController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<PeticionesAJAXController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -99,20 +105,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
             if (pBandejaDeOrganizacion == null)
             {
                 pBandejaDeOrganizacion = "";
             }
-
+            
             int numMensajes = 0;
             int numMensajesOrg = 0;
             int numInvitaciones = 0;
             int numInvitacionesOrg = 0;
             int numSuscripciones = 0;
             int numComentarios = 0;
+            int numNotificaciones = 0;
 
             int numMensajesSinLeer = 0;
             int numMensajesSinLeerOrg = 0;
@@ -120,6 +127,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             int numInvitacionesSinLeerOrg = 0;
             int numSuscripcionesSinLeer = 0;
             int numComentariosSinLeer = 0;
+            int numNotificacionesSinLeer = 0;
 
             string numElemNuevosOtrasIdent = "";
 
@@ -146,7 +154,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         //Perfil personal corporativo (Miembro de la organización)
                         identidades.Add(new Guid(idPerfil.Substring(0, idPerfil.IndexOf("_"))));
-
+                        
                         //Perfil corporativo (organización)
                         identidades.Add(new Guid(idPerfil.Substring(idPerfil.IndexOf("_") + 1)));
 
@@ -159,8 +167,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 //Cargamos todos los contadores de todos los perfiles a la vez
-                LiveCN liveCN = new LiveCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                LiveCN liveCN = new LiveCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<LiveCN>(), mLoggerFactory);
                 List<AD.EntityModel.Models.IdentidadDS.ContadorPerfil> listaContadorPerfil = liveCN.ObtenerContadoresPerfiles(identidades);
+                List<NotificacionesModel> notificaciones = ControladorNotificaciones.ObtenerNotificaciones(IdentidadActual.PerfilID);
+                List<NotificacionesModel> notificacionesSinLeer = ControladorNotificaciones.ObtenerNotificacionesSinLeer(IdentidadActual.PerfilID);
                 AD.EntityModel.Models.IdentidadDS.ContadorPerfil contadorPerfilBuscar = listaContadorPerfil.FirstOrDefault(item => item.PerfilID.Equals(perfilBuscarID));
                 if (contadorPerfilBuscar != null)
                 {
@@ -168,11 +178,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     numComentarios = contadorPerfilBuscar.NuevosComentarios;
                     numInvitaciones = contadorPerfilBuscar.NuevasInvitaciones;
                     numSuscripciones = contadorPerfilBuscar.NuevasSuscripciones;
+                    numNotificaciones = notificaciones.Count();
 
                     numComentariosSinLeer = contadorPerfilBuscar.NumComentariosSinLeer;
                     numMensajesSinLeer = contadorPerfilBuscar.NumMensajesSinLeer;
                     numInvitacionesSinLeer = contadorPerfilBuscar.NumInvitacionesSinLeer;
                     numSuscripcionesSinLeer = contadorPerfilBuscar.NumSuscripcionesSinLeer;
+                    numNotificacionesSinLeer = notificacionesSinLeer.Count();
+
                     if (pPerfilOrganizacionID.HasValue) 
                     {
                         AD.EntityModel.Models.IdentidadDS.ContadorPerfil contadorPerfilBuscarOrganizacion = listaContadorPerfil.FirstOrDefault(item => item.PerfilID.Equals(pPerfilOrganizacionID.Value));
@@ -220,11 +233,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
 
-            string elementos = numMensajes + "|" + numInvitaciones + "|" + numSuscripciones + "|" + numComentarios + "|" + numMensajesSinLeer + "|" + numInvitacionesSinLeer + "|" + numSuscripcionesSinLeer + "|" + numComentariosSinLeer + "|" + numMensajesOrg + "|" + numMensajesSinLeerOrg + "|" + numInvitacionesOrg + "|" + numInvitacionesSinLeerOrg + "|" + numElemNuevosOtrasIdent;
+            string elementos = numMensajes + "|" + numInvitaciones + "|" + numSuscripciones + "|" + numComentarios + "|" + numNotificaciones + "|" + numMensajesSinLeer + "|" + numInvitacionesSinLeer + "|" + numSuscripcionesSinLeer + "|" + numComentariosSinLeer + "|" + numNotificacionesSinLeer+ "|" + numMensajesOrg + "|" + numMensajesSinLeerOrg + "|" + numInvitacionesOrg + "|" + numInvitacionesSinLeerOrg + "|" + numElemNuevosOtrasIdent;
 
             bool hayMensajesNuevos = ComprobarSiHayNotificacionesNuevas(elementos);
 
@@ -235,10 +248,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string privateKey = mConfigService.ObtenerVapidPrivateKey();
                 VapidDetails vapidDetails = new VapidDetails(subject, publicKey, privateKey);
                 PushSubscription subscription = new PushSubscription(HttpContext.Request.Cookies["endpoint"], HttpContext.Request.Cookies["p256dh"], HttpContext.Request.Cookies["auth"]);
-                if (subscription == null)
-                {
-
-                }
                 WebPushClient webPushClient = new WebPushClient();
                 try
                 {
@@ -299,7 +308,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     Guid personaID = Session.Get<GnossIdentity>("Usuario").PersonaID;
 
-                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
                     GestionPersonas gestorPersonas = new GestionPersonas(personaCN.ObtenerPersonaPorID(personaID), mLoggingService, mEntityContext);
                     personaCN.Dispose();
 
@@ -314,7 +323,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (!Session.Get<GnossIdentity>("Usuario").PersonaID.Equals(UsuarioAD.Invitado))
                     {
-                        PaisCL paisCL = new PaisCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        PaisCL paisCL = new PaisCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PaisCL>(), mLoggerFactory);
                         DataWrapperPais paisDW = paisCL.ObtenerPaisesProvincias();
                         paisCL.Dispose();
                         foreach (AD.EntityModel.Models.Pais.Pais fila in paisDW.ListaPais)
@@ -331,7 +340,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
             return Content(null);

@@ -4,6 +4,8 @@ using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.Elementos.Amigos;
+using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
@@ -19,6 +21,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,18 +31,23 @@ using System.Xml;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-    public class AdministrarDisenioController : ControllerBaseWeb
-    {
-        public AdministrarDisenioController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarDisenioController : ControllerAdministrationWeb
+	{
+
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarDisenioController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarDisenioController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+
         }
 
         /// <summary>
         /// Método principal
         /// </summary>
         /// <returns></returns>
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
             // Añadir clase para el body del Layout
@@ -91,13 +100,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         sr.Dispose();
 
                         //proceso el XML
-                        ControladorProyecto controlador = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                        controlador.ConfigurarComunidadConXML(texto, ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave);
+                        ControladorProyecto controlador = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyecto>(), mLoggerFactory);
+                        controlador.ConfigurarComunidadConXML(texto, ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave, mAvailableServices);
 
                         VersionarCaches(controlador);
 
                         #region Guardo el XML en el historial
-                        GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+                        GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
                         gd.Url = UrlServicioWebDocumentacion;
 
                         sw = LoggingService.IniciarRelojTelemetria();
@@ -141,7 +150,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult DownloadDynamicFile()
         {
             //obtengo el xml con la configuración almacenada para ese proyecto
-            ControladorProyectoPintarEstructuraXML controladorEstructuraXML = new ControladorProyectoPintarEstructuraXML(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.FilaProyecto.ProyectoID, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
+            ControladorProyectoPintarEstructuraXML controladorEstructuraXML = new ControladorProyectoPintarEstructuraXML(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.FilaProyecto.ProyectoID, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyectoPintarEstructuraXML>(), mLoggerFactory);
             XmlDocument xml = controladorEstructuraXML.PintarEstructuraXML();
 
             MemoryStream memoryStream = new MemoryStream();
@@ -167,7 +176,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult DownloadFile(string fileName)
         {
-            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
             gd.Url = UrlServicioWebDocumentacion;
             byte[] buffer = gd.ObtenerDocumentoDeDirectorio("Configuracion/" + ProyectoSeleccionado.Clave, fileName, ".xml");
             return File(buffer, "text/xml", "plantilla_" + ProyectoSeleccionado.NombreCorto + fileName.Substring(fileName.IndexOf("_") + 1) + ".xml");
@@ -192,7 +201,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string urlActionDownloadFile = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/" + UtilIdiomas.GetText("URLSEM", "ADMINISTRARDISENIO") + "/DownloadFile";
 
             List<HistoryFile> listXMLVersion = new List<HistoryFile>();
-            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
             gd.Url = UrlServicioWebDocumentacion;
 
             string[] listado = gd.ObtenerListadoDeDocumentosDeDirectorio("Configuracion/" + ProyectoSeleccionado.Clave);
@@ -232,11 +241,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             mGnossCache.RecalcularRutasProyecto(ProyectoSeleccionado.Clave);
 
-            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             List<string> listaRutasPestanyasInvalidarDeCache = null;
             if (controlador.RutasPestanyasInvalidar.Count > 0)
             {
-                listaRutasPestanyasInvalidarDeCache = (List<string>)proyectoCL.ObtenerObjetoDeCache(ProyectoCL.CLAVE_CACHE_LISTA_RUTAPESTANYAS_INVALIDAR + ProyectoSeleccionado.Clave, true);
+                listaRutasPestanyasInvalidarDeCache = (List<string>)proyectoCL.ObtenerObjetoDeCache(ProyectoCL.CLAVE_CACHE_LISTA_RUTAPESTANYAS_INVALIDAR + ProyectoSeleccionado.Clave, true,typeof(List<string>));
 
                 if (listaRutasPestanyasInvalidarDeCache != null)
                 {
@@ -258,7 +267,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             List<string> listaRutasPestanyasRegistrarDeCache = null;
             if (controlador.RutasPestanyasRegistrar.Count > 0)
             {
-                listaRutasPestanyasRegistrarDeCache = (List<string>)proyectoCL.ObtenerObjetoDeCache(ProyectoCL.CLAVE_CACHE_LISTA_RUTAPESTANYAS_REGISTRAR + ProyectoSeleccionado.Clave, true);
+                listaRutasPestanyasRegistrarDeCache = (List<string>)proyectoCL.ObtenerObjetoDeCache(ProyectoCL.CLAVE_CACHE_LISTA_RUTAPESTANYAS_REGISTRAR + ProyectoSeleccionado.Clave, true, typeof(List<string>));
 
                 if (listaRutasPestanyasRegistrarDeCache != null)
                 {

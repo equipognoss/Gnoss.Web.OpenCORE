@@ -1,30 +1,108 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+	</PropertyGroup>
 
-  <ItemGroup>
-	  <PackageReference Include="ClosedXML" Version="0.101.0" />
-	  <PackageReference Include="EntityFramework" Version="6.4.4" />
-	  <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.20" />
-	  <PackageReference Include="MySql.Data" Version="8.1.0" />
-	  <PackageReference Include="WebPush" Version="1.0.12" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Views\Administracion\AdministrarCategorias\modal-views\**" />
+		<Compile Remove="Views\Administracion\AdministrarCategorias\NewFolder\**" />
+		<Compile Remove="Views\Administracion\AdministrarComunidadHome\NewFolder\**" />
+		<Compile Remove="Views\Administracion\AdministrarContextos\_partial-views\**" />
+		<Content Remove="Views\Administracion\AdministrarCategorias\modal-views\**" />
+		<Content Remove="Views\Administracion\AdministrarCategorias\NewFolder\**" />
+		<Content Remove="Views\Administracion\AdministrarComunidadHome\NewFolder\**" />
+		<Content Remove="Views\Administracion\AdministrarContextos\_partial-views\**" />
+		<EmbeddedResource Remove="Views\Administracion\AdministrarCategorias\modal-views\**" />
+		<EmbeddedResource Remove="Views\Administracion\AdministrarCategorias\NewFolder\**" />
+		<EmbeddedResource Remove="Views\Administracion\AdministrarComunidadHome\NewFolder\**" />
+		<EmbeddedResource Remove="Views\Administracion\AdministrarContextos\_partial-views\**" />
+		<None Remove="Views\Administracion\AdministrarCategorias\modal-views\**" />
+		<None Remove="Views\Administracion\AdministrarCategorias\NewFolder\**" />
+		<None Remove="Views\Administracion\AdministrarComunidadHome\NewFolder\**" />
+		<None Remove="Views\Administracion\AdministrarContextos\_partial-views\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.RedesSociales\Es.Riam.Gnoss.RedesSociales.csproj" />
-    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Traducciones\Es.Riam.Gnoss.Traducciones.csproj" />
-    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Util\Es.Riam.Gnoss.Util.csproj" />
-    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.MVC.Controles\Es.Riam.Gnoss.Web.MVC.Controles\Es.Riam.Gnoss.Web.MVC.Controles.csproj" />
-    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.RSS\Es.Riam.Gnoss.Web.RSS.csproj" />
-    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.UtilOAuth\Es.Riam.Gnoss.Web.UtilOAuth.csproj" />
-    <ProjectReference Include="..\..\Gnoss.Commons\OntologyToClass\OntologyToClass.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Remove="Views\Shared\Layout\_partial-views\_layout-left-navigation-panel_Admin - Copia.cshtml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="App_Start\" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Aspose.Zip" Version="24.10.0" />
+		<PackageReference Include="ClosedXML" Version="0.104.1" />
+		<PackageReference Include="EntityFramework" Version="6.5.1" />
+		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
+		<PackageReference Include="MySql.Data" Version="9.1.0" />
+		<PackageReference Include="System.IO.Packaging" Version="8.0.1" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="WebPush" Version="1.0.12" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.AD\Es.Riam.Gnoss.AD.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.CL\Es.Riam.Gnoss.CL.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.RedesSociales\Es.Riam.Gnoss.RedesSociales.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Traducciones\Es.Riam.Gnoss.Traducciones.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Util\Es.Riam.Gnoss.Util.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.MVC.Controles\Es.Riam.Gnoss.Web.MVC.Controles\Es.Riam.Gnoss.Web.MVC.Controles.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.RSS\Es.Riam.Gnoss.Web.RSS.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.UtilOAuth\Es.Riam.Gnoss.Web.UtilOAuth.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Web.UtilDownloadOntologyDlls\Es.Riam.Gnoss.Web.UtilDownloadOntologyDlls.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\Gnoss.Web.LabelerService\Gnoss.Web.LabelerService.csproj" />
+		<ProjectReference Include="..\..\Gnoss.Commons\OntologyToClass\OntologyToClass.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="App_Start\" />
+		<Folder Include="Views\Administracion\AdministrarCategorias\_modal-views\" />
+		<Folder Include="Views\Administracion\AdministrarConsultasSPARQL\" />
+		<Folder Include="Views\Administracion\AdministrarFacetas\_modal-views\" />
+		<Folder Include="Views\Administracion\AdministrarMapasCharts\_modal-views\" />
+		<Folder Include="Views\Administracion\AdministrarMapasCharts\_partial-views\" />
+		<Folder Include="Views\Administracion\AdministrarServiciosExternos\_partial-views\" />
+		<Folder Include="Views\Administracion\AdministrarTraducciones\_modal-views\" />
+		<Folder Include="Views\Administracion\AdministrarVistas\_modal-views\" />
+		<Folder Include="Views\Administracion\CMSAdminListadoComponentes\_partial-views\" />
+		<Folder Include="Views\Administracion\DescargarTraducciones\_modal-views\" />
+		<Folder Include="Views\CMSAdminMultimedia\_modal-views\" />
+		<Folder Include="Views\Dashboard\_partial-views\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Views\Administracion\CMSAdminComponenteEditar\_modal-views\_index.cshtml" />
+		<None Include="Views\CargadorFacetas\CargarFacetas.cshtml" />
+		<None Include="Views\CargadorFacetas\_CajaBusqueda.cshtml" />
+		<None Include="Views\CargadorFacetas\_CajaBusquedaSimple.cshtml" />
+		<None Include="Views\CargadorFacetas\_Faceta.cshtml" />
+		<None Include="Views\CargadorFacetas\_ItemFaceta.cshtml" />
+		<None Include="Views\CargadorResultados\CargarResultados.cshtml" />
+		<None Include="Views\CargadorResultados\CargarResultadosGadget.cshtml" />
+		<None Include="Views\CargadorResultados\LimpiarCache.cshtml" />
+		<None Include="Views\CargadorResultados\_partial-views\_list-actions.cshtml" />
+		<None Include="Views\CargadorResultados\_partial-views\_list-votes.cshtml" />
+		<None Include="Views\CargadorResultados\_partial-views\_results-pagination.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoBlog.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoComentario.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoComentarioContribuciones.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoComunidad.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoContacto.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoGrupo.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoInvitacion.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoMensaje.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoPaginaCMS.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoPerfil.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoRecurso.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoRecursoContribuciones.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoRecursoGadget.cshtml" />
+		<None Include="Views\CargadorResultados\_ResultadoRecursoMisRecursos.cshtml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="Views\Administracion\AdministrarMatomo\_modal-views\_reset-matomo-administrator-password.cshtml">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>

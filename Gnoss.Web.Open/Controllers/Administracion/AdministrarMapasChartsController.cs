@@ -31,18 +31,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-    public class AdministrarMapasChartsController : ControllerBaseWeb
-    {
-        public AdministrarMapasChartsController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarMapasChartsController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarMapasChartsController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarMapasChartsController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult AdministrarMapa()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMapa } })]
+		public ActionResult AdministrarMapa()
         {
             AdministrarMapaViewModel modelo = ControladorMapasCharts.LoadMapFromBBDD();
 
@@ -59,8 +66,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return View("_EditarMapa", modelo);
         }
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult AdministrarChart()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
+		public ActionResult AdministrarChart()
         {
             AdministrarChartsViewModel modelo = ControladorMapasCharts.LoadChartsFromBBDD();
             modelo.IdiomaUsuario = IdiomaUsuario;
@@ -84,14 +91,33 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			return View("Index", modelo);
 		}
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult GuardarMapa(AdministrarMapaViewModel pMapa)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMapa } })]
+		public ActionResult GuardarMapa(AdministrarMapaViewModel pMapa)
         {
             GuardarLogAuditoria();
             GnossResult resultado = new GnossResult("Se han guardado con exito", GnossResult.GnossStatus.OK, mViewEngine);
+            GuardarLogAuditoria();
+            bool iniciado = false;
+            try
+            {
+                iniciado = HayIntegracionContinua;
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
+                return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+            }
             try
             {
                 ControladorMapasCharts.SaveMap(pMapa);
+                if (iniciado)
+                {
+                    HttpResponseMessage respuesta = InformarCambioAdministracion("Mapa", JsonConvert.SerializeObject(pMapa, Formatting.Indented));
+                    if (!respuesta.StatusCode.Equals(HttpStatusCode.OK))
+                    {
+                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -101,15 +127,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return resultado;
         }
 
-        /// <summary>
-        /// Método para realizar el guardado de los gráficos
-        /// </summary>
-        /// <param name="pCharts">Chart o gráfico con los datos que se desea guardar</param>
-        /// <param name="ChartViewInfoOrderList">Lista con los gráficos existentes en la comunidad donde se incluye el id del gráfico y su posición actual</param>
-        /// <returns></returns>
+		/// <summary>
+		/// Método para realizar el guardado de los gráficos
+		/// </summary>
+		/// <param name="pCharts">Chart o gráfico con los datos que se desea guardar</param>
+		/// <param name="ChartViewInfoOrderList">Lista con los gráficos existentes en la comunidad donde se incluye el id del gráfico y su posición actual</param>
+		/// <returns></returns>
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult GuardarChart(ChartViewModel pCharts, List<ChartViewInfoOrder> ChartViewInfoOrderList)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
+		public ActionResult GuardarChart(ChartViewModel pCharts, List<ChartViewInfoOrder> ChartViewInfoOrderList)
         {
             GuardarLogAuditoria();          
 
@@ -155,13 +181,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return resultado;
         }
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult CrearFila()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
+		public ActionResult CrearFila()
         {
             ChartViewModel chart = new ChartViewModel();
             chart.ChartID = Guid.NewGuid().ToString();
             chart.Nombre = $"NuevoComponente@{IdiomaUsuario}";
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 			Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();
             ViewData["0"] = idiomas.FirstOrDefault(x => string.Compare(x.Key, IdiomaUsuario, true) == 0);
             ViewData["1"] = paramCL.ObtenerListaIdiomasDictionary();
@@ -175,8 +201,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			return PartialView("_partial-views/_graphListItem", chart);
         }
 
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { "", TipoPaginaAdministracion.Pagina })]
-        public ActionResult EliminarChart(string ChartID)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
+		public ActionResult EliminarChart(string ChartID)
         {
             List<ChartViewModel> graficos = null;
 
@@ -195,7 +221,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
-            FacetaCN facetaCN = new FacetaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            FacetaCN facetaCN = new FacetaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetaCN>(), mLoggerFactory);
             DataWrapperFacetas facetaDW = facetaCN.ObtenerDatosChartProyecto(ProyectoAD.MyGnoss, ProyectoSeleccionado.Clave, new Guid(ChartID));
             
             FacetaConfigProyChart chartEliminar = facetaDW.ListaFacetaConfigProyChart.FirstOrDefault();

@@ -22,7 +22,19 @@ Variables
 	bool isOriginal = false;
 	string viewTypeValue = "Personalizada";
 	// Fecha edición/creación de la vista
-	string dateValue = "03/11-2022";
+	string dateValue = string.Empty;
+	if (Model.FechaCreacion == Model.FechaModificacion && Model.FechaCreacion.ToShortDateString().Equals("01/01/0001"))
+	{
+		dateValue = "01/01/2024";
+	}
+	else if (Model.FechaModificacion > Model.FechaCreacion)
+	{
+		dateValue = Model.FechaModificacion.ToShortDateString();
+	}
+	else
+	{
+		dateValue = Model.FechaCreacion.ToShortDateString();
+	}
 	
 	// Encontrar la última posición de "/" para quedarnos solo con el nombre
 	int lastPositionCharacter = nombreFormateadoPadre.LastIndexOf("/");

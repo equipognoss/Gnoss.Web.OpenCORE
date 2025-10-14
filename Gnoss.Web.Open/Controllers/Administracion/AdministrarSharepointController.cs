@@ -16,16 +16,20 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.ParametroGeneralDSName;
 using Es.Riam.Gnoss.Web.Controles.Proyectos;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -33,8 +37,8 @@ using System.Linq;
 
 namespace Gnoss.Web.Controllers.Administracion
 {
-    public class AdministrarSharepointController : ControllerBaseWeb
-    {
+    public class AdministrarSharepointController : ControllerAdministrationWeb
+	{
         private AdministrarSharepointViewModel mPaginaModel = null;
         private GestorParametroAplicacion mGestorParametrosAplicacion = null;
         private string mDominioBase;
@@ -47,14 +51,17 @@ namespace Gnoss.Web.Controllers.Administracion
         private string mUrlRedireccionSharepoint;
         private bool mPermisosConcedidos;
         private bool mPermitirVincularOneDrive;
-
-        public AdministrarSharepointController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime) 
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarSharepointController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSharepointController> logger, ILoggerFactory loggerFactory) 
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
         public ActionResult Index()
         {
 
@@ -65,6 +72,7 @@ namespace Gnoss.Web.Controllers.Administracion
             // Establecer el título para el header de DevTools
             ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");            
             ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "ADMINISTRARSHAREPOINT");
+            ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
 
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -78,11 +86,11 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Guardar(AdministrarSharepointViewModel pModel)
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
+		public ActionResult Guardar(AdministrarSharepointViewModel pModel)
         {
             GuardarLogAuditoria();
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
 
             try
@@ -112,8 +120,8 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Manual()
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
+		public ActionResult Manual()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -155,13 +163,13 @@ namespace Gnoss.Web.Controllers.Administracion
 
         private void GuardarParametro(string pModelParam, string pParam)
         {
-            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);           
+            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);           
             paramCN.ActualizarParametroAplicacion(pParam, pModelParam);
         }
 
         private void InvalidarCaches()
         {
-            ParametroAplicacionCL paramCL = new ParametroAplicacionCL("acid", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL("acid", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
             paramCL.InvalidarCacheParametrosAplicacion();
         }
 
@@ -171,7 +179,7 @@ namespace Gnoss.Web.Controllers.Administracion
             {
                 if (mGestorParametrosAplicacion == null)
                 {
-                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
                     mGestorParametrosAplicacion = paramCL.ObtenerGestorParametros();
                 }

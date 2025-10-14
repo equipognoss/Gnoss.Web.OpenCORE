@@ -22,6 +22,8 @@ using System.Linq;
 using Es.Riam.InterfacesOpen;
 using Gnoss.Web.Open.Filters;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 /// <summary>
 /// Descripción breve de ParametrosConfiguracion
@@ -31,10 +33,13 @@ using Microsoft.Extensions.Hosting;
 // Para permitir que se llame a este servicio Web desde un script, usando ASP.NET AJAX, quite la marca de comentario de la línea siguiente. 
 public class ParametrosConfiguracionController : ControllerBaseWeb
 {
-
-    public ParametrosConfiguracionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-    : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    private ILogger mlogger;
+    private ILoggerFactory mLoggerFactory;
+    public ParametrosConfiguracionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ParametrosConfiguracionController> logger, ILoggerFactory loggerFactory)
+    : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
     {
+        mlogger = logger;
+        mLoggerFactory = loggerFactory;
     }
 
     [HttpGet]
@@ -46,7 +51,7 @@ public class ParametrosConfiguracionController : ControllerBaseWeb
     [HttpGet]
     public string UrlPropiaProyecto(Guid pProyectoID)
     {
-        ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+        ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
         string urlPropia = proyectoCN.ObtenerURLPropiaProyecto(pProyectoID);
         proyectoCN.Dispose();
         return urlPropia;
@@ -57,7 +62,7 @@ public class ParametrosConfiguracionController : ControllerBaseWeb
     {
         Guid proyectoID = Guid.Empty;
 
-        ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+        ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
         List<Guid> listaproyID = proyectoCN.ObtenerProyectoIDOrganizacionIDPorNombreCorto(pNombreCorto);
         if (listaproyID != null && listaproyID.Any())
         {
@@ -71,7 +76,7 @@ public class ParametrosConfiguracionController : ControllerBaseWeb
 
             if (dominioActual == pNombreCorto)
             {
-                listaproyID = proyectoCN.ObtenerProyectoIDOrganizacionIDPorNombreCorto(new RouteConfig(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor).NombreProyectoSinNombreCorto);
+                listaproyID = proyectoCN.ObtenerProyectoIDOrganizacionIDPorNombreCorto(new RouteConfig(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor, mLoggerFactory.CreateLogger<RouteConfig>(), mLoggerFactory).NombreProyectoSinNombreCorto);
                 if (listaproyID != null && listaproyID.Any())
                 {
                     proyectoID = listaproyID[1];

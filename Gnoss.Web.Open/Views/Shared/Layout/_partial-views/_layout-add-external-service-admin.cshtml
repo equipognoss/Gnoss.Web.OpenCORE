@@ -25,8 +25,7 @@ Variables
 		<li class="nuevo nueva-pagina">
 	*@
 			@* Botón para añadir una nueva página *@
-			<a
-				href="javascript: void(0);"
+			<button
 				class="btn btn-outline-primary dropdown-toggle no-flecha  @(!Model.EstaConfigurado ? "btn-outline-disabled" : null)"
 				id="menuNuevServicioExterno"
 				@(!Model.EstaConfigurado ? "disabled" : null)
@@ -37,7 +36,7 @@ Variables
 				aria-expanded="true">
 				<span class="material-icons">add</span>
 				<span class="texto">@Html.GetText("DEVTOOLS","NUEVOSERVICIO")</span>
-			</a>
+			</button>
 			@* Dropdown con el servicio externo a crear *@
 			@if (Model.EstaConfigurado)
 			{			

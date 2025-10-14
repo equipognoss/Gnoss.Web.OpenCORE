@@ -10,41 +10,41 @@ Variables
 *@
 
 @{
-CommunityModel Comunidad = Html.GetComunidad();
-HeaderModel cabecera = Html.GetCabecera();
-// Guardar si es multiLenguage la comunidad o no
-bool isMultiLanguage = Model.MultiLanguaje;
-// Contador del nº de pestañas listadas
-int contNumPestañasVisibles = 0;
-// Nº de pestañas de idiomas a visualizar en la sección Tab
-int numMaxPestañasIdiomasVisibles = 2;
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+	// Guardar si es multiLenguage la comunidad o no
+	bool isMultiLanguage = Model.MultiLanguaje;
+	// Contador del nº de pestañas listadas
+	int contNumPestañasVisibles = 0;
+	// Nº de pestañas de idiomas a visualizar en la sección Tab
+	int numMaxPestañasIdiomasVisibles = 2;
 
-// Opciones a utilizar en Tesauro
-string CategoriasSeleccionadas = "";
-string CategoriasExpandidas = "";
-string PasosRealizados = "";
+	// Opciones a utilizar en Tesauro
+	string CategoriasSeleccionadas = "";
+	string CategoriasExpandidas = "";
+	string PasosRealizados = "";
 
-@* Inicializar campos hidden *@
-    if (Model.Thesaurus.SelectedCategories != null)
-    {
-        foreach (Guid categoria in Model.Thesaurus.SelectedCategories)
-        {
-            CategoriasSeleccionadas += categoria.ToString() + ',';
-        }
-    }
+	@* Inicializar campos hidden *@
+	if (Model.Thesaurus.SelectedCategories != null)
+	{
+		foreach (Guid categoria in Model.Thesaurus.SelectedCategories)
+		{
+			CategoriasSeleccionadas += categoria.ToString() + ',';
+		}
+	}
 
-    if (Model.Thesaurus.ExpandedCategories != null)
-    {
-        foreach (Guid categoria in Model.Thesaurus.ExpandedCategories)
-        {
-            CategoriasExpandidas += categoria.ToString() + ',';
-        }
-    }
-    
-    if(!string.IsNullOrEmpty(Model.PasosRealizados))
-    {
-        PasosRealizados = Model.PasosRealizados;
-    }
+	if (Model.Thesaurus.ExpandedCategories != null)
+	{
+		foreach (Guid categoria in Model.Thesaurus.ExpandedCategories)
+		{
+			CategoriasExpandidas += categoria.ToString() + ',';
+		}
+	}
+
+	// if(!string.IsNullOrEmpty(Model.PasosRealizados))
+	// {
+	//     PasosRealizados = Model.PasosRealizados;
+	// }
 }
 
 @*
@@ -67,56 +67,56 @@ string PasosRealizados = "";
 	@*<ul class="nav nav-tabs @( (isMultiLanguage == false) ? "d-none" : null)" id="myTab" role="tablist">*@
 	<ul class="nav nav-tabs @( (Model.MultiLanguaje) ? "" : "d-none")" id="tabIdiomas" role="tablist">
 		@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
-			@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
-				if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
-					<li class="nav-item" role="presentation">
-						<a  class="tabIdiomaItem nav-link @( Model.IdiomaTesauro == idioma.Key ? "active" : null)" 
-							id="@("ver_categorias_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
-							data-language = "@idioma.Key"
-							role="tab" aria-controls="@("litVer" + idioma.Key)"
-							aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
-					</li>
-					contNumPestañasVisibles += 1;
-				}				
-			}
-			@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
-			@if (contNumPestañasVisibles < cabecera.Languajes.Count){
-				@* Dropdown para resto de categorías *@
-				<li class="nav-item">
-					<div class="dropdown">
-						@* Desplegable del dropdown *@
-						<a
-							class="nav-link dropdown-toggle"
-							data-toggle="dropdown"
-							href="#"
-							role="button"
-							aria-haspopup="true"
-							aria-expanded="false"
-							>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
-						@* Sección para mostrar items del dropdown*@
-						<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
-							<ul class="no-list-style">
-								@* Pintado del resto de pestañas en Dropdown *@									
-								@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
-									var item = cabecera.Languajes.ElementAt(i);
-									var itemKey = item.Key;
-									var itemValue = item.Value;
-
-									@* Cada item del dropdown *@
-									<li>
-										<a id="@("ver_categorias_" + itemKey)" 
-										   class="item-dropdown tabIdiomaItem @( Model.IdiomaTesauro == itemKey ? "active" : null)"
-										   data-toggle="tab"
-										   href="#@("litVer" + itemKey)"
-										   data-language = "@itemKey">
-										   @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
-									</li>
-								}
-							</ul>
-						</div>
-					</div>
+		@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
+			if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
+				<li class="nav-item" role="presentation">
+					<a  class="tabIdiomaItem nav-link @( Model.IdiomaTesauro == idioma.Key ? "active" : null)" 
+					id="@("ver_categorias_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)" 
+					data-language = "@idioma.Key"
+					role="tab" aria-controls="@("litVer" + idioma.Key)"
+					aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
 				</li>
-			}
+				contNumPestañasVisibles += 1;
+			}				
+		}
+		@* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+		@if (contNumPestañasVisibles < cabecera.Languajes.Count){
+			@* Dropdown para resto de categorías *@
+			<li class="nav-item">
+				<div class="dropdown">
+					@* Desplegable del dropdown *@
+					<a
+					class="nav-link dropdown-toggle"
+					data-toggle="dropdown"
+					href="#"
+					role="button"
+					aria-haspopup="true"
+					aria-expanded="false"
+					>@Html.GetText("DEVTOOLS","OTROSIDIOMAS")</a>
+					@* Sección para mostrar items del dropdown*@
+					<div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+						<ul class="no-list-style">
+							@* Pintado del resto de pestañas en Dropdown *@									
+							@for (int i = contNumPestañasVisibles; i< cabecera.Languajes.Count; i++) {
+								var item = cabecera.Languajes.ElementAt(i);
+								var itemKey = item.Key;
+								var itemValue = item.Value;
+
+								@* Cada item del dropdown *@
+								<li>
+									<a id="@("ver_categorias_" + itemKey)" 
+									class="item-dropdown tabIdiomaItem @( Model.IdiomaTesauro == itemKey ? "active" : null)"
+									data-toggle="tab"
+									href="#@("litVer" + itemKey)"
+									data-language = "@itemKey">
+										@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)</a>
+								</li>
+							}
+						</ul>
+					</div>
+				</div>
+			</li>
+		}
 	</ul>
 
 	@* Cuerpo de las categorías en todos los idiomas *@
@@ -126,12 +126,12 @@ string PasosRealizados = "";
 			<div class="form-group mb-3">
 				<div class="filtroRapido">
 					<input
-						id="filtro-categorias"
-						class="form-control ac_input"
-						type="text"
-						placeholder="Buscar categorias"
-						onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}"
-						autocomplete="off"
+					id="filtro-categorias"
+					class="form-control ac_input"
+					type="text"
+					placeholder="@Html.GetText("DEVTOOLS","BUSCARCATEGORIAS")"
+					onkeydown="if(event.which || event.keyCode){if ((event.which == 13) || (event.keyCode == 13)) {return false;}}"
+					autocomplete="off"
 					/>
 					<span class="icon material-icons">search</span>
 				</div>
@@ -142,16 +142,19 @@ string PasosRealizados = "";
 		<div id="litVer" class="tab-contenido" role="tabpanel">
 
 			@* Botón para añadir nueva categoría *@
-			<div class="new-category-wrap">
-				<a id="btnAddCategory" data-target="#modal-container" data-toggle="modal" style="cursor:pointer;">										
-					<span class="js-new-category new-category btn" data-target="#modal-nueva-categoria" data-toggle="modal">
-						<span class="material-icons">
-							create_new_folder
+			@if ((ViewBag.CrearCategoriaPermitido != null && ViewBag.CrearCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+			{
+				<div class="new-category-wrap">
+					<a id="btnAddCategory" data-target="#modal-container" data-toggle="modal" style="cursor:pointer;">
+						<span class="js-new-category new-category btn" data-target="#modal-nueva-categoria" data-toggle="modal">
+							<span class="material-icons">
+								create_new_folder
+							</span>
+							<span>@Html.GetText("DEVTOOLS", "NUEVACATEGORIAPRINCIPAL")</span>
 						</span>
-						<span>@Html.GetText("DEVTOOLS","NUEVACATEGORIA")</span>
-					</span>
-				</a>
-			</div>
+					</a>
+				</div>
+			}			
 
 			@* Contenedor de las lista de categorías *@
 			<ul id="id-added-categories-list" class="js-community-categories-list component-list no-list-style">			

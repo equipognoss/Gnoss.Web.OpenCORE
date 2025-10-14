@@ -25,12 +25,12 @@ Variables
 
 
 @* Pintado de cada Vistas Editadas de Resultados *@
-@foreach (string vista in Model.ListEditedResultsServiceViews)
+@foreach (ManageViewsViewModel.EditedView modelo in Model.ListEditedResultsServiceViews)
 {
 	ViewBag.ViewServiceType = "resultados";
 	ViewBag.ViewType = "personalizada";
 	ViewBag.editedWebView = true;
 	// Url de la request para las Vistas de tipo Resultados
 	ViewBag.UrlActionWeb = Model.UrlActionResults;	
-	@Html.PartialView("_partial-views/_editedWebView", vista)									
+	@Html.PartialView("_partial-views/_editedWebView", modelo)									
 }

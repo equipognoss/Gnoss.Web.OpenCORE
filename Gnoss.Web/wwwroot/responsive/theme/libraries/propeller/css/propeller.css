@@ -796,14 +796,14 @@ h2.pmd-card-title-text {
  * Licensed under MIT (http://propeller.in/LICENSE)
  */
 .btn {
-  padding: .625rem .75rem;
-  font-size: .875rem;
-  font-weight: 400;
-  line-height: 1.1;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-  border-radius: .125rem;
-  transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    /*padding: .625rem .75rem;*/
+    font-size: .875rem;
+    font-weight: 400;
+    line-height: 1.1;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    border-radius: .125rem;
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
 .btn:active, .btn.active {

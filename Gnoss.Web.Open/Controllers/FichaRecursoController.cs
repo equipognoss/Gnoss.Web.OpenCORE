@@ -1,4 +1,7 @@
-﻿using Es.Riam.Gnoss.AD.BASE_BD;
+﻿using BeetleX.Redis.Commands;
+using DocumentFormat.OpenXml.Office2010.Word;
+using Es.Riam.AbstractsOpen;
+using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
@@ -19,6 +22,7 @@ using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Documentacion;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Tesauro;
 using Es.Riam.Gnoss.Elementos;
@@ -36,11 +40,14 @@ using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.Notificacion;
+using Es.Riam.Gnoss.Logica.Parametro;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Tesauro;
 using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Logica.Voto;
+using Es.Riam.Gnoss.RabbitMQ;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -48,6 +55,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles;
+using Es.Riam.Gnoss.Web.Controles.Amigos;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
@@ -55,38 +63,44 @@ using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Controles;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
 using Es.Riam.Gnoss.Web.MVC.ControlesMVC;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Es.Riam.Gnoss.Web.MVC.Models.FicherosRecursos;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces;
+using Es.Riam.Interfaces.InterfacesOpen;
+using Es.Riam.InterfacesOpen;
+using Es.Riam.Metagnoss.ExportarImportar;
+using Es.Riam.Open.Model;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
+using Gnoss.Web.Controllers;
+using Gnoss.Web.Open.Filters;
+using Google.Apis.Drive.v2.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 using System.Web;
 using System.Xml;
 using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel;
-using Es.Riam.Gnoss.Web.Controles.Amigos;
-using Gnoss.Web.Controllers;
-using Microsoft.AspNetCore.StaticFiles;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
-using Es.Riam.Interfaces.InterfacesOpen;
-using Es.Riam.AbstractsOpen;
-using Es.Riam.InterfacesOpen;
-using Es.Riam.Gnoss.CL.ParametrosAplicacion;
-using Microsoft.Extensions.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -94,11 +108,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     public class FichaRecursoController : ControllerBaseWeb
     {
         private IRDFSearch mRDFSearch;
-
-        public FichaRecursoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public FichaRecursoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<FichaRecursoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mRDFSearch = rDFSearch;
+            mIPublishEvents = publishEvents;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -111,6 +129,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Documento actual.
         /// </summary>
         private DocumentoWeb mDocumento = null;
+
+        /// <summary>
+        /// Documento actual está versionado
+        /// </summary>
+        private bool mDocumentoVersionado = false;
+
+        /// <summary>
+        /// Guid de la ultima version del documento actual
+        /// </summary>
+        private Guid mDocumentoUltimaVersionID = Guid.Empty;
+
+        /// <summary>
+        /// Guid del documento original
+        /// </summary>
+        private Guid mDocumentoOriginalVersionID = Guid.Empty;
 
         /// <summary>
         /// Identificador de documento.
@@ -138,6 +171,132 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Token del usuario creador del documento
         /// </summary>
         private string tokenSPAdminDocument;
+        private IPublishEvents mIPublishEvents;
+
+        #endregion
+
+        #region Controlador
+
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            ComprobarDocumentoVersionado();
+
+            if (filterContext.Result == null)
+            {
+                ComprobarRedirecciones(filterContext);
+            }
+            // Cargamos el gestor documental y el documento actual
+            if (mGestorDocumental == null)
+            {
+                CargarInicial();
+            }
+            if (mDocumento == null)
+            {
+                CargaInicialDocumento();
+            }
+
+            base.OnActionExecuting(filterContext);
+        }
+
+        /// <summary>
+        /// Comprueba si existe el documento en el proyecto 
+        /// </summary>
+        /// <param name="pFilterContext"></param>
+        private void ComprobarRedirecciones(ActionExecutingContext pFilterContext)
+        {
+            try
+            {
+                if (pFilterContext.Result == null)
+                {
+                    ComprobarExisteDocumento(pFilterContext);
+                }
+                if (pFilterContext.Result == null)
+                {
+                    ComprobarPeticion(pFilterContext);
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex);
+            }
+        }
+
+        private void ComprobarDocumentoVersionado()
+        {
+            using (DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
+            {
+                try
+                {
+                    DataWrapperDocumentacion dwDocumentacion = new DataWrapperDocumentacion();
+                    docCN.ObtenerVersionDocumentosPorIDs(dwDocumentacion, new List<Guid>() { DocumentoID }, true);
+
+                    if (dwDocumentacion.ListaVersionDocumento.Count == 0)
+                        return;
+
+                    var ultimaVersion = dwDocumentacion.ListaVersionDocumento.MaxBy(doc => doc.Version);
+
+                    mDocumentoVersionado = true;
+                    mDocumentoUltimaVersionID = ultimaVersion.DocumentoID;
+                    mDocumentoOriginalVersionID = DocumentoVersionID != Guid.Empty
+                        ? DocumentoID
+                        : ultimaVersion.DocumentoOriginalID;
+                }
+                catch (Exception ex)
+                {
+                    mLoggingService.GuardarLogError("Fallo al determinar la existencia de una ficha de recurso", ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Comprobamos la existencia de la ultima version del documento solicitado
+        /// En el caso de que esté eliminado no mostraremos sus versiones.
+        /// </summary>
+        /// <param name="pFilterContext"></param>
+        private void ComprobarExisteDocumento(ActionExecutingContext pFilterContext)
+        {
+            try
+            {
+                // Si esta versionado mDocumentoUltimaVersionID deberia tener valor por lo que comprobamos si no está eliminado.
+                // Si no tiene valor es que es un documento sin versionar previo al cambio de versionado o un recurso creado
+                // por la api.
+                Guid ultimaVersionDocuemtoID = mDocumentoUltimaVersionID != Guid.Empty ? mDocumentoUltimaVersionID : DocumentoID;
+
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                if (!docCN.ExisteDocumentoEnProyecto(ProyectoSeleccionado.Clave, ultimaVersionDocuemtoID))
+                {
+                    pFilterContext.Result = RedireccionarAPaginaNoEncontrada();
+                }
+
+                docCN.Dispose();
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError("Fallo al determinar la existencia de una ficha de recurso", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Comprobamos que la peticion está bien formada. Si solo se indica un GUID, tiene que ser el Id original del recurso.
+        /// </summary>
+        /// <param name="pFilterContext"></param>
+        private void ComprobarPeticion(ActionExecutingContext pFilterContext)
+        {
+            try
+            {
+                if (DocumentoVersionado && DocumentoVersionID == Guid.Empty)
+                {
+                    if (DocumentoID != mDocumentoOriginalVersionID && pFilterContext.ActionDescriptor.RouteValues["action"].Equals("Index"))
+                    {
+                        pFilterContext.Result = RedireccionarAPaginaNoEncontrada();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError($"Fallo al comprobar la validez de la petiicion del recurso {DocumentoID}", ex.Message);
+            }
+        }
 
         #endregion
 
@@ -199,9 +358,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                ComentarioCN comentarioCN = new ComentarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ComentarioCN comentarioCN = new ComentarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ComentarioCN>(), mLoggerFactory);
                 AD.EntityModel.Models.Comentario.Comentario comentario = comentarioCN.ObtenerComentarioPorID(comentarioID);
-                Comentario elementoComentario = new Comentario(comentario, new GestionComentarios(new DataWrapperComentario(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                Comentario elementoComentario = new Comentario(comentario, new GestionComentarios(new DataWrapperComentario(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionComentarios>(), mLoggerFactory), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<Comentario>(), mLoggerFactory);
 
                 if (comentario != null)
                 {
@@ -302,7 +461,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     GuardarComentarios();
                 }
 
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarComentariosRecursoMVC(DocumentoID, ProyectoSeleccionado.Clave);
                 docCL.InvalidarEventosRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
                 docCL.Dispose();
@@ -340,11 +499,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult GetComments()
+        public ActionResult GetComments(int pInicio)
         {
             try
             {
-                List<CommentModel> listaComentarios = CargarListaComentarios();
+                List<CommentModel> listaComentarios = CargarListaComentarios(pInicio);
 
                 MultiViewResult result = new MultiViewResult(this, mViewEngine);
 
@@ -405,8 +564,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     i++;
                 }
 
-                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
 
                 return result;
             }
@@ -460,11 +619,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     i++;
                 }
 
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarComentariosRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
 
-                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
 
                 return result;
             }
@@ -489,8 +648,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 Comentario comentario = GestorDocumental.GestionComentarios.ListaComentarios[comentarioID];
 
-                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
 
                 //Seguridad : No puede votar dos veces, borramos el voto anterior
                 List<AD.EntityModel.Models.Voto.Voto> filasVotos = comentario.GestorComentarios.GestorVotos.VotoDW.ListaVotos.Where(item => item.IdentidadID.Equals(IdentidadActual.Clave) && item.ElementoID.Equals(comentarioID)).ToList();
@@ -520,7 +679,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     i++;
                 }
 
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarComentariosRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
 
                 return result;
@@ -536,13 +695,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Acción para bloquear los comentarios de un recurso
         /// </summary>
         /// <returns></returns>
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult LockComments()
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult LockComments()
         {
             try
             {
-                //Hay que hacer esta carga porque si no, no comprueba bien los permisos de edición.
-                ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
+				//Hay que hacer esta carga porque si no, no comprueba bien los permisos de edición.
+				ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
 
                 //Seguridad : Si no es borrador y tiene permisos para bloquear y desbloquear
                 if (!Documento.EsBorrador && Documento.TienePermisosIdentidadBloquearDesbloquearComentarios(IdentidadActual, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonBloquearComentariosDoc))
@@ -561,13 +720,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Acción para desbloquear los comentarios de un recurso
         /// </summary>
         /// <returns></returns>
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult UnlockComments()
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult UnlockComments()
         {
             try
             {
-                //Hay que hacer esta carga porque si no, no comprueba bien los permisos de edición.
-                ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
+				//Hay que hacer esta carga porque si no, no comprueba bien los permisos de edición.
+				ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
 
                 //Seguridad : Si no es borrador y tiene permisos para bloquear y desbloquear
                 if (!Documento.EsBorrador && Documento.TienePermisosIdentidadBloquearDesbloquearComentarios(IdentidadActual, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonBloquearComentariosDoc))
@@ -629,7 +788,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 mEntityContext.SaveChanges();
             }
-            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, proyectoActuacionID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, proyectoActuacionID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
             if (Documento.Comentarios.Count == 0)
             {
                 if (Documento.TipoDocumentacion == TiposDocumentacion.Pregunta)
@@ -682,9 +841,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (!proyectoID.Equals(ProyectoAD.MetaProyecto))
                 {
-                    ControladorDocumentacion controlador = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorDocumentacion controlador = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
 
-                    controlador.NotificarCambioEstadoPreguntaDebate(Documento.Clave, proyectoID, (Documento.ProyectoID == proyectoID), Documento.TipoDocumentacion);
+                    controlador.NotificarCambioEstadoPreguntaDebate(Documento.Clave, proyectoID, (Documento.ProyectoID == proyectoID), Documento.TipoDocumentacion, mAvailableServices);
                 }
 
                 #region Actualizar cola GnossLIVE
@@ -717,12 +876,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
 
-                ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, infoExtra);
+                ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
 
 
                 if (proyectoID != ProyectoAD.MetaProyecto)
                 {
-                    ControladorDocumentacion.ActualizarGnossLive(proyectoID, IdentidadActual.ObtenerIdentidadEnProyectoDeIdentidad(proyectoID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta);
+                    ControladorDocumentacion.ActualizarGnossLive(proyectoID, IdentidadActual.ObtenerIdentidadEnProyectoDeIdentidad(proyectoID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta, mAvailableServices);
                 }
 
                 #endregion
@@ -735,6 +894,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             return GnossResultOK();
         }
+
+
 
         private ActionResult CrearComentario(string pDescripcion, Guid pComentarioPadre)
         {
@@ -750,12 +911,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CargarComentarios();
 
                 Comentario comentario = null;
-				string textoComentario = HttpUtility.UrlDecode(pDescripcion);
-				textoComentario = UtilCadenas.LimpiarInyeccionCodigo(textoComentario);                
+                string textoComentario = HttpUtility.UrlDecode(pDescripcion);
+                textoComentario = UtilCadenas.LimpiarInyeccionCodigo(textoComentario);
 
                 if (MostrarControlAgregarComentario && (ComunidadPermiteComentarios || Documento.TipoDocumentacion == TiposDocumentacion.Pregunta))
                 {
-                    ProyectoCN ProyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN ProyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     string NombreProy = "";
                     if (!ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
                     {
@@ -768,7 +929,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (!EsEcosistemaSinMetaProyecto && !ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
                     {
-                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                         urlMetaproyecto = proyCL.ObtenerURLPropiaProyecto(ProyectoAD.MetaProyecto, IdiomaUsuario);
                         if (string.IsNullOrEmpty(urlMetaproyecto))
                         {
@@ -790,7 +951,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         listaPerfiles.Add(editor.FilaEditor.PerfilID);
                     }
 
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     GestorDocumental.GestorIdentidades = new GestionIdentidades(identidadCN.ObtenerIdentidadesDePerfilesEnProyecto(listaPerfiles, ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                     identidadCN.Dispose();
 
@@ -800,13 +961,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         listaIdentidades.Add(identidadID);
                     }
 
-                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
                     GestorDocumental.GestorIdentidades.GestorPersonas = new GestionPersonas(personaCN.ObtenerPersonasPorIdentidad(listaIdentidades), mLoggingService, mEntityContext);
                     personaCN.Dispose();
 
                     #endregion
 
-                    comentario = GestorDocumental.GestionComentarios.AgregarComentarioDocumento(textoComentario, IdentidadActual, Documento, ProyectoSeleccionado.Clave, enlace, urlMetaproyecto, ProyectoSeleccionado, UtilIdiomas.LanguageCode, EsEcosistemaSinMetaProyecto);
+                    comentario = GestorDocumental.GestionComentarios.AgregarComentarioDocumento(textoComentario, IdentidadActual, Documento, ProyectoSeleccionado.Clave, enlace, urlMetaproyecto, ProyectoSeleccionado, UtilIdiomas.LanguageCode, mAvailableServices, EsEcosistemaSinMetaProyecto);
                     comentario.URLFotoIdentidad = IdentidadActual.UrlImagen;
 
                     if (pComentarioPadre != Guid.Empty)
@@ -835,6 +996,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     GuardarComentarioAgregado(comentario);
 
+                    ModificarComentarios modelo = new ModificarComentarios(ProyectoSeleccionado.Clave, Documento.Clave, comentario.Clave, pComentarioPadre, IdentidadActual.Persona.Clave, comentario.Fecha);
+
+
+                    mIPublishEvents.PublishComments(modelo);
+
+
                     List<CommentModel> listaComentarios = CargarListaComentarios();
 
                     MultiViewResult result = new MultiViewResult(this, mViewEngine);
@@ -861,21 +1028,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (GestorDocumental.GestionComentarios == null || (GenPlantillasOWL != null && !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarComentarios))
             {
-                int limiteCargaComent = 100;//TODO HACER ACCIÓN PARA PAGINAR COMENTARIOS
-
-                ComentarioCN comentCN = new ComentarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                DataWrapperComentario comentarioDW = new DataWrapperComentario();
-                int numComentRaiz = comentCN.ObtenerComentariosDeDocumento(comentarioDW, Documento.Clave, ProyectoSeleccionado.Clave, 0, limiteCargaComent, true);
+                ComentarioCN comentCN = new ComentarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ComentarioCN>(), mLoggerFactory);
+                DataWrapperComentario comentarioDW = comentCN.ObtenerComentariosDeDocumento(Documento.Clave,ProyectoSeleccionado.Clave);
                 comentCN.Dispose();
 
-                GestorDocumental.GestionComentarios = new GestionComentariosDocumento(comentarioDW, GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                GestorDocumental.GestionComentarios = new GestionComentariosDocumento(comentarioDW, GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionComentariosDocumento>(), mLoggerFactory);
 
-                VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
                 DataWrapperVoto votoComentariosDW = votoCN.ObtenerVotosComentariosDocumentoPorID(Documento.Clave);
 
                 if (GestorDocumental.GestionComentarios.GestorVotos == null)
                 {
-                    GestorDocumental.GestionComentarios.GestorVotos = new GestorVotosComentario(votoComentariosDW, GestorDocumental.GestionComentarios, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    GestorDocumental.GestionComentarios.GestorVotos = new GestorVotosComentario(votoComentariosDW, GestorDocumental.GestionComentarios, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestorVotosComentario>(), mLoggerFactory);
                 }
                 else
                 {
@@ -885,14 +1049,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        private List<CommentModel> CargarListaComentarios()
+        private List<CommentModel> CargarListaComentarios(int pInicio = 0)
         {
             ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
             List<CommentModel> listaComentariosDoc = null;
 
             if (!Documento.EsBorrador && ParametrosGeneralesRow.ComentariosDisponibles && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarComentarios))
             {
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 listaComentariosDoc = (List<CommentModel>)docCL.ObtenerComentariosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
 
                 if (listaComentariosDoc == null)
@@ -905,6 +1069,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (listaComentariosDoc != null && !mControladorBase.UsuarioActual.EsIdentidadInvitada)
                 {
                     CargarComentarios();
+                    listaComentariosDoc = CargarFichasComentarios(Guid.Empty, pInicio);
                     CargarDatosExtraFichaComentarios(listaComentariosDoc);
                 }
 
@@ -1061,7 +1226,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     pListaComentarios.Remove(fichaComentario);
                 }
 
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarComentariosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                 docCL.InvalidarEventosRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
                 docCL.Dispose();
@@ -1069,18 +1234,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         }
 
-        private List<CommentModel> CargarFichasComentarios(Guid pComentarioSupID)
+        private List<CommentModel> CargarFichasComentarios(Guid pComentarioSupID, int pInicio = 0)
         {
             List<CommentModel> listaComentarios = new List<CommentModel>();
 
-            List<AD.EntityModel.Models.Comentario.Comentario> filasComentarios;
+            int pLimite = 100;
+            if (pInicio != 0) pLimite = 20;
+
+                List<AD.EntityModel.Models.Comentario.Comentario> filasComentarios;
             if (pComentarioSupID != Guid.Empty)
             {
                 filasComentarios = Documento.GestorDocumental.GestionComentarios.ComentarioDW.ListaComentario.Where(item => item.ComentarioSuperiorID.HasValue && item.ComentarioSuperiorID.Value.Equals(pComentarioSupID) && item.Eliminado.Equals(false)).OrderByDescending(item => item.Fecha).ToList();
             }
             else
             {
-                filasComentarios = Documento.GestorDocumental.GestionComentarios.ComentarioDW.ListaComentario.Where(item => !item.ComentarioSuperiorID.HasValue && item.Eliminado.Equals(false)).OrderByDescending(item => item.Fecha).ToList();
+                filasComentarios = Documento.GestorDocumental.GestionComentarios.ComentarioDW.ListaComentario.Where(item => !item.ComentarioSuperiorID.HasValue && item.Eliminado.Equals(false)).OrderByDescending(item => item.Fecha).Skip(pInicio).Take(pLimite).ToList();
             }
 
             List<Guid> listaCreadoresComentarios = new List<Guid>();
@@ -1186,7 +1354,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 urlFoto = identCN.ObtenerSiIdentidadTieneFoto(pComentario.FilaComentario.IdentidadID);
                 identCN.Dispose();
 
@@ -1214,7 +1382,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 #region Cargamos la identidad del autor del comentario en el gestor
 
-                IdentidadCN idenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN idenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 GestionIdentidades gestionMisIdentidades = new GestionIdentidades(idenCN.ObtenerIdentidadPorID(pComentario.FilaComentario.IdentidadID, false), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                 idenCN.Dispose();
                 identAutorComent = gestionMisIdentidades.ListaIdentidades[pComentario.FilaComentario.IdentidadID];
@@ -1302,7 +1470,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             mEntityContext.SaveChanges();
 
-            DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
             docCL.InvalidarComentariosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
             docCL.InvalidarEventosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
             docCL.Dispose();
@@ -1323,7 +1491,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             GuardarComentarios();
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             try
             {
                 //Actualizo el número de comentarios del documento
@@ -1331,7 +1499,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 docCN.ActualizarNumeroComentariosDocumento(Documento.Clave);
                 docCN.Dispose();
 
-                ControladorDocumentacion.AgregarComentarioModeloBaseSimple(pComentario.Clave, ProyectoSeleccionado.Clave, 1, PrioridadBase.Alta);
+                ControladorDocumentacion.AgregarComentarioModeloBaseSimple(pComentario.Clave, ProyectoSeleccionado.Clave, 1, PrioridadBase.Alta, mAvailableServices);
 
                 TipoLive tipo = TipoLive.Recurso;
 
@@ -1344,12 +1512,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     tipo = TipoLive.Pregunta;
                 }
 
-                ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, pComentario.Clave, AccionLive.ComentarioAgregado, (int)tipo, PrioridadLive.Alta);
+                ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, pComentario.Clave, AccionLive.ComentarioAgregado, (int)tipo, PrioridadLive.Alta, mAvailableServices);
 
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
             finally
             {
@@ -1362,11 +1530,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (Documento.Comentarios.Count == 0 && (Documento.TipoDocumentacion == TiposDocumentacion.Debate || Documento.TipoDocumentacion == TiposDocumentacion.Pregunta))
             {
                 //Es el primer comentario, cambio el estado de la pregunta o debate
-                ControladorDocumentacion controlador = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controlador.NotificarCambioEstadoPreguntaDebate(Documento.Clave, ProyectoSeleccionado.Clave, ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Publico) || ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Restringido), Documento.TipoDocumentacion);
+                ControladorDocumentacion controlador = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                controlador.NotificarCambioEstadoPreguntaDebate(Documento.Clave, ProyectoSeleccionado.Clave, ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Publico) || ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Restringido), Documento.TipoDocumentacion, mAvailableServices);
             }
 
-            DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
             docCL.InvalidarFichaRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
             docCL.InvalidarComentariosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
             docCL.InvalidarEventosRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
@@ -1377,13 +1545,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
                 docCN.ActualizarNumeroComentariosDocumento(Documento.Clave);
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
                 throw ex;
             }
         }
@@ -1392,7 +1560,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             GuardarComentarios();
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             try
             {
                 foreach (Comentario comentario in pListaComentarios)
@@ -1401,7 +1569,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     //Se resta UNO, Deberian Contarse los comentarios que hay.
                     docCN.ActualizarNumeroComentariosDocumento(Documento.Clave);
 
-                    ControladorDocumentacion.AgregarComentarioModeloBaseSimple(comentario.Clave, ProyectoSeleccionado.Clave, 1, PrioridadBase.Alta, true);
+                    ControladorDocumentacion.AgregarComentarioModeloBaseSimple(comentario.Clave, ProyectoSeleccionado.Clave, 1, PrioridadBase.Alta, true, mAvailableServices);
 
                     TipoLive tipo = TipoLive.Recurso;
 
@@ -1415,12 +1583,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             break;
                     }
 
-                    ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, comentario.Clave, AccionLive.ComentarioEliminado, (int)tipo, PrioridadLive.Alta);
+                    ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, comentario.Clave, AccionLive.ComentarioEliminado, (int)tipo, PrioridadLive.Alta, mAvailableServices);
                 }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
             finally
             {
@@ -1433,11 +1601,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (Documento.Comentarios.Count == 0 && (Documento.TipoDocumentacion == TiposDocumentacion.Debate || Documento.TipoDocumentacion == TiposDocumentacion.Pregunta))
             {
                 //Han eliminado el único comentario, cambio el estado de la pregunta o debate
-                ControladorDocumentacion controlador = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controlador.NotificarCambioEstadoPreguntaDebate(Documento.Clave, ProyectoSeleccionado.Clave, ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Publico) || ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Restringido), Documento.TipoDocumentacion);
+                ControladorDocumentacion controlador = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                controlador.NotificarCambioEstadoPreguntaDebate(Documento.Clave, ProyectoSeleccionado.Clave, ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Publico) || ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Restringido), Documento.TipoDocumentacion, mAvailableServices);
             }
 
-            DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
             docCL.InvalidarFichaRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
             docCL.InvalidarComentariosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
             docCL.InvalidarEventosRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
@@ -1490,8 +1658,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         if (Documento.GestorDocumental.GestorVotos == null)
                         {
-                            VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
+                            Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionVotosDocumento>(), mLoggerFactory);
                             votoCN.Dispose();
                         }
 
@@ -1552,14 +1720,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             }
 
                             //Se envia una fila al Live para actualizar la valoración de los documentos.
-                            ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, voto.VotoID, AccionLive.Votado, tipo, PrioridadLive.Alta);
+                            ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, voto.VotoID, AccionLive.Votado, tipo, PrioridadLive.Alta, mAvailableServices);
                         }
 
                         //Actualización Offline a partir de un servicio UDP
                         //Llamada asincrona para actualizar la popularidad del recurso:
                         ControladorDocumentacion.LlamadaUDP_ServicioSocketsOffline("Votos", Documento.Clave, ProyectoSeleccionado.Clave, mControladorBase.UsuarioActual.IdentidadID, Documento.CreadorID);
 
-                        DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                         docCL.InvalidarFichaRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                         docCL.InvalidarEventosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                         docCL.Dispose();
@@ -1585,8 +1753,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (Documento.GestorDocumental.GestorVotos == null)
                     {
-                        VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
+                        Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionVotosDocumento>(), mLoggerFactory);
                         votoCN.Dispose();
                     }
 
@@ -1630,7 +1798,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             //Procesado en el servicio live Extra de manera Offline
                             Documento.FilaDocumento.Valoracion = Documento.GestorDocumental.GestorVotos.ObtenerMedia(Documento);
-                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                             Documento.GestorDocumental.DataWrapperDocumentacion.Merge(docCN.ActualizarValoracionDocumento(Documento.Clave));
                             docCN.Dispose();
                         }
@@ -1641,7 +1809,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     //Llamada asincrona para actualizar la popularidad del recurso:
                     ControladorDocumentacion.LlamadaUDP_ServicioSocketsOffline("Votos", Documento.Clave, ProyectoSeleccionado.Clave, mControladorBase.UsuarioActual.IdentidadID, Documento.CreadorID);
 
-                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                     docCL.InvalidarFichaRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                     docCL.InvalidarEventosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                     docCL.Dispose();
@@ -1666,8 +1834,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (Documento.GestorDocumental.GestorVotos == null)
                     {
-                        VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
+                        Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionVotosDocumento>(), mLoggerFactory);
                         votoCN.Dispose();
                     }
 
@@ -1706,7 +1874,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     //Llamada asincrona para actualizar la popularidad del recurso:
                     ControladorDocumentacion.LlamadaUDP_ServicioSocketsOffline("Votos", Documento.Clave, ProyectoSeleccionado.Clave, mControladorBase.UsuarioActual.IdentidadID, Documento.CreadorID);
 
-                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                     docCL.InvalidarFichaRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                     docCL.InvalidarEventosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                     docCL.Dispose();
@@ -1725,7 +1893,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (GestorDocumental.DataWrapperDocumentacion != null)
             {
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 docCN.ObtenerVotosDocumento(Documento.Clave, Documento.GestorDocumental.DataWrapperDocumentacion);
                 docCN.Dispose();
             }
@@ -1733,8 +1901,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (Documento.GestorDocumental.GestorVotos == null || this.Documento.FilaDocumento.VotoDocumento.Count > 0)
             {
-                VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
+                Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(Documento.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionVotosDocumento>(), mLoggerFactory);
                 votoCN.Dispose();
             }
             Documento.GestorDocumental.GestorVotos.RecargarVotos();
@@ -1773,7 +1941,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 #endregion
 
-                IdentidadCN idenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN idenCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 GestionIdentidades gestorIden = new GestionIdentidades(idenCN.ObtenerIdentidadesPorID(listaIdentidades, false), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                 idenCN.Dispose();
 
@@ -1929,14 +2097,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         #endregion
 
         [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult LoadHistory()
+		public ActionResult LoadHistory()
         {
             try
             {
-                Guid docID = new Guid(RequestParams("docID"));
-
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                Dictionary<Guid, int> listaVersionDocumentos = docCN.ObtenerVersionesDocumentoIDPorID(docID);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                Dictionary<Guid, int> listaVersionDocumentos = docCN.ObtenerVersionesDocumentoIDPorID(mDocumentoOriginalVersionID);
                 docCN.Dispose();
 
                 Dictionary<Guid, ResourceModel> listaRecursos = ControladorProyectoMVC.ObtenerRecursosPorID(listaVersionDocumentos.Keys.ToList(), "", null, false);
@@ -1981,11 +2147,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     return redireccion;
                 }
-                SharepointController spController = new SharepointController(RecursoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
+                SharepointController spController = new SharepointController(RecursoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                 spController.Token = tokenSP;
                 extension = spController.ExtraerExtensionFicheroAPI(enlace);
                 nombre = spController.ExtraerNombreSinExtension(enlace);
-                DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 DataWrapperDocumentacion dwDocumentacion = documentoCN.ObtenerDocumentoPorID(new Guid(RecursoID));
                 dwDocumentacion.ListaDocumento[0].Enlace = $"{enlace}|||{nombre}{extension}";
                 AD.EntityModel.Models.Documentacion.Documento doc = dwDocumentacion.ListaDocumento[0];
@@ -1993,12 +2159,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEntityContext.Documento.Update(doc);
                 mEntityContext.SaveChanges();
                 //El tipo se guarda en caché, así que la borramos
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarFichaRecursoMVC(new Guid(RecursoID), (Guid)dwDocumentacion.ListaDocumento[0].ProyectoID);
             }
-            
-            
-            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+
+
+            GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
             gd.Url = UrlServicioWebDocumentacion;
             byte[] bytesFichero = gd.ObtenerDocumento(TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, Documento.OrganizacionID, Documento.ProyectoID, new Guid(RecursoID), extension);
             FileExtensionContentTypeProvider provider = new FileExtensionContentTypeProvider();
@@ -2007,26 +2173,56 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         [HttpGet, HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult DesvincularSharepoint(string pDocumentoID)
+		[TypeFilter(typeof(PermisosRecursos), Arguments = new object[] { new ulong[] { (ulong)PermisoRecursos.EditarRecursoTipoEnlace } })]
+		public ActionResult DesvincularSharepoint(string pDocumentoID)
         {
             try
             {
-                ActionResult redireccion = FuncionalidadSharepoint();
+                DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                DataWrapperDocumentacion dwDocumentacion = documentoCN.ObtenerDocumentoPorID(new Guid(pDocumentoID));
+                ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
+                string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                bool esDocumentoSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrive);
+                string sharepointConfigurado = parametroCN.ObtenerParametroAplicacion("SharepointClientID");
+                SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                string nombre = string.Empty;
 
-                if (redireccion != null)
+                if (string.IsNullOrEmpty(sharepointConfigurado))
                 {
-                    return redireccion;
+                    esDocumentoSharepoint = false;
+                }
+                if (esDocumentoSharepoint)
+                {
+                    try
+                    {
+                        ActionResult redirect = FuncionalidadSharepoint();
+                        if (redirect != null)
+                        {
+                            return redirect;
+                        }                       
+                        spController.Token = tokenSP;
+                        spController.TokenCreadorRecurso = tokenSPAdminDocument;
+                        nombre = spController.ObtenerNombreFichero(dwDocumentacion.ListaDocumento[0].Enlace);
+                        bool eliminacionCorrecta = spController.EliminarDocumentoDeSharepoint(Documento.Enlace);
+                        if (!eliminacionCorrecta)
+                        {
+                            mLoggingService.GuardarLogError($"No se ha podido eliminar el documento del recurso {Documento.Clave} de SharePoint al tratar de desvincular el recurso. Enlace del documento: {Documento.Enlace}", mlogger);
+                            return GnossResultERROR($"Error al eliminar el documento de SharePoint al desvincular el recurso");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        mLoggingService.GuardarLogError(ex, $"Error al eliminar el documento {Documento.Clave} de SharePoint al intentar desvincular el recurso. Enlace del documento: {Documento.Enlace}", mlogger);
+                        return GnossResultERROR($"Error al eliminar el documento de SharePoint al desvincular el recurso");
+                    }
                 }
 
                 //cambiamos el Tipo de Hipervínculo a Adjunto
-                DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                DataWrapperDocumentacion dwDocumentacion = documentoCN.ObtenerDocumentoPorID(new Guid(pDocumentoID));
+                
                 dwDocumentacion.ListaDocumento[0].Tipo = (short)TiposDocumentacion.FicheroServidor;
 
                 //Obtenemos el nombre del fichero para ponerlo como Enlace y cambiamos la fecha de modificacion
-                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);     
-                spController.Token = tokenSP;
-                string nombre = spController.ObtenerNombreFichero(dwDocumentacion.ListaDocumento[0].Enlace);
+                
                 dwDocumentacion.ListaDocumento[0].Enlace = nombre;
                 dwDocumentacion.ListaDocumento[0].FechaModificacion = DateTime.Now;
                 AD.EntityModel.Models.Documentacion.Documento doc = dwDocumentacion.ListaDocumento[0];
@@ -2034,7 +2230,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEntityContext.SaveChanges();
 
                 //El tipo se guarda en caché, así que la borramos
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarFichaRecursoMVC(new Guid(pDocumentoID), (Guid)dwDocumentacion.ListaDocumento[0].ProyectoID);
 
                 return GnossResultOK();
@@ -2051,9 +2247,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 // Comprobamos si esta configurado SharePoint
-                ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                 string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
-                
+
                 if (string.IsNullOrEmpty(sharepointConfigurado))
                 {
                     return GnossResultERROR("SharePoint no esta vinculado para este entorno.");
@@ -2068,20 +2264,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 // Comprobamos si el enlace pasado es valido
                 string oneDrivePermitido = paramCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
-                
+
                 if (!UtilCadenas.EsEnlaceSharepoint(pEnlace, oneDrivePermitido))
                 {
                     return GnossResultERROR("El enlace seleccionado no corresponde a SharePoint/OneDrive o no esta permitido enlazar documentos con OneDrive");
                 }
 
                 // Cambiamos el tipo de documento de Adjunto a Hipervinculo
-                DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                DataWrapperDocumentacion dwDocumentacion = documentoCN.ObtenerDocumentoPorID(new Guid(pDocumentoID));               
+                DocumentacionCN documentoCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                DataWrapperDocumentacion dwDocumentacion = documentoCN.ObtenerDocumentoPorID(new Guid(pDocumentoID));
                 dwDocumentacion.ListaDocumento[0].Tipo = (short)TiposDocumentacion.Hipervinculo;
-                dwDocumentacion.ListaDocumento[0].FechaModificacion = DateTime.Now;             
+                dwDocumentacion.ListaDocumento[0].FechaModificacion = DateTime.Now;
 
                 // Guardarmos el fichero de SharePoint en el servidor
-                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
+                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                 spController.Token = tokenSP;
                 string nombreFichero = spController.GuardarArchivoDesdeAPI(pEnlace);
 
@@ -2099,7 +2295,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEntityContext.SaveChanges();
 
                 // El tipo de documento se guarda en cache, asi que la borramos
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarFichaRecursoMVC(new Guid(pDocumentoID), (Guid)doc.ProyectoID);
 
                 return GnossResultOK();
@@ -2129,8 +2325,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
 
-                ControladorAmigos contrAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                contrAmigos.CargarAmigos(IdentidadActual, true);
+                ControladorAmigos contrAmigos = new ControladorAmigos(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorAmigos>(), mLoggerFactory);
+                contrAmigos.CargarAmigos(IdentidadActual, true, mAvailableServices);
 
                 SendLinkViewModel paginaModel = new SendLinkViewModel();
 
@@ -2171,13 +2367,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult LinkResource(string UrlResourceLink)
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult LinkResource(string UrlResourceLink)
         {
             try
             {
-                //Seguridad : Si no es borrador, es la ultima version
-                if (!Documento.EsBorrador && Documento.FilaDocumento.UltimaVersion && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonVincularDoc))
+				//Seguridad : Si no es borrador, es la ultima version
+				if (!Documento.EsBorrador && Documento.FilaDocumento.UltimaVersion && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonVincularDoc))
                 {
                     return AccionRecurso_Vincular_Aceptar(UrlResourceLink);
                 }
@@ -2189,11 +2385,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult UnLinkResource(Guid ResourceUnLinkKey)
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult UnLinkResource(Guid ResourceUnLinkKey)
         {
-            //Seguridad : Dentro
-            return AccionRecurso_DesVincular_Aceptar(ResourceUnLinkKey);
+			//Seguridad : Dentro
+			return AccionRecurso_DesVincular_Aceptar(ResourceUnLinkKey);
         }
 
         /// <summary>
@@ -2229,7 +2425,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void EnviarReporte(string message)
         {
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             List<string> listaEmailsAdministradores = proyCN.ObtenerEmailsAdministradoresDeProyecto(ProyectoSeleccionado.Clave);
 
             if (listaEmailsAdministradores.Count > 0)
@@ -2237,15 +2433,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string nombreIdentidad = IdentidadActual.Nombre(IdentidadActual.Clave);
                 string urlIdentidad = mControladorBase.UrlsSemanticas.GetURLPerfilDeIdentidad(BaseURL, ProyectoSeleccionado.NombreCorto, UtilIdiomas, IdentidadActual);
 
-                NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
                 DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
-                GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
 
                 string nombreEnlace = Documento.Titulo;
                 string urlEnlace = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, Documento, false);
 
                 GestorNotificaciones.AgregarNotificacionReporteRecurso(listaEmailsAdministradores, message, nombreIdentidad, urlIdentidad, nombreEnlace, urlEnlace, UtilIdiomas.LanguageCode, ProyectoSeleccionado);
-                notificacionCN.ActualizarNotificacion();
+                notificacionCN.ActualizarNotificacion(mAvailableServices);
                 notificacionCN.Dispose();
             }
         }
@@ -2263,10 +2459,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid? baseRecursosID = CargarBaseRecursos();
                 if (baseRecursosID.HasValue)
                 {
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     docCN.ActualizarNumeroDescargasDocumento(DocumentoID, baseRecursosID.Value);
 
-                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                     ResourceModel resourceModel = docCL.ObtenerFichaRecursoMVC(DocumentoID, ProyectoSeleccionado.Clave);
 
                     if (resourceModel != null)
@@ -2301,7 +2497,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             Dictionary<Guid, Elementos.ServiciosGenerales.Proyecto> listaProyectosRecursos = new Dictionary<Guid, Elementos.ServiciosGenerales.Proyecto>();
             List<ParametroGeneral> listaParametrosGeneralesProyectos = new List<ParametroGeneral>();
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             if (docCN.TieneDocumentoDocumentosVinculados(Documento.Clave))
             {
                 listaClavesRecursosProyecto = docCN.ObtenerListaDocumentosVinculadosDocumento(GestorDocumental.DataWrapperDocumentacion, ProyectoSeleccionado.Clave, Documento.Clave, IdentidadActual.PerfilID, inicio, fin, out pNumVinculados);
@@ -2318,11 +2514,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (listaClavesRecursosProyecto.Count > 1 || !listaClavesRecursosProyecto.First().Equals(ProyectoSeleccionado.Clave))
                 {
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    GestionProyecto gestProy = new GestionProyecto(proyCN.ObtenerProyectosPorID(listaClavesRecursosProyecto.Keys.ToList()), mLoggingService, mEntityContext);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+                    GestionProyecto gestProy = new GestionProyecto(proyCN.ObtenerProyectosPorID(listaClavesRecursosProyecto.Keys.ToList()), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionProyecto>(), mLoggerFactory);
                     listaProyectosRecursos = gestProy.ListaProyectos;
 
-                    ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                     listaParametrosGeneralesProyectos = paramCN.ObtenerParametrosGeneralesDeListaDeProyectos(listaClavesRecursosProyecto.Keys.ToList());
                 }
 
@@ -2347,7 +2543,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     Guid proyectoOrigenID = ObtenerProyectoOrigenFichaRecurso(Documento.Clave, ProyectoSeleccionado.Clave);
 
-                    ControladorProyectoMVC controladorMVC = new ControladorProyectoMVC(UtilIdiomas, BaseURL, BaseURLsContent, BaseURLStatic, proy, proyectoOrigenID, paramGenerales, IdentidadActual, mControladorBase.EsBot, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
+                    ControladorProyectoMVC controladorMVC = new ControladorProyectoMVC(UtilIdiomas, BaseURL, BaseURLsContent, BaseURLStatic, proy, proyectoOrigenID, paramGenerales, IdentidadActual, mControladorBase.EsBot, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyectoMVC>(), mLoggerFactory);
 
                     listaRecursosCache = listaRecursosCache.Concat(controladorMVC.ObtenerRecursosPorID(listaClavesRecursosProyecto[proyectoID], urlBusqueda, null, false)).ToDictionary(k => k.Key, v => v.Value);
                 }
@@ -2381,7 +2577,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             Guid proyectoOrigenID = Guid.Empty;
 
             // Obtenemos si existe el recurso pasado para el proyectoActual
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             Guid baseRecursosID = docCN.ObtenerBaseRecursosIDProyecto(pProyectoActualID);
 
             //Si el recurso esta en la propia comunidad no hacemos nada
@@ -2411,7 +2607,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 try
                 {
                     //Buscamos si se esta compartiendo desde una comunidad con url propia
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     List<string> listaUrlPropia = proyCN.ObtenerUrlPropiasProyectos();
                     bool urlEncontrada = false;
                     foreach (string urlPropia in listaUrlPropia)
@@ -2439,9 +2635,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     Guid proyID = proyCN.ObtenerProyectoIDPorNombre(urlComunidad);
 
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     DataWrapperDocumentacion docDW = new DataWrapperDocumentacion();
                     docCN.ObtenerDocumentoPorIDCargarTotal(documentoVincID, docDW, true, false, null);
+                    // Hay que vincularlo con el documentoid de la ultima version si es posible
+                    Guid documentoUlimaVersionID = docDW.ListaVersionDocumento.OrderByDescending(item => item.Version).FirstOrDefault().DocumentoID;
+                    DataWrapperDocumentacion docUltimaVersionDW = new DataWrapperDocumentacion();
+                    docCN.ObtenerDocumentoPorIDCargarTotal(documentoUlimaVersionID, docUltimaVersionDW, true, false, null);
+                    documentoVincID = documentoUlimaVersionID != Guid.Empty ? documentoUlimaVersionID : documentoVincID;
                     bool estaDocumentoVinculado = docCN.EstaVinculadoDocumento(DocumentoID, documentoVincID);
                     docCN.Dispose();
 
@@ -2449,7 +2650,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         mensajeError = UtilIdiomas.GetText("VINCULACIONDOCUMENTACION", "ERRORDOCVINCMISMO");
                     }
-                    else if (docDW.ListaDocumento.First().Eliminado || !docDW.ListaDocumento.First().UltimaVersion || docDW.ListaDocumento.First().Borrador || !docDW.ListaDocumentoWebVinBaseRecursos.Any(doc => !doc.Eliminado))
+                    else if (docUltimaVersionDW.ListaDocumento.First().Eliminado || !docUltimaVersionDW.ListaDocumento.First().UltimaVersion || docUltimaVersionDW.ListaDocumento.First().Borrador || !docUltimaVersionDW.ListaDocumentoWebVinBaseRecursos.Any(doc => !doc.Eliminado))
                     {
                         mensajeError = UtilIdiomas.GetText("VINCULACIONDOCUMENTACION", "ERRORDOCELIMINADO");
                     }
@@ -2472,11 +2673,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                             mEntityContext.SaveChanges();
 
-                            ControladorDocumentacion.ActualizarGnossLivePopularidad(proyID, mControladorBase.UsuarioActual.IdentidadID, documentoVincID, AccionLive.VincularRecursoaRecurso, (int)TipoLive.Miembro, (int)TipoLive.Recurso, true, PrioridadLive.Alta);
+                            ControladorDocumentacion.ActualizarGnossLivePopularidad(proyID, mControladorBase.UsuarioActual.IdentidadID, documentoVincID, AccionLive.VincularRecursoaRecurso, (int)TipoLive.Miembro, (int)TipoLive.Recurso, true, PrioridadLive.Alta, mAvailableServices);
 
                             try
                             {
-                                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                                 docCL.InvalidarVinculadosRecursoMVC(documentoVincID, ProyectoVirtual.Clave);
                                 docCL.InvalidarVinculadosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                                 docCL.Dispose();
@@ -2505,22 +2706,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 //Seguridad : si Tiene Permisos la Identidad para Desvincular estos Recursos
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                docCN.ObtenerDocumentoPorIDCargarTotal(pDocVinculadoID, GestorDocumental.DataWrapperDocumentacion, true, true, null);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                Guid docVinculadoUltimaVersion = docCN.ObtenerVersionesDocumentoIDPorID(pDocVinculadoID).MaxBy(item => item.Value).Key;
 
-                GestorDocumental.DataWrapperDocumentacion.Merge(docCN.ObtenerVinculacionesRecurso(pDocVinculadoID));
+                DataWrapperDocumentacion dwDocumentacion = new DataWrapperDocumentacion();
+                docCN.ObtenerDocumentoPorIDCargarTotal(docVinculadoUltimaVersion, dwDocumentacion, true, true, null);
+                dwDocumentacion.Merge(docCN.ObtenerVinculacionesRecurso(docVinculadoUltimaVersion));
 
-                DocumentoWeb documentoVinc = GestorDocumental.ListaDocumentosWeb[pDocVinculadoID];
+                GestorDocumental gesDoc = new GestorDocumental(dwDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
+
+                DocumentoWeb documentoVinc = gesDoc.ListaDocumentosWeb[docVinculadoUltimaVersion];
 
                 if (GestorDocumental.TienePermisosIdentidadDesvincularRecursos(documentoVinc, Documento, IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion))
                 {
                     //DesVincular
-                    bool correcto = docCN.DesvincularRecursos(DocumentoID, pDocVinculadoID);
+                    bool correcto = docCN.DesvincularRecursos(DocumentoID, docVinculadoUltimaVersion);
 
                     if (correcto)
                     {
-                        DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                        docCL.InvalidarVinculadosRecursoMVC(pDocVinculadoID, ProyectoVirtual.Clave);
+                        DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
+                        docCL.InvalidarVinculadosRecursoMVC(docVinculadoUltimaVersion, ProyectoVirtual.Clave);
                         docCL.InvalidarVinculadosRecursoMVC(DocumentoID, ProyectoVirtual.Clave);
                         docCL.Dispose();
 
@@ -2558,7 +2763,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (Documento.TipoDocumentacion != TiposDocumentacion.Debate && Documento.TipoDocumentacion != TiposDocumentacion.Pregunta && Documento.TipoDocumentacion != TiposDocumentacion.Encuesta && Documento.TipoDocumentacion != TiposDocumentacion.Newsletter)
                     {
                         DataWrapperDocumentacion docDSAux = new DataWrapperDocumentacion();
-                        DocumentacionCN docCNAux = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        DocumentacionCN docCNAux = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                         docCNAux.ObtenerBaseRecursosUsuario(docDSAux, mControladorBase.UsuarioActual.UsuarioID);
                         if (!Documento.BaseRecursos.Contains(docDSAux.ListaBaseRecursosUsuario.First().BaseRecursosID))
                         {
@@ -2573,7 +2778,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 }
                             }
 
-                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                             Guid brPersonal = docCN.ObtenerBaseRecursosIDUsuario(mControladorBase.UsuarioActual.UsuarioID);
 
                             listaBasesRecursos.Add(brPersonal, listaCategorias);
@@ -2620,7 +2825,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (Documento.TipoDocumentacion != TiposDocumentacion.Debate && Documento.TipoDocumentacion != TiposDocumentacion.Pregunta && Documento.TipoDocumentacion != TiposDocumentacion.Encuesta && Documento.TipoDocumentacion != TiposDocumentacion.Newsletter)
                     {
                         DataWrapperDocumentacion docDWAux = new DataWrapperDocumentacion();
-                        DocumentacionCN docCNAux = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        DocumentacionCN docCNAux = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                         docCNAux.ObtenerBaseRecursosUsuario(docDWAux, mControladorBase.UsuarioActual.UsuarioID);
                         if (!Documento.BaseRecursos.Contains(docDWAux.ListaBaseRecursosUsuario.First().BaseRecursosID))
                         {
@@ -2634,7 +2839,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 listaCategorias.Add(cat.Key);
                             }
 
-                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                             Guid brPersonal = docCN.ObtenerBaseRecursosIDUsuario(mControladorBase.UsuarioActual.UsuarioID);
 
                             listaBasesRecursos.Add(brPersonal, listaCategorias);
@@ -2657,8 +2862,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                GestionTesauro gestorTesauroBRPersonal = new GestionTesauro(tesCN.ObtenerTesauroUsuario(mControladorBase.UsuarioActual.UsuarioID), mLoggingService, mEntityContext);
+                TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
+                GestionTesauro gestorTesauroBRPersonal = new GestionTesauro(tesCN.ObtenerTesauroUsuario(mControladorBase.UsuarioActual.UsuarioID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
 
                 //Comprobamos si el nombre está repetido
                 bool nombreRepetido = false;
@@ -2698,26 +2903,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult Share(string[] Categories, string[] Editors, string[] Readers, bool Private)
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult Share(string[] Categories, string[] Editors, string[] Readers, bool Private)
         {
             try
             {
-                // Seguridad : 
-                /*
+				// Seguridad : 
+				/*
                     * Si no es borrador y es la ultima version
                     * Si el documento permite compartir y la comunidad permite compartir
                     * Si no es debate, ni pregunta, ni encuesta, ni documento semantico, ni newsletter
                 */
-
-                bool esOntologia = (Documento.TipoDocumentacion.Equals(TiposDocumentacion.Ontologia) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.OntologiaSecundaria));
+				bool esOntologia = (Documento.TipoDocumentacion.Equals(TiposDocumentacion.Ontologia) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.OntologiaSecundaria));
 
                 if (!Documento.EsBorrador && (Documento.FilaDocumento.UltimaVersion || esOntologia) && Documento.CompartirPermitido && ParametrosGeneralesRow.CompartirRecursosPermitido && (!Documento.FilaDocumentoWebVinBR.PrivadoEditores || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)))
                 {
                     if (Documento.TipoDocumentacion != TiposDocumentacion.Debate && Documento.TipoDocumentacion != TiposDocumentacion.Pregunta && Documento.TipoDocumentacion != TiposDocumentacion.Encuesta && Documento.TipoDocumentacion != TiposDocumentacion.Newsletter)
                     {
                         Dictionary<Guid, List<Guid>> listaBasesRecursos = new Dictionary<Guid, List<Guid>>();
-                        foreach (string brCat in Categories)
+						ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+						foreach (string brCat in Categories)
                         {
                             string[] brCatSplit = brCat.Split(new string[] { "$$" }, StringSplitOptions.None);
                             string br = brCatSplit[0];
@@ -2730,10 +2935,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     listaCategorias.Add(new Guid(cat));
                                 }
                             }
-                            listaBasesRecursos.Add(new Guid(br), listaCategorias);
-                        }
 
-                        List<Guid> listaEditores = new List<Guid>();
+                            if (!Guid.TryParse(br, out Guid brID))
+                            {								
+								Guid proyectoID = proyCN.ObtenerProyectoIDPorNombreCorto(br);
+								brID = proyCN.ObtenerBaseRecursosProyectoPorProyectoID(proyectoID);                               
+							}
+
+							listaBasesRecursos.Add(brID, listaCategorias);
+						}
+						proyCN.Dispose();
+
+						List<Guid> listaEditores = new List<Guid>();
                         List<Guid> listaGrupoEditores = new List<Guid>();
                         if (Editors != null)
                         {
@@ -2814,13 +3027,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult Unshare(Guid BR, Guid ProyectID, Guid OrganizationID)
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult Unshare(Guid BR, Guid ProyectID, Guid OrganizationID)
         {
             try
             {
-                //Seguridad : Que la identidad actual tenga permisos para eliminar el recurso en esta Base de recursos
-                if (Documento.TienePermisosIdentidadEliminarRecursoEnBR(IdentidadActual, BR, ProyectoSeleccionado, UsuarioActual.UsuarioID, UsuarioActual.ProyectoID, EsIdentidadActualAdministradorOrganizacion, EsIdentidadActualSupervisorProyecto))
+				//Seguridad : Que la identidad actual tenga permisos para eliminar el recurso en esta Base de recursos
+				if (Documento.TienePermisosIdentidadEliminarRecursoEnBR(IdentidadActual, BR, ProyectoSeleccionado, UsuarioActual.UsuarioID, UsuarioActual.ProyectoID, EsIdentidadActualAdministradorOrganizacion, EsIdentidadActualSupervisorProyecto))
                 {
                     DesCompartirRecurso(BR, ProyectID, OrganizationID);
                 }
@@ -2837,7 +3050,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 IdentidadActual.GestorIdentidades.SetDataWrapperIdentidad(identidadCN.ObtenerPerfilesDePersona(IdentidadActual.PersonaID.Value, true, IdentidadActual.Clave, true));
                 GestorDocumental.GestorIdentidades = IdentidadActual.GestorIdentidades;
 
@@ -2870,7 +3083,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
 
-                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 
                 AD.EntityModel.Models.Documentacion.DocumentoWebVinBaseRecursos filaDocWebVinBROrigen = GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos.FirstOrDefault(doc => doc.DocumentoID.Equals(Documento.Clave) && doc.BaseRecursosID.Equals(GestorDocumental.BaseRecursosIDActual));
 
@@ -2884,9 +3097,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         List<CategoriaTesauro> listaCategorias = new List<CategoriaTesauro>();
 
-                        TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 
-                        GestionTesauro gestorTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroPorBaseRecursosID(baseRecursosID), mLoggingService, mEntityContext);
+                        GestionTesauro gestorTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroPorBaseRecursosID(baseRecursosID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
 
                         gestorTesauro.CargarCategorias();
                         gestorTesauro.CargarGestor();
@@ -3016,20 +3229,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         if (identidadID == IdentidadActual.IdentidadMyGNOSS.Clave)
                         {
-                            ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                            controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                            ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                            controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
                         }
                         else
                         {
-                            ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                            ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
 
                             // Identidad proyecto actual
-                            controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                            controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
 
                             if (IdentidadActual.GestorIdentidades.ListaIdentidades.ContainsKey(identidadID))
                             {
                                 // Identidad proyecto destino
-                                controladorPersonas.ActivoEnComunidad(IdentidadActual.GestorIdentidades.ListaIdentidades[identidadID]);
+                                controladorPersonas.ActivoEnComunidad(IdentidadActual.GestorIdentidades.ListaIdentidades[identidadID], mAvailableServices);
                             }
                         }
 
@@ -3091,7 +3304,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, infoExtra);
+                    ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
 
 
                     if (proyectoID != ProyectoAD.MetaProyecto)
@@ -3106,25 +3319,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, infoExtra);
+                    ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
 
                     if (proyectoID != ProyectoAD.MetaProyecto)
                     {
-                        ControladorDocumentacion.ActualizarGnossLive(proyectoID, IdentidadActual.ObtenerIdentidadEnProyectoDeIdentidad(proyectoID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta);
+                        ControladorDocumentacion.ActualizarGnossLive(proyectoID, IdentidadActual.ObtenerIdentidadEnProyectoDeIdentidad(proyectoID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta, mAvailableServices);
                     }
                     #endregion
 
-                    ControladorDocumentacion.AgregarRecursoModeloBaseSimple(Documento.Clave, proyectoID, (short)Documento.TipoDocumentacion, PrioridadBase.Alta);
+                    ControladorDocumentacion.AgregarRecursoModeloBaseSimple(Documento.Clave, proyectoID, (short)Documento.TipoDocumentacion, PrioridadBase.Alta, mAvailableServices);
                 }
 
                 if (!Documento.FilaDocumentoWebVinBR.PrivadoEditores)
                 {
-                    GestionProyecto gestProy = new GestionProyecto(proyCN.ObtenerProyectosPorIDsCargaLigera(listaProyectosActualizarNumProy), mLoggingService, mEntityContext);
+                    GestionProyecto gestProy = new GestionProyecto(proyCN.ObtenerProyectosPorIDsCargaLigera(listaProyectosActualizarNumProy), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionProyecto>(), mLoggerFactory);
 
                     List<Elementos.ServiciosGenerales.Proyecto> proyectosEnvioTwitter = new List<Elementos.ServiciosGenerales.Proyecto>(gestProy.ListaProyectos.Values);
 
                     //Enviar mensaje a twitter
-                    ControladorDocumentacion.EnviarEnlaceATwitterDeComunidad(IdentidadActual, Documento, proyectosEnvioTwitter, BaseURLIdioma, UtilIdiomas, UrlPerfil);
+                    ControladorDocumentacion.EnviarEnlaceATwitterDeComunidad(IdentidadActual, Documento, proyectosEnvioTwitter, BaseURLIdioma, UtilIdiomas, UrlPerfil, mAvailableServices);
                 }
                 proyCN.Dispose();
 
@@ -3195,28 +3408,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
             }
 
-            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra);
-            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.ObtenerPublicadorEnBR(baseRecursoID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta);
+            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.VersionOriginalID, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
+            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.ObtenerPublicadorEnBR(baseRecursoID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta, mAvailableServices);
 
             #endregion
 
             Documento doc = Documento.GestorDocumental.ListaDocumentos[Documento.Clave];
 
             ControladorDocumentacion.EstablecePrivacidadRecursoEnMetaBuscador(doc, IdentidadActual, true);
-            ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-            controDoc.ActualizarNumRecCatTesDeTesauro(true, Guid.Empty, organizacionID, proyectoID, Documento.Clave, true);
+            ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+            Guid docID = Documento.VersionOriginalID != Documento.Clave ? Documento.VersionOriginalID : Documento.Clave;
+            controDoc.ActualizarNumRecCatTesDeTesauro(true, Guid.Empty, organizacionID, proyectoID, docID, mAvailableServices, true);
 
             ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.Clave);
 
             try
             {
-                FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, true, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, true, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                 facetadoCN.ModificarVotosNegativo(proyectoID.ToString(), Documento.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos.Find(docu => docu.DocumentoID.Equals(Documento.Clave) && docu.BaseRecursosID.Equals(baseRecursoID)).IdentidadPublicacionID.ToString().ToUpper(), "recursos");
                 facetadoCN.Dispose();
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
         }
 
@@ -3225,7 +3439,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         public void GuardarCompartir()
         {
-            DocumentacionCN docuCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docuCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             docuCN.ActualizarDocumentacion();
             docuCN.Dispose();
             docuCN = null;
@@ -3235,18 +3449,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #region Añadir Categorias y Etiquetas
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult AddTags(string[] Tags)
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult AddTags(string[] Tags)
         {
             try
             {
-                //Seguridad :
-                /*
+				//Seguridad :
+				/*
                     * Si no es borrador y es ultima version
                     * Si no iene permisos de edicion o es una encuesta
                     * Si no esta bloqueado por otro usuario o (es administrador del proyecto y tiene permisos para editar el recurso)
                 */
-                ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
+				ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
                 if (!Documento.EsBorrador && Documento.FilaDocumento.UltimaVersion /*&& (Documento.TipoDocumentacion == TiposDocumentacion.Encuesta)*/ && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonAgregarEtiquetasDoc))
                 {
                     return AccionRecurso_AgregarTags_Aceptar(Tags);
@@ -3272,18 +3486,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult AddCategories(string[] Categories)
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult AddCategories(string[] Categories)
         {
             try
             {
-                //Seguridad :
-                /*
+				//Seguridad :
+				/*
                     * Si no es borrador y es ultima version
                     * Si no iene permisos de edicion o es una encuesta
                     * Si no esta bloqueado por otro usuario o (es administrador del proyecto y tiene permisos para editar el recurso)
                 */
-                ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
+				ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
                 if (!Documento.EsBorrador && Documento.FilaDocumento.UltimaVersion && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonAgregarCategoriaDoc))
                 {
                     return AccionRecurso_AgregarCategorias_Aceptar(Categories);
@@ -3354,17 +3568,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 Documento.Tags = Documento.Tags.Trim(',');
                 //Añado al historial de documento el tratamiento de sus tags.
-                GestorDocumental.AgregarEliminarTagsHistorial(Documento, listaTagAgregador, AccionHistorialDocumento.Agregar, ProyectoSeleccionado.Clave);
+                GestorDocumental.AgregarEliminarTagsHistorial(Documento, listaTagAgregador, AccionHistorialDocumento.Agregar, ProyectoSeleccionado.Clave, IdentidadActual.Clave);
 
                 mEntityContext.SaveChanges();
 
                 ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.Clave);
 
-                ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controDoc.NotificarModificarTagsSearchRecursoComunidadesCompartido(Documento, eliminandoTags, PrioridadBase.Alta);
+                ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                controDoc.NotificarModificarTagsSearchRecursoComunidadesCompartido(Documento, eliminandoTags, PrioridadBase.Alta, mAvailableServices);
 
                 //Actualizamos la cache y el live
-                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 List<Guid> listaProyectosActualizar = new List<Guid>();
                 listaProyectosActualizar.Add(ProyectoSeleccionado.Clave);
                 int tipoDoc = -1;
@@ -3390,11 +3604,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
                 }
 
-                ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, Documento.Clave, AccionLive.Editado, tipoElemento, PrioridadLive.Alta, infoExtra);
+                ControladorDocumentacion.ActualizarGnossLive(ProyectoSeleccionado.Clave, Documento.Clave, AccionLive.Editado, tipoElemento, PrioridadLive.Alta, infoExtra, mAvailableServices);
 
-                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
                 // Identidad proyecto actual
-                controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
 
                 return GnossResultOK();
             }
@@ -3488,7 +3702,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         eliminandoCategorias = true;
                     }
 
-                    UtilidadesVirtuoso.GuardarEdicionCategoriasRecursoEnGrafoBusqueda(Documento, mControladorBase.UsuarioActual.ProyectoID, eliminandoCategorias, UrlIntragnoss, PrioridadBase.Alta);
+                    UtilidadesVirtuoso.GuardarEdicionCategoriasRecursoEnGrafoBusqueda(Documento, mControladorBase.UsuarioActual.ProyectoID, eliminandoCategorias, UrlIntragnoss, PrioridadBase.Alta, mAvailableServices);
 
                     int tipo;
 
@@ -3512,14 +3726,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
                     }
 
-                    ControladorDocumentacion.ActualizarGnossLive(mControladorBase.UsuarioActual.ProyectoID, Documento.Clave, AccionLive.Editado, tipo, PrioridadLive.Alta, infoExtra);
+                    ControladorDocumentacion.ActualizarGnossLive(mControladorBase.UsuarioActual.ProyectoID, Documento.Clave, AccionLive.Editado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
 
                     ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.Clave);
                 }
 
-                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
                 // Identidad proyecto actual
-                controladorPersonas.ActivoEnComunidad(IdentidadActual);
+                controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
 
                 return GnossResultOK();
             }
@@ -3619,7 +3833,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 AD.EntityModel.Models.Documentacion.DocumentoMetaDatos doc = GestorDocumental.AgregarMetaTitulo(Documento, pMetaTitle);
 
                 //Actualizamos la cache y el live
-                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.AgregarMetaDatos(Documento.Clave, doc);
                 docCL.Dispose();
 
@@ -3642,7 +3856,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 AD.EntityModel.Models.Documentacion.DocumentoMetaDatos doc = GestorDocumental.AgregarMetaDescripcion(Documento, pMetaDescripcion);
                 //Actualizamos la cache y el live
-                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.AgregarMetaDatos(Documento.Clave, doc);
                 docCL.Dispose();
 
@@ -3658,8 +3872,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #region Restaurar Version
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult RestoreVersion()
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult RestoreVersion()
         {
             try
             {
@@ -3669,8 +3883,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                  * Si tiene permisos para editar el recurso
                  * Si no es una wiki o (Si es una wiki tiene que ser supervisor y que no este protegido)
                  */
+                bool tienePermiso = TienePermisoRestaurarVersion();
                 ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
-                if ((Documento.TipoDocumentacion != TiposDocumentacion.Wiki || (!Documento.FilaDocumento.Protegido && EsIdentidadActualSupervisorProyecto)) && !Documento.FilaDocumento.UltimaVersion && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)) && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonRestaurarVersionDoc))
+                if ((Documento.TipoDocumentacion != TiposDocumentacion.Wiki || (!Documento.FilaDocumento.Protegido && EsIdentidadActualSupervisorProyecto)) && !Documento.FilaDocumento.UltimaVersion && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)) && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonRestaurarVersionDoc) || tienePermiso)
                 {
                     return AccionRecurso_Restaurar_Aceptar();
                 }
@@ -3681,22 +3896,57 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             return GnossResultERROR();
-        }
+        }        
+
+        private bool TienePermisoRestaurarVersion()
+        {
+			bool tienePermiso = false;
+			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+			switch (Documento.TipoDocumentacion)
+			{
+				case TiposDocumentacion.Hipervinculo:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+			        break;
+				case TiposDocumentacion.ReferenciaADoc:
+					tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionReferencia, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Video:
+					tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos) || utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);					
+					break;
+				case TiposDocumentacion.FicheroServidor:
+					tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Encuesta:
+					tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Debate:
+					tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Pregunta:
+					tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Semantico:
+					tienePermiso = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.RestaurarVersion, Documento.ElementoVinculadoID);
+					break;
+			}
+
+			return tienePermiso;
+		}
 
         private ActionResult AccionRecurso_Restaurar_Aceptar()
         {
             try
             {
-                DocumentoWeb docActual = new DocumentoWeb(Documento.UltimaVersion.FilaDocumento, Documento.GestorDocumental, mLoggingService);
+                DocumentoWeb docUltimaVersion = new DocumentoWeb(Documento.UltimaVersion.FilaDocumento, Documento.GestorDocumental);
 
-                ControladorDocumentacion controlador = new ControladorDocumentacion(Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controlador.CargarNecesarioParaDuplicacion(docActual.Clave, true);
+                ControladorDocumentacion controlador = new ControladorDocumentacion(Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                controlador.CargarNecesarioParaDuplicacion(docUltimaVersion.Clave, true);
                 controlador.CargarNecesarioParaDuplicacion(Documento.Clave, true);
 
                 if (Documento.GestorDocumental.GestorVotos == null)
                 {
-                    VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(docActual.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
+                    Documento.GestorDocumental.GestorVotos = new GestionVotosDocumento(votoCN.ObtenerVotosDocumentoPorID(docUltimaVersion.Clave), Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionVotosDocumento>(), mLoggerFactory);
                     votoCN.Dispose();
                 }
 
@@ -3711,7 +3961,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     identidadRestaurar = IdentidadActual.IdentidadPersonalMyGNOSS;
                 }
 
-                Documento nuevaVersionRestaurada = Documento.GestorDocumental.RestaurarVersion(docActual, Documento, identidadRestaurar);
+                Documento nuevaVersionRestaurada = Documento.GestorDocumental.RestaurarVersion(Documento, docUltimaVersion, identidadRestaurar);
 
                 // David: Añadir el documento a la lista de documentos de la página
                 if (!Documento.GestorDocumental.ListaDocumentos.ContainsKey(nuevaVersionRestaurada.Clave))
@@ -3720,14 +3970,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 bool correcto = true;
 
-                if (docActual.TipoDocumentacion == TiposDocumentacion.Semantico)
+                if (docUltimaVersion.TipoDocumentacion == TiposDocumentacion.Semantico)
                 {
-                    correcto = controlador.CrearNuevaVersionDocumentoRDF(Documento, nuevaVersionRestaurada, UrlIntragnossServicios, UrlServicioWebDocumentacion);
+                    correcto = controlador.CrearNuevaVersionDocumentoRDF(Documento, nuevaVersionRestaurada, docUltimaVersion.Clave, UrlIntragnossServicios, UrlServicioWebDocumentacion, mAvailableServices);
                 }
-                else if (docActual.EsFicheroDigital)
+                else if (docUltimaVersion.EsFicheroDigital)
                 {
-                    correcto = controlador.DuplicarDocumentoFisicamente(Documento, nuevaVersionRestaurada, IdentidadOrganizacionBROrg, (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto), UsuarioActual);
-                    controlador.CapturarImagenWeb(nuevaVersionRestaurada.Clave, false, PrioridadColaDocumento.Alta);
+                    correcto = controlador.DuplicarDocumentoFisicamente(Documento, nuevaVersionRestaurada, IdentidadOrganizacionBROrg, (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto), UsuarioActual, mAvailableServices);
+                    controlador.CapturarImagenWeb(nuevaVersionRestaurada.Clave, false, PrioridadColaDocumento.Alta, mAvailableServices);
                 }
 
                 if (correcto)
@@ -3736,7 +3986,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     #region Actualizo el Live
 
                     int tipo;
-                    switch (docActual.TipoDocumentacion)
+                    switch (docUltimaVersion.TipoDocumentacion)
                     {
                         case TiposDocumentacion.Debate:
                             tipo = (int)TipoLive.Debate;
@@ -3749,9 +3999,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             break;
                     }
 
-                    foreach (Guid baseRecurso in docActual.BaseRecursos)
+                    foreach (Guid baseRecurso in docUltimaVersion.BaseRecursos)
                     {
-                        Guid proyecto = docActual.GestorDocumental.ObtenerProyectoID(baseRecurso);
+                        Guid proyecto = docUltimaVersion.GestorDocumental.ObtenerProyectoID(baseRecurso);
 
                         string infoExtra = null;
 
@@ -3760,29 +4010,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
                         }
 
-                        ControladorDocumentacion.ActualizarGnossLive(proyecto, docActual.Clave, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra);
-                        ControladorDocumentacion.ActualizarGnossLive(proyecto, nuevaVersionRestaurada.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta);
+                        ControladorDocumentacion.ActualizarGnossLive(proyecto, docUltimaVersion.Clave, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
+                        ControladorDocumentacion.ActualizarGnossLive(proyecto, nuevaVersionRestaurada.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, mAvailableServices);
                     }
 
                     #endregion
 
                     #region Actualizo Base
 
-                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                    controDoc.ActualizarNumRecCatTesDeTesauroDeRecursoEliminado(docActual);
-                    controDoc.ActualizarNumRecCatTesDeTesauro(Guid.Empty, nuevaVersionRestaurada.Clave, false, UsuarioActual.OrganizacionID, UsuarioActual.ProyectoID);
+                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+
+                    // No es necesario actualizar el base si es un recurso semántico ya lo hacemos durante la 
+                    // restauracion del RDF
+                    if (docUltimaVersion.TipoDocumentacion != TiposDocumentacion.Semantico)
+                    {
+                        controDoc.ActualizarNumRecCatTesDeTesauroDeRecursoEliminado(docUltimaVersion, mAvailableServices);
+
+                        controDoc.ActualizarNumRecCatTesDeTesauro(Guid.Empty, nuevaVersionRestaurada.Clave, false, UsuarioActual.OrganizacionID, UsuarioActual.ProyectoID, mAvailableServices);
+                    }
 
                     if (nuevaVersionRestaurada.FilaDocumento.DocumentoWebVinBaseRecursos.Count > 1)
                     {
                         controDoc.mActualizarTodosProyectosCompartido = true;
-                        controDoc.NotificarModificarTagsRecurso(nuevaVersionRestaurada.Clave);
+                        controDoc.NotificarModificarTagsRecurso(nuevaVersionRestaurada.Clave, mAvailableServices);
                     }
 
                     #endregion
 
-                    ControladorDocumentacion.BorrarCacheControlFichaRecursos(docActual.Clave);
+                    ControladorDocumentacion.BorrarCacheControlFichaRecursos(docUltimaVersion.Clave);
 
-                    return GnossResultUrl(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, nuevaVersionRestaurada, false));
+                    return GnossResultUrl(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, nuevaVersionRestaurada, false).Replace(nuevaVersionRestaurada.Clave.ToString(), nuevaVersionRestaurada.VersionOriginalID.ToString()));
                 }
                 else
                 {
@@ -3799,7 +4056,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #region Eliminar
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [HttpPost]
+        [TypeFilter(typeof(AccesoRecursoAttribute))]
         public ActionResult Delete()
         {
             try
@@ -3813,9 +4071,74 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 */
                 ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
                 bool bloqueadoPorOtroUsuario = Documento.FilaDocumento.IdentidadProteccionID.HasValue && !Documento.FilaDocumento.IdentidadProteccionID.Equals(mControladorBase.UsuarioActual.IdentidadID);
-
-                if (Documento.FilaDocumento.UltimaVersion && (!Documento.FilaDocumento.Protegido || !bloqueadoPorOtroUsuario || EsIdentidadActualSupervisorProyecto) && (!Documento.TipoDocumentacion.Equals(TiposDocumentacion.Wiki) || EsIdentidadActualSupervisorProyecto) && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || Documento.TienePermisosIdentidadEliminarRecursoEnBR(IdentidadActual, Documento.GestorDocumental.BaseRecursosIDActual, ProyectoSeleccionado, UsuarioActual.UsuarioID, UsuarioActual.ProyectoID, EsIdentidadActualAdministradorOrganizacion, EsIdentidadActualSupervisorProyecto) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)) && (GenPlantillasOWL == null || (!GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonEliminarDoc && (string.IsNullOrEmpty(GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonEliminarDocCondicion) || !GenPlantillasOWL.CumpleRecursoCondicion(GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonEliminarDocCondicion, IdentidadActual.Clave)))))
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+                bool permisoEliminar = false;
+				switch (Documento.TipoDocumentacion)
+				{
+					case TiposDocumentacion.Hipervinculo:
+						permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarRecursoTipoEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+						break;
+					case TiposDocumentacion.Nota:
+						permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+						break;
+					case TiposDocumentacion.FicheroServidor:
+						permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarRecursoTipoAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+						break;
+					case TiposDocumentacion.Encuesta:
+						permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+						break;
+					case TiposDocumentacion.ReferenciaADoc:
+						permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarRecursoTipoReferenciaADocumentoFisico, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+						break;
+					case TiposDocumentacion.Pregunta:
+						permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+						break;
+					case TiposDocumentacion.Debate:
+						permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+						break;
+					case TiposDocumentacion.Semantico:
+						permisoEliminar = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.Eliminar, Documento.ElementoVinculadoID);
+						break;
+				}
+				if (Documento.FilaDocumento.UltimaVersion && (!Documento.FilaDocumento.Protegido || !bloqueadoPorOtroUsuario || EsIdentidadActualSupervisorProyecto) && (!Documento.TipoDocumentacion.Equals(TiposDocumentacion.Wiki) || EsIdentidadActualSupervisorProyecto) && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || Documento.TienePermisosIdentidadEliminarRecursoEnBR(IdentidadActual, Documento.GestorDocumental.BaseRecursosIDActual, ProyectoSeleccionado, UsuarioActual.UsuarioID, UsuarioActual.ProyectoID, EsIdentidadActualAdministradorOrganizacion, EsIdentidadActualSupervisorProyecto) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID) || permisoEliminar) && (GenPlantillasOWL == null || (!GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonEliminarDoc && (string.IsNullOrEmpty(GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonEliminarDocCondicion) || !GenPlantillasOWL.CumpleRecursoCondicion(GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonEliminarDocCondicion, IdentidadActual.Clave)))))
                 {
+                    #region Eliminar de SharePoint
+                    ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
+                    string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                    bool esDocumentoSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrive);
+                    string sharepointConfigurado = parametroCN.ObtenerParametroAplicacion("SharepointClientID");
+                    if (string.IsNullOrEmpty(sharepointConfigurado))
+                    {
+                        esDocumentoSharepoint = false;
+                    }
+                    if (esDocumentoSharepoint)
+                    {
+                        try
+                        {
+                            ActionResult redirect = FuncionalidadSharepoint();
+                            if (redirect != null)
+                            {
+                                return redirect;
+                            }
+                            SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                            spController.Token = tokenSP;
+                            spController.TokenCreadorRecurso = tokenSPAdminDocument;
+                            bool eliminacionCorrecta = spController.EliminarDocumentoDeSharepoint(Documento.Enlace);
+                            if (!eliminacionCorrecta)
+                            {
+                                mLoggingService.GuardarLogError($"No se ha podido eliminar el documento del recurso {Documento.Clave} de SharePoint. Enlace del documento: {Documento.Enlace}", mlogger);
+                                return GnossResultERROR($"Error al eliminar el documento de SharePoint");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            mLoggingService.GuardarLogError(ex, $"Error al eliminar el documento {Documento.Clave} de SharePoint. Enlace del documento: {Documento.Enlace}", mlogger);
+                            return GnossResultERROR($"Error al eliminar el documento de SharePoint");
+                        }
+                    }
+
+                    #endregion
+
                     #region Espacio BRs personales
 
                     Stopwatch sw = null;
@@ -3829,7 +4152,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             {
                                 if (Documento.TipoDocumentacion == TiposDocumentacion.FicheroServidor)
                                 {
-                                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+                                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
                                     gd.Url = UrlServicioWebDocumentacion;
                                     sw = LoggingService.IniciarRelojTelemetria();
                                     if (!EsIdentidadBROrg)
@@ -3844,7 +4167,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 }
                                 else if (Documento.TipoDocumentacion == TiposDocumentacion.Imagen)
                                 {
-                                    ServicioImagenes sI = new ServicioImagenes(mLoggingService, mConfigService);
+                                    ServicioImagenes sI = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                                     sI.Url = UrlIntragnossServicios;
                                     sw = LoggingService.IniciarRelojTelemetria();
                                     if (!EsIdentidadBROrg)
@@ -3861,7 +4184,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 {
                                     sw = LoggingService.IniciarRelojTelemetria();
 
-                                    ServicioVideos sV = new ServicioVideos(mConfigService, mLoggingService);
+                                    ServicioVideos sV = new ServicioVideos(mConfigService, mLoggingService, mLoggerFactory.CreateLogger<ServicioVideos>(), mLoggerFactory);
                                     if (!EsIdentidadBROrg)
                                     {
                                         espacioArchivo = sV.ObtenerEspacioVideoPersonal(Documento.Clave, mControladorBase.UsuarioActual.PersonaID);
@@ -3923,7 +4246,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         Documento.GestorDocumental.EliminarDocumentoLogicamente(Documento);
                         Documento.GestorDocumental.AgregarEliminarCategoriaTesauroHistorial(Documento, Guid.Empty, AccionHistorialDocumento.Eliminar, mControladorBase.UsuarioActual.ProyectoID, IdentidadActual.Clave);
                     }
-                    Documento.GestorDocumental.DesvincularDocumentoDeCategorias(Documento, Documento.CategoriasTesauro.Values.ToList(), Documento.CreadorID, ProyectoSeleccionado.Clave);
+
+                    // Hay que desvincular las categorias con todos las versiones del documento actual.
+                    List<Guid> documentoIDs = GestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.Select(doc => doc.DocumentoID).ToList();
+                    documentoIDs.Add(Documento.VersionOriginalID);
+
+                    foreach (Guid docID in GestorDocumental.ListaDocumentosWeb.Keys)
+                    {
+                        // Nos aseguramos de que solo usamos documentos que tengan que ver con el recurso.
+                        if (!documentoIDs.Contains(docID) && docID != Documento.VersionOriginalID)
+                        {
+                            continue;
+                        }
+                        DocumentoWeb aux = GestorDocumental.ListaDocumentosWeb[docID];
+                        aux.GestorDocumental.DesvincularDocumentoDeCategorias(aux, aux.CategoriasTesauro.Values.ToList(), aux.CreadorID, ProyectoSeleccionado.Clave);
+                    }
 
                     #region Llamada a servio externo para notificar eliminación recurso
 
@@ -3933,7 +4270,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             if (!Documento.GestorDocumental.ListaDocumentos.ContainsKey(Documento.FilaDocumento.ElementoVinculadoID.Value))
                             {
-                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                                 Documento.GestorDocumental.DataWrapperDocumentacion.Merge(docCN.ObtenerDocumentoPorID(Documento.FilaDocumento.ElementoVinculadoID.Value));
                                 docCN.Dispose();
 
@@ -3956,7 +4293,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (Documento.TipoDocumentacion == TiposDocumentacion.Semantico)
                     {
-                        ControladorDocumentacion.BorrarRDFDeDocumentoEliminado(Documento.Clave, Documento.FilaDocumento.ElementoVinculadoID.Value, UrlIntragnoss, false, ProyectoSeleccionado.Clave);
+                        ControladorDocumentacion.BorrarRDFDeDocumentoEliminado(Documento.VersionOriginalID, Documento.FilaDocumento.ElementoVinculadoID.Value, UrlIntragnoss, false, ProyectoSeleccionado.Clave);
                     }
 
                     #region Actualizar cola GnossLIVE
@@ -3985,8 +4322,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
                         }
 
-                        ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], Documento.Clave, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra);
-                        ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], Documento.ObtenerPublicadorEnBR(baseRecursosID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta);
+                        ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], Documento.Clave, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
+                        ControladorDocumentacion.ActualizarGnossLive(listaBRsConProyectos[baseRecursosID], Documento.ObtenerPublicadorEnBR(baseRecursosID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta, mAvailableServices);
                     }
 
                     #endregion
@@ -4003,12 +4340,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         try
                         {
-                            facetadoCN_Master = new FacetadoCN("acid", UrlIntragnoss, "", mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                            facetadoCN_Master = new FacetadoCN("acid", UrlIntragnoss, "", mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                             facetadoCN_Master.BorrarRecurso(grafoBorrar, Documento.Clave);
                         }
                         catch (Exception ex)
                         {
-                            mLoggingService.GuardarLogError(ex);
+                            mLoggingService.GuardarLogError(ex,mlogger);
                         }
                         finally
                         {
@@ -4018,7 +4355,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             }
                         }
 
-                        FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mControladorBase.UsuarioActual.ProyectoID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mControladorBase.UsuarioActual.ProyectoID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                         facetadoCN.BorrarRecurso(grafoBorrar, Documento.Clave);
                         facetadoCN.Dispose();
                     }
@@ -4038,10 +4375,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         ControladorDocumentacion.EstablecePrivacidadRecursoEnMetaBuscador(Documento, IdentidadActual, true);
                     }
 
-                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                     //Si el documento que se borra es un recurso normal, ni debate, ni pregunta, ni encuesta.... se tiene que omitir la eliminación de la caché.
-                    controDoc.ActualizarNumRecCatTesDeTesauroDeRecursoEliminado(Documento, true);
-
+                    controDoc.ActualizarNumRecCatTesDeTesauroDeRecursoEliminado(Documento, mAvailableServices);
+                    PublicarModificarEliminarRecurso publicarModificarEliminarRecursoModel = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
+                    mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, "Eliminar");
                     string nombreSem = PestanyaRecurso.Value;
 
                     string nombreCortoProy = "";
@@ -4051,8 +4389,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         nombreCortoProy = ProyectoSeleccionado.NombreCorto;
                     }
 
-                    return GnossResultUrl(mControladorBase.UrlsSemanticas.GetURLBaseRecursos(BaseURLIdioma, UtilIdiomas, nombreCortoProy, UrlPerfil, EsIdentidadBROrg, nombreSem));
+                    // Hay que eliminar todos los archivos que tenga sus versiones anteriores
+                    foreach (Guid docID in documentoIDs)
+                    {
+                        ControladorDocumentacion.InsertarEnColaProcesarFicherosRecursosModificadosOEliminados(docID, TipoEventoProcesarFicherosRecursos.Borrado, mAvailableServices);
+                    }
 
+                    // Hay que eliminar logicamente los documentos que sean versiones anteriores.
+                    foreach (Documento doc in GestorDocumental.ListaDocumentos.Values.Where(doc => documentoIDs.Contains(doc.Clave)))
+                    {
+                        if (doc.Clave.Equals(Documento.Clave)) continue;
+                        GestorDocumental.EliminarDocumentoLogicamente(doc);
+                    }
+                    mEntityContext.SaveChanges();
+
+                    return GnossResultUrl(mControladorBase.UrlsSemanticas.GetURLBaseRecursos(BaseURLIdioma, UtilIdiomas, nombreCortoProy, UrlPerfil, EsIdentidadBROrg, nombreSem));
                 }
             }
             catch (Exception ex)
@@ -4136,8 +4487,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
                             }
 
-                            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra);
-                            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.ObtenerPublicadorEnBR(baseRecursosID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta);
+                            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.Clave, AccionLive.Eliminado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
+                            ControladorDocumentacion.ActualizarGnossLive(proyectoID, Documento.ObtenerPublicadorEnBR(baseRecursosID), AccionLive.RecursoAgregado, (int)TipoLive.Miembro, PrioridadLive.Alta, mAvailableServices);
 
                             #endregion
                         }
@@ -4152,8 +4503,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         ControladorDocumentacion.BorrarRDFDeDocumentoEliminado(Documento.Clave, Documento.FilaDocumento.ElementoVinculadoID.Value, UrlIntragnoss, false, UsuarioActual.ProyectoID);
                     }
 
-                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                    controDoc.ActualizarNumRecCatTesDeTesauroDeRecursoEliminado(Documento);
+                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                    controDoc.ActualizarNumRecCatTesDeTesauroDeRecursoEliminado(Documento, mAvailableServices);
 
                     ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.Clave);
 
@@ -4197,7 +4548,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 //Borramos la cache de las comunidades afectadas
-                DocumentacionCL documentacionCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL documentacionCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 List<Guid> listaProyectosActualYProyectosRelacionados = new List<Guid>();
                 listaProyectosActualYProyectosRelacionados.AddRange(pListaProyectosActualizarNumRec);
                 foreach (Guid proyecto in pListaProyectosActualizarNumRec)
@@ -4215,7 +4566,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
         }
 
@@ -4235,7 +4586,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mLoggingService.AgregarEntrada("Inicio NotificarServicioExternoBorradoRecurso con url '" + pUrlServicio + "'");
 
                 //Obtenemos el RDF del recurso para extraer la entidad principal:
-                ControladorDocumentacion contrDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                ControladorDocumentacion contrDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                 Ontologia ontologia = null;
                 string rdfTexto = null;
                 string nombreOntologia = null;
@@ -4277,7 +4628,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 catch (Exception ex2)
                 {
-                    mLoggingService.GuardarLogError(ex2);
+                    mLoggingService.GuardarLogError(ex2, mlogger);
                 }
 
                 throw;
@@ -4288,20 +4639,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #region Certificar
 
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult Certify(Guid CertificationID)
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+		public ActionResult Certify(Guid CertificationID)
         {
             try
             {
-                //Seguridad : 
-                /*
+				//Seguridad : 
+				/*
                     * Si es la ultima version
                     * Si eres el supervisor
                     * Si permite la comunidad Certificaciones
                     * Si el proyecto no es el MetaProyecto
                     * Si la ontologia permite Certificaciones
                 */
-                if (Documento.FilaDocumento.UltimaVersion && EsIdentidadActualSupervisorProyecto && ParametrosGeneralesRow.PermitirCertificacionRec && ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonCertificarDoc))
+				if (Documento.FilaDocumento.UltimaVersion && EsIdentidadActualSupervisorProyecto && ParametrosGeneralesRow.PermitirCertificacionRec && ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonCertificarDoc))
                 {
                     return AccionRecurso_Certificar_Aceptar(CertificationID);
                 }
@@ -4364,23 +4715,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
                     }
 
-                    ControladorDocumentacion.ActualizarGnossLive(mControladorBase.UsuarioActual.ProyectoID, Documento.Clave, AccionLive.RecursoCertificado, tipoLive, PrioridadLive.Alta, infoExtra);
+                    ControladorDocumentacion.ActualizarGnossLive(mControladorBase.UsuarioActual.ProyectoID, Documento.Clave, AccionLive.RecursoCertificado, tipoLive, PrioridadLive.Alta, infoExtra, mAvailableServices);
                     if (!Documento.FilaDocumentoWebVinBR.NivelCertificacionID.HasValue)
                     {
-                        ControladorDocumentacion.ActualizarGnossLivePopularidad(mControladorBase.UsuarioActual.ProyectoID, Documento.Clave, idCertificadoAntiguo, AccionLive.RecursoDesCertificado, (int)TipoLive.Recurso, (int)TipoLive.Recurso, false, PrioridadLive.Alta);
+                        ControladorDocumentacion.ActualizarGnossLivePopularidad(mControladorBase.UsuarioActual.ProyectoID, Documento.Clave, idCertificadoAntiguo, AccionLive.RecursoDesCertificado, (int)TipoLive.Recurso, (int)TipoLive.Recurso, false, PrioridadLive.Alta, mAvailableServices);
                     }
 
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     docCN.ActualizarDocumentacion();
                     docCN.Dispose();
 
 
 
-                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                    controDoc.ActualizarNumRecCatTesDeTesauro(false, Guid.Empty, mControladorBase.UsuarioActual.OrganizacionID, mControladorBase.UsuarioActual.ProyectoID, Documento.Clave);
-                    ControladorDocumentacion.AgregarRecursoModeloBaseSimple(Documento.Clave, ProyectoSeleccionado.Clave, (short)Documento.TipoDocumentacion, PrioridadBase.Alta);
+                    ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                    controDoc.ActualizarNumRecCatTesDeTesauro(false, Guid.Empty, mControladorBase.UsuarioActual.OrganizacionID, mControladorBase.UsuarioActual.ProyectoID, Documento.Clave, mAvailableServices);
+                    ControladorDocumentacion.AgregarRecursoModeloBaseSimple(Documento.Clave, ProyectoSeleccionado.Clave, (short)Documento.TipoDocumentacion, PrioridadBase.Alta, mAvailableServices);
 
-                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                     docCL.InvalidarFichaRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
                     docCL.InvalidarEventosRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
                     docCL.Dispose();
@@ -4437,7 +4788,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 */
                 if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && Documento.TipoDocumentacion == TiposDocumentacion.Newsletter && EsIdentidadActualSupervisorProyecto && !Documento.EsBorrador)
                 {
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerGruposDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                     identidadCN.Dispose();
 
@@ -4497,7 +4848,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                ControladorDocumentacion.EnviarCorreoNewsLetter(Documento, pIdioma, null, IdentidadActual.Clave);
+                ControladorDocumentacion.EnviarCorreoNewsLetter(Documento, pIdioma, null, IdentidadActual.Clave, mAvailableServices);
                 return GnossResultOK(UtilIdiomas.GetText("PERFILBASERECURSOSFICHA", "NEWSLETTEROK"));
             }
             catch (Exception ex)
@@ -4516,7 +4867,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                ControladorDocumentacion.EnviarCorreoNewsLetter(Documento, pIdioma, listaGrupos, IdentidadActual.Clave);
+                ControladorDocumentacion.EnviarCorreoNewsLetter(Documento, pIdioma, listaGrupos, IdentidadActual.Clave, mAvailableServices);
                 return GnossResultOK(UtilIdiomas.GetText("PERFILBASERECURSOSFICHA", "NEWSLETTEROK"));
             }
             catch (Exception ex)
@@ -4525,81 +4876,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return GnossResultERROR(UtilIdiomas.GetText("PERFILBASERECURSOSFICHA", "NEWSLETTERKO"));
             }
         }
-
-        #endregion
-
-        #region Crear Versión Documento Semantico
-
-        [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
-        public ActionResult CreateVersionSemanticDoc()
-        {
-            try
-            {
-                ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
-
-                if (!Documento.EsBorrador && Documento.FilaDocumento.UltimaVersion && Documento.PermiteVersiones && mControladorBase.UsuarioActual.ProyectoID.Equals(Documento.ProyectoID) && Documento.TipoDocumentacion == TiposDocumentacion.Semantico && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)))
-                {
-                    return AccionRecurso_CrearVersionDocSem();
-                }
-            }
-            catch (Exception ex)
-            {
-                GuardarLogError(ex);
-            }
-            return GnossResultERROR();
-        }
-
-        /// <summary>
-        /// 
-        /// Crea una versión del recurso semántico y redirecciona para editarlo.
-        /// </summary>
-        /// <returns>Acción de respuesta</returns>
-        private ActionResult AccionRecurso_CrearVersionDocSem()
-        {
-            try
-            {
-                Identidad identCrearVersion = IdentidadActual;
-
-                if (EsIdentidadBROrg)
-                {
-                    identCrearVersion = IdentidadOrganizacionBROrg;
-                }
-                else if (mControladorBase.UsuarioActual.ProyectoID == ProyectoAD.MetaProyecto && IdentidadActual.Tipo != TiposIdentidad.Personal)
-                {
-                    identCrearVersion = IdentidadActual.IdentidadPersonalMyGNOSS;
-                }
-
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                docCN.ObtenerDocumentoPorIDCargarTotal(Documento.Clave, Documento.GestorDocumental.DataWrapperDocumentacion, true, true, null);
-                docCN.Dispose();
-
-                Documento.GestorDocumental.CargarDocumentos(false);
-
-                ControladorDocumentacion controlador = new ControladorDocumentacion(Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                Documento nuevoDoc = Documento.GestorDocumental.CrearNuevaVersionDocumento(Documento, false, identCrearVersion);
-
-                if (!Documento.GestorDocumental.ListaDocumentos.ContainsKey(nuevoDoc.Clave))
-                {
-                    Documento.GestorDocumental.ListaDocumentos.Add(nuevoDoc.Clave, nuevoDoc);
-                }
-                controlador.CrearNuevaVersionDocumentoRDF(Documento, nuevoDoc, UrlIntragnossServicios, UrlServicioWebDocumentacion);
-                Documento.FilaDocumento.FechaModificacion = DateTime.Now;
-
-                //Lo marco como eliminado por si el usuario no decide guardar la versión y hay que desechar el documento.
-                nuevoDoc.FilaDocumento.Eliminado = true;
-                nuevoDoc.FilaDocumento.Enlace = Documento.FilaDocumento.Enlace;
-                mEntityContext.SaveChanges();
-
-                string url = mControladorBase.UrlsSemanticas.GetURLBaseRecursosVersionarDocumentoCreado(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, nuevoDoc.Clave, nuevoDoc.ElementoVinculadoID.ToString(), Documento.Clave, EsIdentidadBROrg);
-                return Content("OK|" + url);
-            }
-            catch (Exception ex)
-            {
-                GuardarLogError(ex.ToString());
-                return GnossResultERROR(UtilIdiomas.GetText("CONTROLESCVSEM", "GUARDADOFALLO"));
-            }
-        }
-
 
         #endregion
 
@@ -4637,7 +4913,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    FacetadoCN facCN = new FacetadoCN(urlintragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    FacetadoCN facCN = new FacetadoCN(urlintragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                     string datos = facCN.ObtenerRelacionesGrafoGraficoDeDocumento(ProyectoSeleccionado.Clave.ToString(), documentoID, propEnlace, nodosLimiteNivel, extra, idioma, tipoRecurso, grafoDbpedia);
                     facCN.Dispose();
 
@@ -4691,7 +4967,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLogError(ex);
+                        mLoggingService.GuardarLogError(ex, mlogger);
                     }
 
                     return GnossResultERROR();
@@ -4933,8 +5209,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid proyectoOrigenID = ObtenerProyectoOrigenFichaRecurso(Documento.Clave, ProyectoSeleccionado.Clave);
 
                 // TODO: Ajustar propiedad para que tenga en cuenta el proyectoOrigenID
-                
-                ControladorProyectoMVC controladorMVC = new ControladorProyectoMVC(UtilIdiomas, BaseURL, BaseURLsContent, BaseURLStatic, ProyectoSeleccionado, proyectoOrigenID, ParametrosGeneralesRow, IdentidadActual, mControladorBase.EsBot, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication);
+
+                ControladorProyectoMVC controladorMVC = new ControladorProyectoMVC(UtilIdiomas, BaseURL, BaseURLsContent, BaseURLStatic, ProyectoSeleccionado, proyectoOrigenID, ParametrosGeneralesRow, IdentidadActual, mControladorBase.EsBot, mLoggingService, mEntityContext, mConfigService, mHttpContextAccessor, mRedisCacheWrapper, mVirtuosoAD, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyectoMVC>(), mLoggerFactory);
                 Dictionary<Guid, ResourceModel> listaRecursos = controladorMVC.ObtenerRecursosPorID(listaRecursosID, baseUrlBusqueda, espacioPersonal, null, false);
 
                 paginaModel.Resource = listaRecursos[DocumentoID];
@@ -4955,7 +5231,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     //Solo pintado
                     if (Documento.FilaDocumentoWebVinBR.NivelCertificacionID.HasValue)
                     {
-                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                         ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaNivelCertificacion = ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaNivelCertificacion.Union(proyectoCL.ObtenerNivelesCertificacionRecursosProyecto(ProyectoSeleccionado.Clave).ListaNivelCertificacion).ToList();
                         paginaModel.Resource.Certification = new KeyValuePair<Guid, string>(Documento.FilaDocumentoWebVinBR.NivelCertificacionID.Value, ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaNivelCertificacion.FirstOrDefault(nivelCert => nivelCert.NivelCertificacionID.Equals(Documento.FilaDocumentoWebVinBR.NivelCertificacionID)).Descripcion);
                     }
@@ -5033,7 +5309,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
 
 
-                    paginaModel.IsDocumentEditor = new AccionesRecurso(this, mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication).TienePermisosEditarDoc(Documento, IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, GenPlantillasOWL, false);
+                    paginaModel.IsDocumentEditor = new AccionesRecurso(this, mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AccionesRecurso>(), mLoggerFactory).TienePermisosEditarDoc(Documento, IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, GenPlantillasOWL, false);
                 }
                 else if (accion == "share-change")
                 {
@@ -5076,7 +5352,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (accion == "add-metatitle" || accion == "add-metadescription")
                 {
-                    DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                     AD.EntityModel.Models.Documentacion.DocumentoMetaDatos docMetas = docCL.ObtenerMetaDatos(Documento.FilaDocumento.DocumentoID);
                     docCL.Dispose();
                     if (docMetas != null)
@@ -5096,8 +5372,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
                 }
-
                 paginaModel.Action = accion;
+                ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
+                string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
+                paginaModel.Resource.EsEnlaceSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrive);
+                string sharepointConfigurado = parametroCN.ObtenerParametroAplicacion("SharepointClientID");
+                if (string.IsNullOrEmpty(sharepointConfigurado))
+                {
+                    paginaModel.Resource.EsEnlaceSharepoint = false;
+                }
 
                 return PartialView("_FichaAcciones", paginaModel);
             }
@@ -5115,7 +5398,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 ProyectosID.Add(Documento.GestorDocumental.ObtenerProyectoID(baseRecursos));
             }
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto proyectosCompartidosDWP = proyCN.ObtenerProyectosPorIDsCargaLigera(ProyectosID);
             proyCN.Dispose();
 
@@ -5176,7 +5459,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //Obtener bases de recursos donde esta compartido el documento
             List<Guid> listaBRYaCompartido = new List<Guid>();
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             if (Documento.TipoDocumentacion.Equals(TiposDocumentacion.Wiki))
             {
                 listaBRYaCompartido = docCN.ObtenerBREstaCompartidoWikiPorNombre(Documento.Titulo);
@@ -5192,9 +5475,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             TiposDocumentacion tipoDocumento = Documento.TipoDocumentacion;
 
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto dataWrapperProyecto = proyectoCN.ObtenerProyectosUsuarioPuedeCompartirRecurso(mControladorBase.UsuarioActual.UsuarioID, tipoDocumento);
-            GestionProyecto gestorProyectos = new GestionProyecto(dataWrapperProyecto, mLoggingService, mEntityContext);
+            GestionProyecto gestorProyectos = new GestionProyecto(dataWrapperProyecto, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionProyecto>(), mLoggerFactory);
             proyectoCN.Dispose();
 
             Dictionary<Identidad, string> listaIdentidadNombrePerfil = new Dictionary<Identidad, string>();
@@ -5205,7 +5488,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             #region Cargo listas identidades proyectos perfil
 
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerPerfilesDePersona(mControladorBase.UsuarioActual.PersonaID, true, mControladorBase.UsuarioActual.IdentidadID, true), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
             identidadCN.Dispose();
 
@@ -5298,7 +5581,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (listaProyCompartirID.Count > 0)
             {
-                DocumentacionCN documCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCN documCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 listaProyIDBRID = documCN.ObtenerBasesRecursosIDporProyectosID(listaProyCompartirID);
                 documCN.Dispose();
             }
@@ -5316,7 +5599,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (listaOrgCompartirID.Count > 0)
             {
-                DocumentacionCN docum2CN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCN docum2CN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 listaOrgIDBRID = docum2CN.ObtenerBasesRecursosIDporOrganizacionesID(listaOrgCompartirID);
                 docum2CN.Dispose();
             }
@@ -5444,15 +5727,71 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ActionsModel fichaAcciones = new ActionsModel();
 
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            bool permisoEditar = true;
+            bool permisoEliminar = true;
+            bool permisoRestaurarVersion = true;
+            bool permisoEliminarVersion = true;
+            switch (Documento.TipoDocumentacion)
+            {
+				case TiposDocumentacion.Hipervinculo:
+					permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarRecursoTipoEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarRecursoTipoEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Nota:
+					permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.FicheroServidor:
+					permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarRecursoTipoAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarRecursoTipoAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Encuesta:
+					permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.ReferenciaADoc:
+					permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarRecursoTipoReferenciaADocumentoFisico, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarRecursoTipoReferenciaADocumentoFisico, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionReferencia, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionReferencia, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Pregunta:
+					permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Debate:
+					permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+					break;
+				case TiposDocumentacion.Semantico:
+					permisoEditar = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.Modificar, Documento.ElementoVinculadoID);
+					permisoEliminar = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.Eliminar, Documento.ElementoVinculadoID);
+					permisoRestaurarVersion = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.RestaurarVersion, Documento.ElementoVinculadoID);
+					permisoEliminarVersion = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.EliminarVersion, Documento.ElementoVinculadoID);
+					break;
+			}
             fichaAcciones.AddToMyPersonalSpace = true;
-            fichaAcciones.Restore = false;
-            fichaAcciones.AddCategories = true;
-            fichaAcciones.AddTags = true;
+            fichaAcciones.Restore = !Documento.FilaDocumento.UltimaVersion && permisoRestaurarVersion;
+            fichaAcciones.AddCategories = permisoEditar;
+            fichaAcciones.AddTags = permisoEditar;
             fichaAcciones.Share = true;
             fichaAcciones.Duplicate = false;
-            fichaAcciones.Edit = true;
+            fichaAcciones.Edit = permisoEditar;
             fichaAcciones.CreateVersion = true;
-            fichaAcciones.ViewHistory = true;
+            fichaAcciones.ViewHistory = Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID) || permisoRestaurarVersion || permisoEliminarVersion;
             fichaAcciones.BlockComments = true;
             fichaAcciones.SendLink = true;
             fichaAcciones.SendNewsletter = true;
@@ -5480,7 +5819,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (!mControladorBase.UsuarioActual.EsUsuarioInvitado)
                     {
                         DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
-                        DocumentacionCN docCNAux = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        DocumentacionCN docCNAux = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                         docCNAux.ObtenerBaseRecursosUsuario(dataWrapperDocumentacion, mControladorBase.UsuarioActual.UsuarioID);
                         if (Documento.BaseRecursos.Contains(dataWrapperDocumentacion.ListaBaseRecursosUsuario.First().BaseRecursosID))
                         {
@@ -5544,7 +5883,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 bool bloqueadoPorOtroUsuario = Documento.FilaDocumento.IdentidadProteccionID.HasValue && !Documento.FilaDocumento.IdentidadProteccionID.Equals(mControladorBase.UsuarioActual.IdentidadID) && !IdentidadActual.GestorIdentidades.ListaIdentidades.ContainsKey(Documento.FilaDocumento.IdentidadProteccionID.Value);
 
-                if (!bloqueadoPorOtroUsuario && ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID) && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)))
+                if (!bloqueadoPorOtroUsuario && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)))
                 {
                     fichaAcciones.AddCategories = true;
                     fichaAcciones.AddTags = true;
@@ -5560,13 +5899,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 #region Editar
 
-                fichaAcciones.Edit = new AccionesRecurso(this, mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication).TienePermisosEditarDoc(Documento, IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, GenPlantillasOWL, bloqueadoPorOtroUsuario);
+                if (!permisoEditar)
+                {
+					fichaAcciones.Edit = new AccionesRecurso(this, mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AccionesRecurso>(), mLoggerFactory).TienePermisosEditarDoc(Documento, IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, GenPlantillasOWL, bloqueadoPorOtroUsuario);
+				}                
 
                 string urlEditar = "";
 
                 if (Documento.TipoDocumentacion != TiposDocumentacion.Semantico)
                 {
-                    urlEditar = mControladorBase.UrlsSemanticas.GetURLBaseRecursosEditarDocumento(BaseURLIdioma, UtilIdiomas, NombreProyEdicionRecurso, UrlPerfil, Documento, 0, EsIdentidadBROrg);
+                    urlEditar = mControladorBase.UrlsSemanticas.GetURLBaseRecursosEditarDocumento(BaseURLIdioma, UtilIdiomas, NombreProyEdicionRecurso, UrlPerfil, Documento, 1, EsIdentidadBROrg);
                 }
                 else
                 {
@@ -5579,7 +5921,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             esDocVirtual = true;
                         }
                     }
-                    urlEditar = mControladorBase.UrlsSemanticas.GetURLBaseRecursosVerDocumentoCreado(BaseURLIdioma, UtilIdiomas, NombreProyEdicionRecurso, UrlPerfil, Documento.Clave, Documento.FilaDocumento.ElementoVinculadoID.ToString(), true, EsIdentidadBROrg, esDocVirtual);
+                    if (esDocVirtual)
+                    {
+                        urlEditar = mControladorBase.UrlsSemanticas.GetURLBaseRecursosVerDocumentoCreado(BaseURLIdioma, UtilIdiomas, NombreProyEdicionRecurso, UrlPerfil, Documento.Clave, Documento.FilaDocumento.ElementoVinculadoID.ToString(), true, EsIdentidadBROrg, esDocVirtual);
+                    }
+                    else
+                    {
+                        urlEditar = mControladorBase.UrlsSemanticas.GetURLBaseRecursosVersionarDocumentoCreado(BaseURLIdioma, UtilIdiomas, NombreProyEdicionRecurso, UrlPerfil, Documento.Clave, Documento.FilaDocumento.ElementoVinculadoID.ToString(), Guid.NewGuid(), EsIdentidadBROrg);
+                    }
                 }
 
                 paginaModel.UrlEdit = urlEditar;
@@ -5588,7 +5937,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 #region CrearVersion
 
-                if (Documento.EsBorrador || !Documento.FilaDocumento.UltimaVersion || !Documento.PermiteVersiones || !mControladorBase.UsuarioActual.ProyectoID.Equals(Documento.ProyectoID) || (Documento.TipoDocumentacion == TiposDocumentacion.Wiki && Documento.FilaDocumento.Protegido && !EsIdentidadActualSupervisorProyecto) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.Encuesta) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.Pregunta) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.Debate) || (!Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && !ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)))
+                if (Documento.EsBorrador || !Documento.FilaDocumento.UltimaVersion || !Documento.PermiteVersiones || !mControladorBase.UsuarioActual.ProyectoID.Equals(Documento.ProyectoID) || (Documento.TipoDocumentacion == TiposDocumentacion.Wiki && Documento.FilaDocumento.Protegido && !EsIdentidadActualSupervisorProyecto) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.Encuesta) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.Pregunta) || Documento.TipoDocumentacion.Equals(TiposDocumentacion.Debate) || (!Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && !ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID) && !permisoEditar))
                 {
                     fichaAcciones.CreateVersion = false;
                 }
@@ -5602,7 +5951,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 #region Historial
 
-                if (Documento.EsBorrador || !Documento.PermiteVersiones || Documento.Version == 0 || !Documento.FilaDocumento.UltimaVersion || (!Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && !ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)))
+                if (Documento.EsBorrador || !Documento.PermiteVersiones || Documento.Version == 0 || !Documento.FilaDocumento.UltimaVersion || (!Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && !ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)) && !permisoRestaurarVersion && !permisoEliminarVersion)
                 {
                     fichaAcciones.ViewHistory = false;
                 }
@@ -5634,7 +5983,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && Documento.TipoDocumentacion == TiposDocumentacion.Newsletter && EsIdentidadActualSupervisorProyecto && !Documento.EsBorrador)
                 {
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerGruposDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                     identidadCN.Dispose();
 
@@ -5675,7 +6024,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 #region Eliminar
 
-                if (!(Documento.FilaDocumento.UltimaVersion && (!Documento.FilaDocumento.Protegido || !bloqueadoPorOtroUsuario || EsIdentidadActualSupervisorProyecto) && (!Documento.TipoDocumentacion.Equals(TiposDocumentacion.Wiki) || EsIdentidadActualSupervisorProyecto) && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || Documento.TienePermisosIdentidadEliminarRecursoEnBR(IdentidadActual, Documento.GestorDocumental.BaseRecursosIDActual, ProyectoSeleccionado, UsuarioActual.UsuarioID, UsuarioActual.ProyectoID, EsIdentidadActualAdministradorOrganizacion, EsIdentidadActualSupervisorProyecto) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID))))
+                if (!(Documento.FilaDocumento.UltimaVersion && (!Documento.FilaDocumento.Protegido || !bloqueadoPorOtroUsuario || EsIdentidadActualSupervisorProyecto) && (!Documento.TipoDocumentacion.Equals(TiposDocumentacion.Wiki) || EsIdentidadActualSupervisorProyecto) && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || Documento.TienePermisosIdentidadEliminarRecursoEnBR(IdentidadActual, Documento.GestorDocumental.BaseRecursosIDActual, ProyectoSeleccionado, UsuarioActual.UsuarioID, UsuarioActual.ProyectoID, EsIdentidadActualAdministradorOrganizacion, EsIdentidadActualSupervisorProyecto) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID) || permisoEliminar)))
                 {
                     fichaAcciones.Delete = false;
                 }
@@ -5768,7 +6117,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid gadgetID = new Guid(RequestParams("gadgetid"));
                 int numPagina = int.Parse(RequestParams("numPagina"));
 
-                GadgetController gadgetController = new GadgetController(this, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
+                GadgetController gadgetController = new GadgetController(this, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, mAvailableServices, mLoggerFactory.CreateLogger<GadgetController>(), mLoggerFactory);
                 return gadgetController.CargarGadgetRecurso(gadgetID, numPagina, Documento, GenPlantillasOWL, PestanyaRecurso.Value);
             }
             else if (!mControladorBase.UsuarioActual.EsIdentidadInvitada)
@@ -5815,12 +6164,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                             if (respuestaID != Guid.Empty && !yaVotado)
                             {
-                                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                                 docCL.InvalidarFichaRecursoMVC(Documento.Clave, ProyectoVirtual.Clave);
                                 docCL.Dispose();
 
                                 GestorDocumental.AgregarVotoARespuestaDeRecurso(Documento.Clave, respuestaID, IdentidadActual.Clave);
-                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                                 docCN.ActualizarDocumentacion();
                                 docCN.Dispose();
 
@@ -5881,7 +6230,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    GadgetController gadgetController = new GadgetController(this, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv);
+                    GadgetController gadgetController = new GadgetController(this, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mEnv, mAvailableServices, mLoggerFactory.CreateLogger<GadgetController>(), mLoggerFactory);
                     listaGadgets = gadgetController.CargarListaGadgetsRecurso(false, listaGadgetsSinCargar, Documento, GenPlantillasOWL, PestanyaRecurso.Value, false);
                 }
                 catch
@@ -5978,16 +6327,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 string baseUrlBusqueda = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursos(BaseURLIdioma, UtilIdiomas, nombreProy, UrlPerfil, EsIdentidadBROrg, nombreSem)}/";
                 List<Guid> listaRecursosID = new List<Guid>();
-                listaRecursosID.Add(DocumentoID);
-                paginaModel.Resource = ControladorProyectoMVC.ObtenerRecursosPorIDSinProcesarIdioma(listaRecursosID, baseUrlBusqueda, baseRecursosPersonaID, Documento.FilaDocumento.ProyectoID)[DocumentoID];
+                listaRecursosID.Add(Documento.Clave);
+                paginaModel.Resource = ControladorProyectoMVC.ObtenerRecursosPorIDSinProcesarIdioma(listaRecursosID, baseUrlBusqueda, baseRecursosPersonaID, Documento.FilaDocumento.ProyectoID)[Documento.Clave];
                 bool recursoObtenidoDeCache = true;
 
-                paginaModel.Resource.LastVersion = Documento.Clave;
+                paginaModel.Resource.LastVersion = Documento.UltimaVersionID;
                 paginaModel.Resource.Description = ModificarVideoSiNoHayCookiesYoutube(paginaModel.Resource.Description);
-                if (!Documento.UltimaVersionID.Equals(Guid.Empty))
-                {
-                    paginaModel.Resource.LastVersion = Documento.UltimaVersionID;
-                }
 
                 if (!paginaModel.Resource.FullyLoaded)
                 {
@@ -5999,7 +6344,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (Documento.FilaDocumentoWebVinBR.NivelCertificacionID.HasValue)
                     {
-                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                         ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaNivelCertificacion = ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaNivelCertificacion.Union(proyectoCL.ObtenerNivelesCertificacionRecursosProyecto(ProyectoSeleccionado.Clave).ListaNivelCertificacion).ToList();
                         paginaModel.Resource.Certification = new KeyValuePair<Guid, string>(Documento.FilaDocumentoWebVinBR.NivelCertificacionID.Value, ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaNivelCertificacion.FirstOrDefault(nivelCert => nivelCert.NivelCertificacionID.Equals(Documento.FilaDocumentoWebVinBR.NivelCertificacionID)).Descripcion);
                     }
@@ -6017,7 +6362,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                     docCL.AgregarFichaRecursoMVC(Documento.Clave, ProyectoVirtual.Clave, paginaModel.Resource);
                     docCL.Dispose();
                 }
@@ -6026,7 +6371,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid token = Guid.Empty;
                 if (ParametroProyecto.ContainsKey(ParametroAD.LecturaFichero) && ParametroProyecto[ParametroAD.LecturaFichero].Equals("1") && paginaModel.Resource.TypeDocument == DocumentType.FicheroServidor && (paginaModel.Resource.NameImage == "xls" || paginaModel.Resource.NameImage == "documento" || paginaModel.Resource.NameImage == "presentacion" || paginaModel.Resource.NameImage == "pdf"))
                 {
-                    SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    SolicitudCN solicitudCN = new SolicitudCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<SolicitudCN>(), mLoggerFactory);
                     token = Guid.NewGuid();
                     solicitudCN.GuardarTokenAccesoAPILogin(token, "Documento");
                     paginaModel.Resource.UrlDocument += $"&token={token.ToString()}";
@@ -6034,8 +6379,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 foreach (CategoryModel categoria in paginaModel.Resource.Categories)
                 {
-                    TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    GestionTesauro gestorTesauro = new GestionTesauro(tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                    TesauroCL tesauroCL = new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory);
+                    GestionTesauro gestorTesauro = new GestionTesauro(tesauroCL.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
 
                     if (gestorTesauro.ListaCategoriasTesauro.ContainsKey(categoria.Key))
                     {
@@ -6113,7 +6458,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             break;
                         case DocumentType.Hipervinculo:
                             paginaModel.Resource.RdfTypeName = UtilIdiomas.GetText("COMBUSQUEDAAVANZADA", "TIPODOCHIPERVINCULO");
-                            ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                             string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
                             paginaModel.Resource.EsEnlaceSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrive);
                             string sharepointConfigurado = parametroCN.ObtenerParametroAplicacion("SharepointClientID");
@@ -6313,7 +6658,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 try
                 {
-                    GadgetController gadgetController = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication);
+                    GadgetController gadgetController = new GadgetController(this, IdentidadActual, mHttpContextAccessor, mLoggingService, mGnossCache, mConfigService, mVirtuosoAD, mEntityContext, mRedisCacheWrapper, mEntityContextBASE, mViewEngine, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GadgetController>(), mLoggerFactory);
                     paginaModel.Resource.Gadgets = gadgetController.CargarListaGadgetsRecurso(true, null, Documento, GenPlantillasOWL, PestanyaRecurso.Value);
                 }
                 catch (Exception ex)
@@ -6353,12 +6698,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     ActualizarConsultaRecurso();
                 }
-                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                 string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
                 //Si es recurso tipo enlace de sharepoint
                 if (Documento.TipoDocumentacion == TiposDocumentacion.Hipervinculo && UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrivePermitido))
                 {
-                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                     string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
                     if (!string.IsNullOrEmpty(sharepointConfigurado))
                     {
@@ -6367,7 +6712,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             return redirect;
                         }
-                        SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
+                        SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                         spController.Token = tokenSP;
                         spController.TokenCreadorRecurso = tokenSPAdminDocument;
                         bool estaAlineadoConSharepoint = spController.ComprobarSiEstaAlineadoConSharepoint(Documento.Enlace);
@@ -6388,9 +6733,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 CargarJavascriptExtra();
 
-                ViewBag.FormularioRegistro = FormularioRegistro;
+                ViewBag.FormularioRegistro = CargarFormularioRegistro(mAvailableServices);
 
                 ViewBag.ListaInputHidden.Add(new KeyValuePair<string, string>("recurso_id", DocumentoID.ToString()));
+                ViewBag.ListaInputHidden.Add(new KeyValuePair<string, string>("recurso_version_id", Documento.Clave.ToString()));
+                ViewBag.ListaInputHidden.Add(new KeyValuePair<string, string>("txtRecurso", UtilIdiomas.GetText("URLSEM", "RECURSO")));
+                ViewBag.ListaInputHidden.Add(new KeyValuePair<string, string>("desvincularSharepointMetodo", UtilIdiomas.GetText("URLSEM", "DESVINCULARSHAREPOINT")));
                 if (Documento.FilaDocumento.FechaModificacion.HasValue)
                 {
                     ViewBag.ListaInputHidden.Add(new KeyValuePair<string, string>("recurso_modification_date", Documento.FilaDocumento.FechaModificacion.Value.ToString("yyyy/MM/dd HH:mm")));
@@ -6441,7 +6789,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (borrarCache)
                 {
-                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                     docCL.InvalidarFichaRecursoMVC(Documento.Clave, ProyectoSeleccionado.Clave);
                 }
 
@@ -6519,12 +6867,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 //Insertar Rabbit ColaTagsComunidadesLInkedData
-                ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controladorDocumentacion.InsertLinkedDataRabbit(Documento.ProyectoID, Documento.TipoDocumentacion.ToString(), lecturaAumentada);
+				ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+				controladorDocumentacion.InsertLinkedDataRabbit(Documento.ProyectoID, Documento.TipoDocumentacion.ToString(), lecturaAumentada, mAvailableServices);          
 
                 mEntityContext.SaveChanges();
 
-                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCL docCL = new DocumentacionCL("acid", "recursos", mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 docCL.InvalidarFichaRecursoMVC(Documento.Clave, ProyectoSeleccionado.Clave);
 
                 return Content("OK");
@@ -6538,7 +6886,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private ActionResult FuncionalidadSharepoint(bool pDescargando = false, string pEnlace = "")
         {
-            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
             string sharepointConfigurado = paramCN.ObtenerParametroAplicacion("SharepointClientID");
             if (!string.IsNullOrEmpty(sharepointConfigurado))
             {
@@ -6548,8 +6896,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     documentoID = RequestParams("docID");
                 }
-                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime);
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 string enlace = docCN.ObtenerEnlaceDocumentoPorDocumentoID(new Guid(documentoID));
                 if (!string.IsNullOrEmpty(pEnlace))
                 {
@@ -6562,7 +6910,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         enlace = Session.GetString("EnlaceDocumentoAgregar");
                     }
                 }
-                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                 string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
                 if (!string.IsNullOrEmpty(enlace) && UtilCadenas.EsEnlaceSharepoint(enlace, oneDrivePermitido))
                 {
@@ -6574,9 +6922,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     mHttpContextAccessor.HttpContext.Response.Cookies.Append("urlInicio", RequestUrl, cookieOptions);
 
                     // Comprobamos en BD si existe un token para el usuario
-                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
+                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
 
 
                     Guid usuarioID = UsuarioActual.UsuarioID;
@@ -6721,7 +7069,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     CargarComentarios();
 
-                    ExportadorWiki exportadorWiki = new ExportadorWiki(OntologiaGnoss, IdiomaUsuario, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, new Metagnoss.ExportarImportar.UtilSemCms(mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication), mServicesUtilVirtuosoAndReplication, mVirtuosoAD);
+                    ExportadorWiki exportadorWiki = new ExportadorWiki(OntologiaGnoss, IdiomaUsuario, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, new Metagnoss.ExportarImportar.UtilSemCms(mEntityContext, mLoggingService, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UtilSemCms>(), mLoggerFactory), mServicesUtilVirtuosoAndReplication, mVirtuosoAD, mLoggerFactory.CreateLogger<ExportadorWiki>(), mLoggerFactory);
                     exportadorWiki.IdentidadActual = IdentidadActual;
                     exportadorWiki.ProyectoSeleccionado = ProyectoSeleccionado;
                     string tipo = TipoElementoGnoss.Documento;
@@ -6738,7 +7086,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         if (!Documento.GestorDocumental.ListaDocumentos.ContainsKey(Documento.ElementoVinculadoID))
                         {
-                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                             Documento.GestorDocumental.DataWrapperDocumentacion.Merge(docCN.ObtenerDocumentoPorID(Documento.ElementoVinculadoID));
                             docCN.Dispose();
 
@@ -6756,7 +7104,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         if (listaPropiedades.ContainsKey(PropiedadesOntologia.xmlTroceado.ToString()) && listaPropiedades[PropiedadesOntologia.xmlTroceado.ToString()].ToLower() == "true")
                         {
                             bool obtenidoVirtuoso = false;
-                            string rdfTexto = ObtenerSemCmsController(Documento).ObtenerRDFDocumento(Documento.Clave, Documento.FilaDocumento.ProyectoID.Value, GestionOWL.NAMESPACE_ONTO_GNOSS, exportadorWiki.URL_ONTOLOGIA_DOCSEM, nombreOntologia, null, UrlIntragnoss, false, out obtenidoVirtuoso);
+                            string rdfTexto = ObtenerSemCmsController(Documento).ObtenerRDFDocumento(Documento.Clave, Documento.FilaDocumento.ProyectoID.Value, GestionOWL.NAMESPACE_ONTO_GNOSS, exportadorWiki.URL_ONTOLOGIA_DOCSEM, nombreOntologia, null, UrlIntragnoss, false, Documento.FilaDocumento.UltimaVersion, out obtenidoVirtuoso);
                             string urlEntPrincipal = SemCmsController.ObtenerTipoEntidadPrincipalRDF(rdfTexto);
                             string claveOnto = Documento.ElementoVinculadoID + urlEntPrincipal;
                             exportadorWiki.CLAVE_ONTO_TROCEADA = claveOnto;
@@ -6814,7 +7162,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     try
                     {
-                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                         DataWrapperProyecto dataWrapperProyecto = proyectoCL.ObtenerGadgetsProyecto(ProyectoSeleccionado.Clave);
                         proyectoCL.Dispose();
 
@@ -6826,7 +7174,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             if (dataWrapperProyecto.ListaProyectoGadget.Where(proy => proy.TipoUbicacion.Equals((short)(TipoUbicacionGadget.FichaRecursoComunidad)) && proy.Visible == true && proy.Tipo.Equals((short)TipoGadget.RecursosRelacionados)).ToList().Count > 0)
                             {
                                 //int resultpag;
-                                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
 
                                 List<Guid> listaIDs = (List<Guid>)docCL.ObtenerRelacionadosRecursoMVC(DocumentoID, ProyectoSeleccionado.Clave);
 
@@ -6840,7 +7188,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                                     FacetadoDS facetadoDS = new FacetadoDS();
 
-                                    FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, ProyectoSeleccionado.Clave.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                                    FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, ProyectoSeleccionado.Clave.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                                     facetadoCN.InformacionOntologias = InformacionOntologias;
 
                                     string tags = "";
@@ -6925,11 +7273,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (ViewBag.ListaMetas == null)
             {
-                ViewBag.ListaMetas = new List<KeyValuePair<string, string>>();
+                ViewBag.ListaMetas = new List<ViewMetaData>();
             }
 
             //Nuevo MetaDescripcion metatitulo
-            DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
             AD.EntityModel.Models.Documentacion.DocumentoMetaDatos docMetas = docCL.ObtenerMetaDatos(pDocumento.FilaDocumento.DocumentoID);
             docCL.Dispose();
             if (docMetas != null)
@@ -6962,11 +7310,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             AgregarMetaImagen(pDocumento);
             AgregarMetaSite(ProyectoSeleccionado.Nombre);
 
-            KeyValuePair<string, string> metaTwitter_card = new KeyValuePair<string, string>("twitter:card", "summary");
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaTwitter_card);
-
-            KeyValuePair<string, string> metaTwitter_domain = new KeyValuePair<string, string>("twitter:domain", mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto));
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaTwitter_domain);
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "twitter:card", ContentAttributeValue = "summary" });
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "twitter:domain", ContentAttributeValue = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoVirtual.NombreCorto) });
 
             AgregarMetasFormularioSemantico();
         }
@@ -7009,8 +7354,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void AgregarMetaSite(string pNombreProyecto)
         {
-            KeyValuePair<string, string> metaOG_site = new KeyValuePair<string, string>("og:site_name", pNombreProyecto);
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaOG_site);
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "property", AttributeValue = "og:site_name", ContentAttributeValue = pNombreProyecto });
 
             if (ProyectoVirtual.FilaProyecto.TieneTwitter)
             {
@@ -7020,8 +7364,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     usuarioTwitter = $"@{usuarioTwitter}";
                 }
 
-                KeyValuePair<string, string> metaTwitter_site = new KeyValuePair<string, string>("twitter:site", usuarioTwitter);
-                ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaTwitter_site);
+                ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "twitter:site", ContentAttributeValue = usuarioTwitter });
             }
         }
 
@@ -7065,36 +7408,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (!string.IsNullOrEmpty(urlImagen))
             {
-                KeyValuePair<string, string> metaOG_image = new KeyValuePair<string, string>("og:image", urlImagen);
-                ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaOG_image);
-
-                KeyValuePair<string, string> metaTwitter_image = new KeyValuePair<string, string>("twitter:image", urlImagen);
-                ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaTwitter_image);
+                ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "property", AttributeValue = "og:image", ContentAttributeValue = urlImagen });
+                ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "twitter:image", ContentAttributeValue = urlImagen });
             }
         }
 
         private void AgregarMetaUrl(DocumentoWeb pDocumento)
         {
             string urlFicha = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, "/", pDocumento, false);
-            KeyValuePair<string, string> metaOG_url = new KeyValuePair<string, string>("og:url", urlFicha);
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaOG_url);
 
-            KeyValuePair<string, string> metaTwitter_url = new KeyValuePair<string, string>("twitter:url", urlFicha);
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaTwitter_url);
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "property", AttributeValue = "og:url", ContentAttributeValue = urlFicha });
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "twitter:url", ContentAttributeValue = urlFicha });
         }
 
         private void AgregarMetaTitulo(string pTituloPaginaConfiguradoXMLOntologia)
         {
-            if (!string.IsNullOrEmpty(pTituloPaginaConfiguradoXMLOntologia))
+            string tituloPagina = pTituloPaginaConfiguradoXMLOntologia;
+
+            if (string.IsNullOrEmpty(tituloPagina))
             {
-                ViewBag.ListaMetas.Add(new KeyValuePair<string, string>("og:title", pTituloPaginaConfiguradoXMLOntologia));
-                ViewBag.ListaMetas.Add(new KeyValuePair<string, string>("twitter:title", pTituloPaginaConfiguradoXMLOntologia));
+                tituloPagina = UtilCadenas.ObtenerTextoDeIdioma(mDocumento.Titulo, IdiomaUsuario, IdiomaPorDefecto);
             }
-            else
-            {
-                ViewBag.ListaMetas.Add(new KeyValuePair<string, string>("og:title", UtilCadenas.ObtenerTextoDeIdioma(mDocumento.Titulo, IdiomaUsuario, IdiomaPorDefecto)));
-                ViewBag.ListaMetas.Add(new KeyValuePair<string, string>("twitter:title", UtilCadenas.ObtenerTextoDeIdioma(mDocumento.Titulo, IdiomaUsuario, IdiomaPorDefecto)));
-            }
+
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "property", AttributeValue = "og:title", ContentAttributeValue = tituloPagina });
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "twitter:title", ContentAttributeValue = tituloPagina });
         }
 
         /// <summary>
@@ -7125,14 +7462,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            KeyValuePair<string, string> meta_Descripcion = new KeyValuePair<string, string>("description", descripcion);
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(meta_Descripcion);
-
-            KeyValuePair<string, string> metaOG_description = new KeyValuePair<string, string>("og:description", descripcion);
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaOG_description);
-
-            KeyValuePair<string, string> metaTwitter_description = new KeyValuePair<string, string>("twitter:description", descripcion);
-            ((List<KeyValuePair<string, string>>)ViewBag.ListaMetas).Add(metaTwitter_description);
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "description", ContentAttributeValue = descripcion });
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "property", AttributeValue = "og:description", ContentAttributeValue = descripcion });
+            ViewBag.ListaMetas.Add(new ViewMetaData { AttributeName = "name", AttributeValue = "twitter:description", ContentAttributeValue = descripcion });
         }
 
         #endregion
@@ -7163,13 +7495,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         // Actualizo el contador del usuario
                         // TODO: Mover al servicio de sockets offline
-                        IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                         identidadCN.ActualizarContadorIdentidad(IdentidadActual.Clave, IdentidadAD.CONTADOR_NUMERO_VISITAS);
                     }
                 }
                 catch (Exception ex)
                 {
-                    mLoggingService.GuardarLogError(ex);
+                    mLoggingService.GuardarLogError(ex, mlogger);
                 }
             }
         }
@@ -7221,7 +7553,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             List<GrafoRecurso> listaGrafosRecurso = new List<GrafoRecurso>();
 
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             DataWrapperProyecto proyGrafosDWP = proyCL.ObtenerGrafosProyecto(ProyectoSeleccionado.Clave);
 
             if (proyGrafosDWP.ListaProyectoGrafoFichaRec.Count > 0)
@@ -7263,7 +7595,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         Guid pestanyaId;
                         if (Guid.TryParse(pestana, out pestanyaId))
                         {
-                            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                            ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                             DataWrapperProyecto proyDWP = proyectoCL.ObtenerPestanyasProyecto(ProyectoSeleccionado.Clave);
                             AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu filaPestanya = proyDWP.ListaProyectoPestanyaMenu.FirstOrDefault(proy => proy.PestanyaID.Equals(pestanyaId));
                             if (filaPestanya != null)
@@ -7309,7 +7641,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return;
             }
 
-            DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             string urlCanonica = documentacionCN.ObtenerDocumentoUrlCanonica(DocumentoID);
 
             if (!string.IsNullOrEmpty(urlCanonica))
@@ -7325,7 +7657,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (!proyectoID.Equals(Guid.Empty) && !proyectoID.Equals(ProyectoAD.MetaProyecto))
                 {
                     // Compartido en una Base de Recursos de proyecto.
-                    ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 
                     // Recurso compartido y con el recurso original eliminado.
                     if (Documento.FilaDocumentoWebVinBR_Publicador.Eliminado)
@@ -7374,7 +7706,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (Documento.GestorDocumental.DataWrapperDocumentacion.ListaBaseRecursosUsuario.Count > 0)
                 {
                     // Persona
-                    AD.EntityModel.Models.PersonaDS.Persona filaPersona = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerPersonaPorIdentidadCargaLigera(Documento.CreadorID);
+                    AD.EntityModel.Models.PersonaDS.Persona filaPersona = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory).ObtenerPersonaPorIdentidadCargaLigera(Documento.CreadorID);
 
                     bool documentoEnCatPublica = false;
                     if (filaPersona.UsuarioID.HasValue)
@@ -7398,11 +7730,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 else if (Documento.GestorDocumental.DataWrapperDocumentacion.ListaBaseRecursosOrganizacion.Count > 0)
                 {
                     // Organizacion
-                    DataWrapperOrganizacion orgDS = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerOrganizacionDeIdentidad(Documento.CreadorID);
+                    DataWrapperOrganizacion orgDS = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<OrganizacionCN>(), mLoggerFactory).ObtenerOrganizacionDeIdentidad(Documento.CreadorID);
                     bool organizacionBuscablePorExternos = false;
                     if (orgDS.ListaOrganizacion.Count > 0)
                     {
-                        AD.EntityModel.Models.OrganizacionDS.Organizacion filaOrg = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerOrganizacionDeIdentidad(Documento.CreadorID).ListaOrganizacion.FirstOrDefault();
+                        AD.EntityModel.Models.OrganizacionDS.Organizacion filaOrg = new OrganizacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<OrganizacionCN>(), mLoggerFactory).ObtenerOrganizacionDeIdentidad(Documento.CreadorID).ListaOrganizacion.FirstOrDefault();
                         ConfiguracionGnossOrg filasConfigOrganizacion = filaOrg.ConfiguracionGnossOrg;
 
                         if (filasConfigOrganizacion != null)
@@ -7431,7 +7763,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //Si hay identidad habrá que llevar con esa:
             if (hayQueLlevarAMyGnoss)
             {
-                GestionIdentidades gestorIdentAux = new GestionIdentidades(new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerIdentidadPorID(Documento.CreadorID, true), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                GestionIdentidades gestorIdentAux = new GestionIdentidades(new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory).ObtenerIdentidadPorID(Documento.CreadorID, true), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                 urlFichaCompleta = GnossUrlsSemanticas.GetURLBaseRecursosFichaMyGnoss(BaseURLIdioma, UtilIdiomas, UrlPerfil, gestorIdentAux.ListaIdentidades[Documento.CreadorID], Documento);
 
                 gestorIdentAux.Dispose();
@@ -7452,8 +7784,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private bool ObtenerSiDocumentoBRUsuarioEstaEnCatPublica(Guid pUsuarioID)
         {
-            TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            GestionTesauro gestionTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroUsuario(pUsuarioID), mLoggingService, mEntityContext);
+            TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
+            GestionTesauro gestionTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroUsuario(pUsuarioID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             tesauroCN.Dispose();
 
             Guid clavePublica = (gestionTesauro.TesauroDW.ListaTesauroUsuario.FirstOrDefault()).CategoriaTesauroPublicoID.Value;
@@ -7474,8 +7806,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             bool documentoEnCatPublica = false;
 
-            TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            Documento.GestorDocumental.GestorTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroOrganizacion(pOrganizacionID), mLoggingService, mEntityContext);
+            TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
+            Documento.GestorDocumental.GestorTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroOrganizacion(pOrganizacionID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
             tesauroCN.Dispose();
 
             Guid clavePublica = (Documento.GestorDocumental.GestorTesauro.TesauroDW.ListaTesauroOrganizacion.FirstOrDefault()).CategoriaTesauroPublicoID.Value;
@@ -7495,7 +7827,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private AD.EntityModel.Models.ProyectoDS.Proyecto ObtenerPrimerProyectoPublicoCompartidoRecurso()
         {
             AD.EntityModel.Models.ProyectoDS.Proyecto filaProy = ProyectoSeleccionado.FilaProyecto;
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 
             //Cuidado con los recursos compartidos en una base de recursos privada
             List<AD.EntityModel.Models.Documentacion.DocumentoWebVinBaseRecursos> filasBR = Documento.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos.Where(doc => doc.Eliminado == false && doc.PrivadoEditores == false && !doc.TipoPublicacion.Equals((short)TipoPublicacion.Publicado)).OrderByDescending(doc => doc.FechaPublicacion).ToList();
@@ -7561,6 +7893,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     string tipo = ControladorDocumentacion.ObtenerTipoEntidadAdjuntarDocumento(Documento.TipoEntidadVinculada);
                     string extension = Path.GetExtension(Documento.NombreDocumento).ToLower();
+                    
+                    if(IdiomaUsuario != IdiomaPorDefecto)
+                    {
+                        baseUrl = $"{baseUrl}/{IdiomaUsuario}";
+                    }
 
                     if (extension == ".swf")
                     {
@@ -7823,7 +8160,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             try
                             {
-                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                                 DataWrapperDocumentacion docDW = docCN.ObtenerDocumentoTokenTOPPorID(pDocumento.Clave);
                                 if (docDW.ListaDocumentoTokenTOP.FirstOrDefault().Estado == (short)EstadoSubidaVideo.Fallido)
                                 {
@@ -7929,7 +8266,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             try
                             {
-                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                                 DataWrapperDocumentacion docDS = docCN.ObtenerDocumentoTokenTOPPorID(pDocumento.Clave);
                                 if (docDS.ListaDocumentoTokenTOP.FirstOrDefault().Estado == (short)EstadoSubidaVideo.Fallido)
                                 {
@@ -7969,7 +8306,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLogError(ex);
+                        mLoggingService.GuardarLogError(ex, mlogger);
                     }
                 }
                 else if (pDocumento.TipoDocumentacion == TiposDocumentacion.Imagen)
@@ -8158,7 +8495,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return listaEtiquetas;
         }
 
-        private List<SharedBRModel> CargarBRCompartidas()
+		private List<SharedBRModel> CargarBRCompartidas()
         {
             List<SharedBRModel> listaBRCompartidas = new List<SharedBRModel>();
 
@@ -8168,7 +8505,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 ProyectosID.Add(Documento.GestorDocumental.ObtenerProyectoID(baseRecursos));
             }
-            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             DataWrapperProyecto proyectosCompartidosDWP = proyCN.ObtenerProyectosPorIDsCargaLigera(ProyectosID);
 
             List<Guid> proyectosParticipaUsuario = proyCN.ObtenerIdProyectosParticipaPersona(UsuarioActual.PersonaID);
@@ -8259,7 +8596,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     }
                                     else if (Documento.GestorDocumental.DataWrapperDocumentacion.ListaBaseRecursosUsuario.Any(item => item.BaseRecursosID.Equals(baseRecursos)))
                                     {
-                                        if (Documento.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos.FirstOrDefault(item => item.BaseRecursosID.Equals(baseRecursos) && item.DocumentoID.Equals(DocumentoID)).TipoPublicacion != 0)
+                                        if (Documento.GestorDocumental.DataWrapperDocumentacion.ListaDocumentoWebVinBaseRecursos.FirstOrDefault(item => item.BaseRecursosID.Equals(baseRecursos) && item.DocumentoID.Equals(Documento.Clave)).TipoPublicacion != 0)
                                         {
                                             SharedBRModel brPersonal = new SharedBRModel();
                                             brPersonal.Key = baseRecursos;
@@ -8409,10 +8746,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private Guid? CargarBaseRecursos()
         {
-            mGestorDocumental = new GestorDocumental(new DataWrapperDocumentacion(), mLoggingService, mEntityContext);
+            mGestorDocumental = new GestorDocumental(new DataWrapperDocumentacion(), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
 
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+            DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
 
             if (ProyectoOrigenBusquedaID != Guid.Empty)
             {
@@ -8456,21 +8793,63 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (CargarBaseRecursos().HasValue)
             {
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                docCN.ObtenerDocumentoPorIDCargarTotal(DocumentoID, mGestorDocumental.DataWrapperDocumentacion, true, true, mGestorDocumental.BaseRecursosIDActual);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
-                //Si no hay fila, hay que consultar BD Master por si acaso no está en una réplica:
-                if (mGestorDocumental.DataWrapperDocumentacion.ListaDocumento.Count == 0)
+                if (DocumentoVersionado)
+                {
+                    Guid documentoUltimaVersionID = DocumentoVersionID != Guid.Empty ? DocumentoVersionID : mDocumentoUltimaVersionID;
+                    docCN.ObtenerDocumentoPorIDCargarTotal(documentoUltimaVersionID, mGestorDocumental.DataWrapperDocumentacion, true, true, mGestorDocumental.BaseRecursosIDActual);
+
+                    // Si es un recurso anterior al versionado de los recursos se mostrará su unico documento
+                    if (mDocumentoOriginalVersionID != Guid.Empty)
+                    {
+                        docCN.ObtenerDocumentoPorIDCargarTotal(mDocumentoOriginalVersionID, mGestorDocumental.DataWrapperDocumentacion, true, true, mGestorDocumental.BaseRecursosIDActual);
+                        // Cargar todos los documentos de las verisones que no estén cargados aun.
+                        foreach (Guid docID in mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.Where(doc => !mGestorDocumental.ListaDocumentos.ContainsKey(doc.DocumentoID)).Select(doc => doc.DocumentoID).ToList())
+                        {
+                            docCN.ObtenerDocumentoPorIDCargarTotal(docID, mGestorDocumental.DataWrapperDocumentacion, true, true, mGestorDocumental.BaseRecursosIDActual);
+                        }
+                    }
+                }
+                else
                 {
                     docCN.ObtenerDocumentoPorIDCargarTotal(DocumentoID, mGestorDocumental.DataWrapperDocumentacion, true, true, mGestorDocumental.BaseRecursosIDActual);
                 }
 
-                //Cargao el gestor de tesauro, lo necesitaremos para la comprobación de seguirdad.
+                //Cargo el gestor de tesauro, lo necesitaremos para la comprobación de seguirdad.
                 CargarTesauro();
                 docCN.Dispose();
             }
 
             mGestorDocumental.CargarDocumentos(false);
+        }
+        private void CargaInicialDocumento()
+        {
+            Guid docId = Guid.Empty;
+            try
+            {
+                if (DocumentoVersionado)
+                {
+                    docId = DocumentoVersionID != Guid.Empty ? DocumentoVersionID : mDocumentoUltimaVersionID;
+                }
+                else
+                {
+                    docId = DocumentoID;
+                }
+
+                if (!(GestorDocumental.ListaDocumentos[docId] is DocumentoWeb))
+                {
+                    mDocumento = new DocumentoWeb(GestorDocumental.ListaDocumentos[docId].FilaDocumento, GestorDocumental);
+                }
+                else
+                {
+                    mDocumento = (DocumentoWeb)GestorDocumental.ListaDocumentos[docId];
+                }
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(ex, $"Se ha producido un error al cargar los datos del documento actual\nID: {docId}");
+            }
         }
 
         /// <summary>
@@ -8482,28 +8861,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (ProyectoOrigenBusquedaID != Guid.Empty)
                 {
-                    GestorDocumental.GestorTesauro = new GestionTesauro(new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerTesauroDeProyecto(ProyectoOrigenBusquedaID), mLoggingService, mEntityContext);
+                    GestorDocumental.GestorTesauro = new GestionTesauro(new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory).ObtenerTesauroDeProyecto(ProyectoOrigenBusquedaID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 else
                 {
-                    GestorDocumental.GestorTesauro = new GestionTesauro(new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                    GestorDocumental.GestorTesauro = new GestionTesauro(new TesauroCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCL>(), mLoggerFactory).ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
             }
             else
             {
-                TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                TesauroCN tesCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
 
                 if (UsuarioVeRecursoOtroPerfilID != Guid.Empty)
                 {
-                    GestorDocumental.GestorTesauro = new GestionTesauro(tesCN.ObtenerTesauroUsuario(UsuarioVeRecursoOtroPerfilID), mLoggingService, mEntityContext);
+                    GestorDocumental.GestorTesauro = new GestionTesauro(tesCN.ObtenerTesauroUsuario(UsuarioVeRecursoOtroPerfilID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 else if (EsIdentidadBROrg)
                 {
-                    GestorDocumental.GestorTesauro = new GestionTesauro(tesCN.ObtenerTesauroOrganizacion(IdentidadOrganizacionBROrg.OrganizacionID.Value), mLoggingService, mEntityContext);
+                    GestorDocumental.GestorTesauro = new GestionTesauro(tesCN.ObtenerTesauroOrganizacion(IdentidadOrganizacionBROrg.OrganizacionID.Value), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
                 else
                 {
-                    GestorDocumental.GestorTesauro = new GestionTesauro(tesCN.ObtenerTesauroUsuario(mControladorBase.UsuarioActual.UsuarioID), mLoggingService, mEntityContext);
+                    GestorDocumental.GestorTesauro = new GestionTesauro(tesCN.ObtenerTesauroUsuario(mControladorBase.UsuarioActual.UsuarioID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                 }
 
                 tesCN.Dispose();
@@ -8546,7 +8925,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public KeyValuePair<Guid?, bool> ObtenerBaseRecursosPersonalRecurso()
         {
             Guid brID = Guid.Empty;
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             bool org = false;
 
             if (RequestParams("organizacion") != null && RequestParams("organizacion").Equals("true"))
@@ -8595,21 +8974,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
-			Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
+            Dictionary<string, string> listaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
             Dictionary<string, KeyValuePair<bool, string>> listaEnlacesMultiIdioma = new Dictionary<string, KeyValuePair<bool, string>>();
             foreach (string idioma in listaIdiomas.Keys)
             {
+                if (!ParametrosGeneralesRow.IdiomasDisponibles && idioma != IdiomaPorDefecto)
+                {
+                    continue;
+                }
                 Guid docID = Guid.Empty;
 
                 if (Guid.TryParse(RequestParams("docID"), out docID))
                 {
                     bool disponible = (listaIdiomasDisponible == null) || listaIdiomasDisponible.Contains(idioma.ToLower());
-                    UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper);
+                    UtilIdiomas utilIdiomasActual = new Recursos.UtilIdiomas(idioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<Recursos.UtilIdiomas>(), mLoggerFactory);
 
                     if (Documento != null)
                     {
-                        string rutaActual = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURL, utilIdiomasActual, ProyectoSeleccionado.NombreCorto, UrlPerfil, Documento, false);
+                        string rutaActual = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURL, utilIdiomasActual, ProyectoSeleccionado.NombreCorto, UrlPerfil, Documento, false).Replace(Documento.Clave.ToString(), Documento.VersionOriginalID.ToString());
                         listaEnlacesMultiIdioma.Add(idioma, new KeyValuePair<bool, string>(disponible, rutaActual));
                     }
                 }
@@ -8680,7 +9063,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
             {
 
-                using (DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication))
+                using (DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
                 {
                     List<Guid> listaProyectos = new List<Guid>();
                     listaProyectos.Add(ProyectoSeleccionado.Clave);
@@ -8760,6 +9143,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return new Guid(RequestParams("docID"));
             }
         }
+        private Guid DocumentoVersionID
+        {
+            get
+            {
+                Guid versionDocID;
+                Guid.TryParse(RequestParams("versionDocID"), out versionDocID);
+                return versionDocID;
+            }
+            set
+            {
+
+            }
+        }
 
         /// <summary>
         /// Devuelve el documento actual.
@@ -8779,7 +9175,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                             if (!(GestorDocumental.ListaDocumentos[DocumentoID] is DocumentoWeb))
                             {
-                                mDocumento = new DocumentoWeb(GestorDocumental.ListaDocumentos[DocumentoID].FilaDocumento, GestorDocumental, mLoggingService);
+                                mDocumento = new DocumentoWeb(GestorDocumental.ListaDocumentos[DocumentoID].FilaDocumento, GestorDocumental);
                             }
                             else
                             {
@@ -8788,7 +9184,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                             if (!mDocumento.FilaDocumento.UltimaVersion && mDocumento.UltimaVersion == null)
                             {
-                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                                 mDocumento.GestorDocumental.DataWrapperDocumentacion.Merge(docCN.ObtenerVersionesDocumentoPorID(DocumentoID));
                                 docCN.Dispose();
                                 mDocumento.GestorDocumental.CargarDocumentosWeb();
@@ -8801,17 +9197,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
+        private bool DocumentoVersionado
+        {
+            get
+            {
+                return mDocumentoVersionado;
+            }
+        }
+
         /// <summary>
-        /// Devuelve o establece el gestor de documentos.
+        /// Devuelve el gestor de documentos.
         /// </summary>
         private GestorDocumental GestorDocumental
         {
             get
             {
-                if (mGestorDocumental == null)
-                {
-                    CargarInicial();
-                }
                 return mGestorDocumental;
             }
             set
@@ -8910,7 +9310,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     else
                     {
-                        AD.EntityModel.Models.PersonaDS.Persona filaPersona = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication).ObtenerPersonaPorIdentidadCargaLigera(Documento.CreadorID);
+                        AD.EntityModel.Models.PersonaDS.Persona filaPersona = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory).ObtenerPersonaPorIdentidadCargaLigera(Documento.CreadorID);
                         if (filaPersona != null)
                         {
                             perpublicadorID = filaPersona.PersonaID;
@@ -8993,7 +9393,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if ((!ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto)) && (ParametrosGeneralesRow.PermitirCertificacionRec))
                 {
-                    ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                     return proyCL.ObtenerNivelesCertificacionRecursosProyecto(ProyectoSeleccionado.Clave);
                 }
                 return null;
@@ -9017,7 +9417,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                         if (!string.IsNullOrEmpty(nombreUsu))
                         {
-                            UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                             Guid? usuarioID = usuCN.ObtenerUsuarioIDPorNombreCorto(nombreUsu);
                             usuCN.Dispose();
 

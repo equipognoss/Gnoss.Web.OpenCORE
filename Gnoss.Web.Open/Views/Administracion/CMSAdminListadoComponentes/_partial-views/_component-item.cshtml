@@ -14,6 +14,7 @@ Variables
 
 	// Enlace para obtener información de la edición del componente (Cargar los datos en el modal)
 	string urlEditComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + Model.Key + "/load-modal";
+	string urlHistoryComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSHISTORIALCOMPONENTE") + "/" + Model.Key + "/load-history";
 	// Enlace para obtener información de la edición del componente (Cargar los datos en el modal)
 	string urlDeleteComponentItem = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/" + Model.Key + "/load-delete-component";
 	// Url para ejecutar el borrado del componente cuando se confirme el borrado
@@ -48,10 +49,10 @@ Variables
 		<div class="info-component">
 			<span class="component-id">@Model.Key</span>			
 			<span alt="Copiar componente" 
-				  title="Copiar componente"
-				  data-url="@Model.Key" 
-				  class="material-icons btnCopyMultimediaItem" 
-				  style="cursor: pointer">content_copy</span>
+			title="Copiar componente"
+			data-url="@Model.Key" 
+			class="material-icons btnCopyMultimediaItem" 
+			style="cursor: pointer">content_copy</span>
 		</div>
 	</td>
 	@* Tipo de componente *@
@@ -74,25 +75,42 @@ Variables
 			</a>
 			<div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
 				@* Acción de editar el componete *@
-				<a
-					class="item-dropdown btnEditComponentItem"
-					data-urleditcomponent = "@urlEditComponentItem"
-					data-urlsave = "@urlSaveComponent"
-					data-target="#modal-container"					
+				@if ((ViewBag.ModificarComponenteCMSPermitido != null && ViewBag.ModificarComponenteCMSPermitido) || (ViewBag.VerComponenteCMSPermitido != null && ViewBag.VerComponenteCMSPermitido))
+				{
+					<a class="item-dropdown btnEditComponentItem"
+					data-urleditcomponent="@urlEditComponentItem"
+					data-urlsave="@urlSaveComponent"
+					data-target="#modal-container"
 					data-toggle="modal">
-					<span class="material-icons">edit</span>
-					<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
-				</a>
+						<span class="material-icons">edit</span>
+						<span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
+					</a>
+				}
+
+				@* Accion de ver el historial del componente *@
+				@if (((ViewBag.RestaurarVersionComponenteCMSPermitido != null && ViewBag.RestaurarVersionComponenteCMSPermitido) || (ViewBag.EliminarVersionComponenteCMSPermitido != null && ViewBag.EliminarVersionComponenteCMSPermitido)) && Model.Versionado)
+				{
+					<a class="item-dropdown btnHistoryComponentItem"
+					   data-urlHistoryComponentItem="@urlHistoryComponentItem"
+					   data-target="#modal-historial-componente"
+					   data-toggle="modal">
+						<span class="material-icons">history</span>
+						<span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "HISTORIAL")</span>
+					</a>
+				}
 
 				@* Acción de eliminar el componente *@
-				<a class="item-dropdown btnDeleteComponentItem" data-name="@Model.Title"
-				   data-target="#modal-container"
-				   data-toggle="modal"
-				   data-url= "@urlDeleteComponentItemAction"
-				   onclick="getVistaFromUrl('@urlDeleteComponentItem','modal-dinamic-content', '')">
-					<span class="material-icons">delete</span>
-					<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
-				</a>
+				@if (ViewBag.EliminarComponenteCMSPermitido != null && ViewBag.EliminarComponenteCMSPermitido)
+				{
+					<a class="item-dropdown btnDeleteComponentItem" data-name="@Model.Title"
+					   data-target="#modal-container"
+					   data-toggle="modal"
+					   data-url="@urlDeleteComponentItemAction"
+					   onclick="getVistaFromUrl('@urlDeleteComponentItem','modal-dinamic-content', '')">
+						<span class="material-icons">delete</span>
+						<span class="texto">@Html.GetText("COMMON", "ELIMINAR")</span>
+					</a>
+				}				
 			</div>
 		</div>
 	</td>

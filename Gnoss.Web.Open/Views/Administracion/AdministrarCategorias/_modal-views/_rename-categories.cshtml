@@ -18,25 +18,99 @@
 *@
 
 <div class="modal-header">
-    <p class="modal-title">
-        <span class="material-icons">edit</span>Renombar categoría
-    </p>
-    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+	<p class="modal-title">
+		<span class="material-icons">edit</span>Renombar categoría
+	</p>
+	<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
 </div>
 @* Contenido central del modal *@
 <div class="modal-body">
 
-    <div class="formulario-edicion">
-        <div class="form-group mb-1">        
-            <label class="control-label">@Html.GetText("DEVTOOLS","INTRODUCEELNUEVONOMBREDELACATEGORIA")</label>                                                               
-        </div>
+	<div class="formulario-edicion">
+		<div class="form-group mb-1">        
+			<label class="control-label">@Html.GetText("DEVTOOLS","INTRODUCEELNUEVONOMBREDELACATEGORIA")</label>                                                               
+		</div>
 
 		@* Título de la categoría -> Pintar caja multiidioma *@
-		@Html.PartialView("_PintarCajasMultiidioma", Model)        
+		@Html.PartialView("_PintarCajasMultiidioma", Model)  
+		@if (Model.pCategoria.ParentCategoryKey == Guid.Empty)
+		{
+			<div class="form-check form-check-inline">
+				@if (Model.pCategoria.Obligatoria == 1)
+				{
+					<input type="checkbox" class="chkObligatoria form-check-input" value="Obligatoria" id="chkObligatoria" checked="checked" />
+				}
+				else
+				{
+					<input type="checkbox" class="chkObligatoria form-check-input" value="Obligatoria" id="chkObligatoria" />
+				}
+				<label class="form-check-label" for="chkObligatoria">Obligatoria</label>
+				&nbsp;&nbsp;&nbsp;&nbsp;
+				@if (Model.pCategoria.Estructurante == 1)
+				{
+					<input type="checkbox" class="chkEstructurante form-check-input" value="Estructurante" id="chkEstructurante" checked="checked" />
+				}
+				else
+				{
+					<input type="checkbox" class="chkEstructurante form-check-input" value="Estructurante" id="chkEstructurante" />
+				}
+				<label class="form-check-label" for="chkEstructurante">Estructurante</label>
+			</div>
+			<br />
+		}
+		@if (Model.pCategoria.Image != null)
+		{
+			<div class="form-group mb-5">
+				<label class="control-label d-block">@Html.GetText("DEVTOOLS","IMAGEN")</label>
+				<img alt="Imagen categoria" src="@Model.pCategoria.Image" style="width: 400px;"><br><br>
+				@if ((ViewBag.ModificarCategoriaPermitido != null && ViewBag.ModificarCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+				{
+					<a id="btnEliminarImagenCategoria" class="btn btn-danger uppercase">@Html.GetText("DEVTOOLS", "ELIMINARIMAGEN")</a>
+				}
+				else
+				{
+					<input type="button" disabled class="btn btn-danger uppercase btnNoEliminarImagenCategoria" value="@Html.GetText("DEVTOOLS","ELIMINARIMAGEN")" />
+				}				
+			</div>
+		}
+		else
+		{
+			<div class="form-group mb-5">
+				<label class="control-label d-block">@Html.GetText("DEVTOOLS","IMAGENCATEGORIA")</label>
+				<div id="contenedorImagen" class="image-uploader js-image-uploader">
+					<div class="image-uploader__preview">
+						<img id="image-uploader-multimedia-item" class="image-uploader__img image-uploader-multimedia-item" alt="Arrastra y suelta para subir un archivo" src="" />
+					</div>
+					<div class="image-uploader__drop-area">
+						<div class="image-uploader__icon">
+							<span class="material-icons">backup</span>
+						</div>
+						<div class="image-uploader__info">
+							<p>
+								<strong>@Html.GetText("DEVTOOLS","ARRASTRAYSUELTAENLAZONAPUNTEADAARCHIVOMULTIMEDIAPARASUBIR")</strong>
+							</p>
+							<p>@Html.GetText("DEVTOOLS","IMAGENESENFORMATOPNGOJPG")</p>
+							<p>Max 20MB</p>
+						</div>
+					</div>
+					<div class="image-uploader__error">
+						<p class="ko"></p>
+					</div>
+				</div>
+				<input type="file" id="image-multimedia-src" class="image-uploader__input image-multimedia-src" multiple="" accept="image/*" max-size="20480" />
+			</div>
+		}
 
 		@* Sección botón de guardado y cierre del modal *@
 		<div class="panelBotonera">
-			<a id="btnGuardarNombreCategory" class="btn btn-primary uppercase">@Html.GetText("COMADMINCATEGORIAS", "RENOMBRAR")</a>
+			@if ((ViewBag.ModificarCategoriaPermitido != null && ViewBag.ModificarCategoriaPermitido) || (ViewBag.PermisoCategoriasEcosistema != null && ViewBag.PermisoCategoriasEcosistema))
+			{
+				<a id="btnGuardarNombreCategory" class="btn btn-primary uppercase">@Html.GetText("COMADMINCATEGORIAS", "GUARDAR")</a>
+			}
+			else
+			{
+				<input type="button" disabled class="btn btn-primary uppercase btnNoGuardarNombreCategory" value="@Html.GetText("COMMON","GUARDAR")" />
+			}				
 		</div>
 	</div>    
 </div>

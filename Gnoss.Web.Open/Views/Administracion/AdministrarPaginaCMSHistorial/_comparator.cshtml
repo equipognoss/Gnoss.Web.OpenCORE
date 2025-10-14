@@ -1,0 +1,85 @@
+﻿@model AdministrarPaginaCMSComparadorViewModel
+@{
+    AdministrarPaginaCMSVersionViewModel modelo1 = Model.Modelo1;
+    AdministrarPaginaCMSVersionViewModel modelo2 = Model.Modelo2;
+    string urlAddCommentRestorePageCMS = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/add-comment";
+    ViewBag.Comparator = Model;
+}
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">compare</span>
+        Comparar versiones
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion no-min-height">
+        <div class="comparar-versiones__wrap">
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header">
+                    <p class="version">
+                        @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo1.Version
+                        @if (modelo1.VersionActual)
+                        {
+                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @modelo1.FechaModificacion.ToString("dd/MM/yyyy HH:mm tt")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body">
+                    <div class="comparar-version">
+                        @Html.PartialView("_comparator-item", modelo1.PestanyaCMS)
+                    </div>
+                </div>
+            </div>
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header">
+                    <p class="version">
+                        @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo2.Version
+                        @if (modelo2.VersionActual)
+                        {
+                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @modelo2.FechaModificacion.ToString("dd/MM/yyyy HH:mm tt")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body">
+                    <div class="comparar-version">
+                        @Html.PartialView("_comparator-item", modelo2.PestanyaCMS)
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (Model.Restaurando)
+        {
+            if (Model.ComponentsDeleted?.Count > 0)
+            {
+                <div class="alert alert-warning" role="alert">
+                    <span class="material-icons">warning</span> @Html.GetText("HISTORIALVERSIONES", "AVISOCOMPONENTESBORRADOS"):
+                    <ul>
+                        @foreach (string componente in Model.ComponentsDeleted.Values)
+                        {
+                           <li>@componente</li>
+                        }
+                    </ul>
+                </div>
+            }
+            <div class="panelBotonera">
+                <a class="btn btn-primary uppercase btnAddCommentRestorePageCMS" data-target="#modal-container" data-toggle="modal" data-version-id="@modelo2.VersionID">@Html.GetText("HISTORIALVERSIONES", "RESTAURARVERSION") @modelo2.Version</a>
+            </div>
+        }
+    </div>
+</div>
+<script type="text/javascript">
+
+    (function ($) {
+        pParams = {
+            urlAddCommentRestorePageCMS: "@urlAddCommentRestorePageCMS"
+        }
+        operativaComparadorPestanyasCMS.init(pParams);
+    })();
+</script>

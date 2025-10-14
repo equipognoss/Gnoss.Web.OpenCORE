@@ -28,6 +28,10 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
+using Es.Riam.Gnoss.Elementos.Amigos;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -35,12 +39,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// 
     /// </summary>
-    public class AdministrarClausulasRegistroController : ControllerBaseWeb
-    {
-
-        public AdministrarClausulasRegistroController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarClausulasRegistroController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarClausulasRegistroController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarClausulasRegistroController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -49,14 +56,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private DataWrapperUsuario mUsuarioDR = null;
 
-        #endregion
+		#endregion
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionPaginasPermitido" })]
-        public ActionResult Index()
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns></returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
+		public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -80,9 +87,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionPaginasPermitido" })]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult NuevaClausula(ManageRegisterClausesViewModel.ClauseType TipoClausula)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
+		public ActionResult NuevaClausula(ManageRegisterClausesViewModel.ClauseType TipoClausula)
         {
             GuardarLogAuditoria();
             EliminarPersonalizacionVistas();
@@ -143,9 +149,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionPaginasPermitido" })]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult Guardar(List<ManageRegisterClausesViewModel.RegisterClauseModel> ListaClausulas)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
+		public ActionResult Guardar(List<ManageRegisterClausesViewModel.RegisterClauseModel> ListaClausulas)
         {
             GuardarLogAuditoria();
             GuardarClausulas(ListaClausulas);
@@ -231,7 +236,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 actualizarParamGral = true;
             }
 
-            ParametroAD parametroAD = new ParametroAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAD parametroAD = new ParametroAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAD>(), mLoggerFactory);
             if (ParametroProyecto.ContainsKey(ParametroAD.NombrePoliticaCookies))
             {
                 parametroAD.ActualizarParametroEnProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, ParametroAD.NombrePoliticaCookies, ParametroProyecto[ParametroAD.NombrePoliticaCookies]);
@@ -243,12 +248,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (actualizarParamGral)
             {
-                ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                 paramCN.ActualizarParametrosGenerales();
                 paramCN.Dispose();
             }
 
-            UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
             usuCN.ActualizarUsuario(false);
             usuCN.Dispose();
         }
@@ -260,6 +265,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void AgregarClausulaNueva(ManageRegisterClausesViewModel.RegisterClauseModel pClausula)
         {
+            DateTime fechaActual = DateTime.Now;
             AD.EntityModel.Models.UsuarioDS.ClausulaRegistro filaNuevaClausula = new AD.EntityModel.Models.UsuarioDS.ClausulaRegistro();
             filaNuevaClausula.ClausulaID = pClausula.Key;
             filaNuevaClausula.OrganizacionID = ProyectoSeleccionado.FilaProyecto.OrganizacionID;
@@ -267,6 +273,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             filaNuevaClausula.Orden = pClausula.Order;
             filaNuevaClausula.Tipo = (short)pClausula.Type;
             filaNuevaClausula.Texto = HttpUtility.UrlDecode(pClausula.Text1);
+            filaNuevaClausula.FechaCreacion = fechaActual;
+            filaNuevaClausula.FechaActualizacion = fechaActual;
 
             if (pClausula.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina))
             {
@@ -374,8 +382,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void EditarClausula(AD.EntityModel.Models.UsuarioDS.ClausulaRegistro pFilaClausula, ManageRegisterClausesViewModel.RegisterClauseModel pClausula)
         {
+            DateTime fechaActual = DateTime.Now;
             pFilaClausula.Orden = pClausula.Order;
             pFilaClausula.Texto = HttpUtility.UrlDecode(pClausula.Text1);
+            pFilaClausula.FechaActualizacion = fechaActual;
 
             if (pClausula.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina))
             {
@@ -503,7 +513,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void InvalidarCaches()
         {
-            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             proyCL.InvalidarCachePoliticaCookiesProyecto(ProyectoSeleccionado.Clave);
             proyCL.InvalidarCacheClausulasRegitroProyecto(ProyectoSeleccionado.Clave);
             proyCL.InvalidarParametrosProyecto(ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID);
@@ -521,13 +531,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mPaginaModel == null)
                 {
-					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+					ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 					mPaginaModel = new ManageRegisterClausesViewModel();
                     mPaginaModel.LanguagesList = paramCL.ObtenerListaIdiomasDictionary();
                     mPaginaModel.DefaultLanguage = !(ParametrosGeneralesRow.IdiomaDefecto == null) && mPaginaModel.LanguagesList.ContainsKey(ParametrosGeneralesRow.IdiomaDefecto) ? ParametrosGeneralesRow.IdiomaDefecto : mPaginaModel.LanguagesList.Keys.First();
                     mPaginaModel.ClausesList = new List<ManageRegisterClausesViewModel.RegisterClauseModel>();
 
-                    ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                     DataWrapperUsuario usuarioDW = proyCL.ObtenerClausulasRegitroProyecto(ProyectoSeleccionado.Clave);
                     if (!ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
                     {
@@ -547,6 +557,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             clause.Type = (ManageRegisterClausesViewModel.ClauseType)filaClausula.Tipo;
                             clause.Text1 = filaClausula.Texto;
                             clause.Text2 = "";
+                            clause.DateCreation = filaClausula.FechaCreacion;
+                            clause.DateModification = filaClausula.FechaActualizacion;
 
                             switch (clause.Type)
                             {
@@ -629,7 +641,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mUsuarioDR == null)
                 {
                     mUsuarioDR = new DataWrapperUsuario();
-                    UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    UsuarioCN usuCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                     mUsuarioDR = usuCN.ObtenerClausulasRegitroProyecto(ProyectoSeleccionado.Clave);
                     usuCN.Dispose();
                 }

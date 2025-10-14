@@ -1,0 +1,140 @@
+﻿@using static Es.Riam.Gnoss.Web.MVC.Models.ViewModels.MyCommunitiesViewModel
+@model MyCommunitiesViewModel
+@*
+    Descripción
+    -----------------------------------------------
+    Nueva vista que muestra las acciones disponibles a realizar. Estas se muestran en la cabecera del listado. Estas acciones serán:
+    - ComboBox para "Ordenar"
+    - ComboBox para "Visualizar"
+*@
+@*
+    Variables
+    ----------------------------------------------------------------
+*@
+@{
+    //Opciones para filtrar los resultados del buscador
+    Dictionary<string, string> listaFiltrosOrden = Model.FilterOrderList;
+    // Filtro por defecto para obtener los resultados de los recursos
+    string FiltroOrdenSeleccionado = Model.FilterOrderSelected;
+    string idioma = Html.GetUtilIdiomas().LanguageCode;
+}
+<div class="acciones-listado">
+    <div class="wrap">
+       
+        @* Botón de filtrar resultados *@
+        @if (listaFiltrosOrden != null && listaFiltrosOrden.Count > 0)
+        {
+            @* Opciones de Ordenar los resultados obtenidos *@
+            <div id="panel-orderBy" class="ordenar dropdown dropdown-select">
+                @* Coger por defecto la primera opción *@
+                <a class="dropdown-toggle active" data-toggle="dropdown" aria-expanded="false" aria-label="@Html.GetText("COMMON","SELECCIONARORDEN")">
+                    <span class="material-icons">swap_vert</span>
+                    <span class="texto">@FiltroOrdenSeleccionado @Html.GetText("COMMON", "ASCENDENTE").ToLower()</span>
+                </a>
+
+                <div class="dropdown-menu basic-dropdown dropdown-menu-right" style="will-change: transform;">
+                    @foreach (string filtro in listaFiltrosOrden.Keys)
+                    {
+                        string activo = (FiltroOrdenSeleccionado == filtro ? "activeView" : "");
+                        <a class="item-dropdown my-community @activo" data-orderBy="@listaFiltrosOrden[filtro]" data-order="orden|asc" aria-label="@Html.GetText("COMMON","SELECCIONARORDENASCENDENTE")">
+                            <span class="material-icons">swap_vert</span>
+                            <span class="texto">@filtro @Html.GetText("COMMON", "ASCENDENTE").ToLower()</span>
+                        </a>
+                        <a class="item-dropdown my-community" data-orderBy="@listaFiltrosOrden[filtro]" data-order="orden|desc" aria-label="@Html.GetText("COMMON","SELECCIONARORDENDESCENDENTE")">
+                            <span class="material-icons">swap_vert</span>
+                            <span class="texto">@filtro @Html.GetText("COMMON", "DESCENDENTE").ToLower()</span>
+                        </a>
+                        
+                    }
+                </div>
+            </div>
+        }
+
+        @* Opciones de visualización los resultados - Tener en cuenta opciones de visualización según la configuración *@
+        @if (Model.ViewList.Count >= 1)
+        {
+            @* Detectar la vista activa*@
+            ViewTypeModel.ViewTypeSearch tipoVistaActiva = ViewTypeModel.ViewTypeSearch.List;
+
+            <div id="panel-viewBy" class="visualizacion dropdown dropdown-select">
+
+                @* Dejar activa la vista activa en el select *@
+                @foreach (ViewTypeModel tipoVista in Model.ViewList)
+                {
+                    // Conocer la vista activa para establecerla visualmente en el "Buscador" por defecto
+                    string activo = "";
+                    if (tipoVista.Active)
+                    {
+                        activo = "activeView";
+                        tipoVistaActiva = tipoVista.ViewType;
+                    }
+                }
+
+                @* Visualizar por defecto los resultados *@
+
+                @switch (tipoVistaActiva)
+                {
+                    case ViewTypeModel.ViewTypeSearch.List:
+                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")">
+                            <span class="material-icons">view_agenda</span>
+                            <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")</span>
+                        </a>
+                        break;
+                    case ViewTypeModel.ViewTypeSearch.Grid:
+                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")">
+                            <span class="material-icons">view_comfy</span>
+                            <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")</span>
+                        </a>
+                        break;
+                    default:
+                        <a id="buscador" class="dropdown-toggle active" data-toggle="dropdown">
+                            <span class="material-icons">view_agenda</span>
+                            <span class="texto">@Html.GetText("DEVTOOLS", "VISUALIZAR")</span>
+                        </a>
+                        break;
+                }
+                @* Opciones disponibles para visualizar los resultados *@
+                <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
+                    @* Detectar el los tipos de visualización disponibles *@
+                    @foreach (ViewTypeModel tipoVista in Model.ViewList)
+                    {
+                        // Conocer si la vista está o no activa
+                        string activo = "";
+                        if (tipoVista.Active)
+                        {
+                            activo = "activeView";
+                            tipoVistaActiva = tipoVista.ViewType;
+                        }
+                        @* Mostrar o no el tipo de vista para visualizar resultados *@
+                        switch (tipoVista.ViewType)
+                        {
+
+                            @* Visualización LISTA *@
+                            case ViewTypeModel.ViewTypeSearch.List:
+                                <a class="item-dropdown aListView @activo" data-class-resource-list="listView" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")">
+                                    <span class="material-icons">view_agenda</span>
+                                    <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "LISTADO")</span>
+                                </a>
+
+                                @* Añadir la vista compactada para recursos si está Lista activada *@
+                                <a class="item-dropdown aCompacView @activo" data-class-resource-list="compacView" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("CORREO", "COMPACTADA")">
+                                    <span class="material-icons">reorder</span>
+                                    <span class="texto">@Html.GetText("CORREO", "COMPACTADA")</span>
+                                </a>
+
+                                break;
+                            @* Visualización GRID - MOSAICO*@
+                            case ViewTypeModel.ViewTypeSearch.Grid:
+                                <a class="item-dropdown aMosaicView @activo" data-class-resource-list="mosaicView" aria-label="@Html.GetText("COMMON","SELECCIONARVISUALIZACION") @Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")">
+                                    <span class="material-icons">view_comfy</span>
+                                    <span class="texto">@Html.GetText("COMBUSQUEDAAVANZADA", "MOSAICO")</span>
+                                </a>
+                                break;
+                        }
+
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

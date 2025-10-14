@@ -1,0 +1,73 @@
+﻿@model TabModel
+@*
+Descripción
+-----------------------------------------------
+Vista en detalle de la página de la comunidad que se desea editar. Se trata de una vista de tipo Modal donde se cargarán las diferentes propiedades que tendrán las páginas.
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	String idModalPage = "modal-configuracion-pagina_" + Model.Key;
+	String idModalPageDelete = "modal-configuracion-pagina_delete" + Model.Key;
+	String idPanelFacetaList = "panelFacetList_" + Model.Key;
+	TabModel pestanya = Model;
+	AdministrarFacetasPestanyasModel facetaPest = new AdministrarFacetasPestanyasModel();
+	facetaPest.ListadoFacetas = ViewBag.ListadoFacetasComunidad;
+	List<TabModel.FacetasTabModel> lista = new List<TabModel.FacetasTabModel>();
+
+
+	string configPestanyaId = "configuracion-paginas" + pestanya.Key.ToString().Substring(0, 5);
+	string listadoFacetasId = "listado-facetas" + pestanya.Key.ToString().Substring(0, 5);
+	string consultaCollapseId = "consulta_collapse_" + pestanya.Key.ToString().Substring(0, 5);
+	string mostrarResultadosId = "mostrar-resultados" + pestanya.Key.ToString().Substring(0, 5);
+
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Previsualización de facetas y resultados de la pestanya --------------------
+*@
+@* Tab listado facetas*@
+<div class="tab-pane fade" id="@listadoFacetasId" role="tabpanel" aria-labelledby="@listadoFacetasId">
+	<ul>
+		@if (pestanya != null && pestanya.ConsultasDeFacetas != null && pestanya.ConsultasDeFacetas.Count > 0)
+		{
+			@foreach (KeyValuePair<string, string> facetaConsulta in pestanya.ConsultasDeFacetas)
+			{
+				@Html.PartialView("_FichaConsulta", facetaConsulta)
+			}
+		}
+		else
+		{
+			<div class="formulario-edicion">@Html.GetText("DEVTOOLS", "NOHAYFACETASQUEMOSTRAR")</div>
+		}
+	</ul>
+</div>
+
+@* Tab resultados*@
+<div class="tab-pane fade" id="@mostrarResultadosId" role="tabpanel" aria-labelledby="@mostrarResultadosId">
+	<ul>
+		@if (!string.IsNullOrEmpty(pestanya.ConsultaDeResultados))
+		{
+			<div>
+				@* Acción de copiar al portapapeles *@
+				<a class="action-copy round-icon-button js-action-copy btnCopyQueryResults"
+				   href="javascript: void(0);">
+					<span class="material-icons">content_paste</span>
+				</a>
+			</div>
+			<div class="query-content">
+				<div class="formulario-edicion">
+					@pestanya.ConsultaDeResultados
+				</div>
+			</div>
+		}
+		else
+		{
+			<div class="formulario-edicion">@Html.GetText("DEVTOOLS", "NOHAYRESULTADOSQUEMOSTRAR")</div>
+		}
+	</ul>
+</div>

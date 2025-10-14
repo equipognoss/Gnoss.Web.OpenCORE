@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
@@ -27,6 +28,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -42,10 +45,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     {
         public const string ID_GOOGLE = "##idgoogle##";
         protected Guid? mUsuarioOauth;
-
-        public VisualizarDocumentoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-        : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public VisualizarDocumentoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<VisualizarDocumentoController> logger, ILoggerFactory loggerFactory)
+        : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Métodos de eventos
@@ -59,7 +65,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
         [HttpGet]
         public IActionResult Index()
-        {   
+        {
             mLoggingService.AgregarEntrada("Entra page load VisualizarDocumento");
             bool OmitirRedireccionFlash = false;
             string mNombreDocumento = string.Empty;
@@ -73,14 +79,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Guid identidadID = new Guid(Request.Query["ID"]);
                 Guid proyectoID = new Guid(Request.Query["proy"]);
 
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
 
                 //Comprobamos si realmente es un swf  
                 DataWrapperDocumentacion dataWrapperDocumentacion = docCN.ObtenerDocumentoPorID(docID);
                 dataWrapperDocumentacion.Merge(docCN.ObtenerEditoresDocumento(docID));
 
-                Documento doc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext).ListaDocumentos[docID];
+                Documento doc = new GestorDocumental(dataWrapperDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory).ListaDocumentos[docID];
                 Identidad identidad = new GestionIdentidades(identidadCN.ObtenerIdentidadPorID(identidadID, true), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication).ListaIdentidades[identidadID];
 
                 bool esSWF = Request.Headers.ContainsKey("flashDocSem") || doc.Enlace.ToLower().EndsWith(".swf");
@@ -151,7 +157,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 if (!mControladorBase.UsuarioActual.EsUsuarioInvitado && mControladorBase.UsuarioActual.EsIdentidadInvitada && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado) && !PaginaVisibleEnPrivada)
                 {
                     mLoggingService.AgregarEntrada("PageLoad: !OmitirRedireccionFlash, !EsUsuarioInvitado y EsIdentidadInvitada y (proyecto con acceso privado ó reservado)");
-                    Response.Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto));
+                    return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto));
                 }
             }
 
@@ -206,13 +212,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             bool descargaIframe = !string.IsNullOrEmpty(Request.Query["iframe"]) && Request.Query["iframe"].Equals("true");
 
-            DocumentacionCN docsCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docsCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
             //Obtengo el documento
-            GestorDocumental gestorDocs = new GestorDocumental(new DataWrapperDocumentacion(), mLoggingService, mEntityContext);
+            GestorDocumental gestorDocs = new GestorDocumental(new DataWrapperDocumentacion(), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
 
             mLoggingService.AgregarEntrada("compruebo gestor documental");
-            
+
             //Carga la base de recursos del usuario:
             gestorDocs.DataWrapperDocumentacion.ListaBaseRecursos = new List<AD.EntityModel.Models.Documentacion.BaseRecursos>();
             if (gestorDocs.DataWrapperDocumentacion != null)
@@ -243,7 +249,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             //Comprueba si se está accediendo al recurso desde una comunidad diferente a la que se creó el recurso
             ComprobarAccesoDesdeOtroProyecto(proyecto, ficheroID);
-                        
+
             mLoggingService.AgregarEntrada("compruebo OmitirRedireccionFlash " + OmitirRedireccionFlash);
 
             if (!OmitirRedireccionFlash)
@@ -254,34 +260,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (mControladorBase.UsuarioActual != null && mControladorBase.UsuarioActual.EsUsuarioInvitado)
                     {
-                        ParametroGeneralCL paramCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        ParametroGeneralCL paramCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                         //ParametroGeneralDS paramDS = paramCL.ObtenerParametrosGeneralesDeProyecto(proyecto);
                         GestorParametroGeneral gestorParametroGeneral = paramCL.ObtenerParametrosGeneralesDeProyecto(proyecto);
                         paramCL.Dispose();
                         string permitirDescargaParam = "PermitirDescargaIdentidadInvitada";
                         bool permitirVisualizarDescargarInvitado = false;
-                        if (ParametroProyecto.ContainsKey(permitirDescargaParam))
+                        if (gestorParametroGeneral.ListaParametroGeneral.Any(x => x.ProyectoID == proyecto && x.PermitirUsuNoLoginDescargDoc))
                         {
-                            if (ParametroProyecto[permitirDescargaParam] == "1" || ParametroProyecto[permitirDescargaParam] == "true")
-                            {
-                                permitirVisualizarDescargarInvitado = true;
-                            }
-                            else if (ParametroProyecto[permitirDescargaParam] == "0" || ParametroProyecto[permitirDescargaParam] == "false")
-                            {
-                                permitirVisualizarDescargarInvitado = false;
-                            }
+                            permitirVisualizarDescargarInvitado = true;
                         }
                         if (!permitirVisualizarDescargarInvitado)
                         {
                             if (!proyecto.Equals(ProyectoAD.MetaProyecto))
                             {
-                                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                                 string nombreCortoProyecto = proyCN.ObtenerNombreCortoProyecto(proyecto);
                                 string urlProyecto = proyCN.ObtenerURLPropiaProyecto(proyecto);
                                 proyCN.Dispose();
 
                                 string url = "";
-                                if (UrlReferrer != null)
+                                if (!string.IsNullOrWhiteSpace(UrlReferrer))
                                 {
                                     url = new Uri(UrlReferrer).AbsolutePath.Trim('/');
                                 }
@@ -298,7 +297,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                                 mLoggingService.AgregarEntrada("PageLoad: !OmitirRedireccionFlash, ListaDocumentosContieneficheroID " + ficheroID + ", EsUsuarioInvitado, !PermitirUsuNoLoginDescargDoc, !MetaProyecto");
 
-                                Response.Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, nombreCortoProyecto) + "/login/redirect/" + url);
+                                return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, nombreCortoProyecto) + $"/{UtilIdiomas.GetText("URLSEM", "LOGIN")}/redirect/" + url);
                             }
                             else
                             {
@@ -330,7 +329,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                         if (listaGrupos.Count > 0)
                         {
-                            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                             DataWrapperIdentidad identDW = identidadCN.ObtenerGruposPorIDGrupo(listaGrupos);
 
                             GestionIdentidades gestorIdent = new GestionIdentidades(identDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
@@ -429,7 +428,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             //Llamada al servicio web para obtener el contenido del fichero.
-            GestionDocumental gestorDocumental = new GestionDocumental(mLoggingService, mConfigService);
+            GestionDocumental gestorDocumental = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
             gestorDocumental.Url = UrlServicioWebDocumentacion;
 
             byte[] byteArray = null;
@@ -468,7 +467,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLog("Problema al descargar fichero '" + archivoAdjuntoSem + "' de Google Drive:" + ex.ToString());
+                        mLoggingService.GuardarLog("Problema al descargar fichero '" + archivoAdjuntoSem + "' de Google Drive:" + ex.ToString(), mlogger);
                     }
                 }
                 else
@@ -643,15 +642,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     // Actualizo el contador del usuario
                     // TODO: Mover al servicio de sockets offline
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     identidadCN.ActualizarContadorIdentidad(IdentidadActual.Clave, IdentidadAD.CONTADOR_NUMERO_DESCARGAS);
 
-                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     docCN.ActualizarNumeroDescargasDocumento(ficheroID, gestorDocs.BaseRecursosIDActual);
                 }
 
-                mLoggingService.GuardarLog($"7. {HttpContext.Response.StatusCode} Descargar iframe -> descargarIframe: {descargaIframe}");
-                
+                mLoggingService.GuardarLog($"7. {HttpContext.Response.StatusCode} Descargar iframe -> descargarIframe: {descargaIframe}", mlogger);
+
                 if (descargaIframe)
                 {
                     agregarCabecera = false;
@@ -739,11 +738,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 return mPermisoOauth.Value;
-            }
-            //else if (Page.Request["rdf"] != null && Usuario.UsuarioActual.EsIdentidadInvitada && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado)) //Se pide un RDF de una comunidad privada sin usar OAuth -> Error
-            //{
-            //    Response.Redirect(UtilUsuario.DominoAplicacionConHTTP + "/" + "Error.aspx?errorOAuth=" + System.Net.WebUtility.UrlEncode(GetText("COMMON", "ERRORNOUSAOAUTH")));
-            //}
+            }            
 
             return true;
         }
@@ -768,7 +763,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     List<Guid> listaUsu = new List<Guid>();
                     listaUsu.Add(pUsuarioID);
-                    IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     List<Guid> listaIdent = identCN.ObtenerIdentidadesIDDeusuariosEnProyecto(ProyectoSeleccionado.Clave, listaUsu, true);
                     identCN.Dispose();
 
@@ -778,10 +773,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         private void ComprobarAccesoDesdeOtroProyecto(Guid pProyectoID, Guid pDocumentoID)
-        {   
+        {
             if (ProyectoSeleccionado.Clave != pProyectoID)
-            {                
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            {
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
                 bool comunidadPermiteDescargaAInvitados = false;
 
@@ -805,7 +800,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     List<Guid> listaUsu = new List<Guid>();
                     listaUsu.Add(mUsuarioOauth.Value);
-                    IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     List<Guid> listaIdent = identCN.ObtenerIdentidadesIDDeusuariosEnProyecto(ProyectoSeleccionado.Clave, listaUsu, true);
 
                     if (listaIdent.Count > 0)
@@ -827,7 +822,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 bool usuarioTieneAccesoProyecto = !esIdentidadInvitada || ProyectoSeleccionado.EsPublico;
 
                 bool usuarioTieneAccesoRecurso = docCN.TieneUsuarioAccesoADocumentoEnProyecto(ProyectoSeleccionado.Clave, pDocumentoID, perfilID, identidadID, identidadMygnossID, false, !esIdentidadInvitada);
-                                
+
                 // Si el usuario no tiene acceso al recurso, se le redirige a la home de la comunidad
                 // Si el usuario tiene acceso al recurso, pero no tiene acceso a la comunidad o esta no permite la descarga para el usuario invitado, se le redirige a la home de la comunidad
                 if (!usuarioTieneAccesoRecurso || (!comunidadPermiteDescargaAInvitados && !usuarioTieneAccesoProyecto))
@@ -858,7 +853,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     mLoggingService.AgregarEntrada("RedireccionarAFicha: ProyectoID = " + pProyectoID);
 
                     //Es un recurso de una base de recursos de comunidad
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     nombreProy = proyCN.ObtenerNombreCortoProyecto(pProyectoID);
                     proyCN.Dispose();
                 }
@@ -867,7 +862,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     mLoggingService.AgregarEntrada("RedireccionarAFicha: ProyectoID vacio");
 
                     //Es un recurso de una base de recursos personal
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerIdentidadPorID(pDocumento.CreadorID, true), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                     identidadCN.Dispose();
 
@@ -905,7 +900,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
             mLoggingService.AgregarEntrada("RedireccionarAFicha: no ha entrado por ninguna redireccion y lo lleva a la home");
@@ -919,7 +914,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private void DevolverOntologia()
         {
             string nombreOnto = Request.Query["ontologia"];
-            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             Guid documentoID = docCN.ObtenerOntologiaAPartirNombre(Guid.Empty, nombreOnto);
             docCN.Dispose();
 

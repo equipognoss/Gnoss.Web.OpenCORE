@@ -15,6 +15,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Web.Controles;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.UtilOAuth;
 using Es.Riam.Util;
@@ -22,6 +23,8 @@ using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
@@ -40,9 +43,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         protected Proyecto mProyecto;
         protected string mIdiomaUsuario;
         protected IHttpContextAccessor mHttpContextAccessor;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
-
-        public OauthLoginController(IHttpContextAccessor httpContextAccessor, EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, GnossCache gnossCache, EntityContextOauth entityContextOauth)
+        public OauthLoginController(IHttpContextAccessor httpContextAccessor, EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, GnossCache gnossCache, EntityContextOauth entityContextOauth, ILogger<OauthLoginController> logger, ILoggerFactory loggerFactory)
         {
             mLoggingService = loggingService;
             mEntityContext = entityContext;
@@ -52,8 +56,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mVirtuosoAD = virtuosoAD;
             mEntityContextOauth = entityContextOauth;
             mHttpContextAccessor = httpContextAccessor;
-
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
         }
 
         public Proyecto ProyectoSeleccionado
@@ -98,14 +103,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (mProyecto == null || (nombreCortoProyecto != mProyecto.NombreCorto && mProyecto.Clave != proyectoID))
                     {
-                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                        ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 
                         if (!string.IsNullOrEmpty(nombreCortoProyecto))
                         {
                             proyectoID = proyectoCL.ObtenerProyectoIDPorNombreCorto(nombreCortoProyecto);
                         }
 
-                        GestionProyecto gestorProyecto = new GestionProyecto(proyectoCL.ObtenerProyectoPorID(proyectoID), mLoggingService, mEntityContext);
+                        GestionProyecto gestorProyecto = new GestionProyecto(proyectoCL.ObtenerProyectoPorID(proyectoID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionProyecto>(), mLoggerFactory);
 
                         if (gestorProyecto.ListaProyectos.Count > 0 && gestorProyecto.ListaProyectos.ContainsKey(proyectoID))
                         {
@@ -150,7 +155,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex.Message);
+                mLoggingService.GuardarLogError(ex.Message,mlogger);
             }
 
             return valorParametro;
@@ -230,7 +235,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     mLoggingService.AgregarEntrada("Peticion redirijida a Autorizar.aspx");
 
-                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                     Guid? proyectoID = mConfigService.ObtenerProyectoConexion();
                     if (proyectoID == null || proyectoID.Equals(Guid.Empty))
                     {
@@ -245,19 +250,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
 
-                    Guid? organizacionID = mConfigService.ObtenerOrganizacionConexion();
-
                     string url = UtilDominios.ObtenerDominioUrl(Request.Path, true);
 
                     if (proyectoID.HasValue && !proyectoID.Value.Equals(ProyectoAD.MetaProyecto))
                     {
-                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, null);
+                        ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, null, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                         string nombreCortoProyecto = proyCL.ObtenerNombreCortoProyecto(proyectoID.Value);
-                        url = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(new UtilIdiomas("es", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper), "", nombreCortoProyecto);
-
+                        url = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(new UtilIdiomas("es", mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory), "", nombreCortoProyecto);                        
                     }
-
-                    return Redirect(string.Concat(url, "/login/redirect/authorized"));
+                    
+                    return Redirect(string.Concat(url, $"/{mControladorBase.UtilIdiomas.GetText("URLSEM", "LOGIN")}/redirect/authorized"));
                 }
             }
             catch (Exception ex)
@@ -265,7 +267,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 GuardarLogError(ex);
             }
 
-            //return new HttpUnauthorizedResult();
             return Content("401: Unauthorized");
         }
 
@@ -330,7 +331,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void GuardarLogError(Exception ex)
         {
-            mLoggingService.GuardarLogError(ex);
+            mLoggingService.GuardarLogError(ex, mlogger);
         }
 
 
@@ -349,7 +350,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (tokenManager == null)
                 {
-                    tokenManager = new ControladorTokens(mEntityContextOauth, mLoggingService, mEntityContext, mConfigService, null);
+                    tokenManager = new ControladorTokens(mEntityContextOauth, mLoggingService, mEntityContext, mConfigService, null, mLoggerFactory.CreateLogger<ControladorTokens>(), mLoggerFactory);
 
                     if (HttpContext.Session != null)
                     {

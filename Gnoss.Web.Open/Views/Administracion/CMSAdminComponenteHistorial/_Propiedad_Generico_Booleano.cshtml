@@ -1,0 +1,64 @@
+﻿@model CMSAdminPropiedadComponenteViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista parcial que se utiliza para mostrar información de un componente CMS en formato RadioButton (Valor Booleano)
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+    string idiomaPanel = (string)ViewData["idiomaPanel"];
+    string idPanel = "propiedad" + ((short)Model.Propiedad.TipoPropiedadCMS);
+	string valorPropiedad = Model.Propiedad.Value;
+    if (!string.IsNullOrEmpty(idiomaPanel))
+    {
+        idPanel += "_" + idiomaPanel;
+    }
+
+	string nombrePropiedad = Html.GetText("COMADMINCMS", "PROPIEDAD_" + Model.Propiedad.TipoPropiedadCMS);
+
+    bool marcarCheckSI = false;
+	if (!string.IsNullOrEmpty(Model.Propiedad.Value) && bool.Parse(Model.Propiedad.Value))
+    {
+        marcarCheckSI = true;
+    }    
+
+}
+
+
+@*
+----------------------------------------------------------------
+-------------------- Vista parcial de tipo RadioButton (Booleano) --------------------
+*@
+
+@* Contenedor del elemento Html *@
+<div id="contenedorPrincipal_@idPanel" class="form-group @(Model.DiferenciasPropiedadesCMS[idiomaPanel] ? "error" : "")">
+    @* Label del elemento Html*@
+	<label class="control-label d-block">@nombrePropiedad</label>
+	@* RadioButton Sí *@
+	<div class="form-check form-check-inline">
+		<input
+			class="form-check-input"
+			type="radio"
+			name="@idPanel"								
+			checked
+			data-value="si"
+			id="@idPanel"
+			   @(marcarCheckSI ? "checked=\"checked\"" : "") disabled />
+		<label class="form-check-label" for="@idPanel">@Html.GetText("COMMON","SI")</label>									
+	</div>
+	<div class="form-check form-check-inline">
+		@* RadioButton No *@
+		<input
+			class="form-check-input"
+			type="radio"
+			name="@idPanel"																			
+			data-value="no"
+			id="@(idPanel)NO"
+			   @(!marcarCheckSI ? "checked=\"checked\"" : "") disabled />
+		<label class="form-check-label" for="@(idPanel)NO">@Html.GetText("COMMON","NO")</label>									
+	</div>
+</div>

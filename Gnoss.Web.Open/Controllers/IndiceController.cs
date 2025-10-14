@@ -17,6 +17,7 @@ using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Facetas;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
@@ -28,6 +29,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -36,9 +39,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     public class IndiceController : ControllerPestanyaBase
     {
-        public IndiceController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public IndiceController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<IndiceController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+
         }
 
         [TypeFilter(typeof(AccesoPestanyaAttribute))]
@@ -57,17 +66,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             Guid categoriaSupID = new Guid(RequestParams("categoriaSupID"));
 
-                            TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                            GestionTesauro gestorTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
+                            TesauroCN tesauroCN = new TesauroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TesauroCN>(), mLoggerFactory);
+                            GestionTesauro gestorTesauro = new GestionTesauro(tesauroCN.ObtenerTesauroDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestionTesauro>(), mLoggerFactory);
                             gestorTesauro.AgregarSugerenciaCategoria(categoriaSupID, gestorTesauro.TesauroActualID, nombreCategoria, IdentidadActual.Clave);
 
                             tesauroCN.ActualizarTesauro();
                             tesauroCN.Dispose();
 
                             //Envio un correo al administrador avisandole de la solicitud:
-                            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(new DataWrapperNotificacion(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            GestionNotificaciones GestorNotificaciones = new GestionNotificaciones(new DataWrapperNotificacion(), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
 
-                            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                            PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
                             List<string> listaCorreos = personaCN.ObtenerCorreoDeAdministradoresDeProyecto(ProyectoSeleccionado.FilaProyecto.OrganizacionID, ProyectoSeleccionado.Clave);
                             personaCN.Dispose();
 
@@ -78,8 +87,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                             if (listaCorreos.Count > 0)
                             {
-                                NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-                                notificacionCN.ActualizarNotificacion();
+                                NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
+                                notificacionCN.ActualizarNotificacion(mAvailableServices);
                                 notificacionCN.Dispose();
                             }
 
@@ -107,10 +116,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             paginaModel.UrlBaseCategories = url + "/" + UtilIdiomas.GetText("URLSEM", "CATEGORIA") + "/";
 
-            if (Comunidad.Categories == null) 
-            { 
-                Comunidad.Categories = CargarTesauroProyecto(); 
-            }
+            Comunidad.Categories = CargarTesauroProyecto();
 
             List<CategoryModel> categoriasTesauro = Comunidad.Categories;
 
@@ -123,7 +129,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<string> mFormulariosSemanticos = ControladorFacetas.ObtenerFormulariosSemanticos(tipoBusqueda, ProyectoSeleccionado.Clave);
 
             FacetadoDS facetadoDS = new FacetadoDS();
-            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, true, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, true, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
             facetadoCN.ListaItemsBusquedaExtra = mListaItemsBusquedaExtra;
             facetadoCN.ObtenerFaceta(ProyectoSeleccionado.Clave.ToString(), facetadoDS, "skos:ConceptID", listaFiltros, mListaItemsBusquedaExtra, false, !mControladorBase.UsuarioActual.EsIdentidadInvitada, mControladorBase.UsuarioActual.EsUsuarioInvitado, IdentidadActual.Clave.ToString(), TipoDisenio.ListaOrdCantidad, 0, -1, mFormulariosSemanticos, null, ProyectoSeleccionado.TipoProyecto, false, null, true, false, false, ParametrosGeneralesRow.PermitirRecursosPrivados, true, 0, TipoPropiedadFaceta.NULL,null,false);
             facetadoCN.Dispose();

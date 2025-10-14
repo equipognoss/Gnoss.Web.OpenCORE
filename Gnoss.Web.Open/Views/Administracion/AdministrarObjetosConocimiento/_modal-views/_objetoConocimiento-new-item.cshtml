@@ -20,9 +20,9 @@ Variables
 		<span class="community-name">@Html.GetText("DEVTOOLS","CREAROBJETODECONOCIMIENTO")</span>
 	</p>
 	<span
-		class="material-icons cerrar"
-		data-dismiss="modal"
-		aria-label="Close">close</span
+	class="material-icons cerrar"
+	data-dismiss="modal"
+	aria-label="Close">close</span
 	>
 </div>
 <div class="modal-body formulario-edicion">			
@@ -39,28 +39,30 @@ Variables
 	</ul>
 	<div class="form-group mb-3">
 		<label class="control-label d-block">@Html.GetText("DEVTOOLS","CREAROBJETODECONOCIMIENTO")</label>
-		@* Objeto de conocimiento Primario *@
-		<div class="form-check form-check-flex">
-			<input
-				class="form-check-input crearObjetoConocimiento"
+		@if (ViewBag.GestionarOC != null && ViewBag.GestionarOC)
+		{
+			@* Objeto de conocimiento Primario *@
+			<div class="form-check form-check-flex">
+				<input class="form-check-input crearObjetoConocimiento"
 				type="radio"
 				name="crearObjetoConocimiento"
 				value="primario"
-				id="crearObjetoConocimientoPrimario"								
-			/>
-			<label class="form-check-label" for="crearObjetoConocimientoPrimario">@Html.GetText("DEVTOOLS","PRINCIPAL")</label>
-		</div>
-		@* Objeto de conocimiento Secundario *@
-		<div class="form-check form-check-flex">
-			<input
-				class="form-check-input crearObjetoConocimiento"
-				type="radio"
-				name="crearObjetoConocimiento"
-				value="secundario"
-				id="crearObjetoConocimientoSecundario"
-			/>
-			<label class="form-check-label" for="crearObjetoConocimientoSecundario">@Html.GetText("DEVTOOLS","SECUNDARIO")</label>
-		</div>
+				id="crearObjetoConocimientoPrimario" />
+				<label class="form-check-label" for="crearObjetoConocimientoPrimario">@Html.GetText("DEVTOOLS", "PRINCIPAL")</label>
+			</div>
+		}
+		@if ((ViewBag.GestionarOC != null && ViewBag.GestionarOC) || (ViewBag.CrearSecundaria != null && ViewBag.CrearSecundaria))
+		{
+			@* Objeto de conocimiento Secundario *@
+			<div class="form-check form-check-flex">
+				<input class="form-check-input crearObjetoConocimiento"
+					   type="radio"
+					   name="crearObjetoConocimiento"
+					   value="secundario"
+					   id="crearObjetoConocimientoSecundario" />
+				<label class="form-check-label" for="crearObjetoConocimientoSecundario">@Html.GetText("DEVTOOLS", "SECUNDARIO")</label>
+			</div>
+		}		
 	</div>
 
 	@* Sección de ficheros para creación de ontología *@

@@ -8,6 +8,7 @@ using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Logica.Parametro;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
@@ -20,13 +21,16 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -39,11 +43,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// <summary>
     /// Controlador para administrar las opciones avanzadas de la comunidad
     /// </summary>
-    public class AdministrarOpcionesAvanzadasController : ControllerBaseWeb
-    {
-        public AdministrarOpcionesAvanzadasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarOpcionesAvanzadasController : ControllerAdministrationWeb
+	{
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarOpcionesAvanzadasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesAvanzadasController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
@@ -59,12 +67,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
+
+            // Añadir clases para el body del Layout
+            ViewBag.BodyClassPestanya = "edicionOpcionesAvanzadas comunidad";
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_OpcionesAvanzadas;
+            // Establecer el título para el header de DevTools            
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "OPCIONESAVANZADAS");
 
             return View(PaginaModel);
         }
@@ -73,10 +88,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Index para mostrar/cargar la información relativa a la Interacción social de usuarios en la comunidad. Se realiza desde "Comunidad -> Integración social
         /// </summary>
         /// <returns>ActionResult</returns>
-        [HttpGet]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult IndexInteraccionSocial()
+        [HttpGet]        
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInteraccionesSociales } })]
+		public ActionResult IndexInteraccionSocial()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -98,15 +112,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return View("../AdministrarOpcionesAvanzadas/Index_InteraccionSocial", PaginaModel);
         }
 
-
         /// <summary>
         /// Index para mostrar/cargar la información relativa al buzón de correo de la comunidad. Se realiza desde "Configuración -> Buzón de correo
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        //[TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        public ActionResult IndexBuzonCorreo()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
+		public ActionResult IndexBuzonCorreo()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -120,7 +133,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "BUZONDECORREO");
 
             // Controlar si es o no del ecosistema            
-            bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
+            bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? bool.Parse(RequestParams("ecosistema")) : false;
             if (isInEcosistemaPlatform)
             {
                 ViewBag.isInEcosistemaPlatform = "true";
@@ -129,7 +142,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             // Devolver la página
             return View("../AdministrarBuzonCorreo/Index", PaginaModel);
         }
-
 
         /// <summary>
         /// Guardar
@@ -152,12 +164,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
 
-            ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+            ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorOpcionesAvanzadas>(), mLoggerFactory);
 
-            //Options.CodigoGoogleAnalytics = HttpUtility.UrlDecode(Options.CodigoGoogleAnalytics);
-            //Options.ScriptGoogleAnalytics = HttpUtility.UrlDecode(Options.ScriptGoogleAnalytics);
-
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
 
             try
@@ -174,13 +183,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     if (Options.PestanyasSeleccionadas.Value.Equals(Guid.Empty)) { Options.PestanyasSeleccionadas = null; }
 
-                    //if (Options.RobotsBusqueda == "") { Options.RobotsBusqueda = null; }
-
                     HttpResponseMessage resultado = InformarCambioAdministracion("OpcionesAvanzadas", JsonConvert.SerializeObject(Options, Newtonsoft.Json.Formatting.Indented));
 
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
-                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                        throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                     }
                 }
 
@@ -209,8 +216,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInteraccionesSociales } })]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult GuardarIntegracionSocial(AdministrarOpcionesAvanzadasViewModel Options)
         {
             GuardarLogAuditoria();
@@ -224,8 +231,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
-            ParametroGeneralCN parametroGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            ParametroCN parametroCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroGeneralCN parametroGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
+            ParametroCN parametroCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroCN>(), mLoggerFactory);
 
             ParametroGeneral parametroGeneral = parametroGeneralCN.ObtenerFilaParametrosGeneralesDeProyecto(ProyectoSeleccionado.Clave);
             ParametroProyecto parametroProyecto = parametroCN.ObtenerParametroDeProyecto(ParametroAD.NumeroCaracteresDescripcion, ProyectoSeleccionado.Clave);
@@ -239,8 +246,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             parametroGeneral.VotacionesDisponibles = Options.VotacionesDisponibles;
             parametroGeneral.InvitacionesDisponibles = Options.InvitacionesDisponibles;
 
-            
-            if(parametroProyecto != null)
+
+            if (parametroProyecto != null)
             {
                 parametroProyecto.Valor = Options.NumeroCaracteresDescripcionSuscripcion;
             }
@@ -257,12 +264,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (iniciado)
             {
-                ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorOpcionesAvanzadas>(), mLoggerFactory);
                 contrOpcionesAvanzadas.CargarBuzonCorreo(Options);
                 HttpResponseMessage resultado = InformarCambioAdministracion("OpcionesAvanzadas", JsonConvert.SerializeObject(Options, Newtonsoft.Json.Formatting.Indented));
                 if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                 {
-                    throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                    throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                 }
             }
 
@@ -274,7 +281,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
 		public ActionResult ValidarCorreo(AdministrarOpcionesAvanzadasViewModel Options)
 		{
            
@@ -291,27 +299,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     //Verificar que el correo configurado funciona
                     UtilCorreo gestorCorreo = new UtilCorreo(Options.ConfiguracionCorreo.SMTP, Options.ConfiguracionCorreo.Port, Options.ConfiguracionCorreo.User, Options.ConfiguracionCorreo.Password, Options.ConfiguracionCorreo.SSL);
                     Guid notifId = new Guid(new byte[16]);
-                    gestorCorreo.EnviarCorreo(Options.ConfiguracionCorreo.Destinatario, Options.ConfiguracionCorreo.Email, null, null, null,"Prueba","El correo electrónico configurado funciona",false, notifId);
+                    gestorCorreo.EnviarCorreo(Options.ConfiguracionCorreo.Destinatario, Options.ConfiguracionCorreo.Email, null, null, null, "Prueba", "El correo electrónico configurado funciona", false, notifId);
 
                     //guardar los datos del buzon
                     GuardarBuzonCorreo(Options);
-					return GnossResultOK("El correo electrónico se ha configurado con éxito");
-				}
-			}
-			catch (Exception ex)
-			{
-				return GnossResultERROR(ex.Message);
-			}
-		}
+                    return GnossResultOK("El correo electrónico se ha configurado con éxito");
+                }
+            }
+            catch (Exception ex)
+            {
+                return GnossResultERROR(ex.Message);
+            }
+        }
 
-			/// <summary>
-			/// Guardar solo la información relativa a la configuráción del buzón del usuario. Se realiza desde "Configuración -> Buzón de correo
-			/// </summary>
-			/// <returns>ActionResult</returns>
-			[HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
-        //[TypeFilter(typeof(AccesoIntegracionAttribute))]
-        public ActionResult GuardarBuzonCorreo(AdministrarOpcionesAvanzadasViewModel Options)
+		/// <summary>
+		/// Guardar solo la información relativa a la configuráción del buzón del usuario. Se realiza desde "Configuración -> Buzón de correo
+		/// </summary>
+		/// <returns>ActionResult</returns>
+		[HttpPost]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
+		public ActionResult GuardarBuzonCorreo(AdministrarOpcionesAvanzadasViewModel Options)
         {
             GuardarLogAuditoria();
             GuardarDatosConfiguracionCorreo(Options);
@@ -319,9 +327,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return GnossResultOK();
         }
 
-        private void CorreoIntegracion(AdministrarOpcionesAvanzadasViewModel options)
+        private static void CorreoIntegracion(AdministrarOpcionesAvanzadasViewModel options)
         {
-            if(string.IsNullOrEmpty(options.ConfiguracionCorreo.Email) && string.IsNullOrEmpty(options.ConfiguracionCorreo.SMTP) && string.IsNullOrEmpty(options.ConfiguracionCorreo.User) && string.IsNullOrEmpty(options.ConfiguracionCorreo.Password))
+            if (string.IsNullOrEmpty(options.ConfiguracionCorreo.Email) && string.IsNullOrEmpty(options.ConfiguracionCorreo.SMTP) && string.IsNullOrEmpty(options.ConfiguracionCorreo.User) && string.IsNullOrEmpty(options.ConfiguracionCorreo.Password))
             {
                 options.ConfiguracionCorreo = null;
             }
@@ -329,7 +337,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void GuardarDatosConfiguracionCorreo(AdministrarOpcionesAvanzadasViewModel pOptions)
         {
-            ParametroCN paramCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, null);
+            ParametroCN paramCN = new ParametroCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<ParametroCN>(), mLoggerFactory);
             ConfiguracionEnvioCorreo filaConfiguracionEnvioCorreo = paramCN.ObtenerFilaConfiguracionEnvioCorreo(ProyectoSeleccionado.Clave);
 
             bool existeConfiguracionAnterior = filaConfiguracionEnvioCorreo != null;
@@ -375,10 +383,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
 
-                    ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                    ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorOpcionesAvanzadas>(), mLoggerFactory);
                     mPaginaModel = contrOpcionesAvanzadas.CargarOpcionesAvanzadas(EsAdministracionEcosistema);
 
-                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     mPaginaModel.PestanyasDeBusqueda = proyCN.ObtenerPestanyasProyectoNombre(ProyectoSeleccionado.Clave);
                     mPaginaModel.ProyectosConOntologias = proyCN.ObtenerProyectosConOntologiasAdministraUsuario(mControladorBase.UsuarioActual.UsuarioID);
                     proyCN.Dispose();

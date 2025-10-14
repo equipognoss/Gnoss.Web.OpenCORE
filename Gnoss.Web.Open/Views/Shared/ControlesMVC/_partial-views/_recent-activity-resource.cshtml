@@ -71,7 +71,7 @@ int numRecentComments = 0;
                 <div class="title-wrap">
                     @* Título del recurso *@
                     <h2 class="resource-title">
-                        <a href="@recurso.CompletCardLink">@recurso.Title</a>
+                        <a href="@recurso.CompleteOriginalCardLink">@recurso.Title</a>
                     </h2>
                     @* Tipo de recurso -> Tenerlo en cuenta desde el viejo Front - Sin diseño dewenir
                     <p class="resourceType @(recurso.TypeDocument == ResourceModel.DocumentType.Semantico?"semantico " + recurso.RdfType:recurso.NameImage) @privado"><span>tipo de documento</span><a href="@recurso.CompletCardLink">@recurso.RdfTypeName</a></p>

@@ -57,7 +57,6 @@
             {
                 @if (acciones.Edit)
                 {
-                //FRAN
                     <li>
                         <a id="op_GoToWeb" class="btn btn-primary" href="@fichaRecurso.UrlDocument" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
                             <span class="material-icons">open_in_new</span>
@@ -164,7 +163,6 @@
                                 {
                                     @if (acciones.Edit)
                                     {
-                                        //FRAN
                                         <li>
                                             <a id="op_GoToWeb_mobile" class="item-dropdown" href="@fichaRecurso.UrlDocument" @Html.Raw(claseEnviarAccGogAnac) target="_blank">
                                                 <span class="material-icons">open_in_new</span>
@@ -177,17 +175,7 @@
                                             <span class="material-icons">get_app</span>
                                             <span class="texto">@Html.GetText("HISTORIALVERSIONES", "DESCARGARSHAREPOINT") @fichaRecurso.PublishDate.ToString("dd-MM-yyyy")</span>
                                         </a>
-                                    </li>
-
-                                    @if (acciones.Edit && !fichaRecurso.EstaAlineadoConSharepoint)
-                                    {
-                                        <li>
-                                            <a id="op_AddCreateVersion_mobile" class="item-dropdown" onclick="CrearVersionRapidaEnlaceSharepoint();">
-                                                <span class="material-icons">file_copy</span>
-                                                <span class="texto">@Html.GetText("HISTORIALVERSIONES", "CREARVERSIONRAPIDA")</span>
-                                            </a>
-                                        </li>
-                                    }              
+                                    </li>           
                                 }
                                 else
                                 {
@@ -275,7 +263,7 @@
                             @if (fichaRecurso.TypeDocument == ResourceModel.DocumentType.Hipervinculo && fichaRecurso.EsEnlaceSharepoint)
                             {
                                 <li>
-                                    <a id="op_Desvincular" class="item-dropdown" onclick="DesvincularSharepoint()">
+                                    <a id="op_Desvincular" class="item-dropdown" onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionUnlinkResourceSP', this, 'modal-dinamic-content', '');" data-toggle="modal" data-target="#modal-container">
                                         <span class="material-icons">link_off</span>
                                         <span class="texto">@Html.GetText("HISTORIALVERSIONES", "DESVINCULARSHAREPOINT")</span>
                                     </a>
@@ -339,28 +327,6 @@
                                         <span class="material-icons">folder</span>
                                         <span class="texto">@textoLinkAgCat</span>
                                     </a>
-                                </li>
-                            }
-
-                            @* Opción Crear versión de un recurso *@
-                            @if (acciones.CreateVersion && !fichaRecurso.EsEnlaceSharepoint)
-                            {
-                                <li>
-                                    @if (fichaRecurso.TypeDocument != ResourceModel.DocumentType.Semantico)
-                                    {
-                                        <a id="op_AddCreateVersion" class="item-dropdown" href="@Model.UrlNewVersion">
-                                            <span class="material-icons">file_copy</span>
-                                            <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "CREARVERSION")</span>
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        string accionEnlace = "CrearVersionDocSem('" + Html.GetUrlPagina() + "', '" + fichaRecurso.Key + "')";
-                                        <a id="op_AddCreateVersion" class="item-dropdown" onclick="@accionEnlace">
-                                            <span class="material-icons">file_copy</span>
-                                            <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "CREARVERSION")</span>
-                                        </a>
-                                    }
                                 </li>
                             }
 

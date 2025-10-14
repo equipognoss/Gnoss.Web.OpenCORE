@@ -54,6 +54,10 @@ var navegacionSecciones = {
                     <h2>Miembros</h2>
                     <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Libero ipsum velit dignissimos debitis natus reprehenderit nam ipsam. Nobis modi, quas blanditiis quisquam similique laborum nesciunt odit perspiciatis beatae repudiandae enim?</p>
                 </div>
+                <div class="section" data-parent-section="comunidad" data-section="roles-comunidad">
+                    <h2>Roles</h2>
+                    <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Libero ipsum velit dignissimos debitis natus reprehenderit nam ipsam. Nobis modi, quas blanditiis quisquam similique laborum nesciunt odit perspiciatis beatae repudiandae enim?</p>
+                </div>
                 <div class="section" data-parent-section="comunidad" data-section="certificacion-comunidad">
                     <h2>Niveles de certificación</h2>
                     <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Libero ipsum velit dignissimos debitis natus reprehenderit nam ipsam. Nobis modi, quas blanditiis quisquam similique laborum nesciunt odit perspiciatis beatae repudiandae enim?</p>
@@ -2573,6 +2577,241 @@ function dragAndDropGnoss() {
 }
 
 
+// Comportamiento de autocompletar en workflows
+const autocompletarWorkflows = {
+    init: function () {
+        this.config();
+        this.exec();
+        this.addTagEvents();
+    },
+    config: function () {
+        this.autocompletar = $('.autocompletar');
+    },
+    exec: function () {
+        // boton más del input
+        this.autocompletar.find('.btn').on('click', (e) => {
+            e.preventDefault();
+            const input = $(e.currentTarget).siblings('input');
+            this.onAutocomplete(input);
+        });
+
+        // evento de dar al enter en input
+        this.autocompletar.find('input').on('keypress', (e) => {
+            if (e.which === 13) {
+                e.preventDefault();
+                const target = $(e.currentTarget);
+                this.onAutocomplete(target);
+            }
+        });
+
+        // select tipo recursos
+        this.autocompletar.find('select').on('change', (e) => {
+            e.preventDefault();
+            const target = $(e.currentTarget);
+            this.onAutocomplete(target);
+        });
+    },
+    onAutocomplete: function (elem) {
+        const target = $(elem);
+        const parent = target.closest('.autocompletar');
+        const list = parent.find('.tag-list');
+        const inputHidden = parent.children('input[type="hidden"]');
+
+        const tagValue = target.val().trim();
+        if (!tagValue) return;
+
+        if (parent.hasClass('autocompletar-estados')) {
+            this.addState(target, tagValue);
+        } else if (parent.hasClass('autocompletar-transiciones')) {
+            const origin = target.parents('.tab-content').find('.select-origin').val();
+            const end = target.parents('.tab-content').find('.select-end').val();
+            if (origin || (origin && end)) {
+                list.append(this.addTag(tagValue, origin, end));
+            }
+        } else {
+            list.append(this.addTag(tagValue));
+        }
+
+        target.val('');
+
+        this.addTagEvents();
+        this.updateHiddenInput(list, inputHidden);
+    },
+    addTag: function (tagValue, origin = null, end = null) {
+        return `
+            <div class="tag" title="${tagValue}">
+                <div class="tag-wrap">
+                    <span class="tag-text">
+                        <span class="tag-label">${tagValue}</span>
+                        ${origin || (origin && end) ? `
+                            <span class="transition">
+                                <span class="transition-label">${origin}</span>
+                                ${end !== "" ? `<span class="material-icons arrow-icon">arrow_right_alt</span>` : ''}
+                                <span class="transition-label">${end}</span>
+                            </span>
+                        ` : ''}
+                    </span>
+                    <span class="tag-edit material-icons">edit</span>
+                    <span class="tag-remove material-icons">delete</span>
+                </div>
+                <input type="hidden" value="${tagValue}">
+            </div>
+        `;
+    },
+    addTagEvents: function () {
+        this.autocompletar.find('.tag-list .tag-remove').off('click').on('click', (e) => {
+            const tag = $(e.currentTarget).closest('.tag');
+            const parent = $(e.currentTarget).closest('.autocompletar');
+            const list = $(e.currentTarget).closest('.tag-list');
+            const inputHidden = parent.find('input[type="hidden"]');
+
+            this.removeTag(tag);
+            this.updateHiddenInput(list, inputHidden);
+        });
+    },
+    removeTag: function (tag) {
+        const tagValue = tag.find('input[type="hidden"]').val();
+
+        tag.remove();
+        $('.select-origin option[value="' + tagValue + '"]').remove();
+        $('.select-end option[value="' + tagValue + '"]').remove();
+    },
+    updateHiddenInput: function (list, inputHidden) {
+        const tagValues = list.find('.tag').map(function () {
+            return $(this).find('input[type="hidden"]').val();
+        }).get();
+        inputHidden.val(tagValues.join(','));
+    },
+    addState: function (target, value) {
+        const selectOrigin = target.parents('.tab-content').find('.select-origin');
+        const selectEnd = target.parents('.tab-content').find('.select-end');
+
+        selectOrigin.append(`
+            <option value="${value}">${value}</option>
+        `);
+        selectEnd.append(`
+            <option value="${value}">${value}</option>
+        `);
+    },
+};
+
+
+const calcHeightModalComparar = {
+    init: function () {
+        this.config();
+        if ($(window).width() >= 991) this.exec();
+    },
+    config: function () {
+        this.compararComponentes = $('#modal-comparar-componentes');
+        this.compararVersiones = $('#modal-comparar-versiones');
+        this.compararEstructura = $('#modal-comparar-estructura');
+    },
+    exec: function () {
+        if (this.compararComponentes.hasClass("show")) {
+            this.matchElementHeights(this.compararComponentes, ".comparar-version", ".form-group.contenedorListaIds, .form-group.contenedorPrincipalMailList, .form-group.contenedorPrincipalMenuList");
+        }
+        if (this.compararVersiones.hasClass("show")) {
+            this.matchElementHeights(this.compararVersiones, ".comparar-version", ".form-group.editarFiltroOrden, .form-group.editarExportaciones,.form-group.editarFacetas");
+        }
+        if (this.compararEstructura.hasClass("show")) {
+            this.matchElementHeights(this.compararEstructura, ".comparar-version", ".cmsrow, .cmsrow-content");
+        }
+
+        this.compararComponentes.on('hidden.bs.modal', (e) => {
+            $(e.currentTarget).find(".comparar-version .form-group").height('auto');
+        });
+
+        this.compararVersiones.on('hidden.bs.modal', (e) => {
+            $(e.currentTarget).find(".comparar-version .form-group").height('auto');
+        });
+
+        this.compararEstructura.on('hidden.bs.modal', (e) => {
+            $(e.currentTarget).find(".comparar-version .cmsrow").height('auto');
+        });
+    },
+    matchElementHeights: function (modal, columnClass, itemSelector) {
+        const col1 = modal.find(columnClass).eq(0).find(itemSelector);
+        const col2 = modal.find(columnClass).eq(1).find(itemSelector);
+
+        const length = Math.min(col1.length, col2.length);
+
+        for (let i = 0; i < length; i++) {
+            $(col1[i]).height('auto');
+            $(col2[i]).height('auto');
+
+            const height1 = $(col1[i]).height();
+            const height2 = $(col2[i]).height();
+            const maxHeight = Math.max(height1, height2);
+
+            $(col1[i]).height(maxHeight);
+            $(col2[i]).height(maxHeight);
+        }
+    },
+};
+
+const launchTooltip = {
+    init: function () {
+        $('.btn-tooltip').tooltip();
+    },
+};
+
+const changeRolePermissions = {
+    init: function () {
+        this.config();
+        this.exec();
+    },
+    config: function () {
+        this.modalNuevo = $('#modal-nuevo-rol');
+        this.modalEditar = $('#modal-editar-rol');
+    },
+    exec: function () {
+        //this.modalNuevo.on('shown.bs.modal', this.handleModalShown.bind(this));
+        //this.modalEditar.on('shown.bs.modal', this.handleModalShown.bind(this));
+    },
+    handleModalShown: function (e) {
+        this.selectAll(e);
+        this.selectRoles(e);
+    },
+    selectAll: function (evt) {
+        const modal = $(evt.currentTarget).attr('id');
+        //const cardHeader = $(evt.currentTarget).find('.card-header');        
+        const cardHeader = $(`#${modal}`).find('.card-header');
+        const checkboxes = cardHeader.find('.custom-checkbox input[type="checkbox"]');
+
+        checkboxes.off('change').on('change', (e) => {
+            const all = $(e.currentTarget).closest('.card').find('.card-body input[type="checkbox"]');
+            const isChecked = $(e.currentTarget).is(':checked');
+
+            if (all.length) {
+                all.each((i, item) => {
+                    $(item).prop('checked', isChecked);
+                });
+            }
+        });
+    },
+    selectRoles: function (evt) {
+        const cardBody = $(evt.currentTarget).find('.card-body');
+        const checkboxes = cardBody.find('.custom-checkbox input[type="checkbox"]');
+
+        checkboxes.off('change').on('change', (e) => {
+            const group = $(e.currentTarget).parents('.custom-control').next('.custom-control__group');
+            const isChecked = $(e.currentTarget).is(':checked');
+
+            if (group.length) {
+                const childrens = group.find('input[type="checkbox"]');
+
+                childrens.each((i, item) => {
+                    $(item).prop('checked', isChecked);
+                });
+            }
+
+            const allCheckbox = $(e.currentTarget).parents('.card').find('.card-header input[type="checkbox"]');
+            const allChecked = checkboxes.length && checkboxes.filter(':checked').length === checkboxes.length;
+            allCheckbox.prop('checked', allChecked);
+        });
+    },
+};
+
 $(function () {
     /////// Quitado -> Navegación secciones gestionada via BackEnd
     /////// navegacionSecciones.init();
@@ -2624,7 +2863,17 @@ $(function () {
         ComponentesPageManagement.init();
     }*/
 
-    // Inicializar operativa de TinyCME
-    operativaTinyMceConfig.init();
+    // Iniciar el comportamiento de los Workflows
+    if (body.hasClass('workflows')) {
+        autocompletarWorkflows.init();
+    }
 
+    // Iniciar el comportamiento para calcular las alturas de los campos de los modales de comparación de páginas y componentes
+    //calcHeightModalComparar.init();
+
+    // Iniciar tooltips en permisos
+    launchTooltip.init();
+
+    // Iniciar comportamiento del cambio de los checkboxes en los roles
+    changeRolePermissions.init();
 });

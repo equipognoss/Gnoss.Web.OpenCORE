@@ -10,41 +10,41 @@ Variables
 *@
 
 @{
-// Cabecera para obtención de idiomas de la Comunidad
-HeaderModel cabecera = Html.GetCabecera();
-// Diccionario de url para multiIdiomas
-Dictionary<string, string> pageUrlDictionary = new Dictionary<string, string>();
-// Diccionario de nombre de la página para multiIdiomas
-Dictionary<string, string> pageNameDictionary = new Dictionary<string, string>();
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	// Diccionario de url para multiIdiomas
+	Dictionary<string, string> pageUrlDictionary = new Dictionary<string, string>();
+	// Diccionario de nombre de la página para multiIdiomas
+	Dictionary<string, string> pageNameDictionary = new Dictionary<string, string>();
 
-@* Toda la información de la página / pestaña*@
-TabModel tabModel = Model.pestanya;
-// Url de la página
-string pageUrl = string.IsNullOrEmpty(@Html.ObtenerTextoIdiomaUsuario(tabModel.Url)) ? "/" : @Html.ObtenerTextoIdiomaUsuario(tabModel.Url) ;
-// Tipo de página 
-string pageType = Html.GetNombreTipoPaginaDevTools(tabModel);
-// Visible en el menú -> Activa --> Por defecto Si
-bool isVisibleInMenu = tabModel.Visible ? true : false;
-// Página publicada -> Activa --> Por defecto Sí (Ej: Si es de tipo Home siempre será activa)
-bool isPagePublishedOrActive = true;
-// Tipo de Privacidad de la página
-string privacyPageType = "";
-// Icono del tipo de privacidad de la página
-string privacyPageIcon = "";
-string textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPRIVADA");
-// Id para la llamada al modal para edición de la página
-string idModalPage = "modal-configuracion-pagina_" + tabModel.Key;
-//String idModalPageDelete = "modal-configuracion-pagina_delete" + tabModel.Key;
-string idModalPageDelete = "modal-delete-page";
-// Controlar visibilidad de edición CMS para páginas tipo Home
-bool homeCmsTodosLosUsuarios = false;
-bool homeCmsMiembros = false;
-bool homeCmsNoMiembros = false;
+	@* Toda la información de la página / pestaña*@
+	TabModel tabModel = Model.pestanya;
+	// Url de la página
+	string pageUrl = string.IsNullOrEmpty(@Html.ObtenerTextoIdiomaUsuario(tabModel.Url)) ? "/" : @Html.ObtenerTextoIdiomaUsuario(tabModel.Url) ;
+	// Tipo de página 
+	string pageType = Html.GetNombreTipoPaginaDevTools(tabModel);
+	// Visible en el menú -> Activa --> Por defecto Si
+	bool isVisibleInMenu = tabModel.Visible ? true : false;
+	// Página publicada -> Activa --> Por defecto Sí (Ej: Si es de tipo Home siempre será activa)
+	bool isPagePublishedOrActive = true;
+	// Tipo de Privacidad de la página
+	string privacyPageType = "";
+	// Icono del tipo de privacidad de la página
+	string privacyPageIcon = "";
+	string textoPrivacidadEspecial = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADPRIVADA");
+	// Id para la llamada al modal para edición de la página
+	string idModalPage = "modal-configuracion-pagina_" + tabModel.Key;
+	//String idModalPageDelete = "modal-configuracion-pagina_delete" + tabModel.Key;
+	string idModalPageDelete = "modal-delete-page";
+	// Controlar visibilidad de edición CMS para páginas tipo Home
+	bool homeCmsTodosLosUsuarios = false;
+	bool homeCmsMiembros = false;
+	bool homeCmsNoMiembros = false;
 
 string fechaModificacion = tabModel.FechaModificacion.ToString("dd/MM/yyyy");
 // Id modal para mover "manualmente" una página
 string idModalMovePaginaFaceta = "modal-move-pagina";
-
+string urlModal = $"{@Html.GetComunidad().Url}/{@Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")}/RestorePage";
 }
 
 @*
@@ -87,7 +87,7 @@ string idModalMovePaginaFaceta = "modal-move-pagina";
 		}
 		privacyPageType = textoPrivacidadEspecial;
 
-	    break;
+		break;
 	case 2:
 		privacyPageType = Html.GetText("COMADMINPESTANYAS", "PRIVACIDADLECTORES");
 		privacyPageIcon = "people";
@@ -128,9 +128,13 @@ string idModalMovePaginaFaceta = "modal-move-pagina";
 
 			<div class="component-header">
 				@* Icono para arrastrar página *@
-				<div class="component-sortable js-component-sortable-page">
-					<span class="material-icons-outlined sortable-icon">drag_handle</span>
-				</div>
+				@if (ViewBag.ModificarPaginaPermitido != null && ViewBag.ModificarPaginaPermitido)
+				{
+					<div class="component-sortable js-component-sortable-page">
+						<span class="material-icons-outlined sortable-icon">drag_handle</span>
+					</div>
+				}
+
 				<div class="component-header-content">
 					<div class="component-header-left">						
 						<div class="component-name-wrap component-w-40">
@@ -147,7 +151,7 @@ string idModalMovePaginaFaceta = "modal-move-pagina";
 							else
 							{														
 								@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
-									{																												
+								{																												
 									<span class="language-component component-name @( ViewBag.AdministrarPestanyasViewModel.IdiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
 										@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
 										@{
@@ -213,11 +217,10 @@ string idModalMovePaginaFaceta = "modal-move-pagina";
 							<span class="component-visible component-visible-si @( (!isVisibleInMenu) ? "d-none" : null)">@Html.GetText("COMMON", "SI")</span>
 							<span class="component-visible component-visible-no @( (isVisibleInMenu) ? "d-none" : null)">@Html.GetText("COMMON", "NO")</span>
 						</div>
-						@* Información: Fecha última actualización 
-						<div class="component-fecha-wrap">
+						@* Información: Fecha última actualización *@
+						<div class="component-fecha-wrap component-w-15">
 							<span class="component-fecha">@fechaModificacion</span>
 						</div>
-						*@
 						@* Información: Nombre y apellido del último editor 
 						<div class="component-editor-wrap">
 							<span class="component-editor">@tabModel.UltimoEditor</span>
@@ -230,87 +233,148 @@ string idModalMovePaginaFaceta = "modal-move-pagina";
 							@* Botón dropdown de acciones *@
 							<div class="dropdown">
 								<a
-									class="nav-link dropdown-toggle btn btn-outline-grey"
-									data-toggle="dropdown"
-									href="#"
-									role="button"
-									aria-haspopup="true"
-									aria-expanded="false">
-									<span class="material-icons">create</span>
-									<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+								class="nav-link dropdown-toggle btn btn-outline-grey"
+								data-toggle="dropdown"
+								href="#"
+								role="button"
+								aria-haspopup="true"
+								aria-expanded="false">
+									@if (ViewBag.ModificarPaginaPermitido != null && ViewBag.ModificarPaginaPermitido)
+									{
+										<span class="material-icons">create</span>
+										<span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
+									}
+									else if (ViewBag.VerPaginaPermitido != null && ViewBag.VerPaginaPermitido)
+									{
+										<span class="material-icons">visibility</span>
+										<span class="texto">@Html.GetText("DEVTOOLS", "VER")</span>
+									}
+
 								</a>
 								@* Panel dropdown con las acciones disponibles *@
 								<div class="dropdown-menu dropdown-menu-left basic-dropdown">
 									<ul class="no-list-style">
+
 										@* Editar página *@
-										<li>
-											<a class="item-dropdown js-action-edit-component btnEditPage"
-											   data-toggle="modal" 
-											   data-target="#@idModalPage">
-												<span class="material-icons">create</span>
-												<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINA")</span>
-											</a>
-										</li>
-
-										@* Mover página *@
-										<li>
-											<a class="item-dropdown js-action-edit-component btnMovePagina"
-											   data-toggle="modal"
-											   data-target="#@idModalMovePaginaFaceta">
-												<span class="material-icons">move_up</span>
-												<span class="texto">
-													@Html.GetText("DEVTOOLS","MOVERPAGINA")
-												</span>
-											</a>
-										</li>
-
-										@* Editar página CMS *@
-										@if (tabModel.Type == TipoPestanyaMenu.CMS && !tabModel.Nueva)
-										{								
-											<li>
-												<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/@tabModel.Key">
-													<span class="material-icons">view_quilt</span>
-													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINACMS")</span>
-												</a>
-											</li>
-										}
-
-										@* Edición página tipo Home (CMS) *@
-										@if (tabModel.Type.Equals(TipoPestanyaMenu.Home))
+										@if (ViewBag.ModificarPaginaPermitido != null && ViewBag.ModificarPaginaPermitido)
 										{
-											@* Editar página CMS Home -> Todos los usuarios -> HomeCmsTodosLosUsuarios  *@
-											<li class="btnEditCmsHome btnEditCmsHomeTodosUsuarios  @( (!homeCmsTodosLosUsuarios ) ? "d-none" : null)">
-												<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/2">
-													<span class="material-icons">view_quilt</span>
-													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOME")</span>
-												</a>
-											</li>											
-											@* Editar página CMS Home -> Miembros -> HomeCmsMiembros *@
-											<li class="btnEditCmsHome btnEditCmsHomeMiembros @( (!homeCmsMiembros) ? "d-none" : null)">
-												<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/0">
-													<span class="material-icons">view_quilt</span>
-													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOMEPARAMIEMBROS")</span>
-												</a>
-											</li>											
-											@* Editar página CMS Home -> No Miembros -> HomeCmsNoMiembros *@
-											<li class="btnEditCmsHome btnEditCmsHomeNoMiembros  @( (!homeCmsNoMiembros) ? "d-none" : null)">
-												<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/1">
-													<span class="material-icons">view_quilt</span>
-													<span class="texto">@Html.GetText("DEVTOOLS","EDITARPAGINAHOMEPARANOMIEMBROS")</span>
+											<li>
+												<a class="item-dropdown js-action-edit-component btnEditPage"
+												data-toggle="modal"
+												data-target="#@idModalPage">
+													<span class="material-icons">create</span>
+													<span class="texto">@Html.GetText("DEVTOOLS", "EDITARPAGINA")</span>
 												</a>
 											</li>
-											
+										}else if (ViewBag.VerPaginaPermitido != null && ViewBag.VerPaginaPermitido)
+										{
+											<li>
+												<a class="item-dropdown js-action-edit-component btnEditPage"
+												   data-toggle="modal"
+												   data-target="#@idModalPage">
+													<span class="material-icons">visibility</span>
+													<span class="texto">@Html.GetText("DEVTOOLS", "VER")</span>
+												</a>
+											</li>
 										}
-										
-										@* Eliminar página *@
-										<li>
-											<a class="item-dropdown js-action-delete-component btnDeletePage"
-											   data-toggle="modal" 
-											   data-target="#@idModalPageDelete">
-												<span class="material-icons">delete</span>
-												<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
-											</a>
-										</li>
+
+										@if (ViewBag.ModificarPaginaPermitido != null && ViewBag.ModificarPaginaPermitido)
+										{
+											@* Mover página *@
+											<li>
+												<a class="item-dropdown js-action-edit-component btnMovePagina"
+												data-toggle="modal"
+												data-target="#@idModalMovePaginaFaceta">
+													<span class="material-icons">move_up</span>
+													<span class="texto">
+														@Html.GetText("DEVTOOLS", "MOVERPAGINA")
+													</span>
+												</a>
+											</li>
+										}
+
+										@if (ViewBag.RestaurarVersionPaginaPermitido || ViewBag.EliminarVersionPaginaPermitido)
+										{
+											@if (tabModel.VersionPagina.Count > 0)
+											{
+												<li>
+													<a class="item-dropdown js-action-edit-component btnHistorialPestanya" data-target="#modal-container" data-toggle="modal">
+														<span class="material-icons">history</span>
+														<span class="texto">@Html.GetText("DEVTOOLS", "HISTORIALCONFIGURACION")</span>
+													</a>
+												</li>
+											}
+											if (tabModel.PaginaCMSVersionado)
+											{
+												<li>
+													<a class="item-dropdown js-action-edit-component btnHistorialEstructura" data-target="#modal-container" data-toggle="modal">
+														<span class="material-icons">history</span>
+														<span class="texto">Historial estructura</span>
+													</a>
+												</li>
+											}
+										}
+										@if ((ViewBag.ModificarPaginaPermitido != null && ViewBag.ModificarPaginaPermitido) || (ViewBag.VerPaginaPermitido != null && ViewBag.VerPaginaPermitido) || (ViewBag.PublicarPaginaPermitido != null && ViewBag.PublicarPaginaPermitido))
+										{											
+											@* Editar página CMS *@
+											@if (tabModel.Type == TipoPestanyaMenu.CMS && !tabModel.Nueva)
+											{												
+												<li>
+													<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/@tabModel.Key">
+														<span class="material-icons">view_quilt</span>
+														<span class="texto">@Html.GetText("DEVTOOLS", "EDITARPAGINACMS")</span>
+													</a>
+												</li>
+											}
+
+											@* Edición página tipo Home (CMS) *@
+											@if (tabModel.Type.Equals(TipoPestanyaMenu.Home))
+											{
+												if (tabModel.PaginaCMSVersionado)
+												{
+													<li>
+														<a class="item-dropdown js-action-edit-component btnHistorialEstructura" data-target="#modal-container" data-toggle="modal">
+															<span class="material-icons">history</span>
+															<span class="texto">Historial estructura</span>
+														</a>
+													</li>
+												}
+												@* Editar página CMS Home -> Todos los usuarios -> HomeCmsTodosLosUsuarios  *@
+												<li class="btnEditCmsHome btnEditCmsHomeTodosUsuarios  @( (!homeCmsTodosLosUsuarios ) ? "d-none" : null)">
+													<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/2">
+														<span class="material-icons">view_quilt</span>
+														<span class="texto">@Html.GetText("DEVTOOLS", "EDITARPAGINAHOME")</span>
+													</a>
+												</li>
+												@* Editar página CMS Home -> Miembros -> HomeCmsMiembros *@
+												<li class="btnEditCmsHome btnEditCmsHomeMiembros @( (!homeCmsMiembros) ? "d-none" : null)">
+													<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/0">
+														<span class="material-icons">view_quilt</span>
+														<span class="texto">@Html.GetText("DEVTOOLS", "EDITARPAGINAHOMEPARAMIEMBROS")</span>
+													</a>
+												</li>
+												@* Editar página CMS Home -> No Miembros -> HomeCmsNoMiembros *@
+												<li class="btnEditCmsHome btnEditCmsHomeNoMiembros  @( (!homeCmsNoMiembros) ? "d-none" : null)">
+													<a class="item-dropdown" href="@Html.GetComunidad().Url/@Html.GetText("URLSEM","ADMINISTRARCOMUNIDADCMSEDITARPAGINA")/1">
+														<span class="material-icons">view_quilt</span>
+														<span class="texto">@Html.GetText("DEVTOOLS", "EDITARPAGINAHOMEPARANOMIEMBROS")</span>
+													</a>
+												</li>
+											}
+										}										
+											
+										@if (ViewBag.EliminarPaginaPermitido != null && ViewBag.EliminarPaginaPermitido)
+										{
+											@* Eliminar página *@
+											<li>
+												<a class="item-dropdown js-action-delete-component btnDeletePage"
+												   data-toggle="modal"
+												   data-target="#@idModalPageDelete">
+													<span class="material-icons">delete</span>
+													<span class="texto">@Html.GetText("COMMON", "ELIMINAR")</span>
+												</a>
+											</li>
+										}										
 									</ul>
 								</div>
 							</div>
@@ -329,15 +393,12 @@ string idModalMovePaginaFaceta = "modal-move-pagina";
 					PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
 					pintar.pestanya = pestanyaHija;
 					pintar.ListaPestanyas = Model.ListaPestanyas;
-					@Html.PartialView("_PintarPestanya", pintar)
+					pintar.versionPaginas = pestanyaHija.VersionPagina;
+					Html.PartialView("_PintarPestanya", pintar);
 				}
 			</ul>
 		</div>
 	</div>
-
-
-	@* Información detallada de la pestaña -> Modal *@
+	
 	@Html.PartialView("_EdicionPestanya", Model.pestanya)
-
-
 </li>

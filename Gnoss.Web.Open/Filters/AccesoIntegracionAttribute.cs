@@ -23,6 +23,7 @@ using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.Gnoss.Web.MVC.Controles;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Es.Riam.AbstractsOpen;
+using Microsoft.Extensions.Logging;
 
 namespace Es.Riam.Gnoss.Web.MVC.Filters
 {
@@ -35,6 +36,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 
     public class AccesoIntegracionAttribute : BaseActionFilterAttribute
     {
+
         private EntityContext mEntityContext;
         private LoggingService mLoggingService;
         private ConfigService mConfigService;
@@ -47,9 +49,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private IUtilServicioIntegracionContinua mUtilIntegracionContinua;
 		private IServicesUtilVirtuosoAndReplication mServicesUtilVirtuosoAndReplication;
 		private string mProyectoConIntegracionContinua = null;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
 
-
-		/*public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua)
+        /*public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
@@ -66,7 +69,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             mUtilIntegracionContinua = utilIntegracionContinua;
         }*/
 
-		public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, FiltroAcciones pFiltro = FiltroAcciones.Todo)
+        public AccesoIntegracionAttribute(EntityContext entityContext, LoggingService loggingService, ConfigService configService, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, GnossCache gnossCache, EntityContextBASE entityContextBASE, IUtilServicioIntegracionContinua utilIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, ILogger<AccesoIntegracionAttribute> logger, ILoggerFactory loggerFactory, FiltroAcciones pFiltro = FiltroAcciones.Todo)
         {
             mEntityContext = entityContext;
             mLoggingService = loggingService;
@@ -77,7 +80,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             mEntityContextBASE = entityContextBASE;
             mRedisCacheWrapper = redisCacheWrapper;
             mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
-            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, servicesUtilVirtuosoAndReplication);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
 
             Filtro = pFiltro;
 
@@ -312,7 +317,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 			{
 				if (mProyectoConIntegracionContinua == null)
 				{
-					using (ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication))
+					using (ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory))
 					{
 
 						bool? activada = proyectoCL.TieneICactivada(mControladorBase.ProyectoSeleccionado.Clave);

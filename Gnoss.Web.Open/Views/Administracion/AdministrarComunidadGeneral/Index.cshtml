@@ -218,7 +218,7 @@ Variables
 
         @* Sección Categorías *@
         <h3>@Html.GetText("COMADMIN", "ADMINCATEGORIAS")</h3>
-        <p>@Html.GetText("DEVTOOLS", "DINOSENQUECATEGORIASDELINDICEGLOBALDEGNOSSQUIERESQUEENCUENTR")</p>
+        <p>@Html.GetText("DEVTOOLS", "DINOSENQUECATEGORIASDELINDICEGLOBALDEGNOSSQUIERESQUEENCUENTR", Comunidad.Name)</p>
         <div id="divSelCatTesauro" class="form-group mb-3">
         @foreach (CategoryModel categoria in Model.EcosistemaCategories.Where(cat => cat.ParentCategoryKey.Equals(Guid.Empty)).OrderBy(cat => cat.Order))
         {

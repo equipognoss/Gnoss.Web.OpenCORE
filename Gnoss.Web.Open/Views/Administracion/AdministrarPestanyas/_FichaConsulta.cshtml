@@ -1,0 +1,70 @@
+﻿@using System.Text
+@model KeyValuePair<string,string>
+
+@*
+Descripción
+-----------------------------------------------
+Vista que contiene la visualización de las consultas de las facetas
+
+Variables
+----------------------------------------------------------------
+*@
+
+@{
+	string clave = Model.Key;
+	string query = Model.Value;
+	Guid id = @Guid.NewGuid();
+	string consultaCollapseId = "panel_collapse_" + id.ToString().Substring(0,5);
+}
+<li class="component-wrap preview-facetas-row" id="" data-filterkey="" data-collapseid="@consultaCollapseId">
+
+	<div class="component">
+		<div class="component-header-wrap">
+			<div class="component-header">
+
+				<div class="component-header-content">
+					<div class="component-header-left">
+						@* Clave de la faceta *@
+						<div class="component-name-wrap">
+							<span class="component-filterName"> @clave</span>
+						</div>
+					</div>
+					@*Sección de acciones *@
+					<div class="component-header-right">
+						<div class="component-actions-wrap">
+							<ul class="no-list-style component-actions">
+								<li>
+									@* Acción de mostrar consulta *@
+									<a class="action-edit round-icon-button js-action-edit-component btnEditFilter"
+									   data-toggle="collapse"
+									   data-target="#@consultaCollapseId"
+									   role="button"
+									   aria-expanded="false"
+									   aria-controls="@consultaCollapseId">
+										<span class="material-icons">expand_more</span>
+									</a>
+								</li>
+								<li>
+									@* Acción de copiar al portapapeles *@
+									<a class="action-copy round-icon-button js-action-copy btnCopyQuery"
+									   href="javascript: void(0);">
+										<span class="material-icons">content_paste</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	@* Consulta - Collapse *@
+	<div class="collapse query-info" id="@consultaCollapseId">
+		<div class="inputsMultiIdioma multiIdiomaContainer" data-idmultiidiomatab="navigation_@consultaCollapseId">
+			<div class="form-group mb-4 query-content">
+				@query
+			</div>
+		</div>
+	</div>
+</li>

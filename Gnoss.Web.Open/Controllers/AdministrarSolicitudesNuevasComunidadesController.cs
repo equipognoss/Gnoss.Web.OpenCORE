@@ -37,16 +37,20 @@ using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.Controles.Solicitudes;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -57,24 +61,34 @@ namespace Gnoss.Web.Controllers
 {
     public class AdministrarSolicitudesNuevasComunidadesController : ControllerBaseWeb
     {
-        public AdministrarSolicitudesNuevasComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private IAvailableServices mAvailableServices;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarSolicitudesNuevasComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSolicitudesNuevasComunidadesController> logger, ILoggerFactory loggerFactory)
+           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
+
         [HttpGet]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarSolicitudesComunidad } })]
         public IActionResult Index(int? pagina)
         {
             if (!pagina.HasValue)
             {
                 pagina = 1;
             }
-            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
             DataWrapperPeticion peticionDW = peticionCN.ObtenerPeticionComunidadesPendientesDeAceptarPaginacion(pagina.Value - 1, 5);
             AdministrarSolicitudesNuevasComunidades administrarSolicitudesNuevasComunidades = new AdministrarSolicitudesNuevasComunidades();
             List<SolicitudNuevaComunidadModel> solicitudesNuevasComunidades = new List<SolicitudNuevaComunidadModel>();
             foreach (var peticionNuevoProyecto in peticionDW.ListaPeticionNuevoProyecto)
             {
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+                DataWrapperIdentidad identidadDW = identidadCN.ObtenerIdentidadDePerfilEnProyecto(peticionNuevoProyecto.PerfilCreadorID, ProyectoSeleccionado.Clave);
+
+                GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
                 SolicitudNuevaComunidadModel solicitudNuevaComunidadModel = new SolicitudNuevaComunidadModel()
                 {
                     ComunidadPrivadaPadreID = peticionNuevoProyecto.ComunidadPrivadaPadreID,
@@ -82,14 +96,21 @@ namespace Gnoss.Web.Controllers
                     Nombre = peticionNuevoProyecto.Nombre,
                     NombreCorto = peticionNuevoProyecto.NombreCorto,
                     PeticionID = peticionNuevoProyecto.PeticionID,
-                    IsPrivate = peticionNuevoProyecto.Tipo != (short)TipoAcceso.Publico
+                    IsPrivate = peticionNuevoProyecto.Tipo != (short)TipoAcceso.Publico,
+                    TipoComunidad = peticionNuevoProyecto.Tipo,
+                    FechaPeticion = peticionNuevoProyecto.Peticion.FechaPeticion,
+                    NombreCreador = identidadDW.ListaPerfil.Select(item => item.NombrePerfil).First(),
+                    NombreCortoOrganizacion = identidadDW.ListaPerfil.Select(item => item.NombreCortoOrg).First(),
+
+                    UrlPerfil = UrlsSemanticas.GetURLPerfilPersonaOOrgEnProyecto(BaseURL, UtilIdiomas, "", gestorIdentidades.ListaIdentidades[identidadDW.ListaIdentidad.Where(item => item.ProyectoID == ProyectoSeleccionado.Clave).Select(item => item.IdentidadID).FirstOrDefault()], ProyectoSeleccionado.NombreCorto)
+                    //UrlsSemanticas.GetURLPerfilDeIdentidad(BaseURLIdioma, ProyectoSeleccionado.NombreCorto, UtilIdiomas, ),
                 };
                 solicitudesNuevasComunidades.Add(solicitudNuevaComunidadModel);
             }
             administrarSolicitudesNuevasComunidades.SolicitudesNuevasComunidades = solicitudesNuevasComunidades;
             administrarSolicitudesNuevasComunidades.NumeroPaginaActual = pagina.Value;
             administrarSolicitudesNuevasComunidades.NumeroResultadosTotal = peticionCN.ObtenerPeticionComunidadesPendientesDeAceptarCount();
-            administrarSolicitudesNuevasComunidades.PageName = UtilIdiomas.GetText("COMMON", "ADMINISTRARNUEVASCOMUNIDADES"); 
+            administrarSolicitudesNuevasComunidades.PageName = UtilIdiomas.GetText("COMMON", "ADMINISTRARNUEVASCOMUNIDADES");
             administrarSolicitudesNuevasComunidades.UrlBusqueda = Request.Headers["Referer"].ToString();
             if (ProyectoVirtual.Clave != ProyectoAD.MetaProyecto)
             {
@@ -103,31 +124,31 @@ namespace Gnoss.Web.Controllers
         }
 
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
-        public IActionResult aceptar_peticion(Guid peticion_id)
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarSolicitudesComunidad } })]
+		public IActionResult aceptar_peticion(Guid peticion_id)
         {
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
             servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
             Dictionary<string, byte[]> logosProyectos = new Dictionary<string, byte[]>();
             string ruta = $"proyectos/{peticion_id}";
             byte[] imagenLogo = servicioImagenes.ObtenerImagen(ruta + "_temp", ".png");
             logosProyectos.Add(peticion_id.ToString(), imagenLogo);
             //Obtenemos la peticion del nuevo proy
-            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
             DataWrapperPeticion peticionDW = peticionCN.ObtenerPeticionComunidadesPendientesDeAceptar();
             PeticionNuevoProyecto peticion = peticionDW.ListaPeticionNuevoProyecto.FirstOrDefault(item => item.PeticionID.Equals(peticion_id));
-            
+
             if (peticion != null)
             {
                 Guid organizacionID = ProyectoAD.MetaOrganizacion;
                 Guid idPadre = Guid.Empty;
                 if (peticion.ComunidadPrivadaPadreID.HasValue)
                 {
-                    ProyectoCN proyeCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ProyectoCN proyeCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
                     organizacionID = proyeCN.ObtenerProyectoCargaLigeraPorID(peticion.ComunidadPrivadaPadreID.Value).ListaProyecto.First().OrganizacionID;
                     idPadre = peticion.ComunidadPrivadaPadreID.Value;
                 }
-                ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                ControladorProyecto controladorProyecto = new ControladorProyecto(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorProyecto>(), mLoggerFactory);
 
                 DataWrapperOrganizacion orgDW = null;
                 DataWrapperProyecto dataWrapperProyecto = null;
@@ -137,16 +158,16 @@ namespace Gnoss.Web.Controllers
                 DataWrapperUsuario dataWrapperUsuario = null;
                 DataWrapperIdentidad identidadadDW = null;
 
-                Es.Riam.Gnoss.Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, imagenLogo, out orgDW, out dataWrapperProyecto, out paramDS, out tesauroDW, out dataWrapperDocumentacion, out dataWrapperUsuario, out identidadadDW, true, null, DominioConfigurado);
+                Es.Riam.Gnoss.Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.IdiomaDefecto,peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, imagenLogo, out orgDW, out dataWrapperProyecto, out paramDS, out tesauroDW, out dataWrapperDocumentacion, out dataWrapperUsuario, out identidadadDW, true, null, null, mAvailableServices);
 
                 peticion.Peticion.Estado = (short)EstadoPeticion.Aceptada;
                 peticion.Peticion.FechaProcesado = DateTime.Now;
-                PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
                 List<PersonaIdentidad> listaPersonaIdentidad = personaCN.ObtenerEmaileIdentidadATravesDePerfil(peticion.PerfilCreadorID);
                 DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
                 if (listaPersonaIdentidad.Count == 1)
                 {
-                    GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
                     string nombre = listaPersonaIdentidad.First().Nombre;
                     Guid personaID = (Guid)listaPersonaIdentidad.First().PersonaID;
                     string correo = listaPersonaIdentidad.First().Email;
@@ -155,8 +176,8 @@ namespace Gnoss.Web.Controllers
                 }
                 mEntityContext.SaveChanges();
                 //Actualizo el modelo base:
-                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
-                controladorPersonas.ActualizarModeloBASE(proyecto.IdentidadCreadoraProyecto, proyecto.Clave, true, true, PrioridadBase.Alta);
+                ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
+                controladorPersonas.ActualizarModeloBASE(proyecto.IdentidadCreadoraProyecto, proyecto.Clave, true, true, PrioridadBase.Alta, mAvailableServices);
 
                 if (imagenLogo != null)
                 {
@@ -165,7 +186,7 @@ namespace Gnoss.Web.Controllers
                     servicioImagenes.AgregarImagen(imagenLogo, "proyectos/" + proyecto.Clave.ToString(), ".png");
                 }
 
-                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication);
+                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 proyCL.InvalidarCacheListaProyectosPerfil(peticion.PerfilCreadorID);
                 string versionDocConfiguracion = string.Empty;
                 string urlDocConfigComunidad = string.Empty;
@@ -186,11 +207,11 @@ namespace Gnoss.Web.Controllers
 
                 if (!string.IsNullOrEmpty(xml))
                 {
-                    controladorProyecto.ConfigurarComunidadConXML(xml, organizacionID, proyecto.Clave);
+                    controladorProyecto.ConfigurarComunidadConXML(xml, organizacionID, proyecto.Clave, mAvailableServices);
 
                     //Subimos el fichero al servidor
                     Stopwatch sw = LoggingService.IniciarRelojTelemetria();
-                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService);
+                    GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
                     gd.Url = UrlServicioWebDocumentacion.Replace("https://", "http://");
                     gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString(), ".xml");
                     gd.AdjuntarDocumentoADirectorio(buffer, "Configuracion/" + proyecto.Clave, proyecto.Clave.ToString() + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"), ".xml");
@@ -204,16 +225,16 @@ namespace Gnoss.Web.Controllers
             }
         }
         [HttpPost]
-        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorMetaProyecto })]
-        public IActionResult rechazar_peticion(Guid peticion_id)
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarSolicitudesComunidad } })]
+		public IActionResult rechazar_peticion(Guid peticion_id)
         {
-            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService);
+            ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
             servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
 
-            GeneralCN generalCN = new GeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GeneralCN generalCN = new GeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GeneralCN>(), mLoggerFactory);
             DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
-            GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
-            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
+            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
             DataWrapperPeticion peticionDW = peticionCN.ObtenerPeticionComunidadesPendientesDeAceptar();
             string nombreProy = peticionDW.ListaPeticionNuevoProyecto.FirstOrDefault(item => item.PeticionID.Equals(peticion_id)).Nombre;
             Guid perfilCreadorID = peticionDW.ListaPeticionNuevoProyecto.FirstOrDefault(item => item.PeticionID.Equals(peticion_id)).PerfilCreadorID;
@@ -226,7 +247,7 @@ namespace Gnoss.Web.Controllers
             {
                 fila.Estado = (short)EstadoPeticion.Rechazada;
                 fila.FechaProcesado = DateTime.Now;
-                PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
                 List<PersonaIdentidad> listaPersonaIdentidad = personaCN.ObtenerEmaileIdentidadATravesDePerfil(perfilCreadorID);
                 if (listaPersonaIdentidad.Count == 1)
                 {

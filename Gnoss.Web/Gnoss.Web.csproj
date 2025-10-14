@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+	  <GenerateRuntimeConfigDevFile>true</GenerateRuntimeConfigDevFile>
+	  <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+      <ServerGarbageCollection>false</ServerGarbageCollection>
+	  <ThreadPoolMinThreads>250</ThreadPoolMinThreads>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -39,39 +42,53 @@
     <Compile Remove="Views\Administracion\AdministrarSharepoint\Manual.cshtml.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Remove="Views\Administracion\AdministrarSharepoint\Manual.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-	  <PackageReference Include="ClosedXML" Version="0.101.0" />
-	  <PackageReference Include="EntityFramework" Version="6.4.4" />
-	  <PackageReference Include="ExcelDataReader" Version="3.6.0" />
-	  <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
-	  <PackageReference Include="GnossApiWrapper.NetCore" Version="6.0.36" />
-	  <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.20" />
-	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.20" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.20" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.20">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	  </PackageReference>
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.20" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.20">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	  </PackageReference>
-	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.20" />
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	  <PackageReference Include="Npgsql" Version="6.0.11" />
-	  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
-	  <PackageReference Include="NWebsec.AspNetCore.Middleware" Version="3.0.0" />
-	  <PackageReference Include="Oracle.EntityFrameworkCore" Version="6.21.90" />
-	  <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-	  <PackageReference Include="System.Security.Cryptography.Pkcs" Version="6.0.4" />
-	  <PackageReference Include="WebPush" Version="1.0.12" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Remove="Views\Administracion\AdministrarSharepoint\Manual.cshtml" />
+		<Content Remove="wwwroot\cssNuevo\XMLBuilderVistas.css" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Remove="wwwroot\img\configuracionOC\bool.png" />
+		<Content Remove="wwwroot\img\configuracionOC\configuracion.png" />
+		<Content Remove="wwwroot\img\configuracionOC\cursor.png" />
+		<Content Remove="wwwroot\img\configuracionOC\date.png" />
+		<Content Remove="wwwroot\img\configuracionOC\link.png" />
+		<Content Remove="wwwroot\img\configuracionOC\objAuxiliar.png" />
+		<Content Remove="wwwroot\img\configuracionOC\objExterno.png" />
+		<Content Remove="wwwroot\img\configuracionOC\string.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Aspose.Zip" Version="24.10.0" />
+		<PackageReference Include="ClosedXML" Version="0.104.1" />
+		<PackageReference Include="EntityFramework" Version="6.5.1" />
+		<PackageReference Include="ExcelDataReader" Version="3.7.0" />
+		<PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+		<PackageReference Include="GnossApiWrapper.NetCore" Version="8.0.2" />
+		<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="8.0.10" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.10">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.10" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Npgsql" Version="8.0.5" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+		<PackageReference Include="NWebsec.AspNetCore.Middleware" Version="3.0.0" />
+		<PackageReference Include="Oracle.EntityFrameworkCore" Version="8.23.60" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+		<PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+		<PackageReference Include="System.IO.Packaging" Version="8.0.1" />
+		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="WebPush" Version="1.0.12" />
+	</ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.AD\Es.Riam.Gnoss.AD.csproj" />
@@ -108,138 +125,188 @@
     <ProjectReference Include="..\Gnoss.Web.Open\Gnoss.Web.Open.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Config\version.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-  </PropertyGroup>
+	<ItemGroup>
+		<None Update="App_Start\routemap.xml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Config\mimeType.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Config\version.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="5.0.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Update="appsettings.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ActividadReciente\_ActividadReciente.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\BuscadorSPARQL\_BuscadorSPARQL.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\Buscador\_Buscador.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\CajaBuscador\_CajaBuscador.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ConsultaSQLSERVER\_ConsultaSQLSERVER.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\DatosComunidad\_DatosComunidad.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\Destacado\_Destacado.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\EnvioCorreo\_EnvioCorreo.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\Faceta\_Faceta.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\FichaDescripcionDocumento\_FichaDescripcionDocumento.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\GrupoComponentes\_Paginacion.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\GrupoComponentes\_PestanyasHorizontales.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\GrupoComponentes\_PestanyasPersonalizadas.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\GrupoComponentes\_PestanyasVerticales.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\HTML\_HTML.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\Index.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoProyectos\_ListadoProyectos.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_BreveConFoto.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_BreveConFotoAUnParrafo.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_Completa.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_DescripcionCompleta.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_Destacado.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_ListadoSinFoto.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_SoloIconoYTitulo.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_UltimosRecursos.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\_ListadoDestacados.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\_ListadoRecursosNormal.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\_ListadoRecursosPaginacion.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoRecursos\_ListadoRecursosPestanyas.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ListadoUsuarios\_ListadoUsuarios.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\MasVistos\_MasVistos.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\Menu\_Menu.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\ResumenPerfil\_ResumenPerfil.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\Tesauro\_Tesauro.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\UsuariosRecomendados\_UsuariosRecomendados.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\_BloqueCMS.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\CMSPagina\_ComponenteCMS.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Views\EspacioPersonal\_modal-views\_manage-categories.cshtml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\DetallesDocumentacion.css">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\extra.css">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\jquery.js">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\jquery_002.js">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\marked.js">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\owl.css">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\Primer.css">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\documentation\rec.css">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\favicon.ico">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\responsive\theme\logic\configuracion.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\responsive\theme\logic\matomo_administracion.js">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Update="Views\CMSPagina\ActividadReciente\_ActividadReciente.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\BuscadorSPARQL\_BuscadorSPARQL.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\Buscador\_Buscador.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\CajaBuscador\_CajaBuscador.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ConsultaSQLSERVER\_ConsultaSQLSERVER.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\DatosComunidad\_DatosComunidad.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\Destacado\_Destacado.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\EnvioCorreo\_EnvioCorreo.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\Faceta\_Faceta.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\FichaDescripcionDocumento\_FichaDescripcionDocumento.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\GrupoComponentes\_Paginacion.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\GrupoComponentes\_PestanyasHorizontales.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\GrupoComponentes\_PestanyasPersonalizadas.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\GrupoComponentes\_PestanyasVerticales.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\HTML\_HTML.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\Index.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoProyectos\_ListadoProyectos.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_BreveConFoto.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_BreveConFotoAUnParrafo.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_Completa.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_DescripcionCompleta.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_Destacado.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_ListadoSinFoto.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_SoloIconoYTitulo.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\Vistas\_UltimosRecursos.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\_ListadoDestacados.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\_ListadoRecursosNormal.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\_ListadoRecursosPaginacion.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoRecursos\_ListadoRecursosPestanyas.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ListadoUsuarios\_ListadoUsuarios.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\MasVistos\_MasVistos.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\Menu\_Menu.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\ResumenPerfil\_ResumenPerfil.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\Tesauro\_Tesauro.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\UsuariosRecomendados\_UsuariosRecomendados.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\_BloqueCMS.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\CMSPagina\_ComponenteCMS.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Views\EspacioPersonal\_modal-views\_manage-categories.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="wwwroot\favicon.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="wwwroot\img\configuracionOC\bool.png" />
+		<None Include="wwwroot\img\configuracionOC\configuracion.png" />
+		<None Include="wwwroot\img\configuracionOC\cursor.png" />
+		<None Include="wwwroot\img\configuracionOC\date.png" />
+		<None Include="wwwroot\img\configuracionOC\link.png" />
+		<None Include="wwwroot\img\configuracionOC\objAuxiliar.png" />
+		<None Include="wwwroot\img\configuracionOC\objExterno.png" />
+		<None Include="wwwroot\img\configuracionOC\string.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="wwwroot\responsive\theme\libraries\spinner-material\" />
+	</ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 

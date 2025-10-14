@@ -1,0 +1,98 @@
+﻿@model AdministrarPaginaCMSHistorialViewModel
+@{
+    AdministrarPaginaCMSVersionViewModel paginaActual = Model.PaginasVersiones.OrderByDescending(item => item.FechaModificacion).First();
+    string urlCompareStructVersion = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL") + "/compare";
+    bool puedeRestaurar = ViewBag.RestaurarVersionComponenteCMSPermitido ?? false;
+    int version = Model.PaginasVersiones.Count;
+}
+
+@*
+    ----------------------------------------------------------------
+    -------------------- Vista Modal ver el historial de un Recurso --------------------
+*@
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">history</span>@Html.GetText("COMPARARVERSIONES", "HISTORIAL")
+    </p>
+    <span class="material-icons cerrar"
+          data-dismiss="modal"
+          aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    @* Tabla con las versiones del componente  *@
+    <table class="display nowrap table table-sm tabla-versiones-estructura-pagina" id="panHistorial_table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>@Html.GetText("HISTORIALVERSIONES", "VERSION")</th>
+                <th>@Html.GetText("HISTORIALVERSIONES", "REVISION")</th>
+                <th>@Html.GetText("HISTORIALVERSIONES", "EDITOR")</th>
+                <th>@Html.GetText("COMMON", "COMENTARIO")</th>
+                <th>@Html.GetText("COMMON", "ACCIONES")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (AdministrarPaginaCMSVersionViewModel pagina in Model.PaginasVersiones.OrderByDescending(recurso => recurso.FechaModificacion))
+            {
+                <tr>
+                    @* Columnas de DataTables*@
+                    @* REVISION *@
+                    <td>
+                        <div class="check-wrapper">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="@pagina.VersionID">
+                                <label class="custom-control-label" for="@pagina.VersionID"></label>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="pl-4">@version</td>
+                    @* FECHA*@
+                    <td>@pagina.FechaModificacion.ToString("dd/MM/yyyy HH:mm")</td>
+                    @* AUTOR *@
+                    <td>@pagina.Autor</td>
+                    <td>@pagina.Comentario</td>
+                    @* RESTAURAR *@
+                    @if (pagina.VersionID == paginaActual.VersionID)
+                    {
+                        <td>@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</td>
+                    }
+                    else if(puedeRestaurar)
+                    {
+                        <td>
+                            <a class="btn btn-outline-grey btnRestoreVersionPaginaCMS" data-target="#modal-comparar-estructura"
+                               data-toggle="modal" data-version-id="@pagina.VersionID" data-version-actual-id="@paginaActual.VersionID" data-pestanya-id="@pagina.PestanyaID">
+                                <span class="material-icons">restore</span>
+                                @Html.GetText("HISTORIALVERSIONES", "RESTAURAR")
+                            </a>
+                        </td>
+                    }
+                </tr>
+                version--;
+            }
+        </tbody>
+    </table>
+
+    <div class="panelBotonera">
+        <a id="btnCompararVersionesPaginaCMS"
+           class="btn btn-primary uppercase"
+           data-target="#modal-comparar-estructura"
+           data-pestanya-id="@paginaActual.PestanyaID"
+           data-toggle="modal"
+           disabled>@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
+    </div>
+</div>
+
+@* Input oculto para guardar los ids de los checks chequeados *@
+<input type="hidden" id="txtHackCheckSeleccionadosEstructura" />
+<input type="hidden" id="txtComponenteActualID" data-componente-id="@paginaActual.PestanyaID" />
+
+<script type="text/javascript">
+    (function ($) {
+         const pParams =
+            {
+                urlCompareStructVersion: "@urlCompareStructVersion"
+            }
+        operativaGestionHistorialPaginaCMS.init(pParams);
+    })();
+</script>

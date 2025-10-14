@@ -10,6 +10,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
+using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +19,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 
@@ -62,36 +65,33 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
     public class RSSListadoRecursosController : ControllerBaseWeb
     {
-        public RSSListadoRecursosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public RSSListadoRecursosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<RSSListadoRecursosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
+
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
 
-        private const int FILAS_POR_PAGINA = 10;
-
         private short mNumPagina = 1;
 
-        private Guid mFuente = Guid.Empty;
-
-        private bool mSoloCompletos = false;
-        /// <summary>
-        /// 
-        /// </summary>
         private RSSListadoRecursosViewModel mPaginaModel = null;
 
         private bool? mEsAdmin = null;
 
-        #endregion
+		#endregion
 
-        #region Metodos de evento
+		#region Metodos de evento
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public ActionResult Index()
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns></returns>
+		public ActionResult Index()
         {
             return View(PaginaModel);
         }
@@ -103,8 +103,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public ActionResult Filtrar(short NumPagina, Guid Fuente, bool SoloCompletos)
         {
             mNumPagina = NumPagina;
-            mFuente = Fuente;
-            mSoloCompletos = SoloCompletos;
 
             return PartialView("_ResultadosRecursosRSS", PaginaModel);
         }
@@ -115,9 +113,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns></returns>
         public ActionResult Publicar(Guid Fuente, bool SoloCompletos, string RecursosID)
         {
-            mFuente = Fuente;
-            mSoloCompletos = SoloCompletos;
-
             List<Guid> listaID = ObtenerIDsRecursos(RecursosID);
 
             short numPublicados = PublicarRecursos(listaID);
@@ -141,20 +136,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             short numPublicados = 0;
             try
             {
-                GestorDocumental gestDocumental = ControladorDocumentacion.CargaIncialDeBaseRecursos(new GestorDocumental(new DataWrapperDocumentacion(), mLoggingService, mEntityContext), null, true, UsuarioActual.ProyectoID, UsuarioActual.UsuarioID, UsuarioActual.OrganizacionID);
+                GestorDocumental gestDocumental = ControladorDocumentacion.CargaIncialDeBaseRecursos(new GestorDocumental(new DataWrapperDocumentacion(), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory), null, true, UsuarioActual.ProyectoID, UsuarioActual.UsuarioID, UsuarioActual.OrganizacionID);
                 gestDocumental.GestorIdentidades = IdentidadActual.GestorIdentidades;
-                ControladorIdentidades controladorIdentidades = new ControladorIdentidades(IdentidadActual.GestorIdentidades, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication);
+                ControladorIdentidades controladorIdentidades = new ControladorIdentidades(IdentidadActual.GestorIdentidades, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorIdentidades>(), mLoggerFactory);
                 controladorIdentidades.CompletarCargaIdentidad(mControladorBase.UsuarioActual.IdentidadID);
 
                 Dictionary<Documento, List<Proyecto>> listaDocsParaTwitter = new Dictionary<Documento, List<Proyecto>>();
                 List<Proyecto> listaProyTwitter = new List<Proyecto>();
                 listaProyTwitter.Add(ProyectoSeleccionado);
 
-                List<Documento> listaRecursosPublicados = new List<Documento>();
-
                 if (ProyectoSeleccionado.FilaProyecto.TieneTwitter)
                 {
-                    ControladorDocumentacion.EnviarEnlaceATwitterDeComunidad(IdentidadActual, listaDocsParaTwitter, BaseURLIdioma, UtilIdiomas);
+                    ControladorDocumentacion.EnviarEnlaceATwitterDeComunidad(IdentidadActual, listaDocsParaTwitter, BaseURLIdioma, UtilIdiomas, mAvailableServices);
                 }
 
             }
@@ -171,11 +164,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns></returns>
         public ActionResult Delete(Guid Fuente, bool SoloCompletos, string RecursosID)
         {
-            mFuente = Fuente;
-            mSoloCompletos = SoloCompletos;
-
-            List<Guid> listaID = ObtenerIDsRecursos(RecursosID);
-
             return PartialView("_ResultadosRecursosRSS", PaginaModel);
         }
 

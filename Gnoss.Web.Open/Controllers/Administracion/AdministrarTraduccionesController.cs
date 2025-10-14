@@ -36,25 +36,33 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
 	/// <summary>
 	/// Vista que permite ver todas las traducciones.
 	/// </summary>
-	public class AdministrarTraduccionesController : ControllerBaseWeb
+	public class AdministrarTraduccionesController : ControllerAdministrationWeb
 	{
-		public AdministrarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarTraduccionesController> logger, ILoggerFactory loggerFactory)
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
 		{
-		}
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+        }
 
-        /// <summary>
-        /// Permite ver todas las traducciones.
-        /// </summary>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        public ActionResult Index()
+		/// <summary>
+		/// Permite ver todas las traducciones.
+		/// </summary>
+		/// <returns></returns>		
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
+		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -91,8 +99,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             modelo.URLActionCrearEntradas = $"{baseUrl}crearentradas";
             modelo.URLActionEliminarEntradas = $"{baseUrl}eliminarentradas";
 
-            ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
-            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
             Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();
             List<TextoTraducidoModel> listaTextos = new List<TextoTraducidoModel>();
 
@@ -117,6 +125,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 foreach (TextosPersonalizadosPersonalizacion filaTextoPersonalizado in grupo)
                 {
                     modeloTraduccion.AgregarTraduccion(filaTextoPersonalizado.Language, filaTextoPersonalizado.Texto);
+                    modeloTraduccion.FechaCreacion = filaTextoPersonalizado.FechaCreacion;
+                    modeloTraduccion.FechaModificacion = filaTextoPersonalizado.FechaActualizacion;
                 }
                 listaTextos.Add(modeloTraduccion);
             }
@@ -129,8 +139,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult CrearLoadModal(TextoTraducidoModel pModelo)
         {
             if (string.IsNullOrEmpty(pModelo.TextoID))
@@ -138,7 +146,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 // Solicitada creación de Traducción
                 EliminarPersonalizacionVistas();
                 CargarPermisosAdministracionComunidadEnViewBag();
-                ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
                 Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();
                 TextoTraducidoModel modelo = new TextoTraducidoModel(idiomas);
@@ -157,11 +165,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModelo">Modelo con los datos de la nueva traduccion</param>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Crear(TextoTraducidoModel pModelo)
         {
-            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
             if (ModelState.IsValid)
             {
                 try
@@ -192,25 +199,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return View("Editar", pModelo);
         }
 
-        /// <summary>
-        /// Permite editar los datos de una traducción.
-        /// </summary>
-        /// <param name="pTextoId">Id del texto a editar</param>
-        /// <returns></returns>        
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		/// <summary>
+		/// Permite editar los datos de una traducción.
+		/// </summary>
+		/// <param name="pTextoId">Id del texto a editar</param>
+		/// <returns></returns>        
         public ActionResult EditarLoadModal(string pTextoId)
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
-            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
             Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();
             TextoTraducidoModel modelo = new TextoTraducidoModel(idiomas);
             var data = Convert.FromBase64String(pTextoId);
             pTextoId = TextoTraducidoModel.GetString(data);
 
-            ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
             GestorParametroGeneral gestorParametoGeneral = new GestorParametroGeneral();
             ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
 
@@ -245,11 +250,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModelo">Datos de la traducción editada</param>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Editar(TextoTraducidoModel pModelo)
         {
-            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
             if (ModelState.IsValid)
             {
                 try
@@ -277,12 +281,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult CrearEntradas()
         {
             //Recorremos todas las vistas en BBDD 
-            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
             DataWrapperVistaVirtual vistaVirtualDW = new DataWrapperVistaVirtual();
             if (EsAdministracionEcosistema)
             {
@@ -348,7 +351,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (EsAdministracionEcosistema)
             {
-                ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                 GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                 gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
                 ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
@@ -366,7 +369,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 paramCN.Dispose();
 
 
-                ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                 paramGeneralCL.InvalidarCacheTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
                 paramGeneralCL.Dispose();
             }
@@ -374,7 +377,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (vistaVirtualDW.ListaVistaVirtualProyecto.Count > 0)
                 {
-                    ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                     GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                     gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizacionProyecto(mControladorBase.PersonalizacionEcosistemaID);
                     ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
@@ -393,7 +396,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     paramCN.ActualizarParametrosGenerales();
                     paramCN.Dispose();
 
-                    ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                     paramGeneralCL.InvalidarCacheParametrosGeneralesDeProyecto(ProyectoSeleccionado.Clave);
                     paramGeneralCL.Dispose();
                 }
@@ -407,8 +410,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult EliminarEntradas()
         {
             GuardarLogAuditoria();
@@ -423,7 +425,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
 
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
 
             try
@@ -432,7 +434,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 transaccionIniciada = proyAD.IniciarTransaccion(true);
 
                 //Recorremos todas las vistas en BBDD 
-                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
                 DataWrapperVistaVirtual vistaVirtualDW = new DataWrapperVistaVirtual();
                 if (EsAdministracionEcosistema)
                 {
@@ -500,7 +502,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (EsAdministracionEcosistema)
                 {
-                    ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                     GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                     ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
                     gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
@@ -522,7 +524,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     paramCN.Dispose();
 
 
-                    ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                     paramGeneralCL.InvalidarCacheTextosPersonalizadosPersonalizacionEcosistema(mControladorBase.PersonalizacionEcosistemaID);
                     paramGeneralCL.Dispose();
                 }
@@ -530,7 +532,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     if (vistaVirtualDW.ListaVistaVirtualProyecto.Count > 0)
                     {
-                        ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                         ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
                         GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                         gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
@@ -552,7 +554,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         paramCN.ActualizarParametrosGenerales();
                         paramCN.Dispose();
 
-                        ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                         paramGeneralCL.InvalidarCacheParametrosGeneralesDeProyecto(ProyectoSeleccionado.Clave);
                         paramGeneralCL.Dispose();
                     }
@@ -590,8 +592,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Texto, "AdministracionVistasPermitido" })]
-        [TypeFilter(typeof(AccesoIntegracionAttribute))]
+		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult BorrarTraduccion(string textoID)
         {
             GuardarLogAuditoria();
@@ -605,7 +606,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
             }
 
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
 
             try
@@ -623,11 +624,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 else
                 {
-                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                    VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
                     personalizacionActualID = vistaVirtualCN.ObtenerPersonalicacionIdDadoProyectoID(ProyectoSeleccionado.Clave);
                 }
 
-                ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroGeneralCN paramCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                 List<TextosPersonalizadosPersonalizacion> textosEliminar = paramCN.ObtenerTraduccionPorTextoIdDePersonalizacion(personalizacionActualID, textoID);
 
                 foreach (TextosPersonalizadosPersonalizacion textoEliminar in textosEliminar)
@@ -642,7 +643,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 paramCN.ActualizarParametrosGenerales();
                 paramCN.Dispose();
 
-                ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroGeneralCL paramGeneralCL = new ParametroGeneralCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCL>(), mLoggerFactory);
                 paramGeneralCL.InvalidarCacheParametrosGeneralesDeProyecto(ProyectoSeleccionado.Clave);
                 paramGeneralCL.Dispose();
 
@@ -739,7 +740,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
             }
 
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
 
             try
@@ -751,7 +752,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 Guid personalizacionID = Guid.Empty;
                 bool vistaVirtualProyectoRowsMayorCero = false;
 
-                ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+                ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
                 if (EsAdministracionEcosistema)
                 {
                     personalizacionID = mControladorBase.PersonalizacionEcosistemaID;
@@ -759,7 +760,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 else
                 {
-                    using (VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication))
+                    using (VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory))
 
                     {
                         DataWrapperVistaVirtual vistaVirtualDW = vistaVirtualCL.ObtenerVistasVirtualPorProyectoID(ProyectoSeleccionado.Clave, mControladorBase.PersonalizacionEcosistemaID, mControladorBase.ComunidadExcluidaPersonalizacionEcosistema);

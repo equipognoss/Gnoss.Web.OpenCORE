@@ -30,30 +30,38 @@ using System.Text;
 using System.Xml.Linq;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Microsoft.Extensions.Hosting;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
+using Gnoss.Web.Open.Filters;
+using Microsoft.Extensions.Logging;
+using Es.Riam.Gnoss.Elementos.Amigos;
+using Es.Riam.Gnoss.Logica.Documentacion;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
     /// <summary>
     /// Permite al usuario administrar sus aplicaciones y tokens de acceso
     /// </summary>
-    public class AdministrarAplicacionesController : ControllerBaseWeb
-    {
-        private OAuthCN mOAuthCN;
-        private EntityContextOauth mEntityContextOauth;
-
-        public AdministrarAplicacionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, EntityContextOauth entityContextOauth, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime)
+    public class AdministrarAplicacionesController : ControllerAdministrationWeb
+	{
+        private readonly OAuthCN mOAuthCN;
+        private readonly EntityContextOauth mEntityContextOauth;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
+        public AdministrarAplicacionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, EntityContextOauth entityContextOauth, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarAplicacionesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mEntityContextOauth = entityContextOauth;
-            mOAuthCN = new OAuthCN(mEntityContext, mLoggingService, mConfigService, entityContextOauth, servicesUtilVirtuosoAndReplication);
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
+            mOAuthCN = new OAuthCN(mEntityContext, mLoggingService, mConfigService, entityContextOauth, servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<OAuthCN>(), mLoggerFactory);
         }
 
-        /// <summary>
-        /// Pagina principal donde se muestran todas las aplicaciones del usuario.
-        /// </summary>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
-        public ActionResult Index()
+		/// <summary>
+		/// Pagina principal donde se muestran todas las aplicaciones del usuario.
+		/// </summary>
+		/// <returns></returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -73,10 +81,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         public OAuthModel ObtenerOAuth()
         {
-			UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
 			ConsumerModel modelo;
 			ConsumerData consumerData;
-			Gnoss.Logica.Documentacion.DocumentacionCN documentoCN = new Gnoss.Logica.Documentacion.DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication);
+			Gnoss.Logica.Documentacion.DocumentacionCN documentoCN = new Gnoss.Logica.Documentacion.DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 			DataWrapperDocumentacion dataWrapperDocumentacion = new DataWrapperDocumentacion();
 			OAuthToken tokens;
 			OAuthModel oauthModel = new OAuthModel();
@@ -130,8 +138,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Crea y descarga un XML con los datos de config
 		/// </summary>
 		/// <returns>Descarga XML</returns>
-		[TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
-        public ActionResult DescargarXML()
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public ActionResult DescargarXML()
         {
             OAuthModel model = ObtenerOAuth();
 			//Se genera el XML con los datos aportados
@@ -277,12 +285,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 
-        /// <summary>
-        /// Muestra un formulario para crear una nueva aplicación.
-        /// </summary>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
-        public ActionResult Crear()
+		/// <summary>
+		/// Muestra un formulario para crear una nueva aplicación.
+		/// </summary>
+		/// <returns></returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public ActionResult Crear()
         {
             GuardarLogAuditoria();
             return View("Editar", new ConsumerModel(0, "", "", "", "", ""));
@@ -292,10 +300,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Guarda en la BD los datos de la nueva aplicación creada.
         /// </summary>
         /// <param name="pConsumerId">ConsumerModel con los datos de la aplicación</param>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
+        /// <returns></returns>        
         [HttpPost]
-        public void Crear(ConsumerModel pModelo)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public void Crear(ConsumerModel pModelo)
         {
             Boolean insertarUsuario = false;
             //Creamos los Consumers para la aplicación
@@ -370,13 +378,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        /// <summary>
-        /// Muestra un formulario para editar algunos datos de la aplicación.
-        /// </summary>
-        /// <param name="id">ConsumerId de la aplicación</param>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
-        public ActionResult Editar(int id)
+		/// <summary>
+		/// Muestra un formulario para editar algunos datos de la aplicación.
+		/// </summary>
+		/// <param name="id">ConsumerId de la aplicación</param>
+		/// <returns></returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public ActionResult Editar(int id)
         {
             GuardarLogAuditoria();
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
@@ -393,10 +401,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Guarda los datos de la aplicación editada.
         /// </summary>
         /// <param name="pModelo">ConsumerModel con los datos de la aplicación</param>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
+        /// <returns></returns>        
         [HttpPost]
-        public ActionResult Editar(ConsumerModel pModelo)
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public ActionResult Editar(ConsumerModel pModelo)
         {
             GuardarLogAuditoria();
             if (ModelState.IsValid)
@@ -436,13 +444,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        /// <summary>
-        /// Muestra la información de la aplicación.
-        /// </summary>
-        /// <param name="id">ConsumerId de la aplicación</param>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
-        public ActionResult Informe(int id)
+		/// <summary>
+		/// Muestra la información de la aplicación.
+		/// </summary>
+		/// <param name="id">ConsumerId de la aplicación</param>
+		/// <returns></returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public ActionResult Informe(int id)
         {
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
             OAuthToken tokens = mOAuthCN.ConsultarTokensPorUsuarioIDyConsumerId(mControladorBase.UsuarioActual.UsuarioID, id);
@@ -454,13 +462,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return View(modelo);
         }
 
-        /// <summary>
-        /// Genera el token, el tokenSecret y los almacena en la BD.
-        /// </summary>
-        /// <param name="id">ConsumerId de la aplicación</param>
-        /// <returns></returns>
-        [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Diseño, "AdministracionDesarrolladoresPermitido" })]
-        public void Tokens(int id)
+		/// <summary>
+		/// Genera el token, el tokenSecret y los almacena en la BD.
+		/// </summary>
+		/// <param name="id">ConsumerId de la aplicación</param>
+		/// <returns></returns>
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		public void Tokens(int id)
         {
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
 

@@ -1,28 +1,84 @@
-/*global.js*/ 
+/*global.js*/
 /*
 ..........................................................................
 :: Links en ventana nueva                                               ::
 ..........................................................................
 */
 
+let bool_usarMasterParaLectura = false;
 // Permitir envío de Cookies a otro dominio
 $(document).ready(function () {
     operativaCrossDomainCookies.init();
 
     // Inicializar operativa de TinyCME
     operativaTinyMceConfig.init();
+    // Añadir clicks a items con la propiedad engancharclicks
+    engancharClicks();
+    // Búsquedas y filtrado de resultados    
+    bool_usarMasterParaLectura = $('input.inpt_usarMasterParaLectura').val() == 'True';
+
+    // Inicialización de datePickers
+    initializeDatePickers();
+    // Prevenir la actualización de páginas con formularios importantes
+    preventLeavingFormWithoutSaving();
+    // Refrescar los Waypoints para el correcto funcionamiento del "scroll infinito"
+    refreshWaypoints();
+    // Configurar el comportamiento del contenedor modal antes de que este se muestre
+    setupModalBehavior();
+    // Configurar el comportamiento del "back button" del navegador
+    initializeBackButtonNavigation();
+    // Configuración de Zoom de imágenes mediante el plugin zoomin
+    initializeImageZooming();
+    // Inicialización de reseteo de contenedor de modales
+    resetModalContainer.init();
+    // tooltips de bootstrap para que estén disponibles en toda la página
+    $('[data-toggle="tooltip"]').tooltip();
+    // Configuración de botón para FichaRecSemCms
+    $('input.btnAccionSemCms').click(function () { AccionFichaRecSemCms(this); });
+    // Añadir a los enlaces con la propiedad "rel=external" que se abran en una página nueva
+    $("a[rel=external]").attr({target: "_blank"});
+    // Inicializa el comportamiento de los tooltips de Freebase.
+    initFreebase();
 });
 
+/* Evitar ocultamiento de faceta cuando se utiliza el datepicker para seleccionar meses */
+$(document).on('click', '#ui-datepicker-div, .ui-datepicker-prev, .ui-datepicker-next', function (e) {
+    e.stopPropagation();
+});
+
+/**
+ * Inicialización de Input de tipo "File" para que coja el nombre del fichero seleccionado (Bootstrap)
+ */
+$(document).on('change', '.custom-file-input', function (event) {
+    $(this).next('.custom-file-label').html(event.target.files[0].name);
+});
+
+/**
+ * Asigna controladores de eventos click a los elementos con el atributo `clickJS`.
+ * Esta función busca todos los elementos que tienen el atributo `clickJS`, asigna el contenido de este atributo como un controlador de eventos click, y luego elimina el atributo del elemento.
+ * @returns {void}
+ */
+function engancharClicks() {
+    $('[clickJS]').each(function () {
+        var control = $(this);
+        var js = control.attr('clickJS');
+        control.removeAttr('clickJS');
+        control.click(function (evento) {
+            evento.preventDefault();
+            eval(js);
+        });
+    });
+}
 
 const operativaCrossDomainCookies = {
     init: function () {
         //if (location.protocol == 'https:')
-            $.ajaxSetup({
-                crossDomain: true,
-                xhrFields: {
-                    withCredentials: true
-                }
-            });
+        $.ajaxSetup({
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            }
+        });
     }
 }
 
@@ -32,14 +88,14 @@ const operativaCrossDomainCookies = {
  * @returns Devuelve el texto limpio para evitar inyección de código, por ejemplo, en buscadores
  */
 function escapeHTML(text) {
-	var map = {
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-		//'"': '&quot;',
-		"'": '&#039;'
-	};
-	return text.replace(/[&<>']/g, function(m) { return map[m]; });
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        //'"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>']/g, function (m) { return map[m]; });
 }
 
 /**
@@ -48,13 +104,13 @@ function escapeHTML(text) {
  * @return {*} Indica si contiene caracteres HTML que es necesario "escapar"
  */
 function containsEscapeHTML(text) {
-	const specialCharacters = ['&amp;', '&lt;', '&gt;', '&quot;', '&#039;'];
-	for (let i = 0; i < specialCharacters.length; i++) {
-	  if (text.includes(specialCharacters[i])) {
-		return true;
-	  }
-	}
-	return false;
+    const specialCharacters = ['&amp;', '&lt;', '&gt;', '&quot;', '&#039;'];
+    for (let i = 0; i < specialCharacters.length; i++) {
+        if (text.includes(specialCharacters[i])) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -125,7 +181,7 @@ const operativaFiltroRapido = {
         // Input donde se realizará la búsqueda
         this.input.on("keyup", function (event) {
             clearTimeout(that.timer);
-            that.timer = setTimeout(function () {                
+            that.timer = setTimeout(function () {
                 // Obtener el id de la lista para saber qué lista filtrar
                 const listaSelCatArbolId = that.input.data("filterlistid");
                 if (!that.isSearching) {
@@ -135,7 +191,7 @@ const operativaFiltroRapido = {
                         that.isSearching = false
                     });
                 }
-                
+
             }, that.timeWaitingForUserToType);
         });
     },
@@ -152,10 +208,17 @@ const operativaUsuariosOrganizacion = {
     /**
      * Acción para inicializar elementos y eventos
      */
-    init: function () {        
+    init: function () {
+        this.configRutas();
         this.configEvents();
     },
-
+    /**
+     * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
+     */
+    configRutas: function () {
+        // Url base
+        this.urlBase = window.location.href.split("?")[0];
+    },
     /*
      * Eventos o clicks en elementos
      * */
@@ -169,14 +232,14 @@ const operativaUsuariosOrganizacion = {
                 that.keyItem = $(e.relatedTarget).data('keyitem');
             } else {
                 that.communityKey = $(e.relatedTarget).data('communitykey');
-            }            
+            }
         });
 
         // Obtener el id del botón que ha abierto el modal (Necesario para posibles acciones)        
         $(document).on('show.bs.modal', '.getExternalIdFromModal', function (e) {
             // Key obtenido del botón que ha abierto el modal
             that.keyItem = $(e.relatedTarget).data('keyitem');
-        });    
+        });
 
         // Botón Aceptar del modal Abandonar la comunidad
         $(document).on('click', '.btnAceptarAbandonarCommunity', function () {
@@ -200,10 +263,10 @@ const operativaUsuariosOrganizacion = {
                 setTimeout(() => {
                     mostrarNotificacion('success', data);
                 }, 1500)
-                
+
             }).fail(function (data) {
                 // 1 - Mostrar error
-                mostrarNotificacion('error', "No se ha podido abandonar la comunidad, algun miembro de la organización es administrador de la comunidad.");                
+                mostrarNotificacion('error', "No se ha podido abandonar la comunidad, algun miembro de la organización es administrador de la comunidad.");
             }).always(function () {
                 OcultarUpdateProgress();
             });
@@ -215,15 +278,15 @@ const operativaUsuariosOrganizacion = {
             const id = $(this).data("communitykey");
             // Item de la lista de la comunidad mostrada
             const communityListItem = $(`#${id}`);
-                        
+
             MostrarUpdateProgress();
             GnossPeticionAjax(
                 $('#urlFilter').val() + '/activar-regauto/' + id,
                 null,
                 true
-            ).done(function (data) {                              
+            ).done(function (data) {
                 // 1 - Eliminar el panel del listado de comunidades
-                communityListItem.remove();                                
+                communityListItem.remove();
                 // 2 - Cerrar modal
                 $(`#modalActivarRegAuto_${id}`).modal('hide');
                 // 3 - Mostrar mensaje OK
@@ -234,7 +297,7 @@ const operativaUsuariosOrganizacion = {
                 location.reload();
             }).fail(function (data) {
                 // 1 - Mostrar error
-                mostrarNotificacion('error', "No se ha podido activar el registro automatico.");                
+                mostrarNotificacion('error', "No se ha podido activar el registro automatico.");
             }).always(function () {
                 OcultarUpdateProgress();
             });
@@ -246,13 +309,13 @@ const operativaUsuariosOrganizacion = {
             const id = $(this).data("communitykey");
             // Item de la lista de la comunidad mostrada
             const communityListItem = $(`#${id}`);
-            
+
             MostrarUpdateProgress();
             GnossPeticionAjax(
                 $('#urlFilter').val() + '/desactivar-regauto/' + id,
                 null,
                 true
-            ).done(function (data) {                
+            ).done(function (data) {
                 // 1 - Eliminar el panel del listado de comunidades
                 communityListItem.remove();
                 // 2 - Cerrar modal
@@ -265,14 +328,14 @@ const operativaUsuariosOrganizacion = {
                 location.reload();
             }).fail(function (data) {
                 // 1 - Mostrar error
-                mostrarNotificacion('error', "No se ha podido desactivar el registro automatico.");                
+                mostrarNotificacion('error', "No se ha podido desactivar el registro automatico.");
             }).always(function () {
                 OcultarUpdateProgress();
             });
         });
 
         // Botón Aceptar del modal "Agregar usuarios a Comunidad"
-        $(document).on('click', '.btnAceptarAccionesProyOrg', function () {            
+        $(document).on('click', '.btnAceptarAccionesProyOrg', function () {
             // Cada uno de los items que aparecen (usuarios/proyectos)
             const proyectos = $("#tblAccionesUsuOrgProyOrg").find(".proyecto");
             // Objeto para mandar la petición
@@ -334,7 +397,7 @@ const operativaUsuariosOrganizacion = {
                 // 2- Mostrar mensaje OK
                 setTimeout(() => {
                     mostrarNotificacion('success', "Acción realizada correctamente.");
-                }, 1500)                
+                }, 1500)
             }).fail(function (data) {
                 // 1 - Mostrar error
                 mostrarNotificacion('error', "Se ha producido un error. Por favor, inténtalo de nuevo más tarde.");
@@ -379,7 +442,7 @@ const operativaUsuariosOrganizacion = {
         });
 
         // Botón Aceptar del modal "Expulsar a usuario de la comunidad"
-        $(document).on('click', '.btnAceptarExpulsarUser', function () {                    
+        $(document).on('click', '.btnAceptarExpulsarUser', function () {
             MostrarUpdateProgress();
             GnossPeticionAjax(
                 $('#urlFilter').val() + '/delete/' + that.keyItem,
@@ -394,7 +457,7 @@ const operativaUsuariosOrganizacion = {
                 }, 1500)
                 // 3 - Eliminar la fila del usuario
                 $(`#${that.keyItem}`).remove();
-                
+
             }).fail(function (data) {
                 // 1 - Mostrar error
                 mostrarNotificacion('error', "Se ha producido un error al tratar de expulsar al usuario de la comunidad. Por favor, inténtalo de nuevo más tarde.");
@@ -404,13 +467,13 @@ const operativaUsuariosOrganizacion = {
         });
 
         // Buscador de elementos al escribir en inputFiltro
-        $(document).on('keyup', '.buscador-coleccion input.inputFiltro', function () {            
+        $(document).on('keyup', '.buscador-coleccion input.inputFiltro', function () {
             that.filtrarProyectosUsu();
         });
 
         // Botón de lupa para inicar búsqueda de miembros, grupos, comunidades
         $(document).on('click', '#inputLupaMiembros', function (event) {
-            that.filtrar();                        
+            that.filtrar();
         });
 
         // Input de búsqueda de miembros, grupos, comunidades (Pulsación ENTER)
@@ -419,10 +482,10 @@ const operativaUsuariosOrganizacion = {
             if (keycode == '13') {
                 that.filtrar();
                 event.preventDefault();
-                return false;                
-            }            
+                return false;
+            }
         });
-    
+
         // Checkbox para mostrar o no aquellos que participan en la comunidad
         $(document).on('change', '#mostrarParticipa', function () {
             that.filtrarProyectosUsu();
@@ -435,6 +498,13 @@ const operativaUsuariosOrganizacion = {
             const pressedButton = $(this);
             that.filtrar(pressedButton);
         });
+
+        // Opciones para filtrar por tipo de Usuario
+        $(document).on('click', '#panel-filterType a.item-dropdown', function () {
+            var tipo = $(this).attr('rel');
+            $('#tipoRol').val(tipo);
+            that.filtrar();
+        });
     },
 
     /**
@@ -445,12 +515,12 @@ const operativaUsuariosOrganizacion = {
         const textoFiltro = inputFiltro.val().toLowerCase().replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u');
         let filtrarPorTexto = false;
 
-        if (textoFiltro.length > 0) {            
+        if (textoFiltro.length > 0) {
             filtrarPorTexto = true;
-        }        
+        }
 
         // Mostrar o no según el valor del checkbox de "Mostrar todos los que participan en la comunidad
-        const mostrarTodos = !$('#mostrarParticipa').is(':checked');        
+        const mostrarTodos = !$('#mostrarParticipa').is(':checked');
 
         // Cada uno de los items (proyectos/usuarios)
         const proyectos = $("#tblAccionesUsuOrgProyOrg").find(".proyecto");;
@@ -474,21 +544,23 @@ const operativaUsuariosOrganizacion = {
      * Método para filtrar resultados al pulsar en paginador. Cargará nuevos resultados en la sección de "resultados".
      * */
     filtrar: function (pressedButton) {
+        const that = this;
         // Sección donde se mostrarán los resultados
         const $panelResults = $("#contentUsuariosOrganizacion");
 
         // Construcción del objeto para realizar la petición
         const dataPost = {
             Search: $('#txtFiltrarMiembros').val(),
+            TipoRol: $('#tipoRol').val(),
             NumPage: $('#numPagina').val(),
             Type: -1 /*($('#tipoFiltro').length > 0 ? $('#tipoFiltro').val() : -1)*/,
             Order: "ASC"/*$('#ordenFiltros').val()*/
         }
 
-        MostrarUpdateProgress();
+        loadingMostrar();
 
         // Construir la url para realizar la petición
-        const urlFilter = `${pressedButton.data("url-filter")}/filter`;
+        const urlFilter = `${that.urlBase}/filter`;
 
         // Realizar la petición para obtención de resultados
         GnossPeticionAjax(
@@ -501,34 +573,33 @@ const operativaUsuariosOrganizacion = {
             $panelResults.html(data);
         }).fail(function (data) {
         }).always(function () {
-            OcultarUpdateProgress();
+            loadingOcultar();
         });
-    },                  
+    },
 };
 
 /* Fin Administración de Comunidades */
 
-$(document).ready(function() {
-	$("a[rel=external]").attr({target: "_blank"})
-});
 
-var RecargarCKEditorInicio = true;
-
-function RecargarTodosCKEditor() {
-    return;    
-}
-
-
-function DestruirTodosCKEditor() {
-    return;
-}
-
-function RecargarCKEditor(id) {
-    return; 
-}
-
-function DestruirCKEditor(id) {
-    return;
+/**
+ * Método para confirmar el abandono de un usuario de una comunidad
+ * @param {any} url
+ */
+function confirmLeaveCommunity(url) {
+    MostrarUpdateProgress();
+    GnossPeticionAjax(
+        url,
+        null,
+        true
+    ).done(function (data) {
+        // Abandono correcto de la comunidad - Redirigir a la url devuelta por el controller
+        window.location.href = data;
+    }).fail(function (data) {
+        // Error al abandonar la comunidad
+        mostrarNotificacion('error', data);
+    }).always(function () {
+        OcultarUpdateProgress();
+        });
 }
 
 /*
@@ -536,19 +607,26 @@ function DestruirCKEditor(id) {
 :: Comprobar email valido                                               ::
 ..........................................................................
 */
-function validarEmail(sTesteo) {
-    //var reEmail = /^(?:\w+\.?)*\w+@(?:\w+\.)+\w+$/;
+
+/**
+ * Valida si una cadena es una dirección de correo electrónico válida.
+ * 
+ * @param {string} sTesteo - La cadena de texto a validar como correo electrónico.
+ * @returns {boolean} - `true` si la cadena es un correo electrónico válido, `false` en caso contrario.
+ */
+function validarEmail(sTesteo) {    
     var reEmail = /^\w+([\.\-ñÑ+]?\w+)*@\w+([\.\-ñÑ]?\w+)*(\.\w{2,})+$/;
     return reEmail.test(sTesteo);
 }
 
-function validarFecha( sFecha ) {
-    var reFecha = /\b(0?[1-9]|[12][0-9]|3[01])\/([1-9]|0[1-9]|1[0-2])\/(19|20\d{2})/;
-    return reFecha.test( sFecha );
-}
-
-//Valida una fecha y además comprueba si es bisiesto o no el año.
-function esFecha(dia,mes,anio) /* Devuelve si una fecha pasada sus tres parámetros [dia,mes,año] es válida */
+/**
+ * Valida si una fecha pasada sus tres parámetros [dia, mes, año] es válida.
+ * @param {number} dia - El día del mes (1-31).
+ * @param {number} mes - El mes del año (1-12).
+ * @param {number} anio - El año (cuatro dígitos).
+ * @returns {boolean} - `true` si la fecha es válida, `false` en caso contrario.
+ */
+function esFecha(dia,mes,anio)
 {
 	//Creo la cadena con la fecha en formato "dd/mm/yyyy"
 	if(dia < 10)
@@ -562,191 +640,81 @@ function esFecha(dia,mes,anio) /* Devuelve si una fecha pasada sus tres parámet
 	
 	var miFecha = miDia + '/' + miMes + '/' + anio;
 
-	//Comprobamos si es un formato correcto
-	var objRegExp = /^([0][1-9]|[12][0-9]|3[01])(\/|-)(0[1-9]|1[012])\2(\d{4})$/;
+    var miFecha = miDia + '/' + miMes + '/' + anio;
 
-	if(!objRegExp.test(miFecha))
-	{
-		return false; //Es una fecha incorrecta porque no cumple el formato
-	}
-	else
-	{
-		var strSeparator = miFecha.substring(2,3);
+    //Comprobamos si es un formato correcto
+    var objRegExp = /^([0][1-9]|[12][0-9]|3[01])(\/|-)(0[1-9]|1[012])\2(\d{4})$/;
 
-		//Creamos el array con los parámetros de la fecha [dia,mes,año]
-		var arrayDate = miFecha.split(strSeparator);
-		//Array con el número de días que tiene cada mes excepto febrero que se valida aparte
-		var arrayLookup = { '01' : 31,'03' : 31,'04' : 30,'05' : 31, '06' : 30,'07' : 31,
-		'08' : 31,'09' : 30,'10' : 31,'11' : 30,'12' : 31}
-
-		var intDay = parseInt(arrayDate[0],10);
-		var intMonth = parseInt(arrayDate[1],10);
-		var intYear = parseInt(arrayDate[2],10);
-
-		//Comprobamos que el valor del día y del mes sean correctos
-		if (intMonth != null) 
-		{
-			if(intMonth != 2)
-			{
-				if (intDay <= arrayLookup[arrayDate[1]] && intDay != 0)
-				{
-					return true;
-				}
-			}
-		}
-
-		//Comprobamos si es febrero y si el valor del día es correcto [Cambia si es bisiesto o no el año]
-		if (intMonth == 2)
-		{
-			if (intDay > 0 && intDay < 29)
-			{
-				return true;
-			}
-			else if (intDay == 29)
-			{
-				if ((intYear % 4 == 0) && (intYear % 100 != 0) || (intYear % 400 == 0))
-				{
-					return true;
-				}
-			}
-		}
-	}
-
-	return false; //Cualquier otro valor, falso
-}
-
-//Validar una URL
-function esURL(sURL)
-{
-    var regexURL = /^((([hH][tT][tT][pP][sS]?|[fF][tT][pP])\:\/\/)?([\w\.\-]+(\:[\w\.\&%\$\-]+)*@)?((([^\s\(\)\<\>\\\"\.\[\]\,@;:]+)(\.[^\s\(\)\<\>\\\"\.\[\]\,@;:]+)*(\.[a-zA-Z]{2,4}))|((([01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}([01]?\d{1,2}|2[0-4]\d|25[0-5])))(\b\:(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)\b)?((\/[^\/][\w\.\,\?\'\\\/\+&%\$#\=~_\-@:]*)*[^\.\,\?\"\'\(\)\[\]!;<>{}\s\x7F-\xFF])?)$/i;
-	if(sURL.length > 0 && sURL.match(regexURL)){
-		return true;
-	}else{
-		return false;
-	}
-}
-/*
-..........................................................................
-:: Arreglo de PNG's pasado a filter:progid:... para elementos puntuales ::
-..........................................................................
-*/
-//$( function() {
-//    if (!($.browser.msie && $.browser.version < 7)) return; // SOLO PARA IE6!!!
-//    var transparenciasIE = {
-//        '#wrap':'scale',
-//        'div.mascaraBoton':'crop',
-//        '#footer':'crop',
-//        '#nav a':'crop',
-//        '#tarjetaLeft':'crop',
-//        '#tarjetaRight':'crop',
-//        'span.fotoPerfil a,span.fotoPerfilBlog a,span.fotoPerfilGrande a':'image',
-//        'span.fotoPerfil a,span.fotoPerfilBlog a,span.fotoPerfilGrande a':'image',
-//        'span.miniSnapshot a':'image',
-//        'div.EstadoDafo0':'scale',
-//        'div.EstadoDafo1':'scale',
-//        'div.EstadoDafo2':'scale',
-//        'div.EstadoDafo3':'scale'
-//    };    
-//    for (elem in transparenciasIE) {
-//        $(elem).each( function() {
-//        	var ruta,
-//        		$this =  $(this);
-//        	ruta  = $this.css('backgroundImage').replace('url(', '').replace(')', '');
-//        	$this.get(0).style.filter = 'progid:DXImageTransform.Microsoft.AlphaImageLoader(src='+ ruta +',sizingMethod='+ transparenciasIE[elem] +')';
-//        	$this.css('backgroundImage', 'none');
-//        });
-//    }
-//});
-
-/*
- * Desplegables genericos a peticion                                                                            
- * Ej. uso: crearDesplegables('selector jQuery boton', 'selector jQuery desplegables', {opciones: 'apetecaun'}) 
- * Opciones disponibles {
- *     efecto: string con cualquiera de los efectos de jQuery UI disponibles (por defecto: 'slide')
- *     opciones: objeto con las opciones del efecto de jQuery UI
- *               (por defecto: {direction: 'up'} si no se define el efecto
- *     			 las propias del jQuery UI si se define otro efecto)
- *     velocidad: duracion del efecto (por defecto: 600)
- * }
- */
-function crearDesplegables(desplegar, desplegable, o) {
-    var desplegar   = $(desplegar),
-        desplegable = $(desplegable),
-        incompatibles= false;
-        o = o || {};
-    if (desplegar.length != desplegable.length) {
-        //alert('Error en la funcion crearDesplegables()\ndesplegar.length != desplegable.length');
-        return false;
-    };
-    if (!o.efecto) {
-        o.efecto = 'slide';
-        o.opciones =  {direction: 'up'};
+    if (!objRegExp.test(miFecha)) {
+        return false; //Es una fecha incorrecta porque no cumple el formato
     }
-    desplegar.each(function(indice) {
-    	if (desplegable.eq(indice).find('form.busquedaAv').length) {
-    		this.incompatibilidad = 'noBusquedaAv';
-    	}
-    	if (this.className.indexOf('activo') == -1) {
-    		desplegable.eq(indice).hide();
-    	} else {
-			desplegable.eq(indice).show();
-		}
-        $(this).click( function() {
-			$(this).toggleClass('activo');
-            desplegable.eq(indice).toggle(o.efecto, o.opciones, o.velocidad, o.callback);
-            if (this.incompatibilidad) {
-                $('div.'+this.incompatibilidad).toggle(o.efecto, o.opciones, o.velocidad, o.callback);	
+    else {
+        var strSeparator = miFecha.substring(2, 3);
+
+        //Creamos el array con los parámetros de la fecha [dia,mes,año]
+        var arrayDate = miFecha.split(strSeparator);
+        //Array con el número de días que tiene cada mes excepto febrero que se valida aparte
+        var arrayLookup = {
+            '01': 31, '03': 31, '04': 30, '05': 31, '06': 30, '07': 31,
+            '08': 31, '09': 30, '10': 31, '11': 30, '12': 31
+        }
+
+        var intDay = parseInt(arrayDate[0], 10);
+        var intMonth = parseInt(arrayDate[1], 10);
+        var intYear = parseInt(arrayDate[2], 10);
+
+        //Comprobamos que el valor del día y del mes sean correctos
+        if (intMonth != null) {
+            if (intMonth != 2) {
+                if (intDay <= arrayLookup[arrayDate[1]] && intDay != 0) {
+                    return true;
+                }
             }
-            return false;
-        });
-    });
-}
+        }
 
-function crearPestanyas(pestanya, ficha, o) {
-    var pestanya   = $(pestanya),
-        ficha = $(ficha),
-        o = o || {};
-    // OJO!!!
-    // DEFINIMOS VARIABLE GLOBAL:
-    flagPestanyas = false;
-    pestanya.eq(0).addClass('activo');
-    ficha.not(':first').hide();
-    if (pestanya.length != ficha.length) {
-        //alert('Error en la funcion crearfichas()\npestanya.length != ficha.length');
-        return false;
-    };
-    if (!o.efecto) {
-        o.efecto = 'slide';
-        o.opciones =  {direction: 'up'};
+        //Comprobamos si es febrero y si el valor del día es correcto [Cambia si es bisiesto o no el año]
+        if (intMonth == 2) {
+            if (intDay > 0 && intDay < 29) {
+                return true;
+            }
+            else if (intDay == 29) {
+                if ((intYear % 4 == 0) && (intYear % 100 != 0) || (intYear % 400 == 0)) {
+                    return true;
+                }
+            }
+        }
     }
-    pestanya.each(function(indice) {
-    	var $this = $(this);
-        $this.click( function() {
-        	if ($this.hasClass('activo') || flagPestanyas) return false;
-        	flagPestanyas = true;
-			ficha.filter(':visible').hide(o.efecto, o.opciones, o.velocidad, function() {
-	        	pestanya.removeClass('activo');
-				$this.addClass('activo');
-				ficha.eq(indice).show(o.efecto, o.opciones, o.velocidad, function() {
-					flagPestanyas = false;
-				});
-			});
-            return false;
-        });
-    });
+
+    return false; //Cualquier otro valor, falso
 }
 
+/**
+ * Crea un mensaje de error en un contenedor especificado. 
+ * @param {string} textoError - El texto del mensaje de error a mostrar.
+ * @param {string|HTMLElement} contenedor - El contenedor donde se mostrará el mensaje de error.
+ */
 function crearError(textoError, contenedor) {
     crearError(textoError, contenedor, false);
 }
 
+/**
+ * Crea un mensaje de error en un contenedor especificado. 
+ * @param {string} textoError - El texto del mensaje de error a mostrar.
+ * @param {string|HTMLElement} contenedor - El contenedor donde se mostrará el mensaje de error.
+ * @param {boolean} [moverScroll=false] - Indica si se debe desplazar la vista al mensaje de error.
+ */
 function crearError(textoError, contenedor, moverScroll) {
     crearError(textoError, contenedor, moverScroll, false)
 }
 
+/**
+ * Crea un mensaje de error en un contenedor especificado. 
+ * @param {string} textoError - El texto del mensaje de error a mostrar.
+ * @param {string|HTMLElement} contenedor - El contenedor donde se mostrará el mensaje de error.
+ * @param {boolean} [moverScroll=false] - Indica si se debe desplazar la vista al mensaje de error.
+ * @param {boolean} [positionAbsolute=false] - Indica si el mensaje de error debe tener una posición absoluta.
+ */
 function crearError(textoError, contenedor, moverScroll, positionAbsolute) {
-	// contenedor debe ser el elemento del DOM donde mostrar el error
-	// o un String para llegar al elemento via jQuery
 	var link = '';
 	
 	if(moverScroll){
@@ -754,838 +722,75 @@ function crearError(textoError, contenedor, moverScroll, positionAbsolute) {
 	}
 	
 	var $c = $(contenedor);
-	if ($c.find('div.ko').length) { // si ya existe el div.ko ...
-	    try
-        {
-	        $c.find('div.ko').html(link + textoError).shakeIt();
-        }catch(err)
-	    {	    
-	    }
+    if ($c.find('div.ko').length) { // si ya existe el div.ko ...
+        try {
+            $c.find('div.ko').html(link + textoError).shakeIt();
+        } catch (err) {
+        }
+        var $c = $(contenedor);
+        if ($c.find('div.ko').length) { // si ya existe el div.ko ...
+            try {
+                $c.find('div.ko').html(link + textoError).shakeIt();
+            } catch (err) {
+            }
 
 
-		if(positionAbsolute){
-		    $c.find('div.ko')[0].style.position = 'absolute';
-		}
-	} else { //... si no lo creamos
-		$('<div class="ko" style="display:none" >' + link + textoError + '</div>').prependTo($c).slideDown('fast');
-		if(positionAbsolute){
-		    $c.find('div.ko')[0].style.position = 'absolute';
-		}
+            if (positionAbsolute) {
+                $c.find('div.ko')[0].style.position = 'absolute';
+            }
+        } else { //... si no lo creamos
+            $('<div class="ko" style="display:none" >' + link + textoError + '</div>').prependTo($c).slideDown('fast');
+            if (positionAbsolute) {
+                $c.find('div.ko')[0].style.position = 'absolute';
+            }
+        }
+        $c.find('div.ko').show();
+
+        if (moverScroll) {
+            document.location = '#MiError';
+        }
     }
-	$c.find('div.ko').show();
-	
-	if(moverScroll){
-	    document.location = '#MiError';
-	}
 }
 
+/**
+ * Limpia todo el contenido HTML de un control especificado.
+ * @param {string} pControl - El ID del control HTML cuyo contenido será limpiado.
+ */
 function LimpiarHtmlControl(pControl)
 {
     if (document.getElementById(pControl) != null)
     {
-        //El siguiente código falla en Internet Explorer ya que no deja dar valor a innerHTML a algunos controles
-        //document.getElementById(pControl).innerHTML = '';
-        var nodosHijos=document.getElementById(pControl).childNodes
-        
+        var nodosHijos=document.getElementById(pControl).childNodes 
         for(i=0;i<nodosHijos.length;i++){
             document.getElementById(pControl).removeChild(nodosHijos[i]);
         }
     }
 }
 
-function mascaraCancelarAbsolute(texto, contenedor, funcionConfirmada) {
-    var $confirmar = $(['<div><div class="pregunta"><span>', texto, '</span><button onclick="return false;" class="btMini">', borr.si, '</button><button onclick="return false;" class="btMini">', borr.no, '</button></div><div class="mascara"></div></div>'].join(''));
-
-    $confirmar.css({
-        'z-index': 200
+/**
+ * Método para convertir una determinada fecha a partir de UTC a la fecha actual según el navegador del usuario.
+ */ 
+function convertDateFromUTC(utcDate) {
+    const fechaUTC = new Date(utcDate);
+    const formatter = new Intl.DateTimeFormat("es-ES", {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
 
-    $confirmar.find('div').css({
-        height: $(contenedor).height() + 'px',
-        paddingTop: ($(contenedor).height() / 2) + 'px',
-        width: $(contenedor).width() + 'px',
-        display: 'none',
-        position: 'absolute'
-    }).filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-
-    // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-    $confirmar.prependTo($(contenedor))
-		.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-		    $confirmar.fundidoANada();
-		}).eq(0).click(funcionConfirmada); // pero solo el primero activa la funcionConfirmada
-}
-
-function mascaraCancelar(texto, contenedor, funcionConfirmada) {
-	// contenedor debe ser el elemento del DOM que se pretende eliminar (o no)
-	// o un String para llegar al elemento via jQuery
-	
-	/* Creamos el elemento del DOM y le asignamos estilos.
-	 * Estructura creada:
-	 * <div class="confirmar">
-	 *     <div class="pregunta">
-	 *         <span>Texto de confirmacion aqui</span>
-     *         <button class="btMini">Si</button>
-	 *         <button class="btMini">No</button>
-	 *     </div>
-	 *     <div class="mascara"></div>
-	 * </div>
-	 */
-	 //TODO : LOZA --> Crear control para popups propios con mas contenido y personalizables.
-    var $confirmar = $(['<div><div class="pregunta"><span>', texto, '</span><button onclick="return false;" class="btMini">', borr.si, '</button><button onclick="return false;" class="btMini">', borr.no, '</button></div><div class="mascara"></div></div>'].join(''));
-
-    $confirmar.css({
-        'z-index': 200
-    });
-
-    $confirmar.find('div').css({
-	    height: $(contenedor).height() + 'px',
-	    paddingTop: ($(contenedor).height() / 2) + 'px',
-	    width: $(contenedor).width() + 'px',
-	    display: 'none',
-        position: 'fixed'
-	}).filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-
-	// Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-    $confirmar.prependTo($(contenedor))
-		.find('button').click( function() { // Ambos botones hacen desaparecer la mascara
-			$confirmar.fundidoANada();
-		}).eq(0).click(funcionConfirmada); // pero solo el primero activa la funcionConfirmada
-}
-
-function mascaraCancelarSiNo(texto, contenedor, funcionConfirmada, funcionNo) {
-	// contenedor debe ser el elemento del DOM que se pretende eliminar (o no)
-	// o un String para llegar al elemento via jQuery
-	var $c = $(contenedor);
-	var $superC = $(contenedor).parents('[class^=wrap]').eq(0);
-	
-	var $confirmar = $(['<div class="confirmar"><div class="pregunta"><span>',texto,'</span><button onclick="return false;" class="btMini">',borr.si,'</button><button onclick="return false;" class="btMini">',borr.no,'</button></div><div class="mascara"></div></div>'].join(''));
-	$confirmar.find('div').css({
-		top       :$c.offset().top  + 'px',
-		left      :$superC.offset().left + 'px',
-		height    :($c.height()/2)+15+'px',
-		paddingTop:($c.height()/2)-15+'px',
-		width     :$superC.width() +'px',
-		display: 'none'
-	}).filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-	// Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-	$confirmar.prependTo($superC)
-		.find('button').click( function() { // Ambos botones hacen desaparecer la mascara
-			$confirmar.fundidoANada();
-		}).eq(0).click(funcionConfirmada);// pero solo el primero activa la funcionConfirmada
-		
-	$confirmar.find('button').eq(1).click(funcionNo);
-}
-
-function mascaraCancelar2(texto, contenedor, funcionConfirmada,textoInferior) {
-	// contenedor debe ser el elemento del DOM que se pretende eliminar (o no)
-	// o un String para llegar al elemento via jQuery
-	var $c = $(contenedor);
-	var $superC = $(contenedor).parents('[class^=wrap]').eq(0);
-	
-	var $anterior = $superC.children('[class^=confirmar]').eq(0);
-	
-	if($anterior.length > 0)
-	{
-	    //Eliminar el anterior
-	    $superC.remove($anterior);
-	}
-	/* Creamos el elemento del DOM y le asignamos estilos.
-	 * Estructura creada:
-	 * <div class="confirmar">
-	 *     <div class="pregunta">
-	 *         <span>Texto de confirmacion aqui</span>
-     *         <button class="btMini">Si</button>
-	 *         <button class="btMini">No</button>
-	 *     </div>
-	 *     <div class="mascara"></div>
-	 * </div>
-	 */
-	var $confirmar = $(['<div class="confirmar"><div class="pregunta"><span>',texto,'</span><br><br><button onclick="return false;" class="btMini">',borr.si,'</button><button onclick="return false;" class="btMini">',borr.no,'</button><p class="small"><br>',textoInferior,'</p></div><div class="mascara"></div></div>'].join(''));
-	$confirmar.find('div').css({
-		top       :$c.offset().top  + 'px',
-		left      :$superC.offset().left + 'px',
-		height    :$c.height()+'px',
-		paddingTop:'20px',
-		width     :$superC.width() +'px',
-		display: 'none'
-	}).filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-	// Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-	$confirmar.prependTo($superC)
-		.find('button').click( function() { // Ambos botones hacen desaparecer la mascara
-			$confirmar.fundidoANada();
-		}).eq(0).click(funcionConfirmada); // pero solo el primero activa la funcionConfirmada
-}
-
-function mascaraCancelarAlturaFija2Textos(texto, contenedor,altura, funcionConfirmada,textoInferior) {
-	// contenedor debe ser el elemento del DOM que se pretende eliminar (o no)
-	// o un String para llegar al elemento via jQuery
-	var $c = $(contenedor);
-	var $superC = $(contenedor).parents('[class^=wrap]').eq(0);
-	
-	var $anterior = $superC.children('[class^=confirmar]').eq(0);
-	
-	if($anterior.length > 0)
-	{
-	    //Eliminar el anterior
-	    $superC.remove($anterior);
-	}
-	/* Creamos el elemento del DOM y le asignamos estilos.
-	 * Estructura creada:
-	 * <div class="confirmar">
-	 *     <div class="pregunta">
-	 *         <span>Texto de confirmacion aqui</span>
-     *         <button class="btMini">Si</button>
-	 *         <button class="btMini">No</button>
-	 *     </div>
-	 *     <div class="mascara"></div>
-	 * </div>
-	 */
-	var $confirmar = $(['<div class="confirmar"><div class="pregunta"><span>',texto,'</span><br><br><button onclick="return false;" class="btMini">',borr.si,'</button><button onclick="return false;" class="btMini">',borr.no,'</button><p class="small"><br>',textoInferior,'</p></div><div class="mascara"></div></div>'].join(''));
-	$confirmar.find('div').css({
-		top       :$c.offset().top  + 'px',
-		left      :$superC.offset().left + 'px',
-		height    :altura+'px',
-		paddingTop:'20px',
-		width     :$superC.width() +'px',
-		display: 'none'
-	}).filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-	// Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-	$confirmar.prependTo($superC)
-		.find('button').click( function() { // Ambos botones hacen desaparecer la mascara
-			$confirmar.fundidoANada();
-		}).eq(0).click(funcionConfirmada); // pero solo el primero activa la funcionConfirmada
-}
-
-function mascaraAlerta(texto, contenedor) {
-	var $c = $(contenedor);
-	var $superC = $(contenedor).parents('[class^=wrap]').eq(0);
-	var $confirmar = $(['<div class="confirmar"><div class="pregunta"><span>',texto,'</span><button onclick="return false;" class="btMini">Aceptar</button></div><div class="mascara"></div></div>'].join(''));
-	$confirmar.find('div').css({
-		top       :$c.offset().top  + 'px',
-		left      :$superC.offset().left + 'px',
-		height    :($c.height()/2)+15+'px',
-		paddingTop:($c.height()/2)-15+'px',
-		width     :$superC.width() +'px',
-		display: 'none'
-	}).filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-}
-
-
-function miniConfirmar(texto, contenedor, funcionConfirmada) {
-	// contenedor debe ser el elemento del DOM que se pretende eliminar (o no)
-	// o un String para llegar al elemento via jQuery
-	var $c = $(contenedor);
-	/* Creamos el elemento del DOM y le asignamos estilos.
-	 * Estructura creada:
-	 * <div class="miniConfirmar">
-	 *     <span>Texto de confirmacion aqui</span>
-     *     <button class="btMini">Si</button>
-	 *     <button class="btMini">No</button>
-	 * </div>
-	 */
-	var $miniC = $(['<div class="miniConfirmar"><span>',texto,'</span><button class="btMini">',borr.si,'</button><button class="btMini">',borr.no,'</button></div>'].join(''));
-	$miniC.css({display: 'none'}).fadeIn();
-	// Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-	$miniC.prependTo($c)
-		.find('button').click( function() { // Ambos botones hacen desaparecer la mascara
-			$miniC.fundidoANada();
-		}).eq(0).click(funcionConfirmada); // pero solo el primero activa la funcionConfirmada
-}
-
-// menu de edicion desplegable para los listados
-//$(function() {
-//	$('div.editarElemento').find('li:last-child').addClass('ultimo').end()
-//	.children('a,img').click(function(evento) {
-//		var editar_eliminar = function(instaKill) {
-//			$('div.editar-desplegado').removeClass('editar-desplegado');
-//			if(instaKill){$clon.remove()}else{
-//				$clon.fadeOut('fast',function(){$(this).remove()});
-//			}
-//		};
-//		var $padre = $(evento.target).parent();
-//		var $clon = $('#editar-clon');
-//		if ($padre.hasClass('editar-desplegado') && $clon.length) {
-//			clearTimeout($clon.get(0).temporizador);
-//		} else {
-//			//nos cargamos el que habia
-//			editar_eliminar(true);
-//			// y creamos el otro
-//			$padre.addClass('editar-desplegado');
-//			$clon = $padre.find('ul:first').clone(true).attr('id', 'editar-clon')
-//			.appendTo('body').css({
-//				opacity: '0',
-//				display: 'block'
-//			});
-//			// ahora que el clon nuevo ya existe y tiene dimensiones podemos ajustar que aparezca donde interesa
-//			$clon.css({
-//				top: $padre.offset().top + $padre.height() + 'px',
-//				left: $padre.offset().left + $padre.width() - $clon.width(),
-//				opacity: '1',
-//				display: 'none'
-//			}).fadeIn('fast').add($padre).hover(function() {
-//				clearTimeout($clon.get(0).temporizador);
-//			}, function() {
-//				$clon.get(0).temporizador = setTimeout(editar_eliminar, 1000);
-//			});
-//			
-//		}
-//		return false;
-//		
-//	});
-//});
-
-//LOZA : Funcion para desplegar el menu de acciones, aadirsela al onclick (onclick="javascript:mostrarMenu(event);") del enlace, y meter la imagen que lleve al lado dentro del propio enlace
-function mostrarMenu(evento) {
-        if (!evento) var evento = window.event;
-		var editar_eliminar = function(instaKill) {
-			$('div.editar-desplegado').removeClass('editar-desplegado');
-			if(instaKill){$clon.remove()}else{
-				$clon.fadeOut('fast',function(){$(this).remove()});
-			}
-		};
-		if(!evento.target){
-		var hijo = evento.srcElement;
-		}
-		else{
-		var hijo = evento.target;
-		}
-		if(hijo.nodeName == 'IMG'){
-		    hijo = $(hijo).parent();
-		}
-		var $padre = $(hijo).parent();
-		
-		
-		var $clon = $('#editar-clon');
-		if ($padre.hasClass('editar-desplegado') && $clon.length) {
-			clearTimeout($clon.get(0).temporizador);
-		} else {
-			//nos cargamos el que habia
-			editar_eliminar(true);
-			// y creamos el otro
-			$padre.addClass('editar-desplegado');
-			$clon = $padre.find('ul:first').clone(true).attr('id', 'editar-clon')
-			.appendTo('body').css({
-				opacity: '0',
-				display: 'block'
-			});
-			// ahora que el clon nuevo ya existe y tiene dimensiones podemos ajustar que aparezca donde interesa
-			$clon.css({
-				top: $padre.offset().top + $padre.height() + 'px',
-				left: $padre.offset().left + $padre.width() - $clon.width(),
-				opacity: '1',
-				display: 'none'
-			}).fadeIn('fast').add($padre).hover(function() {
-				clearTimeout($clon.get(0).temporizador);
-			}, function() {
-				$clon.get(0).temporizador = setTimeout(editar_eliminar, 1000);
-			});
-			
-		}
-		return false;
-		
-	}
-
-function realizarFuncion(funcion, contexto){
-eval(funcion);
-}
-
-
-//LOZA : Funcion para cambiar entre dos pestaas con efecto slide verical
-//DesplegarPestanyas(
-//                      id del boton(o elemento de cabecera tipo LI) que hacemos click, 
-//                      id del panel al que se asocia el elemento anterior,
-//                      id del boton(o elemento de cabecera tipo LI) que se encontraba activo,
-//                      id del panel al que se asocia el elemento anterior)
-function DesplegarPestanyas(pBoton, pPanel,pBoton2,pPanel2) {
-    var boton   = $(document.getElementById(pBoton));
-    var boton2   =$(document.getElementById(pBoton2));
-    if(boton2[0].className == 'activo'){
-        panel = $(document.getElementById(pPanel));
-        panel2 = $(document.getElementById(pPanel2));
-        o = {efecto:'blind', opciones:{direction:'vertical'}};
-        if (!o.efecto) {
-            o.efecto = 'blind';
-            o.opciones =  {direction: 'vertical'};
-        }
-        panel2.toggle(o.efecto, o.opciones, o.velocidad, function() {
-		    boton.toggleClass('activo');
-	        boton2.toggleClass('activo');
-		    panel.toggle(o.efecto, o.opciones, o.velocidad, null);
-	    });
-        return false;
-    }
-}
-
-
-function EjecutarScriptsIniciales(){
-
-	//var id = setInterval("EjecutarScriptsIniciales2()",100);
-	//setTimeout("clearInterval("+id+")",1000);
-	setTimeout("EjecutarScriptsIniciales2()",1000);
-}
-//LOZA, funcion para ejecutar los scripts iniciales en cada callback, para aadir transparencias y demas
-function EjecutarScriptsIniciales2(){
-    jQuery.fn.extend({
-//    pngIE6: function(blank) {
-//        if ($.browser.msie && $.browser.version < 7)
-//        {
-//        if (!blank) blank = 'img/blank.gif';
-//        return this.each( function() {
-//            this.style.filter = 'progid:DXImageTransform.Microsoft.AlphaImageLoader(src='+ this.src +',sizingMethod=image)';
-//            this.src = blank;
-//            });
-//        }
-
-//    },
-    shakeIt: function(o) {
-    	return this.each( function(){
-		    /* Almacenaremos en un atributo del objeto del DOM a mover los valores originales que poseia 
-		     * la primera que se llama a la funcion para evitar que al llamarla dos veces seguidas se
-		     * produzcan animaciones desde una posicion incorrecta del margen.
-		     * El objeto 'o' que se puede pasar como parametro esta destinado a la configuracion de la
-		     * animacion. Por ejemplo $('#idCualquiera').shakeit({velocidad: 200, amplitud: 40, veces: 5})
-		     */
-    		var $this = $(this),
-    		    o     = o || {},
-    		    mL    = this.mLCache || parseInt($this.css('marginLeft')),
-    		    mR    = this.mRCache || parseInt($this.css('marginRight')),
-    		    vel   = parseInt(o.velocidad) || 120,
-    		    ampl  = parseInt(o.amplitud) || 15,
-    		    veces = parseInt(o.veces) || 2;
-    		this.wCache = $this.css('width');
-    		$this.css('width', $this.width()+'px');
-    		this.mLCache = mL;
-    		this.mRCache = mR;
-    		for (var i = 0; i < veces; ++i) {
-    			$this.animate({
-    				marginLeft: (mL + ampl) + 'px',
-    				marginRight: (mR - ampl) + 'px'
-				}, vel).animate({
-					marginLeft: (mL - ampl) + 'px',
-					marginRight: (mR + ampl) + 'px'
-				}, vel);
-    		}
-    		// volvemos al estado primigenio
-    		$this.animate({
-    			marginLeft: mL + 'px',
-    			marginRight: mR + 'px'
-    		}, vel, function() {
-    			$this.css('width', this.wCache);
-    		});
-    	});
-    },
-    fundidoANada: function(o) {
-    	var o = o || {};
-    	o.velocidad = o.velocidad || 600;
-    	return this.each( function() {
-    		$(this).fadeOut(o.velocidad, function() {
-    			$(this).remove();
-    		});
-    	});
-    }
-});
-
-
-//$( function() {
-//    if (!($.browser.msie && $.browser.version < 7)) return; // SOLO PARA IE6!!!
-//    var transparenciasIE = {
-//        '#wrap':'scale',
-//        'div.mascaraBoton':'crop',
-//        '#footer':'crop',
-//        '#nav a':'crop',
-//        '#tarjetaLeft':'crop',
-//        '#tarjetaRight':'crop',
-//        'span.fotoPerfil a,span.fotoPerfilBlog a,span.fotoPerfilGrande a':'image',
-//        'span.miniSnapshot a':'image',
-//        'div.EstadoDafo0':'scale',
-//        'div.EstadoDafo1':'scale',
-//        'div.EstadoDafo2':'scale',
-//        'div.EstadoDafo3':'scale',
-//        'img':'crop'
-//    };    
-//    for (elem in transparenciasIE) {
-//        $(elem).each( function() {
-//        	var ruta,
-//        		$this =  $(this);
-//        	if($this.css('filter')==''){
-//        	    ruta  = $this.css('backgroundImage').replace('url(', '').replace(')', '');
-//        	    $this.get(0).style.filter = 'progid:DXImageTransform.Microsoft.AlphaImageLoader(src='+ ruta +',sizingMethod='+ transparenciasIE[elem] +')';
-//        	    $this.css('backgroundImage', 'none');
-//        	}
-//        });
-//    }
-//    
-//});
-
-//Muestra los paneles con la clase panelOcultar
-$( function() {
-	var divsPanelOcultar =$('div.panelOcultar');
-	var i;
-	for(i=0;i<divsPanelOcultar.length;i++)
-	{
-        divsPanelOcultar[i].style.display = "block";
-	}
-});
-
-//Muestra los '+' en los desplegables de las descripciones que tengan la clase TextoTiny
-$( function() {
-	var divsTextoTiny =$('div.TextoTiny');
-	var i;
-	for(i=0;i<divsTextoTiny.length;i++)
-	{
-	    if(divsTextoTiny[i].id != "")
-	    {
-		    if(divsTextoTiny[i].offsetHeight < divsTextoTiny[i].scrollHeight)
-		    {
-		        if($(document.getElementById(divsTextoTiny[i].id)).find('object').length > 0)
-		        {
-		            var objeto = $(document.getElementById(divsTextoTiny[i].id)).find('object')[0];
-		            if(objeto.width > divsTextoTiny[i].offsetWidth)
-		            {
-		                objeto.height = objeto.height / (objeto.width / divsTextoTiny[i].offsetWidth);
-		                objeto.width = divsTextoTiny[i].offsetWidth;
-		            }
-		        }
-    		    
-		        //$(document.getElementById(divsTextoTiny[i].id)).find('object').hide();
-		        var objects = $(document.getElementById(divsTextoTiny[i].id)).find('object');
-		        for (var count= 0;count<objects.length;count++)
-		        {
-		            var object = objects[count];
-		            if (object != null)
-		            {
-		                if (object.innerHTML.indexOf('<param name="wmode" value="transparent">') == -1)
-		                {
-		                    object.innerHTML = '<param name="wmode" value="transparent">' + object.innerHTML;
-		                }
-    		            
-    		            
-                        if (object.innerHTML.indexOf('<embed') != -1 && object.innerHTML.indexOf('<embed wmode="transparent"') == -1)
-	                    {
-	                        object.innerHTML = object.innerHTML.replace('<embed','<embed wmode="transparent"');
-	                    }
-	                }
-		        }
-			    if(document.getElementById(divsTextoTiny[i].id + '_DesplegarTexto') != null)
-			    {
-				    document.getElementById(divsTextoTiny[i].id + '_DesplegarTexto').style['display'] = '';
-			    }
-		    }
-		    else
-		    {
-			    divsTextoTiny[i].style['height'] = '';
-		    }
-		}
-	}
-});
-
-//Oculta los difuminados en las descripciones que tengan la clase TextoDifuminado
-$( function() {
-	var divsTextoDifuminadoTiny =$('div.TextoDifuminado');
-	var i;
-	
-	for(i=0;i<divsTextoDifuminadoTiny.length;i++)
-	{	    
-	    if(divsTextoDifuminadoTiny[i].offsetHeight >= divsTextoDifuminadoTiny[i].scrollHeight)
-	    {
-	         if(document.getElementById(divsTextoDifuminadoTiny[i].id + '_DifuminarTexto') != null)
-		    {		
-			    document.getElementById(divsTextoDifuminadoTiny[i].id + '_DifuminarTexto').style['display'] = 'none';
-		    }
-	    }		
-	}
-});
-
-//Muestra los '+' en los desplegables de las etiquetas y categorias desplegarEtiquetas
-$( function() {
-	var divsDesplegarEtiquetas =$('div.desplegarEtiquetas');
-	var i;
-	for(i=0;i<divsDesplegarEtiquetas.length;i++)
-	{
-	    if(divsDesplegarEtiquetas[i].id != "")
-	    {
-			var imagenMas = $(document.getElementById(divsDesplegarEtiquetas[i].id)).find('img.mas')[0];
-			var imagenMenos = $(document.getElementById(divsDesplegarEtiquetas[i].id)).find('img.menos')[0];
-			
-			imagenMas.style.display = "none";
-			imagenMenos.style.display = "none";
-			
-		    if((divsDesplegarEtiquetas[i].offsetHeight * 2 + 2) < divsDesplegarEtiquetas[i].scrollHeight)
-		    {
-				imagenMas.style.display = "";
-				imagenMenos.style.display = "";
-			
-                var alturaMaxima = divsDesplegarEtiquetas[i].getBoundingClientRect().top + divsDesplegarEtiquetas[i].offsetHeight -14; //offsetTop maximo del ultimo elemento
-                var enlaces = $(divsDesplegarEtiquetas[i]).find('a');
-                
-			    var ultimoEnlaceFila = 0,
-			        tieneImagenes = false, 
-			        comprobar = true, 
-			        j=0;
-			     
-				while(!tieneImagenes && j < enlaces.length)
-		        {
-		            if(comprobar)
-		            {
-						ultimoEnlaceFila = j;
-						if(enlaces[j].getBoundingClientRect().top > alturaMaxima + 2 || enlaces[j].innerText == "")
-						{
-						    comprobar = false;
-		                    //break;
-		                }
-		            }
-		            if($(enlaces[j].parentNode).find('img').length > 0  && enlaces[j].parentNode.className.indexOf("desplegarEtiquetas") == -1)
-		            {
-		                tieneImagenes = true;
-		            }
-					j++
-		        }
-		        j = ultimoEnlaceFila - 1;
-
-		        imagenMas.style.position = "relative";
-		        imagenMas.style.top = "0px";
-		        imagenMas.style.left = "0px";
-		        imagenMas.style['z-index'] = "100";
-		           
-			    if ($(divsDesplegarEtiquetas[i]).find('span.tag').length > 0 || tieneImagenes || j<0)
-			    {
-			        imagenMas.style.display = "none";
-			        divsDesplegarEtiquetas[i].style['height'] = '';
-			    }
-			    else
-			    {
-		            imagenMas.style.top = enlaces[j].getBoundingClientRect().top - imagenMas.getBoundingClientRect().top + 3 + 'px';
-		            imagenMas.style.left = enlaces[j].getBoundingClientRect().right - imagenMas.getBoundingClientRect().right + imagenMas.offsetWidth + 3 + 'px';
-			    }
-		    }
-		    else
-		    {
-			    divsDesplegarEtiquetas[i].style['height'] = '';
-		    }
-		}
-	}
-});
-
-	//Oculta los paneles con la clase panelOcultar [Miguel]
-    $( 
-        function()
-        {
-	        var divsPanelOcultar = $('div.panelOcultar');
-	        try
-            {
-                if (document.getElementById('ctl00_CPH1_desplegadosHack') != null)
-                {
-	                var desplegadosDiv = document.getElementById('ctl00_CPH1_desplegadosHack').value;
-	                var i;
-	                for(i=0;i<divsPanelOcultar.length;i++)
-	                {
-	                    //Miramos si no está desplegado para ocultarlo
-	                    if (desplegadosDiv.match(divsPanelOcultar[i].id) == null)
-	                    {
-                            divsPanelOcultar[i].style.display = "none";
-                        }
-                        else
-                        {
-                            //Ponemos la ficha de desplegado activo [por si ha hecho F5 se repinte bien]
-                            document.getElementById('Titulo' + divsPanelOcultar[i].id).className = "desplegable activo";
-                        }
-	                }
-	            }
-	        }
-	        catch(err)
-	        {
-	            var i;
-	            for(i=0;i<divsPanelOcultar.length;i++)
-	            {
-                    divsPanelOcultar[i].style.display = "none";
-	            }
-	        }
-        }
-     );
-
-	//Pone el estilo a los CKEDITOR que lo hayan perdido
-    $( 
-        function()
-        {
-			try
-			{
-                var textAreas = $('.comentarios textarea.cke'),
-                    instanceName = "",
-                    config = "",
-                    i = 0;
-
-                for(i=0;i<textAreas.length;i++)
-                {
-                    instanceName = textAreas[i].id;					    
-                    
-					if(document.getElementById('cke_' + instanceName) == null)
-					{
-                        config = {toolbar : textAreas[i].className.split(' ')[1]};
-
-						if(CKEDITOR.instances[instanceName] != null)
-						{
-						    var instance = CKEDITOR.instances[instanceName];
-						    instance.destroy();
-						    CKEDITOR.remove(instance);
-						}
-						CKEDITOR.replace(instanceName, config);
-						CKEDITOR.document.getById( 'cke_contents_' + instanceName ).setStyle( 'height', '120px' );
-						
-						if(CKEDITOR.instances[instanceName] != null)
-						{
-						    var editor = CKEDITOR.instances[instanceName];
-                            editor.on('paste', function(evt) {
-                                evt.data.html=evt.data.html.replace(/\\u0000/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u00AD/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u0600/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u0604/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u070F/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u17B4/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u17B5/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u200C/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u200F/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u2028/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u202F/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u2060/g,'');
-                                evt.data.html=evt.data.html.replace(/\\u206F/g,'');
-                                evt.data.html=evt.data.html.replace(/\\uFEFF/g,'');
-                                evt.data.html=evt.data.html.replace(/\\uFFF0/g,'');
-                                evt.data.html=evt.data.html.replace(/\\uFFFF/g,'');
-                                
-                                var texto = evt.data.html;
-	                            var expReg = [{busq:/style="[^"]*"/, reemp:''}]
-                        					    
-	                            for(var i=0; i< expReg.length; i++)
-	                            {
-		                            var expRegEnlace = expReg[i] ;
-		                            var oMatch = texto.match( expRegEnlace.busq ) ;
-		                            while(oMatch)
-		                            {
-			                            texto = texto.replace(oMatch, expRegEnlace.reemp);
-			                            oMatch = texto.match( expRegEnlace.busq ) ;
-		                            }
-	                            }
-
-	                            evt.data.html = texto;
-		
-                            }, editor.element.$);
-                        }
-					}
-				}
-			}
-			catch(error)
-			{
-			}
-        }
-     );
-}
-
-function DesplegarDescripcionMasNueva(imagen, panelId, alturaMin)
-{
-	var panel = document.getElementById(panelId);
-	if(panel.offsetHeight < panel.scrollHeight)
-	{
-		EstirarPanel(panel);
-	    $(imagen).find('img')[0].src = $(imagen).find('img')[0].src.replace('verMas.gif', 'verMenos.gif');
-	    $(document.getElementById(panelId + '_DesplegarTexto')).find('span')[0].innerHTML = "";
-		//$(document.getElementById(panelId)).find('object').show();
-		
-	}
-	else
-	{
-		EncogerPanel(panel, alturaMin);
-	    $(imagen).find('img')[0].src = $(imagen).find('img')[0].src.replace('verMenos.gif', 'verMas.gif');
-	    $(document.getElementById(panelId + '_DesplegarTexto')).find('span')[0].innerHTML = "...";
-		//$(document.getElementById(panelId)).find('object').hide();
-	}
-}
-
-function DesplegarDescripcionConLeerMas(imagen, panelId, alturaMin)
-{
-	var panel = document.getElementById(panelId);
-	if(panel.offsetHeight < panel.scrollHeight)
-	{
-		EstirarPanel(panel);
-		
-		var spans = $(imagen).find('span');
-		if (spans.length > 0)
-		{
-		    spans[0].style.display = 'none';
-		    $(imagen).find('img')[0].style.display = '';
-		}
-	}
-	else
-	{
-		EncogerPanel(panel, alturaMin);
-		
-		var spans = $(imagen).find('span');
-		if (spans.length > 0)
-		{
-		    spans[0].style.display = '';
-		    $(imagen).find('img')[0].style.display = 'none';
-		}
-	}
-}
-
-function DesplegarEtiquetaMas(panelId, alturaMin)
-{
-	var imagen = $(document.getElementById(panelId)).find('img.mas')[0];
-	var panel = document.getElementById(panelId);
-	if(panel.offsetHeight < panel.scrollHeight)
-	{
-		EstirarPanel(panel);
-		imagen.style.display = "none";
-	}
-	else
-	{
-		EncogerPanel(panel, alturaMin);
-		imagen.style.display = "";
-	}
-}
-
-function EstirarPanel(panel)
-{
-	if(panel.offsetHeight < panel.scrollHeight){
-		panel.style.height = panel.offsetHeight + panel.scrollHeight / 20 + "px";
-		//panel.style.height = panel.offsetHeight + 12 + "px";
-		if(panel.offsetHeight > panel.scrollHeight){
-			panel.style.height = panel.scrollHeight;
-		}
-		setTimeout("EstirarPanel(document.getElementById('" + panel.id + "'))",1);
-	}
-	else
-	{
-		panel.style.height = panel.scrollHeight + "px";
-	}
-}
-
-function EncogerPanel(panel,alturaMin)
-{
-	if(panel.offsetHeight > alturaMin){
-		panel.style.height = panel.offsetHeight - panel.scrollHeight / 20 + "px";
-		//panel.style.height = panel.offsetHeight - 12 + "px";
-		if(panel.offsetHeight <alturaMin){
-			panel.style.height = alturaMin;
-		}
-		setTimeout("EncogerPanel(document.getElementById('" + panel.id + "')," + alturaMin + ")",1);
-	}
-	else
-	{
-		panel.style.height = alturaMin + "px";
-	}
+    return formatter.format(fechaUTC).replace(',', '');
 }
 
 /**
- * Método para convertir una determinada fecha a partir de UTC a la fecha actual según el navegador del usuario.
+ * Verifica si la fecha proporcionada en un campo de entrada es válida y ajusta el formato de la fecha.
+ * 
+ * @param {HTMLInputElement} texbox - El campo de entrada de texto que contiene la fecha a validar.
+ * @returns {boolean} - Retorna `true` si la fecha es válida, de lo contrario `false`.
  */
-function convertDateFromUTC(utcDate){  
-    // Convertir a UTC+2 utilizando moment-timezone
-    const fechaUTC = moment.utc(utcDate);
-    // Establecer la zona horaria deseada
-    const fechaUTC2 = fechaUTC.tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm');
-    return fechaUTC2;
-}
-
 function isDate(texbox) {
     var fecha = texbox.value;
     var datePat = /^(\d{1,2})(\/|-)(\d{1,2})(\/|-)(\d{4})$/;
@@ -1595,7 +800,7 @@ function isDate(texbox) {
         //alert("Please enter date as either mm/dd/yyyy or mm-dd-yyyy.");
         return false;
     }
-    
+
     day = matchArray[1];// pasamos la fecha a variables
     month = matchArray[3];
     year = matchArray[5];
@@ -1608,13 +813,13 @@ function isDate(texbox) {
         return false;
     }
 
-    if ((month==4 || month==6 || month==9 || month==11) && day==31) {
+    if ((month == 4 || month == 6 || month == 9 || month == 11) && day == 31) {
         return false;
     }
 
     if (month == 2) { // comprobamos el 29 de febrero
         var isleap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-        if (day > 29 || (day==29 && !isleap)) {
+        if (day > 29 || (day == 29 && !isleap)) {
             return false;
         }
     }
@@ -1625,6 +830,14 @@ function isDate(texbox) {
 }
 
 
+/**
+ * Compara dos fechas y corrige la fecha cambiada si la primera es mayor que la segunda.
+ * 
+ * @param {HTMLInputElement} fecha1 - Primer campo de entrada de texto que contiene la primera fecha a comparar.
+ * @param {HTMLInputElement} fecha2 - Segundo campo de entrada de texto que contiene la segunda fecha a comparar.
+ * @param {string} fechaCambiada - Indicador que define cuál de las fechas se debe ajustar ("1" para `fecha1` y otro valor para `fecha2`).
+ * @returns {void} - No retorna ningún valor, ajusta `fecha1` si es necesario.
+ */
 function ComprobarFechas(fecha1, fecha2, fechaCambiada) {
     if (fecha1.value != calendario.desde && fecha1.value != calendario.desde && fecha1.value != "") {
         if (isDate(fecha1)) {
@@ -1650,7 +863,7 @@ function ComprobarFechas(fecha1, fecha2, fechaCambiada) {
                     day2 = fecha2Array[1];
                     month2 = fecha2Array[3];
                 }
-                
+
                 if (fecha1Array != null) {
                     year1 = fecha1Array[5];
                 }
@@ -1697,74 +910,6 @@ function ComprobarFechas(fecha1, fecha2, fechaCambiada) {
     }
 }
 
-/*                                                                              Grafico Trabajo
- *---------------------------------------------------------------------------------------------
-
- */
-$(function() {
-	var $context = $('#graficoTrabajo'),
-		$dt = $('dt', $context),
-		$li = $('li', $context),
-		maxH = 0,
-		totalW = $context.width();
-	
-	$dt.each(function(index) {
-		var $t = $(this),
-			proposedW = Math.floor(totalW * parseInt($t.find('big').text(), 10)/100),
-			deltaW = $t.width()-proposedW;
-		// preparamos los css
-		$t.css('cursor', 'pointer');
-		$t.width( proposedW + 'px' );
-		maxH = Math.max(maxH, $t.height());
-		// preparamos los eventos del DD
-		$t.mouseover(function() {
-			$t.next().show().css({
-				left:$t.offset().left + 'px',
-				top:$t.offset().top - 12 - $t.next().height() + 'px'
-			})
-		}).mouseout(function() {
-			$t.next().hide();
-		});
-	}).height(maxH);
-});
-/*                                                                                Tooltips (Tt)
- *---------------------------------------------------------------------------------------------
- */
-$(function() {
-	var posicionarTt = function(event) {
-		var tPosX = event.pageX - 10;
-		var tPosY = event.pageY - 17 - ($("div.tooltip").height() || 0);
-		if(tPosY < window.scrollY + 15)
-		{
-		    tPosY = tPosY + 60;
-		}
-		$("div.tooltip").css({
-			top: tPosY,
-			left: tPosX
-		});
-	}
-
-	var mostrarTt = function(event){
-	    $("div.tooltip").remove();
-		var textoTt = (this.tooltipData) ? this.tooltipData : $(this).text();
-		$("<div class='tooltip' style='display:none;'>" + textoTt + "</div>")
-		   .appendTo("body")
-		   .fadeIn();
-	    posicionarTt(event);
-	}
-
-	var ocultarTt = function() {
-		$("div.tooltip").remove();
-	}
-
-	$(".conTt").each(function() {
-		if (this.title) {
-			this.tooltipData=this.title;
-			this.removeAttribute('title');
-		}
-	}).hover(mostrarTt, ocultarTt).mousemove(posicionarTt);
-});
-
 /*                                                             Tooltips para freebase (conFbTt)
  *---------------------------------------------------------------------------------------------
  */
@@ -1772,759 +917,296 @@ var necesarioPosicionar = true;
 var mouseOnTooltip = false;
 var cerrar = 0;
 var tooltipActivo = '';
-
-$(function() {
-	var posicionarFreebaseTt = function(event) {
-	    if(necesarioPosicionar && $("div.tooltip").length > 0){
-		    var tPosX = event.pageX - 10;
-		    var tPosY = event.pageY - 17 - ($("div.tooltip").height() || 0);
-    		
-		    var navegador = navigator.appName;
-		    var anchoVentana = window.innerWidth;
-		    var altoScroll = window.pageYOffset;
-    		
-            if (navegador == "Microsoft Internet Explorer") {
-                anchoVentana = window.document.body.clientWidth;
-                altoScroll = document.documentElement.scrollTop;
+/**
+ * Inicializa el comportamiento de los tooltips de Freebase.
+ */
+function initFreebase() {
+    ocultarFreebaseTt();
+    $(".conFbTt")
+        .each(function() {
+            if (this.title) {
+                this.tooltipData = this.title;
+                this.removeAttribute('title');
             }
-    		
-		    var sumaX = tPosX + $("div.tooltip").width() + 30;
-		    if(sumaX > anchoVentana){
-		        tPosX = anchoVentana - $("div.tooltip").width() - 30;
-		    }
-    		
-		    if(tPosY < altoScroll){
-		        tPosY = event.pageY + 12
-		    }
-    		
-		    $("div.tooltip").css({
-			    top: tPosY,
-			    left: tPosX
-		    });
-		    necesarioPosicionar = false;
-		}
-	}
-
-	var mostrarFreebaseTt = function(event){
-	    var hayTooltip = $("div.tooltip").length != 0;
-	    var tooltipDiferente = false;
-	    
-	    if(hayTooltip && tooltipActivo != '' && $(this).hasClass('conFbTt')){
-	        tooltipDiferente = ($(this).text() != tooltipActivo);
-	    }
-	    
-	    if(!hayTooltip || tooltipDiferente){
-	        $("div.tooltip").remove();
-		    var textoTt = (this.tooltipData) ? this.tooltipData : $(this).text();
-		    tooltipActivo = $(this).text();
-		    $("<div class='tooltip' style='display:none; width:350px; height:auto;padding:0;' onmousemove='javascript:mouseSobreTooltip()' onmouseover='javascript:mouseSobreTooltip()' onmouseout='javascript:mouseFueraTooltip()'><div class='relatedInfoWindow'><p class='poweredby'>Powered by <a href='http://www.gnoss.com'><strong>Gnoss</strong></a></p><div class='wrapRelatedInfoWindow'>" + textoTt + "</div> <p><em>" + $('input.inpt_avisoLegal').val() + "</em></p></div></div>")
-		       .appendTo("body")
-		       .fadeIn();	       
-		       
-		       $("div.tooltip").hover(mostrarFreebaseTt, ocultarFreebaseTt).mousemove(posicionarFreebaseTt);
-		    if(tooltipDiferente){
-		        necesarioPosicionar = true;
-		    }
-	        posicionarFreebaseTt(event);
-	    }
-	    cerrar++;
-	}
-
-	var ocultarFreebaseTt = function() {
-		setTimeout(quitarFreebaseTt, 1000);
-	}
-
-	$(".conFbTt").each(function() {
-		if (this.title) {
-			this.tooltipData=this.title;
-			this.removeAttribute('title');
-		}
-	}).hover(mostrarFreebaseTt, ocultarFreebaseTt).mousemove(posicionarFreebaseTt);
-});
-
-
-function quitarFreebaseTt(){
-    cerrar--;
-    if((cerrar <= 0) && (!mouseOnTooltip)){
-        $("div.tooltip").remove();
-        necesarioPosicionar = true;
-    }
+        })
+        .hover(mostrarFreebaseTt, ocultarFreebaseTt)
+        .mousemove(posicionarFreebaseTt);
 }
 
-function mouseFueraTooltip()
-{
-    mouseOnTooltip = false;
-    if(cerrar <= 0){
-        setTimeout(quitarFreebaseTt, 1000);
-    }
-}
-
-function mouseSobreTooltip()
-{
-    mouseOnTooltip = true;
-}
-
-function GuardarDescrHack(pCKeID, pHackID)
-{
-	//document.getElementById(pHackID).value = ObtenerValorCKEditor(pCKeID);
-	document.getElementById(pHackID).value = $('#' + pCKeID).val();
-}
-
-function ObtenerValorCKEditor(pCKeID)
-{
-    try
-    {
-        var editor = CKEDITOR.instances[pCKeID];
-
-	    if(editor)
-	    {
-		    var texto = editor.document.$.body.innerHTML;
-		    var expReg = [{busq:/target="[^"]*"/g, reemp:''} ,
-		                  {busq:/id="[^"]*"/g, reemp:''} ,
-		                  {busq:/href="javascript:void\(0\)\/\*\d*\*\/"/g, reemp:''} ,
-		                  {busq:/_cke_saved_href=/g, reemp:'href='}]
-
-		    for(var i=0; i< expReg.length; i++)
-		    {
-			    var expRegEnlace = expReg[i] ;
-			    var oMatch = texto.match( expRegEnlace.busq ) ;
-			    if(oMatch)
-			    {
-			        for(var j=0; j< oMatch.length; j++)
-			        {
-				        texto = texto.replace(oMatch[j], expRegEnlace.reemp);
-			        }
-			    }
-		    }
-		    texto = texto.replace(/<a /g, '<a target="_blank" ');
-
-		    return texto;
-	    }
-	    else
-	    {
-		    return  document.getElementById(pCKeID).value;
-	    }
-	}
-	catch(ex)
-	{
-	    return null;
-	}
-}
-
-
-//Reemplaza los contadores '(n)' p.e. en la bandeja de mensajes
-function reemplazarContadores(idPanel, numero)
-{
-    var texto = $(idPanel).html();
-    var expRegEnlace ='\\([0-9]*\\)';
-    var re = new RegExp(expRegEnlace);
-    var oMatch = texto.match(re);
-    if(oMatch)
-    {
-        if(numero > 0)
-        {
-            texto = texto.replace(oMatch, '(' + numero + ')');
-        }
-        else
-        {
-            texto = texto.replace(oMatch, '');
+/**
+ * Obtiene el valor del hash de la URL actual.
+ * 
+ * @returns {string} - El valor del hash de la URL o una cadena vacía si no hay hash.
+ */
+function ObtenerHash() {
+    var hash = window.location.hash;
+    if (hash != null && hash != '') {
+        var posicion = hash.indexOf(hash)
+        if (posicion > -1) {
+            return hash;
         }
     }
-    else
-    {
-        if(numero > 0)
-        {
-            texto = texto + '(' + numero + ')';
-        }
-    }
-    $(idPanel).html(texto);
+    return '';
 }
 
-function ObtenerHash(){
-	var hash = window.location.hash;
-	if(hash != null && hash != ''){
-		var posicion = hash.indexOf(hash)
-		if(posicion > -1){
-			return hash;
-			}
-	}
-	return '';
-}
 
-function urlEncodeCharacter(c)
-{
-	return '%' + c.charCodeAt(0).toString(16);
-}
-
-function urlDecodeCharacter(str, c)
-{
-	return String.fromCharCode(parseInt(c, 16));
-}
-
+/**
+ * Codifica una cadena de texto en formato URL.
+ * 
+ * @param {string} s - La cadena de texto a codificar.
+ * @returns {string} - La cadena codificada en formato URL.
+ */
 function urlEncode(s)
 {
     var is_firefox = navigator.userAgent.toLowerCase().indexOf('firefox/') > -1;  
     if (is_firefox)
-    {
-        //return encodeURIComponent(s).replace( /[^0-9a-z]/g, urlEncodeCharacter );
+    {        
         return encodeURIComponent(s);
     }
-    else
-    {
+    else {
         return encodeURIComponent(s);
     }
 }
 
+/**
+ * Decodifica una cadena de texto en formato URL.
+ * 
+ * @param {string} s - La cadena de texto a decodificar.
+ * @returns {string} - La cadena decodificada desde formato URL.
+ */
 function urlDecode(s)
 {
     var is_firefox = navigator.userAgent.toLowerCase().indexOf('firefox/') > -1;  
     if (is_firefox)
-    {
-        //return decodeURIComponent(s).replace( /\%([0-9a-f]{2})/g, urlDecodeCharacter);
+    {        
         return decodeURIComponent(s);
     }
-    else
-    {
+    else {
         return decodeURIComponent(s);
     }
 }
 
+/**
+ * Un objeto para la codificación y decodificación de caracteres HTML y Unicode.
+ * 
+ * @namespace
+ */
 Encoder = {
 
-	// When encoding do we convert characters into html or numerical entities
+    // When encoding do we convert characters into html or numerical entities
     EncodeType: "entity",  // entity OR numerical
     arr1: ['&nbsp;', '&iexcl;', '&cent;', '&pound;', '&curren;', '&yen;', '&brvbar;', '&sect;', '&uml;', '&copy;', '&ordf;', '&laquo;', '&not;', '&shy;', '&reg;', '&macr;', '&deg;', '&plusmn;', '&sup2;', '&sup3;', '&acute;', '&micro;', '&para;', '&middot;', '&cedil;', '&sup1;', '&ordm;', '&raquo;', '&frac14;', '&frac12;', '&frac34;', '&iquest;', '&Agrave;', '&Aacute;', '&Acirc;', '&Atilde;', '&Auml;', '&Aring;', '&AElig;', '&Ccedil;', '&Egrave;', '&Eacute;', '&Ecirc;', '&Euml;', '&Igrave;', '&Iacute;', '&Icirc;', '&Iuml;', '&ETH;', '&Ntilde;', '&Ograve;', '&Oacute;', '&Ocirc;', '&Otilde;', '&Ouml;', '&times;', '&Oslash;', '&Ugrave;', '&Uacute;', '&Ucirc;', '&Uuml;', '&Yacute;', '&THORN;', '&szlig;', '&agrave;', '&aacute;', '&acirc;', '&atilde;', '&auml;', '&aring;', '&aelig;', '&ccedil;', '&egrave;', '&eacute;', '&ecirc;', '&euml;', '&igrave;', '&iacute;', '&icirc;', '&iuml;', '&eth;', '&ntilde;', '&ograve;', '&oacute;', '&ocirc;', '&otilde;', '&ouml;', '&divide;', '&oslash;', '&ugrave;', '&uacute;', '&ucirc;', '&uuml;', '&yacute;', '&thorn;', '&yuml;', '&quot;', '&amp;', '&lt;', '&gt;', '&OElig;', '&oelig;', '&Scaron;', '&scaron;', '&Yuml;', '&circ;', '&tilde;', '&ensp;', '&emsp;', '&thinsp;', '&zwnj;', '&zwj;', '&lrm;', '&rlm;', '&ndash;', '&mdash;', '&lsquo;', '&rsquo;', '&sbquo;', '&ldquo;', '&rdquo;', '&bdquo;', '&dagger;', '&Dagger;', '&permil;', '&lsaquo;', '&rsaquo;', '&euro;', '&fnof;', '&Alpha;', '&Beta;', '&Gamma;', '&Delta;', '&Epsilon;', '&Zeta;', '&Eta;', '&Theta;', '&Iota;', '&Kappa;', '&Lambda;', '&Mu;', '&Nu;', '&Xi;', '&Omicron;', '&Pi;', '&Rho;', '&Sigma;', '&Tau;', '&Upsilon;', '&Phi;', '&Chi;', '&Psi;', '&Omega;', '&alpha;', '&beta;', '&gamma;', '&delta;', '&epsilon;', '&zeta;', '&eta;', '&theta;', '&iota;', '&kappa;', '&lambda;', '&mu;', '&nu;', '&xi;', '&omicron;', '&pi;', '&rho;', '&sigmaf;', '&sigma;', '&tau;', '&upsilon;', '&phi;', '&chi;', '&psi;', '&omega;', '&thetasym;', '&upsih;', '&piv;', '&bull;', '&hellip;', '&prime;', '&Prime;', '&oline;', '&frasl;', '&weierp;', '&image;', '&real;', '&trade;', '&alefsym;', '&larr;', '&uarr;', '&rarr;', '&darr;', '&harr;', '&crarr;', '&lArr;', '&uArr;', '&rArr;', '&dArr;', '&hArr;', '&forall;', '&part;', '&exist;', '&empty;', '&nabla;', '&isin;', '&notin;', '&ni;', '&prod;', '&sum;', '&minus;', '&lowast;', '&radic;', '&prop;', '&infin;', '&ang;', '&and;', '&or;', '&cap;', '&cup;', '&int;', '&there4;', '&sim;', '&cong;', '&asymp;', '&ne;', '&equiv;', '&le;', '&ge;', '&sub;', '&sup;', '&nsub;', '&sube;', '&supe;', '&oplus;', '&otimes;', '&perp;', '&sdot;', '&lceil;', '&rceil;', '&lfloor;', '&rfloor;', '&lang;', '&rang;', '&loz;', '&spades;', '&clubs;', '&hearts;', '&diams;'],
     arr2: ['&#160;', '&#161;', '&#162;', '&#163;', '&#164;', '&#165;', '&#166;', '&#167;', '&#168;', '&#169;', '&#170;', '&#171;', '&#172;', '&#173;', '&#174;', '&#175;', '&#176;', '&#177;', '&#178;', '&#179;', '&#180;', '&#181;', '&#182;', '&#183;', '&#184;', '&#185;', '&#186;', '&#187;', '&#188;', '&#189;', '&#190;', '&#191;', '&#192;', '&#193;', '&#194;', '&#195;', '&#196;', '&#197;', '&#198;', '&#199;', '&#200;', '&#201;', '&#202;', '&#203;', '&#204;', '&#205;', '&#206;', '&#207;', '&#208;', '&#209;', '&#210;', '&#211;', '&#212;', '&#213;', '&#214;', '&#215;', '&#216;', '&#217;', '&#218;', '&#219;', '&#220;', '&#221;', '&#222;', '&#223;', '&#224;', '&#225;', '&#226;', '&#227;', '&#228;', '&#229;', '&#230;', '&#231;', '&#232;', '&#233;', '&#234;', '&#235;', '&#236;', '&#237;', '&#238;', '&#239;', '&#240;', '&#241;', '&#242;', '&#243;', '&#244;', '&#245;', '&#246;', '&#247;', '&#248;', '&#249;', '&#250;', '&#251;', '&#252;', '&#253;', '&#254;', '&#255;', '&#34;', '&#38;', '&#60;', '&#62;', '&#338;', '&#339;', '&#352;', '&#353;', '&#376;', '&#710;', '&#732;', '&#8194;', '&#8195;', '&#8201;', '&#8204;', '&#8205;', '&#8206;', '&#8207;', '&#8211;', '&#8212;', '&#8216;', '&#8217;', '&#8218;', '&#8220;', '&#8221;', '&#8222;', '&#8224;', '&#8225;', '&#8240;', '&#8249;', '&#8250;', '&#8364;', '&#402;', '&#913;', '&#914;', '&#915;', '&#916;', '&#917;', '&#918;', '&#919;', '&#920;', '&#921;', '&#922;', '&#923;', '&#924;', '&#925;', '&#926;', '&#927;', '&#928;', '&#929;', '&#931;', '&#932;', '&#933;', '&#934;', '&#935;', '&#936;', '&#937;', '&#945;', '&#946;', '&#947;', '&#948;', '&#949;', '&#950;', '&#951;', '&#952;', '&#953;', '&#954;', '&#955;', '&#956;', '&#957;', '&#958;', '&#959;', '&#960;', '&#961;', '&#962;', '&#963;', '&#964;', '&#965;', '&#966;', '&#967;', '&#968;', '&#969;', '&#977;', '&#978;', '&#982;', '&#8226;', '&#8230;', '&#8242;', '&#8243;', '&#8254;', '&#8260;', '&#8472;', '&#8465;', '&#8476;', '&#8482;', '&#8501;', '&#8592;', '&#8593;', '&#8594;', '&#8595;', '&#8596;', '&#8629;', '&#8656;', '&#8657;', '&#8658;', '&#8659;', '&#8660;', '&#8704;', '&#8706;', '&#8707;', '&#8709;', '&#8711;', '&#8712;', '&#8713;', '&#8715;', '&#8719;', '&#8721;', '&#8722;', '&#8727;', '&#8730;', '&#8733;', '&#8734;', '&#8736;', '&#8743;', '&#8744;', '&#8745;', '&#8746;', '&#8747;', '&#8756;', '&#8764;', '&#8773;', '&#8776;', '&#8800;', '&#8801;', '&#8804;', '&#8805;', '&#8834;', '&#8835;', '&#8836;', '&#8838;', '&#8839;', '&#8853;', '&#8855;', '&#8869;', '&#8901;', '&#8968;', '&#8969;', '&#8970;', '&#8971;', '&#9001;', '&#9002;', '&#9674;', '&#9824;', '&#9827;', '&#9829;', '&#9830;'],
 
-	isEmpty : function(val){
-		if(val){
-			return ((val===null) || val.length==0 || /^\s+$/.test(val));
-		}else{
-			return true;
-		}
-	},
-	// Convert HTML entities into numerical entities
-	HTML2Numerical : function(s){
-	    return this.swapArrayVals(s, this.arr1, this.arr2);
-	},	
-
-	// Convert Numerical entities into HTML entities
-	NumericalToHTML : function(s){
-	    return this.swapArrayVals(s, this.arr2, this.arr1);
-	},
-
-
-	// Numerically encodes all unicode characters
-	numEncode : function(s){
-		
-		if(this.isEmpty(s)) return "";
-
-		var e = "";
-		for (var i = 0; i < s.length; i++)
-		{
-			var c = s.charAt(i);
-			if (c < " " || c > "~")
-			{
-				c = "&#" + c.charCodeAt() + ";";
-			}
-			e += c;
-		}
-		return e;
-	},
-	
-	// HTML Decode numerical and HTML entities back to original values
-	htmlDecode : function(s){
-
-		var c,m,d = s;
-		
-		if(this.isEmpty(d)) return "";
-
-		// convert HTML entites back to numerical entites first
-		d = this.HTML2Numerical(d);
-		
-		// look for numerical entities &#34;
-		arr=d.match(/&#[0-9]{1,5};/g);
-		
-		// if no matches found in string then skip
-		if(arr!=null){
-			for(var x=0;x<arr.length;x++){
-				m = arr[x];
-				c = m.substring(2,m.length-1); //get numeric part which is refernce to unicode character
-				// if its a valid number we can decode
-				if(c >= -32768 && c <= 65535){
-					// decode every single match within string
-					d = d.replace(m, String.fromCharCode(c));
-				}else{
-					d = d.replace(m, ""); //invalid so replace with nada
-				}
-			}			
-		}
-
-		return d;
-	},		
-
-	// encode an input string into either numerical or HTML entities
-	htmlEncode : function(s,dbl){
-			
-		if(this.isEmpty(s)) return "";
-
-		// do we allow double encoding? E.g will &amp; be turned into &amp;amp;
-		dbl = dbl || false; //default to prevent double encoding
-		
-		// if allowing double encoding we do ampersands first
-		if(dbl){
-			if(this.EncodeType=="numerical"){
-				s = s.replace(/&/g, "&#38;");
-			}else{
-				s = s.replace(/&/g, "&amp;");
-			}
-		}
-
-		// convert the xss chars to numerical entities ' " < >
-		s = this.XSSEncode(s,false);
-		
-		if(this.EncodeType=="numerical" || !dbl){
-			// Now call function that will convert any HTML entities to numerical codes
-			s = this.HTML2Numerical(s);
-		}
-
-		// Now encode all chars above 127 e.g unicode
-		s = this.numEncode(s);
-
-		// now we know anything that needs to be encoded has been converted to numerical entities we
-		// can encode any ampersands & that are not part of encoded entities
-		// to handle the fact that I need to do a negative check and handle multiple ampersands &&&
-		// I am going to use a placeholder
-
-		// if we don't want double encoded entities we ignore the & in existing entities
-		if(!dbl){
-			s = s.replace(/&#/g,"##AMPHASH##");
-		
-			if(this.EncodeType=="numerical"){
-				s = s.replace(/&/g, "&#38;");
-			}else{
-				s = s.replace(/&/g, "&amp;");
-			}
-
-			s = s.replace(/##AMPHASH##/g,"&#");
-		}
-		
-		// replace any malformed entities
-		s = s.replace(/&#\d*([^\d;]|$)/g, "$1");
-
-		if(!dbl){
-			// safety check to correct any double encoded &amp;
-			s = this.correctEncoding(s);
-		}
-
-		// now do we need to convert our numerical encoded string into entities
-		if(this.EncodeType=="entity"){
-			s = this.NumericalToHTML(s);
-		}
-
-		return s;					
-	},
-
-	// Encodes the basic 4 characters used to malform HTML in XSS hacks
-	XSSEncode : function(s,en){
-		if(!this.isEmpty(s)){
-			en = en || true;
-			// do we convert to numerical or html entity?
-			if(en){
-				s = s.replace(/\'/g,"&#39;"); //no HTML equivalent as &apos is not cross browser supported
-				s = s.replace(/\"/g,"&quot;");
-				s = s.replace(/</g,"&lt;");
-				s = s.replace(/>/g,"&gt;");
-			}else{
-				s = s.replace(/\'/g,"&#39;"); //no HTML equivalent as &apos is not cross browser supported
-				s = s.replace(/\"/g,"&#34;");
-				s = s.replace(/</g,"&#60;");
-				s = s.replace(/>/g,"&#62;");
-			}
-			return s;
-		}else{
-			return "";
-		}
-	},
-
-	// returns true if a string contains html or numerical encoded entities
-	hasEncoded : function(s){
-		if(/&#[0-9]{1,5};/g.test(s)){
-			return true;
-		}else if(/&[A-Z]{2,6};/gi.test(s)){
-			return true;
-		}else{
-			return false;
-		}
-	},
-
-	// will remove any unicode characters
-	stripUnicode : function(s){
-		return s.replace(/[^\x20-\x7E]/g,"");
-		
-	},
-
-	// corrects any double encoded &amp; entities e.g &amp;amp;
-	correctEncoding : function(s){
-		return s.replace(/(&amp;)(amp;)+/,"$1");
-	},
-
-
-	// Function to loop through an array swaping each item with the value from another array e.g swap HTML entities with Numericals
-	swapArrayVals : function(s,arr1,arr2){
-		if(this.isEmpty(s)) return "";
-		var re;
-		if(arr1 && arr2){
-			//ShowDebug("in swapArrayVals arr1.length = " + arr1.length + " arr2.length = " + arr2.length)
-			// array lengths must match
-			if(arr1.length == arr2.length){
-				for(var x=0,i=arr1.length;x<i;x++){
-					re = new RegExp(arr1[x], 'g');
-					s = s.replace(re,arr2[x]); //swap arr1 item with matching item from arr2	
-				}
-			}
-		}
-		return s;
-	},
-
-	inArray : function( item, arr ) {
-		for ( var i = 0, x = arr.length; i < x; i++ ){
-			if ( arr[i] === item ){
-				return i;
-			}
-		}
-		return -1;
-	}
-
-}
-
-function OculatarHerramientaAddto()
-{
-    if($.browser.msie && $.browser.version < 7)
-    {
-        idIntervalo = setInterval("accederWeb()",500);
-    }
-}
-
-function CambiarNombre(link, nombre1, nombre2)
-{
-    if(link.innerHTML == nombre1)
-    {
-        link.innerHTML = nombre2;
-    }
-    else
-    {
-        link.innerHTML = nombre1;
-    }
-}
-
-
-var panelFicherosDisponibles = {
-	idSection: '#section',
-	cssDescripcion: '.descripcion',
-	cssHeader: '.descripcion .header',
-	cssPanelDesplegable: '.panel',
-	idPanel: '#panelFicherosDisponibles',
-	desplegable: '',
-	enlace: '',
-	linkPDFEs: 'gnossOnto:linkPDFEs',
-	linkPDFEn: 'gnossOnto:linkPDFEn',
-	cssFicheroPdf: '.isPdf',
-	enlaces: [],
-	literales: [],
-	init: function(){
-		this.config();
-		this.crear();
-		this.configPanel();
-		this.ficheros();
-		this.escribirFicheros();
-		this.enganchar();
-		return;
-	},
-	config: function(){
-		this.section = $(this.idSection);
-		this.header = $(this.cssHeader, this.section);
-		return;
-	},
-	ficheros: function(){
-		var ficheros = $(this.cssFicheroPdf, this.section);
-		var enlaces = [];
-		var literales = [];
-		ficheros.each(function(){
-			enlaces.push($('a', this));
-			literales.push($(this).prev().html());
-		});
-		this.enlaces = enlaces;
-		this.literales = literales;
-		return;
-	},
-	escribirFicheros: function(){
-		var enlace;
-		var href;
-		var html;		
-		var lis = '';
-		var that = this;
-		$(this.enlaces).each(function(indice){
-			enlace = that.enlaces[indice];
-			enlace = $(enlace);
-			href = enlace.attr('href');
-			html = enlace.html();		
-			lis += '<li>' + that.literales[indice] + ' <a href="' + href + '">' + html + '</a></li>';
-		});
-		this.ul.html(lis);
-		return;
-	},
-	crear: function(){
-		var encabezado = $('h3', this.header);
-		encabezado.after(panelFicherosDisponibles.template());
-		return;
-	},
-	configPanel: function(){
-		this.panel = $(this.idPanel, this.section);
-		this.desplegable = $(this.cssPanelDesplegable, this.panel);
-		this.enlace = $('.pdf a', this.panel);
-		this.ul = $('ul', this.panel);
-		return;
-	},	
-	enganchar: function(){
-		var that = this;
-		this.enlace.bind('click', function(evento){
-			evento.preventDefault();
-			that.comportamiento(evento);
-			return false;
-		});
-		return;
-	},
-	comportamiento: function(evento){
-		this.desplegable.is(':visible')? this.desplegable.hide():this.desplegable.show();
-	},
-	template: function(){
-		var html = '<div id="panelFicherosDisponibles">\n';
-		html += '<p class="pdf"><a href="/">'+ form.fichaTecnicaPDF +'<\/a><\/p>';
-		html += '<div class="panel">\n';	
-		html += '<ul>\n';	
-		html += '<li>No hay ficheros disponibles<\/li>\n';	
-		html += '<\/ul>\n';	
-		html += '<\/div>\n';	
-		html += '<\/div>\n';	
-		return html;
-	}
-};
-
-$(function(){
-	var ficheros = $('#section .isPdf');
-	var isFicherosDisponibles = ficheros.length > 0;
-	if(isFicherosDisponibles) panelFicherosDisponibles.init();
-})/**/ 
-/*custom.js*/ 
-$( function() {
-    $('input.noLabel[type=text]').focus( function() {
-        var $this = $(this);
-        this.cache = this.cache || $this.val(); // si la cache del input esta vacia la llenamos
-        $this.val('');
-    }).blur( function() {
-        this.value = this.value || this.cache;
-    });
-    $('input.password.noLabel').focus( function() {
-        $(this).addClass('noBgImg');
-    }).blur( function() {
-    if (!this.value) {
-            $(this).removeClass('noBgImg');
+    isEmpty: function (val) {
+        if (val) {
+            return ((val === null) || val.length == 0 || /^\s+$/.test(val));
+        } else {
+            return true;
         }
-    });
-    
-    // Correccion bordes de input para IE
-    $('input').filter('[type=radio], [type=checkbox]').css({
-		border: 0,
-		padding: 0,
-		marginTop: 0
-    });
+    },
+    // Convert HTML entities into numerical entities
+    HTML2Numerical: function (s) {
+        return this.swapArrayVals(s, this.arr1, this.arr2);
+    },
 
-    /* Definimos globalmente los desplegables.
-     * Para montar un desplegable basta con definir un enlace que sirva de boton (a.desplegable)
-     * y una capa con clase panel (div.panel). OJO, si se usa cualquiera de los dos elementos fuera
-     * de su estructura preparada se producira un error de JS y un alert(...)
-     */
-	 
-	//LOZA : Para los desplegables, es recomendable usar la funcion "Desplegar(Boton, PanelId)" en el onclick del enlace que despliega. (Ver ejemplo en BandejaBorradores.aspx)
-    //crearDesplegables('a.desplegable', 'div.panel',{efecto:'blind', opciones:{direction:'vertical'}});
-    crearDesplegables('#desplegarMenu', '#menuLateral',{velocidad: 300});
-    //crearPestanyas('ul.pestanyas li', 'div.pestanya',{efecto:'slide', velocidad:600, opciones:{direction:'up'}})
-	
-	// cambiar la url mediante el select
-	$('select.cambiarListado').change(function(){
-		window.location=this.value;
-	});
-	
-	// filtros de busqueda rapida
-	$('.filtroRapido').find('input').keyup( function() {
-		var $this = $(this);
-		if (this.value.length > 2) {
-			$this.addClass('activo');
-		} else {
-			$this.removeClass('activo');
-		}
-	});
-	
-	// duplicar campos de registro de organizacion
-	$('div.agregarCampo').find('a').click(function() {
-		var $campo = $(this).parents('div.agregarCampo').eq(0).find('input:last');
-		$campo.clone().insertAfter($campo);
-		return false;
-	});
-	
-	// PSEUDO FINDER
-	$.fn.extend({
-		reajustar:function(){// funcion interna para recalcular las alturas del finder y el scroll interno
-		    return this.each(function(){
-		    	var h=0;
-		    	var $mascara=$(this);
-		    	var anchura = $mascara.children('div').width()-1;
-		    	var niveles=$mascara.find('li.activo').length||1;
-		    	$mascara.find('div:visible').each(function() {
-		    		var hTemp=0;
-		    		$(this).children().each( function() {
-		    			var $this=$(this);
-		    			hTemp+=parseFloat($this.css('paddingTop'));
-		    			hTemp+=parseFloat($this.height());
-		    			hTemp+=parseFloat($this.css('paddingBottom'));
-		    		});
-		    		h=(hTemp>h)?hTemp:h;
-		    	});
-			    $mascara.animate({height:h+'px'},200)
-			    .children('div').eq(0).animate({left:-anchura*(niveles-1)+'px'}, 600);
-			    if (niveles > 1) {
-			    	$mascara.find('a.volver').fadeIn(200);
-			    } else {
-			    	$mascara.find('a.volver').fadeOut(200);
-			    }
-		    });
-		},
-	    desactivar:function(){
-	    	return this.each(function(){
-	    		$(this).find('li').andSelf().removeClass('activo')
-	    		    .children().removeClass('activo')
-	    		    .siblings('div').hide();
-	    	});
-	    }
-	});
-	$('div.pseudoFinder').each(function() {
-		var $mascara = $(this);
-		// mostrar un nivel inferior
-		$mascara.find('div').siblings('a:not(.volver)').click( function() {
-			var $li = $(this).parent();
-			var $div = $li.children('div').show();
-			if ($li.hasClass('activo')) return false; //si ya esta activado pasamos de todo
-			// desactivamos los hermanos, reasignamos clases y reajuste de la capa
-			$li.siblings('.activo').desactivar();
-			$li.children('a').andSelf().addClass('activo');
-			$mascara.reajustar();
-			return false;
-		});
-		// enchufar en el target y realizar accion final
-		$mascara.find('a:only-child').css('backgroundImage','none').click(function(){
-			var sHtml;
-			var prime=$mascara.find('a.activo:first').text();
-			var ulti=$(this).text();
-			prime=(prime.length>50)?prime.substring(0,47)+'...':prime;
-			ulti=(ulti.length>50)?ulti.substring(0,47)+'...':ulti;
-			sHtml=['<tr><th scope="row">',prime,'</th><td>',ulti,'</td><td><img src="img/blank.gif" alt="eliminar"/></td></tr>'].join('');
-			$mascara.next('.targetPseudoFinder').show() //mostramos
-			.find('tbody').append(sHtml) //metemos el HTML
-			.find('img:last').click(function(){ // preparamos el evento de eliminar
-				var $capa=$(this).parents('div').eq(1);
-				$(this).parents('tr:first').remove();
-				if (!$capa.find('tr').length) {
-					$capa.slideUp();
-				}
-			});
-			return false;
-		});
-		// volver atras
-		$mascara.find('a.volver').click(function(){
-			$mascara.find('li.activo:last').desactivar().end().reajustar();
-			return false;
-		});
-	});
-	
-	// selector de #baseRecursos
-	$('#baseRecursos div.listadoCategorias a').click(function() {
-		$('#baseRecursos div.listadoCategorias a').removeClass('activo');
-		$(this).addClass('activo');
-		return false;
-	});
-	
-	
-	// desplegables de base de recursos
-	$('#baseRecursos h3+div.panel a').click(function(){
-		$(this).parents('.panel:first').prev().find('a').click();
-	});
-	
-	// inputs condicionados a un select de "tipo de documentos" en el apartado de subir recursos
-	$('#seleccionarRecurso,#tipoRecurso').find('select:eq(0)').change(function() {
-		var $this = $(this);
-		$this.find('option').each(function(){
-			$('#'+this.value).hide();
-		});
-		$('#'+$this.val()).show();
-	}).change();
-	
-	// CURRICULUM VITAE
-	var checkearDatosMyGnoss = function(){
-		var $this = $('#datosMyGnoss');
-		if ($this.is(':checked')) {
-			$this.parents('.cajaDestacadaLila:first').find('input:text').attr('disabled','disabled');
-		} else {
-			$this.parents('.cajaDestacadaLila:first').find('input:text').attr('disabled',false);
-		}
-	}
-	// asignamos el evento al cargar y al pinchar en el checkbox
-	$('#datosMyGnoss').click(checkearDatosMyGnoss);
-	checkearDatosMyGnoss();
-});
+    // Convert Numerical entities into HTML entities
+    NumericalToHTML: function (s) {
+        return this.swapArrayVals(s, this.arr2, this.arr1);
+    },
 
-function Desplegar(pBoton, pPanel) {
-    var boton   = $(pBoton),
-    panel = $(document.getElementById(pPanel));
-	boton.toggleClass('activo');
-	panel.toggle();
-	return false;
+
+    // Numerically encodes all unicode characters
+    numEncode: function (s) {
+
+        if (this.isEmpty(s)) return "";
+
+        var e = "";
+        for (var i = 0; i < s.length; i++) {
+            var c = s.charAt(i);
+            if (c < " " || c > "~") {
+                c = "&#" + c.charCodeAt() + ";";
+            }
+            e += c;
+        }
+        return e;
+    },
+
+    // HTML Decode numerical and HTML entities back to original values
+    htmlDecode: function (s) {
+
+        var c, m, d = s;
+
+        if (this.isEmpty(d)) return "";
+
+        // convert HTML entites back to numerical entites first
+        d = this.HTML2Numerical(d);
+
+        // look for numerical entities &#34;
+        arr = d.match(/&#[0-9]{1,5};/g);
+
+        // if no matches found in string then skip
+        if (arr != null) {
+            for (var x = 0; x < arr.length; x++) {
+                m = arr[x];
+                c = m.substring(2, m.length - 1); //get numeric part which is refernce to unicode character
+                // if its a valid number we can decode
+                if (c >= -32768 && c <= 65535) {
+                    // decode every single match within string
+                    d = d.replace(m, String.fromCharCode(c));
+                } else {
+                    d = d.replace(m, ""); //invalid so replace with nada
+                }
+            }
+        }
+
+        return d;
+    },
+
+    // encode an input string into either numerical or HTML entities
+    htmlEncode: function (s, dbl) {
+
+        if (this.isEmpty(s)) return "";
+
+        // do we allow double encoding? E.g will &amp; be turned into &amp;amp;
+        dbl = dbl || false; //default to prevent double encoding
+
+        // if allowing double encoding we do ampersands first
+        if (dbl) {
+            if (this.EncodeType == "numerical") {
+                s = s.replace(/&/g, "&#38;");
+            } else {
+                s = s.replace(/&/g, "&amp;");
+            }
+        }
+
+        // convert the xss chars to numerical entities ' " < >
+        s = this.XSSEncode(s, false);
+
+        if (this.EncodeType == "numerical" || !dbl) {
+            // Now call function that will convert any HTML entities to numerical codes
+            s = this.HTML2Numerical(s);
+        }
+
+        // Now encode all chars above 127 e.g unicode
+        s = this.numEncode(s);
+
+        // now we know anything that needs to be encoded has been converted to numerical entities we
+        // can encode any ampersands & that are not part of encoded entities
+        // to handle the fact that I need to do a negative check and handle multiple ampersands &&&
+        // I am going to use a placeholder
+
+        // if we don't want double encoded entities we ignore the & in existing entities
+        if (!dbl) {
+            s = s.replace(/&#/g, "##AMPHASH##");
+
+            if (this.EncodeType == "numerical") {
+                s = s.replace(/&/g, "&#38;");
+            } else {
+                s = s.replace(/&/g, "&amp;");
+            }
+
+            s = s.replace(/##AMPHASH##/g, "&#");
+        }
+
+        // replace any malformed entities
+        s = s.replace(/&#\d*([^\d;]|$)/g, "$1");
+
+        if (!dbl) {
+            // safety check to correct any double encoded &amp;
+            s = this.correctEncoding(s);
+        }
+
+        // now do we need to convert our numerical encoded string into entities
+        if (this.EncodeType == "entity") {
+            s = this.NumericalToHTML(s);
+        }
+
+        return s;
+    },
+
+    // Encodes the basic 4 characters used to malform HTML in XSS hacks
+    XSSEncode: function (s, en) {
+        if (!this.isEmpty(s)) {
+            en = en || true;
+            // do we convert to numerical or html entity?
+            if (en) {
+                s = s.replace(/\'/g, "&#39;"); //no HTML equivalent as &apos is not cross browser supported
+                s = s.replace(/\"/g, "&quot;");
+                s = s.replace(/</g, "&lt;");
+                s = s.replace(/>/g, "&gt;");
+            } else {
+                s = s.replace(/\'/g, "&#39;"); //no HTML equivalent as &apos is not cross browser supported
+                s = s.replace(/\"/g, "&#34;");
+                s = s.replace(/</g, "&#60;");
+                s = s.replace(/>/g, "&#62;");
+            }
+            return s;
+        } else {
+            return "";
+        }
+    },
+
+    // returns true if a string contains html or numerical encoded entities
+    hasEncoded: function (s) {
+        if (/&#[0-9]{1,5};/g.test(s)) {
+            return true;
+        } else if (/&[A-Z]{2,6};/gi.test(s)) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+
+    // will remove any unicode characters
+    stripUnicode: function (s) {
+        return s.replace(/[^\x20-\x7E]/g, "");
+
+    },
+
+    // corrects any double encoded &amp; entities e.g &amp;amp;
+    correctEncoding: function (s) {
+        return s.replace(/(&amp;)(amp;)+/, "$1");
+    },
+
+
+    // Function to loop through an array swaping each item with the value from another array e.g swap HTML entities with Numericals
+    swapArrayVals: function (s, arr1, arr2) {
+        if (this.isEmpty(s)) return "";
+        var re;
+        if (arr1 && arr2) {
+            //ShowDebug("in swapArrayVals arr1.length = " + arr1.length + " arr2.length = " + arr2.length)
+            // array lengths must match
+            if (arr1.length == arr2.length) {
+                for (var x = 0, i = arr1.length; x < i; x++) {
+                    re = new RegExp(arr1[x], 'g');
+                    s = s.replace(re, arr2[x]); //swap arr1 item with matching item from arr2	
+                }
+            }
+        }
+        return s;
+    },
+
+    inArray: function (item, arr) {
+        for (var i = 0, x = arr.length; i < x; i++) {
+            if (arr[i] === item) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
 }
 
-function MostrarImgFactorDafo(pPanel, pBaseURL, pClaveDafo, pClaveFactorDafo, pEsFactorNuevo, pRandom)
-{
-	panel = document.getElementById(pPanel + '_panel');
-	if(panel.className == "noCargado")
-	{
-		img = document.getElementById(pPanel + '_grafico');
-		var srcImg = pBaseURL + "/DafoFactorGraficoVotos.aspx?DafoID=" + pClaveDafo + "&FactorID=" + pClaveFactorDafo + "&FactorNuevo=" + pEsFactorNuevo + "&nocache=" + pRandom;
-		img.src = srcImg;
-		panel.className = "cargado"
-	}
-	DesplegarPanel(pPanel + '_panel');
-}
 
-function DesplegarTreeView(pImagen, pPanel) {
-    var imagen   = $(pImagen);
-    if(pImagen.src.indexOf('verMas')>0){
-        pImagen.src = pImagen.src.replace('verMas','verMenos');
-    }
-    else{
-        pImagen.src = pImagen.src.replace('verMenos','verMas');
-    }
-    DesplegarPanel(pPanel);
-}
 
-function marcarDespTreeView(pImagen,pIdTxt,pClave){   
-    mTxt = document.getElementById(pIdTxt);
-    if(pImagen.src.indexOf('verMas')>0){
-        mTxt.value = mTxt.value.replace(pClave + ',','');
-    }
-    else{
-        mTxt.value = mTxt.value + pClave + ',';
-    }
-}
-
+/**
+ * Agrega o elimina una clave a una lista en un campo de texto basado en el estado de un checkbox.
+ * 
+ * @param {HTMLElement} pCheck - El elemento checkbox que determina si agregar o eliminar la clave.
+ * @param {string} pIdTxt - El ID del campo de texto donde se agregará o eliminará la clave.
+ * @param {string} pClave - La clave que se agregará o eliminará de la lista en el campo de texto.
+ */
 function marcarElementoTreeView(pCheck, pIdTxt, pClave) {
     mTxt = $('#' + pIdTxt);
 
@@ -2536,83 +1218,20 @@ function marcarElementoTreeView(pCheck, pIdTxt, pClave) {
     }
 }
 
+/**
+ * Marca o desmarca un elemento en dos listas diferentes y actualiza el estado de los checkboxes en dos secciones del DOM.
+ * 
+ * @param {HTMLElement} pCheck - El elemento checkbox que determina si se debe marcar o desmarcar el elemento.
+ * @param {string} pIdTxt - El ID del campo de texto que contiene una lista de claves separadas por comas.
+ * @param {string} pClave - La clave que se marcará o desmarcará en las dos secciones del DOM.
+ */
 function marcarElementoSelCat(pCheck,pIdTxt,pClave){
     marcarElementoTreeView(pCheck, pIdTxt, pClave);
-    try
-    {
-        $('#divSelCatLista').find('span.'+pClave+' input').attr('checked', $(pCheck).is(':checked'));
-        $('#divSelCatTesauro').find('span.' + pClave + ' input').attr('checked', $(pCheck).is(':checked'));
-    } 
-    catch(Exception){
-    }
-}
-
-function marcarSoloUnElementoSelCat(pCheck,pIdTxt,pClave){
-    marcarElementoTreeView(pCheck, pIdTxt, pClave);
-
     try {
         $('#divSelCatLista').find('span.' + pClave + ' input').attr('checked', $(pCheck).is(':checked'));
         $('#divSelCatTesauro').find('span.' + pClave + ' input').attr('checked', $(pCheck).is(':checked'));
     }
     catch (Exception) {
-    }
-}
-
-function marcarElementoSelCatEHijos(pCheck,pIdTxt,pClave)
-{
-    marcarElementoTreeView(pCheck, pIdTxt, pClave)
-
-    try {
-        $('#divSelCatLista').find('span.' + pClave + ' input').attr('checked', $(pCheck).is(':checked'));
-        $('#divSelCatTesauro').find('span.' + pClave + ' input').attr('checked', $(pCheck).is(':checked'));
-    }
-    catch (Exception) {
-    }
-    
-    var hijos = $(pCheck.parentNode.parentNode).children('div').children('div').children('span').children('input');
-    hijos.each(
-        function (){
-            if ($(pCheck).is(':checked') != $(this).is(':checked')) {
-                this.click();
-            }
-        }
-    )
-}
-
-function filtrarListaSelCat(txt){
-    cadena = txt.value;
-
-    if(cadena.length>2){
-        //Volvemos a inicializar todo
-        try
-        {
-            for(i=0;i<CatEscondidas.length;i++){
-                CatEscondidas[i].style.display = 'block';
-            }
-        }
-		catch(error)
-		{
-		}
-        CatEscondidas = new Array();
-        txt.className = "activo";
-        //filtramos y guardamos los div que escondemos
-        categorias = $('div#divSelCatLista div div');
-        for(i=0;i<categorias.length;i++){
-            cat = categorias[i];
-            if(cat.style.display != 'none' && $(cat).find('span label')[0].innerHTML.toLowerCase().indexOf(cadena.toLowerCase())<0){
-                CatEscondidas[CatEscondidas.length] = cat;
-                cat.style.display = 'none';
-            }
-        }
-        
-    }
-    else{
-        //volvemos a mostrar los contactos escondidos
-            for(i=0;i<CatEscondidas.length;i++){
-                CatEscondidas[i].style.display = 'block';
-            }
-        CatEscondidas = new Array();
-        txt.className = "";
     }
 }
 
@@ -2640,1135 +1259,11 @@ function marcarElementosSelProy(pCheck, pClave) {
         $(radio1).parent().addClass("d-none");
         $(radio2).parent().addClass("d-none");
     }
-    
+
 }
-
-function filtrarListaSelProy(txtBox){    
-    filtro = txtBox.value;
-    filtro=filtro.toLowerCase();
-    filtro.replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u');
-    if(filtro.length>2){
-        txtBox.className = "activo";        
-        proyectos=$('tr.proyectos');       
-        for(i=0;i<proyectos.length;i++)
-        {
-            proy = proyectos[i]; 
-            textoProy=$(proy).find('td span')[0].innerHTML.toLowerCase().replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u');
-            if(textoProy.indexOf(filtro.toLowerCase())<0){
-                proy.style.display = 'none';
-            }else
-            {
-                proy.style.display = '';
-            }
-        }
-    }else
-    {
-        txtBox.className = "";
-        proyectos=$('tr.proyectos');
-        for(i=0;i<proyectos.length;i++)
-        {
-            proyectos[i].style.display='';
-        }
-    }
-}
-
-
-function marcarElementosSelGrupAmigos(pCheck,pClave,pIdTxt,pSoloUnCheck){
-    grupos=$('span.checkGrupo input');
-    var txtAmiSel=document.getElementById(pIdTxt);
-    if(pSoloUnCheck=='True')
-    {
-        var estaCheck=false;
-        
-        if ($(pCheck.childNodes[0]).is(':checked')) {
-            estaCheck=true;
-        }
-        
-        for(i=0;i<grupos.length;i++) {
-            $(grupos[i]).attr('checked', false);
-        }
-        txtAmiSel.value="";
-        $(pCheck.childNodes[0]).attr('checked', estaCheck);
-    }
-    if ($(pCheck.childNodes[0]).is(':checked')) {
-        txtAmiSel.value=txtAmiSel.value + pClave + '|';
-    }else
-    {
-        txtAmiSel.value = txtAmiSel.value.replace(pClave + '|','');
-    }
-}
-
-
-function getElementPosition(elemID) {
-    var offsetTrail = document.getElementById(elemID);
-    var offsetLeft = 0;
-    var offsetTop = 0;
-    while (offsetTrail)
-    {
-        offsetLeft += offsetTrail.offsetLeft;
-        offsetTop += offsetTrail.offsetTop;
-        offsetTrail = offsetTrail.offsetParent;
-    }
-    if (navigator.userAgent.indexOf("Mac") != -1 && typeof document.body.leftMargin != "undefined" && navigator.appName=="Microsoft Internet Explorer" ) 
-    {
-        offsetLeft += parseInt(document.body.leftMargin);
-        offsetTop += parseInt(document.body.topMargin);
-    }
-    return {left:offsetLeft, top:offsetTop};
-} 
-
-/**********  REGION JAVIER  **************/
-
-function CheckDocEntidadPrimerNivel_Click(pElementoID, pTxtSeleccionadosID, pTxtCatDocumentacionID)
-{
-    if ($('#catPrimerNivel_' + pElementoID).is(':checked'))
-    {
-        DesmarcarDesHabilitarElementosPrimerNivelMenosUno(pElementoID, pTxtSeleccionadosID);
-        
-        document.getElementById(pTxtCatDocumentacionID).value = pElementoID;
-    }
-    else
-    {
-        var check = document.getElementById('catPrimerNivel_' + pElementoID);
-        DesmarcarHijosElemento(check, pTxtSeleccionadosID);
-        
-        HabilitarTodosLosElementosArbol();
-        
-        document.getElementById(pTxtCatDocumentacionID).value = '';
-    }
-}
-
-function DesHabilitarElementosNoSeleccionados(pElementoID)
-{
-    if (pElementoID != '00000000-0000-0000-0000-000000000000')
-    {
-        var checks = $('#divSelCatTesauro').find('input.catPrimerNivel');
-        var i=0
-        for (i=0;i<checks.length;i++)
-        {
-            if (checks[i].id.indexOf(pElementoID) == -1)
-            {
-                DesHabilitarElementoEHijos(checks[i]);
-            }
-        }
-    }
-}
-
-function DesHabilitarElementoEHijos(pCheck)
-{
-    pCheck.disabled = true;
-            
-    var hijos = $(pCheck.parentNode.parentNode).children('div').children('div').children('span').children('input');
-    var i =0;
-    for (i=0; i<hijos.length;i++)
-    {
-       DesHabilitarElementoEHijos(hijos[i]);
-    } 
-}
-
-function DesmarcarHijosElemento(pCheck, pTxtSeleccionadosID)
-{
-    var idElemento = pCheck.parentNode.className;
-    $(pCheck).attr('checked', false);
-    $('#' + pTxtSeleccionadosID).val($('#' + pTxtSeleccionadosID).val().replace(idElemento + ',', ''));
-    
-    var hijos = $(pCheck.parentNode.parentNode).children('div').children('div').children('span').children('input');
-    var i =0;
-    for (i=0; i<hijos.length;i++)
-    {
-       DesmarcarHijosElemento(hijos[i], pTxtSeleccionadosID);
-    }
-}
-
-function DesmarcarDesHabilitarElementoEHijos(pCheck, pTxtSeleccionadosID)
-{
-    $(pCheck).attr('checked', false);
-    $(pCheck).attr('disabled', true);
-
-    var idElemento = pCheck.parentNode.className;
-
-    $('#' + pTxtSeleccionadosID).val($('#' + pTxtSeleccionadosID).val().replace(idElemento + ',', ''));
-            
-    var hijos = $(pCheck.parentNode.parentNode).children('div').children('div').children('span').children('input');
-    var i =0;
-    for (i=0; i<hijos.length;i++)
-    {
-       DesmarcarElementoEHijos(hijos[i], pTxtSeleccionadosID);
-    } 
-}
-
-function HabilitarTodosLosElementosArbol()
-{
-    var checks = $('#divSelCatTesauro').find('input.catPrimerNivel');
-    for (i=0;i<checks.length;i++)
-    {
-        HabilitarElementoEHijos(checks[i]);
-    }
-}
-
-function HabilitarElementoEHijos(pCheck)
-{
-    pCheck.disabled = false;
-    
-    var idElemento = pCheck.parentNode.className;    
-    var hijos = $(pCheck.parentNode.parentNode).children('div').children('div').children('span').children('input');
-    var i =0;
-    for (i=0; i<hijos.length;i++)
-    {
-       HabilitarElementoEHijos(hijos[i]);
-    } 
-}
-
-function DesmarcarDesHabilitarElementosPrimerNivelMenosUno(pElementoID, pTxtSeleccionadosID){
-    var checks = $('#divSelCatTesauro').find('input.catPrimerNivel');
-    var i=0
-    for (i=0;i<checks.length;i++)
-    {
-        if (checks[i].id.indexOf(pElementoID) == -1)
-        {
-            DesmarcarDesHabilitarElementoEHijos(checks[i], pTxtSeleccionadosID);
-        }
-    }
-}
-
-function DesmarcarDesHabilitarElementoEHijos(pCheck, pTxtSeleccionadosID)
-{
-    $(pCheck).attr('checked', false);
-    $(pCheck).attr('disabled', true);
-
-    var idElemento = pCheck.parentNode.className;
-    $('#' + pTxtSeleccionadosID).val($('#' + pTxtSeleccionadosID).val().replace(idElemento + ',', ''));
-            
-    var hijos = $(pCheck.parentNode.parentNode).children('div').children('div').children('span').children('input');
-    var i =0;
-    for (i=0; i<hijos.length;i++)
-    {
-       DesmarcarDesHabilitarElementoEHijos(hijos[i], pTxtSeleccionadosID);
-    } 
-}
-
-
-/* ****    FIN REGION JAVIER   ***********/
-
-
-//    if(cadena.length>2){
-//        //Volvemos a inicializar todo
-//            for(i=0;i<CatEscondidas.length;i++){
-//                CatEscondidas[i].style.display = 'block';
-//            }
-//        CatEscondidas = new Array();
-//        txt.className = "activo";
-//        //filtramos y guardamos los div que escondemos
-//        categorias = $('div#divSelCatLista div div');
-//        for(i=0;i<categorias.length;i++){
-//            cat = categorias[i];
-//            if(cat.style.display != 'none' && $(cat).find('span label')[0].innerHTML.toLowerCase().indexOf(cadena.toLowerCase())<0){
-//                CatEscondidas[CatEscondidas.length] = cat;
-//                cat.style.display = 'none';
-//            }
-//        }
-//        
-//    }
-//    else{
-//        //volvemos a mostrar los contactos escondidos
-//            for(i=0;i<CatEscondidas.length;i++){
-//                CatEscondidas[i].style.display = 'block';
-//            }
-//        CatEscondidas = new Array();
-//        txt.className = "";
-//    }
-
-
-
-
-
-
-//function DesplegarImgMas(pBoton,pPanel){
-//    alert('Despliego');
-//    var boton   = $(pBoton),
-//    panel = $(document.getElementById(pPanel));
-//    var img = boton.children();
-//    var img2 = pBoton.firstChild;
-//    alert(img2.attributes);    
-//    if(panel.attr('style') == 'display: none;'){
-//        
-//        img.attr({ alt:'-', src:img.attr('src').replace('Mas','Menos') });
-//        img.attr('alt') = '-';
-//        alert('Cambio de mas a menos');
-//    }
-//    else{
-//        img.attr({ alt:'+', src:img.attr('src').replace('Menos','Mas') });
-//        alert('Cambio de menos a mas');
-//    }
-//    o = {efecto:'blind', opciones:{direction:'vertical'}};
-//    if (!o.efecto) {
-//        o.efecto = 'blind';
-//        o.opciones =  {direction: 'vertical'};
-//    }
-//    
-//			boton.toggleClass('activo');
-//            panel.toggle(o.efecto, o.opciones, o.velocidad, o.callback);
-//            return false;
-//}
-
-function DesplegarPanel(pPanel) {
-            //var $panel = $(document.getElementsByName(pPanel)[0]);
-            var $panel = $(document.getElementById(pPanel));
-			if ($panel[0].style.display == 'none') {
-			    $panel.show();
-				//$panel['show']('blind', {direction:'vertical'}, 'fast');
-			}
-			else {
-			    $panel.hide();
-				//$panel['hide']('blind', {direction:'vertical'}, 'fast');
-			}
-			return false;
-		}
-		
-function DesplegarOcultarPaneles(pPanel1, pPanel2) {
-        var $panel = $(document.getElementById(pPanel1));
-        var $panel2 = $(document.getElementById(pPanel2));
-		if ($panel[0].style.display == 'none') {
-		    $panel.show();
-			//$panel['show']('blind', {direction:'vertical'}, 'fast');
-		}
-		else {
-		    $panel.hide();
-			//$panel['hide']('blind', {direction:'vertical'}, 'fast');
-		}
-		if ($panel2[0].style.display == 'none') {
-		    $panel2.show();
-			//$panel2['show']('blind', {direction:'vertical'}, 'fast');
-		}
-		else
-		{
-			$panel2.hide();
-            //$panel2['hide']('blind', {direction:'vertical'}, 'fast');
-		}
-		return false;
-		}
-		
-function DesplegarImgMas(pBoton,pPanel) {
-            var $boton   = $(pBoton);
-            var $panel = $(document.getElementById(pPanel));
-            var $img = $boton.find('img');
-            if($img.length == 0)
-            {
-                $img = $boton;
-            }
-            var source = $img.attr('src');
-			if ('+' == $img.attr('alt')) {
-				func = 'show';
-				$img.attr({ alt:'-', src:source.replace('Mas','Menos') });
-			} else if ('-' == $img.attr('alt')) {
-				func = 'hide';
-				$img.attr({ alt:'+', src:source.replace('Menos','Mas') });
-			}
-            if ($panel[0].tagName.toLowerCase() == 'div') {
-				$panel[func]('blind', {direction:'vertical'}, 'fast');				
-			} else {
-				$panel[func]();
-			}
-			return false;
-		}
-		
-/*   LOZA : funcion para desplegar el texto tipo ver mas */
-function DesplegarDescripcionMas(pBoton,pPanel,pPanelReducido) {
-            var $boton   = $(pBoton);
-            var $panel = $(document.getElementById(pPanel));
-            var $panelReducido = $(document.getElementById(pPanelReducido));
-            var $img = $boton.find('img');
-            if($img.length == 0)
-            var source = $img.attr('src');
-			if ('+' == $img.attr('alt')) {
-			    //$panelReducido['hide']('blind', {direction:'vertical'}, 'fast');
-			    document.getElementById(pPanelReducido).style.display = 'none';
-				$panel.show('slow');
-			} else if ('-' == $img.attr('alt')) {
-			    $panel.hide('slow');
-				//$panelReducido['show']('blind', {direction:'vertical'}, 'fast');
-				document.getElementById(pPanelReducido).style.display = 'block';
-			}
-			return false;
-}
-
-/*David: Funcion para mostrar y ocultar dos paneles uno debajo de otro*/
-function MostrarOcultarPanel(pPanel1,pPanel2)
-{
-    if(document.getElementById(pPanel1).style.display == 'none')
-    {
-        document.getElementById(pPanel1).style.display = 'block';
-        document.getElementById(pPanel2).style.display = 'none';
-    }
-    else
-    {
-        document.getElementById(pPanel1).style.display = 'none';
-        document.getElementById(pPanel2).style.display = 'block';
-    }
-	return false;
-}
-
-/*  LOZA : Funcion para desplegar panel desde img +   */
-function DesplegarImgMasEnSpan(pBoton, pPanel) {
-    var boton   = $(pBoton),
-    panel = $(document.getElementById(pPanel));
-        o = {efecto:'blind', opciones:{direction:'vertical'}};
-    if (!o.efecto) {
-        o.efecto = 'blind';
-        o.opciones =  {direction: 'vertical'};
-    }
-    
-	boton.toggleClass('activo');
-    panel.toggle(o.efecto, o.opciones, o.velocidad, o.callback);
-    
-    var $botonOtro = $(pBoton)
-    var $img = $botonOtro.find('img');
-    var source = $img.attr('src');
-    if ('+' == $img.attr('alt')) 
-    {
-		$img.attr({ alt:'-', src:source.replace('Mas','Menos') });
-	} else if ('-' == $img.attr('alt')) {
-		$img.attr({ alt:'+', src:source.replace('Menos','Mas') });
-	}
-    return false;
-}
-
-function DesplegarImgMasEnSpanSinAnimacion(pBoton, pPanel) {
-    panel = (document.getElementById(pPanel));
-    if (panel.style.display == 'none')
-    {
-        panel.style.display = 'inline';
-    }
-    else
-    {
-        panel.style.display = 'none';
-    }
-    
-    var $botonOtro = $(pBoton)
-    var $img = $botonOtro.find('img');
-    var source = $img.attr('src');
-    if ('+' == $img.attr('alt')) 
-    {
-		$img.attr({ alt:'-', src:source.replace('Mas','Menos') });
-	} else if ('-' == $img.attr('alt')) {
-		$img.attr({ alt:'+', src:source.replace('Menos','Mas') });
-	}
-    return false;
-}
-
-
-// drag and drop DAFO
-function HabilitarDragDrop(){
-	$("ol.dragDrop").sortable({
-	    stop: function(event, ui) {
-		   var padre = $(ui.item[0]).parent(),
-		   hijos = padre.children();
-		   hijos.removeClass('odd').removeClass('even');
-		   hijos.filter(':odd').addClass('even');
-		   hijos.filter(':even').addClass('odd');
-		   
-		   //Modificado por fernando
-		   var i = 0;
-		   var orden = "";
-		   for(i; i<hijos.length; i++)
-		   {
-				orden += hijos[i].id + ",";
-		   }
-		   document.getElementById('ctl00_ctl00_CPH1_CPHContenido_txtHackOrdenFactores').value = orden;
-		   eval(document.getElementById('ctl00_ctl00_CPH1_CPHContenido_lbHackOrdenFactores').href);
-		},
-		handle: 'span.dragDrop'
-	});
-}
-
-InsertarScriptVotacionDafo();
-
-//Inserta el script que cambia los radio buttons de la ficha de votación del dafo
-//por el control de votación con los puntos y la X de cancelar voto
-function InsertarScriptVotacionDafo()
-{
-//Sistema de votación DAFO
-
-/*
- ### jQuery Star Rating Plugin v3.12 - 2009-04-16 ###
- * Home: http://www.fyneworks.com/jquery/star-rating/
- * Code: http://code.google.com/p/jquery-star-rating-plugin/
- *
-	* Dual licensed under the MIT and GPL licenses:
- *   http://www.opensource.org/licenses/mit-license.php
- *   http://www.gnu.org/licenses/gpl.html
- ###
-*/
-
-/*# AVOID COLLISIONS #*/
-;if(window.jQuery) (function($){
-/*# AVOID COLLISIONS #*/
-	
-	// IE6 Background Image Fix
-	//if ($.browser.msie) try { document.execCommand("BackgroundImageCache", false, true)} catch(e) { };
-	// Thanks to http://www.visualjquery.com/rating/rating_redux.html
-	
-	// plugin initialization
-	$.fn.rating = function(options){
-		if(this.length==0) return this; // quick fail
-		
-		// Handle API methods
-		if(typeof arguments[0]=='string'){
-			// Perform API methods on individual elements
-			if(this.length>1){
-				var args = arguments;
-				return this.each(function(){
-					$.fn.rating.apply($(this), args);
-    });
-			};
-			// Invoke API method handler
-			$.fn.rating[arguments[0]].apply(this, $.makeArray(arguments).slice(1) || []);
-			// Quick exit...
-			return this;
-		};
-		
-		// Initialize options for this call
-		var options = $.extend(
-			{}/* new object */,
-			$.fn.rating.options/* default options */,
-			options || {} /* just-in-time options */
-		);
-		
-		// Allow multiple controls with the same name by making each call unique
-		$.fn.rating.calls++;
-		
-		// loop through each matched element
-		this
-		 .not('.star-rating-applied')
-			.addClass('star-rating-applied')
-		.each(function(){
-			
-			// Load control parameters / find context / etc
-			var control, input = $(this);
-			var eid = (this.name || 'unnamed-rating').replace(/\[|\]/g, '_').replace(/^\_+|\_+$/g,'');
-			var context = $(this.form || document.body);
-			
-			// FIX: http://code.google.com/p/jquery-star-rating-plugin/issues/detail?id=23
-			//var raters = context.data('rating');
-			var raters = ( options.resetAll ? { count:0 } : context.data('rating') || { 
-count:0 } );
-
-			if(!raters || raters.call!=$.fn.rating.calls) raters = { count:0, call:$.fn.rating.calls };			
-			var rater = raters[eid];
-			options.resetAll = false;
-			// if rater is available, verify that the control still exists
-			if(rater) control = rater.data('rating');
-			
-			
-			if(rater && control)//{// save a byte!
-				// add star to control if rater is available and the same control still exists
 				
-				control.count++;
-			//}// save a byte!
-			else{
-				// create new control if first star or control element was removed/replaced
-				// Initialize options for this raters
-				control = $.extend(
-					{}/* new object */,
-					options || {} /* current call options */,
-					($.metadata? input.metadata(): ($.meta?input.data():null)) || {}, /* metadata options */
-					{ count:0, stars: [], inputs: [] }
-				);
-				
-				// increment number of rating controls
-				control.serial = raters.count++;
-				
-				// create rating element
-				rater = $('<span class="star-rating-control"/>');
-				input.before(rater);
-				
-				// Mark element for initialization (once all stars are ready)
-				rater.addClass('rating-to-be-drawn');
-				
-				// Accept readOnly setting from 'disabled' property
-				if(input.attr('disabled')) control.readOnly = true;
-				
-				// Create 'cancel' button
-				rater.append(
-					control.cancel = $('<div class="rating-cancel"><a title="' + control.cancel + '">' + control.cancelValue + '</a></div>')
-					.mouseover(function(){
-						$(this).rating('drain');
-						$(this).addClass('star-rating-hover');
-						//$(this).rating('focus');
-					})
-					.mouseout(function(){
-						$(this).rating('draw');
-						$(this).removeClass('star-rating-hover');
-						//$(this).rating('blur');
-					})
-					.click(function(){
-					 $(this).rating('select');
-					})
-					.data('rating', control)
-				);
-				
-			}; // first element of group
-			
-			// insert rating star
-			var star = $('<div class="star-rating rater-'+ control.serial +'" style=" display:' + this.style["display"] + '"><a name="' + this.name + '" title="' + (this.title || this.value) + '">' + this.value + '</a></div>');
-			rater.append(star);
-			
-			// inherit attributes from input element
-			if(this.id) star.attr('id', this.id);
-			if(this.className) star.addClass(this.className);
-			
-			// Half-stars?
-			if(control.half) control.split = 2;
-			
-			// Prepare division control
-			if(typeof control.split=='number' && control.split>0){
-				var stw = ($.fn.width ? star.width() : 0) || control.starWidth;
-				var spi = (control.count % control.split), spw = Math.floor(stw/control.split);
-				star
-				// restrict star's width and hide overflow (already in CSS)
-				.width(spw)
-				// move the star left by using a negative margin
-				// this is work-around to IE's stupid box model (position:relative doesn't work)
-				.find('a').css({ 'margin-left':'-'+ (spi*spw) +'px' })
-			};
-			
-			// readOnly?
-			if(control.readOnly)//{ //save a byte!
-				// Mark star as readOnly so user can customize display
-				star.addClass('star-rating-readonly');
-			//}  //save a byte!
-			else//{ //save a byte!
-			 // Enable hover css effects
-				star.addClass('star-rating-live')
-				 // Attach mouse events
-					.mouseover(function(){
-						$(this).rating('fill');
-						$(this).rating('focus');
-					})
-					.mouseout(function(){
-						$(this).rating('draw');
-						$(this).rating('blur');
-					})
-					.click(function(){
-						$(this).rating('select');
-					})
-				;
-			//}; //save a byte!
-			
-			// set current selection
-			if($(this).is(':checked'))	control.current = star;
-			
-			// hide input element
-			input.hide();
-			
-			// backward compatibility, form element to plugin
-			input.change(function(){
-    $(this).rating('select');
-   });
-			
-			// attach reference to star to input element and vice-versa
-			star.data('rating.input', input.data('rating.star', star));
-			
-			// store control information in form (or body when form not available)
-			control.stars[control.stars.length] = star[0];
-			control.inputs[control.inputs.length] = input[0];
-			control.rater = raters[eid] = rater;
-			control.context = context;
-			
-			input.data('rating', control);
-			rater.data('rating', control);
-			star.data('rating', control);
-			context.data('rating', raters);
-  }); // each element
-		
-		// Initialize ratings (first draw)
-		$('.rating-to-be-drawn').rating('draw').removeClass('rating-to-be-drawn');
-		
-		return this; // don't break the chain...
-	};
-	
-	/*--------------------------------------------------------*/
-	
-	/*
-		### Core functionality and API ###
-	*/
-	$.extend($.fn.rating, {
-		// Used to append a unique serial number to internal control ID
-		// each time the plugin is invoked so same name controls can co-exist
-		calls: 0,
-		
-		focus: function(){
-			var control = this.data('rating'); if(!control) return this;
-			if(!control.focus) return this; // quick fail if not required
-			// find data for event
-			var input = $(this).data('rating.input') || $( this.tagName=='INPUT' ? this : null );
-   // focus handler, as requested by focusdigital.co.uk
-			if(control.focus) control.focus.apply(input[0], [input.val(), $('a', input.data('rating.star'))[0]]);
-		}, // $.fn.rating.focus
-		
-		blur: function(){
-			var control = this.data('rating'); if(!control) return this;
-			if(!control.blur) return this; // quick fail if not required
-			// find data for event
-			var input = $(this).data('rating.input') || $( this.tagName=='INPUT' ? this : null );
-   // blur handler, as requested by focusdigital.co.uk
-			if(control.blur) control.blur.apply(input[0], [input.val(), $('a', input.data('rating.star'))[0]]);
-		}, // $.fn.rating.blur
-		
-		fill: function(){ // fill to the current mouse position.
-			var control = this.data('rating'); if(!control) return this;
-			// do not execute when control is in read-only mode
-			if(control.readOnly) return;
-			// Reset all stars and highlight them up to this element
-			this.rating('drain');
-			this.prevAll().andSelf().filter('.rater-'+ control.serial).addClass('star-rating-hover');
-		},// $.fn.rating.fill
-		
-		drain: function() { // drain all the stars.
-			var control = this.data('rating'); if(!control) return this;
-			// do not execute when control is in read-only mode
-			if(control.readOnly) return;
-			// Reset all stars
-			control.rater.children().filter('.rater-'+ control.serial).removeClass('star-rating-on').removeClass('star-rating-hover');
-		},// $.fn.rating.drain
-		
-		draw: function(){ // set value and stars to reflect current selection
-			var control = this.data('rating'); if(!control) return this;
-			// Clear all stars
-			this.rating('drain');
-			// Set control value
-			if(control.current){
-				control.current.data('rating.input').attr('checked','checked');
-				control.current.prevAll().andSelf().filter('.rater-'+ control.serial).addClass('star-rating-on');
-			}
-			else
-			 $(control.inputs).removeAttr('checked');
-			// Show/hide 'cancel' button
-			control.cancel[control.readOnly || control.required?'hide':'show']();
-			// Add/remove read-only classes to remove hand pointer
-			this.siblings()[control.readOnly?'addClass':'removeClass']('star-rating-readonly');
-		},// $.fn.rating.draw
-		
-		select: function(value){ // select a value
-			var control = this.data('rating'); if(!control) return this;
-			// do not execute when control is in read-only mode
-			if(control.readOnly) return;
-			
-			//========================================================================================
-			// LOZA: Añado esto para guardar el valor anterior antes de votar
-			//========================================================================================
-			var votoAnterior = '0';
-			if(control.current != null) //Antes teniamos voto
-			{
-				votoAnterior = control.current[0].textContent;
-			}
-			//========================================================================================
-			// LOZA: Fin de añadido
-			//========================================================================================
-			
-			// clear selection
-			control.current = null;
-			// programmatically (based on user input)
-			if(typeof value!='undefined'){
-			 // select by index (0 based)
-				if(typeof value=='number')
- 			 return $(control.stars[value]).rating('select');
-				// select by literal value (must be passed as a string
-				if(typeof value=='string')
-					//return 
-					$.each(control.stars, function(){
-						if($(this).data('rating.input').val()==value) $(this).rating('select');
-					});
-			}
-			else
-				control.current = this[0].tagName=='INPUT' ? 
-				 this.data('rating.star') : 
-					(this.is('.rater-'+ control.serial) ? this : null);
-			
-			// Update rating control state
-			this.data('rating', control);
-			// Update display
-			this.rating('draw');
-			
-			//========================================================================================
-			// LOZA: Añado esto para que me establezca el valor actual en un txt
-			//========================================================================================
-			
-			if(this[0] == control.cancel[0]) //Hemos pulsado el boton cancelar
-			{
-				var baseNombre = control.inputs[0].name;
-				var txtHack = document.getElementById('txtHack'+baseNombre);
-				if(txtHack.value == '0'){return;}
-				txtHack.value = '0';
-			}
-			else	//Hemos pulsado una estrella
-			{
-				var baseNombre = this[0].childNodes[0].name;
-				var txtHack = document.getElementById('txtHack'+baseNombre);
-				if(txtHack.value == this[0].textContent){return;}
-				txtHack.value = this[0].textContent;
-			}
-			
-			//========================================================================================
-			// LOZA: Fin de añadido
-			//========================================================================================
-			
-			// find data for event
-			var input = $( control.current ? control.current.data('rating.input') : null );
-			// click callback, as requested here: http://plugins.jquery.com/node/1655
-			if(control.callback) control.callback.apply(input[0], [input[0], control,votoAnterior]);// callback event
-		},// $.fn.rating.select
-		
-		readOnly: function(toggle, disable){ // make the control read-only (still submits value)
-			var control = this.data('rating'); if(!control) return this;
-			// setread-only status
-			control.readOnly = toggle || toggle==undefined ? true : false;
-			// enable/disable control value submission
-			if(disable) $(control.inputs).attr("disabled", "disabled");
-			else     			$(control.inputs).removeAttr("disabled");
-			// Update rating control state
-			this.data('rating', control);
-			// Update display
-			this.rating('draw');
-		},// $.fn.rating.readOnly
-		
-		disable: function(){ // make read-only and never submit value
-			this.rating('readOnly', true, true);
-		},// $.fn.rating.disable
-		
-		enable: function(){ // make read/write and submit value
-			this.rating('readOnly', false, false);
-		}// $.fn.rating.select
-		
-		
-		
- });
-
-	
-	/*--------------------------------------------------------*/
-	
-	/*
-		### Default Settings ###
-		eg.: You can override default control like this:
-		$.fn.rating.options.cancel = 'Clear';
-	*/
-	$.fn.rating.options = { //$.extend($.fn.rating, { options: {
-	        resetAll: true,
-			cancel: 'Cancel Rating',   // advisory title for the 'cancel' link
-			cancelValue: '',           // value to submit when user click the 'cancel' link
-			split: 0,                  // split the star into how many parts?
-						
-			// Width of star image in case the plugin can't work it out. This can happen if
-			// the jQuery.dimensions plugin is not available OR the image is hidden at installation
-			starWidth: 16,
-			
-			//NB.: These don't need to be pre-defined (can be undefined/null) so let's save some code!
-			//half:     false,         // just a shortcut to control.split = 2
-			required: false,         // disables the 'cancel' button so user can only select one of the specified values
-			//readOnly: false,         // disable rating plugin interaction/ values cannot be changed
-			//focus:    function(){},  // executed when stars are focused
-			//blur:     function(){},  // executed when stars are focused
-			//callback: function(){},  // executed when a star is clicked
-			focus: function(value, link){
-				// 'this' is the hidden form element holding the current value
-				// 'value' is the value selected
-				// 'element' points to the link element that received the click.
-				var tip = $('#hover'+ this.name);
-				tip[0].data = tip[0].data || tip.html();
-				tip.html(link.title || 'value: '+value);
-			},
-			blur: function(value, link){
-				var tip = $('#hover'+ this.name);
-				tip.html(tip[0].data || '');
-			},
-			callback: function(input, control, votoViejo){
-			    //Sea lo que sea, reseteamos el control
-			    var eid = (this.name || 'unnamed-rating').replace(/\[|\]/g, '_').replace(/^\_+|\_+$/g,'');
-			    var context = $(this.form || document.body);
-			    var raters = context.data('rating');
-                if(!raters || raters.call!=$.fn.rating.calls) raters = { count:0, call:$.fn.rating.calls };
-                var rater = raters[eid];
-			    rater = null;
-			    
-				if(control.current != null) //Hemos pulsado una estrella
-				{
-				    input.attributes['onclick'].value=input.attributes['onclick'].value.replace('%votoViejo%',votoViejo);
-				    if(typeof(input.onclick) == 'function'){
-					    input.onclick();
-					}
-					else{
-					    eval(input.onclick);
-					}
-				}else{	//Hemos pulsado en el boton cancelar
-				    control.inputs[0].attributes['onclick'].value=control.inputs[0].attributes['onclick'].value.replace('%votoViejo%',votoViejo);
-				    control.inputs[0].attributes['onclick'].value=control.inputs[0].attributes['onclick'].value.replace('&1','&0');
-					//eval(control.inputs[0].attributes['onclick'].value.replace('&1','&0'));
-					if(typeof(control.inputs[0].onclick) == 'function'){
-					    control.inputs[0].onclick();
-					}
-					else{
-					    eval(control.inputs[0].attributes['onclick'].value);
-					}
-				}
-			}
-			
-			
-			  
- }; //} });
-	/*--------------------------------------------------------*/
-	
-	/*
-		### Default implementation ###
-		The plugin will attach itself to file inputs
-		with the class 'multi' when the page loads
-	*/
-	$(function(){
-	 $('input[type=radio].star').rating();
-	});
-	
-/*# AVOID COLLISIONS #*/
-})(jQuery);
-/*# AVOID COLLISIONS #*/
-
-}
-
-
-$(document).ready(function(){
-    var duracion=500;
-    if(navigator.appName=="Microsoft Internet Explorer")
-    {
-        duracion= 0;
-    }    
-	
-	$('div.gallery').gallery({
-		duration: 500,
-		autoRotation: 5000,
-		listOfSlides: '#carousel > ul > li',
-		switcher: '.switcher>li',
-		effect:true
-	});
-	$('div.gallery').gallery({
-		duration: 500,
-		autoRotation: 5000,
-		listOfSlides: '.items > .item',
-		switcher: '.switcher>li',
-		effect:true
-	});
-	$('#comunidades').gallery({
-		duration: duracion,
-		//autoRotation: 5000,
-		listOfSlides: ' .contenedor > .pag_comunidades',
-		switcher: ' .contenedor > .botones > li > .botoncito',
-		effect:true
-	});
-	$('#recursos').gallery({	
-	    duration:duracion,	
-		autoRotation: 5000,
-		listOfSlides: ' .contenedor > .pag_recurso',
-		switcher: ' .contenedor > .botones > li',
-		effect:true
-	});
-});
-
-(function($) {
-	$.fn.gallery = function(options) { return new Gallery(this.get(0), options); };
-	
-	function Gallery(context, options) { this.init(context, options); };
-	
-	Gallery.prototype = {
-		options:{},
-		init: function (context, options){
-			this.options = $.extend({
-				duration: 1400,
-				slideElement: 1,
-				autoRotation: false,
-				effect: false,
-				listOfSlides: 'ul > li',
-				switcher: false,
-				disableBtn: false,
-				nextBtn: 'a.link-next, a.btn-next, a.next',
-				prevBtn: 'a.link-prev, a.btn-prev, a.prev',
-				circle: true,
-				direction: false,
-				event: 'click',
-				IE: false
-			}, options || {});
-			var _el = $(context).find(this.options.listOfSlides);
-			if (this.options.effect) this.list = _el;
-			else this.list = _el.parent();
-			this.switcher = $(context).find(this.options.switcher);
-			this.nextBtn = $(context).find(this.options.nextBtn);
-			this.prevBtn = $(context).find(this.options.prevBtn);
-			this.count = _el.index(_el.filter(':last'));
-			
-			if (this.options.switcher) this.active = this.switcher.index(this.switcher.filter('.active:eq(0)'));
-			else this.active = _el.index(_el.filter('.active:eq(0)'));
-			if (this.active < 0) this.active = 0;
-			this.last = this.active;
-			
-			this.woh = _el.outerWidth(true);
-			if (!this.options.direction) this.installDirections(this.list.parent().width());
-			else {
-				this.woh = _el.outerHeight(true);
-				this.installDirections(this.list.parent().height());
-			}
-			
-			if (!this.options.effect) {
-				this.rew = this.count - this.wrapHolderW + 1;
-				if (!this.options.direction) this.list.css({marginLeft: -(this.woh * this.active)});
-				else this.list.css({marginTop: -(this.woh * this.active)});
-			}
-			else {
-				this.rew = this.count;
-				this.list.css({opacity: 0}).removeClass('active').eq(this.active).addClass('active').css({opacity: 1}).css('opacity', 'auto');
-				this.switcher.removeClass('active').eq(this.active).addClass('active');
-			}
-			
-			if (this.options.disableBtn) {
-				if (this.count < this.wrapHolderW) this.nextBtn.addClass(this.options.disableBtn);
-				if (this.active == 0) this.prevBtn.addClass(this.options.disableBtn);
-			}
-			
-			this.initEvent(this, this.nextBtn, this.prevBtn, true);
-			this.initEvent(this, this.prevBtn, this.nextBtn, false);
-			
-			if (this.options.autoRotation) this.runTimer(this);
-			
-			if (this.options.switcher) this.initEventSwitcher(this, this.switcher);
-		},
-		installDirections: function(temp){
-			this.wrapHolderW = Math.ceil(temp / this.woh);
-			if (((this.wrapHolderW - 1) * this.woh + this.woh / 2) > temp) this.wrapHolderWwrapHolderW--;
-		},
-		fadeElement: function(){
-//			if ($.browser.msie && this.options.IE){
-//				this.list.eq(this.last).css({opacity:0});
-//				this.list.removeClass('active').eq(this.active).addClass('active').css({opacity:'auto'});
-//			}
-//			else{
-				this.list.eq(this.last).animate({opacity:0}, {queue:false, duration: this.options.duration});
-				this.list.removeClass('active').eq(this.active).addClass('active').animate({
-					opacity:1
-				}, {queue:false, duration: this.options.duration, complete: function(){
-					$(this).css('opacity','auto');
-				}});
-//			}
-			if (this.options.switcher) this.switcher.removeClass('active').eq(this.active).addClass('active');
-			this.last = this.active;
-		},
-		scrollElement: function(){
-			if (!this.options.direction) this.list.animate({marginLeft: -(this.woh * this.active)}, {queue:false, duration: this.options.duration});
-			else this.list.animate({marginTop: -(this.woh * this.active)}, {queue:false, duration: this.options.duration});
-			if (this.options.switcher) this.switcher.removeClass('active').eq(this.active).addClass('active');
-		},
-		runTimer: function($this){
-			if($this._t) clearTimeout($this._t);
-			$this._t = setInterval(function(){
-				$this.toPrepare($this, true);
-			}, this.options.autoRotation);
-		},
-		initEventSwitcher: function($this, el){
-			el.bind($this.options.event, function(){
-				$this.active = $this.switcher.index($(this));
-				if($this._t) clearTimeout($this._t);
-				if (!$this.options.effect) $this.scrollElement();
-				else $this.fadeElement();
-				if ($this.options.autoRotation) $this.runTimer($this);
-				return false;
-			});
-		},
-		initEvent: function($this, addEventEl, addDisClass, dir){
-			addEventEl.bind($this.options.event, function(){
-				if($this._t) clearTimeout($this._t);
-				if ($this.options.disableBtn &&($this.count > $this.wrapHolderW)) addDisClass.removeClass($this.options.disableBtn);
-				$this.toPrepare($this, dir);
-				if ($this.options.autoRotation) $this.runTimer($this);
-				return false;
-			});
-		},
-		toPrepare: function($this, side){
-			if (($this.active == $this.rew) && $this.options.circle && side) $this.active = -$this.options.slideElement;
-			if (($this.active == 0) && $this.options.circle && !side) $this.active = $this.rew + $this.options.slideElement;
-			for (var i = 0; i < $this.options.slideElement; i++){
-				if (side) {
-					if ($this.active + 1 > $this.rew) {
-						if ($this.options.disableBtn && ($this.count > $this.wrapHolderW)) $this.nextBtn.addClass($this.options.disableBtn);
-					}
-					else $this.active++;
-				}
-				else{
-					if ($this.active - 1 < 0) {
-						if ($this.options.disableBtn && ($this.count > $this.wrapHolderW)) $this.prevBtn.addClass($this.options.disableBtn);
-					}
-					else $this.active--;
-				}
-			};
-			if ($this.active == $this.rew && side) if ($this.options.disableBtn &&($this.count > $this.wrapHolderW)) $this.nextBtn.addClass($this.options.disableBtn);
-			if ($this.active == 0 && !side) if ($this.options.disableBtn &&($this.count > $this.wrapHolderW)) $this.prevBtn.addClass($this.options.disableBtn);
-			if (!$this.options.effect) $this.scrollElement();
-			else $this.fadeElement();
-		},
-		stop: function(){
-			if (this._t) clearTimeout(this._t);
-		},
-		play: function(){
-			if (this._t) clearTimeout(this._t);
-			if (this.options.autoRotation) this.runTimer(this);
-		}
-	}
-}(jQuery));
-
-
-/**/ 
-/*ejemplosUso.js*/ 
-function loadCallback(paramsCallback, controlPintado, funcionJS) {
-    controlPintado.load(document.location.href + '?callback=' + paramsCallback, funcionJS);
-}
-
-var $_getVariables = { isset: false };
-var $_getGlobalVariables = {};
-var $_GETAllVariables = function () {
-    var scripts = document.getElementsByTagName("script");
-    for (var i = 0; i < scripts.length; i++) {
-        var script = (scripts[i].src + "").split("/");
-        script = script[script.length - 1].split("?", 2);
-        if (script.length > 1) {
-            var parameters = script[1].split("&")
-            for (var j = 0; j < parameters.length; j++) {
-                var vars = parameters[j].split("=");
-                if (!$_getVariables[script[0]]) $_getVariables[script[0]] = {};
-                $_getVariables[script[0]][vars[0]] = vars[1];
-                $_getGlobalVariables[vars[0]] = vars[1];
-            }
-        }
-    }
-    $_getVariables.isset = true;
-};
-$_GET = function (paramToGet, jsFile) {
-    if (!$_getVariables.isset)
-        $_GETAllVariables();
-    if (jsFile)
-        return $_getVariables[jsFile][paramToGet];
-    else
-        return $_getGlobalVariables[paramToGet];
-};
-
-$(function () {
-    if ($('#sidebar .selectorAdd').length > 0) {
-        $('#sidebar .selectorAdd').listToSelect();
-    }
-});
-
-if (document.cookie != "" && document.location.href.toLowerCase().indexOf('http://www.') == 0) {
-    la_cookie = document.cookie.split("; ")
-    fecha_fin = new Date
-    fecha_fin.setDate(fecha_fin.getDate() - 1)
-    for (i = 0; i < la_cookie.length; i++) {
-        mi_cookie = la_cookie[i].split("=")[0]
-        document.cookie = mi_cookie + "=;expires=" + fecha_fin.toGMTString()
-    }
-}
-
+/**/
+/*ejemplosUso.js*/
 var contResultados = 0;
 var filtrosPeticionActual = '';
 //var contFacetas = 0;
@@ -3782,577 +1277,8 @@ var ExpresionRegularNombres = /^([a-zA-ZñÑüÜáéíóúÁÉÍÓÚàèìòùÀ
 var ExpresionNombreCorto = /^([a-zA-Z0-9ñÑüÜáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛ'´`çÇ-]{4,30})$/;
 var ExpresionNombreCortoCentro = /^([a-zA-Z0-9ñÑüÜáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛ '´`çÇ-]{2,10})$/;
 
-function pasarSegundaParteOrg() {
-    var $pan1 = $('#datosCuenta');
-    var $pan2 = $('#loginContactoPral');
-    $pan1.fadeOut('', function () {
-        $pan2.fadeIn();
-    });
-    return false;
-}
-
-function volverPrimeraParteOrg() {
-    var $pan1 = $('#loginContactoPral');
-    var $pan2 = $('#datosCuenta');
-    $pan1.fadeOut('', function () {
-        $pan2.fadeIn();
-    });
-    return false;
-}
-
-function pasarSegundaParteOrgUsu() {
-    var error = '';
-
-    if (document.getElementById('ctl00_CPH1_cbUsarMyGNOSS') != null) {
-        if ($('#ctl00_CPH1_cbUsarMyGNOSS').is(':checked')) {
-            if (($('#ctl00_CPH1_txtCargo').val() == '') || ($('#ctl00_CPH1_txtEmail').val() == '')) {
-                if ($('#ctl00_CPH1_txtCargo').val() == '') {
-                    error += '<p>' + form.camposVacios + '</p>';
-                    document.getElementById('ctl00_CPH1_lblCargo').style.color = 'red';
-                }
-                else {
-                    document.getElementById('ctl00_CPH1_lblCargo').style.color = '';
-                }
-
-                if ($('#ctl00_CPH1_txtEmail').val() == '') {
-                    error += '<p>' + form.emailValido + '</p>';
-                    document.getElementById('ctl00_CPH1_lblEmail').style.color = 'red';
-                }
-                else {
-                    document.getElementById('ctl00_CPH1_lblEmail').style.color = '';
-                }
-            }
-            else {
-                document.getElementById('ctl00_CPH1_lblCargo').style.color = '';
-                document.getElementById('ctl00_CPH1_lblEmail').style.color = '';
-            }
-        }
-        else {
-            if ($('#ctl00_CPH1_txtCargo').val() == '' || $('#ctl00_CPH1_txtEmail').val() == '') {
-                if ($('#ctl00_CPH1_txtCargo').val() == '') {
-                    error += '<p>' + form.camposVacios + '</p>';
-                    document.getElementById('ctl00_CPH1_lblCargo').style.color = 'red';
-                }
-                else {
-                    document.getElementById('ctl00_CPH1_lblCargo').style.color = '';
-                }
-
-                if ($('#ctl00_CPH1_txtEmail').val() == '') {
-                    error += '<p>' + form.emailValido + '</p>';
-                    document.getElementById('ctl00_CPH1_lblEmail').style.color = 'red';
-                }
-                else {
-                    document.getElementById('ctl00_CPH1_lblEmail').style.color = '';
-                }
-            }
-            else {
-                document.getElementById('ctl00_CPH1_lblCargo').style.color = '';
-
-                if (!validarEmail($('#ctl00_CPH1_txtEmail').val())) {
-                    error += '<p>' + form.emailValido + '</p>';
-                    document.getElementById('ctl00_CPH1_lblEmail').style.color = 'red';
-                }
-                else {
-                    document.getElementById('ctl00_CPH1_lblEmail').style.color = '';
-                }
-            }
-        }
-    }
-
-
-    if (!$('#ctl00_CPH1_cbLegal').is(':checked')) {
-        error += '<p>' + form.aceptarLegal + '</p>';
-        $('#ctl00_CPH1_lblAceptarCondiciones').attr('class', 'ko');
-    }
-    else {
-        $('#ctl00_CPH1_lblAceptarCondiciones').attr('class', '');
-    }
-
-
-    if (error.length) {
-        crearError(error, '#divError', true);
-        return false;
-    }
-    else {
-        return true;
-    }
-}
-
-//                                                                       Busquedas guardadas
-//------------------------------------------------------------------------------------------
-$('ul.busquedasGuardadas a.miniEliminar').click(function () {
-    miniConfirmar('Desea minieliminar esta b&uacute;squeda?', $(this).parents('li').eq(0), function () {
-        alert('Funciona al uso');
-    });
-});
-
-//                                                                          registro de clases
-//--------------------------------------------------------------------------------------------
-function registroClaseSiguiente(funcion, id, id2) {
-    var error = '';
-
-    if (!(document.getElementById('ctl00_CPH1_lblErrorLogo') == null || document.getElementById('ctl00_CPH1_lblErrorLogo').innerHTML == '')) {
-        return false;
-    }
-
-    error += AgregarErrorReg(error, ValidarCentroClase('ctl00_CPH1_txtCentro', 'ctl00_CPH1_lblCentro'));
-    error += AgregarErrorReg(error, ValidarAsignaturaClase('ctl00_CPH1_txtAsignatura', 'ctl00_CPH1_lblAsignatura'));
-    error += AgregarErrorReg(error, ValidarCurso('ctl00_CPH1_txtCurso', 'ctl00_CPH1_lblCurso'));
-    error += AgregarErrorReg(error, ValidarCPOrg('ctl00_CPH1_txtCP', 'ctl00_CPH1_lblCP'));
-    error += AgregarErrorReg(error, ValidarPoblacionOrg('ctl00_CPH1_txtPoblacion', 'ctl00_CPH1_lblPoblacion'));
-    error += AgregarErrorReg(error, ValidarDireccionSede('ctl00_CPH1_txtDireccionSede', 'ctl00_CPH1_lblDireccionSede'));
-
-    error += AgregarErrorReg(error, ValidarCategorias('ctl00_CPH1_txtCat', 'ctl00_CPH1_lblCat', 'ctl00_CPH1_chkCrearComunidadPrivada'));
-
-    error += AgregarErrorReg(error, ValidarPaisOrg('ctl00_CPH1_editPais', 'ctl00_CPH1_lblPaisResidencia'));
-
-    error += AgregarErrorReg(error, ValidarProvinciaOrg('ctl00_CPH1_editProvincia', 'ctl00_CPH1_lblProvincia', 'ctl00_CPH1_txtProvincia'));
-
-    error += AgregarErrorReg(error, ValidarNombreCortoCentro('ctl00_CPH1_txtNombreCortoCentro', 'ctl00_CPH1_lblNombreCortoCentro'));
-
-    //Nombre corto de la asignatura
-    error += AgregarErrorReg(error, ValidarNombreCortoAsig('ctl00_CPH1_txtNombreCortoAsignatura', 'ctl00_CPH1_lblNombreCortoAsignatura'));
-
-    //Nombre corto del curso
-    error += AgregarErrorReg(error, ValidarNombreCortoCursoIntroducido('ctl00_CPH1_txtCurso', 'ctl00_CPH1_lblCurso'));
-
-    //Grupos    
-    error += AgregarErrorReg(error, ValidarGrupos('ctl00_CPH1_txtGrupo', 'ctl00_CPH1_lblGrupo'));
-
-    //Comprobamos si se ha seleccionado el tipo de clase    
-    error += AgregarErrorReg(error, ValidarTipoClase('ctl00_CPH1_rbUni20', 'ctl00_CPH1_rbEdex', 'ctl00_CPH1_lblTipoClase'));
-
-    if (error.length) {
-        crearError(error, '#tikitakaOrg', true);
-        return false;
-    } else {
-        if (document.getElementById('lblBtnPrefieroUsuario') != null) {
-            document.getElementById('lblBtnPrefieroUsuario').style.display = 'none';
-        }
-        id = '#' + id;
-        id2 = '#' + id2;
-
-        //Esto es necesario ya que si no compara con el nombre acabado en <br/>        
-        var a = $(id).val();
-        if (a.match('<br/>') != null) {
-            a = a.substring(0, a.indexOf('<br/>'));
-        }
-
-        var b = $(id2).val();
-        //array url
-        var b2 = b.split("<br/>");
-
-        var clases = "";
-
-        for (i = 0; i < b2.length; i++) {
-            var arrayClase = b2[i].split("/");
-            if (arrayClase[arrayClase.length - 1] != "") {
-                clases = clases + "|" + arrayClase[arrayClase.length - 1];
-            }
-        }
-
-        var checked = true;
-        if ($('#ctl00_CPH1_chkCrearComunidadPrivada').length > 0) {
-            checked = $('#ctl00_CPH1_chkCrearComunidadPrivada').is(':checked');
-        }
-
-        var comunidades = '';
-        try {
-            comunidades = $('#ctl00_CPH1_chkCrearComunidadPrivada').val();
-        } catch (Exception) { }
-
-        funcion = funcion.replace("$$", "&" + a.replace('\'', '\\\'') + "&" + clases + "&" + checked + "&" + comunidades);
-        eval(funcion);
-    }
-}
-
-function ComprobarCampoRegClase(pCampo) {
-    var error = '';
-    var panPintarError = '';
-
-    if (pCampo == 'Centro') {
-        error = ValidarCentroClase('ctl00_CPH1_txtCentro', 'ctl00_CPH1_lblCentro');
-        panPintarError = 'divKoCentroClase';
-    }
-    else if (pCampo == 'Asignatura') {
-        error = ValidarAsignaturaClase('ctl00_CPH1_txtAsignatura', 'ctl00_CPH1_lblAsignatura');
-        panPintarError = 'divKoNombreAsig';
-    }
-    else if (pCampo == 'Curso') {
-        error = ValidarCurso('ctl00_CPH1_txtCurso', 'ctl00_CPH1_lblCurso');
-        error = ValidarNombreCortoCursoIntroducido('ctl00_CPH1_txtCurso', 'ctl00_CPH1_lblCurso');
-        panPintarError = 'divKoCurso';
-    }
-    else if (pCampo == 'Categorias') {
-        error = ValidarCategorias('ctl00_CPH1_txtCat', 'ctl00_CPH1_lblCat', 'ctl00_CPH1_chkCrearComunidadPrivada');
-        panPintarError = 'divKoCategoria';
-    }
-    else if (pCampo == 'NombreCortoCentro') {
-        error = ValidarNombreCortoCentro('ctl00_CPH1_txtNombreCortoCentro', 'ctl00_CPH1_lblNombreCortoCentro');
-        panPintarError = 'divKoNombreCortoCentro';
-    }
-    else if (pCampo == 'Asig') {
-        error = ValidarNombreCortoAsig('ctl00_CPH1_txtNombreCortoAsignatura', 'ctl00_CPH1_lblNombreCortoAsignatura');
-        panPintarError = 'divKoNombreCortoAsig';
-    }
-    else if (pCampo == 'Grupos') {
-        error = ValidarGrupos('ctl00_CPH1_txtGrupo', 'ctl00_CPH1_lblGrupo');
-        panPintarError = 'divKoGrupo';
-    }
-        //    else if (pCampo == 'Curso')
-        //    {
-        //        error = ValidarNombreCortoCursoIntroducido('ctl00_CPH1_txtCurso','ctl00_CPH1_lblCurso');
-        //        panPintarError = '';
-        //    }
-    else if (pCampo == 'TipoClase') {
-        error = ValidarTipoClase('ctl00_CPH1_rbUni20', 'ctl00_CPH1_rbEdex', 'ctl00_CPH1_lblTipoClase');
-        panPintarError = 'divKoTipoClase';
-    }
-
-    if (error != '') {
-        crearError(error, '#' + panPintarError);
-    }
-    else {
-        LimpiarHtmlControl(panPintarError);
-    }
-}
-
-function ValidarCentroClase(pTxtCentro, pLblCentro) {
-    var error = '';
-    var centro = document.getElementById(pTxtCentro);
-    if (centro != null && centro.value == '') {
-        error += '<p>' + form.camposVacios + '</p>';
-        $('#' + pLblCentro).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblCentro).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarAsignaturaClase(pTxtAsignatura, pLblAsignatura) {
-    var error = '';
-    var asignatura = document.getElementById(pTxtAsignatura);
-    if (asignatura != null && asignatura.value == '') {
-        error += '<p>' + form.camposVacios + '</p>';
-        $('#' + pLblAsignatura).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblAsignatura).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarCurso(pTxtCurso, pLblCurso) {
-    var error = '';
-    var curso = document.getElementById(pTxtCurso);
-    if (curso != null && (curso.value.length == 0 || curso.value.length > 10)) {
-        error += '<p>' + form.camposVacios + '</p>';
-        $('#' + pLblCurso).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblCurso).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarGrupos(pTxtGrupo, pLblGrupo) {
-    var error = '';
-    var grupos = document.getElementById(pTxtGrupo);
-
-    var RegExPatternNombreCorto = /^([a-z,A-Z]{0,999})$/;
-    var correcto = grupos.value.match(RegExPatternNombreCorto);
-
-    if (!correcto) {
-        error += '<p>' + form.grupoincorrecto + '</p>';
-        $('#' + pLblGrupo).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblGrupo).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarCategorias(pTxtCat, pLblCat, pChkComPri) {
-    var error = '';
-
-    if ($('#' + pChkComPri).is(':checked')) {
-        if ($('#' + pTxtCat).val() == '') {
-            $('#' + pLblCat).attr('class', 'ko');
-            error += '<p>' + form.camposVacios + '</p>';
-        } else {
-            $('#' + pLblCat).attr('class', '');
-        }
-    }
-
-    return error;
-}
-
-function ValidarNombreCortoCentro(pTxtNombreCentro, pLblNombreCentro) {
-    var error = '';
-
-    //Nombre corto del centro
-    var nombreCortoCentro = document.getElementById(pTxtNombreCentro).value;
-    var errorNombreCortoCentro = !ValidarNombreCortoCentroYAsignatura(nombreCortoCentro);
-    if (errorNombreCortoCentro) {
-        error += '<p>' + form.nombrecortoincorrectocentro + '</p>';
-        $('#' + pLblNombreCentro).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblNombreCentro).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarNombreCortoAsig(pTxtNombreAsig, pLblNombreAsig) {
-    var error = '';
-
-    //Nombre corto de la asignatura
-    var nombreCortoAsignatura = document.getElementById(pTxtNombreAsig).value;
-    var errorNombreCortoAsignatura = !ValidarNombreCortoCentroYAsignatura(nombreCortoAsignatura);
-    if (errorNombreCortoAsignatura) {
-        error += '<p>' + form.nombrecortoincorrectoasignatura + '</p>';
-        $('#' + pLblNombreAsig).attr('class', 'ko');
-    } else {
-        $('#' + pLblNombreAsig).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarNombreCortoCursoIntroducido(pTxtCurso, pLblCurso) {
-    var error = '';
-
-    //Nombre corto del curso
-    var nombreCortoCurso = document.getElementById(pTxtCurso).value;
-    var errorNombreCortoCurso = !ValidarNombreCortoCurso(nombreCortoCurso);
-    if (errorNombreCortoCurso) {
-        error += '<p>' + form.nombrecortoincorrectocurso + '</p>';
-        $('#' + pLblCurso).attr('class', 'ko');
-    } else {
-        $('#' + pLblCurso).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarTipoClase(pRbTipoClase1, pRbTipoClase2, pLblTipoClase) {
-    var error = '';
-
-    //Comprobamos si se ha seleccionado el tipo de clase
-    var uniChecked = $('#' + pRbTipoClase1).is(':checked');
-    var edexChecked = $('#' + pRbTipoClase2).is(':checked');
-    if (!uniChecked && !edexChecked) {
-        error += '<p>' + form.debesseleccionartipoclase + '</p>';
-        $('#' + pLblTipoClase).attr('class', 'ko');
-    } else {
-        $('#' + pLblTipoClase).attr('class', '');
-    }
-
-    return error;
-}
-
 //                                                                  registro de organizaciones
 //--------------------------------------------------------------------------------------------
-function registroOrganizacionSiguiente(funcion, id, id2) {
-    var error = '';
-
-    if (!(document.getElementById('ctl00_CPH1_lblErrorLogo') == null || document.getElementById('ctl00_CPH1_lblErrorLogo').innerHTML == '')) {
-        return false;
-    }
-
-    if ($('#ctl00_CPH1_txtRazonSocial').val() == ''
-|| $('#ctl00_CPH1_editDia').val() == ''
-|| (($('#ctl00_CPH1_txtProvincia').val() == '') && (document.getElementById('ctl00_CPH1_txtProvincia').style.display == ""))) {
-        error += '<p>' + form.camposVacios + '</p>';
-    }
-
-    error += AgregarErrorReg(error, ValidarAlias('ctl00_CPH1_txtAlias', 'ctl00_CPH1_lblAlias'));
-    error += AgregarErrorReg(error, ValidarRazonSocial('ctl00_CPH1_txtRazonSocial', 'ctl00_CPH1_lblRazonSocial'));
-    error += AgregarErrorReg(error, ValidarDireccionSede('ctl00_CPH1_txtDireccionSede', 'ctl00_CPH1_lblDireccionSede'));
-    error += AgregarErrorReg(error, ValidarCPOrg('ctl00_CPH1_txtCP', 'ctl00_CPH1_lblCP'));
-    error += AgregarErrorReg(error, ValidarPoblacionOrg('ctl00_CPH1_txtPoblacion', 'ctl00_CPH1_lblPoblacion'));
-
-    error += AgregarErrorReg(error, ValidarTipoOrg('ctl00_CPH1_ddlTipoOrganizacion', 'ctl00_CPH1_lblTipoOrganizacion'));
-
-    error += AgregarErrorReg(error, ValidarSector('ctl00_CPH1_ddlSector', 'ctl00_CPH1_lblSector'));
-
-    error += AgregarErrorReg(error, ValidarEmpleados('ctl00_CPH1_ddlEmpleados', 'ctl00_CPH1_lblNumeroEmpl'));
-
-    error += AgregarErrorReg(error, ValidarPaisOrg('ctl00_CPH1_editPais', 'ctl00_CPH1_lblPaisResidencia'));
-
-    error += AgregarErrorReg(error, ValidarProvinciaOrg('ctl00_CPH1_editProvincia', 'ctl00_CPH1_lblProvincia', 'ctl00_CPH1_txtProvincia'));
-
-    error += AgregarErrorReg(error, ValidarNombreCortoOrgIntroducido('ctl00_CPH1_txtNombreCorto', 'ctl00_CPH1_lblNombreCorto'));
-
-    if (error.length) {
-        crearError(error, '#tikitakaOrg', true);
-        return false;
-    }
-    else {
-        if (document.getElementById('ctl00_CPH1_btnPrefieroUsuario') != null) {
-            document.getElementById('ctl00_CPH1_btnPrefieroUsuario').style.display = 'none';
-        }
-        id = '#' + id;
-        id2 = '#' + id2;
-        funcion = funcion.replace("$$", "&" + $(id).val().replace('\'', '\\\'') + "&" + $(id2).val());
-        eval(funcion);
-    }
-}
-
-function ComprobarCampoRegOrg(pCampo) {
-    var error = '';
-    var panPintarError = '';
-
-    if (pCampo == 'Alias') {
-        error = ValidarAlias('ctl00_CPH1_txtAlias', 'ctl00_CPH1_lblAlias');
-        panPintarError = 'divKoAlias';
-    }
-    else if (pCampo == 'RazonSocial') {
-        error = ValidarRazonSocial('ctl00_CPH1_txtRazonSocial', 'ctl00_CPH1_lblRazonSocial');
-        panPintarError = 'divKoRazonSocial';
-    }
-    else if (pCampo == 'DireccionSede') {
-        error = ValidarDireccionSede('ctl00_CPH1_txtDireccionSede', 'ctl00_CPH1_lblDireccionSede');
-        panPintarError = 'divKoDireccionSede';
-    }
-    else if (pCampo == 'CPOrg') {
-        error = ValidarCPOrg('ctl00_CPH1_txtCP', 'ctl00_CPH1_lblCP');
-        panPintarError = 'divKoCP';
-    }
-    else if (pCampo == 'Poblacion') {
-        error = ValidarPoblacionOrg('ctl00_CPH1_txtPoblacion', 'ctl00_CPH1_lblPoblacion');
-        panPintarError = 'divKoPoblacion';
-    }
-    else if (pCampo == 'TipoOrg') {
-        error = ValidarTipoOrg('ctl00_CPH1_ddlTipoOrganizacion', 'ctl00_CPH1_lblTipoOrganizacion');
-        panPintarError = 'divKoTipoOrg';
-    }
-    else if (pCampo == 'Sector') {
-        error = ValidarSector('ctl00_CPH1_ddlSector', 'ctl00_CPH1_lblSector');
-        panPintarError = 'divKoSector';
-    }
-    else if (pCampo == 'Empleados') {
-        error = ValidarEmpleados('ctl00_CPH1_ddlEmpleados', 'ctl00_CPH1_lblNumeroEmpl');
-        panPintarError = 'divKoEmpleados';
-    }
-    else if (pCampo == 'Pais') {
-        error = ValidarPaisOrg('ctl00_CPH1_editPais', 'ctl00_CPH1_lblPaisResidencia');
-        panPintarError = 'divKoPaisOrg';
-    }
-    else if (pCampo == 'Provincia') {
-        error = ValidarProvinciaOrg('ctl00_CPH1_editProvincia', 'ctl00_CPH1_lblProvincia', 'ctl00_CPH1_txtProvincia');
-        panPintarError = 'divKoProvincia';
-    }
-    else if (pCampo == 'NombreCortoOrg') {
-        error = ValidarNombreCortoOrgIntroducido('ctl00_CPH1_txtNombreCorto', 'ctl00_CPH1_lblNombreCorto');
-        panPintarError = 'divKoNombreCorto';
-    }
-
-    if (error != '') {
-        crearError(error, '#' + panPintarError);
-    }
-    else {
-        LimpiarHtmlControl(panPintarError);
-    }
-}
-
-function ValidarAlias(pTxtAlias, pLblAlias) {
-    var error = '';
-
-    if ($('#' + pTxtAlias).val() == '') {
-        error += '<p>' + form.camposVacios + '</p>';
-        $('#' + pLblAlias).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblAlias).attr('class', '');
-    }
-
-    //Comprobamos el alias
-    if (document.getElementById(pTxtAlias) != null) {
-        var aliasOrg = document.getElementById(pTxtAlias).value;
-        var RegExPatternaliasOrg = /<|>$/;
-
-        if (aliasOrg.match(RegExPatternaliasOrg) || aliasOrg.length > 30 || aliasOrg.indexOf(',') != -1) {
-            error += '<p>' + form.formatoAlias + '</p>';
-            $('#' + pLblAlias).attr('class', 'ko');
-        }
-    }
-
-    return error;
-}
-
-function ValidarRazonSocial(pTxtRazonSocial, pLblRazonSocial) {
-    var error = '';
-    //Comprobamos razon social
-    if (document.getElementById(pTxtRazonSocial) != null) {
-        if (document.getElementById(pTxtRazonSocial).style.display != 'none' && $('#' + pTxtRazonSocial).val() == '') {
-            error += '<p>' + form.camposVacios + '</p>';
-            $('#' + pLblRazonSocial).attr('class', 'ko');
-        }
-        else {
-            $('#' + pLblRazonSocial).attr('class', '');
-
-            var razonSocialOrg = document.getElementById(pTxtRazonSocial).value;
-            var RegExPatternrazonSocialOrg = /<|>$/;
-            if (razonSocialOrg.match(RegExPatternrazonSocialOrg)) {
-                error += '<p>' + form.formatoRazonSocial + '</p>';
-                $('#' + pLblRazonSocial).attr('class', 'ko');
-            }
-        }
-    }
-
-    return error;
-}
-
-function ValidarDireccionSede(pTxtDireccion, pLblDireccion) {
-    var error = '';
-
-    if ($('#' + pTxtDireccion).val() == '') {
-        error += '<p>' + form.camposVacios + '</p>';
-        $('#' + pLblDireccion).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblDireccion).attr('class', '');
-    }
-
-    //Comprobamos la dirección
-    var direccionOrg = document.getElementById(pTxtDireccion).value;
-    var RegExPatterndireccionOrg = /<|>$/;
-    if (direccionOrg.match(RegExPatterndireccionOrg)) {
-        error += '<p>' + form.formatoDireccion + '</p>';
-        $('#' + pLblDireccion).attr('class', 'ko');
-    }
-
-    return error;
-}
-
-function ValidarCPOrg(pTxtCP, pLblCP) {
-    var error = '';
-
-    if ($('#' + pTxtCP).val() == '') {
-        error += '<p>' + form.camposVacios + '</p>';
-        $('#' + pLblCP).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblCP).attr('class', '');
-    }
-
-    //Comprobamos el CP
-    var CPOrg = document.getElementById(pTxtCP).value;
-    var RegExPatternCPOrg = /<|>$/;
-    if (CPOrg.match(RegExPatternCPOrg)) {
-        error += '<p>' + form.formatoCP + '</p>';
-        $('#' + pLblCP).attr('class', 'ko');
-    }
-
-    return error;
-}
 
 /**
  * Validar el campo población introducido para el proceso de registro.
@@ -4387,147 +1313,6 @@ function ValidarPoblacionOrg(pTxtPobla, pLblPobla) {
     }
 
     return error;
-}
-
-function ValidarTipoOrg(pDdlTipoOrg, pLblDdlTipoOrg) {
-    var error = '';
-    var comboOrg = document.getElementById(pDdlTipoOrg);
-
-    if (comboOrg != null && comboOrg.selectedIndex == 0) {
-        error += '<p>' + form.tipoorgincorrecta + '</p>';
-        $('#' + pLblDdlTipoOrg).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblDdlTipoOrg).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarSector(pDdlSector, pLblDdlSector) {
-    var error = '';
-    var comboSector = document.getElementById(pDdlSector);
-
-    if (comboSector != null && comboSector.selectedIndex == 0) {
-        error += '<p>' + form.sectorincorrecto + '</p>';
-        $('#' + pLblDdlSector).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblDdlSector).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarEmpleados(pDdlEmpleados, pLblDdlEmpleados) {
-    var error = '';
-    var comboEmpleados = document.getElementById(pDdlEmpleados);
-
-    if (comboEmpleados != null && comboEmpleados.selectedIndex == 0) {
-        error += '<p>' + form.numeroemplincorrecto + '</p>';
-        $('#' + pLblDdlEmpleados).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblDdlEmpleados).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarPaisOrg(pEditPais, pLblEditPais) {
-    var error = '';
-
-    if ((document.getElementById(pEditPais) != null) && (document.getElementById(pEditPais).selectedIndex == 0)) {
-        error += '<p>' + form.paisincorrecto + '</p>';
-        $('#' + pLblEditPais).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblEditPais).attr('class', '');
-    }
-
-    return error;
-}
-
-function ValidarProvinciaOrg(pEditProvincia, pLblEditProvincia, pTxtProvincia) {
-    var error = '';
-
-    if ((document.getElementById(pEditProvincia).style.display == "") && (document.getElementById(pEditProvincia).selectedIndex == 0)) {
-        error += '<p>' + form.provinciaincorrecta + '</p>';
-        $('#' + pLblEditProvincia).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblEditProvincia).attr('class', '');
-    }
-
-    //Comprobamos la provincia   
-    if (document.getElementById(pTxtProvincia) != null) {
-        var provinciaOrg = document.getElementById(pTxtProvincia).value;
-
-        var RegExPatternprovinciaOrg = /<|>$/;
-
-        if (provinciaOrg.match(RegExPatternprovinciaOrg)) {
-            error += '<p>' + form.formatoProvincia + '</p>';
-            $('#' + pLblEditProvincia).attr('class', 'ko');
-        }
-    }
-
-    if (($('#' + pTxtProvincia).val() == '') && (document.getElementById(pTxtProvincia).style.display == "")) {
-        error += '<p>' + form.camposVacios + '</p>';
-        $('#' + pLblEditProvincia).attr('class', 'ko');
-    }
-
-    return error;
-}
-
-function ValidarNombreCortoOrgIntroducido(pTxtNombre, pLblNombre) {
-    var error = '';
-
-    if (!ValidarNombreCortoUsuario($('#' + pTxtNombre).val())) {
-        error += '<p>' + form.nombrecortoincorrecto + '</p>';
-        $('#' + pLblNombre).attr('class', 'ko');
-    }
-    else {
-        $('#' + pLblNombre).attr('class', '');
-    }
-
-    return error;
-}
-
-
-function validarCif(texto) {
-    var pares = 0;
-    var impares = 0;
-    var suma;
-    var ultima;
-    var unumero;
-    var uletra = new Array("J", "A", "B", "C", "D", "E", "F", "G", "H", "I");
-    var xxx;
-
-    var regular = new RegExp(/^[ABCDEFGHKLMNPQS]\d\d\d\d\d\d\d[0-9,A-J]$/g);
-
-    if (!regular.exec(texto)) {
-        error += '<p>' + form.nifincorrecto + '</p>';
-    }
-    else {
-        ultima = texto.substr(8, 1);
-
-        for (var cont = 1; cont < 7; cont++) {
-            xxx = (2 * parseInt(texto.substr(cont++, 1))).toString() + "0";
-            impares += parseInt(xxx.substr(0, 1)) + parseInt(xxx.substr(1, 1));
-            pares += parseInt(texto.substr(cont, 1));
-        }
-        xxx = (2 * parseInt(texto.substr(cont, 1))).toString() + "0";
-        impares += parseInt(xxx.substr(0, 1)) + parseInt(xxx.substr(1, 1));
-
-        suma = (pares + impares).toString();
-        unumero = parseInt(suma.substr(suma.length - 1, 1));
-        unumero = (10 - unumero).toString();
-
-        if (unumero == 10) unumero = 0;
-
-        if (!((ultima == unumero) || (ultima == uletra[unumero])))
-            error += '<p>' + form.nifincorrecto + '</p>';
-    }
 }
 
 function validarNombreCortoComunidad(nombre) {
@@ -4574,179 +1359,6 @@ function ComprobarCampoRegistro(paginaID, pCampo) {
     }
 }
 
-
-function registroUsuarioParte1(errores, paginaID, funcionComprobar) {
-    var error = errores;
-    $dC = $('#' + paginaID + '_datosUsuario');
-
-    if ((typeof RecogerDatosExtra != 'undefined')) {
-        error += RecogerDatosExtra();
-    }
-
-    error += AgregarErrorReg(error, ValidarNombrePersona(paginaID + '_txtNombrePersonal', paginaID + '_lblNombre'));
-    error += AgregarErrorReg(error, ValidarApellidos(paginaID + '_txtApellidos', paginaID + '_lblApellidos'));
-    error += AgregarErrorReg(error, ValidarPais(paginaID + '_ddlPais', paginaID + '_lblPais'));
-    error += AgregarErrorReg(error, ValidarEmailIntroducido(paginaID + '_txtCorreoE', paginaID + '_lblEmail'));
-    error += AgregarErrorReg(error, ValidarContrasena(paginaID + '_txtContrasenya', '', paginaID + '_lblContrasenya', '', false));
-
-    var errorAvisoLegal = false;
-    var error3 = '';
-
-    //Fecha nacimiento / mayor de edad
-    if (document.getElementById(paginaID + '_cbMayorEdad') != null) {
-        if (!$('#' + paginaID + '_cbMayorEdad').is(':checked')) {
-            errorAvisoLegal = true;
-            error3 += '<p>' + form.mayorEdad + '</p>';
-            $('#' + paginaID + '_lblMayorEdad').attr('class', 'ko');
-        } else {
-            $('#' + paginaID + '_lblMayorEdad').attr('class', '');
-        }
-    }
-    if (document.getElementById(paginaID + '_editDia') != null) {
-        error += AgregarErrorReg(error, ValidarFechaNacimiento(paginaID + '_editDia', paginaID + '_editMes', paginaID + '_editAnio', paginaID + '_lblFechaNac'));
-    }
-
-    //Compruebo cláusulas adicionales:
-    if ($('#' + paginaID + '_txtHackClausulasSelecc').length && $('#' + paginaID + '_txtHackClausulasSelecc').val().indexOf('||') != -1) {
-        var valorHackClau = $('#' + paginaID + '_txtHackClausulasSelecc').val();
-        valorHackClau = valorHackClau.substring(0, valorHackClau.indexOf('||'));
-
-        var color = '';
-        if (valorHackClau != '0') {
-
-            if (!errorAvisoLegal) {
-                error3 += '<p>' + form.aceptarLegal + '</p>';
-            }
-            color = '#E24973';
-        }
-
-        var labelsClau = $('.clauAdicional');
-
-        for (var i = 0; i < labelsClau.length; i++) {
-            labelsClau[i].style.color = color;
-        }
-    }
-
-    if (error.length || error3.length) {
-        if (error.length) {
-            crearError(error, '#divKodatosUsuario', false);
-        }
-        else {
-            LimpiarHtmlControl('divKodatosUsuario');
-        }
-
-        if (error3.length) {
-            crearError(error3, '#divKoCondicionesUso', false);
-        }
-        else {
-            LimpiarHtmlControl('divKoCondicionesUso');
-        }
-
-        return false;
-    } else {
-        LimpiarHtmlControl('divKodatosUsuario');
-        LimpiarHtmlControl('divKoDatosPersonales');
-        LimpiarHtmlControl('divKoCondicionesUso');
-        funcionComprobar = funcionComprobar.replace("$$", $('#' + paginaID + '_txtCorreoE').val() + "&" + $('#' + paginaID + '_txtNombrePersonal').val() + "&" + $('#' + paginaID + '_txtApellidos').val() + "&" + $('#' + paginaID + '_captcha').val());
-        eval(funcionComprobar);
-
-        return false;
-    }
-}
-
-
-function registroUsuario_1(ultimoCheck, funcionComprobar) {
-    var error = '',
-$dC = $('#ctl00_CPH1_datosUsuario');
-
-    error += AgregarErrorReg(error, ValidarNombrePersona('ctl00_CPH1_txtNombrePersonal', 'ctl00_CPH1_lblNombre'));
-    error += AgregarErrorReg(error, ValidarApellidos('ctl00_CPH1_txtApellidos', 'ctl00_CPH1_lblApellidos'));
-
-    error += AgregarErrorReg(error, ValidarNombreUsu('ctl00_CPH1_txtNombreUsuario', 'ctl00_CPH1_lblNombreUsuario'));
-
-    if (!ultimoCheck) {
-        error += AgregarErrorReg(error, ValidarContrasena('ctl00_CPH1_txtContrasenya', 'ctl00_CPH1_txtcContrasenya', 'ctl00_CPH1_lblContrasenya', 'ctl00_CPH1_lblConfirmarContrasenya', true));
-    }
-
-    error += AgregarErrorReg(error, ValidarEmailIntroducido('ctl00_CPH1_txtCorreoE', 'ctl00_CPH1_lblEmail'));
-
-    var error2 = '';
-    error2 += AgregarErrorReg(error2, ValidarProvincia('ctl00_CPH1_txtProvincia', 'ctl00_CPH1_lblProvincia', 'ctl00_CPH1_editProvincia'));
-    error2 += AgregarErrorReg(error2, ValidarSexo('ctl00_CPH1_editSexo', 'ctl00_CPH1_lblSexo'));
-    error2 += AgregarErrorReg(error2, ValidarCentroEstudios('ctl00_CPH1_txtCentroEstudios', 'ctl00_CPH1_lbCentroEstudios'));
-    error2 += AgregarErrorReg(error2, ValidarAreaEstudios('ctl00_CPH1_txtAreaEstudios', 'ctl00_CPH1_lbAreaEstudios'));
-    error2 += AgregarErrorReg(error2, ComprobarFechaNac('ctl00_CPH1_editDia', 'ctl00_CPH1_editMes', 'ctl00_CPH1_editAnio', 'ctl00_CPH1_lblFechaNac', 'ctl00_CPH1_lblEdadMinima', 'ctl00_CPH1_'));
-
-    var errorAvisoLegal = false;
-    var error3 = '';
-
-    //Compruebo cláusulas adicionales:
-    if (document.getElementById('ctl00_CPH1_txtHackClausulasSelecc') != null && document.getElementById('ctl00_CPH1_txtHackClausulasSelecc').value.indexOf('||') != -1) {
-        var valorHackClau = document.getElementById('ctl00_CPH1_txtHackClausulasSelecc').value;
-        valorHackClau = valorHackClau.substring(0, valorHackClau.indexOf('||'));
-
-        var color = '';
-        if (valorHackClau != '0') {
-
-            if (!errorAvisoLegal) {
-                error3 += '<p>' + form.aceptarLegal + '</p>';
-            }
-            color = '#E24973';
-        }
-
-        var labelsClau = $('.clauAdicional');
-
-        for (var i = 0; i < labelsClau.length; i++) {
-            labelsClau[i].style.color = color;
-        }
-    }
-
-    if (error.length || error2.length || error3.length) {
-        if (error.length) {
-            //crearError('<ul>'+error+'</ul>', '#ctl00_CPH1_datosUsuario', true);
-            crearError(error, '#divKodatosUsuario', true);
-        }
-        else {
-            LimpiarHtmlControl('divKodatosUsuario');
-        }
-
-        if (error2.length) {
-            crearError(error2, '#divKoDatosPersonales', true);
-            //$('body, html').animate({scrollTop: $dP.offset().top}, 600);
-        }
-        else {
-            LimpiarHtmlControl('divKoDatosPersonales');
-        }
-
-        if (error3.length) {
-            crearError(error3, '#divKoCondicionesUso', true);
-        }
-        else {
-            LimpiarHtmlControl('divKoCondicionesUso');
-        }
-
-        return false;
-    }
-    else if (ultimoCheck == true) {
-        // si no hay error y estamos comprobando el formulario por ultima vez (antes de enviarlo, por ejemplo)...
-        return true;
-    }
-    else {
-        LimpiarHtmlControl('divKodatosUsuario');
-        LimpiarHtmlControl('divKoDatosPersonales');
-        LimpiarHtmlControl('divKoCondicionesUso');
-        funcionComprobar = funcionComprobar.replace("$$", "&" + $('#ctl00_CPH1_txtNombreUsuario').val() + "," + $('#ctl00_CPH1_txtCorreoE').val() + "," + $('#ctl00_CPH1_txtNombreCorto').val() + "," + $('#ctl00_CPH1_txtCaptcha').val());
-        eval(funcionComprobar);
-        //		// ... de otro modo ocultamos y mostramos las capas pertinentes y...
-        //		$dC.fadeOut('', function() {
-        //			$('#registroUsuario').find('div.ko').remove();
-        //			$('#datosPersonales').fadeIn();
-        //		});
-        //		// ... evitamos el comportamiento normal del botoncico
-        return false;
-    }
-}
-
 function AgregarErrorReg(pErrores, pError) {
     if (pErrores.indexOf(pError) != -1)//El error ya está, no hay que agregarlo.
     {
@@ -4754,70 +1366,6 @@ function AgregarErrorReg(pErrores, pError) {
     }
     else {
         return pError;
-    }
-}
-
-function ComprobarCampoRegUsuario(pCampo) {
-    var error = '';
-    var error2 = '';
-
-    var panPintarError = '';
-
-    if (pCampo == 'NombreUsu') {
-        error = ValidarNombreUsu('ctl00_CPH1_txtNombreUsuario', 'ctl00_CPH1_lblNombreUsuario');
-        panPintarError = 'divKoLogin';
-    }
-    else if (pCampo == 'Contra1') {
-        error = ValidarContrasena('ctl00_CPH1_txtContrasenya', 'ctl00_CPH1_txtcContrasenya', 'ctl00_CPH1_lblContrasenya', 'ctl00_CPH1_lblConfirmarContrasenya', false);
-        panPintarError = 'divKoContr';
-    }
-    else if (pCampo == 'Contra2') {
-        error = ValidarContrasena('ctl00_CPH1_txtContrasenya', 'ctl00_CPH1_txtcContrasenya', 'ctl00_CPH1_lblContrasenya', 'ctl00_CPH1_lblConfirmarContrasenya', true);
-        panPintarError = 'divKoContr';
-    }
-    else if (pCampo == 'Mail') {
-        error = ValidarEmailIntroducido('ctl00_CPH1_txtCorreoE', 'ctl00_CPH1_lblEmail');
-        panPintarError = 'divKoEmail';
-    }
-    else if (pCampo == 'NombrePersonal') {
-        error = ValidarNombrePersona('ctl00_CPH1_txtNombrePersonal', 'ctl00_CPH1_lblNombre');
-        panPintarError = 'divKoNombrePersonal';
-    }
-    else if (pCampo == 'Apellidos') {
-        error = ValidarApellidos('ctl00_CPH1_txtApellidos', 'ctl00_CPH1_lblApellidos');
-        panPintarError = 'divKiApellidos';
-    }
-    else if (pCampo == 'Provincia') {
-        error2 = ValidarProvincia('ctl00_CPH1_txtProvincia', 'ctl00_CPH1_lblProvincia', 'ctl00_CPH1_editProvincia');
-        panPintarError = 'divKoProvincia';
-    }
-    else if (pCampo == 'Sexo') {
-        error2 = ValidarSexo('ctl00_CPH1_editSexo', 'ctl00_CPH1_lblSexo');
-        panPintarError = 'divKoSexo';
-    }
-    else if (pCampo == 'CentroEstudios') {
-        error2 = ValidarCentroEstudios('ctl00_CPH1_txtCentroEstudios', 'ctl00_CPH1_lbCentroEstudios');
-        panPintarError = 'divKoCentroEstudios';
-    }
-    else if (pCampo == 'AreaEstudios') {
-        error2 = ValidarAreaEstudios('ctl00_CPH1_txtAreaEstudios', 'ctl00_CPH1_lbAreaEstudios');
-        panPintarError = 'divKoAreaEstudios';
-    }
-
-    if (error != '') {
-        //crearError('<ul>'+error+'</ul>', '#ctl00_CPH1_datosUsuario');
-        crearError(error, '#' + panPintarError);
-    }
-    else if (error2 == '') {
-        LimpiarHtmlControl(panPintarError);
-    }
-
-    if (error2 != '') {
-        //crearError('<ul>'+error2+'</ul>', '#fielDatosPersonales div.textBox:first');
-        crearError(error2, '#' + panPintarError);
-    }
-    else if (error == '') {
-        LimpiarHtmlControl(panPintarError);
     }
 }
 
@@ -4870,7 +1418,7 @@ function ValidarContrasena(pTxtContra, pTxtContra2, pLblContra, pLblContra2, pVa
             //$('#' + pLblContra).attr('class', '');
             $('#' + pTxtContra).addClass('is-valid');
             $('#' + pTxtContra).removeClass('is-invalid');
-            
+
             if (pValidarContr2) {
                 //$('#' + pLblContra2).attr('class', '');
                 $('#' + pTxtContra2).addClass('is-valid');
@@ -4972,7 +1520,7 @@ function ValidarFechaNacimiento(pDiaFechaNacimiento, pMesFechaNacimiento, pAnioF
                 //Los ha cumplido en algún mes anterior
                 mayor = true;
             }
-                //Los cumple durante el año en el que estamos
+            //Los cumple durante el año en el que estamos
             else if (hoy.getMonth() == fecha.getMonth()) {
                 //Los cumple durante el mes en el que estamos        
                 if (hoy.getDate() >= fecha.getDate()) {
@@ -5216,331 +1764,6 @@ function ComprobarFechaNac(pTxtDia, pTxtMes, pTxtAnio, pLblFechaNac, pLblEdadMin
     return error;
 }
 
-function ValidarNombreCortoUsuario(nombre) {
-    var RegExPatternNombreCorto = ExpresionNombreCorto;
-    return (nombre.match(RegExPatternNombreCorto) && nombre != '');
-}
-
-function ValidarNombreCortoCentroYAsignatura(nombre) {
-    var RegExPatternNombreCorto = ExpresionNombreCortoCentro;
-    return (nombre.match(RegExPatternNombreCorto) && nombre != '');
-}
-
-function ValidarNombreCortoCurso(nombre) {
-    var RegExPatternNombreCorto = /^([0-9]{1,10})$/;
-    return (nombre.match(RegExPatternNombreCorto) && nombre != '');
-}
-
-function pasarSegundaParte() {
-    $dC = $('#ctl00_CPH1_datosCuenta');
-    $dC.fadeOut('', function () {
-        //$('#registroUsuario').find('div.ko').remove();
-        $('#ctl00_CPH1_datosPersonales').fadeIn();
-    });
-    $('#queEsEstoParte1').fadeOut('', function () {
-        $('#queEsEstoParte2').fadeIn();
-    });
-
-}
-
-function pasarPrimeraParte() {
-    $dC = $('#ctl00_CPH1_datosPersonales');
-    $dC.fadeOut('', function () {
-        //document.getElementById('divErrores').className = '';
-        $('#ctl00_CPH1_datosCuenta').fadeIn();
-    });
-    $('#queEsEstoParte2').fadeOut('', function () {
-        $('#queEsEstoParte1').fadeIn();
-    });
-}
-
-function registroUsuario_2(IdCaptcha, funcionComprobar) {
-    if (!(document.getElementById('ctl00_CPH1_lblErrorFoto') == null || document.getElementById('ctl00_CPH1_lblErrorFoto').innerHTML == '')) {
-        return false;
-    }
-    var $dP = $('#fielDatosPersonales'),
-error = '';
-    // comprobamos el anterior fieldset, por si el usuario trastea por el DOM como si se creyese Tarzan
-    //	if (!registroUsuario_1(true))
-    //	{
-    //		$('#registroUsuario button.anterior:eq(0)').click();
-    //		return false;
-    //	}
-    // ahora comprobamos los campos personales
-    $dP.find('label:contains(*)').each(function () {
-        // todos aquellos label que contengan un asterisco:
-        var $label = $(this);
-        var $input = $label.next();
-        if (!$input.val().length) {
-            error += '<p>' + $label.text().replace('*', '') + form.obligatorio + '</p>';
-        }
-    });
-
-    error += AgregarErrorReg(error, ValidarProvincia('ctl00_CPH1_txtProvincia', 'ctl00_CPH1_lblProvincia', 'ctl00_CPH1_editProvincia'));
-
-    error += AgregarErrorReg(error, ValidarSexo('ctl00_CPH1_editSexo', 'ctl00_CPH1_lblSexo'));
-
-    //    //Comprobamos provincia
-    //    if(document.getElementById('ctl00_CPH1_txtProvincia').style.display==""){
-    //	    var provinciaUsuario = document.getElementById('ctl00_CPH1_txtProvincia').value;
-    //	    var RegExPatternprovinciaUsuario = /<|>$/;
-    //	    if (provinciaUsuario.match(RegExPatternprovinciaUsuario))
-    //	    {
-    //		    error += '<li>'+form.formatoProvincia+'</li>';
-    //		    document.getElementById('ctl00_CPH1_lblProvincia').style.color="red";
-    //	    }
-    //	}
-    //	//Comprobamos codigopostal
-    //	var CPUsuario = document.getElementById('ctl00_CPH1_txtCodigoPost').value;
-    //	var RegExPatternCPUsuario = /<|>$/;
-    //	if (CPUsuario.match(RegExPatternCPUsuario))
-    //	{
-    //		error += '<li>'+form.formatoCP+'</li>';
-    //		document.getElementById('ctl00_CPH1_lblCP').style.color="red";
-    //	}
-    //	//Comprobamos localidad
-    //	var localidadUsuario = document.getElementById('ctl00_CPH1_txtPoblacion').value;
-    //	var RegExPatternlocalidadUsuario = /<|>$/;
-    //	if (localidadUsuario.match(RegExPatternlocalidadUsuario))
-    //	{
-    //		error += '<li>'+form.formatoLocalidad+'</li>';
-    //		document.getElementById('ctl00_CPH1_lblPoblacion').style.color="red";
-    //	}
-
-    error += AgregarErrorReg(error, ValidarCentroEstudios('ctl00_CPH1_txtCentroEstudios', 'ctl00_CPH1_lbCentroEstudios'));
-
-    error += AgregarErrorReg(error, ValidarAreaEstudios('ctl00_CPH1_txtAreaEstudios', 'ctl00_CPH1_lbAreaEstudios'));
-
-    error += AgregarErrorReg(error, ComprobarFechaNac('ctl00_CPH1_editDia', 'ctl00_CPH1_editMes', 'ctl00_CPH1_editAnio', 'ctl00_CPH1_lblFechaNac', 'ctl00_CPH1_lblEdadMinima', 'ctl00_CPH1_'));
-
-    if (error.length) {
-        crearError(error, '#fielDatosPersonales div.textBox:first', true);
-        $('body, html').animate({ scrollTop: $dP.offset().top }, 600);
-        return false;
-    }
-    else {
-        IdCaptcha = '#' + IdCaptcha;
-        funcionComprobar = funcionComprobar.replace("$$", "&" + $(IdCaptcha).val());
-        eval(funcionComprobar);
-    }
-}
-
-function registroProfesor(funcionComprobar) {
-    var error = '';
-
-    // primero comprobamos los campos
-    if (!validarEmail($('#ctl00_CPH1_txtEmail').val())) {
-        error += '<p>' + form.emailValido + '</p>';
-    }
-
-    if ($('#ctl00_CPH1_txtCentroEstudios').val() == '') {
-        error += '<p>' + form.centroestudiosincorrecto + '</p>';
-    }
-
-    if ($('#ctl00_CPH1_txtAreaEstudios').val() == '') {
-        error += '<p>' + form.areaestudiosincorrecto + '</p>';
-    }
-
-    if (error.length) {
-        crearError(error, '#ctl00_CPH1_datosCuenta div.reg', true);
-        return false;
-    } else {
-        funcionComprobar = funcionComprobar.replace("$$", "&" + $('#ctl00_CPH1_txtEmail').val() + "," + $('#ctl00_CPH1_txtCentroEstudios').val() + "," + $('#ctl00_CPH1_txtAreaEstudios').val());
-        eval(funcionComprobar);
-        //		// ... de otro modo ocultamos y mostramos las capas pertinentes y...
-        //		$dC.fadeOut('', function() {
-        //			$('#registroUsuario').find('div.ko').remove();
-        //			$('#datosPersonales').fadeIn();
-        //		});
-        //		// ... evitamos el comportamiento normal del botoncico
-        return false;
-    }
-}
-
-// asignamos los eventos
-$(function () {
-    //$('#registroUsuario #datosCuenta button.siguiente').click(registroUsuario_1);
-    $('#registroUsuario').submit(function () {
-        return registroUsuario_2();
-    });
-    // boton anterior
-    $('#wrap').filter('.registro').find('button.anterior').click(function () {
-        var $this = $(this);
-        $this.parents('form').find('fieldset:visible').fadeOut('', function () {
-            $this.parents('fieldset').prev('fieldset').fadeIn();
-        });
-        return false;
-    });
-});
-
-function irAnteriorUsu() {
-    $('#ctl00_CPH1_datosPersonales').fadeOut('', function () {
-        $('#ctl00_CPH1_datosCuenta').fadeIn();
-    });
-    $('#queEsEstoParte2').fadeOut('', function () {
-        $('#queEsEstoParte1').fadeIn();
-    });
-
-    return false;
-}
-
-//                                                                 Agregar datos de contacto
-//------------------------------------------------------------------------------------------
-
-function crearDatosContacto() {
-    var $dP = $('#fielDatosPersonales'),
-error = '';
-
-    // ahora comprobamos los campos personales
-    $dP.find('label:contains(*)').each(function () {
-        // todos aquellos label que contengan un asterisco:
-        var $label = $(this);
-        var $input = $label.next();
-        if (!$input.val().length) {
-            error += '<p>' + $label.text().replace('*', '') + form.obligatorio + '</p>';
-        }
-    });
-
-    //Comprobamos el formato de nombre de usuario
-    var nombreUsuario = document.getElementById('ctl00_CPH1_txtNombrePersonal').value;
-    var RegExPatternNombreUsuario = ExpresionRegularNombres;
-    if (!nombreUsuario.match(RegExPatternNombreUsuario)) {
-        error += '<p>' + form.formatoNombre + '</p>';
-    }
-
-    //Comprobamos el formato de los apellidos del usuario
-    var apellidosUsuario = document.getElementById('ctl00_CPH1_txtApellidos').value;
-    var RegExPatternApellidosUsuario = ExpresionRegularNombres;
-    if (!apellidosUsuario.match(RegExPatternApellidosUsuario)) {
-        error += '<p>' + form.formatoApellidos + '</p>';
-    }
-
-    if (document.getElementById('ctl00_CPH1_txtEmail').value != "") {
-        if (!validarEmail(document.getElementById('ctl00_CPH1_txtEmail').value)) {
-            error += '<p>' + form.emailValido + '</p>';
-        }
-    }
-
-    if (error.length) {
-        crearError(error, '#fielDatosPersonales div.textBox:first', true);
-        $('body, html').animate({ scrollTop: $dP.offset().top }, 600);
-        return false;
-    }
-    else {
-        eval(document.getElementById('ctl00_CPH1_btnHackCrearDatos').href);
-    }
-}
-
-//                                                                             Suscripciones
-//------------------------------------------------------------------------------------------
-
-function confirmarSuscripcion(control, accion, nombre) {
-    var $this = $('#' + control);
-    var texto = dialogo.confirmarSuscripcion.replace("@1@", nombre);
-    mascaraCancelar(texto, $this, accion);
-}
-
-function eliminarSuscripcion(control, accion, nombre) {
-    var $this = $('#' + control);
-    var texto = dialogo.eliminarSuscripcion.replace("@1@", nombre);
-    mascaraCancelar(texto, $this, accion);
-}
-function confirmarSuscripcionBlog(control, accion, nombre) {
-    var $this = $('#' + control);
-    var texto = dialogo.confirmarSuscripcionBlog.replace("@1@", nombre);
-    mascaraCancelar(texto, $this, accion);
-}
-
-function eliminarSuscripcionBlog(control, accion, nombre) {
-    var $this = $('#' + control);
-    var texto = dialogo.eliminarSuscripcionBlog.replace("@1@", nombre);
-    mascaraCancelar(texto, $this, accion);
-}
-
-//                                                                    listado de comunidades
-//------------------------------------------------------------------------------------------
-$(function () { // ejemplo de borrado de comunidad
-    $('#wrap').filter('.comunidades').find('ul.imagenAsociada a.cancelarSuscr').click(function () {
-        var $this = $(this);
-        var $li = $this.parents('li').eq(0);
-        mascaraCancelar(borr.suscripcion, $li.get(0), function () {
-            alert('Aqui iria algun tipo de funcion para borrar "' + $li.find('h3').text() + '" de la base de datos o de donde se crea conveniente.');
-        });
-    });
-});
-
-//                                                                          listado de blogs
-//------------------------------------------------------------------------------------------
-$(function () { // ejemplo de borrado de suscripcion
-    $('#wrap').filter('.blogs').find('ul.imagenAsociada a.cancelarSuscr').click(function () {
-        var $this = $(this);
-        var $li = $this.parents('li').eq(0);
-        mascaraCancelar(borr.suscripcion, $li.get(0), function () {
-            alert('Aqui iria algun tipo de funcion para borrar "' + $li.find('h3').text() + '" de la base de datos o de donde se crea conveniente.');
-        });
-    });
-});
-
-//                                                                     listado de borradores
-//------------------------------------------------------------------------------------------
-/*$( function() { // ejemplo de borrado de borrador
-$('#wrap').filter('.borradores').find('ul.imagenAsociada a.cancelar').click( function() {
-var $this = $(this); 
-var $li = $this.parents('li').eq(0);
-mascaraCancelar(borr.borrador, $li.get(0), function() {
-alert('Aqui iria algun tipo de funcion para borrar "'+$li.find('h3').text()+'" de la base de datos o de donde se crea conveniente.');
-});
-});
-});*/
-
-function borrarBorrador(control, accion) {
-    var $this = $(control);
-    var $li = $this.parents('li').eq(0);
-    mascaraCancelar(borr.borrador, $li.get(0), accion);
-}
-//                                                                 listado de suscripciones
-//------------------------------------------------------------------------------------------
-/*$( function() { // ejemplo de borrado de suscripcion
-$('#wrap').filter('.suscripciones').find('ul.imagenAsociada a.cancelarSuscr').click( function() {
-var $this = $(this); 
-var $li = $this.parents('li').eq(0);
-mascaraCancelar(borr.suscripcion, $li.get(0), function() {
-alert('Aqui iria algun tipo de funcion para borrar "'+$li.find('h3').text()+'" de la base de datos o de donde se crea conveniente.');
-});
-});
-});
-*/
-function borrarSuscripcion(control, accion) {
-    var $this = $(control);
-    var $li = $this.parents('li').eq(0);
-    mascaraCancelar(borr.suscripcion, $li.get(0), accion);
-}
-//                                                                   listado de comentarios
-//------------------------------------------------------------------------------------------
-
-/* 
-$( function() { // ejemplo de borrado de comentarios
-$('#wrap').filter('.comentarios').find('ul.imagenAsociada a.cancelar').click( function() {
-var $this = $(this); 
-var $li = $this.parents('li').eq(0);
-mascaraCancelar(borr.comentario, $li.get(0), function() {
-alert('Aqui iria algun tipo de funcion para borrar "'+$li.find('h3').text()+'" de la base de datos o de donde se crea conveniente.');
-});
-});
-});
-*/
-function borrarComentario(control, accion) { // ejemplo de borrado de comentarios
-    var $this = $(control);
-    var $li = $this.parents('li').eq(0);
-    mascaraCancelar(borr.comentario, $li.get(0), accion);
-}
-
-//function AccionFichaPersona(texto,id,accion) { 
-//		var $li = $(document.getElementById(id)); 
-//		mascaraCancelar(texto, $li, accion);
-//}
-
-
 /**
  * Acción que se ejecuta cuando se pulsa sobre las acciones disponibles de un item/recurso de tipo "Perfil" encontrado por el buscador.
  * Las acciones que se podrán realizar son (No/Enviar newsletter, No/Bloquear). Acciones también de vincular, desvincular recurso...
@@ -5552,746 +1775,59 @@ function borrarComentario(control, accion) { // ejemplo de borrado de comentario
  * @param {any} accion: Acción o función que se ejecutará cuando se pulse en el botón de primario
  * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
-function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, texto, id, accion, textoInferior=null, idModalPanel="#modal-container") {
+function AccionFichaPerfil(titulo, textoBotonPrimario, textoBotonSecundario, texto, id, accion, textoInferior = null, idModalPanel = "#modal-container") {
 
     // Panel dinámico del modal padre donde se insertará la vista "hija"
-    const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');     
+    const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
     // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
-        plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>'+ titulo +'</p>';
-        plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
+    plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + titulo + '</p>';
+    plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
     plantillaPanelHtml += '</div>';
     // Cuerpo del panel
     plantillaPanelHtml += '<div class="modal-body">';
-        plantillaPanelHtml += '<div class="formulario-edicion">';
-            plantillaPanelHtml += '<div class="form-group">';                
-                plantillaPanelHtml += '<p>'+texto+'</p>';
+    plantillaPanelHtml += '<div class="formulario-edicion">';
+    plantillaPanelHtml += '<div class="form-group">';
+    plantillaPanelHtml += '<p>' + texto + '</p>';
+    plantillaPanelHtml += '</div>';
+    if (textoInferior != undefined) {
+        if (textoInferior.length > 5) {
+            plantillaPanelHtml += '<div class="form-group">';
+            plantillaPanelHtml += '<label class="control-label">' + textoInferior + '</label>';
             plantillaPanelHtml += '</div>';
-            if (textoInferior != undefined) {
-                if (textoInferior.length > 5) {
-                    plantillaPanelHtml += '<div class="form-group">';
-                    plantillaPanelHtml += '<label class="control-label">' + textoInferior + '</label>';
-                    plantillaPanelHtml += '</div>';
-                }
-            }          
-            plantillaPanelHtml += '<div id="modal-dinamic-action-response">';
-                // Posibles mensajes de info
-                plantillaPanelHtml += '<div>';
-                    plantillaPanelHtml += '<div id="menssages">';
-                    plantillaPanelHtml += '<div class="ok"></div>';
-                    plantillaPanelHtml += '<div class="ko"></div>';
-                plantillaPanelHtml += '</div>';
-            plantillaPanelHtml += '</div>';
-            // Panel de botones para la acción
-            plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
-                plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">'+textoBotonSecundario+'</button>'
-                plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1">'+textoBotonPrimario+'</button>'
-            plantillaPanelHtml += '</div>';                       
-        plantillaPanelHtml += '</div>';        
-    plantillaPanelHtml += '</div>'; 
+        }
+    }
+    plantillaPanelHtml += '<div id="modal-dinamic-action-response">';
+    // Posibles mensajes de info
+    plantillaPanelHtml += '<div>';
+    plantillaPanelHtml += '<div id="menssages">';
+    plantillaPanelHtml += '<div class="ok"></div>';
+    plantillaPanelHtml += '<div class="ko"></div>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
+    // Panel de botones para la acción
+    plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
+    plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">' + textoBotonSecundario + '</button>'
+    plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1">' + textoBotonPrimario + '</button>'
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
     // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
-    $modalDinamicContentPanel.html(plantillaPanelHtml);       
+    $modalDinamicContentPanel.html(plantillaPanelHtml);
 
     // Acceso a los botones
     const botones = $modalDinamicContentPanel.find('#modal-dinamic-action-buttons > button');
 
     // Asignación de la función al botón "Sí" o de acción
     $(botones[1]).on("click", function () {
-      // Ocultar el panel modal de bootstrap - De momento estará visible. Se ocultará si se muestra mensaje de OK pasados 1.5 segundos
+        // Ocultar el panel modal de bootstrap - De momento estará visible. Se ocultará si se muestra mensaje de OK pasados 1.5 segundos
         //$('#modal-container').modal('hide');
     }).click(accion);
-}
-
-function AccionCrearComentario(clientID, id, pCKECompleto) {
-    var $c = $(document.getElementById("nuevo_" + id));
-
-    document.getElementById("nuevo_" + id).className = 'comment-content';
-
-
-    var $anterior = $c.children();
-
-    if ($anterior.length > 0) {
-        //Eliminar el anterior
-        $anterior.remove();
-    }
-
-    var accion = "javascript:CrearComentario('" + clientID + "', '" + id + "');";
-    var claseCK = 'cke comentarios';
-
-    if (pCKECompleto) {
-        claseCK = 'cke recursos'
-    }
-
-    var $confirmar = $(['<fieldset class="mediumLabels"><legend>', comentarios.publicarcomentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_', id, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="text medium"></p></fieldset>'].join(''));
-    $confirmar.prependTo($c)
-    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-        $c.parents('.stateShowForm').css({ display: 'none' });
-        $confirmar.css({ display: 'none' });
-    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	
-}
-
-function CrearComentario(clientID, id) {
-    if ($('#txtComentario_' + id).val() != '') {
-        var descripcion = $('#txtComentario_' + id).val().replace(/\|/g, '[-@@@1-]').replace(/,/g, '[-@@@2-]');
-        MostrarUpdateProgress();
-
-        var target = clientID.replace(/_/gi, "$");
-
-        WebForm_DoCallback(target, 'ListadoComentarios_Editar|' + clientID + ',' + id + ',' + 'AgregarComentario' + ',' + document.getElementById('txtHackListDocDeComent').value + ',' + document.getElementById('txtHackMostrarSoloProyComent').value + ',' + descripcion, ReceiveServerData, '', null, false);
-    }
-    else {
-        $('#error_' + id).html(comentarios.comentarioError);
-    }
-}
-
-function AccionResponderComentario(clientID, id, pCKECompleto) {
-    var $c = $(document.getElementById("respuesta_" + id));
-
-    document.getElementById("respuesta_" + id).className = 'comment-content';
-
-    document.getElementById(id).style.display = 'block';
-
-
-    var $anterior = $c.children();
-
-    if ($anterior.length > 0) {
-        //Eliminar el anterior
-        $anterior.remove();
-    }
-
-    var accion = "javascript:ResponderComentario('" + clientID + "', '" + id + "');";
-    var claseCK = 'cke comentarios';
-
-    if (pCKECompleto) {
-        claseCK = 'cke recursos'
-    }
-
-    var $confirmar = $(['<fieldset class="mediumLabels"><legend>', comentarios.responderComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_', id, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="text medium"></p></fieldset>'].join(''));
-    $confirmar.prependTo($c)
-    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-        $c.parents('.stateShowForm').css({ display: 'none' });
-        $confirmar.css({ display: 'none' });
-    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	    
-}
-
-function ResponderComentario(clientID, id) {
-    if ($('#txtComentario_' + id).val() != '') {
-        var descripcion = $('#txtComentario_' + id).val().replace(/\|/g, '[-@@@1-]').replace(/,/g, '[-@@@2-]');
-        MostrarUpdateProgress();
-
-        var target = clientID.replace(/_/gi, "$");
-
-        WebForm_DoCallback(target, 'ListadoComentarios_Editar|' + clientID + ',' + id + ',' + 'guardarRespuestaComentario' + ',' + document.getElementById('txtHackListDocDeComent').value + ',' + document.getElementById('txtHackMostrarSoloProyComent').value + ',' + descripcion, ReceiveServerData, '', null, false);
-    }
-    else {
-        $('#error_' + id).html(comentarios.comentarioError);
-    }
-}
-
-function AccionEditarComentario(clientID, id, pCKECompleto) {
-    var $c = $(document.getElementById("respuesta_" + id));
-
-
-    var mensajeAntiguo = document.getElementById(id).innerHTML;
-
-    if (mensajeAntiguo.indexOf('<ul class="principal">') > -1) {
-        // Si encuentra el elemento principal, es Inevery y tenemos la lista de responder, eliminar.... etc....
-        mensajeAntiguo = mensajeAntiguo.substr(0, mensajeAntiguo.indexOf('<ul class="principal">'));
-    }
-
-    document.getElementById(id).style.display = 'none';
-
-    document.getElementById("respuesta_" + id).className = 'comment-content';
-
-    var $anterior = $c.children();
-
-    if ($anterior.length > 0) {
-        //Eliminar el anterior
-        $anterior.remove();
-    }
-
-    var accion = "javascript:EditarComentario('" + clientID + "', '" + id + "');";
-    var claseCK = 'cke comentarios';
-
-    if (pCKECompleto) {
-        claseCK = 'cke recursos'
-    }
-
-    var $confirmar = $(['<fieldset class="mediumLabels"><legend>', comentarios.editarComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_', id, '" rows="2" cols="20">' + mensajeAntiguo + '</textarea><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.guardar, '" class="text medium"></p></fieldset>'].join(''));
-    $confirmar.prependTo($c)
-    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-        $c.parents('.stateShowForm').css({ display: 'none' });
-        $confirmar.css({ display: 'none' });
-    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada	    
-}
-
-function EditarComentario(clientID, id) {
-    if ($('#txtComentario_' + id).val() != '') {
-        var descripcion = $('#txtComentario_' + id).val().replace(/\|/g, '[-@@@1-]').replace(/,/g, '[-@@@2-]');
-        MostrarUpdateProgress();
-
-        var target = clientID.replace(/_/gi, "$");
-        WebForm_DoCallback(target, 'ListadoComentarios_Editar|' + clientID + ',' + id + ',' + 'guardarComentario' + ',' + document.getElementById('txtHackListDocDeComent').value + ',' + document.getElementById('txtHackMostrarSoloProyComent').value + ',' + descripcion, ReceiveServerData, '', null, false);
-    }
-    else {
-        $('#error_' + id).html(comentarios.comentarioError);
-    }
-}
-
-function AccionEnviarMensajeGrupo(clientID, id) {
-
-    var $c = $(document.getElementById(id));
-
-    if (CKEDITOR.instances["txtDescripcion_" + id] != null) {
-        CKEDITOR.instances["txtDescripcion_" + id].destroy();
-    }
-
-    var $anterior = $c.children();
-
-    if ($anterior.length > 0) {
-        //Eliminar el anterior
-        $anterior.remove();
-    }
-
-    var accion = "javascript:EnviarMensajeGrupo('" + clientID + "', '" + id + "');";
-
-    var $confirmar = $(['<fieldset class="mediumLabels"><legend>', mensajes.enviarMensaje, '</legend><p><label for="txtAsunto_', id, '">', mensajes.asunto, '</label><input type="text" id="txtAsunto_', id, '" class="text big"></p><p><label for="txtDescripcion_', id, '">', mensajes.descripcion, '</label></p><p><textarea class="cke mensajes" id="txtDescripcion_', id, '" rows="2" cols="20"></textarea></p><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', mensajes.enviar, '" class="text medium"></p></fieldset>'].join(''));
-    //$confirmar.find('div').filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-    // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-    $confirmar.prependTo($c)
-    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-        $c.parents('.stateShowForm').css({ display: 'none' });
-        $confirmar.css({ display: 'none' });
-    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
-
-        MostrarPanelAccionDesp(clientID + "_desplegable_" + id, null);    
-}
-
-
-function AccionEnviarMensaje(clientID, id) {
-    var $c = $(document.getElementById(id));
-
-    if (CKEDITOR.instances["txtDescripcion_" + id] != null) {
-        CKEDITOR.instances["txtDescripcion_" + id].destroy();
-    }
-
-    var $anterior = $c.children();
-
-    if ($anterior.length > 0) {
-        //Eliminar el anterior
-        $anterior.remove();
-    }
-
-    var accion = "javascript:EnviarMensaje('" + clientID + "', '" + id + "');";
-
-    var $confirmar = $(['<fieldset class="mediumLabels"><legend>', mensajes.enviarMensaje, '</legend><p><label for="txtAsunto_', id, '">', mensajes.asunto, '</label><input type="text" id="txtAsunto_', id, '" class="text big"></p><p><label for="txtDescripcion_', id, '">', mensajes.descripcion, '</label></p><p><textarea class="cke mensajes" id="txtDescripcion_', id, '" rows="2" cols="20"></textarea></p><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', mensajes.enviar, '" class="text medium"></p></fieldset>'].join(''));
-    //$confirmar.find('div').filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-    // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-    $confirmar.prependTo($c)
-    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-        $c.parents('.stateShowForm').css({ display: 'none' });
-        $confirmar.css({ display: 'none' });
-    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
-
-    if ($('#divContMensajesPerf').length > 0 && $('#divContMensajesPerf').html() == '') {
-        $('#divContMensajesPerf').html($('#' + clientID + "_desplegable_" + id).parent().html());
-        $('#' + clientID + "_desplegable_" + id).parent().html('');
-    }
-
-    MostrarPanelAccionDesp(clientID + "_desplegable_" + id, null);    
-}
-
-
-function AccionRechazarDesplegandoMensaje(clientID, textoRechazarConMensaje, textoRechazarSinMensaje) {
-    //var $c = $(document.getElementById(clientID));
-
-    if (CKEDITOR.instances["txtDescripcion_"] != null) {
-        CKEDITOR.instances["txtDescripcion_"].destroy();
-    }
-
-    var id = "_rechazado";
-    var accionSinMensaje = "javascript:RechazarSinMensaje();";
-    var accionConMensaje = "javascript:RechazarConMensaje('" + clientID + "', '" + id + "');";
-
-    var html = '<fieldset class="mediumLabels"><legend>' + mensajes.enviarMensaje + '</legend><p><label for="txtDescripcion' + id + '">' + mensajes.descripcion + '</label></p><p><textarea class="cke mensajes" id="txtDescripcion' + id + '" rows="2" cols="20"></textarea></p><p><label class="error" id="error' + id + '"></label></p><input type="button" onclick="' + accionConMensaje + '" value="' + textoRechazarConMensaje + '" class="text medium"><input type="button" onclick="' + accionSinMensaje + '" value="' + textoRechazarSinMensaje + '" class="text medium"></p></fieldset>';
-
-    MostrarPanelAccionDesp(clientID, html);    
-}
-
-function RechazarSinMensaje() {
-    WebForm_DoCallback('__Page', 'rechazarsinmensaje', ReceiveServerData, '', null, false);
-}
-
-function RechazarConMensaje(clientID, id) {
-    if ($('#txtAsunto' + id).val() != '' && $('#txtDescripcion' + id).val() != '') {
-        var descripcion = $('#txtDescripcion' + id).val().replace(/&/g, '[-|-]');
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', 'rechazarconmensaje&' + descripcion, ReceiveServerData, '', null, false);
-    }
-    else {
-        $('#error' + id).html(mensajes.mensajeError);
-    }
-}
-
-
-function EnviarMensajeGrupo(clientID, id) {
-    if ($('#txtAsunto_' + id).val() != '' && $('#txtDescripcion_' + id).val() != '') {
-        var asunto = $('#txtAsunto_' + id).val().replace(/&/g, '[-|-]');
-        var descripcion = $('#txtDescripcion_' + id).val().replace(/&/g, '[-|-]');
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', 'FichaGrupo_EnviarMensaje&' + id + '&' + asunto + '&' + descripcion + '&' + clientID, ReceiveServerData, '', null, false);
-        //AceptarPanelAccion(clientID + "_desplegable_" + id, true, mensajes.mensajeEnviado);
-    }
-    else {
-        $('#error_' + id).html(mensajes.mensajeError);
-    }
-}
-
-function AccionEditarNombreGrupo(texto, grupoId, textoInferior) {
-
-    var $c = $(document.getElementById(grupoId));
-
-    var $anterior = $c.children();
-
-    if ($anterior.length > 0) {
-        //Eliminar el anterior
-        $anterior.remove();
-    }
-
-    var accion = "javascript:EditarNombreGrupo('" + grupoId + "');";
-
-    var $confirmar = $(['<div><p>', texto, '</p><br><p class="small"><br>', textoInferior, '</p><br><input type="text" id=txtNombreGrupo_' + grupoId + '></input><input type="button" value="Aceptar" onclick="' + accion + '" class="btMini"></input></div>'].join(''));
-    //$confirmar.find('div').filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-    // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-    $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
-}
-
-function EditarNombreGrupo(grupoId) {
-
-    var nombreGrupo = $('#txtNombreGrupo_' + grupoId).val().replace(/&/g, '[-|-]');
-
-    contenedorNombre = document.getElementById('divNombre_' + grupoId);
-    contenedorNombre.childNodes[0].textContent = nombreGrupo;
-
-    CerrarPanelAccion('ListadoGenerico_controles_fichagrupo_ascx_desplegable_' + grupoId);
-    WebForm_DoCallback('__Page', 'FichaGrupo_EditarNombreGrupo&' + grupoId + '&' + nombreGrupo + '&', null, '', null, false);
-    //    AceptarPanelAccion("_desplegable_" + id, true, 'Grupo Editado');
-}
-
-function AccionEditarGrupo(grupoId) {
-
-    WebForm_DoCallback('__Page', 'AgregarContactoAGrupo&' + grupoId + '&', ReceiveServerData, '', null, false);
-}
-
-function AccionFichaGrupo(texto, grupoId, accion, textoInferior) {
-    var $c = $(document.getElementById(grupoId));
-
-    var $anterior = $c.children();
-
-    if ($anterior.length > 0) {
-        //Eliminar el anterior
-        $anterior.remove();
-    }
-
-
-    var $confirmar = $(['<div><p>', texto, '</p><br><p class="small"><br>', textoInferior, '</p><br><button onclick="return false;" class="btMini">', borr.si, '</button><button onclick="return false;" class="btMini">', borr.no, '</button></div>'].join(''));
-
-    $confirmar.prependTo($c)
-.find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-    $c.parents('.stateShowForm').css({ display: 'none' });
-    $confirmar.css({ display: 'none' });
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
-}
-
-function EnviarMensaje(clientID, id) {
-    if ($('#txtAsunto_' + id).val() != '' && $('#txtDescripcion_' + id).val() != '') {
-        var asunto = $('#txtAsunto_' + id).val().replace(/&/g, '[-|-]');
-        var descripcion = $('#txtDescripcion_' + id).val().replace(/&/g, '[-|-]');
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', 'FichaPerfil_EnviarMensaje&' + id + '&' + asunto + '&' + descripcion + '&' + clientID, ReceiveServerData, '', null, false);
-        //AceptarPanelAccion(clientID + "_desplegable_" + id, true, mensajes.mensajeEnviado);
-    }
-    else {
-        $('#error_' + id).html(mensajes.mensajeError);
-    }
-}
-
-function AccionFichaPersona(texto, id, accion, textoInferior) {
-    var $li = $(document.getElementById(id));
-    mascaraCancelar2(texto, $li, accion, textoInferior);
-}
-
-function AccionAlerta(texto, id) {
-    var $li = $(document.getElementById(id));
-    mascaraCancelar(texto, $li);
-}
-
-function MostrarPopUp(texto, control, accion) {
-    var $this = $(control);
-    var $li = $this.parents('li').eq(0);
-    mascaraCancelar(texto, $li.get(0), accion);
-}
-
-function aceptarInvitacion(control, accion) {
-    var $this = $(control);
-    var $li = $this.parents('li').eq(0);
-    mascaraCancelar(invitaciones.aceptar, $li.get(0), accion);
-}
-
-function ignorarInvitacion(control, accion) {
-    var $this = $(control);
-    var $li = $this.parents('li').eq(0);
-    mascaraCancelar(invitaciones.ignorar, $li.get(0), accion);
-}
-
-
-//                                                      funciones asociadas a base recursos
-//------------------------------------------------------------------------------------------
-//$( function() {
-//	$('#selectoresBase img.ascendente').click(function(){
-//		if ('img/onUp.gif' == this.src) return false;
-//		this.src = 'img/onUp.gif'; 
-//		$('#selectoresBase img.descendente').attr('src', 'img/offDown.gif');
-//		alert('Recargar el listado?');
-//		return false;
-//	});
-//	$('#selectoresBase img.descendente').click(function(){
-//		if ('img/onDown.gif' == this.src) return false;
-//		this.src = 'img/onDown.gif'; 
-//		$('#selectoresBase img.ascendente').attr('src', 'img/offUp.gif');
-//		alert('Recargar el listado?');
-//		return false;
-//	});
-
-//	$('#baseRecursos a:contains(Aadir recurso a categora), button:contains(Editar Categorias), #anyadirACategoria, #anyadirEditores').click( function() {
-//		// meto esto aqui porque imagino que se tendra que llamar por Ajax al listado,
-//		// bastar con inyectarlo como ultimo elemento del <body/>.
-//		// Ademas, podeis darle un identificador al <a> para no tener que buscarlo por
-//		// el DOM usando su contenido =)
-//		var $capa = $('#capaModal');
-//		$capa.find('div.mascara').height($(document).height());
-//		$capa.find('form.anyadirCategorias').css('top', ($('html').attr('scrollTop') || $('body').attr('scrollTop') || 0) + 'px')
-//		$capa.fadeIn();
-//		// una vez llamado deberian prepararse los eventos
-//		$capa.find('a.icoEliminar').unbind('click').click(function(){
-//			$capa.fadeOut();
-//		});
-//		return false;
-//	});
-
-//	$('#baseRecursos a:contains(Crear categora)').click(function() {
-//		// id. que anterior
-//		$('#baseRecursos div.ko').remove()
-//		$('#editarCategoria').slideUp();
-//		$('#crearCategoria').slideDown().find('button[type=reset]').unbind('click').click(function(){
-//			$('#crearCategoria').slideUp();
-//		});
-//		return false;
-//	});
-//	
-//	$('#baseRecursos a:contains(Editar)').click(function() {
-//		// id. que anterior
-//		var $a = $('#baseRecursos div.listadoCategorias ul:gt(0) a.activo');
-//		if(!$a.length){
-//			crearError('<p>'+baseRec.noCategoria+'</p>','div.listadoCategorias');
-//			return false;
-//		}
-//		$('#baseRecursos div.ko').remove();
-//		$('#crearCategoria').slideUp();
-//		$('#editarCategoria').slideDown().find('input').val($a.text().replace(/\(\d*\)/,'')).find('button[type=reset]').unbind('click').click(function(){
-//			$('#editarCategoria').slideUp();
-//		});
-//		return false;
-//	});
-//});
-
-
-/*---------     Modificado todo by Javier     --------------*/
-
-function MostrarPopUpSelectorCategorias() {
-    // meto esto aqui porque imagino que se tendra que llamar por Ajax al listado,
-    // bastar con inyectarlo como ultimo elemento del <body/>.
-    // Ademas, podeis darle un identificador al <a> para no tener que buscarlo por
-    // el DOM usando su contenido =)
-
-    var $capa = $('#capaModal');
-    var $iframe = null;
-    //var $mask = $capa.find('div.mascara').height($(document).height());
-    var cssMascaraCom = {
-        'height': '100%',
-        'width': '100%',
-        'position': 'fixed',
-        'top': 0,
-        'left': 0
-    }
-    var $mask = $capa.find('div.mascara').css(cssMascaraCom);
-    //$capa.find('div.anyadirCategorias').css('top', ($('html').attr('scrollTop') || $('body').attr('scrollTop') || 0) + 'px')
-    /*var cssMascaraComCat = {
-    'position': 'fixed',
-    'top': 100
-    }
-    $capa.find('div.anyadirCategorias').css(cssMascaraComCat);*/
-    $capa.fadeIn();
-    //    if ($.browser.msie && $.browser.version < 7) {
-    //        $iframe = $('<iframe></iframe>').css({
-    //            position: 'absolute',
-    //            top: 0,
-    //            left: '50%',
-    //            zIndex: parseInt($mask.css('zIndex')) - 1,
-    //            width: '1000px',
-    //            marginLeft: '-500px',
-    //            height: $mask.height(),
-    //            filter: 'mask()'
-    //        }).insertAfter($mask);
-    //    }
-    // una vez llamado deberian prepararse los eventos
-    $capa.find('a.icoEliminar').unbind('click').click(function () {
-        $capa.fadeOut();
-        if ($iframe) { $iframe.remove(); }
-    });
-    return false;
-}
-
-function MostrarPopUpSelectorEditoresYCat(pCapa) {
-    //Lo siguiente se utiliza para que el popup aparezca centrado en la pantalla del usuario
-    var posY = "0px";
-    if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {//si es chrome
-        posY = document.body.scrollTop + (document.documentElement.clientHeight / 2);
-    } else//si no es chrome
-    {
-        posY = document.documentElement.scrollTop + (document.documentElement.clientHeight / 2);
-    }
-
-    // meto esto aqui porque imagino que se tendra que llamar por Ajax al listado,
-    // bastar con inyectarlo como ultimo elemento del <body/>.
-    // Ademas, podeis darle un identificador al <a> para no tener que buscarlo por
-    // el DOM usando su contenido =)
-
-    //0 -> selector de categorias
-    //1 -> selector de editores
-
-    if (pCapa == 0) {
-        document.getElementById('panEditores').style.display = 'none';
-        document.getElementById('panSelectorLectores').style.display = 'none';
-        if (document.getElementById('panCategorias') != null) {
-            document.getElementById('panCategorias').style.display = 'block';
-            document.getElementById('panCategorias').style.marginTop = posY - 300 + 'px';
-        }
-    }
-    else if (pCapa == 1) {
-        document.getElementById('panEditores').style.display = 'block';
-        document.getElementById('panEditores').style.marginTop = posY - 300 + 'px';
-        if (document.getElementById('panCategorias') != null) {
-            document.getElementById('panCategorias').style.display = 'none';
-        }
-        document.getElementById('panSelectorLectores').style.display = 'none';
-    }
-    else {
-        document.getElementById('panEditores').style.display = 'none';
-        if (document.getElementById('panCategorias') != null) {
-            document.getElementById('panCategorias').style.display = 'none';
-        }
-        document.getElementById('panSelectorLectores').style.display = 'block';
-        document.getElementById('panSelectorLectores').style.marginTop = posY - 300 + 'px';
-    }
-    MostrarPopUpSelectorCategorias();
-
-    /*var $capa = $('#capaModal');
-    var $iframe = null;
-    var $mask = $capa.find('div.mascara').height($(document).height());
-    $capa.find('div.anyadirCategorias').css('top', ($('html').attr('scrollTop') || $('body').attr('scrollTop') || 0) + 'px')
-    $capa.fadeIn();
-    if ($.browser.msie && $.browser.version < 7) {
-    $iframe = $('<iframe></iframe>').css({
-    position:'absolute',
-    top:0,
-    left:'50%',
-    zIndex:parseInt($mask.css('zIndex')) - 1,
-    width:'1000px',
-    marginLeft:'-500px',
-    height:$mask.height(),
-    filter:'mask()'
-    }).insertAfter($mask);
-    }
-    // una vez llamado deberian prepararse los eventos
-    $capa.find('a.icoEliminar').unbind('click').click(function(){
-    $capa.fadeOut();
-    if ($iframe) {$iframe.remove();}
-    });
-    return false;*/
-}
-
-function MostrarSelectorCategorias() {
-    // meto esto aqui porque imagino que se tendra que llamar por Ajax al listado,
-    // bastar con inyectarlo como ultimo elemento del <body/>.
-    // Ademas, podeis darle un identificador al <a> para no tener que buscarlo por
-    // el DOM usando su contenido =)
-
-    if (document.getElementById('panCompartirDocPopUp') != null) {
-        document.getElementById('panCompartirDocPopUp').style.display = 'none';
-    }
-    if (document.getElementById('panAgregarCatDocPopUp') != null) {
-        document.getElementById('panAgregarCatDocPopUp').style.display = 'block';
-    }
-    if (document.getElementById('panAgregarTagDocPopUp') != null) {
-        document.getElementById('panAgregarTagDocPopUp').style.display = 'none';
-    }
-
-    if (document.getElementById('panInfoEnvioTwitterPopUp') != null) {
-        document.getElementById('panInfoEnvioTwitterPopUp').style.display = 'none';
-    }
-    MostrarPopUpSelectorCategorias();
-
-    /*var $capa = $('#capaModal');
-    var $iframe = null;
-    var $mask = $capa.find('div.mascara').height($(document).height());
-    $capa.find('div.anyadirCategorias').css('top', ($('html').attr('scrollTop') || $('body').attr('scrollTop') || 0) + 'px')
-    $capa.fadeIn();
-    if ($.browser.msie && $.browser.version < 7) {
-    $iframe = $('<iframe></iframe>').css({
-    position:'absolute',
-    top:0,
-    left:'50%',
-    zIndex:parseInt($mask.css('zIndex')) - 1,
-    width:'1000px',
-    marginLeft:'-500px',
-    height:$mask.height(),
-    filter:'mask()'
-    }).insertAfter($mask);
-    }
-    // una vez llamado deberian prepararse los eventos
-    $capa.find('a.icoEliminar').unbind('click').click(function(){
-    $capa.fadeOut();
-    if ($iframe) {$iframe.remove();}
-    });
-    return false;*/
-}
-
-function MostrarEditorTags() {
-    // meto esto aqui porque imagino que se tendra que llamar por Ajax al listado,
-    // bastar con inyectarlo como ultimo elemento del <body/>.
-    // Ademas, podeis darle un identificador al <a> para no tener que buscarlo por
-    // el DOM usando su contenido =)
-
-    document.getElementById('panCompartirDocPopUp').style.display = 'none';
-    document.getElementById('panAgregarCatDocPopUp').style.display = 'none';
-    document.getElementById('panAgregarTagDocPopUp').style.display = 'block';
-
-    if (document.getElementById('panInfoEnvioTwitterPopUp') != null) {
-        document.getElementById('panInfoEnvioTwitterPopUp').style.display = 'none';
-    }
-
-    MostrarPopUpSelectorCategorias();
-
-    /*var $capa = $('#capaModal');
-    var $iframe = null;
-    var $mask = $capa.find('div.mascara').height($(document).height());
-    $capa.find('div.anyadirCategorias').css('top', ($('html').attr('scrollTop') || $('body').attr('scrollTop') || 0) + 'px')
-    $capa.fadeIn();
-    if ($.browser.msie && $.browser.version < 7) {
-    $iframe = $('<iframe></iframe>').css({
-    position:'absolute',
-    top:0,
-    left:'50%',
-    zIndex:parseInt($mask.css('zIndex')) - 1,
-    width:'1000px',
-    marginLeft:'-500px',
-    height:$mask.height(),
-    filter:'mask()'
-    }).insertAfter($mask);
-    }
-    // una vez llamado deberian prepararse los eventos
-    $capa.find('a.icoEliminar').unbind('click').click(function(){
-    $capa.fadeOut();
-    if ($iframe) {$iframe.remove();}
-    });
-    return false;*/
-}
-
-function MostrarCompartidorDocumentos() {
-    // meto esto aqui porque imagino que se tendra que llamar por Ajax al listado,
-    // bastar con inyectarlo como ultimo elemento del <body/>.
-    // Ademas, podeis darle un identificador al <a> para no tener que buscarlo por
-    // el DOM usando su contenido =)
-
-    document.getElementById('panCompartirDocPopUp').style.display = 'block';
-    if (document.getElementById('panAgregarCatDocPopUp') != null) {
-        document.getElementById('panAgregarCatDocPopUp').style.display = 'none';
-    }
-    if (document.getElementById('panAgregarTagDocPopUp') != null) {
-        document.getElementById('panAgregarTagDocPopUp').style.display = 'none';
-    }
-
-    if (document.getElementById('panInfoEnvioTwitterPopUp') != null) {
-        document.getElementById('panInfoEnvioTwitterPopUp').style.display = 'none';
-    }
-    MostrarPopUpSelectorCategorias();
-}
-
-function MostrarInfoEnvioTwitter() {
-    if (document.getElementById('panInfoEnvioTwitterPopUp') != null) {
-        document.getElementById('panInfoEnvioTwitterPopUp').style.display = 'block';
-    }
-    if (document.getElementById('panCompartirDocPopUp') != null) {
-        document.getElementById('panCompartirDocPopUp').style.display = 'none';
-    }
-    if (document.getElementById('panAgregarCatDocPopUp') != null) {
-        document.getElementById('panAgregarCatDocPopUp').style.display = 'none';
-    }
-    if (document.getElementById('panAgregarTagDocPopUp') != null) {
-        document.getElementById('panAgregarTagDocPopUp').style.display = 'none';
-    }
-    MostrarPopUpSelectorCategorias();
-}
-
-function MostrarVinculadorDocumentos() {
-    document.getElementById('panCompartirDocPopUp').style.display = 'none';
-    document.getElementById('panAgregarCatDocPopUp').style.display = 'none';
-    document.getElementById('panAgregarTagDocPopUp').style.display = 'none';
-
-    if (document.getElementById('panInfoEnvioTwitterPopUp') != null) {
-        document.getElementById('panInfoEnvioTwitterPopUp').style.display = 'none';
-    }
-    document.getElementById('panVincularDocADoc').style.display = 'block';
-
-    MostrarPopUpSelectorCategorias();
-}
-
-function CerrarSelectorCategorias() {
-    CerrarCapaModal();
-}
-
-function CerrarCapaModal() {
-    var $capa = $('#capaModal');
-    $capa.fadeOut();
-}
-
-function CerrarCompartidorRecurso() {
-    CerrarSelectorCategorias();
-    document.getElementById('panCompartirDocPopUp').style.display = 'none';
-}
-
-function CerrarSelectorCualquiera(capa) {
-    var $capa = $('#' + capa);
-    $capa.fadeOut();
-}
-
-function AjustarPanelDesplegableBusqAvanzParaAutoCompTags() {
-    if (document.getElementById('panBusquedaAv').style.overflow != "visible") {
-        document.getElementById('panBusquedaAv').style.overflow = "visible";
-    }
-    else {
-        document.getElementById('panBusquedaAv').style.overflow = "hidden";
-    }
 }
 
 function CalcularTopPanelYMostrar(evento, panelID) {
@@ -6313,584 +1849,12 @@ function CalcularTopPanelYMostrar(evento, panelID) {
     return false;
 }
 
-/*---------     Fin by Javier     --------------*/
-
-/*---------     RIAM: Funcion para modificar un checkBox       --------------*/
-function ModificarCheck(checkID, estado) {
-    if ($('#' + checkID).length > 0) {
-        $('#' + checkID).attr('checked', estado);
-    }
-}
-
-/*---------     FIN RIAM: Funcion para modificar un checkBox       --------------*/
-
-/*---------    REGION RESALTAR TAGS, BY ALTU    --------------------------------------------*/
-
-
-//NOTA:   NO TOCAR SIN EL COSENTIMIENTO DE JAVIER.
-
-function ResaltarTags(pListaTags) {
-    var listaColoresResaltar = new Array(8);
-
-    listaColoresResaltar[0] = "#8F529D"; //"rgb(143, 82, 157)";
-    listaColoresResaltar[1] = "#4C8FB5"; //"rgb(76, 143, 181)";
-    listaColoresResaltar[2] = "#E08552"; //"rgb(224, 133, 82)";
-    listaColoresResaltar[3] = "#E55982"; //"rgb(229, 89, 130)";
-    listaColoresResaltar[4] = "#C4A3CB"; //"rgb(196, 163, 203)";
-    listaColoresResaltar[5] = "#B5DDF1"; //"rgb(181, 221, 241)";
-    listaColoresResaltar[6] = "#F8C0A9"; //"rgb(248, 192, 169)";
-    listaColoresResaltar[7] = "#F6ABCF"; //"rgb(246, 171, 207)";
-
-    listaPlanaColoresResaltar = "#8F529D #4C8FB5 #E08552 #E55982 #C4A3CB #B5DDF1 #F8C0A9 #F6ABCF";
-    listaArtiConjuPrep = ",el,la,los,las,un,una,lo,unos,unas,y,o,u,e,ni,a,con,de,del,en,para,por,al,";
-    listaCaracteresExpurios = [" ", ",", "\"", "\'", "(", ")", ";", "<", ">", ":", "/"];
-
-    var elementos = $('.Resaltable');
-    var elementosTags = $('.TagResaltable');
-    var listaTags = pListaTags.split(",");
-
-    for (var i = 0; i < elementos.length; i++) {
-
-        var texto = elementos[i].innerHTML;
-        elementos[i].innerHTML = ObtenerTextoConEnfasisSegunLosTags(texto, listaTags, listaColoresResaltar, false);
-    }
-
-    for (var i = 0; i < elementosTags.length; i++) {
-
-        var textoTags = elementosTags[i].innerHTML;
-        //elementosTags[i].innerHTML = ObtenerTextoConEnfasisSegunLosTagsParaCadenaDeTags(textoTags, listaTags, listaColoresResaltar);
-        elementosTags[i].innerHTML = ObtenerTextoConEnfasisSegunLosTags(textoTags, listaTags, listaColoresResaltar, false);
-    }
-}
-
-function ObtenerTextoConEnfasisSegunLosTags(pTexto, pListaTags, pListaColoresResaltar, pExpandirPalabra) {
-    var textoConEnfasis = pTexto;
-    var count = 0;
-
-    for (var i = 0; i < pListaTags.length; i++) {
-        var tag = pListaTags[i];
-        var textoEnMinusSinAcentos = QuitarAcentosConvertirMinuscula(textoConEnfasis);
-        var tagEnMinusSinAcentos = QuitarAcentosConvertirMinuscula(tag);
-
-        if (textoEnMinusSinAcentos.indexOf(tagEnMinusSinAcentos) != -1) {//Contiene todo el tag por lo enfatizo entero:
-
-            textoConEnfasis = ProcesarTagEnTextoUnaOVariosVeces(textoConEnfasis, tag, count, pListaColoresResaltar, listaCaracteresExpurios, pExpandirPalabra);
-        }
-        else {
-            //Puede que contenga alguna palabra del tag por lo que la enfatizo individualmente:
-            var trozosTag = SepararTextoPorCarater(tag, ' ');
-
-            for (var x = 0; x < trozosTag.length; x++) {
-                var trozoTag = trozosTag[x];
-
-                if (!EsArticuloOConjuncionOPreposicionesComunes(trozoTag)) {
-                    var textoRecompuesto = "";
-                    var separador = "";
-                    var palabras = SepararTextoPorCarater(textoConEnfasis, ' ');
-
-                    for (var z = 0; z < palabras.length; z++) {
-                        var palabra = palabras[z];
-                        var palabraLimpia = QuitarAcentosConvertirMinuscula(palabra);
-                        var trozoTagLimpio = QuitarAcentosConvertirMinuscula(trozoTag);
-
-                        if (palabraLimpia == trozoTagLimpio) {
-                            textoRecompuesto += separador + AgregarEnfasisATexto(palabra, count, pListaColoresResaltar);
-                        }
-                        else if (pExpandirPalabra && palabraLimpia.indexOf(trozoTagLimpio) != -1) {
-                            if (caracterEnPListaCaracteresExpurios(listaCaracteresExpurios, palabra.charAt(0))) {
-                                textoRecompuesto += separador + palabra.charAt(0) + AgregarEnfasisATexto(palabra.substring(1), count, pListaColoresResaltar);
-                            }
-                            else if (caracterEnPListaCaracteresExpurios(listaCaracteresExpurios, palabra[palabra.length - 1])) {
-                                textoRecompuesto += separador + AgregarEnfasisATexto(palabra.substring(0, palabra.length - 1), count, pListaColoresResaltar) + palabra.charAt(palabra.length - 1);
-                            }
-                            else {
-                                textoRecompuesto += separador + AgregarEnfasisATexto(palabra, count, pListaColoresResaltar);
-                            }
-                        }
-                        else {
-                            textoRecompuesto += separador + palabra;
-                        }
-                        separador = " ";
-                    }
-                    textoConEnfasis = textoRecompuesto;
-                }
-            }
-        }
-        count++;
-
-        if (count >= pListaColoresResaltar.length) {
-            count = 0;
-        }
-    }
-    return textoConEnfasis;
-}
-
-function ObtenerTextoConEnfasisSegunLosTagsParaCadenaDeTags(pTexto, pListaTags, pListaColoresResaltar) {
-    var textoConEnfasis = pTexto;
-    var count = 0;
-
-    for (var i = 0; i < pListaTags.length; i++) {
-        var tag = pListaTags[i];
-        var tagContieneTrozoTag = false;
-        var textoEnMinusSinAcentos = QuitarAcentosConvertirMinuscula(textoConEnfasis);
-        var tagEnMinusSinAcentos = QuitarAcentosConvertirMinuscula(tag);
-
-        if (textoEnMinusSinAcentos.indexOf(tagEnMinusSinAcentos) != -1) {//Contiene todo el tag por lo enfatizo el tag entero entero:
-            tagContieneTrozoTag = true;
-        }
-        else {//Puede que contenga alguna palabra del tag por lo que la enfatizo individualmente:
-            var trozosTag = SepararTextoPorCarater(tag, ' ');
-
-            for (var x = 0; x < trozosTag.length; x++) {
-                var trozoTag = trozosTag[x];
-
-                if (!EsArticuloOConjuncionOPreposicionesComunes(trozoTag)) {
-                    var palabras = SepararTextoPorCarater(textoConEnfasis, ' ');
-
-                    for (var z = 0; z < palabras.length; z++) {
-                        var palabra = palabras[z];
-
-                        if (QuitarAcentosConvertirMinuscula(palabra) == QuitarAcentosConvertirMinuscula(trozoTag)) {
-                            tagContieneTrozoTag = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (tagContieneTrozoTag && textoConEnfasis.indexOf("<span") == -1) {
-            textoConEnfasis = AgregarEnfasisATexto(EliminarEspaciosExteriores(textoConEnfasis), count, pListaColoresResaltar);
-        }
-        else {
-            textoConEnfasis = EliminarEspaciosExteriores(textoConEnfasis);
-        }
-        count++;
-
-        if (count >= pListaColoresResaltar.Length) {
-            count = 0;
-        }
-    }
-    return textoConEnfasis;
-}
-
-function ProcesarTagEnTextoUnaOVariosVeces(pTexto, pTag, pEstiloResalto, pListaColoresResaltar, pListaCaracteresExpurios, pExpandirPalabra) {
-    var textoConEnfasis = pTexto;
-
-    var textoEnMinusSinAcentos = QuitarAcentosConvertirMinuscula(textoConEnfasis);
-    var tagEnMinusSinAcentos = QuitarAcentosConvertirMinuscula(pTag);
-
-    if (textoEnMinusSinAcentos.indexOf(tagEnMinusSinAcentos) != -1) {//Contiene todo el tag por lo enfatizo entero:
-
-        if (pTexto.length > pTag.length) {
-            var inicioTagEnTexto = textoEnMinusSinAcentos.indexOf(tagEnMinusSinAcentos);
-            var finTagEnTexto = inicioTagEnTexto + pTag.length;
-
-            if (pExpandirPalabra) {
-                //Expandimos el tag hasta tener palabras completas, o el final del texto:
-                while (inicioTagEnTexto != 0 && !caracterEnPListaCaracteresExpurios(pListaCaracteresExpurios, textoConEnfasis.charAt(inicioTagEnTexto - 1))) {
-                    inicioTagEnTexto--;
-                }
-                while (finTagEnTexto != textoConEnfasis.length && !caracterEnPListaCaracteresExpurios(pListaCaracteresExpurios, textoConEnfasis.charAt(finTagEnTexto))) {
-                    finTagEnTexto++;
-                }
-
-                textoConEnfasis = textoConEnfasis.substring(0, inicioTagEnTexto) + AgregarEnfasisATexto(textoConEnfasis.substring(inicioTagEnTexto, finTagEnTexto), pEstiloResalto, pListaColoresResaltar) + ProcesarTagEnTextoUnaOVariosVeces(textoConEnfasis.substring(finTagEnTexto), pTag, pEstiloResalto, pListaColoresResaltar, pListaCaracteresExpurios, pExpandirPalabra); //+ textoConEnfasis.substring(finTagEnTexto);
-            }
-            else {
-                if ((inicioTagEnTexto == 0 || caracterEnPListaCaracteresExpurios(pListaCaracteresExpurios, textoConEnfasis.charAt(inicioTagEnTexto - 1))) && (finTagEnTexto == textoEnMinusSinAcentos.length || caracterEnPListaCaracteresExpurios(pListaCaracteresExpurios, textoConEnfasis.charAt(finTagEnTexto)))) { //Solo si la cadena contiene el propio pTag como palabra
-                    textoConEnfasis = textoConEnfasis.substring(0, inicioTagEnTexto) + AgregarEnfasisATexto(textoConEnfasis.substring(inicioTagEnTexto, finTagEnTexto), pEstiloResalto, pListaColoresResaltar) + ProcesarTagEnTextoUnaOVariosVeces(textoConEnfasis.substring(finTagEnTexto), pTag, pEstiloResalto, pListaColoresResaltar, pListaCaracteresExpurios, pExpandirPalabra);
-                }
-                else {
-                    textoConEnfasis = textoConEnfasis.substring(0, finTagEnTexto) + ProcesarTagEnTextoUnaOVariosVeces(textoConEnfasis.substring(finTagEnTexto), pTag, pEstiloResalto, pListaColoresResaltar, pListaCaracteresExpurios, pExpandirPalabra);
-                }
-            }
-        }
-        else {
-            textoConEnfasis = AgregarEnfasisATexto(textoConEnfasis, pEstiloResalto, pListaColoresResaltar);
-        }
-    }
-    return textoConEnfasis;
-}
-
-function caracterEnPListaCaracteresExpurios(pListaCaracteresExpurios, caracter) {
-    for (i = 0; i < pListaCaracteresExpurios.length; i++) {
-        if (pListaCaracteresExpurios[i] == caracter) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function AgregarEnfasisATexto(pTexto, pEstiloResalto, pListaColoresResaltar) {
-    if (pTexto.indexOf("style=") == -1 && pTexto.indexOf("<span class") == -1 && pTexto.indexOf("</span") == -1 && pTexto != "span" && pTexto != "class=" && pTexto != "tag" && pTexto != "background-color" && pTexto != "/span" && pTexto != "color" && pTexto != "#FFFFFF" && listaPlanaColoresResaltar.indexOf(pTexto) == -1) {
-        return "<span class=\"tag\" style=\"color:#FFFFFF;background-color:" + pListaColoresResaltar[pEstiloResalto] + ";\">" + pTexto + "</span>";
-    }
-    else {
-        return pTexto;
-    }
-}
-
-function EliminarEspaciosExteriores(pTexto) {
-    var textoSinEspacios = pTexto;
-    var hayEspacios = true;
-
-    while (textoSinEspacios.length > 0 && hayEspacios) {
-        if (textoSinEspacios.charAt(0) == ' ') {
-            textoSinEspacios = textoSinEspacios.substring(1);
-        }
-        else if (textoSinEspacios[textoSinEspacios.length - 1] == ' ') {
-            textoSinEspacios = textoSinEspacios.substring(0, textoSinEspacios.length - 1);
-        }
-        else {
-            hayEspacios = false;
-        }
-    }
-    return textoSinEspacios;
-}
-
-function SepararTextoPorCarater(pTexto, pCaracter) {
-    var palabras = pTexto.split(pCaracter);
-
-    //Quito elementos vacíos:
-    var textoAuxiliar = "";
-    var separador = "";
-
-    for (var i = 0; i < palabras.length; i++) {
-        if (palabras[i] != '') {
-            textoAuxiliar += separador + palabras[i];
-            separador = ",";
-        }
-    }
-    return textoAuxiliar.split(",");
-}
-
-function EsArticuloOConjuncionOPreposicionesComunes(pTexto) {
-    if (pTexto.length > 4) {
-        //No hay ninguna preposición, conjunción o artículo con las de 4 caracteres.
-        return false;
-    }
-    else {
-        return (listaArtiConjuPrep.indexOf(',' + pTexto + ',') != -1);
-    }
-}
-
-function QuitarAcentosConvertirMinuscula(pTexto) {
-    var textoLimpio = pTexto;
-
-    textoLimpio = textoLimpio.replace(/\á/g, 'a');
-    textoLimpio = textoLimpio.replace(/\Á/g, 'a');
-
-    textoLimpio = textoLimpio.replace(/\é/g, 'e');
-    textoLimpio = textoLimpio.replace(/\É/g, 'e');
-
-    textoLimpio = textoLimpio.replace(/\í/g, 'i');
-    textoLimpio = textoLimpio.replace(/\Í/g, 'i');
-
-    textoLimpio = textoLimpio.replace(/\ó/g, 'o');
-    textoLimpio = textoLimpio.replace(/\Ó/g, 'o');
-
-    textoLimpio = textoLimpio.replace(/\ú/g, 'u');
-    textoLimpio = textoLimpio.replace(/\Ú/g, 'u')
-
-    textoLimpio = textoLimpio.toLowerCase();
-
-    return textoLimpio;
-}
-
-/*--------    FIN REGION RESALTAR TAGS    ---------------------------------------------------*/
-
-/*--------    REGION BUSQUEDA POR VARIAS CATEGORÍAS -----------------------------------------*/
-
-function AceptarSelectorCatBusqueda(pTxtHackIds, pTxtControlSelector) {
-    AceptarSelectorCatBusqueda(pTxtHackIds, pTxtControlSelector, true, false);
-}
-
-function AceptarSelectorCatBusqueda(pTxtHackIds, pTxtControlSelector, pFiltrarBusqueda, pCategoriasDocumentacion) {
-    document.getElementById(pTxtHackIds).value = document.getElementById(pTxtControlSelector).value;
-
-    var categoriaIDs = document.getElementById(pTxtHackIds).value;
-    var divs = document.getElementById('divSelCatTesauro');
-    document.getElementById('contenedorFiltrosCategorias').innerHTML = '';
-
-    var nivel = 1;
-
-    if (pCategoriasDocumentacion) {
-        document.getElementById('contenedorFiltrosCatDocumentacion').innerHTML = '';
-        nivel = 0;
-    }
-
-    var numSeleccionados = AgregarCategoriasASeleccion(divs, categoriaIDs, pTxtHackIds, pTxtControlSelector, nivel, pFiltrarBusqueda, pCategoriasDocumentacion);
-
-    var divsLista = document.getElementById('divSelCatLista');
-    AjustarCategoriasSeleccion(divsLista.children[1], categoriaIDs);
-
-    if (document.getElementById('filtrosCategorias') != null) {
-        if (numSeleccionados > 0) {
-            document.getElementById('filtrosCategorias').style.display = '';
-            //EjecutarScriptsIniciales();
-        }
-        else {
-            document.getElementById('filtrosCategorias').style.display = 'none';
-        }
-    }
-
-    if (pFiltrarBusqueda) {
-        FiltrarBusqueda();
-    }
-}
-
-function AgregarCategoriasASeleccion(pDivs, pCategoriaIDs, pTxtHackIds, pTxtControlSelector, pNivel, pFiltrarBusqueda, pCategoriasDocumentacion) {
-    var numSeleccionados = 0;
-
-    for (var i = 0; i < pDivs.children.length; i++) {
-        if (pCategoriaIDs.indexOf(pDivs.children[i].children[1].className) != -1) {
-            var contenedor = null;
-
-            if (pNivel != 0) {
-                contenedor = 'contenedorFiltrosCategorias';
-            }
-            else {
-                contenedor = 'contenedorFiltrosCatDocumentacion';
-            }
-
-            document.getElementById(contenedor).innerHTML += '<a id="idTemp" onclick="EliminarCategoriaFiltroBusqueda(\'' + pDivs.children[i].children[1].className + '\',\'' + pTxtHackIds + '\', \'' + pTxtControlSelector + '\', ' + pNivel + ', ' + pFiltrarBusqueda + ', ' + pCategoriasDocumentacion + ');">' + pDivs.children[i].children[1].children[1].innerHTML + '</a> ';
-            numSeleccionados++;
-            $(pDivs.children[i].children[1].children[0]).attr('checked', true);
-        }
-        else if ($(pDivs.children[i].children[1].children[0]).is(':checked')) {
-            $(pDivs.children[i].children[1].children[0]).attr('checked', false);
-        }
-
-        if (pDivs.children[i].children.length == 3) {
-            numSeleccionados = numSeleccionados + AgregarCategoriasASeleccion(pDivs.children[i].children[2], pCategoriaIDs, pTxtHackIds, pTxtControlSelector, pNivel + 1, pFiltrarBusqueda, pCategoriasDocumentacion);
-        }
-    }
-
-    return numSeleccionados;
-}
-
-function AjustarCategoriasSeleccion(pDivs, pCategoriaIDs) {
-    for (var i = 0; i < pDivs.children.length; i++) {
-        if (pCategoriaIDs.indexOf(pDivs.children[i].children[0].className) == -1) {
-            $(pDivs.children[i].children[0].children[0]).attr('checked', false)
-        }
-        else {
-            $(pDivs.children[i].children[0].children[0]).attr('checked', true)
-        }
-
-        if (pDivs.children[i].children.length == 2) {
-            AjustarCategoriasSeleccion(pDivs.children[i].children[1], pCategoriaIDs);
-        }
-    }
-}
-
-function EliminarCategoriaFiltroBusqueda(pCategoriaID, pTxtHackIds, pTxtControlSelector, pNivel, pFiltrarBusqueda, pCategoriasDocumentacion) {
-    document.getElementById(pTxtControlSelector).value = document.getElementById(pTxtControlSelector).value.replace(pCategoriaID + ',', '');
-
-    if (pCategoriasDocumentacion && pNivel == 0) {
-        document.getElementById(pTxtControlSelector).value = '';
-        HabilitarTodosLosElementosArbol();
-    }
-
-    AceptarSelectorCatBusqueda(pTxtHackIds, pTxtControlSelector, pFiltrarBusqueda, pCategoriasDocumentacion);
-}
-
-function MostrarOcultarPanelCatBusqueda(pPanelCatID) {
-    Desplegar(this, pPanelCatID);
-
-    if (document.getElementById(pPanelCatID).style.display != 'none') {
-        document.getElementById('aspnetForm').setAttribute('onclick', 'OcultarPanelCategoriasBusqueda(\'' + pPanelCatID + '\');');
-    }
-}
-
-function OcultarPanelCategoriasBusqueda(pPanelCatID) {
-    if (document.getElementById('txtHackNoCerrarSelector').value == '' && document.getElementById(pPanelCatID).style.display != 'none') {
-        Desplegar(this, pPanelCatID);
-    }
-
-    document.getElementById('txtHackNoCerrarSelector').value = '';
-}
-
-function LimpiarCatSelecciondas(pTxtHackIds, pTxtControlSelector, pPanelCatID, pFiltrarBusqueda, pCategoriasDocumentacion) {
-    if (pCategoriasDocumentacion) {
-        HabilitarTodosLosElementosArbol();
-    }
-
-    document.getElementById(pTxtControlSelector).value = '';
-    AceptarSelectorCatBusqueda(pTxtHackIds, pTxtControlSelector, pFiltrarBusqueda, pCategoriasDocumentacion);
-    Desplegar(this, pPanelCatID);
-}
-
-function AjustarTopControl(pControlID) {
-    //document.getElementById(pControlID).style.top = (((document.body.offsetHeight-17)/4) + document.documentElement.scrollTop)+'px';
-
-
-
-    if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
-        document.getElementById(pControlID).style.top = (200 + document.body.scrollTop) + 'px';
-    } else//si no es chrome
-    {
-        document.getElementById(pControlID).style.top = (200 + document.documentElement.scrollTop) + 'px';
-    }
-}
-
-function MostrarControles(pControles) {
-    while (pControles.length > 1) {
-        var controlID = '';
-        if (pControles.indexOf(',') != -1) {
-            controlID = pControles.substring(0, pControles.indexOf(','));
-            pControles = pControles.replace(controlID + ',', '');
-        }
-        else {
-            controlID = pControles;
-            pControles = pControles.replace(controlID, '');
-        }
-
-        if (document.getElementById(controlID) != null) {
-            $('#' + controlID).fadeIn();
-        }
-    }
-}
-
-function CalcularTagsSegunTitulo(pTituloID, pHackTituloID, pTagsID, pHackPalabrasNoRelevantesID, pHackSeparadores) {
-    var tags = ObtenerTagsFrase(document.getElementById(pTituloID).value, pHackPalabrasNoRelevantesID, pHackSeparadores);
-    var txtTags = ''; //toLowerCase()
-
-    //Quito los tags antiguos:
-    var txtHackTagsTitulo = document.getElementById(pHackTituloID).value
-    var tagsActuales = document.getElementById(pTagsID).value.split(',');
-    var separador = '';
-    for (var j = 0; j < tagsActuales.length; j++) {
-        var tag = tagsActuales[j].trim();
-        if (tag != '' && txtHackTagsTitulo.indexOf('[&]' + tag + '[&]') == -1) {
-            txtTags += separador + tag;
-            separador = ', '
-        }
-    }
-
-    //Agrego los tags nuevos:
-    txtHackTagsTitulo = '';
-    for (var i = 0; i < tags.length; i++) {
-        if (tags[i] != '') {
-            txtTags += separador + tags[i];
-            separador = ', '
-            txtHackTagsTitulo += '[&]' + tags[i] + '[&]';
-        }
-    }
-
-    document.getElementById(pTagsID).value = txtTags;
-    document.getElementById(pHackTituloID).value = txtHackTagsTitulo;
-}
-
-function ObtenerTagsFrase(pFrase, pHackPalabrasNoRelevantesID, pHackSeparadores) {
-    var listaTags = new Array();
-    var ListaPalabrasNoRelevantes = document.getElementById(pHackPalabrasNoRelevantesID).value;
-
-    var numeroPalabrasDescartadas = 0;
-
-    var subcadenas = ObtenerPalabras(pFrase, pHackSeparadores);
-
-    var listaTagsTexto = '';
-    for (var i = 0; i < subcadenas.length; i++) {
-        var palabra = LimpiarPalabraParaTagGeneradoSegunTitulo(subcadenas[i].toLowerCase());
-
-        if (palabra.indexOf('"') != -1 || palabra.indexOf('\'') != -1) {
-            if (palabra.indexOf('"') == 0 || palabra.lastIndexOf('"') == palabra.length - 1) {
-                palabra = palabra.replace(/"/g, '');
-            }
-            else if (palabra.indexOf('\'') == 0 || palabra.lastIndexOf('\'') == palabra.length - 1) {
-                palabra = palabra.replace(/\'/g, '');
-            }
-        }
-
-        if (ListaPalabrasNoRelevantes.indexOf('[&]' + palabra + '[&]') == -1 && listaTagsTexto.indexOf('[&]' + palabra + '[&]') == -1) {
-            listaTags[listaTags.length] = palabra;
-            listaTagsTexto += '[&]' + palabra + '[&]';
-        }
-        else {
-            numeroPalabrasDescartadas++;
-        }
-    }
-
-    if (listaTags.length != 0) {
-        if (listaTags[listaTags.length - 1].indexOf(".") == (listaTags[listaTags.length - 1].length - 1)) {
-            var ultima = listaTags[listaTags.length - 1];
-            listaTags[listaTags.length - 1] = ultima.replace('.', '');
-        }
-    }
-
-    return listaTags;
-}
-
-function LimpiarPalabraParaTagGeneradoSegunTitulo(pPalabra) {
-    if (pPalabra.length == 0) {
-        return pPalabra;
-    }
-    else if (pPalabra.indexOf('¿') == 0 || pPalabra.indexOf('?') == 0 || pPalabra.indexOf('¡') == 0 || pPalabra.indexOf('!') == 0) {
-        return LimpiarPalabraParaTagGeneradoSegunTitulo(pPalabra.substring(1));
-    }
-    else if (pPalabra.lastIndexOf('¿') == (pPalabra.length - 1) || pPalabra.lastIndexOf('?') == (pPalabra.length - 1) || pPalabra.lastIndexOf('¡') == (pPalabra.length - 1) || pPalabra.lastIndexOf('!') == (pPalabra.length - 1)) {
-        return LimpiarPalabraParaTagGeneradoSegunTitulo(pPalabra.substring(0, pPalabra.length - 1));
-    }
-    else {
-        return pPalabra;
-    }
-}
-
-function ObtenerPalabras(pFrase, pHackSeparadores) {
-    var separadores = document.getElementById(pHackSeparadores).value + ' [&]';
-    var listaSeparadores = separadores.split('[&]');
-    var frase = [pFrase];
-
-    for (var i = 0; i < listaSeparadores.length; i++) {
-        frase = ObtenerPalabrasSeparadas(frase, listaSeparadores[i]);
-    }
-
-    return frase;
-}
-
-function ObtenerPalabrasSeparadas(pPalabras, pSeparador) {
-    if (pSeparador != '') {
-        var palabras = new Array();
-
-        for (var i = 0; i < pPalabras.length; i++) {
-            var palabrasInt = pPalabras[i].split(pSeparador);
-
-            for (var j = 0; j < palabrasInt.length; j++) {
-                palabras[palabras.length] = palabrasInt[j];
-            }
-        }
-
-        return palabras;
-    }
-    else {
-        return pPalabras;
-    }
-}
-
-/*--------    FIN REGION BUSQUEDA POR VARIAS CATEGORÍAS    ----------------------------------*/
-
-
-/*--------    REGION DAFOS ------------------------------------------------------------------*/
-
-function CalcularNumFactoresSinVotar(elementID, txtHackID, voto) {
-    var element = document.getElementById(elementID);
-    var txtHack = document.getElementById(txtHackID).value;
-    var numFactoresSinVotar = element.innerHTML.substring(element.innerHTML.indexOf('(', 0) + 1, element.innerHTML.length - 1);
-    if (txtHack == 0 && voto > 0) {
-        numFactoresSinVotar = parseFloat(numFactoresSinVotar) - 1;
-    }
-    else if (txtHack > 0 && voto == 0) {
-        numFactoresSinVotar = parseFloat(numFactoresSinVotar) + 1;
-    }
-    element.innerHTML = element.innerHTML.substring(0, element.innerHTML.indexOf('(', 0) - 1) + ' (' + numFactoresSinVotar + ')';
-    document.getElementById(txtHackID).value = voto;
-}
-
-/*--------    FIN REGION DAFOS    -----------------------------------------------------------*/
-
-
+/**
+ * Cambia una fecha en formato dd/mm/yyyy a yyyymmdd.
+ *
+ * @param {string} fecha - La fecha en formato dd/mm/yyyy.
+ * @returns {string} - La fecha en formato yyyymmdd.
+ */
 function cambiarFormatoFecha(fecha) {
     //Cambia una fecha en formato 01/02/2011 a 20110201
     var cachos;
@@ -6898,53 +1862,13 @@ function cambiarFormatoFecha(fecha) {
     return cachos[2] + cachos[1] + cachos[0];
 }
 
-
-
-/*--------    REGION BLOGS ------------------------------------------------------------------*/
-
-function AgregarCategoriaBlog(txtNombre, txtHack, panel, baseURL) {
-    var categoria = txtNombre.val();
-    if (txtHack.val().indexOf("##&##" + categoria + "##&##") == -1) {
-        txtHack.val(txtHack.val() + categoria + "##&##");
-    }
-    PintarCategoriasBlog(txtHack, panel, baseURL);
-    txtNombre.val('');
-}
-
-function PintarCategoriasBlog(txtHack, panel, baseURL) {
-    panel.html('');
-    var listaCat = txtHack.val().split("##&##");
-
-    for (var i = 0; i < listaCat.length; i++) {
-        var categoria = listaCat[i];
-        if (categoria != "") {
-            var html = "<label>" + categoria + "<a onclick=\"javascript:EliminarCategoriaBlog(this.parentNode.textContent, $('" + txtHack.selector + "'), $('" + panel.selector + "'), '" + baseURL + "');\"><img src='" + baseURL + "blank.gif' alt='" + borr.eliminar + "'/></a></label>"
-            panel.html(panel.html() + html);
-        }
-    }
-}
-
-function EliminarCategoriaBlog(categoria, txtHack, panel, baseURL) {
-    if (txtHack.val().indexOf("##&##" + categoria + "##&##") >= 0) {
-        txtHack.val(txtHack.val().replace(categoria + "##&##", ""));
-    }
-
-    PintarCategoriasBlog(txtHack, panel, baseURL);
-}
-
-/*--------    FIN REGION BLOGS    -----------------------------------------------------------*/
-
-function quitarFormatoHTML(cadena) {
-    //return Encoder.htmlDecode(cadena.replace(/<[^>]+>/g,'').replace(/\n/g, '').replace(/^\s*|\s*$/g,""));
-    return Encoder.htmlDecode(cadena.replace(/^\s*|\s*$/g, ""));
-}
-
-
-
-
-
 /*--------    REGION BUSCADOR FACETADO    -----------------------------------------------------------*/
 
+/**
+ * Obtiene el fragmento hash de la URL actual.
+ *
+ * @returns {string} - El valor del hash de la URL actual, o una cadena vacía si no hay hash.
+ */
 function ObtenerHash() {
     var hash = window.location.hash;
     if (hash != null && hash != '') {
@@ -6956,6 +1880,16 @@ function ObtenerHash() {
     return '';
 }
 
+/**
+ * Obtiene un filtro de rango basado en los valores de dos controles de entrada.
+ *
+ * @param {HTMLElement} control1 - El primer control de entrada.
+ * @param {string} textoInicioCtrl1 - El valor de texto inicial para el primer control.
+ * @param {HTMLElement} control2 - El segundo control de entrada.
+ * @param {string} textoInicioCtrl2 - El valor de texto inicial para el segundo control.
+ * @param {boolean} esFiltroFechas - Indica si los valores son fechas y deben formatearse.
+ * @returns {string} - Una cadena que representa el rango, en el formato 'valor1-valor2'.
+ */
 function ObtenerFiltroRango(control1, textoInicioCtrl1, control2, textoInicioCtrl2, esFiltroFechas) {
     var resultado = '';
     if (control1 != null && $(control1).val() != "" && $(control1).val() != textoInicioCtrl1 && control1.type != 'hidden') {
@@ -6973,90 +1907,114 @@ function ObtenerFiltroRango(control1, textoInicioCtrl1, control2, textoInicioCtr
         }
         resultado += valor2;
     }
-
     return resultado;
 }
 
 
+/**
+ * Configura el control de autocompletar para un campo de entrada.
+ *
+ * @param {HTMLElement} control - El control de entrada al que se aplicará el autocompletar.
+ * @param {string} pClaveFaceta - La clave de faceta para la autocompletar.
+ * @param {number} pOrden - El orden para la autocompletar.
+ * @param {string} pParametros - Parámetros adicionales para la autocompletar.
+ */
 function autocompletarGenerico(control, pClaveFaceta, pOrden, pParametros) {
     $(control).autocomplete(
-null,
-{
-    //servicio: new WS($('input.inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
-    //metodo: 'AutoCompletarFacetas',
-    url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarFacetas",
-    type: "POST",
-    delay: 0,
-    minLength: 4,
-    scroll: false,
-    selectFirst: false,
-    minChars: 4,
-    width: 170,
-    cacheLength: 0,
-    extraParams: {
-        proyecto: $('input.inpt_proyID').val(),
-        bool_esMyGnoss: $('input.inpt_bool_esMyGnoss').val() == 'True',
-        bool_estaEnProyecto: $('input.inpt_bool_estaEnProyecto').val() == 'True',
-        bool_esUsuarioInvitado: $('input.inpt_bool_esUsuarioInvitado').val() == 'True',
-        identidad: $('input.inpt_identidadID').val(),
-        organizacion: $('input.inpt_organizacionID').val(),
-        filtrosContexto: '',
-        languageCode: $('input.inpt_Idioma').val(),
-        perfil: perfilID,
-        nombreFaceta: pClaveFaceta,
-        orden: pOrden,
-        parametros: replaceAll(replaceAll(replaceAll(pParametros.replace('#', ''), '%', '%25'), '#', '%23'), '+', "%2B"),
-        tipo: $('input.inpt_tipoBusquedaAutoCompl').val(),
-        botonBuscar: control.id + 'botonBuscar'
-    }
-}
-);
+        null,
+        {
+            //servicio: new WS($('input.inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
+            //metodo: 'AutoCompletarFacetas',
+            url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarFacetas",
+            type: "POST",
+            delay: 0,
+            minLength: 4,
+            scroll: false,
+            selectFirst: false,
+            minChars: 4,
+            width: 170,
+            cacheLength: 0,
+            extraParams: {
+                proyecto: $('input.inpt_proyID').val(),
+                bool_esMyGnoss: $('input.inpt_bool_esMyGnoss').val() == 'True',
+                bool_estaEnProyecto: $('input.inpt_bool_estaEnProyecto').val() == 'True',
+                bool_esUsuarioInvitado: $('input.inpt_bool_esUsuarioInvitado').val() == 'True',
+                identidad: $('input.inpt_identidadID').val(),
+                organizacion: $('input.inpt_organizacionID').val(),
+                filtrosContexto: '',
+                languageCode: $('input.inpt_Idioma').val(),
+                perfil: perfilID,
+                nombreFaceta: pClaveFaceta,
+                orden: pOrden,
+                parametros: replaceAll(replaceAll(replaceAll(pParametros.replace('#', ''), '%', '%25'), '#', '%23'), '+', "%2B"),
+                tipo: $('input.inpt_tipoBusquedaAutoCompl').val(),
+                botonBuscar: control.id + 'botonBuscar'
+            }
+        }
+    );
     if (control.attributes["onfocus"] != null) {
         control.attributes.removeNamedItem('onfocus');
     }
-
     pintarTagsInicio();
 }
 
 
+/**
+ * Configura el control de autocompletar para un campo de entrada de usuario.
+ *
+ * @param {HTMLElement} control - El control de entrada al que se aplicará el autocompletar.
+ * @param {string} pClaveFaceta - La clave de faceta para el autocompletar.
+ * @param {number} pOrden - El orden para el autocompletar.
+ * @param {string} pParametros - Parámetros adicionales para el autocompletar.
+ * @param {string} pGrafo - El identificador del proyecto o grafo.
+ */
 function autocompletarUsuario(control, pClaveFaceta, pOrden, pParametros, pGrafo) {
     $(control).autocomplete(
-    null,
-    {
-        //servicio: new WS($('input.inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
-        //metodo: 'AutoCompletarFacetas',
-        url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarFacetas",
-        type: "POST",
-        delay: 0,
-        minLength: 4,
-        scroll: false,
-        selectFirst: false,
-        minChars: 4,
-        width: 170,
-        cacheLength: 0,
-        extraParams: {
-            proyecto: pGrafo,
-            bool_esMyGnoss: $('input.inpt_bool_esMyGnoss').val() == 'True',
-            bool_estaEnProyecto: $('input.inpt_bool_estaEnProyecto').val() == 'True',
-            bool_esUsuarioInvitado: $('input.inpt_bool_esUsuarioInvitado').val() == 'True',
-            identidad: $('input.inpt_identidadID').val(),
-            organizacion: $('input.inpt_organizacionID').val(),
-            perfil: perfilID,
-            filtrosContexto: '',
-            languageCode: $('input.inpt_Idioma').val(),
-            nombreFaceta: pClaveFaceta,
-            orden: pOrden,
-            parametros: pParametros,
-            tipo: $('input.inpt_tipoBusquedaAutoCompl').val(),
-            botonBuscar: control.id + 'botonBuscar'
+        null,
+        {
+            //servicio: new WS($('input.inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
+            //metodo: 'AutoCompletarFacetas',
+            url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarFacetas",
+            type: "POST",
+            delay: 0,
+            minLength: 4,
+            scroll: false,
+            selectFirst: false,
+            minChars: 4,
+            width: 170,
+            cacheLength: 0,
+            extraParams: {
+                proyecto: pGrafo,
+                bool_esMyGnoss: $('input.inpt_bool_esMyGnoss').val() == 'True',
+                bool_estaEnProyecto: $('input.inpt_bool_estaEnProyecto').val() == 'True',
+                bool_esUsuarioInvitado: $('input.inpt_bool_esUsuarioInvitado').val() == 'True',
+                identidad: $('input.inpt_identidadID').val(),
+                organizacion: $('input.inpt_organizacionID').val(),
+                perfil: perfilID,
+                filtrosContexto: '',
+                languageCode: $('input.inpt_Idioma').val(),
+                nombreFaceta: pClaveFaceta,
+                orden: pOrden,
+                parametros: pParametros,
+                tipo: $('input.inpt_tipoBusquedaAutoCompl').val(),
+                botonBuscar: control.id + 'botonBuscar'
+            }
         }
-    }
     );
     if (control.attributes["onfocus"] != null) {
         control.attributes.removeNamedItem('onfocus');
     }
 }
 
+/**
+ * Configura el control de autocompletar para un campo de entrada con filtro de contexto.
+ *
+ * @param {HTMLElement} control - El control de entrada al que se aplicará el autocompletar.
+ * @param {string} pClaveFaceta - La clave de faceta para el autocompletar.
+ * @param {number} pOrden - El orden para el autocompletar.
+ * @param {string} pParametros - Parámetros adicionales para el autocompletar.
+ * @param {string} pFiltroContexto - Filtro de contexto adicional.
+ */
 function autocompletarGenericoConFiltroContexto(control, pClaveFaceta, pOrden, pParametros, pFiltroContexto) {
     var proyectoBusqueda = $('input.inpt_proyID').val();
 
@@ -7104,13 +2062,26 @@ function autocompletarGenericoConFiltroContexto(control, pClaveFaceta, pOrden, p
     pintarTagsInicio();
 }
 
-function autocompletarEtiquetas(control, pClaveFaceta, pOrden, pParametros) {
+/**
+ * Configura el control de autocompletar para etiquetas con tipado.
+ *
+ * @param {HTMLElement} control - El control de entrada al que se aplicará el autocompletar.
+ * @param {string} pClaveFaceta - La clave de faceta para el autocompletar.
+ * @param {boolean} pIncluirIdioma - Indica si se debe incluir el idioma en los parámetros adicionales.
+ */
+function autocompletarEtiquetasTipado(control, pClaveFaceta, pIncluirIdioma) {
+    var extraFaceta = '';
+
+    if (pIncluirIdioma) {
+        extraFaceta = '[MultiIdioma]';
+    }
+
     $(control).autocomplete(
         null,
         {
             servicio: new WS($('input.inpt_urlServicioAutocompletarEtiquetas').val(), WSDataType.jsonp),
-            metodo: 'AutoCompletar',
-            //url: $('#input.inpt_urlServicioAutocompletarEtiquetas').val() + "/AutoCompletar",
+            metodo: 'AutoCompletarTipado',
+            //url: $('#input.inpt_urlServicioAutocompletarEtiquetas').val() + "/AutoCompletarTipado",
             //type: "POST",
             delay: 0,
             scroll: false,
@@ -7120,10 +2091,12 @@ function autocompletarEtiquetas(control, pClaveFaceta, pOrden, pParametros) {
             cacheLength: 0,
             extraParams: {
                 pProyecto: $('input.inpt_proyID').val(),
-                pTablaPropia: true,
-                pFaceta: pClaveFaceta,
-                pOrigen: '',
+                //pTablaPropia: tablaPropiaAutoCompletar,
+                pFacetas: pClaveFaceta + extraFaceta,
+                pOrigen: origenAutoCompletar,
+                pTipoAutocompletar: tipoAutocompletar,
                 pIdentidad: $('input.inpt_identidadID').val(),
+                pIdioma: $('input.inpt_Idioma').val(),
                 botonBuscar: control.id + 'botonBuscar'
             }
         }
@@ -7135,46 +2108,18 @@ function autocompletarEtiquetas(control, pClaveFaceta, pOrden, pParametros) {
     pintarTagsInicio();
 }
 
-function autocompletarEtiquetasTipado(control, pClaveFaceta, pIncluirIdioma) {
-    //var tablaPropiaAutoCompletar = $('input.inpt_tablaPropiaAutoCompletar').val().toLowerCase() == "true";
-
-    var extraFaceta = '';
-
-    if (pIncluirIdioma) {
-        extraFaceta = '[MultiIdioma]';
-    }
-
-    $(control).autocomplete(
-null,
-{
-    servicio: new WS($('input.inpt_urlServicioAutocompletarEtiquetas').val(), WSDataType.jsonp),
-    metodo: 'AutoCompletarTipado',
-    //url: $('#input.inpt_urlServicioAutocompletarEtiquetas').val() + "/AutoCompletarTipado",
-    //type: "POST",
-    delay: 0,
-    scroll: false,
-    selectFirst: false,
-    minChars: 1,
-    width: 170,
-    cacheLength: 0,
-    extraParams: {
-        pProyecto: $('input.inpt_proyID').val(),
-        //pTablaPropia: tablaPropiaAutoCompletar,
-        pFacetas: pClaveFaceta + extraFaceta,
-        pOrigen: origenAutoCompletar,
-        pIdentidad: $('input.inpt_identidadID').val(),
-        pIdioma: $('input.inpt_Idioma').val(),
-        botonBuscar: control.id + 'botonBuscar'
-    }
-}
-);
-    if (control.attributes["onfocus"] != null) {
-        control.attributes.removeNamedItem('onfocus');
-    }
-
-    pintarTagsInicio();
-}
-
+/**
+ * Configura el control de autocompletar para la selección de entidades.
+ *
+ * @param {HTMLElement} control - El control de entrada al que se aplicará el autocompletar.
+ * @param {string} grafo - El identificador del grafo.
+ * @param {string} entContenedora - La entidad contenedora.
+ * @param {string} propiedad - La propiedad de la entidad.
+ * @param {string} tipoEntidadSolicitada - El tipo de entidad solicitada.
+ * @param {string} propSolicitadas - Las propiedades solicitadas.
+ * @param {string} extraWhere - Condiciones adicionales para el autocompletar.
+ * @param {string} idioma - El idioma para la solicitud.
+ */
 function autocompletarSeleccionEntidad(control, grafo, entContenedora, propiedad, tipoEntidadSolicitada, propSolicitadas, extraWhere, idioma) {
     var limite = 10;
 
@@ -7183,38 +2128,48 @@ function autocompletarSeleccionEntidad(control, grafo, entContenedora, propiedad
     }
 
     $(control).autocomplete(
-null,
-{
-    url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarSeleccEntDocSem",
-    type: "POST",
-    delay: 0,
-    scroll: false,
-    selectFirst: false,
-    minChars: 1,
-    /*width: 170,*/
-    cacheLength: 0,
-    matchCase: true,
-    pintarConcatenadores: true,
-    max: limite,
-    extraParams: {
-        identidad: $('input.inpt_identidadID').val(),
-        pProyectoID: $('.inpt_proyID').val(),
-        pGrafo: grafo,
-        pEntContenedora: entContenedora,
-        pPropiedad: propiedad,
-        pTipoEntidadSolicitada: tipoEntidadSolicitada,
-        pPropSolicitadas: propSolicitadas,
-        pControlID: urlEncode(control.id),
-        pExtraWhere: extraWhere,
-        pIdioma: idioma
-    }
-}
-);
+        null,
+        {
+            url: $('input.inpt_urlServicioAutocompletar').val() + "/AutoCompletarSeleccEntDocSem",
+            type: "POST",
+            delay: 0,
+            scroll: false,
+            selectFirst: false,
+            minChars: 1,
+            /*width: 170,*/
+            cacheLength: 0,
+            matchCase: true,
+            pintarConcatenadores: true,
+            max: limite,
+            extraParams: {
+                identidad: $('input.inpt_identidadID').val(),
+                pProyectoID: $('.inpt_proyID').val(),
+                pGrafo: grafo,
+                pEntContenedora: entContenedora,
+                pPropiedad: propiedad,
+                pTipoEntidadSolicitada: tipoEntidadSolicitada,
+                pPropSolicitadas: propSolicitadas,
+                pControlID: urlEncode(control.id),
+                pExtraWhere: extraWhere,
+                pIdioma: idioma
+            }
+        }
+    );
     if (control.attributes["onfocus"] != null) {
         control.attributes.removeNamedItem('onfocus');
     }
 }
 
+
+/**
+ * Configura el control de autocompletar para la selección de entidades y grupos en Gnoss.
+ *
+ * @param {HTMLElement} control - El control de entrada al que se aplicará el autocompletar.
+ * @param {string} pIdentidad - El identificador de la identidad del usuario.
+ * @param {string} pOrganizacion - El identificador de la organización del usuario.
+ * @param {string} pProyecto - El identificador del proyecto en el que se realiza la búsqueda.
+ * @param {string} pTipoSolicitud - El tipo de solicitud que se está realizando.
+ */
 function autocompletarSeleccionEntidadGruposGnoss(control, pIdentidad, pOrganizacion, pProyecto, pTipoSolicitud) {
     var limite = 10;
 
@@ -7250,12 +2205,21 @@ function autocompletarSeleccionEntidadGruposGnoss(control, pIdentidad, pOrganiza
     }
 }
 
+
+/**
+ * Configura el control de autocompletar para una entidad dependiente en un grafo específico.
+ *
+ * @param {HTMLElement} control - El control de entrada al que se aplicará el autocompletar.
+ * @param {string} pEntidad - El identificador de la entidad principal para la cual se está configurando el autocompletar.
+ * @param {string} pPropiedad - El identificador de la propiedad de la entidad principal.
+ * @param {string} grafo - El identificador del grafo donde se realizará la búsqueda.
+ * @param {string} tipoEntDep - El tipo de entidad dependiente que se está buscando.
+ * @param {string} propDepende - La propiedad de la entidad dependiente que se está buscando.
+ * @param {string} entPropDepende - La entidad y propiedad en las que se basa la dependencia.
+ */
 function autocompletarGrafoDependiente(control, pEntidad, pPropiedad, grafo, tipoEntDep, propDepende, entPropDepende) {
     EliminarValoresGrafoDependientes(pEntidad, pPropiedad, false, true);
-    //var idControl = control.id.replace("hack_", "Campo_");
-    //document.getElementById(idControl).value = '';
 
-    //control.value = '';
     var idValorPadre = '';
 
     if (propDepende != '' && entPropDepende != '') {
@@ -7296,6 +2260,15 @@ function autocompletarGrafoDependiente(control, pEntidad, pPropiedad, grafo, tip
     //    }
 }
 
+/**
+ * Elimina los valores de un campo en un grafo dependiente y opcionalmente deshabilita el campo.
+ * También puede eliminar valores de campos dependientes recursivamente.
+ *
+ * @param {string} pEntidad - El identificador de la entidad cuyo campo se está modificando.
+ * @param {string} pPropiedad - El identificador de la propiedad del campo que se está modificando.
+ * @param {boolean} pDeshabilitar - Indica si el campo debe ser deshabilitado después de eliminar su valor.
+ * @param {boolean} pRecursivo - Indica si la eliminación de valores y la desactivación deben realizarse de manera recursiva en campos dependientes.
+ */
 function EliminarValoresGrafoDependientes(pEntidad, pPropiedad, pDeshabilitar, pRecursivo) {
     var idControlCampo = ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
     //var valorBorrar = document.getElementById(idControlCampo).value;
@@ -7325,6 +2298,15 @@ function EliminarValoresGrafoDependientes(pEntidad, pPropiedad, pDeshabilitar, p
     }
 }
 
+
+/**
+ * Habilita un campo de autocompletar dependiente basado en una entidad y una propiedad específicas.
+ *
+ * Esta función obtiene las propiedades dependientes de una entidad y propiedad dadas, y habilita el campo de autocompletar asociado si existe.
+ *
+ * @param {string} pEntidad - El identificador de la entidad para la cual se están habilitando los campos dependientes.
+ * @param {string} pPropiedad - El identificador de la propiedad para la cual se están habilitando los campos dependientes.
+ */
 function HabilitarCamposGrafoDependientes(pEntidad, pPropiedad) {
     var pronEntDep = GetPropiedadesDependientes(pEntidad, pPropiedad);
 
@@ -7335,39 +2317,50 @@ function HabilitarCamposGrafoDependientes(pEntidad, pPropiedad) {
 }
 
 
+/**
+ * Crea un campo de autocompletar para etiquetas con soporte para múltiples selecciones.
+ *
+ * Esta función inicializa un campo de autocompletar en el control especificado, utilizando una URL de servicio para obtener las etiquetas. El campo soporta múltiples selecciones y está configurado con parámetros específicos relacionados con el proyecto, la identidad, y el estado del usuario.
+ *
+ * @param {HTMLElement} control - El control HTML en el que se va a configurar el autocompletar para etiquetas. Este parámetro debe ser un elemento de entrada en el cual se aplicará la funcionalidad de autocompletar.
+ * @param {string} pUrlAutocompletar - La URL del servicio de autocompletar que proporciona las etiquetas. Esta URL debe apuntar a un endpoint que maneje solicitudes de autocompletar.
+ * @param {string} pProyectoID - El ID del proyecto para el cual se están obteniendo las etiquetas. Este parámetro se utiliza para filtrar las etiquetas relacionadas con un proyecto específico.
+ * @param {boolean} pEsMyGnoss - Valor booleano que indica si el contexto es MyGnoss. Se utiliza para ajustar el comportamiento del autocompletar en función de si el entorno es MyGnoss o no.
+ * @param {boolean} pEstaEnProyecto - Valor booleano que indica si el usuario está actualmente en un proyecto. Este parámetro se utiliza para ajustar el comportamiento del autocompletar según el estado del usuario en el proyecto.
+ * @param {boolean} pEsUsuarioInvitado - Valor booleano que indica si el usuario es un usuario invitado. Este parámetro se utiliza para ajustar el comportamiento del autocompletar en función de si el usuario tiene un rol de invitado.
+ * @param {string} pIdentidadID - El ID de identidad del usuario para el cual se están obteniendo las etiquetas. Este parámetro se utiliza para asociar las etiquetas con una identidad específica.
+ */
 function CrearAutocompletarTags(control, pUrlAutocompletar, pProyectoID, pEsMyGnoss, pEstaEnProyecto, pEsUsuarioInvitado, pIdentidadID) {
     $(control).autocomplete(
-null,
-{
-    //servicio: new WS(pUrlAutocompletar, WSDataType.jsonp),
-    //metodo: 'AutoCompletarFacetas',
-    url: pUrlAutocompletar + "/AutoCompletarFacetas",
-    type: "POST",
-    delay: 300,
-    minLength: 4,
-    multiple: true,
-    scroll: false,
-    selectFirst: false,
-    minChars: 4,
-    width: 300,
-    cacheLength: 0,
-    extraParams: {
-        proyecto: pProyectoID,
-        bool_esMyGnoss: pEsMyGnoss,
-        bool_estaEnProyecto: pEstaEnProyecto,
-        bool_esUsuarioInvitado: pEsUsuarioInvitado,
-        identidad: pIdentidadID,
-        nombreFaceta: 'sioc_t:Tag',
-        orden: '',
-        parametros: '',
-        tipo: '',
-        perfil: '',
-        organizacion: '',
-        filtrosContexto: '',
-        languageCode: $('input.inpt_Idioma').val()
-    }
-}
-);
+        null,
+        {
+            url: pUrlAutocompletar + "/AutoCompletarFacetas",
+            type: "POST",
+            delay: 300,
+            minLength: 4,
+            multiple: true,
+            scroll: false,
+            selectFirst: false,
+            minChars: 4,
+            width: 300,
+            cacheLength: 0,
+            extraParams: {
+                proyecto: pProyectoID,
+                bool_esMyGnoss: pEsMyGnoss,
+                bool_estaEnProyecto: pEstaEnProyecto,
+                bool_esUsuarioInvitado: pEsUsuarioInvitado,
+                identidad: pIdentidadID,
+                nombreFaceta: 'sioc_t:Tag',
+                orden: '',
+                parametros: '',
+                tipo: '',
+                perfil: '',
+                organizacion: '',
+                filtrosContexto: '',
+                languageCode: $('input.inpt_Idioma').val()
+            }
+        }
+    );
     if (control.attributes["onfocus"] != null) {
         control.attributes.removeNamedItem('onfocus');
     }
@@ -7375,10 +2368,18 @@ null,
     pintarTagsInicio();
 }
 
-/////////////ETIQUETADO AUTOMATICO//////////////////        
+/////////////ETIQUETADO AUTOMATICO////////////////// 
+
+/**
+ * Realiza un etiquetado automático de recursos basado en el título y la descripción del recurso.
+ * Si la descripción es demasiado larga, delega la tarea en una función que maneja el etiquetado en varias solicitudes.
+ *
+ * @param {string} titulo - El título del recurso que se va a etiquetar. Este parámetro es la base para generar las etiquetas.
+ * @param {string} descripcion - La descripción del recurso que se va a etiquetar. Este texto se usa para generar etiquetas adicionales.
+ * @param {string} txtHack - El ID del campo de entrada donde se deben colocar las etiquetas generadas. Este campo se actualiza con las nuevas etiquetas.
+ * @param {boolean} pEsPaginaEdicion - Valor booleano que indica si el contexto es una página de edición. Este parámetro ajusta el comportamiento del etiquetado para una página de edición o una vista general.
+ */
 function EtiquetadoAutomaticoDeRecursos(titulo, descripcion, txtHack, pEsPaginaEdicion) {
-    //var servicio = new WS($('input.inpt_urlEtiquetadoAutomatico').val(), WSDataType.jsonp);
-    var servicio = new WS($('input.inpt_urlEtiquetadoAutomatico').val());
     var params = {};
     params['ProyectoID'] = $('input.inpt_proyID').val();
     params['documentoID'] = documentoID;
@@ -7395,9 +2396,7 @@ function EtiquetadoAutomaticoDeRecursos(titulo, descripcion, txtHack, pEsPaginaE
         var metodo = 'SeleccionarEtiquetas';
         params['titulo'] = titulo;
         params['descripcion'] = descripcion;
-        /*servicio.call(metodo, params, function (data) {
-            procesarTags(data, txtHack, pEsPaginaEdicion);
-        });*/
+
         $.post(obtenerUrl($('input.inpt_urlEtiquetadoAutomatico').val()) + "/" + metodo, params, function (data) {
             procesarTags(data, txtHack, pEsPaginaEdicion);
         });
@@ -7408,9 +2407,18 @@ function EtiquetadoAutomaticoDeRecursos(titulo, descripcion, txtHack, pEsPaginaE
     }
 }
 
-function EtiquetadoAutomaticoDeRecursosMultiple(titulo, descripcion, numMax, params, txtHack, pEsPaginaEdicion) {
-    //var servicio = new WS($('input.inpt_urlEtiquetadoAutomatico').val(), WSDataType.jsonp);
-    var servicio = new WS($('input.inpt_urlEtiquetadoAutomatico').val());
+/**
+ * Realiza el etiquetado automático de recursos en múltiples solicitudes si la descripción es demasiado larga para procesarla en una sola petición.
+ * Divide la descripción en partes y envía cada parte al servicio web para el etiquetado.
+ *
+ * @param {string} titulo - El título del recurso que se está etiquetando. Este parámetro se usa para la generación de etiquetas.
+ * @param {string} descripcion - La descripción del recurso que se está etiquetando. Este texto se divide en partes si es demasiado largo.
+ * @param {number} numMax - El número máximo de caracteres para procesar en una sola solicitud.
+ * @param {Object} params - Los parámetros para la solicitud al servicio de etiquetado automático. Estos parámetros incluyen detalles sobre el recurso y la petición.
+ * @param {string} txtHack - El ID del campo de entrada donde se deben colocar las etiquetas generadas. Este campo se actualiza con las nuevas etiquetas.
+ * @param {boolean} pEsPaginaEdicion - Valor booleano que indica si el contexto es una página de edición. Este parámetro ajusta el comportamiento del etiquetado según el contexto.
+ */
+function EtiquetadoAutomaticoDeRecursosMultiple(titulo, descripcion, numMax, params, txtHack, pEsPaginaEdicion) {        
     if (descripcion.length <= numMax) {
         params['fin'] = "true";
         numMax = descripcion.length;
@@ -7507,6 +2515,15 @@ function procesarTags(data, txtHack, pEsPaginaEdicion) {
     txtHack.val(directos + '[&]' + propuestos);
 }
 
+/**
+ * Agrega nuevos tags a una lista de tags existentes, evitando duplicados y considerando tags descartados.
+ * Actualiza el campo de entrada con los tags manuales y los nuevos tags agregados.
+ *
+ * @param {string} pListaTagsNuevos - Una cadena de texto con los nuevos tags a agregar, separados por comas.
+ * @param {string} pListaTagsViejos - Una cadena de texto con los tags existentes en la lista, separados por comas.
+ * @param {string} pTagsID - El ID del campo de entrada donde se encuentran los tags actuales y donde se agregarán los nuevos tags.
+ * @returns {string} - Una cadena de texto con los nuevos tags agregados, separados por comas.
+ */
 function AgregarTagsDirectosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pTagsID) {
     var tagsDescartados = "";
 
@@ -7517,9 +2534,11 @@ function AgregarTagsDirectosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pTag
     var tagsManuales = "";
     var tagsAgregados = "";
 
-    var tagsActuales = $('#' + pTagsID + '_Hack').val().split(',');
+    var tagsActuales = $('#' + pTagsID + '_Hack').length > 0
+        ? $('#' + pTagsID + '_Hack').val().split(',')
+        : [];
 
-    //Recorrro los tags de la caja y guardo los manuales
+    //Recorro los tags de la caja y guardo los manuales
     for (var j = 0; j < tagsActuales.length; j++) {
         var tag = tagsActuales[j].trim();
 
@@ -7551,7 +2570,9 @@ function AgregarTagsDirectosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pTag
     $('#' + pTagsID).val(tagsManuales + tagsAgregados);
 
     LimpiarTags($('#' + pTagsID));
-    PintarTags($('#' + pTagsID));
+
+    // Pintar tags a partir del input sólo si existe
+    $('#' + pTagsID).length > 0 && PintarTags($('#' + pTagsID));
 
     return tagsAgregados;
 }
@@ -7566,7 +2587,9 @@ function AgregarTagsPropuestosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pT
     var tagsManuales = "";
     var tagsAgregados = "";
 
-    var tagsActuales = $('#' + pTagsID + '_Hack').val().split(',');
+    var tagsActuales = $('#' + pTagsID + '_Hack').length > 0
+        ? $('#' + pTagsID + '_Hack').val().split(',')
+        : [];
 
     //Recorrro los tags de la caja y guardo los manuales
     for (var i = 0; i < tagsActuales.length; i++) {
@@ -7579,14 +2602,14 @@ function AgregarTagsPropuestosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pT
     // Nuevo Front
     //var divPropuestos = $('#' + pTagsID).parent().next().find('.contenedor');
     var divPropuestos = $('#' + pTagsID).parent().parent().parent().find(".propuestos > .contenedor");
-    
+
 
     //Recorro los tags viejos y si no estan en los nuevos, los quito
     divPropuestos.find('.tag').each(function () {
         var tag = $(this).attr('title');
 
         var estaYaAgregada = pListaTagsViejos.indexOf(',' + tag + ',') != -1;
-        estaYaAgregada = estaYaAgregada || pListaTagsViejos.substring(0, tag.length + 1) == tag + ',';        
+        estaYaAgregada = estaYaAgregada || pListaTagsViejos.substring(0, tag.length + 1) == tag + ',';
 
         if (tag != '' && estaYaAgregada) {
             $(this).remove();
@@ -7635,7 +2658,7 @@ function AgregarTagsPropuestosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pT
         $(this).bind('click', function (evento) {
             var tag = $(this).parent().parent().attr('title');
             $('#' + pTagsID).val(tag);
-            $(this).parent().parent().css('display', 'none');            
+            $(this).parent().parent().css('display', 'none');
             PintarTags($('#' + pTagsID));
         });
     });
@@ -7643,136 +2666,52 @@ function AgregarTagsPropuestosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pT
     return tagsAgregados;
 }
 
-function ActualizacionDelDiccionarioEtiquetas() {
-    var servicio = new WS($('input.inpt_urlEtiquetadoAutomatico').val(), WSDataType.jsonp);
-    var metodo = 'ActualizarDiccionarioEtiquetas';
-    var params = {};
-    var textoPropuesto = $('#' + txtHackTagsTituloID).val() + $('#' + txtHackTagsDescripcionID).val();
-    textoPropuesto = textoPropuesto.replace(/\[&\]\[&\]/g, ',').replace(/\[&\]/g, '');
-    params['textoPropuesto'] = textoPropuesto;
-    params['textoElegidoUsuario'] = $('#' + txtTagsID).val();
-    params['ProyectoID'] = $('input.inpt_proyID').val();
-    servicio.call(metodo, params, function (data) {
-    });
-}
 
-function CargaDelDiccionarioEtiquetas() {
-    var servicio = new WS($('input.inpt_urlEtiquetadoAutomatico').val(), WSDataType.jsonp);
-    var metodo = 'CargarDiccionarioEtiquetas';
-    var params = {};
-    params['ProyectoID'] = $('input.inpt_proyID').val();
-    servicio.call(metodo, params, function (data) {
-    });
-}
+/**
+ * Extiende el prototipo de `String` para añadir el método `endsWith`.
+ * 
+ * Este método verifica si una cadena de texto termina con una subcadena específica.
+ * 
+ * @param {string} str - La subcadena con la que se verifica si la cadena de texto termina.
+ * @returns {boolean} - Devuelve `true` si la cadena de texto termina con la subcadena especificada, `false` en caso contrario.
+ */
+String.prototype.endsWith = function (str) { return (this.match(str + "$") == str) };
 
-//Añado al tipo string de javascript las funciones startsWith y EndsWith 
-String.prototype.endsWith = function (str)
-{ return (this.match(str + "$") == str) };
 
+/**
+ * Extiende el prototipo de `String` para añadir el método `startsWith`.
+ * 
+ * Este método verifica si una cadena de texto comienza con una subcadena específica.
+ * 
+ * @param {string} str - La subcadena con la que se verifica si la cadena de texto empieza.
+ * @returns {boolean} - Devuelve `true` si la cadena de texto empieza con la subcadena especificada, `false` en caso contrario.
+ */
 String.prototype.startsWith = function (str)
 { return (this.match("^" + str) == str) };
 
-function SepararFiltro(filtro) {
-    var array = new Array(4);
-    var indiceFiltro = filtro.indexOf('=') + 1;
-    array[0] = filtro.replace(':', '_'); //id
-    array[1] = filtro.substring(indiceFiltro, filtro.length); //title
-    array[2] = array[1]; //innerHTML
-    array[3] = 'javascript:AgregarFacetas(filtro, null);'; //onclick
-    return array;
-}
 
-function Login(usuario, password) {
-    document.getElementById('usuario').value = usuario;
-    document.getElementById('password').value = password;
-    document.getElementById('formLogin').submit();
-}
+let timeoutUpdateProgress;
 
-function LoginConClausulasRegistro(usuario, password, condicionesUso) {
-    document.getElementById('usuario').value = usuario;
-    document.getElementById('password').value = password;
-    document.getElementById('clausulasRegistro').value = condicionesUso;
-    document.getElementById('formLogin').submit();
-}
-
-function CambiarUrlRedirectLoginAUrlActual() {
-    var accion = $('#formLogin').attr('action');
-
-    var indiceRedirect = accion.indexOf('&redirect');
-    var indiceFinRedirect = accion.indexOf('&', indiceRedirect + 1);
-    var parametroRedirect = accion.substring(indiceRedirect, indiceFinRedirect);
-
-    accion = accion.replace(parametroRedirect, '&redirect=' + document.location.href);
-
-    $('#formLogin').attr('action', accion);
-}
-
-function ValidarLogin(arg, context) {
-    if (arg == 'entrar') {
-        location.reload(true);
-    }
-    else if (arg == 'mostrarError') {
-        $('#errorLogin').html('<p>' + form.errorLogin + '</p>');
-        $('#errorLogin').css('display', '');
-        return false;
-    }
-    else {
-        window.location = arg;
-    }
-}
-
-$(document).ready(function () {
-    $(".loginButton").click(function () {
-        $("#botonLogin").toggleClass("btLogin");
-    });
-
-    $("#txtUsuario").keydown(function (event) {
-        if (event.which || event.keyCode) {
-            if ((event.which == 13) || (event.keyCode == 13)) {
-                return false;
-            }
-        }
-    });
-
-    $("#txtContraseña").keydown(function (event) {
-        if (event.which || event.keyCode) {
-            if ((event.which == 13) || (event.keyCode == 13)) {
-                controlarEntradaMaster();
-                return false;
-            }
-        }
-    });
-
-    $("#formularioLoginHeader input.submit").click(function () {
-        controlarEntradaMaster();
-    });
-
-    $(".registroRedesSociales ul a").click(function () {
-        window.open(this.href, 'auth', 'width=600,height=500');
-        return false;
-    });
-});
-
-
-
-function beginRequestHandle(sender, Args) {
-    if (Args._postBackElement != null && Args._postBackElement.id != "ctl00_ctl00_CPH1_CPHBandejaContenido_TimerRefresco") {
-        MostrarUpdateProgress();
-    }
-}
-
-function endRequestHandle(sender, Args) {
-    OcultarUpdateProgress();
-}
-
-var timeoutUpdateProgress;
-
+/**
+ * Muestra una máscara blanca de progreso de actualización.
+ * 
+ * Esta función llama a `MostrarUpdateProgressTime` sin parámetros, lo que hace que la máscara blanca se muestre sin establecer un temporizador.
+ * 
+ * @example
+ * MostrarUpdateProgress();
+ */
 function MostrarUpdateProgress() {
-    // Quitar la opción de que a los 15 segundos desaparezca el "Loading"
-    //MostrarUpdateProgressTime(15000)
     MostrarUpdateProgressTime();
 }
 
+/**
+ * Muestra una máscara blanca de progreso de actualización con un temporizador opcional para ocultar la máscara.
+ * 
+ * Esta función añade una clase a `<body>` para activar una máscara blanca de progreso. Si se proporciona un tiempo positivo, la máscara se oculta después de ese tiempo.
+ * 
+ * @param {number} [time=0] - Tiempo en milisegundos para el temporizador de ocultar la máscara. Si es mayor que 0, `OcultarUpdateProgress` se llama después de ese tiempo. Si no se proporciona o se establece en 0, el temporizador no se establece.
+ * 
+ */
 function MostrarUpdateProgressTime(time) {
     if ($('#mascaraBlanca').length > 0) {
         $('body').addClass('mascaraBlancaActiva');
@@ -7873,11 +2812,11 @@ function observarClaseTinyLoaded(callback) {
  * @returns 
  */
 function createElementFromHTML(htmlString) {
-	const div = document.createElement('div');
-	div.innerHTML = htmlString.trim();
-  
-	// Change this to div.childNodes to support multiple top-level nodes.
-	return div.firstChild;
+    const div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+
+    // Change this to div.childNodes to support multiple top-level nodes.
+    return div.firstChild;
 }
 
 /* Funciones nuevas para uso de loading con librería busyLoad */
@@ -7892,43 +2831,43 @@ function createElementFromHTML(htmlString) {
  * https://github.com/piccard21/busy-load
  */
 const loadingMostrar = function (pJqueryHtmlElemento = undefined, loadingText = undefined) {
-	// Mostrar/ocultar loading por defecto en fullScreen
-	let isFullScreenElement = true;
+    // Mostrar/ocultar loading por defecto en fullScreen
+    let isFullScreenElement = true;
 
-	if (pJqueryHtmlElemento != undefined) {
-		isFullScreenElement = false;
-	}
+    if (pJqueryHtmlElemento != undefined) {
+        isFullScreenElement = false;
+    }
 
-	// Custom spinner
-	const customSpinner = `
+    // Custom spinner
+    const customSpinner = `
 		<div class="spinner-border" style="color:#006eff" role="status">
 			<span class="sr-only">Loading ...</span>
 		</div>
 	`;
 
-	// Configuración de parámetros para mostrar el efecto de loading
-	const busyParams = {
-		// spinner: "accordion", -> Por defecto será un loading normal		
-		background: "rgba(255, 255, 255, 0.8)", // --> Color del fondo del loading
-		color: "#006eff", // --> Color del loading
-		animation: "fade", // -> Animación de aparición del Loading
-		containerClass: "mascara-loading", // -> Nombre de la clase para el contenedor del loading
-		containerItemClass: "mi-item-contenedor-mascara-loading",
-		custom: $(customSpinner), // --> Custom spinner de bootstrap		
-		text: loadingText != undefined ? loadingText : "",
-		textPosition: "bottom",
-	};
+    // Configuración de parámetros para mostrar el efecto de loading
+    const busyParams = {
+        // spinner: "accordion", -> Por defecto será un loading normal		
+        background: "rgba(255, 255, 255, 0.8)", // --> Color del fondo del loading
+        color: "#006eff", // --> Color del loading
+        animation: "fade", // -> Animación de aparición del Loading
+        containerClass: "mascara-loading", // -> Nombre de la clase para el contenedor del loading
+        containerItemClass: "mi-item-contenedor-mascara-loading",
+        custom: $(customSpinner), // --> Custom spinner de bootstrap		
+        text: loadingText != undefined ? loadingText : "",
+        textPosition: "bottom",
+    };
 
-	// Mostrar loading
-	if (!isFullScreenElement) {
-		// Mostrar loading dentro del elemento jquery
-		// Loading con spinner por defecto
-		pJqueryHtmlElemento.busyLoad("show", busyParams);
-	} else {
-		// Mostrar loading de pantalla completa
-		// Loading con spinner por defecto
-		$.busyLoadFull("show", busyParams);		
-	}
+    // Mostrar loading
+    if (!isFullScreenElement) {
+        // Mostrar loading dentro del elemento jquery
+        // Loading con spinner por defecto
+        pJqueryHtmlElemento.busyLoad("show", busyParams);
+    } else {
+        // Mostrar loading de pantalla completa
+        // Loading con spinner por defecto
+        $.busyLoadFull("show", busyParams);
+    }
 }
 
 /**
@@ -7939,30 +2878,34 @@ const loadingMostrar = function (pJqueryHtmlElemento = undefined, loadingText = 
  * https://github.com/piccard21/busy-load
  */
 const loadingOcultar = function () {
-	// Configuración de parámetros para mostrar el efecto de loading
-	const busyParams = {
-		animation: "fade", // -> Animación de desaparición del Loading
-	};
+    // Configuración de parámetros para mostrar el efecto de loading
+    const busyParams = {
+        animation: "fade", // -> Animación de desaparición del Loading
+    };
 
-	// Identificador de la clase "loading"
-	const mascaraLoadingClass = "mascara-loading";
-	const mascara = $(`.${mascaraLoadingClass}`);
+    // Identificador de la clase "loading"
+    const mascaraLoadingClass = "mascara-loading";
+    const mascara = $(`.${mascaraLoadingClass}`);
 
-	const loadingParent = mascara.parent();
-	if (loadingParent.length > 0){
-		// Permitir hacer scroll (Añadía la librería un no-scroll)
-		loadingParent.removeClass("no-scroll");
-		loadingParent.busyLoad("hide", busyParams);
-	}else{		
-		// El loading está dentro de un elemento del dom
-		const loadingContainer = $('.busy-load-active');
-		loadingContainer.busyLoad("hide", busyParams);
-	}
+    const loadingParent = mascara.parent();
+    if (loadingParent.length > 0) {
+        // Permitir hacer scroll (Añadía la librería un no-scroll)
+        loadingParent.removeClass("no-scroll");
+        loadingParent.busyLoad("hide", busyParams);
+    } else {
+        // El loading está dentro de un elemento del dom
+        const loadingContainer = $('.busy-load-active');
+        loadingContainer.busyLoad("hide", busyParams);
+    }
 };
 
 
-
-
+/**
+ * Oculta la máscara blanca de progreso de actualización y las ventanas emergentes.
+ * 
+ * Esta función oculta los elementos de la interfaz de usuario relacionados con la máscara blanca de progreso, detiene cualquier temporizador de progreso en curso, y oculta todos los elementos con la clase `popup`.
+ * 
+ */
 function OcultarUpdateProgress() {
     if ($('#mascaraBlanca').length > 0) {
         $('.popup').hide();
@@ -7971,6 +2914,12 @@ function OcultarUpdateProgress() {
     }
 }
 
+
+/**
+ * Ejecuta una función cuando el usuario hace scroll en la página, pero solo si el valor de un campo oculto indica que se deben aceptar cookies.
+ * **Uso común:**
+ * - Este código se usa para ejecutar la función `AceptarCookies` cuando el usuario interactúa con la página mediante el scroll, bajo la condición de que un campo específico (`#inpt_Cookies`) indique que es necesario aceptar cookies.
+ */
 $(function () {
     if ($('#inpt_Cookies').length > 0 && $('#inpt_Cookies').val().toLowerCase() == "true") {
         var obj = $(document);
@@ -7985,48 +2934,27 @@ $(function () {
     }
 });
 
-var cookiesAceptadas = false;
+let cookiesAceptadas = false;
 
 function AceptarCookies() {
     if (!cookiesAceptadas) {
         cookiesAceptadas = true;
-        //WebForm_DoCallback('__Page', 'aceptamosCookies', ReceiveServerData, '', null, false);
     }
 }
-
-//$(document).ready(function () {
-//    $('#formLogin').attr('action', $('input.inpt_UrlLogin').val());
-//});
-
-
-function controlarEntradaMaster() {
-    var user = $('#txtUsuario').val();
-    var pass = $('#txtContraseña').val();
-    if (user.length > 0 && pass.length > 0) {
-        Login(user, pass);
-    } else {
-        $('#errorLogin').html('<p>' + form.errorLoginVacio + '</p>');
-        $('#errorLogin').css('display', '');
-    }
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-
-//if(filtro.length > 1 || document.location.href.indexOf('/tag/') > -1){parametrosFacetas = " + "'AgregarFacetas|" + arg + "'; var parametrosResultados = " + "'ObtenerResultados|" + arg + "';
-//var displayNone = '';
-//if(HayFiltrosActivos(filtro)){
-//document.getElementById('" + this.divFiltros.ClientID + "').setAttribute('style', 'padding-top:0px !important; ' + displayNone + ' margin-top:10px; ');}
-//sb.AppendLine(Page.ClientScript.GetCallbackEventReference(this.Page, "parametrosResultados", "ReceiveServerData", String.Empty) + ";}
-//else{
-//document.getElementById('" + this.divFiltros.ClientID + "').setAttribute('style', 'padding-top:0px !important; margin-top:10px; display:none !important;');
-//sb.AppendLine(Page.ClientScript.GetCallbackEventReference(this.Page, "parametrosFacetas", "ReceiveServerData", String.Empty) + ";}
-//return false;
-//}
 
 /**
- * Comportamiento de facetas pop up para que se muestren todas las categorías de tipo "Tesauro" una vez se pulse en el botón "Ver más".
- * */
+ * **`comportamientoFacetasPopUpPlegado`** es un objeto que gestiona el comportamiento de un modal relacionado con facetas en una aplicación web.
+ * Este objeto maneja la apertura, configuración, y el cierre del modal, así como la carga y visualización de facetas semánticas o clonadas.
+ * 
+ * **Propiedades:**
+ * - `facetaActual`: {string} ID de la faceta actual seleccionada.
+ * - `facetaActualName`: {string} Nombre de la faceta actual.
+ * - `FacetTranslations`: {object} Traducciones para los textos del modal en diferentes idiomas.
+ * - `$modalLoaded`: {jQuery object} Referencia al modal actualmente cargado.
+ * - `facetaTesauroSemantico`: {boolean} Indica si la faceta actual es de tipo tesauro semántico.
+ * - `arrayTotales`: {Array} Array que contiene las facetas y sus subfacetas.
+ * - `textoActual`: {string} Texto actual del campo de búsqueda en el modal.
+ */
 const comportamientoFacetasPopUpPlegado = {
     init: function () {
         this.config();
@@ -8052,13 +2980,13 @@ const comportamientoFacetasPopUpPlegado = {
             // Faceta seleccionada
             that.facetaActual = $(e.relatedTarget).data('facetkey');
             that.facetaActualName = $(e.relatedTarget).data('facetname');
-        
+
             // Registrar el id del modal abierto (para cargar los datos en el modal correspondiente)
             that.$modalLoaded = $(`#${e.target.id}`);
             that.facetaTesauroSemantico = $(e.relatedTarget).data('facetissemantic');
 
             // Establecer el título en el modal correspondiente
-            that.$modalLoaded.find(".loading-modal-facet-title").text(that.facetaActualName);              
+            that.$modalLoaded.find(".loading-modal-facet-title").text(that.facetaActualName);
 
             if (that.facetaTesauroSemantico == "True") {
                 that.obtenerFacetaTesuaroSemantico();
@@ -8067,7 +2995,7 @@ const comportamientoFacetasPopUpPlegado = {
                 // Clonar la faceta/mostrarlo en modal
                 that.clonarFaceta();
             }
-            
+
             // Configurar eventos mostrados en el modal
             that.configEvents();
         });
@@ -8118,7 +3046,7 @@ const comportamientoFacetasPopUpPlegado = {
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = that.facetaActual;
 
-       
+
         // Petición al servicio para obtención de Facetas                
         $.post(obtenerUrl($('input.inpt_UrlServicioFacetas').val()) + "/" + metodo, params, function (data) {
             var htmlRespuesta = $("<div>").html(data);
@@ -8155,7 +3083,7 @@ const comportamientoFacetasPopUpPlegado = {
 
                     ul.append(li);
                 }
-              
+
                 // Ocultar el Loading
                 that.$modalLoaded.find('.loading-modal-facet').addClass('d-none');
             }
@@ -8182,7 +3110,7 @@ const comportamientoFacetasPopUpPlegado = {
             that.textoActual = that.eliminarAcentos($(this).val());
             that.filtrarElementos()
         });
-        
+
         // Configurar click de la faceta
         this.$modalLoaded.find(".faceta").off().click(function (e) {
             AgregarFaceta($(this).attr("name"));
@@ -8199,7 +3127,7 @@ const comportamientoFacetasPopUpPlegado = {
         const that = this;
 
         // Buscar el panel de tipo faceta seleccionada
-        this.facetaActual = this.facetaActual.replace(':', '_');
+        this.facetaActual = this.facetaActual.replace(/[@:]/g, '_');
         this.panelFacetaActual = $(`#${this.facetaActual}`);
 
         // Establecer "Título" en la cabecera del modal y en el header      
@@ -8261,8 +3189,8 @@ const comportamientoFacetasPopUpPlegado = {
         itemsListado.show();
         if (that.textoActual != '') {
             itemsListado.each(function () {
-                //Obtengo el nombre de la categoría en la que me situo
-                var nombreCat = $(this).find('.textoFaceta').text();                
+                // Eliminamos posibles tildes para búsqueda ampliada
+                var nombreCat = $(this).find('.textoFaceta').text().normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
                 //Compruebo si el nombre de la faceta actual tiene el texto que estoy buscando. Si no lo tiene oculta la faceta
                 if (nombreCat.toLowerCase().indexOf(that.textoActual.toLowerCase()) < 0) {
@@ -8279,22 +3207,23 @@ const comportamientoFacetasPopUpPlegado = {
      * Método para pintar las facetas hijas de de tipo Tesauro para plegar o desplegar su visualización
      * @param facetasHijas: Cada una de las facetas hijas contenidas por parte de una faceta "padre"
      * @param listaTodasFacetas: Faceta padre que contiene todas las subfacetas a mostrar. Debe ir en un "ul"
-     */   
-    PintarFacetasHijas: function(facetasHijas, listaTodasFacetas){
+     */
+    PintarFacetasHijas: function (facetasHijas, listaTodasFacetas) {
         let conjuntoFacetasHijas = `
         <ul>            
             ${facetasHijas.html()}
         </ul>
-        `;    
-        listaTodasFacetas.append(conjuntoFacetasHijas);        
+        `;
+        listaTodasFacetas.append(conjuntoFacetasHijas);
     },
 };
 
-
 /**
- * Comportamiento de facetas pop up para que se carguen una vez se pulse en el botón de "Ver más".
- * Se hará la llamada para la obtención de Facetas y se muestran en un panel modal.  
- * */
+ * Objeto que maneja el comportamiento de los pop-ups de facetas en la interfaz de usuario.
+ * Este objeto se encarga de observar cambios en el DOM para la aparición de elementos de facetas,
+ * configurar el comportamiento de los modales para la visualización y búsqueda de facetas, y manejar
+ * la lógica de interacción con los servicios de facetas.
+ */
 const comportamientoFacetasPopUp = {
     init: function () {
         // Objetivo Observable
@@ -8341,7 +3270,7 @@ const comportamientoFacetasPopUp = {
 
             // Configuración de los modales
             this.configModals();
-        }        
+        }
 
     },
     config: function () {
@@ -8483,9 +3412,9 @@ const comportamientoFacetasPopUp = {
         } else {
             that.$modalLoaded.find(".buscador-coleccion .buscar .texto").attr("placeholder", `${this.FacetTranslations.es.searchBy}${that.facetasConPopUp[that.IndiceFacetaActual][1]}`);
         }
-    
+
         this.textoActual = "";
-    
+
         // Configuración del servicio para llamar a las facetas deseadas
         var metodo = "CargarFacetas";
         var params = {};
@@ -8522,7 +3451,7 @@ const comportamientoFacetasPopUp = {
         params["pNumeroFacetas"] = -1;
         params["pUsarMasterParaLectura"] = bool_usarMasterParaLectura;
         params["pFaceta"] = FacetaActual;
-    
+
         // Buscador o filtrado de facetas cuando se inicie la escritura en el Input buscador dentro del modal         
         that.$modalLoaded.find(".buscador-coleccion .buscar .texto")
             .keyup(function () {
@@ -8534,15 +3463,15 @@ const comportamientoFacetasPopUp = {
                 const input = $(this);
                 setTimeout(function () {
                     input.keyup();
-                },200);
-                
+                }, 200);
+
             });
-    
+
         // Petición al servicio para obtenciÃ³n de Facetas                
         $.post(obtenerUrl($('input.inpt_UrlServicioFacetas').val()) + "/" + metodo, params, function (data) {
             var htmlRespuesta = $("<div>").html(data);
             that.arrayTotales = new Array($(htmlRespuesta).find(".faceta").length);
-            that.facetaTesuaroSemantico = $(htmlRespuesta).find(".tesaroSemantico").length > 0;            
+            that.facetaTesuaroSemantico = $(htmlRespuesta).find(".tesaroSemantico").length > 0;
             numFacetasTotales = that.arrayTotales;
             var i = 0;
             $(htmlRespuesta)
@@ -8555,7 +3484,7 @@ const comportamientoFacetasPopUp = {
                     that.arrayTotales[i][1] = $(this);
                     i++;
                 });
-    
+
             //Ordena por orden alfabÃ©tico
             if (that.facetasConPopUp[that.IndiceFacetaActual][2]) {
                 that.arrayTotales = that.arrayTotales.sort(function (a, b) {
@@ -8564,7 +3493,7 @@ const comportamientoFacetasPopUp = {
                     return 0;
                 });
             }
-    
+
             that.paginaActual = 1;
             // Header navegaciÃ³n de resultados de facetas
             const actionButtonsResultados = `<div class="action-buttons-resultados">
@@ -8579,17 +3508,17 @@ const comportamientoFacetasPopUp = {
                                                     </li>
                                                 </ul>
                                             </div>`;
-    
+
             // Añadir al header de navegaciÃ³n de facetas (Anterior)
             that.$modalLoaded.find(".indice-lista.no-letra").prepend(actionButtonsResultados);
-    
+
             // Configuración de los botones (Anterior/Siguiente)
             $(".js-anterior-facetas-modal").click(function () {
-    
+
                 if (!that.buscando && that.paginaActual > 1) {
                     that.buscando = true;
                     that.paginaActual--;
-                    
+
                     var hacerPeticion = true;
                     //$(".indice-lista .js-anterior-facetas-modal").hide();
                     $(".indice-lista ul").animate(
@@ -8619,14 +3548,14 @@ const comportamientoFacetasPopUp = {
                     );
                 }
             });
-    
+
             // Configuración del clicks de navegación (Siguiente)            
             $(".js-siguiente-facetas-modal").click(function () {
-    
+
                 if (!that.buscando && !that.fin) {
                     that.buscando = true;
                     that.paginaActual++;
-                                                            
+
                     var hacerPeticion = true;
                     //$(".indice-lista .js-siguiente-facetas-modal").hide();
                     $(".indice-lista ul").animate(
@@ -8678,13 +3607,13 @@ const comportamientoFacetasPopUp = {
                         if (query.length >= 4) {
                             let filtrosActivos = $("#panListadoFiltros").find("li a").not('.borrarFiltros');
                             let filtros = ''
-    
+
                             filtrosActivos.each(function (index) {
                                 filtros += $(this).attr("name") + '|';
                             });
                             filtros = filtros.substring(0, filtros.length - 1);
                             console.log(filtros);
-    
+
                             //Inicializamos los parametros de la petición para el servicio autocompletar					
                             var proyectoBusqueda = $('input.inpt_proyID').val();
                             if (parametros_adiccionales.indexOf('proyectoOrigenID=') == 0) {
@@ -8708,7 +3637,7 @@ const comportamientoFacetasPopUp = {
                             params["organizacion"] = $('input.inpt_organizacionID').val();
                             params["filtrosContexto"] = '';
                             params["languageCode"] = $('input.inpt_Idioma').val();
-    
+
                             //Realizamos la petición al servicio autocompletar
                             $.post(obtenerUrl($('input.inpt_urlServicioAutocompletar').val()) + "/" + metodo, params, function (data) {
                                 var listaFacetasDevueltas = data.split("\r\n");
@@ -8723,7 +3652,7 @@ const comportamientoFacetasPopUp = {
                                     var textoNombreFaceta = facetaDevuelta.substring(0, indiceNumero);
                                     var textoNumeroFaceta = facetaDevuelta.substring(indiceNumero + 1);
                                     var enlace = document.location.href;
-    
+
                                     if (document.location.href.indexOf("?") != -1) {
                                         enlace += `&${FacetaActual}=${textoNombreFaceta}`;
                                     }
@@ -8738,7 +3667,7 @@ const comportamientoFacetasPopUp = {
                                 that.arrayTotales = new Array($(htmlRespuesta).find(".faceta").length);
                                 numFacetasTotales = that.arrayTotales;
                                 var i = 0;
-    
+
                                 $(htmlRespuesta)
                                     .find(".faceta")
                                     .each(function () {
@@ -8747,7 +3676,7 @@ const comportamientoFacetasPopUp = {
                                         that.arrayTotales[i][1] = $(this);
                                         i++;
                                     });
-    
+
                                 //Ordena por orden alfaético
                                 if (that.facetasConPopUp[that.IndiceFacetaActual][2]) {
                                     that.arrayTotales = that.arrayTotales.sort(function (a, b) {
@@ -8756,14 +3685,14 @@ const comportamientoFacetasPopUp = {
                                         return 0;
                                     });
                                 }
-    
+
                                 that.paginaActual = 1;
-    
+
                                 //Buscamos y pintamos las facetas en el modal
                                 that.buscarFacetas();
                             });
                         }
-    
+
                     }, that.timeWaitingForUserToType);
                 }
             });
@@ -8793,16 +3722,16 @@ const comportamientoFacetasPopUp = {
         this.fin = true;
 
         // Controlar botones de siguiente y anteriores si es necesario su mostrado según el nº de facetas
-        if (that.paginaActual == 1){
+        if (that.paginaActual == 1) {
             $(".js-anterior-facetas-modal").addClass("d-none");
-        }else{
+        } else {
             $(".js-anterior-facetas-modal").removeClass("d-none");
         }
-        if (that.paginaActual < that.numPaginasTotales){
+        if (that.paginaActual < that.numPaginasTotales) {
             $(".js-siguiente-facetas-modal").removeClass("d-none");
-        }else{
+        } else {
             $(".js-siguiente-facetas-modal").addClass("d-none");
-        }  
+        }
 
         $(".js-siguiente-facetas-modal").removeAttr("style")
         $(".js-anterior-facetas-modal").removeAttr("style");
@@ -8857,6 +3786,17 @@ const comportamientoFacetasPopUp = {
 };
 
 
+/**
+ * Muestra una faceta en un control específico, gestionando el contenido y las facetas relacionadas.
+ * 
+ * @param {string} faceta - La clave de la faceta que se desea visualizar.
+ * @param {string} controlID - El ID del control HTML en el que se va a mostrar la faceta.
+ * @returns {boolean} - Siempre devuelve `false`.
+ * 
+ * @example
+ * // Muestra la faceta 'categoria' en el control con ID 'control1'.
+ * VerFaceta('categoria', 'control1');
+ */
 function VerFaceta(faceta, controlID) {
     if (document.getElementById(controlID + '_aux') == null) {
         $('#' + controlID).parent().html($('#' + controlID).parent().html() + '<div style="display:none;" id="' + controlID + '_aux' + '"></div>');
@@ -8890,68 +3830,18 @@ function VerFaceta(faceta, controlID) {
     return false;
 }
 
-function VerArbol(faceta, controlID) {
-    var filtros = ObtenerHash2();
-    //sb.AppendLine(Page.ClientScript.GetCallbackEventReference(this.Page, "filtros", "ReceiveServerData", String.Empty) + ";
-    MontarFacetas(filtros, false, -1, '#' + controlID, faceta + '_Arbol');
-    return false;
-}
 
-function CrearFiltroEliminarDeElemento(elemento) {
-    var onclick = '';
-    if (elemento.onclick != null) {
-        onclick = elemento.onclick.toString();
-    }
-    CrearFiltroEliminar(elemento.name, elemento.title, onclick, elemento.innerHTML);
-}
-
-function CrearFiltroEliminar(name, title, onclick, innerHTML) {
-    if (name.indexOf('search_') == 0) {
-        $('#ctl00_ctl00_txtBusqueda').val('');
-    }
-    if (title != '') {
-        innerHTML = title;
-    }
-    else if (innerHTML.charAt(innerHTML.length - 1) == ')') {
-        var indiceParentesis = innerHTML.lastIndexOf('(') - 1;
-        innerHTML = innerHTML.substring(0, indiceParentesis);
-    }
-    var nameNuevo = name;
-
-    var elementosAgregado = $('li[name="' + nameNuevo + '"]');
-
-    var agregame = document.getElementById(panFiltrosPulgarcito);
-    if (agregame != null) {
-        if (elementosAgregado.length == 0) {
-            onclick = onclick.substr(onclick.indexOf('{') + 1);
-            //            var nuevo = document.createElement('a');
-            //            //nuevo.innerHTML = innerHTML;
-            //            nuevo.setAttribute('onclick', onclick.substr(0, onclick.length - 1));
-            //            nuevo.title = title;
-            //            nuevo.id = nameNuevo;
-            //            nuevo.name = nameNuevo;
-
-            var li = document.createElement('li');
-            li.setAttribute('name', nameNuevo);
-            li.innerHTML = innerHTML + ' <a href="#" id="' + nameNuevo + '" name="' + nameNuevo + '" title="' + title + '" onclick="' + onclick.substr(0, onclick.length - 1) + '" class="remove">' + form.eliminar + '</a>';
-            //li.appendChild(nuevo);
-
-            agregame.appendChild(li);
-        }
-        else {
-            agregame.removeChild(elementosAgregado[0]);
-        }
-    }
-    if (agregame.childNodes.length > 0) {
-        $('.group.filterSpace').css('display', '');
-        $('.searchBy').css('display', '');
-    }
-    else {
-        $('.searchBy').css('display', 'none');
-    }
-
-}
-
+/**
+ * Determina si hay filtros activos en un conjunto de filtros dado.
+ * 
+ * @param {string} pFiltros - Una cadena con filtros separados por el carácter `|`.
+ * @returns {boolean} - Devuelve `true` si hay filtros activos, de lo contrario, devuelve `false`.
+ * 
+ * @example
+ * // Verifica si hay filtros activos en la cadena de filtros.
+ * HayFiltrosActivos('search=camisa|categoria=ropa|orden=asc');
+ * // Devuelve `true` porque hay un filtro de búsqueda activo.
+ */
 function HayFiltrosActivos(pFiltros) {
     $('#ctl00_ctl00_txtBusqueda').val('');
     if (pFiltros != "") {
@@ -8968,9 +3858,37 @@ function HayFiltrosActivos(pFiltros) {
     return false;
 }
 
-//Realizamos la petición
+/**
+ * Verifica si hay filtros activos en una cadena de filtros dada.
+ * 
+ * @param {string} pFiltros - Una cadena que contiene filtros separados por el carácter `|`, en el formato `clave=valor`.
+ * @returns {boolean} - Devuelve `true` si hay al menos un filtro activo distinto de `pagina`, `orden`, o `ordenarPor`. Devuelve `false` si no hay filtros activos o solo hay filtros de `pagina`, `orden`, o `ordenarPor`.
+ */
+function HayFiltrosActivos(pFiltros) {
+    $('#ctl00_ctl00_txtBusqueda').val('');
+    if (pFiltros != "") {
+        var filtros = pFiltros.split('|');
+        for (var i = 0; i < filtros.length; i++) {
+            if (filtros[i].indexOf('pagina=') == -1 && filtros[i].indexOf('orden=') == -1 && filtros[i].indexOf('ordenarPor=') == -1) {
+                if (filtros[i].indexOf('search=') != -1) {
+                    $('#ctl00_ctl00_txtBusqueda').val(filtros[i].substring(filtros[i].indexOf('=') + 1).replace('|', ''));
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 
+/**
+ * Reemplaza todas las ocurrencias de una subcadena en una cadena de texto por otra subcadena.
+ * 
+ * @param {string} texto - La cadena de texto en la que se realizarán los reemplazos.
+ * @param {string} busqueda - La subcadena que se buscará y reemplazará en el texto.
+ * @param {string} reemplazo - La subcadena que reemplazará cada ocurrencia de la subcadena de búsqueda.
+ * @returns {string} - La cadena de texto con todas las ocurrencias de `busqueda` reemplazadas por `reemplazo`.
+ */
 function replaceAll(texto, busqueda, reemplazo) {
     var resultado = '';
 
@@ -8984,7 +3902,19 @@ function replaceAll(texto, busqueda, reemplazo) {
     return resultado;
 }
 
-//montamos el contexto de los mensajes
+
+/**
+ * Carga el contexto de mensajes en un panel específico, mostrando u ocultando el contenedor de contexto según corresponda.
+ * 
+ * @param {number} pUsuarioID - El ID del usuario asociado al contexto de mensajes.
+ * @param {number} pIdentidadID - El ID de identidad asociado al contexto de mensajes.
+ * @param {number} pMensajeID - El ID del mensaje que se desea cargar en el contexto.
+ * @param {string} pLanguageCode - El código del idioma para el contexto del mensaje.
+ * @param {Object} pParametrosBusqueda - Parámetros de búsqueda adicionales que se enviarán al servicio para cargar el contexto.
+ * @param {string} pPanelID - El ID del panel donde se mostrará el contexto del mensaje.
+ * 
+ * @returns {void}
+ */
 function MontarContextoMensajes(pUsuarioID, pIdentidadID, pMensajeID, pLanguageCode, pParametrosBusqueda, pPanelID) {
 
     var servicio = new WS($('input.inpt_UrlServicioContextos').val(), WSDataType.jsonp);
@@ -9003,7 +3933,6 @@ function MontarContextoMensajes(pUsuarioID, pIdentidadID, pMensajeID, pLanguageC
 
         panel.html(data);
 
-        //si divContexto tiene mensajes muestro el divContenedorContexto
         if (panel.children().children().length > 0) {
             document.getElementById('divContenedorContexto').style['display'] = "block";
         }
@@ -9011,14 +3940,12 @@ function MontarContextoMensajes(pUsuarioID, pIdentidadID, pMensajeID, pLanguageC
             document.getElementById('divContenedorContexto').style['display'] = "none";
         }
 
-        //intentamos limpiar el panel que sobra
         if (panel.children('#ListadoGenerico_panContenedor').length > 0) {
             var panelResultados = $([panel.children('#ListadoGenerico_panContenedor').html()].join(''));
             panelResultados.appendTo(panel);
             panel.children('#ListadoGenerico_panContenedor').html('');
         }
 
-        /* enganchar comportamiento mensajes */
         listadoMensajesMostrarAcciones.init();
         vistaCompactadaMensajes.init();
 
@@ -9028,6 +3955,8 @@ function MontarContextoMensajes(pUsuarioID, pIdentidadID, pMensajeID, pLanguageC
     });
 }
 
+
+var currentMousePos = { x: -1, y: -1 };
 var utilMapas = {
     puntos: [],
     infowindow: null,
@@ -9054,7 +3983,7 @@ var utilMapas = {
     region: 'ES',
     IDMap: null,
     filtroWhere: null,
-	listenerAdded:false,
+    listenerAdded: false,
 
     EstablecerFiltroCoordMapa: function (pFiltroLat, pFiltroLong) {
         this.filtroCoordenadasMapaLat = pFiltroLat;
@@ -9217,21 +4146,21 @@ var utilMapas = {
         }
         var that = this;
 
-		if(!this.listenerAdded){
-			this.listenerAdded = true;
-			google.maps.event.addListener(this.map, 'bounds_changed', function () {
-				if (!that.fichaRecurso && utilMapas.filtroCoordenadasMapaLat != null && utilMapas.filtroCoordenadasMapaLong != null) {
-					that.OcultarFichaMapa();
-					var coordenadas = this.getBounds();
-					if (utilMapas.UltimaCoordenada == null) {
-						utilMapas.UltimaCoordenada = coordenadas;
-					} else if (utilMapas.UltimaCoordenada != coordenadas) {
-						utilMapas.UltimaCoordenada = coordenadas;
-						setTimeout("utilMapas.FiltrarPorCoordenadas('" + coordenadas + "')", 1000);
-					}
-				}
-			});
-		}
+        if (!this.listenerAdded) {
+            this.listenerAdded = true;
+            google.maps.event.addListener(this.map, 'bounds_changed', function () {
+                if (!that.fichaRecurso && utilMapas.filtroCoordenadasMapaLat != null && utilMapas.filtroCoordenadasMapaLong != null) {
+                    that.OcultarFichaMapa();
+                    var coordenadas = this.getBounds();
+                    if (utilMapas.UltimaCoordenada == null) {
+                        utilMapas.UltimaCoordenada = coordenadas;
+                    } else if (utilMapas.UltimaCoordenada != coordenadas) {
+                        utilMapas.UltimaCoordenada = coordenadas;
+                        setTimeout("utilMapas.FiltrarPorCoordenadas('" + coordenadas + "')", 1000);
+                    }
+                }
+            });
+        }
     },
     OcultarFichaMapa: function () {
         $('#' + this.fichaMapa).attr('activo', 'false');
@@ -9554,16 +4483,16 @@ var utilMapas = {
     }
 }
 
-function ColorAleatorio() {
-    hexadecimal = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F")
-    color_aleatorio = "#";
-    for (i = 0; i < 6; i++) {
-        posarray = aleatorio(0, hexadecimal.length)
-        color_aleatorio += hexadecimal[posarray]
-    }
-    return color_aleatorio
-}
 
+/**
+ * Genera un número entero aleatorio dentro del rango especificado, incluyendo el límite inferior pero excluyendo el límite superior.
+ * 
+ * Esta función devuelve un número entero aleatorio entre `inferior` (inclusive) y `superior` (exclusivo). Por ejemplo, si `inferior` es 1 y `superior` es 10, la función puede devolver cualquier número del 1 al 9.
+ * 
+ * @param {number} inferior - El límite inferior del rango, un número entero inclusivo.
+ * @param {number} superior - El límite superior del rango, un número entero exclusivo.
+ * @returns {number} - Un número entero aleatorio entre `inferior` (inclusive) y `superior` (exclusivo).
+ */
 function aleatorio(inferior, superior) {
     numPosibilidades = superior - inferior
     aleat = Math.random() * numPosibilidades
@@ -9571,371 +4500,10 @@ function aleatorio(inferior, superior) {
     return parseInt(inferior) + aleat
 }
 
-var contador = 0;
-
-var viewOptions = {
-
-    id: '#viewOptions',
-
-    cssResources: '.resourcesList',
-
-    cssResourcesRow: 'row',
-
-    cssResourcesGrid: 'grid',
-
-    cssGridView: '.gridView',
-
-    cssRowView: '.rowView',
-
-    cssResource: '.resource',
-
-    cssActive: 'activeView',
-
-    isCalculadoOmega: false,
-
-    alturas: [],
-
-    init: function () {
-
-        this.config();
-
-        this.behaviours();
-
-    },
-
-    config: function () {
-
-        this.componente = $(this.id);
-
-        this.resourceList = this.componente.next();
-
-        this.gridView = $(this.cssGridView, this.componente);
-
-        this.rowView = $(this.cssRowView, this.componente);
-
-        this.links = $('a', this.componente);
-
-        this.resources = $(this.cssResource, this.resourceList);
-
-        return;
-
-    },
-
-    calcularOmega: function () {
-
-        var contador = 0;
-
-        var masAlto = 0;
-
-        var that = this;
-
-        this.resources.each(function () {
-
-            var recurso = $(this);
-
-            var altura = recurso.height();
-
-            if (altura > masAlto) masAlto = altura;
-
-            contador++;
-
-            if (contador == 3) {
-
-                recurso.addClass('omega');
-
-                that.alturas.push(masAlto);
-
-                contador = 0;
-
-                masAlto = 0;
-
-            }
-
-        });
-
-        this.resources.each(function () {
-
-            var recurso = $(this);
-
-            recurso.css('height', masAlto + 'px');
-
-        });
-
-        this.isCalculadoOmega = true;
-
-    },
-
-    igualarAlturas: function () {
-
-        var that = this;
-
-        console.log(this.alturas);
-
-        var contador = 0;
-
-        this.resources.each(function (indice) {
-
-            var recurso = $(this);
-
-            var fila = parseInt(indice / 3);
-
-            recurso.css('height', that.alturas[fila] + 'px');
-
-        });
-
-    },
-
-    borrarAlto: function () {
-
-        this.resources.each(function () {
-
-            var recurso = $(this);
-
-            recurso.css('height', 'auto');
-
-        });
-
-    },
-
-    desmarcarActivo: function () {
-
-        var that = this;
-
-        this.links.each(function () {
-
-            $(this).removeClass(that.cssActive);
-
-        })
-
-        return;
-
-    },
-
-    behaviours: function () {
-
-        var that = this;
-
-        this.gridView.bind('click', function (evento) {
-
-            that.desmarcarActivo();
-
-            $(this).addClass(that.cssActive);
-
-            that.resourceList.removeClass(that.cssResourcesRow);
-
-            that.resourceList.addClass(that.cssResourcesGrid);
-
-            if (!that.isCalculadoOmega) that.calcularOmega();
-
-            that.igualarAlturas();
-
-            return false;
-
-        });
-
-        this.rowView.bind('click', function (evento) {
-
-            that.desmarcarActivo();
-
-            $(this).addClass(that.cssActive);
-
-            that.resourceList.removeClass(that.cssResourcesGrid);
-
-            that.resourceList.addClass(that.cssResourcesRow);
-
-            that.borrarAlto();
-
-            return false;
-
-        });
-    }
-}
-
-
-/*--------    REGION MASTER GNOSS    -----------------------------------------------------------*/
-
-function aceptarNuevaNavegacion() {
-    document.getElementById('capaModal').style.display = 'none';
-}
-
-//Codigo para crear el desplegable del login mediante jQuery
-
-
-//function submitform() {
-//    document.myform.submit();
-//}
-
-
-function OculatarHerramientaAddto() {
-    //    if ($.browser.msie && $.browser.version < 7) {
-    //        idIntervalo = setInterval("accederWeb()", 500);
-    //    }
-}
-
-function CambiarNombre(link, nombre1, nombre2) {
-    if (link.innerHTML == nombre1) {
-        link.innerHTML = nombre2;
-    }
-    else {
-        link.innerHTML = nombre1;
-    }
-}
-
 /*--------    REGION SCRIPTS INICIALES   -----------------------------------------------------------*/
 
-function ReceiveServerData(arg, context) {
-    EjecutarScriptsIniciales();
-    if (!(arg == "")) {
-        var json = eval('(' + arg + ')');
-        for (var i = 0; i < json.length; i++) {
-            var object = json[i];
-            if (object.render == true) {
-                if (object.id != "") {
-                    var element = document.getElementById(object.id);
-
-                    if (element != null) {
-                        if (object.reemplazarHtml) {
-                            if (object.innerHTML == "") {
-                                element.parentNode.removeChild(element);
-                            }
-                            else {
-                                var divNuevoHtml = document.createElement("div");
-                                divNuevoHtml.innerHTML = object.innerHTML;
-                                element.parentNode.replaceChild(divNuevoHtml.childNodes[0], element);
-                            }
-                        }
-                        else if (object.agregarHtml) {
-                            element.innerHTML += object.innerHTML;
-                        }
-                        else if (object.agregarHtmlAlPrinc) {
-                            element.innerHTML = object.innerHTML + element.innerHTML;
-                        }
-                        else {
-                            if (element != null) { element.innerHTML = object.innerHTML; }
-                        }
-                    }
-                } //Fin if(object.id!=\"\")
-            } //Fin if(object.render == true), empieza esle
-            else {
-                var cadena = object.funcion.split('&');
-                object.funcion = cadena[0];
-                if (object.funcion == "Seleccionar") {
-                    SeleccionarElemento(object.id);
-                }
-                else if (object.funcion == "DeSeleccionar") {
-                    DeSeleccionarElemento(object.id);
-                }
-                else if (object.funcion == "Contraer") {
-                    var element = document.getElementById(object.id);
-                    element.style.display = "none";
-                }
-                else if (object.funcion == "HacerVisible") {
-                    var element = document.getElementById(object.id);
-                    element.style.display = "block";
-                }
-                else if (object.funcion == "Ocultar") {
-                    var element = document.getElementById(object.id);
-                    if (element != null) {
-                        element.style.display = "none";
-                    }
-                }
-                else if (object.funcion == "CambiarConector") {
-                    var element = document.getElementById(object.id);
-                    element.src = object.innerHTML;
-                }
-                else if (object.funcion == "CambiarCssClass") {
-                    var element = document.getElementById(object.id);
-                    element.className = object.innerHTML;
-                }
-                else if (object.funcion == "CambiarValor") {
-                    var element = document.getElementById(object.id);
-                    element.value = object.innerHTML;
-                }
-                else if (object.funcion == "CambiarAtributo") {
-                    var element = document.getElementById(object.id);
-                    element.setAttribute(object.atributo, object.valor);
-                }
-                else if (object.funcion == "CambiarAtributoStyle") {
-                    var element = document.getElementById(object.id);
-                    element.style[object.atributo] = object.valor;
-                }
-                else if (object.funcion == "CambiarID") {
-                    var element = document.getElementById(object.id);
-                    element.id = object.innerHTML;
-                }
-                else if (object.funcion == "Guardar") {
-                    Guardar(object.innerHTML);
-                }
-                else if (object.funcion == "MarcarCheckBox") {
-                    $('#' + object.id).attr('checked', true);
-                }
-                else if (object.funcion == "DesmarcarCheckBox") {
-                    $('#' + object.id).attr('checked', false);
-                }
-                else if (object.funcion == "SweetTitles") {
-                    if (window.sweetTitles) { sweetTitles.init(); }
-                }
-                else if (object.funcion == "MostrarErrorLogin") {
-                    crearError('<p>' + form.errorLogin + '</p>', cadena[1]);
-                }
-                else if (object.funcion == "redirect") {
-                    if (object.Direccion != null) {
-                        window.location.href = object.Direccion;
-                    }
-                    else {
-                        window.location.href = cadena[1];
-                    }
-                }
-                else if (object.funcion == "hacerClick") {
-                    document.getElementById(cadena[1]).click();
-                }
-                else if (object.funcion == "ejecutarFuncion") {
-                    eval(object.innerHTML);
-                }
-                else if (object.funcion == "ejecutarFuncionConParametorObjeto") {
-                    eval(object.metodoJS + '(object);');
-                }
-                else if (object.funcion == "ResaltarTags" && object.ListaTags != "") {
-                    ResaltarTags(object.ListaTags);
-                }
-                else if (object.funcion == "reload") {
-                    document.location.reload();
-                }
-
-                if (object.funcion == "TraerNumeroResultados") {
-                    FiltrarBusquedaAvanzada(object.numResulCoincidentes);
-                }
-
-                if (object.funcion == "MostrarControles") {
-                    MostrarControles(object.controles);
-                }
-            } //Fin else de if(object.render == true), empieza esle
-        } //Fin foreach
-    } //Fin if(!(arg == \"\"))
-} //Fin function
-
-//Seleccionar
-function SeleccionarElemento(elementID) {
-    var element = document.getElementById(elementID);
-    element.style.border = "solid 1px black";
-}
-//DeSeleccionar
-function DeSeleccionarElemento(elementID) {
-    var element = document.getElementById(elementID);
-    element.style.border = "";
-}
-function CambiarNombreElemento(elementID, nombre) {
-    var element = document.getElementById(elementID);
-    element.innerHTML = '';
-    element.parentNode.innerHTML = nombre;
-}
-function CambiarTextoElemento(elementID, nombre) {
-    var element = document.getElementById(elementID);
-    element.innerHTML = nombre;
-}
-
 /**
- * Eliminaá los atributos del botón para que no pueda volver a ejecutar nada a menos que se vuelva a carguar la página web
+ * Eliminará los atributos del botón para que no pueda volver a ejecutar nada a menos que se vuelva a cargar la página web
  * Ej: Acciones que se hacen sobre una persona ("No enviar newsletter, Bloquear...")
  * @param {any} elementId: Elemento que se desea cambiar el nombre y eliminar atributos
  * @param {any} nombre: Nombre que tendrá el botón una vez se haya pulsado sobre él y las acciones se hayan realizado
@@ -9952,154 +4520,33 @@ function CambiarTextoAndEliminarAtributos(elementId, nombre, listaAtributos) {
     $(element).css('cursor', 'auto');
 }
 
-//Función que arregla pringues de Microsoft:
-function WebForm_CallbackComplete() {
-    for (var i = 0; i < __pendingCallbacks.length; i++) {
-        callbackObject = __pendingCallbacks[i];
-        if (callbackObject && callbackObject.xmlRequest && (callbackObject.xmlRequest.readyState == 4)) {
-            WebForm_ExecuteCallback(callbackObject);
-            if (__pendingCallbacks[i] != null && !__pendingCallbacks[i].async) {
-                __synchronousCallBackIndex = -1;
-            }
-            __pendingCallbacks[i] = null;
-            var callbackFrameID = "__CALLBACKFRAME" + i;
-            var xmlRequestFrame = document.getElementById(callbackFrameID);
-            if (xmlRequestFrame) {
-                xmlRequestFrame.parentNode.removeChild(xmlRequestFrame);
-            }
-        }
-    }
-}
-
-////Realizamos la petición
-//function DesplegarDescripcionAJAX(pGuidDoc) {
-//    PeticionesAJAX.CargarDescripcionRecurso(pGuidDoc, RecogerDescripcion, RecogerErroresAJAX);
-//}
-
-//function DesplegarDescripcionSuscripcionAJAX(pGuidDoc, pGuidSusc) {
-//    PeticionesAJAX.CargarDescripcionRecursoSuscripcion(pGuidDoc, pGuidSusc, RecogerDescripcion, RecogerErroresAJAX);
-//}
-
-//function RecogerDescripcion(datosRecibidos) {
-//    //Leemos los datos
-//    var docID = datosRecibidos.substring(0, datosRecibidos.indexOf('|'));
-//    var descripcion = datosRecibidos.substring(datosRecibidos.indexOf('|') + 1);
-//    //Ocultamos la descripción corta y mostramos la larga
-//    $('#DescripcionCorta_' + docID).hide();
-//    $('#DescripcioLarga_' + docID).show();
-//    $('#DescripcioLarga_' + docID).html(descripcion);
-//    //Cambiamos la imágen del + y quitamos los puntos suspensivos
-//    //La variable  $('input.inpt_baseURL').val() se define en la MasterGnoss
-//    $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('a').children('img').attr('src',  $('input.inpt_baseURL').val() + '/img/verMenos.gif');
-//    $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('span').html('');
-//    //Quitamos el evento onclick del +
-//    $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('a').removeAttr('onclick');
-//    //Creamos el evento que alterna entre las descripciones
-//    $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('a').toggle(function () {
-//        $('#DescripcionCorta_' + docID).show();
-//        $('#DescripcioLarga_' + docID).hide();
-//        $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('a').children('img').attr('src',  $('input.inpt_baseURL').val() + '/img/verMas.gif');
-//        $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('span').html('...');
-//    },
-//function () {
-//    $('#DescripcionCorta_' + docID).hide();
-//    $('#DescripcioLarga_' + docID).show();
-//    $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('a').children('img').attr('src',  $('input.inpt_baseURL').val() + '/img/verMenos.gif');
-//    $('#DescripcionCorta_' + docID + '_DesplegarTexto').children('p').children('span').html('');
-//});
-//}
-
 function RecogerErroresAJAX(error) {
-    //alert(error);
+    console.log(error)
 }
 
-function ObtenerNumMensajesSinLeerAJAX(pGuidIdent) {
-    PeticionesAJAX.CargarNumMensajesSinLeer(pGuidIdent, RecogerNumMensajesSinLeer, RecogerErroresAJAX);
-}
-
-function RecogerNumMensajesSinLeer(datosRecibidos) {
-    //Leemos los datos
-    var arrayDatos = datosRecibidos.split('|');
-    var numMensajesNoLeidos = arrayDatos[0];
-    var numMensajesNoLeidosEliminados = arrayDatos[1];
-
-    //Cambiamos el numero de mensajes recibidos
-    reemplazarContadores('#ctl00_CPH1_hlCorreoRecibido', numMensajesNoLeidos);
-
-    //Cambiamos el numero de mensajes recibidos
-    reemplazarContadores('#ctl00_CPH1_hlCorreoEliminado', numMensajesNoLeidosEliminados);
-}
-
-
-function ObtenerNumElementosSinLeerAJAX(pGuidPerfilUsu, pGuidPerfilOrg, pGuidOrg, pEsBandejaOrg, pCaducidadSusc) {
-    PeticionesAJAX.CargarNumElementosSinLeer(pGuidPerfilUsu, pGuidPerfilOrg, pGuidOrg, pEsBandejaOrg, pCaducidadSusc, RecogerNumElementosSinLeer, RecogerErroresAJAX);
-}
-
-function RecogerNumElementosSinLeer(datosRecibidos) {
-    //Leemos los datos
-    var arrayDatos = datosRecibidos.split('|');
-    var numMensajesNoLeidos = arrayDatos[0];
-    var numInvitacionesNoLeidas = arrayDatos[1];
-    var numSuscripcionesNoLeidos = arrayDatos[2];
-    var numComentariosNoLeidos = arrayDatos[3];
-
-    //Cambiamos el numero de Mensajes
-    reemplazarContadores('#ctl00_ctl00_CPH1_hlMensajes', numMensajesNoLeidos);
-
-    //Cambiamos el numero de Comentarios
-    reemplazarContadores('#ctl00_ctl00_CPH1_hlComentarios', numComentariosNoLeidos);
-
-    //Cambiamos el numero de Invitaciones
-    reemplazarContadores('#ctl00_ctl00_CPH1_hlInvitaciones', numInvitacionesNoLeidas);
-
-    //Cambiamos el numero de Suscripciones
-    reemplazarContadores('#ctl00_ctl00_CPH1_hlSuscripciones', numSuscripcionesNoLeidos);
-
-}
-
-var perfilID;
-var perfilOrgID;
-var organizacionID;
-var esAdministradorOrg;
+let perfilID;
+let perfilOrgID;
+let organizacionID;
+let esAdministradorOrg;
 $(document).ready(function () {
     perfilID = $('input#inpt_perfilID').val();
     perfilOrgID = $('input#inpt_perfilOrgID').val();
     organizacionID = $('input#inpt_organizacionID').val();
     esAdministradorOrg = $('input#inpt_AdministradorOrg').val();
-    refrescarNumElementosNuevos();
-    //$('#descargarRDF').click(function () {
-    //    var url = window.location.href;
-
-    //    if (url.indexOf('?rdf') == -1 && url.indexOf('&rdf') == -1) {
-    //        if (url.indexOf('?') == -1) {
-    //            url += '?';
-    //        }
-    //        else {
-    //            url += '&';
-    //        }
-
-    //        url += 'rdf';
-    //    }
-
-    //    window.open(url, '_blank');
-    //    return false;
-    //});
-    engancharClicks();
+    refrescarNumElementosNuevos();   
 });
 
-function engancharClicks() {
-    $('[clickJS]').each(function () {
-        var control = $(this);
-        var js = control.attr('clickJS');
-        control.removeAttr('clickJS');
-        control.click(function (evento) {
-            evento.preventDefault();
-            eval(js);
-        });
-    });
-}
 
 
+/**
+ * Refresca los elementos nuevos mediante llamadas AJAX periódicas.
+ * 
+ * Este método verifica si `perfilID` está definido y es válido, luego realiza una llamada a `ObtenerNumElementosNuevosAJAX` para obtener elementos nuevos.
+ * Además, configura llamadas repetidas a `ObtenerNumElementosNuevosAJAX` con diferentes intervalos dependiendo del estado de la sesión activa.
+ * 
+ * @function
+ * @returns {void}
+ */
 function refrescarNumElementosNuevos() {
     if (typeof (perfilID) != 'undefined' && perfilID != 'ffffffff-ffff-ffff-ffff-ffffffffffff' && perfilID != '00000000-0000-0000-0000-000000000000') {
         try {
@@ -10109,19 +4556,24 @@ function refrescarNumElementosNuevos() {
 
             if ($('input.inpt_MantenerSesionActiva').length == 0 || $('input.inpt_MantenerSesionActiva').val().toLowerCase() == "true") {
                 setInterval("ObtenerNumElementosNuevosAJAX('" + perfilID + "', '" + perfilOrgID + "', '" + esAdministradorOrg + "')", 600000);
-            }
-            
-            //if ($('input.inpt_refescarContadoresSinLimite').val() == "1") {
-            //    setInterval("ObtenerNumElementosNuevosAJAX('" + perfilID + "', '" + perfilOrgID + "', '" + esAdministradorOrg + "')", 600000);
-            //}
-            //else {
-            //    setTimeout("ObtenerNumElementosNuevosAJAX('" + perfilID + "', '" + perfilOrgID + "', '" + esAdministradorOrg + "')", 600000);
-            //}
+            }        
         }
         catch (ex) { }
     }
 }
 
+
+/**
+ * Realiza una solicitud AJAX para obtener el número de elementos nuevos.
+ * 
+ * Esta función construye un identificador de nuevos elementos a partir de elementos `<span>` con la clase `novPerfilOtraIdent` y llama a `PeticionesAJAX.CargarNumElementosNuevos` para obtener los nuevos elementos.
+ * 
+ * @function
+ * @param {string} pGuidPerfilUsu - El GUID del perfil del usuario.
+ * @param {string} pGuidPerfilOrg - El GUID del perfil de la organización.
+ * @param {boolean} pEsBandejaOrg - Indica si es la bandeja de entrada de la organización.
+ * @returns {void}
+ */
 function ObtenerNumElementosNuevosAJAX(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg) {
     var identCargarNov = '';
     var spanNov = $('span.novPerfilOtraIdent');
@@ -10135,20 +4587,6 @@ function ObtenerNumElementosNuevosAJAX(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandej
     PeticionesAJAX.CargarNumElementosNuevos(pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX);
 }
 
-function PeticionAJAX(pMetodo, pDatosPost,pFuncionOK,pFuncionKO)
-{
-    var urlPeticion = location.protocol + "//" + location.host + "/PeticionesAJAX/" + pMetodo;
-    GnossPeticionAjax(
-        urlPeticion,
-        pDatosPost,
-        true
-    ).done(function (response) {
-        pFuncionOK(response)
-    }).fail(function (response) {
-        pFuncionKO(response);
-    });
-}
-
 /**
  * Método que es ejecutado para mostrar información traida del backend como Mensajes nuevos, invitaciones nuevas, suscripciones nuevas...
  * @param {any} datosRecibidos
@@ -10160,28 +4598,31 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     var numInvitacionesNuevos = arrayDatos[1];
     var numSuscripcionesNuevos = arrayDatos[2];
     var numComentariosNuevos = arrayDatos[3];
+    var numNotificacionesNuevos = arrayDatos[4];
 
-    var numMensajesSinLeer = arrayDatos[4];
-    var numInvitacionesSinLeer = arrayDatos[5];
-    var numSuscripcionesSinLeer = arrayDatos[6];
-    var numComentariosSinLeer = arrayDatos[7];
+    var numMensajesSinLeer = arrayDatos[5];
+    var numInvitacionesSinLeer = arrayDatos[6];
+    var numSuscripcionesSinLeer = arrayDatos[7];
+    var numComentariosSinLeer = arrayDatos[8];
+    var numNotificacionesSinLeer = arrayDatos[9];
 
-    var numMensajesNuevosOrg = arrayDatos[8];
-    var numMensajesSinLeerOrg = arrayDatos[9];
-    var numInvitacionesNuevosOrg = arrayDatos[10];
-    var numInvitacionesSinLeerOrg = arrayDatos[11];
+    var numMensajesNuevosOrg = arrayDatos[10];
+    var numMensajesSinLeerOrg = arrayDatos[11];
+    var numInvitacionesNuevosOrg = arrayDatos[12];
+    var numInvitacionesSinLeerOrg = arrayDatos[13];
 
-    var numInvOtrasIdent = arrayDatos[12];
+    var numInvOtrasIdent = arrayDatos[14];
 
     // Identificación de elementos HTML para controlar el nº de mensajes nuevos
     // Mensajes nuevos    
     const mensajesMenuNavegacionItem = document.querySelectorAll('.liMensajes')//$('#navegacion').find('.liMensajes');
-    const suscripcionesMenuNavegacionItem = document.querySelectorAll('.liNotificaciones'); //$('#navegacion').find('.liNotificaciones');
+    const suscripcionesMenuNavegacionItem = document.querySelectorAll('.liSuscripciones'); //$('#navegacion').find('.liNotificaciones');
+    const notificacionesMenuNavegacionItem = document.querySelectorAll('.liNotificaciones');
     const comentariosMenuNavegacionItem = document.querySelectorAll('.liComentarios'); //$('#navegacion').find('.liComentarios');
     // Quitarlo -> No se utilizan 
     // const invitacionesMenuNavegacionItem = document.querySelectorAll('.liInvitaciones'); //$('#navegacion').find('.liInvitaciones');
     const contactosMenuNavegacionItem = document.querySelectorAll('.liContactos'); //$('#navegacion').find('.liContactos');
-    
+
 
     //Cambiamos el numero de Mensajes
     DarValorALabel('infoNumMensajes', parseInt(numMensajesNuevos) + parseInt(numMensajesNuevosOrg));
@@ -10195,6 +4636,9 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Notificaciones
     DarValorALabel('infoNumNotificaciones', parseInt(numInvitacionesNuevos) + parseInt(numInvitacionesNuevosOrg) + parseInt(numComentariosNuevos));
     DarValorALabel('infoNumNotificacionesMobile', parseInt(numInvitacionesNuevos) + parseInt(numInvitacionesNuevosOrg) + parseInt(numComentariosNuevos));
+
+    DarValorALabel('infoNumNotificacionesPersonalizadas', parseInt(numNotificacionesNuevos) + parseInt(numNotificacionesSinLeer));
+    DarValorALabel('infoNumNotificacionesMobilePersonalizadas', parseInt(numNotificacionesNuevos) + parseInt(numNotificacionesSinLeer));
     //Cambiamos el numero de Suscripciones
     DarValorALabel('infoNumSuscriopciones', numSuscripcionesNuevos);
     DarValorALabel('infoNumSuscriopcionesMobile', numSuscripcionesNuevos);
@@ -10210,7 +4654,7 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     }
     //Cambiamos el numero de Comentarios sin leer
     DarValorALabel('infNumComentariosSinLeer', numComentariosSinLeer);
-    DarValorALabel('infNumComentariosSinLeerMobile', numComentariosSinLeer); 
+    DarValorALabel('infNumComentariosSinLeerMobile', numComentariosSinLeer);
     // Añadir punto rojo de 'nuevos' Comentarios
     if (parseInt(numComentariosNuevos) > 0) {
         $(comentariosMenuNavegacionItem).addClass('nuevos');
@@ -10227,8 +4671,20 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
         $(invitacionesMenuNavegacionItem).removeClass('nuevos');
     }*/
     //Cambiamos el numero de Notificaciones sin leer
-    DarValorALabel('infNumNotificacionesSinLeer', parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg) + parseInt(numComentariosSinLeer));
-    DarValorALabel('infNumNotificacionesSinLeerMobile', parseInt(numInvitacionesSinLeer) + parseInt(numInvitacionesSinLeerOrg) + parseInt(numComentariosSinLeer));
+    DarValorALabel('infNumNotificacionesSinLeer',  parseInt(numNotificacionesSinLeer));
+    DarValorALabel('infNumNotificacionesSinLeerMobile', parseInt(numNotificacionesSinLeer));
+
+    if (numNotificacionesSinLeer > 0) {
+        document.getElementById('notificacionesPersonalizadas').hidden = false
+    } else {
+        document.getElementById('notificacionesPersonalizadas').hidden = true
+    }
+    // Añadir punto rojo de 'nuevas' Notificaciones
+    if (parseInt(numNotificacionesNuevos)) {
+        $(notificacionesMenuNavegacionItem).addClass('nuevos');
+    } else {
+        $(notificacionesMenuNavegacionItem).removeClass('nuevos');
+    }
     //Cambiamos el numero de Suscripciones sin leer
     DarValorALabel('infNumSuscripcionesSinLeer', numSuscripcionesSinLeer);
     DarValorALabel('infNumSuscripcionesSinLeerMobile', numSuscripcionesSinLeer);
@@ -10237,9 +4693,9 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
         $(suscripcionesMenuNavegacionItem).addClass('nuevos');
     } else {
         $(suscripcionesMenuNavegacionItem).removeClass('nuevos');
-    } 
+    }
     // Añadir punto rojo en el icono del usuario para saber si hay mensajes, notificaciones nuevas
-    if ((parseInt(numMensajesSinLeer) + parseInt(numMensajesSinLeerOrg) > 0) || (parseInt(numComentariosSinLeer) > 0) || (parseInt(numSuscripcionesSinLeer))) {
+    if ((parseInt(numMensajesSinLeer) + parseInt(numMensajesSinLeerOrg) > 0) || (parseInt(numComentariosSinLeer) > 0) || (parseInt(numSuscripcionesSinLeer)) || (parseInt(numNotificacionesSinLeer) > 0)) {
         $('#user-panel-trigger').addClass("nuevos");
     } else {
         $('#user-panel-trigger').removeClass("nuevos");
@@ -10295,11 +4751,11 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
                 var numNov = parseInt(identRef[i].split(':')[1]);
                 DarValorALabel(perfilID_infoNov, numNov);
                 // Añadir punto rojo de novedades
-                if (numNov > 0) {                    
+                if (numNov > 0) {
                     $(`.${perfilID_infoIdentidad}`).addClass('nuevos');
                 } else {
                     $(`.${perfilID_infoIdentidad}`).removeClass('nuevos');
-                }                               
+                }
             }
         }
     }
@@ -10315,7 +4771,7 @@ function DarValorALabel(pLabelID, pNumElementos) {
     // Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podrá haber 2 elementos con un mismo ID)
     //if ($('#' + pLabelID).length > 0) {
     if ($('.' + pLabelID).length > 0) {
-       // Cambiado por nuevo Front: Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podrá haber 2 elementos con un mismo ID). Hecho abajo
+        // Cambiado por nuevo Front: Cambiado por nuevo Front para buscar por clase (El menú clonado también existe y no podrá haber 2 elementos con un mismo ID). Hecho abajo
         // document.getElementById(pLabelID).innerHTML = pNumElementos;        
 
         if (pLabelID.indexOf('SinLeer') != -1) {
@@ -10336,12 +4792,22 @@ function DarValorALabel(pLabelID, pNumElementos) {
                 element.innerHTML = pNumElementos;
             });
         }
-        else {            
+        else {
             document.querySelectorAll('.' + pLabelID).forEach(element => element.style.display = 'none');
         }
     }
 }
 
+/**
+ * Actualiza el contenido y la visibilidad de un elemento `<label>` basado en el número de elementos nuevos.
+ * 
+ * Esta función actualiza el contenido de un elemento `<label>` con el ID proporcionado para mostrar un número de elementos nuevos. Si el número de elementos es mayor que 0, el número se muestra y el elemento se hace visible. Si es 0, el contenido se borra y el elemento se oculta.
+ * 
+ * @function
+ * @param {string} pLabelID - El ID del elemento `<label>` cuyo contenido se actualizará.
+ * @param {number} pNumElementos - El número de elementos nuevos a mostrar en el `<label>`.
+ * @returns {void}
+ */
 function DarValorALabelNovedades(pLabelID, pNumElementos) {
     if (document.getElementById(pLabelID) != null) {
         if (pNumElementos > 0) {
@@ -10354,6 +4820,17 @@ function DarValorALabelNovedades(pLabelID, pNumElementos) {
     }
 }
 
+
+/**
+ * Actualiza el contenido y la visibilidad de un elemento `<label>` para mostrar el número de elementos pendientes.
+ * 
+ * Esta función actualiza el contenido de un elemento `<label>` con el ID proporcionado para mostrar el número de elementos pendientes entre paréntesis. Si el número de elementos es mayor que 0, se muestra el número en el `<label>` y el elemento se hace visible. Si es 0, el contenido se borra y el elemento se oculta.
+ * 
+ * @function
+ * @param {string} pLabelID - El ID del elemento `<label>` cuyo contenido se actualizará.
+ * @param {number} pNumElementos - El número de elementos pendientes a mostrar en el `<label>`.
+ * @returns {void}
+ */
 function DarValorALabelPendientes(pLabelID, pNumElementos) {
     try {
         if (pNumElementos > 0) {
@@ -10366,71 +4843,19 @@ function DarValorALabelPendientes(pLabelID, pNumElementos) {
     } catch (Exception) { }
 }
 
-function ObtenerNombreCortoUsuRegistroAJAX(pNombre, pApellidos) {
-    PeticionesAJAX.ObtenerNombreCortoNuevoUsu(pNombre, pApellidos, ComponerUrlUsuario, ComponerUrlUsuario);
-}
 
-function ComponerUrlUsuario(datosRecibidos) {
-    repintarUrl(datosRecibidos);
-}
-
-function ComprobarCorreoUsuRegistroAJAX(pCorreo, pMetodoJS) {
-    PeticionesAJAX.ComprobarExisteCorreoUsuRegistro(pCorreo, pMetodoJS, pMetodoJS);
-}
-
-function ComprobarLoginUsuRegistroAJAX(pLogin, pMetodoJS) {
-    PeticionesAJAX.ComprobarExisteLoginUsuRegistro(pLogin, pMetodoJS, pMetodoJS);
-}
-
-
-function FuncionObtenerNombreCortoOrgRegistroAJAX(pNombre) {
-    PeticionesAJAX.ObtenerNombreCortoNuevaOrg(pNombre, ComponerUrlOrganizacion, ComponerUrlOrganizacion);
-}
-
-function ComponerUrlOrganizacion(datosRecibidos) {
-    repintarUrl(datosRecibidos);
-}
-
-//function FiltrarBandejaMensajesAJAX(pFiltros) {
-//    PeticionesAJAX.FiltrarBandejaMensajes(pFiltros, PintarResultados, PintarResultados);
-//}
-
-//function PintarResultados(datosRecibidos) {
-//    ReceiveServerData(datosRecibidos, '');
-//}
-
-function mostrarConfirmacionListado(control, mensaje, accion) {
-
-    var cont = $('#' + control);
-
-    $('.confirmar').css('display', 'none');
-
-    if (cont.children('.confirmar.eliminar').length > 0) {
-        var anterior = cont.children('.confirmar.eliminar').eq(0);
-        anterior.remove();
-    }
-
-    var htmlConfirmar =
-'<div class="confirmar eliminar confirmacionMultiple" style="display:block; z-index: 5000;">' +
-'<div class="mascara"></div>' +
-'<div class="pregunta"><span>' + mensaje + '</span>' +
-'<label class="btAzul boton botonancho floatRight right10"><strong><a class="botonConfirmacion">' + borr.si + '</a></strong></label>' +
-'<label class="btAzul boton botonancho floatRight right10"><strong><a class="botonConfirmacion">' + borr.no + '</a></strong></label>' +
-'</div>' +
-'</div>';
-
-    var panConfirmar = $([htmlConfirmar].join(''));
-
-    panConfirmar.prependTo(cont)
-.find('a.botonConfirmacion').click(function () { // Ambos botones hacen desaparecer la mascara
-    panConfirmar.css('display', 'none');
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
-}
-
-function mostrarConfirmacionSencilla(control, mensaje, accion) {
-    mostrarConfirmacionSencillaEnPanel(control, mensaje, accion, 'ctl00_CPH1_divPanListado');
-}
-
+/**
+ * Muestra una confirmación sencilla en un panel con un mensaje y dos opciones de respuesta.
+ * 
+ * Esta función muestra un cuadro de confirmación sobre un control específico en un panel. El cuadro de confirmación contiene un mensaje y dos botones para aceptar o cancelar la acción. Solo el primer botón ejecutará la acción proporcionada.
+ * 
+ * @function
+ * @param {jQuery} control - El elemento sobre el cual se mostrará la confirmación.
+ * @param {string} mensaje - El mensaje que se mostrará en el cuadro de confirmación.
+ * @param {Function} accion - La función que se ejecutará si el usuario confirma la acción.
+ * @param {string} panelID - El ID del panel donde se insertará el cuadro de confirmación.
+ * @returns {void}
+ */
 function mostrarConfirmacionSencillaEnPanel(control, mensaje, accion, panelID) {
 
     if (control.children('.confirmar').length > 0) {
@@ -10444,201 +4869,41 @@ function mostrarConfirmacionSencillaEnPanel(control, mensaje, accion, panelID) {
     var top = '0px';
 
     var htmlConfirmar =
-'<div class="confirmar confirmacionSencilla" style="height:' + altura + ';top:' + top + ';display:block;z-index:1000">' +
-'<div class="mascara"></div>' +
-'<div class="pregunta" style="margin-top:' + margin + '"><span>' + mensaje + '</span>' +
-'<label class="btAzul boton botonancho floatRight right10"><strong><a class="botonConfirmacion">' + borr.si + '</a></strong></label>' +
-'<label class="btAzul boton botonancho floatRight right10"><strong><a class="botonConfirmacion">' + borr.no + '</a></strong></label>' +
-'</div>' +
-'</div>';
+    '<div class="confirmar confirmacionSencilla" style="height:' + altura + ';top:' + top + ';display:block;z-index:1000">' +
+    '<div class="mascara"></div>' +
+    '<div class="pregunta" style="margin-top:' + margin + '"><span>' + mensaje + '</span>' +
+    '<label class="btAzul boton botonancho floatRight right10"><strong><a class="botonConfirmacion">' + borr.si + '</a></strong></label>' +
+    '<label class="btAzul boton botonancho floatRight right10"><strong><a class="botonConfirmacion">' + borr.no + '</a></strong></label>' +
+    '</div>' +
+    '</div>';
 
-    var panConfirmar = $([htmlConfirmar].join(''));
+        var panConfirmar = $([htmlConfirmar].join(''));
 
-    panConfirmar.prependTo($('#' + panelID))
-.find('a.botonConfirmacion').click(function () { // Ambos botones hacen desaparecer la mascara
-    panConfirmar.css('display', 'none');
-}).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
+        panConfirmar.prependTo($('#' + panelID))
+    .find('a.botonConfirmacion').click(function () { // Ambos botones hacen desaparecer la mascara
+        panConfirmar.css('display', 'none');
+    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
 }
 
-function mostrarConfirmacion(control, mensaje, accion) {
-    var cont = document.getElementById(control);
-    //Compruebo que este elemento no contiene mensajes de confirmación pendientes
-    mascaraCancelar(mensaje, cont, accion);
-}
-
-function mostrarConfirmacion2(control, mensaje, accion, accion2) {
-    var cont = document.getElementById(control);
-    //Compruebo que este elemento no contiene mensajes de confirmación pendientes
-    mascaraCancelarSiNo(mensaje, cont, accion, accion2);
-}
-
-function PrepararCapaModal(capaModal, mascara, seleccionarElementos, args) {
-    var height = $(document).height() + 'px';
-    var top = $('html').attr('scrollTop') + 'px';
-    args = args.replace('$height$', height);
-    args = args.replace('$top$', top);
-    //console.info(args);
-    window.setTimeout(function () {
-        eval(args);
-    }, 0);
-    return false;
-}
-
-function MostrarCapaModal(capaModal, mascara, seleccionarElementos) {
-    var $capa = $(capaModal);
-    var capa = document.getElementById(capaModal);
-    var mascara = document.getElementById(mascara);
-    mascara.style.height = $(document).height() + 'px';
-    var seleccionarElementos = document.getElementById(seleccionarElementos);
-    seleccionarElementos.style.top = $('html').attr('scrollTop') + 'px';
-    //// || $('body').attr('scrollTop') || 0) + 'px');
-
-    $capa.fadeIn();
-    //una vez llamado deberian prepararse los eventos
-    $capa.find('a.icoEliminar').unbind('click').click(function () {
-        $capa.fadeOut();
-    });
-    return false;
-}
-
-function EvitarEnvioRepetido(arg, elemento) {
-    var element = document.getElementById(elemento);
-    element.setAttribute("onclick", "return false;");
-    window.setTimeout(function () {
-        eval(arg);
-    }, 0);
-}
-
-//desde aqui, evitar multiples postbacks
-function Init(sender) {
-    prm = Sys.WebForms.PageRequestManager.getInstance();
-    //Ensure EnablePartialRendering isn't false which will prevent
-    //accessing an instance of the PageRequestManager
-    if (prm != null && prm) {
-        if (!prm.get_isInAsyncPostBack()) {
-            prm.add_initializeRequest(InitRequest);
-        }
-    }
-}
-
-var esperaID;
-var timeout;
-var continuar = false;
-var _sender;
-var _args;
-
-function InitRequest(sender, args) {
-
-    //if (prm.get_isInAsyncPostBack() & args.get_postBackElement().id =='btnRefresh') {
-    //Could abort current request by using:  prm.abortPostBack();  
-    //Cancel most recent request so that previous request will complete
-    //and display : args.set_cancel(true);
-
-    if (prm != null && prm.get_isInAsyncPostBack()) {
-        //Esperamos a que termine el anterior postback
-        clearInterval(esperaID);
-        esperaID = setInterval("EsperarPostBack(prm, _sender, _args)", 100);
-        //Cancelar el anterior postback si pasan 3 segundos
-        _sender = sender;
-        _args = args;
-        clearTimeout(timeout);
-        timeout = setTimeout("CancelarPostBack(prm, _sender, _args)", 3000);
-        //args.set_cancel(true);
-        //Anula el postback actual, aunque se relanzara cuando el anterior postback acabe o se cancele
-        args.set_cancel(true);
-    }
-}
-
-function EsperarPostBack(prm, sender, args) {
-    if (prm == null || !prm.get_isInAsyncPostBack()) {
-        clearTimeout(timeout);
-        clearInterval(esperaID);
-    }
-}
-
-function CancelarPostBack(prm, sender, args) {
-    clearInterval(esperaID);
-    if (prm != null) {
-        prm.abortPostBack();
-        var uniqueID = args.get_postBackElement().id.replace(/_/g, "$");
-        prm._doPostBack(uniqueID, '');
-    }
-}
-//hasta aqui, evitar multiples postbacks
-
-function EndRequest(sender, args) {
-    if (window.sweetTitles) { sweetTitles.init(); }
-
-    // Check to see if there's an error on this request.
-    //if (cambiosCurriculum){cambiosCurriculum.init();}
-
-    if (args.get_error() != undefined) {
-        var err = args.get_error();
-
-        if (err.name != "Sys.WebForms.PageRequestManagerServerErrorException" || (err.httpStatusCode != 0 && err.httpStatusCode != 12030)) { alert(err.message); }
-        // Let the framework know that the error is handled, 
-        //  so it doesn't throw the JavaScript alert.
-        args.set_errorHandled(true);
-
-        EjecutarScriptsIniciales();
-    }
-}
-
-function RecogerCheckComentarios() {
-    var checksMarcados = '';
-    //var checks = ObtenerElementosPorClase('checkSelectComent', 'input');
-    var checks = $('input.checkSelectComent');
-    for (var i = 0; i < checks.length; i++) {
-        if ($(checks[i]).is(':checked')) { checksMarcados += checks[i].id.substring(checks[i].id.lastIndexOf('_') + 1) + ','; }
-    }
-    return checksMarcados;
-}
-
-function MarcarTodos(pCheck) {
-    //var checks = ObtenerElementosPorClase('checkSelectComent', 'input');
-    var checks = $('input.checkSelectComent');
-    for (var i = 0; i < checks.length; i++) {
-        $(checks[i]).attr('checked', $(pCheck).is(':checked'));
-    }
-}
-
-function MarcarComentariosLeidos(pIdComent, pNumTotalComent, pContadorID, pMarcarLeidos) {
-    var comentsID = pIdComent.split(',');
-    var nombreClass = '';
-    if (pMarcarLeidos) { nombreClass = 'busquedaDestacada'; }
-    var nombreLinkMostrar = 'linkMarcarComentPerfilLeido_'; var nombreLinkOcultar = 'linkMarcarComentPerfilNOLeido_';
-    if (pMarcarLeidos) { nombreLinkMostrar = 'linkMarcarComentPerfilNOLeido_'; nombreLinkOcultar = 'linkMarcarComentPerfilLeido_'; }
-    for (var i = 0; i < comentsID.length; i++) {
-        if (comentsID[i] != '') {
-            document.getElementById('liComentario_' + comentsID[i]).className = nombreClass;
-            document.getElementById(nombreLinkMostrar + comentsID[i]).style.display = ''; document.getElementById(nombreLinkOcultar + comentsID[i]).style.display = 'none';
-            if (pMarcarLeidos) {
-                document.getElementById('liComentario_' + comentsID[i]).style.backgroundColor = '#FFFFFF';
-            }
-            else {
-                document.getElementById('liComentario_' + comentsID[i]).style.backgroundColor = '#F5F5F5';
-            }
-        }
-    }
-    if (document.getElementById(pContadorID).innerHTML.indexOf('(') != -1) {
-        document.getElementById(pContadorID).innerHTML = document.getElementById(pContadorID).innerHTML.replace(document.getElementById(pContadorID).innerHTML.substring(document.getElementById(pContadorID).innerHTML.indexOf('(')), '(' + pNumTotalComent + ')');
-    }
-    else { document.getElementById(pContadorID).innerHTML += ' (' + pNumTotalComent + ')'; }
-
-    if (pNumTotalComent > 0) { document.getElementById('infoNumComentariosSinLeer').innerHTML = pNumTotalComent; } else { document.getElementById('infoNumComentariosSinLeer').innerHTML = ''; }
-
-    OcultarUpdateProgress();
-}
-
-function EstablecerContadorComentNoLeido(pNumTotalComent) {
-    DarValorALabel('infNumComentariosSinLeer', pNumTotalComent);
-}
-
+/**
+ * Establece el contador de mensajes nuevos y actualiza los elementos correspondientes en la interfaz de usuario. Utilizado desde la bandeja de mensajería. 
+ * @param {number} pNumTotalComent - El número total de comentarios nuevos.
+ */
 function EstablecerContadorMensajesNuevos(pNumTotalComent) {
     DarValorALabel('infoNumMensajes', pNumTotalComent);
     DarValorALabelNovedades('infoNumMensajesNovedades', pNumTotalComent);
 }
 
+
+/**
+ * Disminuye el contador de mensajes no leídos en la interfaz de usuario.
+ * 
+ * Esta función decrementa el contador de mensajes no leídos en dos lugares diferentes de la interfaz de usuario: uno que siempre está presente y otro que varía dependiendo del valor de `pBandejaOrg`.
+ * 
+ * @function
+ * @param {boolean} pBandejaOrg - Indica si se deben actualizar los mensajes en la bandeja de organización. Si es verdadero, actualiza el contador de mensajes en la bandeja de organización; de lo contrario, actualiza el contador general.
+ * @returns {void}
+ */
 function DisminuirContadorMensajeNoLeido(pBandejaOrg) {
     try {
 
@@ -10677,613 +4942,19 @@ function DisminuirContadorMensajeNoLeido(pBandejaOrg) {
     } catch (Exception) { }
 }
 
-function DisminuirContadorInvitacionesNoLeido(pBandejaOrg) {
-    var numMenText = document.getElementById('infNumInvitacionesSinLeer').innerHTML;
-    var numMen = 0;
 
-    if (numMenText.trim() != '') {
-        if (numMenText.indexOf('<') != -1) {
-            numMenText = numMenText.substring(0, numMenText.indexOf('<'));
-        }
-
-        numMen = parseInt(numMenText.trim()) - 1;
-    }
-
-    DarValorALabel('infNumInvitacionesSinLeer', numMen);
-
-    var infBandeja = 'infoNumInvitacionesSinLeerNovedades';
-
-    if (pBandejaOrg) {
-        infBandeja = 'infoNumInvitacionesSinLeerNovedadesOrg';
-    }
-
-    numMenText = document.getElementById(infBandeja).innerHTML;
-    numMen = 0;
-
-    if (numMenText.trim() != '') {
-        if (numMenText.indexOf('(') != -1) {
-            numMenText = numMenText.substring(numMenText.indexOf('(') + 1);
-            numMenText = numMenText.substring(0, numMenText.indexOf(')'));
-        }
-
-        numMen = parseInt(numMenText.trim()) - 1;
-    }
-
-    DarValorALabelPendientes(infBandeja, numMen);
-}
-
-function DisminuirContadorSuscripcionesNoLeido(pNumDisminucion) {
-    var numMenText = document.getElementById('infNumSuscripcionesSinLeer').innerHTML;
-    var numMen = 0;
-
-    if (numMenText.trim() != '') {
-        if (numMenText.indexOf('<') != -1) {
-            numMenText = numMenText.substring(0, numMenText.indexOf('<'));
-        }
-
-        numMen = parseInt(numMenText.trim()) - pNumDisminucion;
-    }
-
-    DarValorALabel('infNumSuscripcionesSinLeer', numMen);
-
-    var infBandeja = 'infoNumSuscripcionesSinLeerNovedades';
-
-    numMenText = document.getElementById(infBandeja).innerHTML;
-    numMen = 0;
-
-    if (numMenText.trim() != '') {
-        if (numMenText.indexOf('(') != -1) {
-            numMenText = numMenText.substring(numMenText.indexOf('(') + 1);
-            numMenText = numMenText.substring(0, numMenText.indexOf(')'));
-        }
-
-        numMen = parseInt(numMenText.trim()) - pNumDisminucion;
-    }
-
-    DarValorALabelPendientes(infBandeja, numMen);
-}
-
-
-function RecogerValorCheckPendientes() {
-    var valor = new String($('#chkSoloPedientesLeer').is(':checked'));
-    if (document.getElementById('chkSoloComentUsuLeer') != null) {
-        valor += ',' + new String($('#chkSoloComentUsuLeer').is(':checked')) + ',' + new String($('#chkSoloComentOrgLeer').is(':checked'));
-    }
-    return valor;
-}
-
-function CallServerSelectorGrupoAmigos(arg, context) {
-    window.setTimeout(function () {
-        eval(arg);
-    }, 0);
-}
-
-function DarFormato(arg, context) {
-    var element = document.getElementById(arg);
-    var parametros = context.split("&");
-    var accion = parametros[0];
-    if (accion == 'negrita') {
-        Envolver("'''", "'''", element);
-    }
-    else if (accion == 'cursiva') {
-        Envolver("''", "''", element);
-    }
-    else if (accion == 'enlaceInterno') {
-        Envolver("[[", "]]", element);
-    }
-    else if (accion == 'enlaceExterno') {
-        Envolver("[", "]", element);
-    }
-    else if (accion == 'titulo1') {
-        //Envolver("\\n==","==\\n", element);
-        Envolver("==", "==", element);
-    }
-    else if (accion == 'titulo2') {
-        //Envolver("\\n===","===\\n", element);
-        Envolver("===", "===", element);
-    }
-    else if (accion == 'titulo3') {
-        //Envolver("\\n====","====\\n", element);
-        Envolver("====", "====", element);
-    }
-    else if (accion == 'imagen') {
-        var imagen = document.getElementById(parametros[1]);
-        Envolver("[[Imagen:" + imagen.value, "]]", element);
-        imagen.value = "";
-    }
-}
-
-function Envolver(tagOpen, tagClose, element) {
-    var txtarea = element;
-    var selText, isSample = false;
-    if (document.selection && document.selection.createRange) { // IE/Opera            ////save window scroll position
-        ////if (document.documentElement && document.documentElement.scrollTop)
-        ////    var winScroll = document.documentElement.scrollTop
-        ////else if (document.body)
-        ////    var winScroll = document.body.scrollTop;
-
-        //get current selection
-        txtarea.focus();
-        var range = document.selection.createRange();
-        selText = range.text;
-        //////insert tags
-        ////checkSelectedText();
-        range.text = tagOpen + selText + tagClose;
-        //alert(range.text);
-        //////mark sample text as selected
-        ////if (isSample && range.moveStart) {
-        ////    if (window.opera)
-        ////        tagClose = tagClose.replace(/\n/g,'');
-        ////    range.moveStart('character', - tagClose.length - selText.length); 
-        ////    range.moveEnd('character', - tagClose.length); 
-        ////}
-        //range.select();
-        //////restore window scroll position
-        ////if (document.documentElement && document.documentElement.scrollTop)
-        ////    document.documentElement.scrollTop = winScroll
-        ////else if (document.body)
-        ////    document.body.scrollTop = winScroll;
-    }
-    else if (txtarea.selectionStart || txtarea.selectionStart == '0') {// Mozilla
-        //save textarea scroll position
-        var textScroll = txtarea.scrollTop;
-        //get current selection
-        txtarea.focus();
-        var startPos = txtarea.selectionStart;
-        var endPos = txtarea.selectionEnd;
-        selText = txtarea.value.substring(startPos, endPos);
-        //insert tags
-        //checkSelectedText();
-        txtarea.value = txtarea.value.substring(0, startPos)
-+ tagOpen + selText + tagClose
-+ txtarea.value.substring(endPos, txtarea.value.length);
-        //set new selection
-        if (isSample) {
-            //txtarea.selectionStart = startPos + tagOpen.length;
-            //txtarea.selectionEnd = startPos + tagOpen.length + selText.length;
-        } else {
-            //txtarea.selectionStart = startPos + tagOpen.length + selText.length + tagClose.length;
-            //txtarea.selectionEnd = txtarea.selectionStart;
-        }
-        //restore textarea scroll position
-        txtarea.scrollTop = textScroll;
-    }
-}
-
-function CallServerListadoBlogs(arg, context) {
-    window.setTimeout(function () {
-        eval(arg);
-    }, 0);
-}
-
-function CallServerSelectorCategorias(arg, id, context) {
-    window.setTimeout(function () {
-        //eval(arg);
-        WebForm_DoCallback(id, context, ReceiveServerData, '', null, false)
-    }, 0);
-}
-
-function CallServerSelectorCategoriasBlog(arg, context) {
-    window.setTimeout(function () {
-        eval(arg);
-    }, 0);
-}
-
-function CallServerSelectorEditoresBlog(arg, context) {
-    window.setTimeout(function () {
-        eval(arg);
-    }, 0);
-}
-
-function addTag(evento, control) {
-    var contenedor = $('#contenedorFiltros');
-    var $this = $(control).parents('a');
-    var texto = $this.text().replace(/\n/g, '').replace(/^\s*|\s*$/g, '');
-    if (contenedor.parents('div.panel').is(':hidden')) {
-        contenedor.parents('div.panel').show('blind', { direction: 'vertical' }, 600, function () {
-            $this.effect('transfer', { to: objetivo }, 400);
-        }).prevAll().find('a.desplegable').eq(0).addClass('activo');
-    }
-    var tagsDentro = contenedor.find('a');
-    var estaDentro = false;
-    for (i = 0; i < tagsDentro.length; i++) {
-        if (tagsDentro[i].innerHTML == texto) { estaDentro = true; }
-    }
-    if (!estaDentro) {
-        var objetivo = $(['<a id="idTemp">', texto, '</a><input type="hidden" name="filtros" value="', $this.text(), '" />'].join('')).appendTo(contenedor);
-        contenedor.parent().andSelf().css('display', 'block');
-        $this.effect('transfer', { to: objetivo }, 400);
-        objetivo.click(function () {
-            $(this).remove();
-            eliminarTagsBusqueda(texto); return false;
-            if (!contenedor.find('a').length) { contenedor.parent().andSelf().hide(); }
-            return false;
-        });
-    }
-    return false;
-}
-
-function CallServerSelectorCategorias(arg, id, context) {
-    window.setTimeout(function () {
-        //eval(arg);
-        WebForm_DoCallback(id, context, ReceiveServerData, '', null, false)
-    }, 0);
-}
-
-function marcarElementos(pCheck, pClave, pIdTxt) {
-    var txtOrgSel = document.getElementById(pIdTxt);
-    if ($(pCheck).is(':checked')) {
-        txtOrgSel.value = txtOrgSel.value + pClave + '|';
-    }
-    else {
-        txtOrgSel.value = txtOrgSel.value.replace(pClave + '|', '');
-    }
-}
-
-function CallServerSelectorPersonas(arg, context) {
-    window.setTimeout(function () {
-        eval(arg);
-    }, 0);
-}
-
-function CallServerSelectorRolUsuario(arg, context) {
-    window.setTimeout(function () {
-        eval(arg);
-    }, 0);
-}
-
-var votar = null
-function Votar(arg, elemento) {
-    var element = document.getElementById(elemento);
-    //console.info(element.value);
-    votar = window.setTimeout(function () {
-        CallServer(arg + "&" + element.value);
-    }, 0);
-}
-
-var cambiarPagina = null;
-function CambiarPagina(arg, context) {
-    var pagina = document.getElementById('pagina');
-    if (pagina != null) {
-        var params = arg.split('&'); pagina.value = params[2];
-    }
-    var updateProgress = document.getElementById('ctl00_CPH1_UpdateProgress1');
-    if (updateProgress != null) {
-        updateProgress.style.display = "block";
-    }
-    //cambiarPagina = window.setTimeout(function() {
-
-    CallServer(arg, context);
-    //}, 0);
-}
-
-
-/* Funciones Desplegables */
-
-function DesplegarAccion(pBoton, pPanelID, pPanelName, pCallBackPage, pArg) {
-    var panel = document.getElementById(pPanelID);
-
-    panel.children[0].children[0].style.display = 'block';
-    panel.children[0].children[1].style.display = 'none';
-    panel.children[0].children[2].style.display = 'none';
-    panel.children[0].children[3].style.display = 'none';
-
-    panel.children[0].style.display = 'block';
-    panel.style.display = '';
-
-    if (pBoton != null && typeof (pBoton.parentNode) != 'undefined') {
-        DesactivarBotonesActivosDespl();
-        pBoton.parentNode.className += ' active';
-    }
-
-    var target = '__Page';
-
-    if (!pCallBackPage) {
-        //target = pPanelID.replace(/\_/g,'$');
-        target = pPanelName;
-    }
-
-    WebForm_DoCallback(target, 'CargarControlDesplegar' + pArg, ReceiveServerData, "", null, false);
-}
-
-function MostrarPanelAccionDesp(pPanelID, pHtml) {
-    MostrarPanelAccionDesp(pPanelID, pHtml, false)
-}
-
-function MostrarPanelAccionDesp(pPanelID, pHtml, pPintarCargando) {
-    MostrarPanelAccionDesp(pPaneID, pHtml, pPintarCargando, false);
-}
-
-function MostrarPanelAccionDesp(pPanelID, pHtml, pPintarCargando, pSoloAux) {
-    var panel = document.getElementById(pPanelID);
-
-
-    if (pHtml != null) {
-        var html = pHtml.replace(/\j001j/g, '"').replace(/\j002j/g, '\'');
-        panel.children[0].children[2].innerHTML = html;
-    }
-    if (!pSoloAux) {
-
-        panel.children[0].children[0].style.display = 'none';
-        panel.children[0].children[1].style.display = 'none';
-        panel.children[0].children[2].style.display = 'block';
-        panel.children[0].children[3].style.display = 'none';
-        //panel.children[0].children[4].style.display = 'block';
-
-
-        panel.children[0].style.display = 'block';
-        panel.style.display = '';
-
-    }
-
-    else {
-        panel.children[0].children[0].style.display = 'none';
-        panel.children[0].children[1].style.display = 'none';
-        panel.children[0].children[2].style.display = 'none';
-        panel.children[0].children[3].style.display = 'block';
-        panel.children[0].children[4].style.display = 'block';
-
-
-        panel.children[0].style.display = 'block';
-        panel.style.display = '';
-
-    }
-    if (pPintarCargando) {
-        var htmlCargando = '<img id="ctl00_ctl00_controles_master_controlcargando_ascx_imgEspera" src="http://static.gnoss.net/img/espera.gif"><h3> Cargando...</h3>';
-        panel.children[0].children[3].innerHTML = htmlCargando;
-    }
-}
-
-function AceptarPanelAccion(pPanelID, pOk, pHtml) {
-    var panel = document.getElementById(pPanelID);
-
-    if (pHtml != null && pHtml != '' && pHtml.indexOf('<p') != 0) {
-        pHtml = '<p>' + pHtml + '</p>';
-    }
-
-    if (pOk) {
-        panel.children[0].children[1].children[0].style.display = 'block';
-        panel.children[0].children[1].children[1].style.display = 'none';
-
-        panel.children[0].children[1].children[0].innerHTML = pHtml;
-
-        // Solo si ha ido bien
-        panel.children[0].children[0].style.display = 'none';
-        panel.children[0].children[2].style.display = 'none';
-        panel.children[0].children[3].style.display = 'none';
-    }
-    else {
-        panel.children[0].children[1].children[0].style.display = 'none';
-        panel.children[0].children[1].children[1].style.display = 'block';
-
-        panel.children[0].children[1].children[1].innerHTML = pHtml;
-    }
-
-    panel.children[0].children[1].style.display = 'block';
-    panel.children[0].children[4].style.display = 'block';
-
-    panel.children[0].style.display = 'block';
-    panel.style.display = '';
-
-    DesactivarBotonesActivosDespl();
-}
-
-function CerrarPanelAccion(pPanelID) {
-    var panel = document.getElementById(pPanelID);
-    panel.children[0].style.display = 'none';
-    panel.style.display = 'none';
-
-    DesactivarBotonesActivosDespl();
-}
-
-function DesactivarBotonesActivosDespl() {
-    var btnActivos = $('.active');
-    for (var i = 0; i < btnActivos.length; i++) {
-        btnActivos[i].className = btnActivos[i].className.replace('active', '');
-    }
-}
-
-/* Fin Funciones Desplegables */
-
-var diffHoras = null;
-
-/* Fechas actividad reciente */
-function MontarFechas() {
-    if (typeof (diffHoras) == 'undefined' || diffHoras == null || isNaN(diffHoras)) {
-        var fechaServidor = new Date($('#inpt_serverTime').val());
-        var fechaCliente = new Date();
-        var diffHoras = parseInt((fechaServidor.getTime() / (1000 * 60 * 60)) - (fechaCliente.getTime() / (1000 * 60 * 60)));
-    }
-
-    $('.resource .fechaLive').each(function () {
-        var enlace = $(this);
-        enlace.removeClass("fechaLive");
-        var fecha = enlace[0].innerHTML;
-        var fechaRecurso = new Date(fecha);
-        fechaRecurso.setHours(fechaRecurso.getHours() - diffHoras);
-        DifFechasEvento(fechaRecurso.format("yyyy/MM/dd HH:mm"), enlace);
-    });
-}
-
-function DifFechasEvento(fecha, contenedor) {
-    var factual = new Date();
-
-    var finicio = new Date(fecha);
-    var dateDifDay = parseInt((factual.getTime() / (1000 * 60 * 60 * 24)) - (finicio.getTime() / (1000 * 60 * 60 * 24)));
-    var difD = dateDifDay;
-    if (dateDifDay < 7 && dateDifDay > 0) {
-        var diaInicio = finicio.getDay();
-        var diaActual = factual.getDay();
-		if(diaInicio >= diaActual)
-		{
-			diaActual = diaActual + 7;
-        }
-        var difD = diaActual - diaInicio;
-    }
-    var difH = parseInt((factual.getTime() / (1000 * 60 * 60)) - (finicio.getTime() / (1000 * 60 * 60)));
-    var difM = parseInt((factual.getTime() / (1000 * 60)) - (finicio.getTime() / (1000 * 60)));
-    //Montamos la frase para el tiempo pasado
-    var tiempoPasado = '';
-    if (difD < 7) {
-        if (difD == 0) {
-            if (difH == 0) {
-                if (difM <= 1) {
-                    tiempoPasado = tiempo.hace + ' 1 ' + tiempo.minuto;
-                }
-                else {
-                    tiempoPasado = tiempo.hace + ' ' + difM + ' ' + tiempo.minutos;
-                }
-            }
-            else if (difH == 1) {
-                tiempoPasado = tiempo.hace + ' 1 ' + tiempo.hora;
-            }
-            else {
-                tiempoPasado = tiempo.hace + ' ' + difH + ' ' + tiempo.horas;
-            }
-        }
-        else if (difD == 1) {
-            tiempoPasado = tiempo.ayer;
-        }
-        else {
-            tiempoPasado = tiempo.hace + ' ' + difD + ' ' + tiempo.dias;
-        }
-    }
-    else {
-        var dia = finicio.getDate();
-        if (dia < 10) { dia = '0' + dia; }
-        var mes = finicio.getMonth() + 1;
-        if (mes < 10) { mes = '0' + mes; }
-
-        //var fecha = dia + '/' + mes + '/' + finicio.getFullYear();
-        var fechaPintado = tiempo.fechaBarras.replace('@1@', dia).replace('@2@', mes).replace('@3@', finicio.getFullYear());
-        tiempoPasado = tiempo.eldia + ' ' + fechaPintado;
-    }
-    contenedor.html(tiempoPasado);
-}
-
-/* Fin fechas actividad reciente */
-
-/* Enganchamos el evento click cuando es necesario, sabemos que en IE y las ultimas versiones de ff(16) y chrome(22) funciona bien*/
-var is_ie = navigator.userAgent.indexOf("MSIE") > -1;
-var is_chrome_nuevo = false;
-if (navigator.userAgent.indexOf("Chrome/") > -1) {
-    var nav = navigator.userAgent.substring(navigator.userAgent.indexOf("Chrome/") + 7);
-    if (nav.indexOf(' ') > -1) {
-        nav = nav.substring(0, nav.indexOf(' '));
-    }
-    if (nav.indexOf('.') > -1) {
-        nav = nav.substring(0, nav.indexOf('.'));
-    }
-    if (parseInt(nav) > 21) {
-        is_chrome_nuevo = true;
-    }
-}
-var is_firefox_nuevo = false;
-if (navigator.userAgent.indexOf("Firefox/") > -1) {
-    var nav = navigator.userAgent.substring(navigator.userAgent.indexOf("Firefox/") + 8);
-    if (nav.indexOf(' ') > -1) {
-        nav = nav.substring(0, nav.indexOf(' '));
-    }
-    if (nav.indexOf('.') > -1) {
-        nav = nav.substring(0, nav.indexOf('.'));
-    }
-    if (parseInt(nav) > 15) {
-        is_firefox_nuevo = true;
-    }
-}
-
-if (!is_ie && !is_chrome_nuevo && !is_firefox_nuevo) {
-    HTMLElement.prototype.click = function () {
-        var evt = this.ownerDocument.createEvent('MouseEvents');
-        evt.initMouseEvent('click', true, true, this.ownerDocument.defaultView, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
-        this.dispatchEvent(evt);
-    }
-}
-
-/* Fin Enganchamos el evento click cuando es necesario*/
-
-function AnyadirGrupoAContacto(contactoId) {
-    WebForm_DoCallback('__Page', 'AgregarGrupoAContacto&' + contactoId + '&', ReceiveServerData, '', null, false);
-
-}
-
-function ConectarConUsuario(pIdentidad, pNombre) {
-    var panelResul = 'divResultadosConRec';
-
-    if ($('#' + panelResul).length == 0) {
-        panelResul = 'divResultados';
-    }
-
-    var numSeleccioados = 0;
-    var args = 'ConectarConUsuario&' + pIdentidad;
-    mostrarConfirmacionSencillaEnPanel($('#divEtiquetas' + pIdentidad).parent().parent(), invitaciones.invitarContactoAceptar.replace('@1@', pNombre).replace('@2@', pNombre), function () {
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', args, ReceiveServerData, '', null, false);
-    }, panelResul);
-}
-
-function IgnorarUsuario(pIdentidad, pNombre) {
-    var panelResul = 'divResultadosConRec';
-
-    if ($('#' + panelResul).length == 0) {
-        panelResul = 'divResultados';
-    }
-
-    var numSeleccioados = 0;
-    var args = 'IgnorarUsuario&' + pIdentidad;
-    mostrarConfirmacionSencillaEnPanel($('#divEtiquetas' + pIdentidad).parent().parent(), invitaciones.ingnorarContactoAceptar.replace('@1@', pNombre), function () {
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', args, ReceiveServerData, '', null, false);
-    }, panelResul);
-}
-
-
-function IgnorarProyecto(pProyecto, pNombre) {
-    var panelResul = 'divResultadosComRec';
-
-    if ($('#' + panelResul).length == 0) {
-        panelResul = 'divResultados';
-    }
-
-    var numSeleccioados = 0;
-    var args = 'IgnorarProyecto&' + pProyecto;
-    mostrarConfirmacionSencillaEnPanel($('#divEtiquetas' + pProyecto).parent().parent(), invitaciones.ingnorarProyAceptar.replace('@1@', pNombre), function () {
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', args, ReceiveServerData, '', null, false);
-    }, panelResul);
-}
-
-function HacerseMiembroProy(pProyecto, pNombre) {
-    var panelResul = 'divResultadosComRec';
-
-    if ($('#' + panelResul).length == 0) {
-        panelResul = 'divResultados';
-    }
-
-    var numSeleccioados = 0;
-    var args = 'HacerseMiembroProy&' + pProyecto;
-    mostrarConfirmacionSencillaEnPanel($('#divEtiquetas' + pProyecto).parent().parent(), invitaciones.haztemiembroProyAceptar.replace('@1@', pNombre), function () {
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', args, ReceiveServerData, '', null, false);
-    }, panelResul);
-}
-
-function SolicitarAccesoProy(pProyecto, pNombre) {
-    var panelResul = 'divResultadosComRec';
-
-    if ($('#' + panelResul).length == 0) {
-        panelResul = 'divResultados';
-    }
-
-    var numSeleccioados = 0;
-    var args = 'SolicitarAccesoProy&' + pProyecto;
-    mostrarConfirmacionSencillaEnPanel($('#divEtiquetas' + pProyecto).parent().parent(), invitaciones.solicitaraccesoProyAceptar.replace('@1@', pNombre), function () {
-        MostrarUpdateProgress();
-        WebForm_DoCallback('__Page', args, ReceiveServerData, '', null, false);
-    }, panelResul);
-}
-
-/* Seleccionar & eliminar Autocompletar*/
+/**
+ * Selecciona un elemento de autocompletado y actualiza los elementos de la interfaz de usuario correspondientes.
+ * 
+ * @param {string} nombre - El nombre del elemento que se va a mostrar en la lista de selección.
+ * @param {string} identidad - La identidad única del elemento que se está seleccionando.
+ * @param {string} PanContenedorID - El ID del contenedor donde se mostrará el elemento seleccionado.
+ * @param {string} txtHackID - El ID del campo de texto oculto donde se almacenan las identidades de los elementos seleccionados.
+ * @param {string} [ContenedorMostrarID] - El ID del contenedor que se mostrará después de seleccionar el elemento (opcional).
+ * @param {string} txtFiltroID - El ID del campo de texto de filtro que se limpiará al seleccionar un elemento.
+ * 
+ * @returns {void}
+ */
 function seleccionarAutocompletar(nombre, identidad, PanContenedorID, txtHackID, ContenedorMostrarID, txtFiltroID) {
     document.getElementById(txtFiltroID).value = '';
     $('#selector').css('display', 'none');
@@ -11297,6 +4968,18 @@ function seleccionarAutocompletar(nombre, identidad, PanContenedorID, txtHackID,
     }
 }
 
+
+/**
+ * Elimina un elemento de autocompletado de la lista de elementos seleccionados y actualiza el campo de texto oculto.
+ * 
+ * @param {HTMLElement} nombre - El elemento HTML del enlace de eliminación que invoca esta función.
+ * @param {string} identidad - La identidad única del elemento que se está eliminando.
+ * @param {string} PanContenedorID - El ID del contenedor donde se encuentra el elemento a eliminar.
+ * @param {string} txtHackID - El ID del campo de texto oculto donde se almacenan las identidades de los elementos seleccionados.
+ * @param {string} [ContenedorMostrarID] - El ID del contenedor que se oculta si no quedan más elementos seleccionados (opcional).
+ * 
+ * @returns {void}
+ */
 function eliminarAutocompletar(nombre, identidad, PanContenedorID, txtHackID, ContenedorMostrarID) {
     contenedor = document.getElementById(PanContenedorID);
     contenedor.children[0].removeChild(nombre.parentNode);
@@ -11306,6 +4989,18 @@ function eliminarAutocompletar(nombre, identidad, PanContenedorID, txtHackID, Co
     }
 }
 
+
+/**
+ * Obtiene información sobre entidades LOD (Linked Open Data) desde un servicio web y actualiza el tooltip de los elementos en la lista de etiquetas.
+ * 
+ * @param {string} pUrlServicio - La URL del servicio web que proporciona datos LOD.
+ * @param {string} pUrlBaseEnlaceTag - La URL base para crear enlaces a las etiquetas en LOD.
+ * @param {string} pDocumentoID - El ID del documento para el que se obtendrán las entidades LOD.
+ * @param {string[]} pEtiquetas - Una lista de etiquetas (tags) para buscar en el servicio web.
+ * @param {string} pIdioma - El idioma en el que se deben obtener las descripciones de las etiquetas.
+ * 
+ * @returns {void}
+ */
 function ObtenerEntidadesLOD(pUrlServicio, pUrlBaseEnlaceTag, pDocumentoID, pEtiquetas, pIdioma) {
     var servicio = new WS(pUrlServicio, WSDataType.jsonp);
 
@@ -11332,16 +5027,9 @@ function ObtenerEntidadesLOD(pUrlServicio, pUrlBaseEnlaceTag, pDocumentoID, pEti
     });
 }
 
-
 /*                                                             Tooltips para freebase (conFbTt)
 *---------------------------------------------------------------------------------------------
 */
-
-var necesarioPosicionar = true;
-var mouseOnTooltip = false;
-var tooltipActivo = '';
-var cerrar = 0;
-
 var posicionarFreebaseTt = function (event) {
     if (necesarioPosicionar && $("div.tooltip").length > 0) {
         var tPosX = event.pageX - 10;
@@ -11386,8 +5074,8 @@ var mostrarFreebaseTt = function (event) {
         var textoTt = (this.tooltipData) ? this.tooltipData : $(this).text();
         tooltipActivo = $(this).text();
         $("<div class='tooltip entidadesEnlazadas' style='display:none; width:350px; height:auto;padding:0; opacity:1;' onmousemove='javascript:mouseSobreTooltip()' onmouseover='javascript:mouseSobreTooltip()' onmouseout='javascript:mouseFueraTooltip()'><div class='relatedInfoWindow'><p class='poweredby'>Powered by <a href='http://www.gnoss.com'><strong>Gnoss</strong></a></p><div class='wrapRelatedInfoWindow'>" + textoTt + "</div> <p><em>" + $('input.inpt_avisoLegal').val() + "</em></p></div></div>")
-.appendTo("body")
-.fadeIn();
+        .appendTo("body")
+        .fadeIn();
 
         $("div.tooltip").hover(mostrarFreebaseTt, ocultarFreebaseTt).mousemove(posicionarFreebaseTt);
         if (tooltipDiferente) {
@@ -11425,108 +5113,14 @@ function mouseSobreTooltip() {
 *---------------------------------------------------------------------------------------------
 */
 
-function ObtenerParametrosProyOrigen(pPestanya) {
-    var pestanyas = hackBusquedaPestProyOrigen.split('[||]');
-
-    if (pestanyas.length > 0) {
-        for (var i = 0; i < pestanyas.length; i++) {
-            if (pestanyas[i].split('[|]')[0] == pPestanya) {
-                return pestanyas[i].split('[|]')[1];
-            }
-        }
-    }
-
-    return '';
-}
-
-function OnUploadCompleted(pRutaImg) {
-    urlCKEImg.val(pRutaImg/*.replace('https://', 'http://')*/);
-    botonCKEAceptar.click();
-}
-
-function ElemVisible(pClase) {
-    var elems = $(pClase);
-    for (var i = 0; i < elems.length; i++) {
-        if ($(elems[i]).is(':visible')) {
-            return elems[i];
-        }
-    }
-}
-
-
-function DesplegarAccionListado(pControl, pArg, pDocumentoID, pProyectoID) {
-    //Limpio los paneles anteriores:
-    $('.divContAccList').html('');
-
-    ContenedorDesplBusqueda = $('.divContAccList', $(pControl).parent().parent().parent().parent())[0];
-    $(ContenedorDesplBusqueda).html($('#divContDespBusq').html());
-
-    var docIDArg = '&docBusqID=' + pDocumentoID + '&';
-    if (pProyectoID != undefined && pProyectoID != '') {
-        var proyIDArg = '&proyID=' + pProyectoID + '&';
-    }
-
-    DesplegarAccion(pControl, ClientDesplegarID, UniqueDesplegarID, false, docIDArg + proyIDArg + pArg);
-}
-
-function IntercambiarOnclickTag(pControl, pTexto1, pTexto2) {
-    var clase = pControl.className;
-    var controles = $('.' + clase);
-
-    for (var i = 0; i < controles.length; i++) {
-        $(controles[i]).html($(controles[i]).html().replace(pTexto1, pTexto2));
-
-        var tag = controles[i].attributes['tag'].value;
-        controles[i].attributes['tag'].value = controles[i].attributes['onclick'].value;
-        controles[i].attributes['onclick'].value = tag;
-    }
-}
-
-
-
-function AumentarNumElemento(pElemento) {
-    try {
-        if (pElemento.length > 0) {
-            var texto = pElemento.html();
-
-            if (texto != '') {
-                if (texto.indexOf('+') != -1) {
-                    texto = texto.replace('+', '');
-                    var num = parseInt(texto) + 1;
-                    pElemento.html(' + ' + num)
-                }
-                else if (texto.indexOf('-') != -1) {
-                    texto = texto.replace('-', '');
-                    var num = parseInt(texto) - 1;
-
-                    if (num == 0) {
-                        pElemento.html(num)
-                    }
-                    else {
-                        pElemento.html(' - ' + num)
-                    }
-                }
-                else {
-                    var num = parseInt(texto) + 1;
-                    pElemento.html(' + ' + num)
-                }
-            }
-        }
-    }
-    catch (ex) { }
-}
-
-function EnviarAccGogAnac(pCat, pTipo, pLabel) {
-    try {
-        if (typeof pageTracker != 'undefined') {
-            pageTracker._trackEvent(pCat, pTipo, pLabel);
-        }
-    } catch (ex) {
-    }
-}
-
-
 var arriba;
+/**
+ * Desplaza la página hacia arriba en pequeños incrementos hasta que llegue a la parte superior.
+ * 
+ * Esta función simula el desplazamiento continuo hacia arriba de la página, en un intento de llevar el contenido hasta la parte superior del viewport.
+ * 
+ * @returns {void}
+ */
 function SubirPagina() {
     if (document.body.scrollTop != 0 || document.documentElement.scrollTop != 0) {
         window.scrollBy(0, -50);
@@ -11535,6 +5129,16 @@ function SubirPagina() {
     else clearTimeout(arriba);
 }
 
+
+/**
+ * Abre una ventana emergente centrada en la pantalla con las propiedades especificadas.
+ *
+ * @param {string} url - La URL que se cargará en la ventana emergente.
+ * @param {number} width - El ancho de la ventana emergente en píxeles.
+ * @param {number} height - La altura de la ventana emergente en píxeles.
+ *
+ * @returns {void}
+ */
 function MostrarPopUpCentrado(url,width,height)
 {
     var left = (screen.width - width) / 2;
@@ -11543,456 +5147,25 @@ function MostrarPopUpCentrado(url,width,height)
     window.open(url, '', windowProperties);
 }
 
-/****** CHAT **********/
 
-function ActivarChat(perfil, activar, nombre) {
-    if ($('#divchatframe').length == 0) {
-        var panel = document.createElement("div");
-        //$(panel).css('left', '5px');
-        //$(panel).css('position', 'fixed');
-        //$(panel).css('width', '325px');
-        //$(panel).css('padding', '2px');
-        $(panel).attr('id', 'divchatframe');
-        $(panel).attr('class', 'chat');
-        $(panel).css('height', '20px');
-
-        var panelInt = document.createElement("div");
-        $(panelInt).attr('id', 'divChat');
-        $(panelInt).css('display', 'none');
-        $(panelInt).css('height', '50px');
-        panel.appendChild(panelInt);
-
-        var panelAlerta = document.createElement("div");
-        $(panelAlerta).attr('id', 'divAlertaChat');
-        $(panelAlerta).css('display', 'none');
-        panel.appendChild(panelAlerta);
-
-
-        var panelCerrar = document.createElement("div");
-        $(panelCerrar).attr('class', 'menuChat');
-        panel.appendChild(panelCerrar);
-
-        var aCerrar = document.createElement("a");
-        panelCerrar.appendChild(aCerrar);
-        $(aCerrar).attr('onclick', 'desactivarUsuChat();');
-        $(aCerrar).html(textChat.desconectar);
-        $(aCerrar).attr('id', 'hlCerrChat');
-
-        var aMaximizar = document.createElement("a");
-        panelCerrar.appendChild(aMaximizar);
-        $(aMaximizar).attr('onclick', 'ExpandirChat(' + activar + ');');
-        $(aMaximizar).html(textChat.expandir);
-        $(aMaximizar).attr('id', 'hlMaxChat');
-
-        if (!activar) {
-            $(aMaximizar).html('Conectar');
-            $(aCerrar).css('display', 'none');
-        }
-
-        var aMinChat = document.createElement("a");
-        panelCerrar.appendChild(aMinChat);
-        $(aMinChat).attr('onclick', 'ContraerChat();');
-        $(aMinChat).html(textChat.contraer);
-        $(aMinChat).attr('id', 'hlMinChat');
-        $(aMinChat).css('display', 'none');
-
-        var inputPerfil = document.createElement("input");
-        $(inputPerfil).css('display', 'none');
-        $(inputPerfil).attr('type', 'text');
-        $(inputPerfil).attr('id', 'txtHackPerfilActual');
-        $(inputPerfil).val(perfil);
-        panelCerrar.appendChild(inputPerfil);
-
-        var inputNomAct = document.createElement("input");
-        $(inputNomAct).css('display', 'none');
-        $(inputNomAct).attr('type', 'text');
-        $(inputNomAct).attr('id', 'txtHackNombreActual');
-        panelCerrar.appendChild(inputNomAct);
-
-        document.body.appendChild(panel);
-        $('#txtHackNombreActual').val(nombre);
-        ColocarChat();
-
-        if (activar) {
-            MontarChat();
-        }
-    }
-    else {
-        $('#divchatframe').css('display', '');
-    }
-}
-
-function ColocarChat() {
-    $('#divchatframe').css('top', ($(window).height() - $('#divchatframe').outerHeight() - 20));
-}
-
-function ExpandirChat(activado) {
-    $('#divChat').css('height', '325px');
-    $('#divchatframe').css('height', '345px');
-    $('#divChat').css('display', '');
-    $('#hlMaxChat').css('display', 'none');
-    $('#hlMinChat').css('display', '');
-    ColocarChat();
-
-    if (!activado) {
-        MontarChat();
-        $('#hlMaxChat').attr('onclick', 'ExpandirChat(true);');
-        $('#hlMaxChat').html('Expandir');
-        $('#hlCerrChat').css('display', '');
-    }
-}
-
-function ContraerChat() {
-    $('#divChat').css('height', '50px');
-    $('#divchatframe').css('height', '20px');
-    $('#divChat').css('display', 'none');
-    $('#hlMaxChat').css('display', '');
-    $('#hlMinChat').css('display', 'none');
-    ColocarChat();
-    MostrarChatsActivos(true);
-}
-
-function MostrarCargandoChat() {
-    $('#divChatAccion').html('<div class=\"menuChatInt\">...</div><div class="chatCargando"><span>' + textChat.cargando + '</span></div>');
-    MostrarChatsActivos(false);
-}
-
-function MontarChat() {
-    try {
-        $('#divChat').html('<div id="divChatsActivos"></div><div id="divChatAccion"></div>');
-        MostrarCargandoChat();
-
-        wanachat = $.connection.myChatHub;
-
-        //$('#txtHackUsu').val('');
-
-        wanachat.client.addMessage = function (message, remitente, idPerfilRemitenteID, chatID, mensID) {
-            if (idPerfilRemitenteID == null || idPerfilRemitenteID == $('#txtHackUsu').val()) {
-                if (idPerfilRemitenteID != null) {
-                    PintarMensaje(remitente, message, 1, mensID);
-                    MarcarNumMenChat(chatID, 0);
-                    wanachat.server.chatLeido($('#txtHackPerfilActual').val(), chatID);
-                }
-                else {
-                    PintarMensaje(remitente, message, 2, mensID);
-                }
-            }
-            else {
-                MarcarNumMenChat(chatID, 1);
-                MoverChatPrimero(chatID);
-
-                //$('#txtHackMensajes').val($('#txtHackMensajes').val() + idPerfilRemitenteID + '|' + remitente + '|' + message + '|||');
-                var alerta = message;
-
-                if (alerta.length > 30) {
-                    alerta = alerta.substring(0, 27) + '...';
-                }
-
-                MontarAlerta(remitente + ': ' + alerta, idPerfilRemitenteID, remitente, chatID, 0);
-            }
-        };
-
-        wanachat.client.addHtml = function (divID, html, js) {
-            if (html.indexOf('[|||]') != -1) {
-                var varIdiomas = html.substring(0, html.indexOf('[|||]'));
-                html = html.substring(html.indexOf('[|||]') + 5);
-                var variables = varIdiomas.split('|||');
-
-                for (var i = 0; i < variables.length; i++) {
-                    html = html.replace('@' + variables[i] + '@', eval(variables[i]));
-                }
-            }
-
-            $('#' + divID).html(html);
-
-            if (js != '') {
-                eval(js);
-            }
-        };
-
-        wanachat.client.addMasMensajes = function (htmlNuevo) {
-            if (htmlNuevo.indexOf('[|||]') != -1) {
-                var varIdiomas = htmlNuevo.substring(0, htmlNuevo.indexOf('[|||]'));
-                htmlNuevo = htmlNuevo.substring(htmlNuevo.indexOf('[|||]') + 5);
-                var variables = varIdiomas.split('|||');
-
-                for (var i = 0; i < variables.length; i++) {
-                    htmlNuevo = htmlNuevo.replace('@' + variables[i] + '@', eval(variables[i]));
-                }
-            }
-
-            var html = $('ul#listMessagesChat').html();
-            html = html.substring(html.indexOf('</li>') + 5);
-            html = htmlNuevo + html;
-            $('ul#listMessagesChat').html(html);
-        };
-
-        wanachat.client.addChat = function (htmlNuevo) {
-            $('#divChatsActivos ul').html(htmlNuevo + $('#divChatsActivos ul').html());
-        };
-
-        wanachat.client.addError = function (error) {
-            MontarAlerta(error, null, null, null, 1);
-        };
-
-        $.connection.hub.start().done(function () { registrarUsuChat('0') }).fail(function () { MontarAlerta('registrar', null, null, null, 1); });
-    }
-    catch (err) { }
-}
-
-function PintarMensaje(remitente, message, tipo, mensID) {
-    var mensaje = '<span class="mensRemi">' + remitente + ':</span><span class="mensChat">' + message + '</span><span class="mensFecha">' + ObtenerFecha() + '</span>';
-    if (tipo == 0) {
-        $('#listMessagesChat').append('<li id="liMen_' + mensID + '" class="ownerMessage mensAccionEnviando">' + mensaje + '<span class="mensAccionEnviando">' + textChat.enviando + '...</span></li>');
-    }
-    else if (tipo == 1) {
-        $('#listMessagesChat').append('<li id="liMen_' + mensID + '" class="contactMessage">' + mensaje + '</li>');
-    }
-    else if (tipo == 2) {
-        $('#liMen_' + mensID).html(mensaje + '<span class="mensAccionEnviado">' + textChat.enviado + '</span>');
-        $('#liMen_' + mensID).attr('class', 'ownerMessage mensAccionEnviado');
-    }
-
-    DesplazarScrollMens();
-}
-
-function ObtenerFecha() {
-    var f = new Date();
-    return (f.getHours() + ":" + (f.getMinutes()));
-}
-
-function DesplazarScrollMens() {
-    $('.divListMessages')[0].scrollTop = $('.divListMessages')[0].scrollHeight;
-    $('#listMessagesChat')[0].scrollTop = $('#listMessagesChat')[0].scrollHeight;
-}
-
-function MarcarNumMenChat(chatID, num) {
-    if ($('#divChatsActivos li#liChat_' + chatID + ' span.chatNoRead').length > 0) {
-        var numText = '';
-
-        if (num > 0) {
-            var antNunText = $('#divChatsActivos li#liChat_' + chatID + ' span.chatNoRead').html()
-            var antNun = 0;
-
-            if (antNunText != '') {
-                antNun = parseInt(antNunText.trim());
-                num += antNun;
-            }
-
-            numText = num;
-        }
-
-        $('#divChatsActivos li#liChat_' + chatID + ' span.chatNoRead').html(numText);
-    }
-}
-
-function MoverChatPrimero(chatID) {
-    var chats = $('#divChatsActivos li#liChat_' + chatID);
-
-    if (chats.length > 0) {
-        var ul = chats.parent();
-        var li = chats[0];
-        chats.remove();
-        ul.prepend(li);
-    }
-    else {
-        //TODO: HACER -> Traer chat de server y pintar por ejemplo
-        ComprobarConexionChat();
-        wanachat.server.getChat($('#txtHackPerfilActual').val(), chatID);
-    }
-}
-
-function MostrarChatsActivos(mostrar) {
-    if (mostrar) {
-        $('#txtHackUsu').val('')
-        $('#divChatAccion').css('display', 'none');
-        $('#divChatsActivos').css('display', '');
-    }
-    else {
-        $('#divChatAccion').css('display', '');
-        $('#divChatsActivos').css('display', 'none');
-    }
-}
-
-function AgregarContactoChat() {
-    MostrarCargandoChat();
-    ComprobarConexionChat();
-    wanachat.server.addContact($('#txtHackPerfilActual').val());
-}
-
-function registrarUsuChat(pInicio) {
-    if ($.connection.hub.id != null && $.connection.myChatHub.connection.state === 1/*signalR.connectionState.connected*/) {
-        //var wanachat = $.connection.myChatHub;
-        wanachat.server.registrar($('#txtHackPerfilActual').val(), pInicio);
-
-        if (pInicio == '0') {
-            setTimeout('ComprobarConexionChat()', 300000);
-        }
-    }
-    else {
-        setTimeout('registrarUsuChat(\'' + pInicio + '\')', 100);
-    }
-}
-
-function desactivarUsuChat() {
-    ContraerChat();
-    $('#hlMaxChat').html(textChat.conectar);
-    $('#hlMaxChat').attr('onclick', 'ExpandirChat(false);');
-    $('#hlCerrChat').css('display', 'none');
-
-    ComprobarConexionChat();
-
-    if ($.connection.hub.id != null && $.connection.myChatHub.connection.state === 1) {
-        wanachat.server.desactivarChat($('#txtHackPerfilActual').val());
-
-        $.connection.hub.disconnect();
-
-        $('#divchatframe').attr('class', 'divChat disabled');
-    }
-}
-
-function IniciarChat(idPerfilID, nombrePerfil, chatID) {
-    MostrarCargandoChat();
-    ComprobarConexionChat();
-    wanachat.server.addChat($('#txtHackPerfilActual').val(), $('#txtHackNombreActual').val(), idPerfilID, nombrePerfil, chatID);
-    MarcarNumMenChat(chatID, 0);
-}
-
-function EnviarMensChat(id) {
-    var idMen = guidGenerator();
-    PintarMensaje($('#txtHackNombreActual').val(), $('#txtMessage').val(), 0, idMen);
-    ComprobarConexionChat();
-    wanachat.server.send($('#txtMessage').val(), $('#txtHackPerfilActual').val(), $('#txtHackUsu').val(), $('#txtHackNombreActual').val(), id, idMen);
-    $('#txtMessage').val('');
-}
-
-function ComprobarConexionChat() {
-    if (!($.connection.hub.id != null && $.connection.myChatHub.connection.state === 1)) {
-        $.connection.hub.start().done(function () { registrarUsuChat('1') }).fail(function () { MontarAlerta('registrar', null, null, null, 1); });
-    }
-}
-
-function CargarMensAntChat(id, idUsu, numLlamada) {
-    ComprobarConexionChat();
-    wanachat.server.cargarMensAnt(id, idUsu, numLlamada);
-}
-
-
-function MontarAlerta(alerta, idPerfilID, nombrePerfil, chatID, tipo) {
-    if (tipo == 0) {
-        $('#divAlertaChat').html('<p><a onclick="ExpandirChat(true);OcultarAlerta();IniciarChat(\'' + idPerfilID + '\', \'' + nombrePerfil + '\', \'' + chatID + '\');">Ver</a> ' + alerta + '</p>');
-    }
-    else {
-        var error = '';
-
-        if (alerta == 'send') {
-            error = textChat.errorSend;
-        }
-        else if (alerta == 'registrar') {
-            error = textChat.errorReg;
-        }
-        else if (alerta == 'desactivarChat') {
-            error = textChat.errorDesac;
-        }
-        else if (alerta == 'addContact') {
-            error = textChat.errorContac;
-        }
-        else if (alerta == 'addChat') {
-            error = textChat.errorChat;
-        }
-        else if (alerta == 'cargarMensAnt') {
-            error = textChat.errorCargarMenAnt;
-        }
-        else if (alerta == 'send') {
-            error = textChat.errorSend;
-        }
-        else if (alerta == 'send') {
-            error = textChat.errorSend;
-        }
-        else if (alerta == 'send') {
-            error = textChat.errorSend;
-        }
-
-        $('#divAlertaChat').html('<div class=\"ko\" style="display:block;"><p>' + error + '</p></div>');
-    }
-    var margin = 5 + $('#divAlertaChat').height();
-    $('#divAlertaChat').css('margin-top', '-' + margin + 'px');
-    $('#divAlertaChat').css('display', '');
-    setTimeout('OcultarAlerta()', 5000);
-}
-
-function OcultarAlerta() {
-    $('#divAlertaChat').css('display', 'none');
-}
-
-
-/****** FIN CHAT **********/
-
-var currentMousePos = { x: -1, y: -1 };
-//Devuelve la posisición del cursor 
-$(document).mousemove(function (event) {
-    currentMousePos.x = event.pageX;
-    currentMousePos.y = event.pageY;
-});
-
-function Distancia(lat1, lon1, lat2, lon2) {
-    rad = function (x) { return x * Math.PI / 180; }
-
-    //Radio de la tierra en km
-    var R = 6378.137;
-    var dLat = rad(lat2 - lat1);
-    var dLong = rad(lon2 - lon1);
-
-    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLong / 2) * Math.sin(dLong / 2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    var d = R * c;
-
-    //Retorna tres decimales
-    return d.toFixed(3);
-}
-
-function ObtenerUrlParaCallBack()
-{
-    var url = document.location.href;
-    url = url.substr(0, url.indexOf('#'));
-    return url;
-}
-
-
-$(document).ready(function () {
-    $('a.linkDescargaFichero').click(function () {
-        EnviarAccGogAnac('Descargar Fichero', 'Descargar Fichero', window.location.href);
-    });
-});
-
-
-function chequearUsuarioLogueado(funcionRespuesta)
-{
-    MostrarUpdateProgress();
-
-    var request = new XMLHttpRequest();
-    request.onreadystatechange = function ()
-    {
-        if (request.readyState == 4)
-        {
-            eval(funcionRespuesta);
-        }
-    }
-    var url = window.location.protocol + '//' + window.location.host + '/solicitarcookie.aspx'
-    request.open('GET', url, true);
-    request.withCredentials = true;
-    request.send();
-}
-
-function Redirigir(response)
-{
-    if (response != undefined )
-    {
+/**
+ * Redirige la página actual a una nueva URL especificada.
+ * 
+ * @param {string} response - La URL a la que se redirigirá si se define.
+ */
+function Redirigir(response) {
+    if (response != undefined) {
         window.location.href = response;
     }
 }
 
+/**
+ * Objeto para manejar peticiones relacionadas con cookies.
+ */
 var PeticionesCookie = {
+    /**
+     * Método para cargar y refrescar la cookie a través de una petición AJAX.
+     */    
     CargarCookie() {
         var urlPeticion = null;
         urlPeticion = $('#inpt_UrlLoginCookie').val() + "/RefrescarCookie";
@@ -12001,16 +5174,33 @@ var PeticionesCookie = {
             null,
             true
         ).done(function (response) {
-        }).fail(function (response) {     
+        }).fail(function (response) {
         });
     }
 }
 
+/**
+ * Objeto para manejar peticiones AJAX.
+ */
 var PeticionesAJAX = {
+    /**
+     * Método para cargar el número de elementos nuevos.
+     * 
+     * @param {string} pGuidPerfilUsu - Identificador del perfil del usuario.
+     * @param {string} pGuidPerfilOrg - Identificador del perfil de la organización.
+     * @param {boolean} pEsBandejaOrg - Indica si es la bandeja de la organización.
+     * @param {string} identCargarNov - Identificadores adicionales para cargar novedades.
+     * @param {function} RepintarContadoresNuevosElementos - Función para repintar los contadores de nuevos elementos.
+     * @param {function} RecogerErroresAJAX - Función para manejar los errores de AJAX.
+     */    
     CargarNumElementosNuevos: function (pGuidPerfilUsu, pGuidPerfilOrg, pEsBandejaOrg, identCargarNov, RepintarContadoresNuevosElementos, RecogerErroresAJAX) {
         var urlPeticion = null;
+        var rutaEjecucionWeb = $('#inpt_rutaEjecucionWeb').val();
+        if (rutaEjecucionWeb == null || rutaEjecucionWeb == undefined) {
+            rutaEjecucionWeb = "";
+        }
         if ($('#inpt_proyID').val() == '11111111-1111-1111-1111-111111111111') {
-            urlPeticion = location.protocol + "//" + location.host + "/PeticionesAJAX/CargarNumElementosNuevos";
+            urlPeticion = location.protocol + "//" + location.host + "/" + rutaEjecucionWeb + "PeticionesAJAX/CargarNumElementosNuevos";
         } else {
             urlPeticion = $('#inpt_baseUrlBusqueda').val() + "/PeticionesAJAX/CargarNumElementosNuevos";
         }
@@ -12036,6 +5226,12 @@ var PeticionesAJAX = {
             RecogerErroresAJAX(response);
         });
     },
+
+    /**
+     * Método para obtener los datos del usuario actual.
+     * 
+     * @param {function} FuncionEjecutar - Función a ejecutar con los datos del usuario actual.
+     */    
     ObtenerDatosUsuarioActual: function (FuncionEjecutar) {
         var urlPeticion = location.protocol + "//" + location.host + "/PeticionesAJAX/ObtenerDatosUsuarioActual";
         GnossPeticionAjax(
@@ -12046,11 +5242,16 @@ var PeticionesAJAX = {
             FuncionEjecutar(response)
         });
     }
+}
 
-}/**/ 
+
 /*busquedas.js*/ 
-var estamosFiltrando = false;
+let estamosFiltrando = false;
 
+/**
+ * Cuando el usuario navega hacia atrás o hacia adelante, el código verifica si los filtros deben ser reaplicados. Esto es importante para mantener el estado de la interfaz de usuario coherente con la URL actual.
+ * Previniendo el comportamiento por defecto del evento popstate, se asegura que la página no se recargue o cambie inesperadamente. Esto proporciona una experiencia de usuario más fluida y controlada.
+ */
 window.onpopstate = function (e) {
     if (window.location.href.indexOf('?') != -1 || window.location.href.indexOf('#') == -1) {
         if (estamosFiltrando) {
@@ -12062,47 +5263,47 @@ window.onpopstate = function (e) {
     estamosFiltrando = true;
 };
 
-var enlazarJavascriptFacetas = false;
+let enlazarJavascriptFacetas = false;
 
+
+/**
+ * Configura los eventos para los filtros de búsqueda y la paginación.
+ * 
+ * - Configura el evento `click` para limpiar los filtros de búsqueda.
+ * - Configura el evento `change` en los selectores de ordenación para aplicar el nuevo orden.
+ * - Configura el evento `click` en los elementos de ordenación y paginación para aplicar filtros correspondientes.
+ */
 function enlazarFiltrosBusqueda() {
-    // Cambiado por nuevo Front
-    /*$('.limpiarfiltros')
-    .unbind()
-    .click(function (e) {
-        LimpiarFiltros();
-        e.preventDefault();
-    });*/
-
     // Permitir borrar filtros de búsqueda
     $("#divFiltros")
-    .unbind()
-    .on('click', '.limpiarfiltros', function (event) {
-        LimpiarFiltros();
-        event.preventDefault();
-    });
+        .unbind()
+        .on('click', '.limpiarfiltros', function (event) {
+            LimpiarFiltros();
+            event.preventDefault();
+        });
     $("#panFiltros")
         .unbind()
         .on('click', '.limpiarfiltros', function (event) {
             LimpiarFiltros();
             event.preventDefault();
-    });
-    
+        });
+
     $('.panelOrdenContenedor select.filtro')
-    .unbind()
-        .change(function (e) {            
-        AgregarFiltro('ordenarPor', $(this).val(), true);
-    });
+        .unbind()
+        .change(function (e) {
+            AgregarFiltro('ordenarPor', $(this).val(), true);
+        });
 
     // Configurar la selección de ordenará de los resultados al pulsar en "Ordenado por"
     $("#panel-orderBy a.item-dropdown")
         // En ordenación, no mostraba el icono seleccionado ya que lo "desmontaba".
         //.unbind()
-        .click(function (e) {                    
+        .click(function (e) {
             var orderBy = $(this).attr("data-orderBy");
             var filtroOrder = $(this).attr("data-order");
             const concatFilterAndOrder = orderBy + "|" + filtroOrder.split("|")[1];
             AgregarFiltro('ordenarPor', concatFilterAndOrder, true);
-    });
+        });
 
     // Orden Ascedente o Descedente
     $('#panel-orderAscDesc a.item-dropdown')
@@ -12113,36 +5314,44 @@ function enlazarFiltrosBusqueda() {
         });
 
     $('.panelOrdenContenedor a.filtroV2')
-    .unbind()
-    .click(function (e) {
-        var filtro = $(this).attr("name");
-        AgregarFiltro(filtro.split('-')[0], filtro.split('-')[1], false);
-        e.preventDefault();
-    });
+        .unbind()
+        .click(function (e) {
+            var filtro = $(this).attr("name");
+            AgregarFiltro(filtro.split('-')[0], filtro.split('-')[1], false);
+            e.preventDefault();
+        });
     $('.paginadorResultados a.filtro')
-    .unbind()
-    .click(function (e) {
-        var filtro = $(this).attr("name");
-        AgregarFiltro(filtro.split('|')[0], filtro.split('|')[1], false);
+        .unbind()
+        .click(function (e) {
+            var filtro = $(this).attr("name");
+            AgregarFiltro(filtro.split('|')[0], filtro.split('|')[1], false);
 
-        if (typeof searchAnalitics != 'undefined') {
-            searchAnalitics.pageSearch(filtro.split('|')[1]);
-        }
-        e.preventDefault();
-    });
+            if (typeof searchAnalitics != 'undefined') {
+                searchAnalitics.pageSearch(filtro.split('|')[1]);
+            }
+            e.preventDefault();
+        });
 }
 
+
+/**
+ * Configura los eventos para la faceta de búsqueda en un panel de búsqueda con facetas.
+ * 
+ * - Configura el evento `keydown` en los campos de facetas para permitir la búsqueda al presionar Enter.
+ * - Configura el evento `click` en el botón de búsqueda para agregar facetas de búsqueda o aplicar filtros por fecha.
+ * - Configura el evento `click` en los enlaces de facetas para agregar facetas individuales o grupos de facetas.
+ * - Configura el evento `click` en el enlace para descargar RDF con los filtros aplicados.
+ */
 function enlazarFacetasBusqueda() {
     $('.facetedSearchBox .filtroFaceta')
-	.unbind()
-	.keydown(function (event) {
-	    if ($(this).val().indexOf('|') > -1) {
-	        $(this).val($(this).val().replace(/\|/g, ''));
-	    };
+        .unbind()
+        .keydown(function (event) {
+            if ($(this).val().indexOf('|') > -1) {
+                $(this).val($(this).val().replace(/\|/g, ''));
+            };
 
 	    if (event.which || event.keyCode) {
-	        if ((event.which == 13) || (event.keyCode == 13)) {
-	            //return false;
+	        if ((event.which == 13) || (event.keyCode == 13)) {	            
                 // Iniciar la búsqueda                        
                 const inputContainer = $(this).closest('div');                
                 const searchButton = inputContainer.find('.searchButton');                
@@ -12162,118 +5371,137 @@ function enlazarFacetasBusqueda() {
     }
 
     $('.facetedSearchBox .searchButton')
-	.unbind()
-	.click(function (event) {
-	    if ($(this).parents('.facetedSearchBox').find('.filtroFaceta').length == 1) {
-	        if ($(this).parents('.facetedSearchBox').find('.filtroFacetaTesauroSemantico').length == 1 && $(this).parents('.facetedSearchBox').find('.filtroFaceta').val().indexOf('@' + $('input.inpt_Idioma').val()) == -1) {
-	            AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val() + '@' + $('input.inpt_Idioma').val());
-	        } else {
-	            AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val());
-	        }
-	    } else {
-	        var filtroBusqueda = $(this).attr('name');
-	        var fechaDesde = $(this).parents('.facetedSearchBox').find('input')[0];
-	        var fechaHasta = $(this).parents('.facetedSearchBox').find('input')[1];
-	        var formatoFecha = false;
+        .unbind()
+        .click(function (event) {
+            if ($(this).parents('.facetedSearchBox').find('.filtroFaceta').length == 1) {
+                if ($(this).parents('.facetedSearchBox').find('.filtroFacetaTesauroSemantico').length == 1 && $(this).parents('.facetedSearchBox').find('.filtroFaceta').val().indexOf('@' + $('input.inpt_Idioma').val()) == -1) {
+                    AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val() + '@' + $('input.inpt_Idioma').val());
+                } else {
+                    AgregarFaceta($(this).parents('.facetedSearchBox').find('.filtroFaceta').attr('name') + '=' + $(this).parents('.facetedSearchBox').find('.filtroFaceta').val());
+                }
+            } else {
+                var filtroBusqueda = $(this).attr('name');
+                var fechaDesde = $(this).parents('.facetedSearchBox').find('input')[0];
+                var fechaHasta = $(this).parents('.facetedSearchBox').find('input')[1];
+                var formatoFecha = false;
 
-	        if (typeof ($(this).parents('.facetedSearchBox').find('input.hasDatepicker')[0]) != 'undefined') {
-	            formatoFecha = true;
-	        }
+                if (typeof ($(this).parents('.facetedSearchBox').find('input.hasDatepicker')[0]) != 'undefined') {
+                    formatoFecha = true;
+                }
 
-	        if (desde == '') {
-	            desde = $('input.inpt_Desde').val();
-	        }
-	        if (hasta == '') {
-	            hasta = $('input.inpt_Hasta').val();
-	        }
+                if (desde == '') {
+                    desde = $('input.inpt_Desde').val();
+                }
+                if (hasta == '') {
+                    hasta = $('input.inpt_Hasta').val();
+                }
 
-	        var filtro = ObtenerFiltroRango(fechaDesde, desde, fechaHasta, hasta, formatoFecha);
+                var filtro = ObtenerFiltroRango(fechaDesde, desde, fechaHasta, hasta, formatoFecha);
 
-	        if (filtro != '-') {
-	            AgregarFaceta(filtroBusqueda + '=' + filtro);
-	        }
-	    }
-	    return false;
-	});
+                if (filtro != '-') {
+                    AgregarFaceta(filtroBusqueda + '=' + filtro);
+                }
+            }
+            return false;
+        });
 
     $('.facetedSearch a.faceta')
-	.unbind()
-	.click(function (e) {
-        AgregarFaceta($(this).attr("name"));
-        // Quitar el panel de filtrado para móvil para visualizar resultados correctamente
-        $(body).removeClass("facetas-abiertas");
-	    e.preventDefault();
-	});
+        .unbind()
+        .click(function (e) {
+            AgregarFaceta($(this).attr("name"));
+            // Quitar el panel de filtrado para móvil para visualizar resultados correctamente
+            $(body).removeClass("facetas-abiertas");
+            e.preventDefault();
+        });
     $('.facetedSearch input.faceta')
-	.unbind()
-	.click(function (e) {
-	    AgregarFaceta($(this).attr("name"));
-	    e.preventDefault();
-	});
+        .unbind()
+        .click(function (e) {
+            AgregarFaceta($(this).attr("name"));
+            e.preventDefault();
+        });
     $('.facetedSearch a.faceta.grupo')
-	.unbind()
-	.click(function (e) {
-	    AgregarFacetaGrupo($(this).attr("name"));
-	    e.preventDefault();
-	});
+        .unbind()
+        .click(function (e) {
+            AgregarFacetaGrupo($(this).attr("name"));
+            e.preventDefault();
+        });
 
     $('#descargarRDF')
-    .unbind()
-	.click(function (e) {
-	    var filtros = ObtenerHash2();
-	    var url = document.location.href;
+        .unbind()
+        .click(function (e) {
+            var filtros = ObtenerHash2();
+            var url = document.location.href;
 
-	    if (url.indexOf('?') != -1) {
-	        url = url.substring(0, url.indexOf('?'));
-	    }
+            if (url.indexOf('?') != -1) {
+                url = url.substring(0, url.indexOf('?'));
+            }
 
-	    var filtroRdf = '?rdf';
-	    if (filtros != '') {
-	        filtros = '?' + filtros;
-	        filtroRdf = '&rdf';
-	    }
+            var filtroRdf = '?rdf';
+            if (filtros != '') {
+                filtros = '?' + filtros;
+                filtroRdf = '&rdf';
+            }
 
-	    url = url + filtros + filtroRdf;
-	    $('#descargarRDF').prop('href', url);
-	    eval($('#descargarRDF').href);
-	});
+            url = url + filtros + filtroRdf;
+            $('#descargarRDF').prop('href', url);
+            eval($('#descargarRDF').href);
+        });
 }
 
+
+/**
+ * Configura los eventos para facetas en un panel de búsqueda que no está directamente relacionado con la búsqueda.
+ * 
+ * - **Configura el evento `keydown`** en los campos de facetas para evitar la adición de caracteres `|` y prevenir la acción por defecto de Enter.
+ * - **Configura el evento `click`** en el botón de búsqueda para redirigir a una URL construida con los filtros aplicados.
+ */
 function enlazarFacetasNoBusqueda() {
     $('.facetedSearchBox .filtroFaceta')
-	.unbind()
-	.keydown(function (event) {
-	    if ($(this).val().indexOf('|') > -1) {
-	        $(this).val($(this).val().replace(/\|/g, ''));
-	    };
-	    if (event.which || event.keyCode) {
-	        if ((event.which == 13) || (event.keyCode == 13)) {
-	            return false;
-	        }
-	    } else {
-	        return true;
-	    };
-	});
+        .unbind()
+        .keydown(function (event) {
+            if ($(this).val().indexOf('|') > -1) {
+                $(this).val($(this).val().replace(/\|/g, ''));
+            };
+            if (event.which || event.keyCode) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    return false;
+                }
+            } else {
+                return true;
+            };
+        });
 
     $('.facetedSearchBox .searchButton')
-	.unbind()
-	.click(function (event) {
-	    event.preventDefault();
-	    var urlRedirect = $(this).attr('href') + '?' + $(this).parent().find('.filtroFaceta').attr('name') + '=' + $(this).parent().find('.filtroFaceta').val();
-	    window.location.href = urlRedirect;
-	});
+        .unbind()
+        .click(function (event) {
+            event.preventDefault();
+            var urlRedirect = $(this).attr('href') + '?' + $(this).parent().find('.filtroFaceta').attr('name') + '=' + $(this).parent().find('.filtroFaceta').val();
+            window.location.href = urlRedirect;
+        });
 }
 
-var cargarFacetas = true;
+let cargarFacetas = true;
 
+
+/**
+ * Añade o actualiza un filtro en la URL de la página actual y aplica los filtros de facetas correspondientes.
+ * 
+ * - **Actualiza** el filtro en la URL basándose en el tipo de filtro y el valor proporcionado.
+ * - **Actualiza** la ordenación de los resultados si el filtro es de tipo 'ordenarPor'.
+ * - **Reinicia** la paginación si el parámetro `reiniciarPag` es `true`.
+ * - **Actualiza** la vista con los nuevos filtros aplicados.
+ * 
+ * @param {string} tipoFiltro - Tipo de filtro a aplicar (por ejemplo, 'ordenarPor', 'categoria', etc.).
+ * @param {string} filtro - Valor del filtro a aplicar.
+ * @param {boolean} reiniciarPag - Indica si se debe reiniciar la paginación.
+ */
 function AgregarFiltro(tipoFiltro, filtro, reiniciarPag) {
     estamosFiltrando = true;
     cargarFacetas = false;
     var filtros = ObtenerHash2();
 
     var tipoOrden = "";
-	if (tipoFiltro ==  "ordenarPor" && filtro.split("|").length>1)
-	{
+    if (tipoFiltro == "ordenarPor" && filtro.split("|").length > 1) {
         tipoOrden = filtro.split("|")[1];
         filtro = filtro.split("|")[0];
     }
@@ -12283,13 +5511,13 @@ function AgregarFiltro(tipoFiltro, filtro, reiniciarPag) {
         var tipoFiltroOrden = "orden";
         var filtroOrden = "asc";
 
-	    if (filtros.indexOf(tipoFiltroOrden + '=') == 0 || filtros.indexOf('&' + tipoFiltroOrden + '=') > 0) {
+        if (filtros.indexOf(tipoFiltroOrden + '=') == 0 || filtros.indexOf('&' + tipoFiltroOrden + '=') > 0) {
             if (filtros.indexOf(tipoFiltroOrden + '=' + filtroOrden) == 0 || filtros.indexOf('&' + tipoFiltroOrden + '=' + filtroOrden) > 0) {
-		  
-	            filtroOrden = "desc";
-	        }
+
+                filtroOrden = "desc";
+            }
             if (tipoOrden != "") {
-		  
+
                 filtroOrden = tipoOrden;
             }
 
@@ -12355,6 +5583,14 @@ function AgregarFiltro(tipoFiltro, filtro, reiniciarPag) {
     }
 }
 
+
+/**
+ * Añade un filtro a la URL de la página actual para una faceta específica.
+ * Redirige la página a la nueva URL con el filtro aplicado.
+ * 
+ * @param {string} claveFaceta - La clave de la faceta para la que se está aplicando el filtro.
+ * @param {string} filtro - El valor del filtro a aplicar para la faceta.
+ */
 function AgregarFiltroAutocompletar(claveFaceta, filtro) {
     var url = document.location;
     var separador = '?';
@@ -12364,8 +5600,14 @@ function AgregarFiltroAutocompletar(claveFaceta, filtro) {
     document.location = url + separador + claveFaceta + '=' + filtro;
 }
 
-var clickEnFaceta = false;
+let clickEnFaceta = false;
 
+/**
+ * Agrega una faceta a la URL actual para aplicar un nuevo filtro o eliminar uno existente.
+ * Actualiza la URL con el nuevo conjunto de filtros y realiza acciones adicionales dependiendo del estado del filtro.
+ * 
+ * @param {string} faceta - La faceta a agregar o eliminar, que puede incluir un valor de filtro específico.
+ */
 function AgregarFaceta(faceta) {
     faceta = faceta.replace(/%22/g, '"');
     estamosFiltrando = true;
@@ -12374,7 +5616,7 @@ function AgregarFaceta(faceta) {
     filtros = replaceAll(filtros, '%26', '---AMPERSAND---');
     filtros = decodeURIComponent(filtros);
     filtros = replaceAll(filtros, '---AMPERSAND---', '%26');
-	
+
 
 
     var esFacetaTesSem = false;
@@ -12420,7 +5662,7 @@ function AgregarFaceta(faceta) {
         filtros = filtros.substring(0, filtros.length - 1);
     }
     if (faceta.indexOf('search=') == 0) {
-	 
+
         $('h1 span#filtroInicio').remove();
     }
 
@@ -12484,7 +5726,7 @@ function AgregarFaceta(faceta) {
 
         for (var i = 0; i < filtrosArray.length; i++) {
             if (filtrosArray[i] != '' && filtrosArray[i] != faceta && filtrosArray[i] != facetaDecode) {
-            //if (filtrosArray[i] != '' && (filtrosArray[i].indexOf(faceta) == -1 || filtrosArray[i].indexOf(facetaDecode)) == -1)) {
+                //if (filtrosArray[i] != '' && (filtrosArray[i].indexOf(faceta) == -1 || filtrosArray[i].indexOf(facetaDecode)) == -1)) {
                 filtros += filtrosArray[i] + '&';
             }
         }
@@ -12515,22 +5757,15 @@ function AgregarFaceta(faceta) {
     } else {
         FiltrarPorFacetas(ObtenerHash2());
     }
-    EscribirUrlForm(filtros);
 }
 
-function EscribirUrlForm(filtros) {
-    var accion = $('#aspnetForm').attr('action');
-    if (accion != undefined) {
-        if (accion.indexOf('?') != -1) {
-            accion = accion.substring(0, accion.indexOf('?'));
-        }
-        accion += '?' + filtros;
-        $('#aspnetForm').attr('action', accion);
-    }
-}
-
+/**
+ * Agrega una faceta a un grupo de facetas en la URL actual, o la marca como `default` si ya existe.
+ * El método maneja las facetas en un contexto de grupo, permitiendo marcar facetas existentes como `default` o agregarlas si no están presentes.
+ * 
+ * @param {string} faceta - La faceta del grupo a agregar o marcar como `default`.
+ */
 function AgregarFacetaGrupo(faceta) {
- 
     estamosFiltrando = true;
     var filtros = ObtenerHash2();
     filtros = replaceAll(filtros, '%26', '---AMPERSAND---');
@@ -12553,7 +5788,7 @@ function AgregarFacetaGrupo(faceta) {
     }
 
     if (agregar) {
-	 
+
         if (filtros.indexOf(faceta) != -1) {
             //Si lo contiene lo reemplaza
             filtros = filtros.replace(faceta, "default;" + faceta);
@@ -12577,6 +5812,13 @@ function AgregarFacetaGrupo(faceta) {
     FiltrarPorFacetas(ObtenerHash2());
 }
 
+/**
+ * Limpia todos los filtros aplicados en la URL actual y redirige a una URL sin filtros.
+ * 
+ * Este método maneja dos escenarios:
+ * 1. Si se encuentra una referencia a `filtroDePag`, limpia los filtros basándose en una URL específica.
+ * 2. Si no hay referencia a `filtroDePag`, limpia todos los filtros y redirige a la URL base.
+ */
 function LimpiarFiltros() {
     if (typeof (filtroDePag) != 'undefined' && filtroDePag != '') {
         var url = document.location.href;
@@ -12646,8 +5888,20 @@ function ObtenerHash2() {
     return "";
 }
 
-var primeraCargaDeFacetas = true;
+let primeraCargaDeFacetas = true;
 
+/**
+ * Filtra el contenido de la página en función del filtro proporcionado.
+ * 
+ * Este método determina cuál de varias funciones de filtrado debe ser llamada, basándose en la existencia de funciones específicas en el ámbito global:
+ * - Llama a `FiltrarBandejaMensajes` si está definida.
+ * - Llama a `FiltrarPerfilUsuario` si `FiltrarBandejaMensajes` no está definida pero `FiltrarPerfilUsuario` sí.
+ * - Llama a `ProcesarFiltro` si ninguna de las anteriores está definida pero `ProcesarFiltro` sí.
+ * - Llama a `FiltrarPorFacetasGenerico` si ninguna de las funciones anteriores está definida.
+ * 
+ * @param {string} filtro - El filtro que se aplicará para ajustar el contenido de la página.
+ * @returns {any} El resultado de la función de filtrado llamada.
+ */
 function FiltrarPorFacetas(filtro) {
     if (typeof FiltrarBandejaMensajes != "undefined") {
         return FiltrarBandejaMensajes(filtro);
@@ -12661,6 +5915,15 @@ function FiltrarPorFacetas(filtro) {
     return FiltrarPorFacetasGenerico(filtro);
 }
 
+
+/**
+ * Aplica el filtro proporcionado para ajustar los resultados de búsqueda o la vista de facetas en la página.
+ * 
+ * Este método maneja diversas configuraciones y actualizaciones en función del filtro recibido, ajustando vistas y contenidos según sea necesario.
+ * 
+ * @param {string} filtro - El filtro a aplicar a los resultados de búsqueda o a las facetas de la página.
+ * @returns {boolean} Retorna `false` al final de la ejecución.
+ */
 function FiltrarPorFacetasGenerico(filtro) {
     filtro = filtro.replace(/&/g, '|');
 
@@ -12700,7 +5963,7 @@ function FiltrarPorFacetasGenerico(filtro) {
     var vistaMapa = $(".item-dropdown.aMapView").hasClass("activeView");
     var vistaChart = $(".item-dropdown.aGraphView").hasClass("activeView");
 
-    
+
 
     if (!primeraCargaDeFacetas && !vistaMapa) {
         MostrarUpdateProgress();
@@ -12708,7 +5971,7 @@ function FiltrarPorFacetasGenerico(filtro) {
 
     var parametrosFacetas = 'ObtenerResultados';
 
-    var gruposPorTipo = $('#facetedSearch.facetedSearch .listadoAgrupado ').length>0;
+    var gruposPorTipo = $('#facetedSearch.facetedSearch .listadoAgrupado ').length > 0;
 
     if (cargarFacetas && !gruposPorTipo) {
         if (typeof panFacetas != "undefined" && panFacetas != "" && $('#' + panFacetas).length > 0 && !primeraCargaDeFacetas && !gruposPorTipo) {
@@ -12779,7 +6042,7 @@ function FiltrarPorFacetasGenerico(filtro) {
     }
 
     var tokenAfinidad = guidGenerator();
-    
+
     if ((vistaMapa || !primeraCargaDeFacetas) && (!vistaChart || typeof (chartActivo) != "undefined")) {
         MontarResultados(filtro, primeraCarga, 1, '#' + panResultados, tokenAfinidad);
     }
@@ -12808,8 +6071,16 @@ function FiltrarPorFacetasGenerico(filtro) {
     return false;
 }
 
-noGrafico = true;
-
+let noGrafico = true;
+/**
+ * Ajusta el orden de los resultados en la interfaz de usuario basándose en el parámetro `hash` proporcionado.
+ * 
+ * Este método actualiza la selección del filtro de orden en un elemento `select` basado en el hash de la URL.
+ * Maneja el caso en el que no hay un parámetro de orden explícito en el hash y también gestiona el estado de opciones relacionadas con búsquedas.
+ * 
+ * @param {string} hash - El hash de la URL que contiene el parámetro de orden.
+ * @returns {void}
+ */
 function CambiarOrden(hash) {
     if ($('.panelOrdenContenedor select.filtro').length > 0) {
         var controlOrden = $('.panelOrdenContenedor select.filtro');
@@ -12866,51 +6137,19 @@ function CambiarOrden(hash) {
     }
 }
 
-function MontarFechaCliente() {
-    if (typeof (diffHoras) == 'undefined' || diffHoras == null) {
-        var fechaServidor = new Date($('#inpt_serverTime').val());
-        $('p.publicacion strong').each(function (index) {
-            if ($(this).attr('content') != null) {
-                var fechaRecurso = new Date($(this).attr('content'));
-                var fechaCliente = new Date();
-                //var diffHoras = parseInt((fechaServidor.getTime() / (1000 * 60 * 60)) - (fechaCliente.getTime() / (1000 * 60 * 60)));
-                var diffMinutos = parseInt((fechaServidor.getTime() / (1000 * 60)) - (fechaCliente.getTime() / (1000 * 60)));
-                var diffHoras = diffMinutos / 60;
-                //redondeo
-                var resto = diffMinutos % 60;
-                if (resto / 60 > 0.5) {
-                    if (diffHoras > 0) {
-                        diffHoras = diffHoras + 1;
-                    }
-                    else {
-                        diffHoras = diffHoras - 1;
-                    }
-                }
-                fechaRecurso.setHours(fechaRecurso.getHours() - diffHoras);
-                var dia = fechaRecurso.getDate();
-                if (dia < 10) {
-                    dia = '0' + dia;
-                }
-                var mes = fechaRecurso.getMonth() + 1;
-                if (mes < 10) {
-                    mes = '0' + mes;
-                }
-                //var fechaPintado = fechaRecurso.format("yyyy/MM/dd HH:mm");
-                var fechaPintado = tiempo.fechaPuntos.replace('@1@', dia).replace('@2@', mes).replace('@3@', fechaRecurso.getFullYear());
-                $(this).html(fechaPintado);
-                $(this).show();
-            }
-        });
-    }
-}
 
-var bool_usarMasterParaLectura = false;
-$(document).ready(function () {
-    bool_usarMasterParaLectura = $('input.inpt_usarMasterParaLectura').val() == 'True';
-});
-var finUsoMaster = null;
-
-//Realizamos la peticion
+let finUsoMaster = null;
+/**
+ * Envía una solicitud al servidor para obtener resultados basados en los filtros y configuraciones actuales, y actualiza la interfaz de usuario con esos resultados.
+ * 
+ * @param {string} pFiltros - Los filtros actuales aplicados a la búsqueda, que se enviarán al servidor para obtener resultados.
+ * @param {boolean|string} pPrimeraCarga - Indica si es la primera carga de resultados. Se usa para configurar el comportamiento inicial de la carga.
+ * @param {number} pNumeroResultados - El número de resultados que se deben mostrar. Utilizado para la paginación.
+ * @param {string} pPanelID - El ID del panel donde se mostrarán los resultados.
+ * @param {string} pTokenAfinidad - Un token de afinidad utilizado para asegurar que los resultados de búsqueda sean consistentes.
+ * 
+ * @returns {void}
+ */
 function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, pTokenAfinidad) {
     contResultados = contResultados + 1;
     if (document.getElementById('ctl00_ctl00_CPH1_CPHContenido_txtRecursosSeleccionados') != null) {
@@ -12920,19 +6159,9 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
 
     var paramAdicional = parametros_adiccionales;
 
-    /*
-    if ($('li.mapView').attr('class') == "mapView activeView") {
-        paramAdicional += 'busquedaTipoMapa=true';
-    }*/
-    /*
-    if ($('.chartView').attr('class') == "chartView activeView") {
-        paramAdicional = 'busquedaTipoChart=' + chartActivo + '|' + paramAdicional;
-    }*/
-
     if ($('.mapView').hasClass('activeView')) {
         paramAdicional += 'busquedaTipoMapa=true';
     }
-
 
     if ($('.chartView').hasClass('activeView')) {
         paramAdicional = 'busquedaTipoChart=' + chartActivo + '|' + paramAdicional;
@@ -12960,11 +6189,11 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
     params['pEsUsuarioInvitado'] = $('input.inpt_bool_esUsuarioInvitado').val() == 'True';
 
     if (typeof (identOrg) != 'undefined') {
-	 
+
         params['pIdentidadID'] = identOrg;
     }
     else {
-	 
+
         params['pIdentidadID'] = $('input.inpt_identidadID').val();
     }
     params['pParametros'] = '' + pFiltros.replace('#', '');
@@ -13017,9 +6246,16 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
                     panelListado.append(panel.find('.resource-list').html())
                     panel.find('.resource-list').html('');
                 } else if (!vistaMapa && !vistaChart) {
+
+                    // Verificar y añadir la clase "resource-list" a pPanelID si aún no la tiene
+                    const pPanel = $(document).find(pPanelID);
+                    if (!pPanel.hasClass("resource-list")) {
+                        pPanel.addClass("resource-list");
+                    }
+
                     // Montar resultados en el contenedor correcto
-                    const contenedor = $(document).find(`${pPanelID}.resource-list`).length > 0
-                        ? $(document).find(`${pPanelID}.resource-list`)
+                    const contenedor = pPanel.length > 0
+                        ? pPanel
                         : $(document).find("#panelResultados.resource-list");
 
                     // Tener en cuenta la posible existencia de un div adicional de clase ".resource-list-wrap"
@@ -13028,10 +6264,35 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
                         : contenedor;
 
                     // Si no se ha encontrado ningún contenedor para datos, hacerlo directamente
-                    if (contenedorPrincipal.length == 0) {
+                    if (contenedorPrincipal.length === 0) {
                         contenedorPrincipal = $(".resource-list-wrap");
                     }
-                    contenedorPrincipal.html(descripcion);
+
+                    // Verificar si `.resource-list-wrap` ya existe en `contenedor`
+                    if (contenedorPrincipal.hasClass("resource-list-wrap")) {
+                        // Si existe, insertar `descripcion` dentro del div `.resource-list-wrap`
+                        contenedorPrincipal.html(descripcion);
+                    } else {
+                        // Si no existe, envolver `descripcion` en un nuevo div con clase `.resource-list-wrap`
+                        contenedorPrincipal.html(`<div class="resource-list-wrap">${descripcion}</div>`);
+                    }
+
+                    // Hacer que las propiedades se oculten bien al volver de gráfico
+                    var texto = $("#buscador .texto").text();
+                    var listados = $('.content-properties .listado');
+                    var mosaicos = $('.content-properties .mosaico');
+
+                    if (texto === "Listado" || texto === "Compacto") {
+                        listados.removeClass('hidden').attr('hidden', false);
+                        mosaicos.addClass('hidden').attr('hidden', true);
+                        if (texto === "Compacto") {
+                            contenedor.removeClass('listView');
+                            contenedor.addClass('compacView');
+                        }
+                    } else if (texto === "Mosaico") {
+                        listados.addClass('hidden').attr('hidden', true);
+                        mosaicos.removeClass('hidden').attr('hidden', false);
+                    }
 
                 }
                 else {
@@ -13058,13 +6319,26 @@ function MontarResultados(pFiltros, pPrimeraCarga, pNumeroResultados, pPanelID, 
                 FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados, pPanelID);
             }
             if (MontarResultadosScroll.pagActual != null) {
-                MontarResultadosScroll.pagActual = 1;                
+                MontarResultadosScroll.pagActual = 1;
                 MontarResultadosScroll.setupCargarScroll();
             }
         }, "json");
     }
 }
 
+/**
+ * Envía una solicitud al servidor para obtener datos y genera un gráfico o una tabla en el panel especificado usando esos datos.
+ * 
+ * @param {string} metodo - El método del servidor que se llama para obtener los datos del gráfico o tabla.
+ * @param {Object} params - Un objeto que contiene los parámetros para la solicitud del servidor.
+ * @param {Object} asistente - Un objeto que contiene información sobre el asistente de gráficos, incluyendo título, nombre, tamaño, tipo y datasets.
+ * @param {string} paramAdicional - Parámetros adicionales a enviar con la solicitud.
+ * @param {string} funcionJS - Una función de JavaScript a ejecutar después de crear el gráfico o tabla.
+ * @param {number} pNumeroResultados - El número de resultados a mostrar, utilizado para la paginación.
+ * @param {string} pPanelID - El ID del panel donde se mostrará el gráfico o tabla.
+ * 
+ * @returns {void}
+ */
 function PintarGrafico(metodo, params, asistente, paramAdicional, funcionJS, pNumeroResultados, pPanelID) {
     $.post(obtenerUrl($('input.inpt_UrlServicioResultados').val()) + "/" + metodo, params, function (response) {
         if (response != '0resultados|||' && response != "") {
@@ -13169,6 +6443,17 @@ function PintarGrafico(metodo, params, asistente, paramAdicional, funcionJS, pNu
     }, "json");
 }
 
+
+/**
+ * Genera una tabla usando Google Visualization DataTable con los datos proporcionados y la dibuja en el `div` especificado.
+ * 
+ * @param {Array} asistenteDatasets - Un array de objetos que contiene los datos para las columnas de la tabla.
+ * @param {Array} arrayDatos - Un array de cadenas que contiene las filas de datos, separadas por `@@@`.
+ * @param {Array} asistentesOrdenes - Un array que define el orden de las columnas en los datos.
+ * @param {HTMLElement} divNuevo - El `div` donde se mostrará la tabla generada.
+ * 
+ * @returns {void}
+ */
 function DibujarTabla(asistenteDatasets, arrayDatos, asistentesOrdenes, divNuevo) {
     var data = new google.visualization.DataTable();
     for (var i = 0; i < asistenteDatasets.length; i++) {
@@ -13188,6 +6473,20 @@ function DibujarTabla(asistenteDatasets, arrayDatos, asistentesOrdenes, divNuevo
     table.draw(data, { width: '100%', height: '100%' });
 }
 
+
+/**
+ * Crea un gráfico de mapa de calor (heatmap) usando Highcharts con los datos proporcionados y lo muestra en el `div` especificado.
+ * 
+ * @param {Array} asistenteDatasets - Un array de objetos que contiene información sobre los datasets, incluyendo color de la escala del mapa de calor.
+ * @param {Array} arrayDatos - Un array de cadenas que contiene los datos del mapa de calor, con datos separados por `@@@`.
+ * @param {Array} asistentesOrdenes - Un array que define el orden de las columnas en los datos. Se utiliza para identificar los valores del eje X, eje Y y los valores de los datos.
+ * @param {HTMLElement} divNuevo - El `div` HTML donde se generará y mostrará el gráfico de mapa de calor.
+ * @param {String} asistenteName - El nombre del asistente que se usará como título de la serie en el gráfico.
+ * @param {Number} tam - El tamaño del gráfico, se utiliza para ajustar el tamaño de la leyenda.
+ * @param {Boolean} mtGrafico - Determina si se debe agregar un título al gráfico.
+ * 
+ * @returns {void}
+ */
 function DibujarHeatMap(asistenteDatasets, arrayDatos, asistentesOrdenes, divNuevo, asistenteName, tam, mtGrafico) {
 
     var ejeX = [];
@@ -13271,6 +6570,17 @@ function DibujarHeatMap(asistenteDatasets, arrayDatos, asistentesOrdenes, divNue
     }
 }
 
+
+/**
+ * Genera el formato de datos necesario para crear gráficos de barras o líneas en Chart.js.
+ * 
+ * @param {Array} arrayDatos - Un array de cadenas con los datos a ser usados en el gráfico. Los datos están separados por `@@@`.
+ * @param {Array} asistenteDatasets - Un array de objetos que define los datasets del gráfico, incluyendo nombre, color y otros atributos.
+ * @param {Array} asistentesOrdenes - Un array que define el orden de los datos en `arrayDatos`. El primer índice es para las etiquetas y los índices siguientes son para los datos.
+ * @param {Boolean} fill - Define si el gráfico debe tener el área de las barras o líneas rellena.
+ * 
+ * @returns {Object} Un objeto con las etiquetas y datasets necesarios para Chart.js.
+ */
 function DataBarrasLineas(arrayDatos, asistenteDatasets, asistentesOrdenes, fill) {
     var labels = [];
     for (var i = 1; i < arrayDatos.length - 1; i++) {
@@ -13301,6 +6611,15 @@ function DataBarrasLineas(arrayDatos, asistenteDatasets, asistentesOrdenes, fill
     };
     return data;
 }
+
+/**
+ * Genera el formato de datos necesario para crear un gráfico de círculos (pie o doughnut) en Chart.js.
+ * 
+ * @param {Array} arrayDatos - Un array de cadenas con los datos a ser usados en el gráfico. Los datos están separados por `@@@`.
+ * @param {Array} asistentesOrdenes - Un array que define el orden de los datos en `arrayDatos`. El primer índice es para las etiquetas y el segundo índice es para los valores.
+ * 
+ * @returns {Object} Un objeto con las etiquetas y datasets necesarios para Chart.js.
+ */
 function DataCirculos(arrayDatos, asistentesOrdenes) {
     var labels = [];
     for (var i = 1; i < arrayDatos.length - 1; i++) {
@@ -13327,6 +6646,14 @@ function DataCirculos(arrayDatos, asistentesOrdenes) {
     return conf;
 }
 
+/**
+ * Crea un gráfico en un nuevo canvas dentro del elemento div proporcionado, usando la configuración proporcionada.
+ * 
+ * @param {HTMLElement} divNuevo - El elemento div donde se creará el gráfico. Debe estar presente en el DOM.
+ * @param {Object} config - Un objeto de configuración para Chart.js, que define el tipo de gráfico, datos y opciones.
+ * 
+ * @returns {void}
+ */
 function EjemploGrafico(divNuevo, config) {
     var canvas = document.createElement("canvas");
     canvas.className = "graficoCtx";
@@ -13334,7 +6661,6 @@ function EjemploGrafico(divNuevo, config) {
     var ctx = canvas.getContext('2d');
 
     new Chart(ctx, config);
-
 }
 
 /**
@@ -13352,12 +6678,12 @@ const scrollingListadoRecursos = {
         this.contenedor = $(document).find("#panResultados.resource-list").length > 0
             ? $(document).find("#panResultados.resource-list")
             : $(document).find("#panelResultados.resource-list");
-        
+
         // Tener en cuenta la posible existencia de un div adicional de clase ".resource-list-wrap"
-        this.contenedorPrincipal = this.contenedor.find(".resource-list-wrap").length > 0 
-        ? this.contenedor.find(".resource-list-wrap")
-        : this.contenedor;
-                                
+        this.contenedorPrincipal = this.contenedor.find(".resource-list-wrap").length > 0
+            ? this.contenedor.find(".resource-list-wrap")
+            : this.contenedor;
+
         return;
     },
     scrollingListado: function () {
@@ -13378,8 +6704,6 @@ const scrollingListadoRecursos = {
                     that.contenedorPrincipal.append(this);
                 });
             that.cargandoScrolling(data);
-            // Formatear el contenido que ha sido traido al haber hecho scroll
-            limpiarActividadRecienteHome.init();
         };
 
         return;
@@ -13421,9 +6745,9 @@ var MontarResultadosScroll = {
         this.footer = $(idFooterJQuery);
         this.item = idItemJQuery;
         // Controlar que solo haga una petición cada vez
-        this.isLoadingData = false;        
+        this.isLoadingData = false;
         // Configurar carga mediante scroll
-        this.footer.length > 0 && this.setupCargarScroll();        
+        this.footer.length > 0 && this.setupCargarScroll();
         return;
     },
 
@@ -13431,41 +6755,47 @@ var MontarResultadosScroll = {
      * Método que configurará el método mediante el cual se traerán los resultados al hacer scroll.
      * Si el #footer tiene la propiedad de "fixed", se implementará la lógica con cargarScrollForFixedFooter. En caso contrario se lanzará con cargarScroll
      */
-    setupCargarScroll: function(){
+    setupCargarScroll: function () {
         const that = this;
 
         // Verifica si el elemento con clase "footer" tiene la posición "fixed"
         if (that.footer.css('position') === 'fixed') {
-          that.cargarScrollForFixedFooter();            
+            that.cargarScrollForFixedFooter();
         } else {
-          that.cargarScroll();
+            that.cargarScroll();
         }
+    },
+    
+    comprobarScroll: function (direction) {
+        var numContenedoresChar = $("#divContChart").length;
+
+        // Devuelve true si se está haciendo scroll hacia abajo, no se están cargando datos y la página de búsqueda no se está visualizando en modo gráfico
+        return direction === "down" && this.isLoadingData === false && numContenedoresChar == 0;
     },
 
     cargarScroll: function () {
-        var that = this;
+        var that = this;  // Mantén la referencia de `this` en `that`
         this.waypointMoreResults = new Waypoint({
             element: that.footer,
-            handler: function (direction) {                
+            handler: function (direction) {
                 // Esperar a realizar la petición
-                setTimeout(function() {
-                    if (direction == "down" && that.isLoadingData == false) {
+                setTimeout(function () {
+                    if (that.comprobarScroll(direction)) {
                         // Gestionar la petición de los datos
                         that.handleLoadDataFromScroll();
-                    }              
-                }, 500); 
+                    }
+                }, 500);
             },
-            //offset: 'bottom-in-view' // Disparar petición cuando se visualice el footer
-            // Cambiado debido a que listado de recursos, al pulsar en "Ctrol + Fin" no detectaba ese comportamiento
-            offset: '100%', // Disparar petición cuando se visualice el footer
-        })
-        return;
+            offset: '100%' // Disparar petición cuando se visualice el footer
+        });
     },
 
+
+
     /* Cargar Infinite Scroll para cuando el footer está fixed */
-	cargarScrollForFixedFooter: function(){
+    cargarScrollForFixedFooter: function () {
         var that = this;
-        window.addEventListener('scroll', function() {
+        window.addEventListener('scroll', function () {
             if (!that.isLoadingData) {
                 var scrollPercentage = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
                 if (scrollPercentage >= that.threshold) {
@@ -13475,48 +6805,49 @@ var MontarResultadosScroll = {
                 }
             }
         });
-	},
+    },
 
     /**
      * Método que realizará la lógica de petición de los datos y la gestión de estos en el contenedor de resultados.
      * Es llamado cargarScrollForFixedFooter o desde cargarScroll dependiendo de si hay o no footer "fixed"
      */
-    handleLoadDataFromScroll: function(){
+    handleLoadDataFromScroll: function () {
         const that = this;
-        
+
         that.isLoadingData = true;
         /* Antes de hacer petición visualizar el "Loading" */
         scrollingListadoRecursos.crearCargando();
         /* Realizar petición al servidor */
         const peticionScrollResultadosPromise = that.peticionScrollResultados();
-        peticionScrollResultadosPromise.then(function(data) {
+        peticionScrollResultadosPromise.then(function (data) {
             let htmlRespuesta = document.createElement("div");
             htmlRespuesta.innerHTML = data;
             if ($(htmlRespuesta).find(that.item).length > 0) {
                 that.CargarResultadosScroll(data);
             } else {
-                that.CargarResultadosScroll('');
-                // No se traen más datos -> Eliminar scrolling
-                // that.destroyScroll();
+                that.CargarResultadosScroll('');                
                 // La petición ha terminado. Permitir hacer más peticiones
                 that.isLoadingData = false;
             }
-            if ((typeof CompletadaCargaRecursos != 'undefined')) {
+
+            // A modo de "completion", ejecutar CompletadaCargaRecursos si está definida
+            if (typeof CompletadaCargaRecursos != 'undefined') {
                 CompletadaCargaRecursos();
             }
+
             if (typeof (urlCargarAccionesRecursos) != 'undefined') {
                 ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
             }
-            }).catch(function(error) {
-                console.error("Error al traer resultados vía scroll:", error);
-            }).always(function(){
-                that.isLoadingData = false;
-                // Fin de petición -> Ocultar loading
-                scrollingListadoRecursos.cargandoScrolling();
-            });
+        }).catch(function (error) {
+            console.error("Error al traer resultados vía scroll:", error);
+        }).always(function () {
+            that.isLoadingData = false;
+            // Fin de petición -> Ocultar loading
+            scrollingListadoRecursos.cargandoScrolling();
+        });
     },
 
-    destroyScroll: function () {        
+    destroyScroll: function () {
         this.waypointMoreResults.destroy();
         return;
     },
@@ -13567,10 +6898,10 @@ var MontarResultadosScroll = {
                 defr.resolve(data);
             }
         }, "json")
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            // Manejar el error
-            defr.reject(errorThrown); // Rechazar la promesa con el mensaje de error
-        });
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                // Manejar el error
+                defr.reject(errorThrown); // Rechazar la promesa con el mensaje de error
+            });
         // Devolver la promesa para que el consumidor la maneje
         return defr.promise(); //         
     }
@@ -13773,6 +7104,16 @@ var MontarPaginacionBusquedaResultados = {
 }
 
 
+/**
+ * Realiza el post-procesamiento de la carga de resultados, incluyendo ajustes en la vista, ejecución de scripts, y otras configuraciones.
+ * 
+ * @param {string} paramAdicional - Parámetros adicionales para determinar el tipo de vista (mapa, gráfico, etc.).
+ * @param {string} funcionJS - Código JavaScript adicional a ejecutar después de cargar los resultados.
+ * @param {number} pNumeroResultados - Número de resultados de la búsqueda.
+ * @param {string} pPanelID - ID del panel donde se mostrarán los resultados.
+ * 
+ * @returns {void}
+ */
 function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados, pPanelID) {
 
     var vistaMapa = (paramAdicional.indexOf('busquedaTipoMapa=true') != -1);
@@ -13789,8 +7130,7 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
 
     $('#' + panFiltrosPulgarcito).css('display', '');
 
-    EjecutarScriptsIniciales();
-    if (pNumeroResultados == 1) { OcultarUpdateProgress(); viewOptions.init(); MontarNumResultados(); }
+    if (pNumeroResultados == 1) { OcultarUpdateProgress(); MontarNumResultados(); }
 
     if (funcionJS != '') {
         eval(funcionJS);
@@ -13807,41 +7147,25 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
             mensaje.removeClass('over');
             if (vistaCompacta) { acciones.hide(); }
             mensaje.hover(
-		        function () {
-		            $(this).removeClass('over');
-		            utils.show();
-		            acciones.show();
-		        },
-		        function () {
-		            $(this).removeClass('over');
-		            utils.show();
-		            acciones.show();
-		        }
-	        );
+                function () {
+                    $(this).removeClass('over');
+                    utils.show();
+                    acciones.show();
+                },
+                function () {
+                    $(this).removeClass('over');
+                    utils.show();
+                    acciones.show();
+                }
+            );
         });
     }
-    MontarFechas();
-
-    limpiarActividadRecienteHome.init();
-
     enlazarFiltrosBusqueda();
 
     if (typeof listadoMensajesMostrarAcciones != 'undefined') {
         /* Lanzar el evento de las imagenes */
         listadoMensajesMostrarAcciones.init();
     }
-
-    /* numero categorias */
-    mostrarNumeroCategorias.init();
-
-    /* numero etiquetas */
-    mostrarNumeroEtiquetas.init();
-
-    /* enganchar mas menos categorias y etiquetas */
-    verTodasCategoriasEtiquetas.init();
-
-    /* pintar iconos de los videos*/
-    pintarRecursoVideo.init();
 
     /* Es listado de mensajes */
     if (tipoBusqeda == 12) {
@@ -13862,14 +7186,9 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
         /* En los listados de Inevery, hay que ejecutar este script */
         customizarListado.init();
     }
-
+    
     if ((typeof CompletadaCargaRecursos != 'undefined')) {
         CompletadaCargaRecursos();
-    }
-
-    /* enganchar vista listado-mosaico*/
-    if (!vistaMapa && !vistaChart) {
-        modoVisualizacionListados.init(pPanelID);
     }
 
     utilMapas.AjustarBotonesVisibilidad();
@@ -13891,10 +7210,26 @@ function FinalizarMontarResultados(paramAdicional, funcionJS, pNumeroResultados,
 
     if (typeof (urlCargarAccionesRecursos) != 'undefined') {
         ObtenerAccionesListadoMVC(urlCargarAccionesRecursos);
-    }
-    MontarFechaCliente();
+    }    
+
+
 }
 
+
+/**
+ * Trae la información adicional sobre un punto en el mapa y muestra el contenido en un panel o infowindow.
+ * 
+ * @param {Object} me - Objeto del marcador en el mapa que tiene el infowindow. Si es null, se actualiza un panel en lugar del infowindow.
+ * @param {string} panelVerMas - ID del panel donde se mostrará la información adicional si `me` es null.
+ * @param {string} claveLatLog - Clave para la latitud y longitud del punto en el mapa.
+ * @param {string} docIDs - Identificadores de documentos a incluir en la solicitud.
+ * @param {string} docIDsExtra - Identificadores de documentos adicionales para la solicitud.
+ * @param {number} panelVerMasX - Posición X del panel si `me` es null.
+ * @param {number} panelVerMasY - Posición Y del panel si `me` es null.
+ * @param {string} tipo - Tipo de clase CSS a aplicar al panel de "ver más".
+ * 
+ * @returns {void}
+ */
 function TraerRecPuntoMapa(me, panelVerMas, claveLatLog, docIDs, docIDsExtra, panelVerMasX, panelVerMasY, tipo) {
     if (me == null) {
         $('#' + panelVerMas).html('<div><p>' + form.cargando + '...</p></div>');
@@ -13941,7 +7276,7 @@ function TraerRecPuntoMapa(me, panelVerMas, claveLatLog, docIDs, docIDsExtra, pa
             if (panelVerMasX != null && panelVerMasY != null) {
                 $('#' + panelVerMas).removeAttr('class');
                 if (tipo != null) {
-		   
+
                     $('#' + panelVerMas).addClass(tipo);
                 }
 
@@ -13962,10 +7297,15 @@ function TraerRecPuntoMapa(me, panelVerMas, claveLatLog, docIDs, docIDsExtra, pa
                 }
             }
         }
-        limpiarActividadRecienteHome.init();
     });
 }
 
+/**
+ * Reposiciona el panel de información en el mapa para que se ajuste a la ventana del navegador.
+ * Asegura que el panel sea visible y no se desborde de la ventana.
+ * 
+ * @returns {void}
+ */
 function ReposicionarFichaMapa() {
     var fichaMapa = $('#' + utilMapas.fichaMapa);
     var posX = 0;
@@ -14009,11 +7349,27 @@ function ReposicionarFichaMapa() {
 
 }
 
+
+/**
+ * Actualiza la vista de la página para mostrar un gráfico específico y aplica un filtro basado en facetas.
+ * Cambia el estado de la vista a `chartView` y guarda el ID del gráfico activo junto con el JavaScript asociado.
+ *
+ * @param {string} pCharID - El ID del gráfico que se debe mostrar.
+ * @param {string} pJsChart - El JavaScript asociado al gráfico que se debe ejecutar.
+ * 
+ * @returns {void}
+ */
 function SeleccionarChart(pCharID, pJsChart) {
     $('.listView').attr('class', 'listView');
     $('.gridView').attr('class', 'gridView');
     $('.mapView').attr('class', 'mapView');
-    $('.chartView').attr('class', 'chartView activeView');
+    $('.mosaicView').attr('class', 'mosaicView');
+
+    $('.chartView').each(function () {
+        if (!$(this).hasClass('activeView')) {
+            $(this).addClass('activeView');
+        }
+    });
 
     chartActivo = pCharID;
     jsChartActivo = pJsChart;
@@ -14021,6 +7377,12 @@ function SeleccionarChart(pCharID, pJsChart) {
     FiltrarPorFacetas(ObtenerHash2());
 }
 
+/**
+ * Configura el panel de gráficos y aplica filtros basados en facetas.
+ * Actualiza la vista a `chartView`, calcula el tamaño fijo de los gráficos, y filtra los datos según las facetas.
+ *
+ * @returns {void}
+ */
 function SeleccionarDashboard() {
     var json = jsonAsistente;
 
@@ -14041,6 +7403,16 @@ function SeleccionarDashboard() {
     noGrafico = true;
 }
 
+
+/**
+ * Envía un formulario para exportar una búsqueda a un formato específico.
+ * La función valida los parámetros y establece los valores necesarios antes de enviar el formulario de exportación.
+ *
+ * @param {string} pExportacionID - ID de la exportación, utilizado para identificar la exportación en el servidor.
+ * @param {string} pNombreExportacion - Nombre de la exportación, para describir el archivo exportado.
+ * @param {string} pFormatoExportacion - Formato de exportación deseado (por ejemplo, 'CSV', 'PDF').
+ * @returns {void}
+ */
 function ExportarBusqueda(pExportacionID, pNombreExportacion, pFormatoExportacion) {
     if (pExportacionID != "" && pNombreExportacion != "" && $('#ParametrosExportacion').length > 0 && $('#FormExportarBusqueda').length > 0 && pFormatoExportacion != "") {
         $('#ParametrosExportacion').val(pExportacionID + '|' + pNombreExportacion + '|' + pFormatoExportacion);
@@ -14048,6 +7420,17 @@ function ExportarBusqueda(pExportacionID, pNombreExportacion, pFormatoExportacio
     }
 }
 
+
+/**
+ * Configura y envía una solicitud para cargar y mostrar facetas en la interfaz de usuario basada en los filtros y otros parámetros proporcionados.
+ * 
+ * @param {string} pFiltros - Filtros aplicados a la búsqueda, reemplaza '&' por '|'.
+ * @param {boolean} pPrimeraCarga - Indica si es la primera vez que se cargan las facetas.
+ * @param {number} pNumeroFacetas - Número de facetas a cargar.
+ * @param {string} pPanelID - ID del panel donde se mostrarán las facetas.
+ * @param {string|null} pFaceta - Faceta específica a cargar, puede incluir '|vermas'.
+ * @param {string} pTokenAfinidad - Token de afinidad para la sesión actual.
+ */
 function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFaceta, pTokenAfinidad) {
     pFiltros = pFiltros.replace(/&/g, '|');
     if (mostrarFacetas) {
@@ -14115,10 +7498,9 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
                 }
 
                 if (pFaceta == null || pFaceta == '' || pNumeroFacetas == 1) {
-					if( pNumeroFacetas == 1)
-					{
-						$('#' + panFacetas).html('');
-					}
+                    if (pNumeroFacetas == 1) {
+                        $('#' + panFacetas).html('');
+                    }
                     var panelFacetas = pPanelID;
                     if ($('#facetedSearch').length) {
                         panelFacetas = '#facetedSearch';
@@ -14141,8 +7523,6 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
                         }
                     }
                     $(panelFacetas).append(descripcion);
-
-                    facetedSearch.init();
                 }
                 else {
                     //Si viene el parámetro pFaceta, se está rellenando una faceta, hay que sustituir el contenido anterior por el actual. 
@@ -14155,7 +7535,7 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
                             descripcion += '<p class="moreResults">' + htmlVerMas + '</p>';
                         }
                         if (descripcion == null) {
-						 
+
                             descripcion = data.trim();
                         }
                     }
@@ -14167,19 +7547,18 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
                     else {
                         $(pPanelID).html(descripcion);
                     }
-                    facetedSearch.init();
                 }
 
                 if (pNumeroFacetas == 1) { MontarPanelFiltros(); }
                 /* presentacion facetas */
                 // Longitud facetas por CSS
-		        // limiteLongitudFacetas.init();
+                // limiteLongitudFacetas.init();
 
                 //}
 
                 if (pNumeroFacetas == 3) {
                     if ($(".filtroFacetaFecha").length > 0) {
-					 
+
                         $(".filtroFacetaFecha").datepicker();
                     }
 
@@ -14219,6 +7598,11 @@ function MontarFacetas(pFiltros, pPrimeraCarga, pNumeroFacetas, pPanelID, pFacet
     primeraCargaDeFacetas = false;
 }
 
+/**
+ * Inicializa el componente de selección de fechas (datepicker) y configura los eventos para manejar la selección de fechas y semanas.
+ *
+ * @param {string} [fechaInicioCalendario] - Fecha inicial para el calendario, en formato 'YYYYMMDD'.
+ */
 function IniciarFacetaCalendario(fechaInicioCalendario) {
 
     //Cogemos los eventos
@@ -14372,6 +7756,14 @@ function IniciarFacetaCalendario(fechaInicioCalendario) {
     });
 }
 
+/**
+ * Configura y envía una solicitud para cargar facetas de búsqueda para el siguiente mes, actualizando los filtros aplicados.
+ *
+ * @param {string} faceta - Faceta específica a actualizar.
+ * @param {string} controlID - ID del control donde se mostrarán los resultados.
+ * @param {number} year - Año del siguiente mes.
+ * @param {number} month - Mes a cargar (1-12).
+ */
 function VerFechasSiguienteMes(faceta, controlID, year, month) {
     var filtros = ObtenerHash2();
     if (month <= 9) {
@@ -14400,10 +7792,11 @@ function VerFechasSiguienteMes(faceta, controlID, year, month) {
     MontarFacetas(filtros, false, -1, '#' + controlID, faceta + '|vermas');
 }
 
+
+/**
+ * Finaliza el proceso de montaje de facetas, inicializando la búsqueda facetada y configurando los filtros y eventos necesarios.
+ */
 function FinalizarMontarFacetas() {
-
-    facetedSearch.init();
-
     MontarPanelFiltros();
 
     if (enlazarJavascriptFacetas) {
@@ -14435,8 +7828,12 @@ $(document).ready(function () {
             return false;
         }
         if (txt.hasClass('text') && txt.val() != '') {
+            var nombreSearch = $('.inpt_searchPersonalizadoActivo').val();
+            if (nombreSearch == "" || nombreSearch == null || nombreSearch == "search") {
+                nombreSearch = "search";
+            }
             //Resto de buscadores
-            window.location.href = $('input.inpt_baseUrlBusqueda').val() + '/recursos?search=' + txt.val();
+            window.location.href = $('input.inpt_baseUrlBusqueda').val() + '/recursos?' + nombreSearch +'=' + txt.val();
             return false;
         }
         return false;
@@ -14484,24 +7881,21 @@ $(document).ready(function () {
         };
     });
 
-
-
-
     $('.aaCabecera .searchGroup .text')
-    .unbind()
-    .keydown(function (event) {
-        if ($(this).val().indexOf('|') > -1) {
-            $(this).val($(this).val().replace(/\|/g, ''));
-        };
-        if (!$(this).hasClass('ac_input') && (event.which || event.keyCode)) {
-            if ((event.which == 13) || (event.keyCode == 13)) {
-                $(this).parent().find('.encontrar').click();
-                return false;
-            }
-        } else {
-            return true;
-        };
-    });
+        .unbind()
+        .keydown(function (event) {
+            if ($(this).val().indexOf('|') > -1) {
+                $(this).val($(this).val().replace(/\|/g, ''));
+            };
+            if (!$(this).hasClass('ac_input') && (event.which || event.keyCode)) {
+                if ((event.which == 13) || (event.keyCode == 13)) {
+                    $(this).parent().find('.encontrar').click();
+                    return false;
+                }
+            } else {
+                return true;
+            };
+        });
 
     $('.searchGroup .text').focus(function (event) {
         if ($(this).attr('class') == 'text defaultText') {
@@ -14527,13 +7921,18 @@ $(document).ready(function () {
                 }
                 var parametros = $('.searchGroup .text').val();
                 var autocompletar = $('.ac_results .ac_over');
+                var nombreSearch = $('.inpt_searchPersonalizadoActivo').val();
+                if (nombreSearch == "" || nombreSearch == null || nombreSearch == "search") {
+                    nombreSearch = "search";
+                }
+
                 if (typeof (autocompletar) != 'undefined' && autocompletar.length > 0 && typeof ($('.ac_results .ac_over')[0].textContent) != 'undefined') {
 
                     parametros = $('.ac_results .ac_over')[0].textContent;
                 }
 
                 if (parametros == '') {
-                    url = url.replace('?search=', '').replace('/tag/', '');
+                    url = url.replace('?' + nombreSearch +'=', '').replace('/tag/', '');
                 }
                 window.location.href = url + parametros;
             }
@@ -14542,26 +7941,19 @@ $(document).ready(function () {
 
 
 $(document).ready(function () {
-    PreparaAutoCompletarComunidad();
-    PrepararInputBuscador();
-});
-
-/**
- * Prepara el input de búsqueda en la sección de "Recursos" u otras páginas similares.
- *
- * Este método se encarga de configurar el comportamiento del input de búsqueda
- * y del botón de búsqueda asociado. Si el campo de entrada `#finderSection` está presente
- * en la página, añade manejadores de eventos para realizar búsquedas cuando el usuario
- * hace clic en el botón de búsqueda o presiona la tecla Enter.
- */
-function PrepararInputBuscador() {
     if ($('#finderSection').length > 0) {
         var urlPaginaActual = $('.inpt_urlPaginaActual').val();
         if (typeof (urlPaginaActual) != 'undefined') {
             $('#inputLupa').click(function (event) {
                 // Ejecución de búsqueda
                 const searchString = escapeHTML($('#finderSection').val());
-                window.location.href = urlPaginaActual + "?search=" + encodeURIComponent(searchString);
+
+                var nombreSearch = $('.inpt_searchPersonalizadoActivo').val();
+                if (nombreSearch == "" || nombreSearch == null || nombreSearch == "search") {
+                    nombreSearch = "search";
+                }
+
+                window.location.href = urlPaginaActual + "?"+nombreSearch+"=" + encodeURIComponent(searchString); 
             });
         }
 
@@ -14578,28 +7970,138 @@ function PrepararInputBuscador() {
                 return true;
             };
         });
-    }
-}
 
+        if (typeof (origenAutoCompletar) == 'undefined') {
+            origenAutoCompletar = ObtenerOrigenAutoCompletarBusqueda($('input.inpt_tipoBusquedaAutoCompl').val());
+            if (origenAutoCompletar == '') {
+                var pathName = window.location.pathname;
+
+                pathName = pathName.substr(pathName.lastIndexOf('/') + 1);
+                if (pathName.indexOf('?') > 0) {
+                    pathName = pathName.substr(0, pathName.indexOf('?'));
+                }
+
+                origenAutoCompletar = pathName;
+            }
+        }
+
+        //var tablaPropiaAutoCompletar = $('input.inpt_tablaPropiaAutoCompletar').val().toLowerCase() == 'true';
+        var urlServicioAutocompletar = $('.inpt_urlServicioAutocompletar').val();
+        if (urlServicioAutocompletar.indexOf('autocompletarEtiquetas') > 0) {
+            var proyID = $('.inpt_proyID').val();
+            var facetasBusqPag = $('.inpt_facetasBusqPag').val();
+            var identidadID = $('.inpt_identidadID').val();
+
+            $('#finderSection').autocomplete(
+			null,
+			{
+			    servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
+                metodo: 'AutoCompletarTipado',
+                //url: urlServicioAutocompletar + "/AutoCompletarTipado",
+                //type: "POST",
+			    delay: 0,
+			    scroll: false,
+			    selectFirst: false,
+			    minChars: 1,
+			    width: 'auto',
+			    max: 25,
+			    cacheLength: 0,
+			    extraParams: {
+			        pProyecto: proyID,
+			        //pTablaPropia: tablaPropiaAutoCompletar,
+			        pFacetas: facetasBusqPag,
+			        pOrigen: origenAutoCompletar,
+			        pIdentidad: $('input.inpt_identidadID').val(),
+			        pIdioma: $('input.inpt_Idioma').val(),
+			        maxwidth: '420px',
+			        botonBuscar: 'inputLupa'
+			    }
+			}
+			);
+        } else {
+            var proyID = $('.inpt_proyID').val();
+            var facetasBusqPag = $('.inpt_facetasBusqPag').val();
+            var identidadID = $('.inpt_identidadID').val();
+            var bool_esMyGnoss = $('.inpt_bool_esMyGnoss').val() == 'True';
+            var bool_estaEnProyecto = $('.inpt_bool_estaEnProyecto').val() == 'True';
+            var bool_esUsuarioInvitado = $('input.inpt_bool_esUsuarioInvitado').val() == 'True';
+            var orgID = $('input.inpt_organizacionID').val();
+            var perfilID = $('input#inpt_perfilID').val();
+            var parametros = $('.inpt_parametros').val();
+            var tipo = $('.inpt_tipoBusquedaAutoCompl').val();
+            var facetasBusqPag = $('.inpt_facetasBusqPag').val();
+            $('#finderSection').autocomplete(
+				null,
+				{
+				    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
+				    //metodo: 'AutoCompletarFacetas',
+                    url: urlServicioAutocompletar + "/AutoCompletarFacetas",
+                    type: "POST",
+				    delay: 0,
+				    minLength: 4,
+				    scroll: false,
+				    selectFirst: false,
+				    minChars: 4,
+				    width: 190,
+				    cacheLength: 0,
+				    extraParams: {
+				        proyecto: proyID,
+				        bool_esMyGnoss: bool_esMyGnoss == true,
+				        bool_estaEnProyecto: bool_estaEnProyecto == true,
+				        bool_esUsuarioInvitado: bool_esUsuarioInvitado == true,
+				        identidad: identidadID,
+				        organizacion: orgID,
+				        filtrosContexto: '',
+				        languageCode: $('input.inpt_Idioma').val(),
+				        perfil: perfilID,
+				        //pTablaPropia: tablaPropiaAutoCompletar,
+				        pFacetas: facetasBusqPag,
+				        pOrigen: origenAutoCompletar,
+				        nombreFaceta: 'search',
+				        orden: '',
+				        parametros: parametros,
+				        tipo: tipo,
+				        botonBuscar: 'inputLupa'
+				    }
+				}
+			);
+        }
+    }
+});
+
+$(document).ready(function () {
+    PreparaAutoCompletarComunidad();
+});
+
+/**
+ * Configura el autocompletado para todos los campos de entrada con la clase `autocompletar`.
+ * El autocompletado se basa en el origen, facetas, y parámetros específicos del contexto de la búsqueda.
+
+ * @returns {void}
+ */
 function PreparaAutoCompletarComunidad() {
     $('input.autocompletar').each(function () {
         var txtBusqueda = this;
         var ddlCategorias = $(this).parent().parent().find('.ddlCategorias');
         var pOrigen = '';
+        tipoAutocompletar = -1;
         var pTipoDdlCategorias = '';
         var facetasAutoComTip = '';
         if ($(this).attr('origen') != undefined) {
             pTipoDdlCategorias = $(this).attr('origen');
             pOrigen = ObtenerOrigenAutoCompletarBusqueda($(this).attr('origen'));
+            tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda($(this).attr('origen'));
             facetasAutoComTip = ObtenerFacetasAutocompletar($(this).attr('origen'));
         } else if (typeof (ddlCategorias.val()) != 'undefined' && ddlCategorias.val() != '') {
             pOrigen = ObtenerOrigenAutoCompletarBusqueda(ddlCategorias.val());
             facetasAutoComTip = ObtenerFacetasAutocompletar(ddlCategorias.val());
+            tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda(ddlCategorias.val());
             pTipoDdlCategorias = ddlCategorias.val();
         } else if (typeof ($('input.inpt_tipoBusquedaAutoCompl').val()) != 'undefined') {
             if ($('input.inpt_tipoBusquedaAutoCompl').val() != '') {
                 pOrigen = origenAutoCompletar;
                 facetasAutoComTip = ObtenerFacetasAutocompletar($('input.inpt_tipoBusquedaAutoCompl').val());
+                tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda($('input.inpt_tipoBusquedaAutoCompl').val());
             }
             pTipoDdlCategorias = $('input.inpt_tipoBusquedaAutoCompl').val();
         }
@@ -14619,9 +8121,8 @@ function PreparaAutoCompletarComunidad() {
         var urlServicioAutocompletarEtiquetas = $('input.inpt_urlServicioAutocompletarEtiquetas').val();
 
         var identidadID = $('input.inpt_identidadID').val();
-        var limitAutocomplete = 25; 
-        if ($(this).attr('gnoss-autocomplete-limit') != undefined)
-        {
+        var limitAutocomplete = 25;
+        if ($(this).attr('gnoss-autocomplete-limit') != undefined) {
             limitAutocomplete = parseInt($(this).attr('gnoss-autocomplete-limit'));
         }
         var proyID = $('input.inpt_proyID').val();
@@ -14631,7 +8132,7 @@ function PreparaAutoCompletarComunidad() {
         var btnBuscarID = '';
         // Size() deprecado
         //if ($(this).parent().find('.encontrar').size() > 0) {
-          if ($(this).parent().find('.encontrar').length > 0) {
+        if ($(this).parent().find('.encontrar').length > 0) {
             btnBuscarID = $(this).parent().find('.encontrar').attr('id');
         } else {
             return;
@@ -14642,7 +8143,7 @@ function PreparaAutoCompletarComunidad() {
         var bool_estaEnProyecto = $('input.inpt_bool_estaEnProyecto').val() == 'True';
         var bool_esUsuarioInvitado = $('input.inpt_bool_esUsuarioInvitado').val() == 'True';
         if (facetasAutoComTip == '') {
-		 
+
             facetasAutoComTip = $('input.inpt_FacetasProyAutoCompBuscadorCom').val();
         }
         //var tablaPropiaAutoCompletar = $('input.inpt_tablaPropiaAutoCompletar').val().toLowerCase() == "true";
@@ -14669,6 +8170,7 @@ function PreparaAutoCompletarComunidad() {
                         //pTablaPropia: tablaPropiaAutoCompletar,
                         pFacetas: facetasAutoComTip,
                         pOrigen: pOrigen,
+                        pTipoAutocompletar: tipoAutocompletar,
                         pIdentidad: identidadID,
                         pIdioma: $('input.inpt_Idioma').val(),
                         maxwidth: '389px',
@@ -14677,42 +8179,49 @@ function PreparaAutoCompletarComunidad() {
                 });
         } else {
             $(this).autocomplete(
-			null,
-			{
-			    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
-			    //metodo: 'AutoCompletarFacetas',
-                url: urlServicioAutocompletar + "/AutoCompletarFacetas",
-			    type: "POST",
-			    delay: 0,
-			    minLength: 4,
-			    scroll: false,
-			    selectFirst: false,
-			    minChars: 4,
-			    width: 190,
-			    cacheLength: 0,
-			    extraParams: {
-			        proyecto: proyID,
-			        bool_esMyGnoss: bool_esMyGnoss == 'True',
-			        bool_estaEnProyecto: bool_estaEnProyecto == 'True',
-			        bool_esUsuarioInvitado: bool_esUsuarioInvitado == 'True',
-			        identidad: identidadID,
-			        organizacion: organizacionID,
-			        filtrosContexto: '',
-			        languageCode: $('input.inpt_Idioma').val(),
-			        perfil: perfilID,
-			        nombreFaceta: 'search',
-			        orden: '',
-			        parametros: '',
-			        tipo: pTipoDdlCategorias,
-			        botonBuscar: btnBuscarID
-			    }
-			});
+                null,
+                {
+                    //servicio: new WS(urlServicioAutocompletar, WSDataType.jsonp),
+                    //metodo: 'AutoCompletarFacetas',
+                    url: urlServicioAutocompletar + "/AutoCompletarFacetas",
+                    type: "POST",
+                    delay: 0,
+                    minLength: 4,
+                    scroll: false,
+                    selectFirst: false,
+                    minChars: 4,
+                    width: 190,
+                    cacheLength: 0,
+                    extraParams: {
+                        proyecto: proyID,
+                        bool_esMyGnoss: bool_esMyGnoss == 'True',
+                        bool_estaEnProyecto: bool_estaEnProyecto == 'True',
+                        bool_esUsuarioInvitado: bool_esUsuarioInvitado == 'True',
+                        identidad: identidadID,
+                        organizacion: organizacionID,
+                        filtrosContexto: '',
+                        languageCode: $('input.inpt_Idioma').val(),
+                        perfil: perfilID,
+                        nombreFaceta: 'search',
+                        orden: '',
+                        parametros: '',
+                        tipo: pTipoDdlCategorias,
+                        botonBuscar: btnBuscarID
+                    }
+                });
         }
     });
 }
 
-var wrap = '';
 
+/**
+ * Obtiene la URL de búsqueda asociada a un tipo de búsqueda específico.
+ * La función busca en los elementos de entrada con la clase `inpt_tipo_busqueda` para encontrar una URL que corresponda al tipo de búsqueda dado.
+ * Si no se encuentra una coincidencia, devuelve la URL por defecto del último elemento.
+ *   
+ * @param {string} tipo - El tipo de búsqueda para el que se desea obtener la URL.
+ * @returns {string} La URL de búsqueda asociada al tipo de búsqueda especificado, o la URL por defecto del último elemento si no se encuentra una coincidencia.
+ */
 function ObtenerUrlBusqueda(tipo) {
     var tamagno = $('input.inpt_tipo_busqueda').length;
     for (var i = 0; i < tamagno; i++) {
@@ -14729,6 +8238,15 @@ function ObtenerUrlBusqueda(tipo) {
     return ($('input.inpt_tipo_busqueda')[tamagno - 1]).value.split('@')[1];
 }
 
+
+/**
+ * Obtiene el origen de autocompletado de búsqueda asociado a un tipo de búsqueda específico.
+ * La función busca en los elementos de entrada con la clase `inpt_OrigenAutocompletar` para encontrar un origen que corresponda al tipo de búsqueda dado.
+ * Si no se encuentra una coincidencia, devuelve una cadena vacía como valor por defecto.
+ * 
+ * @param {string} tipo - El tipo de búsqueda para el que se desea obtener el origen de autocompletado.
+ * @returns {string} El origen de autocompletado asociado al tipo de búsqueda especificado, o una cadena vacía si no se encuentra una coincidencia.
+ */
 function ObtenerOrigenAutoCompletarBusqueda(tipo) {
     var tamagno = $('input.inpt_OrigenAutocompletar').length;
     for (var i = 0; i < tamagno; i++) {
@@ -14745,6 +8263,41 @@ function ObtenerOrigenAutoCompletarBusqueda(tipo) {
     return '';
 }
 
+function ObtenerTipoAutoCompletarBusqueda(tipo) {
+    var tamagno = $('input.inpt_OrigenAutocompletar').length;
+    for (var i = 0; i < tamagno; i++) {
+        var valor = ($('input.inpt_OrigenAutocompletar')[i]).value;
+        if (valor.startsWith("oa_")) {
+            valor = valor.substring(3);
+        }
+        if (valor.split('@')[0] == tipo) {
+            if ($('input.inpt_OrigenAutocompletar')[i].dataset.tipoautocomplete != undefined) {
+                var tipoAutocompletar = $('input.inpt_OrigenAutocompletar')[i].dataset.tipoautocomplete;
+                if (Number.isInteger(parseInt(tipoAutocompletar))) {
+                    return parseInt(tipoAutocompletar);
+                }
+                else {
+                    return -1
+                }
+            }
+            else {
+                return -1;
+            }
+        }
+    }
+
+    //Devolvemos el por defecto.
+    return -1;
+}
+/**
+ * Obtiene las facetas de autocompletado asociadas a un tipo de búsqueda específico.
+ * La función busca en los elementos de entrada con la clase `inpt_FacetasAutocompletar` para encontrar facetas que correspondan al tipo de búsqueda dado.
+ * Si no se encuentra una coincidencia, devuelve una cadena vacía como valor por defecto.
+ *
+ * @function ObtenerFacetasAutocompletar
+ * @param {string} tipo - El tipo de búsqueda para el cual se desean obtener las facetas de autocompletado.
+ * @returns {string} Las facetas de autocompletado asociadas al tipo de búsqueda especificado, o una cadena vacía si no se encuentra una coincidencia.
+ */
 function ObtenerFacetasAutocompletar(tipo) {
     var tamagno = $('input.inpt_FacetasAutocompletar').length;
     for (var i = 0; i < tamagno; i++) {
@@ -14761,6 +8314,12 @@ function ObtenerFacetasAutocompletar(tipo) {
     return '';
 }
 
+/**
+ * Monta el panel de filtros en la interfaz de usuario si se debe mostrar la caja de búsqueda.
+ * La función transfiere el contenido del panel de filtros a otro elemento especificado por `panFiltrosPulgarcito`.
+ * Luego, limpia el contenido del panel de filtros y asegura que ciertos elementos de la interfaz estén visibles.  
+ * @returns {void} No devuelve ningún valor. Solo realiza modificaciones en el DOM.
+ */
 function MontarPanelFiltros() {
     if (mostrarCajaBusqueda) {
         if (document.getElementById('panelFiltros') != null && document.getElementById('panelFiltros').innerHTML != "" && document.getElementById(panFiltrosPulgarcito) != null) {
@@ -14775,8 +8334,10 @@ function MontarPanelFiltros() {
 }
 
 /**
- * Método para mostrar el nº de resultados devueltos por el servicio resultados
- * */
+ * Actualiza el panel de resultados de búsqueda en la interfaz de usuario, incluyendo el manejo de resultados no encontrados y la visualización del número total de resultados.
+ * La función transfiere el contenido del panel `numResultadosRemover` a otro elemento, muestra un mensaje si no se encuentran resultados, y gestiona la visibilidad de los elementos relevantes. 
+ * @returns {void} No devuelve ningún valor. Solo realiza modificaciones en el DOM.
+ */
 function MontarNumResultados() {
 
     // Input para buscar
@@ -14798,7 +8359,7 @@ function MontarNumResultados() {
             const numResultados = parseInt($('#numResultadosRemover').text());
             // Cadena utilizada para búsqueda
             var queryString = findGetParameter("search");
-            
+
             // No se han encontrado resultados - Mostrar aviso siempre que se realice alguna búsqueda
             if (numResultados == 0 && queryString != undefined) {
                 queryString = queryString.replace('<', '&lt;');
@@ -14864,8 +8425,10 @@ function MontarNumResultados() {
 }
 
 /**
- * Buscar un parámetro de tipo GET
- * @param {any} parameterName: Nombre del parámetro a buscar
+ * Obtiene el valor de un parámetro de búsqueda en la URL actual.
+ * La función busca en los parámetros de la cadena de consulta de la URL el valor asociado con el nombre de parámetro proporcionado.
+ * @param {string} parameterName - El nombre del parámetro de búsqueda cuyo valor se desea obtener.
+ * @returns {string|null} El valor del parámetro de búsqueda o `null` si el parámetro no está presente en la URL.
  */
 function findGetParameter(parameterName) {
     var result = null,
@@ -14880,62 +8443,11 @@ function findGetParameter(parameterName) {
     return result;
 }
 
-//M?todos para las acciones de los listados de las b?squedas
-function ObtenerAccionesListado(jsEjecutar) {
-    var resources = $('.resource-list .resource');
-    var idPanelesAcciones = '';
-    var numDoc = 0;
-    resources.each(function () {
-        var recurso = $(this);
-        var accion = recurso.find('.group.acciones.noGridView');
-        if (accion.length == 1) {
-            accion.attr('id', accion.attr('id') + '_' + numDoc);
-            idPanelesAcciones += accion.attr('id') + ',';
-            numDoc++;
-        }
-        var accionesusuario = recurso.find('.group.accionesusuario.noGridView');
-        if (accionesusuario.length == 1) {
-            accionesusuario.attr('id', accionesusuario.attr('id') + '_' + numDoc);
-            idPanelesAcciones += accionesusuario.attr('id') + ',';
-            numDoc++;
-        }
-    });
-
-    if (jsEjecutar == null) {
-	 
-        jsEjecutar = "";
-    }
-
-    if (idPanelesAcciones != '') {
-        try {
-		 
-            WebForm_DoCallback(UniqueDesplegarID, 'CargarControlDesplegar&ObtenerAcciones&' + idPanelesAcciones + "&jsEjecutar=" + jsEjecutar, ReceiveServerData, '', null, false);
-        }
-        catch (ex) { }
-    } else if (jsEjecutar != null) {
-        eval(jsEjecutar);
-    }
-}
-
-function AccionListadoActivarDesactivar(boton) {
-    if (boton.parent().attr('class') == null || boton.parent().attr('class') == '') {
-        boton.parent().parent().children().each(function () {
-            $(this).attr('class', '');
-        });
-        boton.parent().attr('class', 'active');
-    } else {
-        boton.parent().attr('class', '');
-    }
-}
-
-function AccionListadoCambiarOnClickPorOnclickAux(boton) {
-    boton.attr('onclickAux2', $(this).attr('onclick'));
-    boton.attr('onclick', $(this).attr('onclickAux'));
-    boton.attr('onclickAux', $(this).attr('onclickAux2'));
-    boton.removeAttr('onclickAux2');
-}
-
-
+/**
+ * Recorre todos los elementos de facetas gráficas en la página y aplica un formato gráfico a cada uno de ellos.
+ * La función se encarga de verificar el tipo de gráfico que debe ser renderizado (barras o sectores) y asegura que cada faceta solo se formatee una vez. 
+ * @returns {void} No devuelve ningún valor. Solo realiza modificaciones en el DOM.
+ */
 function FormatearFacetasGraficas() {
     //Componentes
     var facetasBarras = $('.componenteFaceta.graficoBarras');
@@ -14959,6 +8471,15 @@ function FormatearFacetasGraficas() {
     });
 }
 
+
+/**
+ * Configura y pinta un gráfico en una faceta gráfica usando Google Charts.
+ * La función maneja dos estilos de gráficos: 'barras' y 'sectores'.
+ * 
+ * @param {jQuery} faceta - Elemento jQuery que representa la faceta gráfica a pintar.
+ * @param {string} estilo - El estilo del gráfico a dibujar, puede ser 'barras' o 'sectores'.
+ * @returns {void} No devuelve ningún valor. Solo realiza modificaciones en el DOM y dibuja el gráfico.
+ */
 function PintarGraficoFaceta(faceta, estilo) {
     faceta.hide();
     var listaElementos = faceta.find('.facetedSearch ul li');
@@ -14998,12 +8519,12 @@ function PintarGraficoFaceta(faceta, estilo) {
 
         var view = new google.visualization.DataView(data);
         view.setColumns([0, 1,
-                    {
-                        calc: "stringify",
-                        sourceColumn: 1,
-                        type: "string",
-                        role: "annotation"
-                    }]);
+            {
+                calc: "stringify",
+                sourceColumn: 1,
+                type: "string",
+                role: "annotation"
+            }]);
 
         var options = {
             title: titulo
@@ -15046,19 +8567,26 @@ function PintarGraficoFaceta(faceta, estilo) {
     }
 }
 
+/**
+ * Obtiene una URL a partir de un servicio dado, eligiendo una URL de una lista separada por comas si es necesario.
+ * 
+ * @function obtenerUrl
+ * @param {string} service - El nombre del servicio para obtener la URL correspondiente.
+ * @returns {string} La URL seleccionada del servicio.
+ */
 function obtenerUrl(service) {
     var url = service;
     if (url.indexOf(',') != -1) {
         var urlMultiple = url.split(',');
         if (indicesWS[service] == null) {
-		 
+
             indicesWS[service] = null;
         }
         if (indicesWS[service] == null) {
-		 
+
             indicesWS[service] = this.aleatorio(0, urlMultiple.length - 1);
         } else if (indicesWS[service] > urlMultiple.length - 1) {
-		 
+
             indicesWS[service] = 0;
         }
         url = urlMultiple[indicesWS[service]];
@@ -15067,330 +8595,12 @@ function obtenerUrl(service) {
     return url;
 }
 
-function aleatorio(inferior, superior) {
-    numPosibilidades = superior - inferior;
-    aleat = Math.random() * numPosibilidades;
-    aleat = Math.round(aleat);
-    return parseInt(inferior) + aleat;
-}/**/ 
-/*opcionesDestacadasMenuLateral.js*/ 
-var opcionesDestacadasMenuLateral = {
-	id: '#usuarioConectadoComunidades',
-	idMenuSuperior: '#menuSuperiorComunidades',
-	idPanelDesplegable: 'panelDesplegableOpciones',
-	cssItem: '.item',
-	cssPanel: '.opcionesPanel',
-	cssOpcionPrincipal: '.opcionPrincipal',
-	cssItemConOpciones: 'itemConOpcionesSegundoNivel',
-	idItemOtrasIdentidades: '#otrasIdentidades',
-	idIdentidad: '#identidad',
-	paneles: [],
-	cssActivo: 'activo',
-	cssActivoOtras: 'activoOtras',
-	timeoutOcultarMenu: '',
-	ocultarMenu: false,
-	init: function(){
-		this.id = $(this.id);
-		if(this.id.size() <= 0) return;
-		this.crearPanelDesplegable();
-		this.config();
-		this.customizar();
-		this.marcarOpcionesPrincipales();
-		this.engancharComportamiento();
-		this.engancharOtrasIdentidades();
-		return;
-	},
-	config: function(){
-		this.menuSuperior = this.id.find(this.idMenuSuperior);
-		this.panelDesplegable = this.id.find('#' + this.idPanelDesplegable);
-		this.buscador = $('#cabecera .busqueda');
-		this.items= this.id.find(this.cssItem);
-		this.opcionesPrincipales = this.id.find(this.cssOpcionPrincipal);
-		this.otrasIdentidades = $(this.idItemOtrasIdentidades);
-		this.enlaceOtrasIdentidades = this.otrasIdentidades.find('a');
-		this.identidades = $(this.idIdentidad);
-		return;
-	},
-	numeroTabs: function(){
-		var that = this;
-		this.itemsIdentidad = [];
-		this.identidades.find('li').each(function(){
-			var item = $(this);
-			if(item.parents('ul.infoCuenta').size() <= 0){
-				that.itemsIdentidad.push(item);
-			};
-		});
-		return this.itemsIdentidad.length;
-	},
-	customizar: function(){
-		var tabs = this.numeroTabs();
-		if(tabs == 1) {
-			var item = this.itemsIdentidad[0];
-			$(item).addClass('identidadUnica');
-		}else if(tabs > 1 && tabs <= 4){
-			var item = this.itemsIdentidad[1];
-			$(item).addClass('activoAnterior');
-			item = this.itemsIdentidad[tabs - 1];
-			$(item).addClass('ultimoItem');
-		}else{
-			var item = this.itemsIdentidad[1];
-			$(item).addClass('activoAnterior');			
-		}
-		return;
-	},
-	crearPanelDesplegable: function(){
-		this.id.append('<div id=\"' + this.idPanelDesplegable + '\"><\/div>\n');
-		return;
-	},
-	marcarOpcionesPrincipales: function(){
-		var that = this;
-		this.items.each(function(){
-			var item = $(this);
-			var panel = item.find(that.cssPanel);
-			if(panel.size() > 0){
-				item.addClass(that.cssItemConOpciones);
-				that.paneles.push(panel.html());
-			} 
-		});
-		return;
-	},
-	plantilla: function(numero){
-		var html = '';
-		html += '<div class=\"opcionesPanel\">\n';
-		html += this.paneles[numero];
-		html += '<\/div>\n';
-		return html;
-	},
-	mostrarOpcionesItem: function(numero){
-		this.panelDesplegable.html(this.plantilla(numero));
-		this.panelDesplegable.children('.opcionesPanel').hide();
-		$(this.panelDesplegable.children('.opcionesPanel')).slideToggle(1000, function() {
-		    this.timeoutOcultarMenu = setTimeout(function() {
-                if(this.ocultarMenu)
-                {
-                    this.ocultarOpcionesItem(parent, that.cssActivo);
-                    this.ocultarMenu = false;
-                }
-            }, 600);
-            this.ocultarMenu = true;
-		});
-		return;
-	},
-	ocultarOpcionesItem: function(){
-	    var that = this;
-		$(this.panelDesplegable.children('.opcionesPanel')).slideToggle(1000, function() {
-		    that.panelDesplegable.html('');
-		});
-		return;
-	},
-	desmarcarOpcionesItem: function(){
-		var that = this;
-		this.opcionesPrincipales.each(function(){
-			$(this).removeClass(that.cssActivo);
-		});
-		return;
-	},
-	engancharOtrasIdentidades: function(){
-		var that = this;
-		var contenidoListadoOtrasIdentidades = this.otrasIdentidades.find('.listadoOtrasIdentidades');
-		
-		var enlace = that.enlaceOtrasIdentidades;
-		var parent = enlace.parent().parent();
-		var desplegable = that.panelDesplegable;
-			
-		//Al entrar en el enlace
-		enlace.hover(function() {
-		    if(parent.hasClass(that.cssActivoOtras))
-		    {
-		        clearTimeout(that.timeoutOcultarMenu);
-		    }
-		},
-		//Al salir del enlace
-		function() {
-		    if(parent.hasClass(that.cssActivoOtras))
-		    {
-		        that.timeoutOcultarMenu = setTimeout(
-		            function() {
-		                desplegable.children('.opcionesPanel').slideUp(800, function() {parent.removeClass(that.cssActivoOtras);desplegable.removeClass('desplegarOtrasIdentidades');});
-		            }
-		         , 600);
-		    }
-		});	
-		
-		//Al entrar en el menú desplegado
-        desplegable.hover(function() {
-            if(parent.hasClass(that.cssActivoOtras))
-            {
-                clearTimeout(that.timeoutOcultarMenu);
-            }
-        },
-        //Al salir del menú desplegado
-        function() {
-            if(parent.hasClass(that.cssActivoOtras))
-            {
-                that.timeoutOcultarMenu = setTimeout(
-                    function() {
-                        desplegable.children('.opcionesPanel').slideUp(800, function() {parent.removeClass(that.cssActivoOtras);});
-                    }
-                , 600);
-            }
-        });
-		
-		enlace.click(function() {
-		    desplegable.children('.opcionesPanel').stop(true);
-    	    
-	        //Si está desplegado
-	        if(parent.hasClass(that.cssActivoOtras))
-	        {
-	            desplegable.children('.opcionesPanel').slideUp(800, function() {parent.removeClass(that.cssActivoOtras);desplegable.removeClass('desplegarOtrasIdentidades');});
-	        }
-	        //Si no está desplegado
-	        else
-	        {
-	            //Quitamos el timeout y las clases 'activo' que pueda haber
-		        clearTimeout(that.timeoutOcultarMenu);
-	            that.id.find('.' + that.cssItemConOpciones + ' ' + that.cssOpcionPrincipal + ' a').each(function(){
-	                var enlace = $(this);
-		            var parent = enlace.parent();
-		            parent.removeClass(that.cssActivo);
-	            });
-				desplegable.addClass('desplegarOtrasIdentidades');
-                
-	            //Generamos el contenido del panel desplegable, y lo mostramos
-	            parent.addClass(that.cssActivoOtras);
-	            var html = '<div class=\"opcionesPanel\">\n' + $(contenidoListadoOtrasIdentidades).html() + '<\/div>\n';
-	            desplegable.html(html);
-	            desplegable.children('.opcionesPanel').hide();
-	            desplegable.css('left',parent.position().left);
-	            desplegable.children('.opcionesPanel').slideDown(800);
-	        }
-	        return false;
-		});
-		return;
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		//Recorremos todos los enlaces del menú y les añadimos los comportamientos
-		this.id.find('.' + this.cssItemConOpciones + ' ' + this.cssOpcionPrincipal + ' a').each(function(indice){
-			var enlace = $(this);
-			var parent = enlace.parent();
-			var desplegable = that.panelDesplegable;
-			
-			//Al entrar en el enlace
-			enlace.hover(function() {
-			    if(parent.hasClass(that.cssActivo))
-			    {
-			        clearTimeout(that.timeoutOcultarMenu);
-			    }
-			},
-			//Al salir del enlace
-			function() {
-			    if(parent.hasClass(that.cssActivo))
-			    {
-			        that.timeoutOcultarMenu = setTimeout(
-			            function() {
-			                parent.removeClass(that.cssActivo);
-			                desplegable.children('.opcionesPanel').slideUp(800);
-			            }
-			        , 600);
-			    }
-			});
-			
-			//Al entrar en el menú desplegado
-	        desplegable.hover(function() {
-	            if(parent.hasClass(that.cssActivo))
-	            {
-	                clearTimeout(that.timeoutOcultarMenu);
-	            }
-	        },
-	        //Al salir del menú desplegado
-	        function() {
-	            if(parent.hasClass(that.cssActivo))
-	            {
-	                that.timeoutOcultarMenu = setTimeout(
-	                    function() {
-	                        parent.removeClass(that.cssActivo);
-	                        desplegable.children('.opcionesPanel').slideUp(800);
-	                    }
-	                , 600);
-	            }
-	        });
-			
-			//Al hacer click en el enlace
-			enlace.click(function() {
-			    desplegable.children('.opcionesPanel').stop(true);
-			    that.enlaceOtrasIdentidades.parent().parent().removeClass(that.cssActivoOtras);
-			    desplegable.removeClass('desplegarOtrasIdentidades');
-			    
-			    //Si está desplegado
-			    if(parent.hasClass(that.cssActivo))
-			    {
-			        parent.removeClass(that.cssActivo);
-			        desplegable.children('.opcionesPanel').slideUp(800);
-			    }
-			    //Si no está desplegado
-			    else
-			    {
-			        //Quitamos el timeout y las clases 'activo' que pueda haber
-			        clearTimeout(that.timeoutOcultarMenu);
-		            that.id.find('.' + that.cssItemConOpciones + ' ' + that.cssOpcionPrincipal + ' a').each(function(){
-		                var enlace = $(this);
-			            var parent = enlace.parent();
-			            parent.removeClass(that.cssActivo);
-		            });
-		            
-			        //Generamos el contenido del panel desplegable, y lo mostramos
-			        parent.addClass(that.cssActivo);
-			        var html = '<div class=\"opcionesPanel\">\n' + parent.parent().children('.opcionesPanel').html() + '<\/div>\n';
-			        desplegable.html(html);
-			        desplegable.children('.opcionesPanel').hide();
-			        desplegable.css('left',enlace.position().left);
-			        desplegable.children('.opcionesPanel').slideDown(800);
-			    }
-			    return false;
-			});
-		})
-		return;
-	}
-}
-var reemplazarEncabezados = {
-    cssGroup: '.group',
-    init: function(){
-        this.config();
-        this.reemplazar();  
-    },
-    config: function(){
-        this.encabezado = subname;
-        this.group = $('#section ' + this.cssGroup);
-        this.groupFirst = this.group[0];
-        this.title = $('h2', this.groupFirst);
-    },
-    template: function(encabezado){
-        var html = '';
-        html = '<span class=\"subname\">';
-        html += encabezado;
-        html += '<\/span>';
-        return html;
-    },
-    reemplazar: function(){
-        var encabezado = this.encabezado.text();
-        this.title.append(this.template(encabezado));
-    }
-};
-var subname;
-$(function(){
-	//opcionesDestacadasMenuLateral.init();
-	$('#perfilUsuarioGnossCargando').hide();
-	$('#perfilUsuarioGnoss').show();
-	
-	subname = $('h2#subname');
-	// Deprecado size()
-    //if (subname.size() > 0) reemplazarEncabezados.init();
-    if (subname.legnth > 0) reemplazarEncabezados.init();
-})/**/ 
 /*WS.js*/ 
-﻿WSDataType = { json: "json", jsonp: "jsonp" };
+WSDataType = { json: "json", jsonp: "jsonp" };
 
+/**
+ * Objeto con dos propiedades estáticas que representan los tipos de datos aceptados por el servicio web: json para JSON y jsonp para JSONP
+ */
 WS = function(service, dataType) {
     this.service = service;
     if (dataType)
@@ -15398,66 +8608,84 @@ WS = function(service, dataType) {
 };
 
 var indicesWS = {};
+
+/**
+ * Define las propiedades y métodos que todas las instancias de la clase WS compartirán.
+ * Estos métodos permiten a las instancias de WS interactuar con servicios web a través de solicitudes HTTP, manejar URLs de servicio, y generar números aleatorios.
+ * */
 WS.prototype = {
     dataType: WSDataType.json,
     service: null,
-    call: function(pMethod, pArgs, pCallback, pError) {
+    call: function (pMethod, pArgs, pCallback, pError) {
         var url = null;
         var service = this.service;
         service = this.obtenerUrl(service);
-        if (service[service.length - 1] != "/") service += "/"; 
-        if (this.dataType == WSDataType.jsonp) {
-            url = $.jmsajaxurl({
-                url: service,
-                method: pMethod,
-                data: pArgs != null ? pArgs : {}
-            });
+        if (service[service.length - 1] !== "/") service += "/";
+
+        // Si la dataType es jsonp, formateamos los parámetros correctamente.
+        if (this.dataType === WSDataType.jsonp) {
+            // Envolvemos en comillas los parámetros que deben tener comillas
+            for (var key in pArgs) {
+                if (pArgs.hasOwnProperty(key) && key === 'callback') {
+                    // Aseguramos que las comillas no se codifiquen como %22
+                    pArgs[key] = `"${pArgs[key]}"`;  // Agregar comillas alrededor de los valores
+                }
+            }
+
+            // Generamos la URL con los parámetros correctamente formateados
+            let baseUrl = service + pMethod;
+            let paramString = `?`;
+
+            // Concatenar todos los parámetros manualmente
+            for (var key in pArgs) {
+                if (pArgs.hasOwnProperty(key)) {
+                    paramString += `${key}=${pArgs[key]}&`;
+                }
+            }
+            // Elimina el último "&" extra
+            url = baseUrl + paramString.slice(0, -1);
         } else {
             url = service + pMethod;
         }
-        if (pMethod == "AutoCompletarTipado") {
+
+        // Si el método es "AutoCompletarTipado", vaciamos los argumentos
+        if (pMethod === "AutoCompletarTipado") {
             pArgs = null;
         }
+
         $.ajax({
-            type: this.dataType == WSDataType.json ? "POST" : "POST",
-            url: url + ((this.dataType == WSDataType.jsonp) ? "&format=json" : ""),
-            //data: ((this.dataType == WSDataType.json) ? JSON.stringify(pArgs) : ""),
+            type: this.dataType === WSDataType.json ? "POST" : "POST",
+            url: url,
             data: pArgs,
             cache: false,
-            //contentType: "application/json; charset=utf-8",
             contentType: "application/x-www-form-urlencoded",
             dataType: this.dataType
         })
-        .done(function (response) {          
-            if (pCallback)
-            {
-                if(response.d != null){
-                    pCallback(response.d);
+            .done(function (response) {
+                if (pCallback) {
+                    if (response.d != null) {
+                        pCallback(response.d);
+                    } else {
+                        pCallback(response);
+                    }
                 }
-                else{
-                    pCallback(response);
+            })
+            .fail(function (data) {
+                if (pError) {
+                    pError();
                 }
-            }
-        })
-        .fail(function (data) {
-            if (pError) {
-                pError();
-            }
-        });
+            });
     },
     obtenerUrl: function (service) {
         var url = service;
-        if (url.indexOf(',') != -1) {
+        if (url.indexOf(',') !== -1) {
             var urlMultiple = url.split(',');
-            if (indicesWS[service] == null)
-            {
+            if (indicesWS[service] == null) {
                 indicesWS[service] = null;
             }
-            if (indicesWS[service] == null)
-            {
+            if (indicesWS[service] == null) {
                 indicesWS[service] = this.aleatorio(0, urlMultiple.length - 1);
-            } else if (indicesWS[service] > urlMultiple.length - 1)
-            {
+            } else if (indicesWS[service] > urlMultiple.length - 1) {
                 indicesWS[service] = 0;
             }
             url = urlMultiple[indicesWS[service]];
@@ -15466,320 +8694,50 @@ WS.prototype = {
         return url;
     },
     aleatorio: function (inferior, superior) {
-        numPosibilidades = superior - inferior;
-        aleat = Math.random() * numPosibilidades;
+        const numPosibilidades = superior - inferior;
+        let aleat = Math.random() * numPosibilidades;
         aleat = Math.round(aleat);
         return parseInt(inferior) + aleat;
     }
-};/**/ 
-/*listToSelect.jquery.js*/ 
-/*
- * list to select  beta
- *
- * Copyright (c) 2011 felix tuesta
- *
- * Date: 14 / 02 / 2011
- * Library: jQuery
- * 
+};
+
+
+/**
+ * Se ejecuta al completar la carga de contextos.
+ * Esta función realiza las siguientes acciones:
+ * - Llama a la función `engancharClicks()` para gestionar eventos de clic en la interfaz de usuario.
+ * @returns {void}
  */
-(function($){
-	$.fn.listToSelect = function(options){
-		var defaults = { 
-			start: -1,
-			cssListaPlegada: 'plegada'			
-		};
-		var options = $.extend(defaults, options);  
-
-		var componente = $(this);
-		var lista = $('ul', componente);
-		var boton = null;        
-
-		return this.each(function(){
-			initialize();
-		});
-		function initialize(){
-			boton = $('p.desplegar a', componente);	
-			comportamientoBotonDesplegar();			
-		}
-		
-		function plegarDesplegarLista(){
-			lista.hasClass(options.cssListaPlegada) ? lista.removeClass(options.cssListaPlegada) : lista.addClass(options.cssListaPlegada) ;
-		}
-		function comportamientoBotonDesplegar(){
-			boton.bind('click', function(){		
-			    plegarDesplegarLista();	
-				this.blur();
-				return false;
-			})
-		}
-	};
-})(jQuery);/**/ 
-/*jMsAjax.js*/ 
-/*
-* jMsAjax 0.2.2 - Microsoft Ajax jQuery Plugin
-*
-* Copyright (c) 2008 Adam Schröder (schotime.net)
-* Dual licensed under the MIT (MIT-LICENSE.txt)
-* and GPL (GPL-LICENSE.txt) licenses.
-*
-* $Date: 2008-07-12 $
-*/
-(function($) {
-    $.jmsajaxurl = function(options) {
-        var url = options.url;
-        if (url[url.length - 1] != "/") url += "/";
-        url += options.method; if (options.data) {
-
-            var data = ""; for (var i in options.data) {
-                if (data != "")
-                    data += "&"; data += i + "=" + msJSON.stringify(options.data[i]);
-            }
-            url += "?" + data; data = null; options.data = "{}";
-        }
-        return url;
-    };
-    $.jmsajax = function(options) {
-        var defaults = { type: "POST", dataType: "msjson", data: {}, beforeSend: function(xhr) { xhr.setRequestHeader("Content-type", "application/json; charset=utf-8"); }, contentType: "application/json; charset=utf-8", error: function(x, s, m) { alert("Status: " + ((x.statusText) ? x.statusText : "Unknown") + "\nMessage: " + msJSON.parse(((x.responseText) ? x.responseText : "Unknown")).Message); } }; var options = $.extend(defaults, options); if (options.method)
-            options.url += "/" + options.method; if (options.data) {
-            if (options.type == "GET") {
-                var data = ""; for (var i in options.data) {
-                    if (data != "")
-                        data += "&"; data += i + "=" + msJSON.stringify(options.data[i]);
-                }
-                options.url += "?" + data; data = null; options.data = "{}";
-            }
-            else if (options.type == "POST")
-            { options.data = msJSON.stringify(options.data); }
-        }
-        if (options.success) {
-            if (options.dataType) {
-                if (options.dataType == "msjson") {
-                    var base = options.success; options.success = function(response, status) {
-                        var y = dateparse(response); if (options.version) {
-                            if (options.version >= 3.5)
-                                y = y.d;
-                        }
-                        else {
-                            if (response.indexOf("{\"d\":") == 0)
-                                y = y.d;
-                        }
-                        base(y, status);
-                    }
-                }
-            }
-        }
-        return $.ajax(options);
-    }; dateparse = function(data) {
-        try {
-            return msJSON.parse(data, function(key, value) {
-                var a; if (typeof value === "string") {
-                    if (value.indexOf("Date") >= 0)
-                    { a = /^\/Date\((-?[0-9]+)\)\/$/.exec(value); if (a) { return new Date(parseInt(a[1], 10)); } }
-                }
-                return value;
-            });
-        }
-        catch (e) { return null; }
-    }
-    msJSON = function() {
-        function f(n) { return n < 10 ? '0' + n : n; }
-        //Date.prototype.toJSON=function(key){return this.getUTCFullYear()+'-'+f(this.getUTCMonth()+1)+'-'+f(this.getUTCDate())+'T'+f(this.getUTCHours())+':'+f(this.getUTCMinutes())+':'+f(this.getUTCSeconds())+'Z';};
-        var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g, escapeable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g, gap, indent, meta = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"': '\\"', '\\': '\\\\' }, rep; function quote(string) {
-            escapeable.lastIndex = 0; return escapeable.test(string) ? '"' + string.replace(escapeable, function(a) {
-                var c = meta[a]; if (typeof c === 'string') { return c; }
-                return '\\u' + ('0000' +
-	(+(a.charCodeAt(0))).toString(16)).slice(-4);
-            }) + '"' : '"' + string + '"';
-        }
-        function str(key, holder) {
-            var i, k, v, length, mind = gap, partial, value = holder[key]; if (value && typeof value === 'object' && typeof value.toJSON === 'function') { value = value.toJSON(key); }
-            if (typeof rep === 'function') { value = rep.call(holder, key, value); }
-            switch (typeof value) {
-                case 'string': return quote(value); case 'number': return isFinite(value) ? String(value) : 'null'; case 'boolean': case 'null': return String(value); case 'object': if (!value) { return 'null'; }
-                    if (value.toUTCString) { return '"\\/Date(' + (value.getTime()) + ')\\/"'; }
-                    gap += indent; partial = []; if (typeof value.length === 'number' && !(value.propertyIsEnumerable('length'))) {
-                        length = value.length; for (i = 0; i < length; i += 1) { partial[i] = str(i, value) || 'null'; }
-                        v = partial.length === 0 ? '[]' : gap ? '[\n' + gap +
-	partial.join(',\n' + gap) + '\n' +
-	mind + ']' : '[' + partial.join(',') + ']'; gap = mind; return v;
-                    }
-                    if (rep && typeof rep === 'object') { length = rep.length; for (i = 0; i < length; i += 1) { k = rep[i]; if (typeof k === 'string') { v = str(k, value, rep); if (v) { partial.push(quote(k) + (gap ? ': ' : ':') + v); } } } } else { for (k in value) { if (Object.hasOwnProperty.call(value, k)) { v = str(k, value, rep); if (v) { partial.push(quote(k) + (gap ? ': ' : ':') + v); } } } }
-                    v = partial.length === 0 ? '{}' : gap ? '{\n' + gap + partial.join(',\n' + gap) + '\n' +
-	mind + '}' : '{' + partial.join(',') + '}'; gap = mind; return v;
-            }
-        }
-        return { stringify: function(value, replacer, space) {
-            var i; gap = ''; indent = ''; if (typeof space === 'number') { for (i = 0; i < space; i += 1) { indent += ' '; } } else if (typeof space === 'string') { indent = space; }
-            rep = replacer; if (replacer && typeof replacer !== 'function' && (typeof replacer !== 'object' || typeof replacer.length !== 'number')) { throw new Error('JSON.stringify'); }
-            return str('', { '': value });
-        }, parse: function(text, reviver) {
-            var j; function walk(holder, key) {
-                var k, v, value = holder[key]; if (value && typeof value === 'object') { for (k in value) { if (Object.hasOwnProperty.call(value, k)) { v = walk(value, k); if (v !== undefined) { value[k] = v; } else { delete value[k]; } } } }
-                return reviver.call(holder, key, value);
-            }
-            cx.lastIndex = 0; if (cx.test(text)) {
-                text = text.replace(cx, function(a) {
-                    return '\\u' + ('0000' +
-	(+(a.charCodeAt(0))).toString(16)).slice(-4);
-                });
-            }
-            if (/^[\],:{}\s]*$/.test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@').replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) { j = eval('(' + text + ')'); return typeof reviver === 'function' ? walk({ '': j }, '') : j; }
-            throw new SyntaxError('JSON.parse');
-        }
-        };
-    } ();
-})(jQuery);
-
-
-function CompletadaCargaActividadReciente() {
-    if (typeof (window.CompletadaCargaActividadRecienteComunidad) == 'function') {
-        CompletadaCargaActividadRecienteComunidad();
-    }
-}
-function CompletadaCargaBiografia() {
-    if (typeof (window.CompletadaCargaBiografiaComunidad) == 'function') {
-        CompletadaCargaBiografiaComunidad();
-    }
-}
-function CompletadaCargaRecursos() {
-    modoVisualizacionListados.init();
-    if (typeof (window.CompletadaCargaRecursosComunidad) == 'function') {
-        CompletadaCargaRecursosComunidad();
-    }
-}
 function CompletadaCargaContextos() {
-    engancharClicks();
-	comportamientoRecursosVinculados.init();
-	if(typeof (window.CompletadaCargaContextosComunidad) == 'function') {
-		CompletadaCargaContextosComunidad();
-	}		
+    engancharClicks();	
 }
-function CompletadaCargaFacetas(){
-	comportamientoCargaFacetas.init();
-	if(typeof (window.comportamientoCargaFacetasComunidad) == 'function') {
-		comportamientoCargaFacetasComunidad();
-	}		
-}
-function CompletadaCargaUsuariosVotanRecurso(){
-	comportamientoCargaUsuariosVotanRecurso.init();
-	if(typeof (window.comportamientoCargaUsuariosVotanRecursoComunidad) == 'function') {
-		comportamientoCargaUsuariosVotanRecursoComunidad();
-	}		
-}
-function completadaCargaAcciones(){
-    herramientasRecursoCompactado.init();        
-    if (body.hasClass('palco') && body.hasClass('activo')) {
-        abreEnVentanaNueva.montarHerramientas();
-        abreEnVentanaNueva.montarVotos();
-        abreEnVentanaNueva.montarVolverFicha();        
-    }
-	if(typeof (window.completadaCargaAccionesComunidad) == 'function') {
-		completadaCargaAccionesComunidad();
-	}	
-	return;
-}
-function CompletadaCargaAccionesListado() {
-    if (typeof (window.CompletadaCargaAccionesListadoComunidad) == 'function') {
-        CompletadaCargaAccionesListadoComunidad();
-    }
-}
-var comportamientoCargaUsuariosVotanRecurso = {
-	init: function(){
-		this.config();
-		this.engancharEnlaceMasResultados();
-		if(this.listado.find('.votoNegativo').size() <= 0) return;
-		this.tabsVotosPositivosNegativos();
-		return;
-	},
-	config: function(){
-		this.body = body;
-		this.panelAmpliado = this.body.find('#panelVotosAmpliado');
-		this.listado = this.panelAmpliado.find('.resource-list');
-		this.enlace = this.panelAmpliado.find('.masUsuriosVotosRecursos a');
-		return;
-	},
-	tabsVotosPositivosNegativos: function(){
-		var tabs = this.panelAmpliado.find('.tabsVotosPositivosNegativos');
-		if(tabs.size() > 0) return;
-		this.tabs = $('<div>').addClass('tabsVotosPositivosNegativos tabspresentation acciones');
-		var ulTabs = $('<ul>');
-		var liPositivosTabs = $('<li>').addClass('mostrarPositivos');
-		var liNegativosTabs = $('<li>').addClass('mostrarNegativos');
-		var liTodosTabs = $('<li>').addClass('mostrarTodos active');
-		var aPositivosTabs = $('<a>').attr('href', '#').text('votos positivos');
-		var aNegativosTabs = $('<a>').attr('href', '#').text('votos negativos');
-		var aTodosTabs = $('<a>').attr('href', '#').text('todos');
-		liPositivosTabs.append(aPositivosTabs);
-		liNegativosTabs.append(aNegativosTabs);
-		liTodosTabs.append(aTodosTabs);
-		ulTabs.append(liTodosTabs);
-		ulTabs.append(liPositivosTabs);
-		ulTabs.append(liNegativosTabs);
-		this.tabs.append(ulTabs);
-		this.listado.before(this.tabs);
-		this.engancharTipoVoto();
-		return;
-	},
-	desmarcarTabs: function(){
-		this.tabs.find('li').removeClass('active');
-		return;
-	},
-	engancharTipoVoto: function(){
-		var that = this;
-		this.tabs.find('a').bind('click', function(evento){
-			evento.preventDefault();
-			var enlace = $(evento.target);
-			var li = enlace.parent();
-			that.desmarcarTabs();
-			that.listado.removeClass('mostrarPositivos mostrarNegativos mostrarTodos');
-			that.listado.addClass(li.attr('class'));
-			li.addClass('active');
-		})
-		return;
-	},
-	engancharEnlaceMasResultados: function(){
-		var that = this;
-		this.enlace.bind('click', function(evento){
-			evento.preventDefault();
-			//var enlace = $(this);
-			//var url = enlace.attr('href');
-			/*setTimeout(function(){
-				that.traerUsuariosVotosRecursos(url);
-			}, 800);*/
-			//WebForm_DoCallback('ctl00$ctl00$CPH1$CPHContenido$controles_ficharecurso_ascx', 'VerVotantes', ReceiveServerData, '', null, false);
-			enlace.parent().remove();
-		})
-		return;
-	},
-	traerUsuariosVotosRecursos: function(url){
-		var that = this;
-		//var url = url;
-		//var respuesta = $.ajax({
-		//  url: url,
-		//  type: "GET",
-		//  dataType: "html"
-		//})
 
-	    GnossPeticionAjax(url, null, true)
-		.done(function(pagina) {
-			var html = pagina;
-			that.panelAmpliado.find('.resource-list').first().append(html);	
-			var scrollTop = that.listado.scrollTop() + 710;
-			that.listado.scrollTop(scrollTop);
-			CompletadaCargaUsuariosVotanRecurso();
-			return;
-		})
-		.fail(function( jqXHR, textStatus ) {
-		  alert( "Request failed: " + textStatus );
-		})
-		return;		
-	}
+
+/**
+ * Se ejecuta al completar la carga de facetas.
+ * Esta función realiza las siguientes acciones:
+ * - Llama al método `init()` de `comportamientoCargaFacetas` para inicializar comportamientos relacionados con las facetas.
+ * - Verifica si `window.comportamientoCargaFacetasComunidad` es una función y, si es así, la ejecuta. (Encontrado en theme.js)
+ * @name CompletadaCargaFacetas
+ * @returns {void}
+ */
+function CompletadaCargaFacetas() {
+    comportamientoCargaFacetas.init();
+    if (typeof (window.comportamientoCargaFacetasComunidad) == 'function') {
+        comportamientoCargaFacetasComunidad();
+    }
 }
+
+/**
+ * Inicializa los comportamientos relacionados con las facetas de búsqueda.
+ * 
+ * Esta función realiza las siguientes acciones:
+ * - Llama al método `init()` de `facetedSearch` para inicializar la búsqueda facetada.
+ * - Asocia eventos de clic a los elementos con la clase `verMasFaceta` para mostrar más información sobre una faceta específica.
+ * @returns {void}
+ */
 var comportamientoCargaFacetas = {
     init: function () {
-        // Longitud facetas por CSS
-		// limiteLongitudFacetas.init();
-		facetedSearch.init();
 		$('.verMasFaceta').each(function () {
 		    var enlace = $(this);
 		    var params = enlace.attr('rel').split('|');
@@ -15793,1873 +8751,17 @@ var comportamientoCargaFacetas = {
 		return;
 	}
 }
-var comportamientoRecursosVinculados = {
-	init: function(){
-		this.config();
-		var groupsToSemanticView = this.columnaRelacionados.find('.moveToSemanticView')
-        /* No existe size if(groupsToSemanticView.size() > 0) this.moveToSemanticView(groupsToSemanticView);	*/
-        if (groupsToSemanticView.length > 0) this.moveToSemanticView(groupsToSemanticView);
-		return;
-	},
-	config: function(){
-		this.content = $('#content');
-		this.columnaRelacionados = this.content.find('#col01');
-		this.semanticView = this.content.find('.semanticView');
-		return;
-	},
-	moveToSemanticView: function(groupsToSemanticView){
-		var that = this;
-		groupsToSemanticView.each(function(){
-			var grupo = this;
-			that.semanticView.append(grupo);
-		});
-		return;
-	}
-}
-var limpiarGruposVaciosSemanticView = {
-	init: function(){
-		$('.semanticView .group').each(function(indice){
-			var group = $(this);
-			var contentGroup = group.find('.contentGroup');
-			if(contentGroup.html() == '') group.remove();
-		})
-	}
-}
-var controladorLineas = {
-	caracteres: 140,
-	init: function(){
-		this.config();
-	},
-	config: function(){
-		var that = this;
-		this.items = $('#col02 .semanticView .limitGroup');
-		this.items.each(function(indice){
-			var item = $(this);
-			var contentGroup = item.find('.contentGroup');
-			var texto = contentGroup.text();
-			var arrayTexto = texto.split(' ');
-			if(arrayTexto.length <= that.caracteres) return;			
-			contentGroup.addClass('activado').hide()
-			var css = item.attr('class');
-			var cssArray = css.split(' ');
-			var cssLimite = cssArray[cssArray.length - 1];
-			if(cssLimite.indexOf('limit_') >= 0){
-				that.carateres = cssLimite.substring(6, cssLimite.length);
-			};
-
-			var recorte = arrayTexto.slice(0, that.caracteres);
-			var textoRecortado = '<p>';
-			for(var contador = 0; contador < that.caracteres; contador++){
-				textoRecortado += recorte[contador] + ' ';
-			};
-			textoRecortado += '</p>';
-			var enlace = $('<a>').attr('class','leermas').attr('href','#').text('+ leer más').attr('title','leer resto de la entrada');
-			var plegar = $('<a>').attr('class','plegar').attr('href','#').text('- plegar').attr('title','plegar contendio de la entrada');
-			var divTextoRecortado = $('<div>').attr('class','textoRecortado');
-			divTextoRecortado.append(textoRecortado);
-			contentGroup.before(divTextoRecortado);
-			contentGroup.append(plegar);
-			divTextoRecortado.append(enlace);
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			});
-			plegar.bind('click', function(evento){
-				evento.preventDefault();
-				that.plegarEntrada(evento);
-			});			
-		});
-		return;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		var group = enlace.parents('.group').first();
-		var recorte = group.find('.textoRecortado');
-		var original = group.find('.contentGroup');
-		recorte.hide();
-		original.show();
-		return;
-	},		
-	plegarEntrada: function(evento){
-		var enlace = $(evento.target);
-		var group = enlace.parents('.group').first();
-		var recorte = group.find('.textoRecortado');
-		var original = group.find('.contentGroup');
-		original.hide();
-		recorte.show();
-		return;
-	}	
-}
-var modoVisualizacionListadosHomeCatalogo = {
-	init: function(){
-		this.body = body;
-		this.grupos = this.body.find('#col02 .listadoRecursos');
-		if(this.grupos.size() <= 0) return;
-		this.config();
-		this.preloader();
-		return;
-	},
-	config: function(){
-		return;
-	},	
-	preloader: function(){
-		var that = this;
-		var group = group;
-		this.grupos.each(function(indice){
-			var grupo = $(this);
-			if(grupo.hasClass('listView')) return;
-			that.calcular(grupo);
-			var imagenes = grupo.find('.miniatura img');
-			imagenes.each(function(indice){
-				var imagen = $(this);
-				imagen.load(function(evento){
-					var imagen = $(evento.target);
-					var grupo = imagen.parents('.listadoRecursos').first();
-					that.calcular(grupo);
-				})
-			})
-			
-		})
-		return;
-	},	
-	calcular: function(grupo){
-		var that = this;
-		var grupo = grupo;
-		var contador = 0;
-		var masAlto = 0;
-		var resources = grupo.find('.resource');
-		var alturas = [];
-		resources.each(function(){
-			var recurso = $(this);
-			recurso.attr('style', '');
-			//var categorias = recurso.find('.categorias')
-			//var etiquetas = recurso.find('.etiquetas')
-			//limitarNumeroItems.init(categorias);
-			//limitarNumeroItems.init(etiquetas);
-			var altura = recurso.height();
-			if(altura > masAlto) masAlto = altura;
-			contador ++;
-			if(contador == 3){
-				recurso.addClass('omega');
-				alturas.push(masAlto);
-				contador = 0;
-				masAlto = 0;
-			}
-		});
-		resources.each(function(indice){
-			var recurso = $(this);
-			var fila = parseInt(indice/3);
-			recurso.css('height', alturas[fila] + 'px');
-		});		
-		this.isCalculadoOmega = true;
-		return;
-	}
-};
-var modoVisualizacionListados = {
-    id: '#view',
-    cssListView: 'listView',
-    cssGridView: 'gridView',
-    cssActiveView: 'activeView',
-    cssResourceList: '.resource-list',
-    isAlturaCalculada: false,
-    isCalculadoOmega: false,
-    isGridViewDefault: false,
-    isLanzadaSeguridad: false,
-    init: function () {
-        body = $('body');
-        this.body = body;
-        var group = this.body.find('#col02 .listadoRecursos');
-        this.config();
-        this.setView();
-        if (this.isGridViewDefault) {
-            this.configGridView();
-            this.preloader(group);
-        } else {
-            this.configListView();
-        }        
-        this.enganchar();
-        return;
-        //if(!this.isLanzadaSeguridad)this.seguridadImagenesRotas();
-        //this.isLanzadaSeguridad = true;
-    },
-    config: function () {
-        this.list = $(this.cssResourceList);
-        this.view = $(this.id);
-        this.listView = $('.' + this.cssListView, this.view);
-        this.gridView = $('.' + this.cssGridView, this.view);
-        return;
-    },
-    configGridView: function () {
-        this.showGridView();
-    },
-    configListView: function () {
-        this.showListView();
-    },
-    showGridView: function () {
-        this.list.removeClass(this.cssListView);
-        //this.list.addClass(this.cssGridView);
-        this.list.addClass("mosaicView");
-    },
-    showListView: function () {
-        //this.list.removeClass(this.cssGridView);
-        this.list.removeClass("mosaicView");
-        this.list.addClass(this.cssListView);
-    },
-    preloader: function (group) {
-        var that = this;
-        var group = group;
-        //group.css('visibility','hidden');
-        group.addClass('gridPreview');
-        var imagenes = $('.miniatura img', group);
-        var numeroImagenes = imagenes.length;
-
-        for (var i=1;i<=5;i++)
-        {
-            setTimeout(function () {
-                that.calcular(group);
-            }, i*1000);
-        }
-        
-        if (numeroImagenes <= 0) {
-            this.calcular(group);
-            //group.css('visibility','visible');
-            group.removeClass('gridPreview');
-        } else {
-            var contador = 0;
-            //sthis.view.hide();
-            imagenes.load(function () {
-                var imagen = $(this);
-                contador++;
-                if (contador > numeroImagenes - 1) {
-                    that.calcular(group);
-                    group.removeClass('gridPreview');
-                    //group.css('visibility','visible');
-                    that.view.show();
-                }
-            });
-        };
-        
-        return;
-    },
-    seguridadImagenesRotas: function () {
-        var that = this;
-        setTimeout(function () {
-            $('#section .listadoRecursos').each(function () {
-                var group = $(this);
-                var atributo = group.attr('style');
-                var isGroupVisible = atributo.indexOf('hidden') <= 0;
-                if (!isGroupVisible) {
-                    that.calcular(group);
-                    group.removeClass('gridPreview');
-                    //group.css('visibility','visible');
-                    that.view.show();
-                }
-            })
-        }, 5000);
-    },
-    calcular: function (group) {
-        var that = this;
-        var contador = 0;
-        var masAlto = 0;
-        var resources = $('.resource', group);
-        var alturas = [];
-        resources.each(function () {
-            var recurso = $(this);
-            recurso.removeAttr('style');  
-            var categorias = recurso.find('.categorias')
-            var etiquetas = recurso.find('.etiquetas')
-            limitarNumeroItems.init(categorias);
-            limitarNumeroItems.init(etiquetas);
-            var altura = recurso.height();
-            if (altura > masAlto) masAlto = altura;
-            contador++;
-            if (contador == 3) {
-                recurso.addClass('omega');
-                alturas.push(masAlto);
-                contador = 0;
-                masAlto = 0;
-            }
-        });
-        resources.each(function (indice) {
-            var recurso = $(this);
-            var fila = parseInt(indice / 3);
-            recurso.css('height', alturas[fila] + 'px');
-        });
-        this.isCalculadoOmega = true;
-        return;
-    },
-    setView: function () {
-        //this.gridView.hasClass(this.cssActiveView) ? this.isGridViewDefault = true : this.isGridViewDefault = false;
-        $(".activeView").hasClass("aMosaicView") ? this.isGridViewDefault = true : this.isGridViewDefault = false;
-        return;
-    },
-    enganchar: function () {
-        var that = this;
-        $('a', this.listView).unbind();
-        $('a', this.listView).bind('click', function (evento) {
-            evento.preventDefault();
-            that.showListView();
-            that.listView.addClass(that.cssActiveView);
-            that.gridView.removeClass(that.cssActiveView);
-        });
-
-        $('a', this.gridView).unbind();
-        $('a', this.gridView).bind('click', function (evento) {
-            evento.preventDefault();
-            that.showGridView();
-            that.gridView.addClass(that.cssActiveView);
-            that.listView.removeClass(that.cssActiveView);
-            that.calcular();
-        });
-        return;
-    }
-};
-var seccion = {
-	id: '#nav',
-	secciones: ['home','indice','catalogo','recurso','debate', 'dafo', 'pregunta','encuesta', 'persona'],
-	seccionActiva: 0,
-	init: function(){
-		this.config();
-		this.buscarSeccion();
-		this.desmarcar();
-		this.marcar();
-	},
-	config: function(){
-		this.nav = $(this.id);
-		this.li = $('li', this.nav);
-		return;
-	},
-	buscarSeccion: function(){
-		var items = this.secciones.length;
-		var url = window.location.href;
-		for(var contador = 0; items > contador; contador ++ ){
-			var nombreSeccion = this.secciones[contador];
-			if(url.indexOf(nombreSeccion) >= 0) this.seccionActiva = contador;
-		};
-		return;
-	},
-	desmarcar: function(){
-		this.li.each(function(){
-			$(this).removeClass('activo');
-		})
-		return;
-	},
-	marcar: function(){
-		var activo = $(this.li[this.seccionActiva]);
-		activo.addClass('activo');
-		return;
-	}	
-};
-function desmarcarOpcionesGrupo(lis){
-	lis.each(function(){
-		var link = $('a', this);
-		if(!link.hasClass('noGroup')){
-			$(this).removeClass('active');
-		};
-	});
-	return;
-}
-function ocultarPaneles(panels){
-	var panels = panels.split(' ');
-	var contador = panels.length;
-	for(var i = 0; contador > i; i++ ){
-		$('#' + panels[i]).hide();
-	};				
-}
-var carrusel = {
-	id: '#presentation',
-	preloadImages: true,
-	isImagesLoaded: false,
-	numImagenActiva: 0,
-	isPause: false,
-	vueltas: 0,
-	init: function(){
-		this.config();
-		if(!this.preloadImages) return;
-		this.loader();
-	},
-	config: function(){
-		this.carrusel = $(this.id);
-		if(this.carrusel.hasClass('nopreload')) this.preloadImages = false;
-		if(!this.preloadImages) return;
-		this.view = $('.galeriaPresentacion', this.carrusel);
-		this.items = $('.carrusel li', this.carrusel);
-		this.imagenes = $('.carrusel li img', this.carrusel);
-		// Deprecado size() 
-        //this.numeroImagenes = this.imagenes.size();
-        this.numeroImagenes = this.imagenes.length;
-		return;
-	},
-	loader: function(){
-		var that = this;
-		var contador = 0;
-		this.imagenes.each(function(indice){
-			var imagen = $(this);
-			imagen.parent().attr('rel', indice);
-			var li = that.items[indice];
-			if(indice > 0) $(li).hide();
-			this.onload = function(){
-				contador ++;
-				var imagen = $(this);
-				if(indice == that.numImagenActiva){
-					var li = that.items[indice];
-					$(li).fadeIn('slow');
-				}
-				imagen.addClass('loaded');
-				if(contador == that.numeroImagenes){
-					that.engancharEfecto();
-					that.crearPasador();
-				}
-			};
-		});
-		this.seguridad();
-		return;
-	},
-	crearPasador: function(){
-		var itemsCarrusel = '';
-		var html = '';
-		this.items.each(function(indice){
-			var muestra = indice + 1;
-			itemsCarrusel += '<li><a href=\"#\" rel=\"' + indice + '\" >' + muestra + '<\/a><\/li>';
-		});
-		html += '<div id=\"pasadorCarrusel\">';
-		html += '<ul>';
-		html += itemsCarrusel;
-		html += '<\/ul>';
-		html += '<\/div>';
-		this.view.append(html);
-		this.pasador = $('#pasadorCarrusel', this.carrusel);
-		this.enlacesPasador = $('a', this.pasador);
-		this.marcarItemPasadorActivo(0);
-		this.engancharPasador();
-		return;
-	},	
-	desmarcarItemsPasadorActivo: function(){
-		this.enlacesPasador.each(function(){
-			$(this).removeClass('activo');
-		});
-		return;
-	},	
-	marcarItemPasadorActivo: function(numero){
-		var enlace = this.enlacesPasador[numero];
-		$(enlace).addClass('activo');
-		return;
-	},
-	engancharPasador: function(){
-		var that = this;
-		this.enlacesPasador.each(function(){
-			var enlace = $(this);
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				var numero = enlace.attr('rel');
-				enlace.addClass('activo');
-				that.isPause =  true;
-				that.contadorIntervalos = 0;
-				that.efectoPasador(numero);
-			});
-		})
-		return;
-	},
-	efectoPasador: function(numero){
-		var siguiente = numero;
-		var liIn = $(this.items[siguiente]);
-		var liOut = $(this.items[this.numImagenActiva]);
-		this.desmarcarItemsPasadorActivo();	
-		this.marcarItemPasadorActivo(siguiente);		
-		liOut.fadeOut('fast', function(){
-			liIn.hide().fadeIn('slow');			
-		});		
-		this.numImagenActiva = siguiente;	
-		clearInterval(this.intervalo);
-		return;
-	},	
-	efecto: function(){
-		var siguiente = this.numImagenActiva + 1;
-		if(siguiente >= this.numeroImagenes){
-			siguiente = 0;
-			this.vueltas ++;
-			if(this.vueltas == 2) clearInterval(this.intervalo);
-		}
-		var liIn = $(this.items[siguiente]);
-		var liOut = $(this.items[this.numImagenActiva]);
-		this.desmarcarItemsPasadorActivo();
-		this.marcarItemPasadorActivo(siguiente);
-		liOut.fadeOut('fast', function(){
-			liIn.hide().fadeIn('slow');			
-		});	
-		this.numImagenActiva = siguiente;	
-		return;
-	},
-	seguridad: function(){
-		var that = this;
-		var imagen = this.imagenes[0];
-		var isLoadedImage = false;
-		imagen = $(imagen);
-		setTimeout(function(){
-			if(imagen.hasClass('loaded')) isLoadedImage = true;
-			if(!isLoadedImage) {
-				that.engancharEfecto();
-				that.crearPasador();
-			}
-		}, 3000);			 
-	},
-	engancharEfecto: function(){
-		var that = this;
-		//this.engancharClick();
-		this.contadorIntervalos = 0;
-		this.intervalo = setInterval(function(){
-			that.contadorIntervalos ++;
-			if(that.contadorIntervalos >= 4){
-				that.isPause = false;
-				that.contadorIntervalos = 0;
-			}
-			that.efecto();
-		}, 3000);
-		return;
-	}
-}
-var carruselLateralColumna  = {
-	identificadorRecurso: '.resource',
-	carruseles: ['.comiteCrea'],
-	recursoVisible: 0,
-	isPause: false,
-	init: function(){
-		var carrusel = this.carruseles[0];
-		this.componente = $(carrusel);
-		this.config();
-		this.ocultar();
-		this.mostrar(this.recursoVisible);
-		this.crearPaginador();
-		this.engancharPaginador();
-		this.automatismo();
-		return;
-	},
-	config: function(){
-		this.recursos = $(this.identificadorRecurso, this.componente);
-		return;
-	},
-	ocultar: function(){	
-		this.recursos.each(function(){
-			$(this).hide();
-		})
-		return;
-	},
-	mostrar: function(numero){
-		var visible = this.recursos[numero];
-		visible = $(visible);
-		visible.show();
-		return;
-	},
-	plantilla: function(){
-		var html = '';
-		html += '<div class=\"paginador\">';
-		html += '<ul>';
-		this.recursos.each(function(indice){
-			if(indice == 0){
-				html += '<li class=\"activo\"><a href=\"#\" rel=\"' + indice + '\">' + indice  + '<\/a><\/li>';
-			}else{
-				html += '<li><a href=\"#\" rel=\"' + indice + '\">' + indice  + '<\/a><\/li>';
-			}
-		});
-		html += '<\/ul>';
-		html += '<\/div>';
-		return html;
-	},
-	crearPaginador: function(){
-		this.componente.append(this.plantilla());
-		this.paginador = $('.paginador', this.componente);
-		this.itemsPaginador = $('a', this.paginador);
-		return;
-	},
-	desmarcarPaginador: function(){
-		this.itemsPaginador.each(function(){
-			$(this).parent().removeClass('activo');
-		});
-		return;
-	},
-	automatismo: function(){
-		var that = this;
-		var contador = 0;
-		setInterval(function(){
-			contador++;
-			if(contador >= 8){
-				that.isPause = false;
-				contador = 0;
-			}
-			if(that.isPause) return;
-			that.recursoVisible ++;
-            // Deprecado size()
-            //if(that.recursoVisible >= that.itemsPaginador.size()) that.recursoVisible = 0;
-            if (that.recursoVisible >= that.itemsPaginador.length) that.recursoVisible = 0;			
-			that.siguiente();
-			var activo = that.itemsPaginador[that.recursoVisible];
-			activo = $(activo);
-			activo.parent().addClass('activo');
-		}, 4000);		
-	},	
-	siguiente: function(){
-		this.ocultar();
-		this.mostrar(this.recursoVisible);
-		this.desmarcarPaginador();
-		return;
-	},
-	engancharPaginador: function(){
-		var that = this;
-		this.itemsPaginador.each(function(contador){
-			$(this).bind('click', function(evento){
-				evento.preventDefault();
-				that.isPause = true;
-				var enlace = $(evento.target);
-				var indice = enlace.attr('rel');
-				that.recursoVisible = indice;
-				that.siguiente();
-				enlace.parent().addClass('activo');	
-			});
-		});
-		return;
-	}
-}
-var opcionesMenuIdentidad = {
-	cssItemActivo: 'itemActivo',
-	cssItemsOpcionesSegundoNivel: '.itemConOpcionesSegundoNivel',
-	cssOpcionPrincipal: '.opcionPrincipal',
-	idMenuSuperiorComunidades: '#menuSuperiorComunidades',
-	idOtrasIdentidades: '#otrasIdentidades',
-	idIdentidad: '#identidad',
-	cssEnlaceOtrasIdentidades: '#otrasIdentidades .wrap a',
-	cssListadoOtrasIdentidades: '.listadoOtrasIdentidades',
-	init: function(){
-        this.config();
-        // Deprecado size()
-        //if(this.menu.size() <= 0) return;
-        if (this.menu.length <= 0) return;
-		this.pantalla();
-		this.enganchar();
-		this.ocultarMenusInactividad();
-	},
-	config: function(){
-		this.identidad = $(this.idIdentidad);
-		this.menu = $(this.idMenuSuperiorComunidades);
-		this.items = $(this.cssItemsOpcionesSegundoNivel, this.menu);
-		this.enlaces = $(this.cssOpcionPrincipal + ' a', this.items);
-		this.otrasIdentidades = $(this.cssOpcionPrincipal + ' a', this.items);
-		this.enlaceOtrasIdentidades = $(this.cssEnlaceOtrasIdentidades, this.identidad);
-		this.otrasIdentidades = $(this.cssListadoOtrasIdentidades, this.identidad);
-		this.page = $('#page');
-		return;
-	},
-	ocultarMenusInactividad: function(){
-		var that = this;
-		this.page.hover(
-			function(){
-				that.ocultar();
-				that.ocultarOtrasIdentidades();
-			},function(){return}
-		);	
-	},
-	ocultar: function(){
-		this.items.removeClass(this.cssItemActivo);
-		return;
-	},
-	ocultarOtrasIdentidades: function(){
-		this.enlaceOtrasIdentidades.parents('li').removeClass(this.cssItemActivo);
-		this.otrasIdentidades.hide();
-		return;
-	},	
-	pantalla: function(){
-		var item = this.items[0];
-		var principal = $(this.cssOpcionPrincipal, item);
-		this.correccion = principal.offset().left;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		var item = enlace.parents(this.cssItemsOpcionesSegundoNivel);
-		if(!item.hasClass(this.cssItemActivo)){
-			this.ocultar();
-			this.ocultarOtrasIdentidades();
-			var principal = enlace.parent();
-			principal = $(principal);
-			var left = principal.offset().left - this.correccion;
-			var opciones = $('.opcionesPanel', item);
-			opciones.css('left', left + 'px');
-			item.addClass(this.cssItemActivo);
-		}else{
-			item.removeClass(this.cssItemActivo);
-		}
-		return;
-	},
-	comportamientoOtrasIdentidades: function(evento){
-		var enlace = $(evento.target);
-		var item = enlace.parents('li');
-		this.ocultar();
-		if(!item.hasClass(this.cssItemActivo)){
-			var left = item.offset().left - this.correccion;
-			this.otrasIdentidades.css('left', left + 'px');
-			this.otrasIdentidades.show();
-			item.addClass(this.cssItemActivo);
-		}else{
-			this.ocultarOtrasIdentidades();
-		}
-		return;
-	},	
-	enganchar: function(){
-		var that = this;
-		this.enlaces.each(function(){
-			$(this).bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			})
-		});
-		this.enlaceOtrasIdentidades.bind('click', function(evento){
-			evento.preventDefault();
-			that.comportamientoOtrasIdentidades(evento);
-		});
-	}
-};
-
-var facetedSearch = {
-	noCollapse: 'noCollapse',
-	init: function(){
-		//this.config();
-		//this.comportamiento();
-	},
-	config: function(){
-		this.facetas = $('#facetedSearch .box:not(.' + this.noCollapse + '):not(.categories)');
-		return;
-	},
-	ocultar: function(){
-		this.facetas.each(function(){
-			var faceta = $(this);
-			var searchBox = $('.facetedSearchBox', faceta);
-			if(faceta.height() < 72) return;
-			searchBox.hide();
-			faceta.css({
-				'height': '72px',
-				'background': '#f0f0f0',
-				'border-bottom': 'none'
-			});			
-		});
-		return;
-	},
-	comportamiento: function(){
-		var that = this;
-		this.facetas.each(function(){
-			var faceta = $(this);
-			var searchBox = $('.facetedSearchBox', faceta);
-			if(faceta.height() < 72) return;
-			searchBox.hide();
-			faceta.css({
-				'height': '72px',
-				'overflow': 'hidden'
-			});
-			faceta.hover(
-				function(){
-					that.ocultar();
-					searchBox.show();
-					var altura = faceta.height();
-					faceta.css({
-						'height': '100%',
-						'background': '#eee'
-					}, 1000);
-				},
-				function(){
-					return;
-					searchBox.hide();
-					faceta.css({
-						'height': '72px',
-						'background': '#f0f0f0',
-						'border-bottom': 'none'
-					});
-				})
-		});		
-	}
-}; 
-var limitarNumeroItems = {
-	init: function(listado){
-		this.listado = listado;
-		this.listado.addClass('limitado');
-		this.config();
-		this.comportamiento();
-		return;
-	},
-	config: function(){
-		this.recurso = this.listado.parents('div.resource');
-		this.enlace = this.recurso.find('.title a');
-		return;
-	},
-	comportamiento: function(){
-		var ul = this.listado.find('ul');
-		var lis = this.listado.find('li');
-		if(lis.size() <= 3) return;
-		lis.each(function(indice){
-			if(indice > 2) $(this).hide();
-		});
-		ul.append('<li><a class=\"verTodasCategoriasEtiquetas mas\" href="' + this.enlace.attr('href') + '" title=\"ver todos\">' + form.masMIN + '...<\/a><\/li>');
-		return;
-	}
-};
-
-var mostrarNumeroCategorias = {
-    init: function () {
-        this.comportamiento();
-    },
-    config: function () { return },
-    comportamiento: function () {
-        var categorias = $('#section .resource .categorias ul');
-        categorias.each(function () {
-            var ul = $(this);
-            var verMas = ul.find('a.verTodasCategoriasEtiquetas');
-            if (verMas.length == 0) {
-                var lis = $('li', ul);
-                if (lis.length <= 3) return;
-                lis.each(function (indice) {
-                    if (indice > 2) $(this).hide();
-                })
-                ul.append('<li><a class=\"verTodasCategoriasEtiquetas mas\" href="#" title=\"ver todos\">' + form.masMIN + '...<\/a><\/li>');
-            }
-        });
-        return;
-    }
-};
-
-var mostrarNumeroEtiquetas = {
-    init: function () {
-        this.comportamiento();
-    },
-    config: function () { return },
-    comportamiento: function () {
-        $('#section  .resource .etiquetas ul').each(function () {
-            var ul = $(this);
-            var verMas = ul.find('a.verTodasCategoriasEtiquetas');
-            if (verMas.length == 0) {
-                var lis = $('li', ul);
-                if (lis.size() <= 3) return;
-                lis.each(function (indice) {
-                    if (indice > 2) $(this).hide();
-                })
-                ul.append('<li><a class=\"verTodasCategoriasEtiquetas mas\" href="#" title=\"ver todos\">' + form.masMIN + '...<\/a><\/li>');
-            }
-        });
-        return;
-    }
-};
-
-
 
 /**
- * Calcular y recortar la longitud de las facetas que aparecen en el panel izquierdo de "Búsquedas". 
- */
-var limiteLongitudFacetas = {
-    init: function () {
-        this.comportamiento();
-    },
-    config: function () { return },
-    comportamiento: function () {
-        $('#facetedSearch .box li a .textoFaceta').each(function () {
-            var digitos = 24;
-            var hayNumero = false;
-            var enlace = $(this);
-            var textoEnlace = $.trim(enlace.text());
-            var longitud = textoEnlace.length;
-            var caracter = '';
-
-            var p1 = longitud;
-
-            if (textoEnlace.lastIndexOf('(') > 0) {
-                p1 = textoEnlace.lastIndexOf('(');
-            }
-
-            if (enlace.parent().children('img').length > 0) {
-                digitos--;
-            }
-
-            var margenLeft = enlace.css('margin-left');
-            margenLeft = margenLeft.substring(0, margenLeft.length - 2);
-            while (margenLeft >= 10) {
-                margenLeft = margenLeft - 10;
-                digitos--;
-            }
-
-            if (enlace.parents('ul').length > 1) {
-                digitos = digitos - (enlace.parents('ul').length * 2);
-            }
-
-            hayNumero = (textoEnlace.charAt(textoEnlace.length - 1) == ')');
-            if (hayNumero) {
-                digitos = digitos - (longitud - p1);
-            }
-
-            var c1 = $.trim(textoEnlace.substring(0, p1));
-            if (c1.length >= digitos) {
-                longitud = digitos - 4;
-                c1 = c1.substring(0, longitud);
-                c1 = c1 + ' ...';
-            }
-            var textoEnlaceNuevo = c1;
-            if (hayNumero) {
-                var cantidad = textoEnlace.substring(p1 + 1, textoEnlace.length - 1);
-                textoEnlaceNuevo += '<span>(';
-                textoEnlaceNuevo += cantidad;
-                textoEnlaceNuevo += ')<\/span>';
-            }
-            enlace.html(textoEnlaceNuevo);
-        });
-    }
-};
-
-
-var verTodasCategoriasEtiquetas = {
-    init: function () {
-        this.comportamiento();
-    },
-    config: function () { return },
-    comportamiento: function () {
-        $('#section  .resource .verTodasCategoriasEtiquetas').each(function () {
-            $(this).unbind();
-            $(this).bind('click', function (evento) {
-                evento.preventDefault();
-                var enlace = $(evento.target);
-                var ul = enlace.parents('ul');
-                var lis = $('li', ul);
-                var total = lis.size();
-                if (enlace.hasClass('mas')) {
-                    lis.show();
-                    enlace.removeClass('mas');
-                    enlace.text(form.menos);
-                } else {
-                    lis.each(function (indice) {
-                        var li = $(this);
-                        if (indice > 2 && indice < total - 1) li.hide();
-                    });
-                    enlace.addClass('mas');
-                    enlace.text(form.masMIN+'...');
-                }
-            })
-        });
-        return;
-    }
-};
-var limpiarActividadRecienteHome = {
-    init: function () {	
-		var body = $('body');
-        if(body.hasClass('fichaComunidad') || body.hasClass('fichaRecurso')) return;
-        this.limpiar();
-    },
-    mostrarContenidos: function (content) {
-        var items = content.children();
-        items.hide();
-        var itemsMostrados = 0;
-        primerParrafoConImagen = false;
-		var primerItem = items.first();
-		var segundoItem = primerItem.next();
-        var item = '';
-		var longitud = 250;
-        if (primerItem.hasClass('miniatura')) {
-            primerItem.show();
-            segundoItem.show();
-            item = segundoItem;
-        }else {
-			var longitudPrimerParrafo = primerItem.text().length;
-			if(longitudPrimerParrafo > longitud){
-				primerItem.show();
-                item = primerItem;
-                // Eliminar los párrafos que no se muestran para que no generen espacio adicional excluyendo el primero
-                for (var i = 1, l = items.length; i < l; i++) {
-                    items[i].remove();
-                }
-			}else{
-				primerItem.show();
-				segundoItem.show();
-				item = segundoItem;
-				longitud = longitud - longitudPrimerParrafo;
-			}
-        }
-		this.acortarItem(item, longitud);			
-        this.buscarEnlace(item);
-        return;
-    },
-    acortarItem: function (item, longitud) {
-        var texto = item.text();
-        if (texto.length > longitud) {
-            var acortado = texto.substring(0, longitud);
-            //item.text(acortado);
-            // Añadir ... para que de sensación de continuidad
-            item.text(acortado + "...");
-        }
-        return;
-    },
-    buscarEnlace: function (item) {
-        var content = item.parents('div').first();
-        var verMasRecurso = content.next();
-		if(!verMasRecurso.hasClass('verMasRecurso')) return;
-        var enlace = verMasRecurso.find('a');
-        item.append(enlace);
-		return;
-    },
-    resetear: function (item) {
-        var isSpan = item.nodeName == 'SPAN';
-        var item = $(item);
-        if (!isSpan) item.attr('style', '');
-        if (!item.hasClass('miniatura')) item.attr('class', '');
-        item.attr('size', '');
-        item.attr('face', '');
-        return;
-    },
-
-    /**
-    * Limpiar el contenido de recursos o comentarios para que no aparezcan formatos HTML. Además de acortarlos textos de comentarios (Vista preliminar)".
-    */
-    limpiar: function () {
-        var that = this;
-        // Actualizado el item para que sepa donde limpiar el contenido
-        $('.resource-list .descripcionResumida, #content .comment-content').each(function () {
-            var content = $(this);
-            if (!content.hasClass('limpio')) {
-                var parrafos = $('p', content);
-                var span = $('span', content);
-                var font = $('font', content);
-                var img = $('img', content);
-                var div = $('div', content);
-                var a = $('a', content);
-                var ul = $('ul', content);
-                var li = $('li', content);
-                var items = [parrafos, span, font, img, div, a, ul, li];
-                $.each(items, function () {
-                    $.each(this, function () {
-                        that.resetear(this);
-                    });
-                });
-                parrafos.each(function (indice) {
-                    var item = $(this);
-                    if (item.hasClass('miniatura')) return;
-                    var texto = item.text();
-                    texto = $.trim(texto);
-                    if (texto == '' || texto == ' ' || texto == '&nbsp' || texto == ' &nbsp' || texto == null) {
-                        item.remove();
-                    };
-                });
-                div.each(function (indice) {
-                    var item = $(this);
-                    var hasParrafos = false;
-                    var parrafos = $('p', item);
-                    // Deprecado la función size -> Usar propiedad length
-                    //if (parrafos.size() > 0) hasParrafos = true;                    
-                    if (parrafos.length > 0) hasParrafos = true;
-                    if (!hasParrafos) {
-                        var html = '<p>';
-                        html += item.html();
-                        html += '<\/p>';
-                        item.after(html);
-                        item.remove();
-                    } else {
-                        item.after(item.html());
-                        item.remove();
-                    }
-                });
-                that.mostrarContenidos(content);                
-                content.addClass('limpio');
-            }
-        })
-        return;
-    }
-}
-var pintarRecursoVideo = {
-	css: '.recursoVideo',
-	cssMiniatura: '.miniatura',
-	cssListado: '.resource-list',
-	cssItemsVideo: '#content .resource-list .descripcionResumida .recursoVideo',
-	init: function(){
-		this.config();
-		this.comportamiento();
-	},
-	config: function(){
-		this.itemsVideo = $(this.cssItemsVideo, '#section');
-		return;
-	},
-	comportamiento: function(){
-		this.itemsVideo.each(function(){
-			var item = $(this);
-			var enlace = $('a', item);
-			var ruta = enlace.attr('href');
-			item.append('<a href=\"' + ruta + '\" class=\"resourceTypeVideo\">recurso video<\/a>');
-		});
-		return;
-	}
-}
-var viewGridHome = {
-	resource: '.resource',
-	init: function(listado){
-		this.listado = $(listado);
-		this.recursos = $(this.resource, this.listado);
-		var contador = 0;
-		this.recursos.each(function(){
-			if(contador == 2){
-				var recurso = $(this);
-				recurso.addClass('omega');
-				recurso.after('<div class=\"clearFile\"><\/div>');
-				contador = -1;
-			}
-			contador ++;
-		});
-	}
-}
-var viewListDestacadoHome = {
-	resource: '.resource',
-	init: function(listado){
-		this.listado = $(listado);
-		this.recursos = $(this.resource, this.listado);
-		var contador = 0;
-		this.recursos.each(function(){
-			if(contador == 1){
-				var recurso = $(this);
-				recurso.addClass('omega');
-				recurso.after('<div class=\"clearFile\"><\/div>');
-				contador = -1;
-			}
-			contador ++;
-		});
-	}
-}
-var recursoCompactado = {
-	cssContendioExtendido: 'contendioExtendido',
-	idCustomAboutResource: '#customAboutResource',
-	opcionesDesplegables: ['li.licencia','li.certificado'],
-	init: function(){
-		this.config();
-		this.enganchar();
-		return;
-	},
-	config: function(){
-		this.customAboutResource = $(this.idCustomAboutResource);
-		this.customAboutResource.append('<div class=\"'+ this.cssContendioExtendido +'\"><p>contenido extendido<\/p><\/div>');
-		this.contenidoExtendido = $('.' + this.cssContendioExtendido, this.customAboutResource);
-		return;
-	},
-	enganchar: function(){
-		var that = this;
-		for (var contador = 0; contador < this.opcionesDesplegables.length; contador ++){
-			var opcion = $(this.opcionesDesplegables[contador], this.customAboutResource);
-			var etiqueta = opcion.find('span.label');
-			etiqueta.addClass('activado');
-			var lis = $('li', this.customAboutResource);
-			etiqueta.bind('click', function(evento){
-				evento.stopPropagation();
-				var etiqueta = $(evento.target);
-				var opcion = etiqueta.parent();
-				var valor = opcion.find('span.value').html();
-				if(!opcion.hasClass('activo')){
-					lis.removeClass('activo');
-					that.contenidoExtendido.html(valor);
-					that.contenidoExtendido.show();	
-					opcion.addClass('activo');
-				}else{
-					that.contenidoExtendido.hide();	
-					opcion.removeClass('activo');
-				}
-			});
-		};
-		return;
-	}
-}
-
-var iconografia = {
-	cssItems: ['a.megusta', 'a.nomegusta'],
-	cssIconizer: 'iconizer',
-	init: function(){
-		var that = this;
-		$.each(this.cssItems, function(indice, valor){
-			var items = $(valor);
-			items.each(function(){
-				var item = $(this);
-				if(!item.hasClass(that.cssIconizer)){
-					item.prepend('<span class="\icono"\><\/span>');
-					item.addClass(that.cssIconizer);
-				}
-			});
-
-		});
-	}
-}
-var ajustarTextoLogoComunidad = {
-	id: '#corporativo',
-	css: '.content',
-	cssClase: '.identificadorClase',
-	isClase: false,
-	hasLogoImagen: false,
-	init: function(){
-		this.config();
-		if(this.hasLogoImagen) return;
-		this.ajustar();
-		return;
-	},
-	config: function(){
-		this.caja = $(this.id);
-		this.clase = $(this.cssClase, this.caja);
-		// Deprecado size()
-        if (this.clase.length > 0) this.isClase = true;
-		this.wrapcaja = $(this.css, this.caja);
-		this.encabezado = $('h1 a', this.caja);
-		this.imagen = $('img', this.encabezado);
-		// Deprecado size() 
-        //if (this.imagen.size() > 0) this.hasLogoImagen = true;
-        if (this.imagen.length > 0) this.hasLogoImagen = true;
-		return;
-	},
-	ajustar: function(){
-		this.wrapcaja.hide();
-		var texto = this.encabezado.text();
-		var caracteres = texto.length;
-		this.wrapcaja.css({'margin-top':'10px'});
-		if(caracteres > 70){
-			this.encabezado.css({'font-size':'32px'});
-		}else if(caracteres > 40 && caracteres <= 60){
-			this.encabezado.css({'font-size':'36px'});			
-		}else if(caracteres > 20 && caracteres <= 40){
-			this.encabezado.css({'font-size':'47px'});
-		}else{
-			this.encabezado.css({'font-size':'60px'});
-		}
-		this.wrapcaja.show();
-		return;
-	}
-}
-var herramientasRecursoCompactado = {
-    idCustomAboutResource: '#customAboutResource',
-    cssResourceTools: '.acciones',
-    cssUlPrincipal: '.principal',
-    cssLiToSecondary: '.toSecondary',
-    anchoMaxUlPrincipal: 540,
-    isCreatedSecondary: false,
-    init: function () {
-        this.config();
-        this.resources.addClass('activo');
-        this.opcionesSecundarias();
-        this.anchoUlPrincipal();
-        this.iconografia();
-        this.engancharMoreOptions();
-        this.engancharMoreOptionsLayer();
-    },
-    config: function () {
-        this.about = $(this.idCustomAboutResource);
-        this.resources = this.about.find(this.cssResourceTools);
-        this.ulPrincipal = this.resources.find(this.cssUlPrincipal);
-        this.liPrincipal = this.ulPrincipal.find('li');
-        this.lisToSecundary = this.ulPrincipal.find('li' + this.cssLiToSecondary);
-        return;
-    },
-    engancharMoreOptionsLayer: function () {
-        var capa = this.resources.find('.moreTools');
-        var parent = capa.parent();
-        capa.unbind().hover(
-			function () {
-			    return;
-			}, function () {
-			    parent.hasClass('showing') ? parent.removeClass('showing') : parent.addClass('showing');
-			    return;
-			}
-		);
-        return;
-    },
-    engancharMoreOptions: function () {
-        var enlace = this.resources.find('.opMoreOptions > a');
-        enlace.unbind().bind('click', function (evento) {
-            evento.preventDefault();
-            var parent = enlace.parent();
-            parent.hasClass('showing') ? parent.removeClass('showing') : parent.addClass('showing');
-        })
-        return;
-    },
-    crearUlSecondary: function () {
-        this.ulSecondary = $('<ul class=\"secondary\">');
-        this.resources.append(this.ulSecondary);
-        this.isCreatedSecondary = true;
-        return;
-    },
-    opcionesSecundarias: function () {
-		// Deprecado size();
-        //if (this.lisToSecundary.size() > 0) {
-        if (this.lisToSecundary.length > 0) {
-            this.crearUlSecondary();
-            this.ulSecondary.html(this.lisToSecundary);
-            this.liPrincipal = this.ulPrincipal.find('li');
-        }
-        return;
-    },
-    iconografia: function () {
-        var enlaces = this.resources.find('a');
-        enlaces.each(function () {
-            var enlace = $(this);
-            enlace.prepend('<span><\/span>');
-        })
-    },
-    htmlLisMoreOptions: function (lis) {
-        var lis = $(lis);
-        var html = '';
-        lis.each(function () {
-            var li = $(this);
-            html += '<li>' + li.html() + '<\/li>';
-        });
-        //html += '<li class=\"opClose last\"><a href=\"#\">cerrar<\/a><\/li>';
-        return html;
-    },
-    anchoUlPrincipal: function () {
-        var that = this;
-        if (this.ulPrincipal.width() > this.anchoMaxUlPrincipal) {
-            var lisMoreOptions = [];
-            var lisVisibleOptions = [];
-            var ancho = 0;
-            this.liPrincipal.each(function () {
-                var li = this;
-                ancho += ($(li).width() + 22);
-                if (ancho >= that.anchoMaxUlPrincipal) {
-                    lisMoreOptions.push(li);
-                    $(li).remove();
-                };
-            })
-            if (!this.isCreatedSecondary) this.crearUlSecondary();
-
-            if (this.ulSecondary.find('.opMoreOptions').size()==0) {
-                this.liMoreOptions = $('<li class=\"opMoreOptions\">');
-                this.aliMoreOptions = $('<a href=\"#\">Más opciones<\/a>');
-                this.divMoreOptions = $('<div class=\"moreTools\">');
-                this.ulDivMoreOptions = $('<ul>');
-                this.divMoreOptions.append(this.ulDivMoreOptions);
-                this.ulDivMoreOptions.append(this.htmlLisMoreOptions(lisMoreOptions));
-                this.liMoreOptions.append(this.aliMoreOptions);
-                this.liMoreOptions.append(this.divMoreOptions);
-                this.ulSecondary.append(this.liMoreOptions);
-            }
-        };
-        return;
-    }
-}
-
-var onlymembers = {
-	init: function(){
-		$('.onlyMembers').each(function(){
-			var capa = $(this);
-			var imagen = $('.image', capa);
-			imagen.append('<div class=\"\wrap\"><\/div>');
-			capa.append('<p class=\"message\">Solo miembros / Only members<\/p>');
-			var wrap = $('.wrap', imagen);
-			wrap.css('opacity', 0.6);
-		})	
-	}
-}
-
-var onlymembersContent = {
-	init: function(){
-		$('.onlyMembersContent').each(function(){
-			var capa = $(this);
-			var mensajePersonalizado = $('.mensajePersonalizadoSoloMiembros');
-			var wrap = $('<div>').attr('class','wrap').css('opacity', 0.8);
-			capa.prepend(wrap);
-			if(mensajePersonalizado.size() > 0) return
-			capa.append('<div class=\"message\"><p>Solo miembros / Only members<\/p><p><a href=\"mgLogin.php\">Accede y participa ...<\/a><\/p><\/div>');
-		});	
-	}
-}
-
-var subcategoriasMenuPrincipal = {
-	idPrincipal: '#nav',
-	init: function(){
-		this.config();
-		if(!this.hasSubcategorias) return;
-		this.nav.addClass('activado');
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.page = $('#page');
-		this.nav = $(this.idPrincipal);
-		this.subcategorias = this.nav.find('ul ul');
-		// Deprecado size()
-        //this.hasSubcategorias = this.subcategorias.size() > 0;
-        this.hasSubcategorias = this.subcategorias.length > 0;
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		this.subcategorias.each(function(indice){
-			var ul = $(this);
-			var li = ul.parents('li').first();
-			var a = li.find('a').first();
-			li.addClass('hasSubcategorias');
-			a.hover(
-				function(){
-					that.desmarcarTodos();
-					var enlace = $(this);
-					var li = enlace.parent().addClass('current on');
-					//that.comportamiento(evento);
-				},
-				function(){
-					var enlace = $(this);
-					var li = enlace.parent().removeClass('current');					
-					return;
-				}
-			);
-			ul.hover(
-				function(evento){				
-					return;
-				},
-				function(evento){
-					var ul = $(this);
-					var li = ul.parent().removeClass('on');					
-					return;
-				}
-			);		
-		});
-		this.page.hover(
-			function(){
-				that.desmarcarTodos()
-			},
-			function(){
-				return
-			}
-		)	
-		return;
-	},
-	desmarcarTodos: function(){
-		var items = this.nav.find('.on');
-		items.each(function(){
-			var item = $(this);
-			if(!item.hasClass('current')) item.removeClass('on')
-		});
-		return;
-	}
-}
-var abreEnVentanaNueva = {
-	isFicha: false,
-	idFichaCatalogo: 'fichaCatalogo',
-	idFichaRecurso: 'fichaRecurso',
-	init: function(){
-		this.body = $('body');
-		if(this.body.hasClass(this.idFichaCatalogo) || this.body.hasClass(this.idFichaRecurso)) this.isFicha = true;
-		if(!this.isFicha) return;
-		this.config();
-		this.comportamiento();
-		return;
-	},
-	config: function(){
-		this.recurso = this.body.find('#col02 .resource').first();
-		this.title = this.recurso.find('.title');
-		this.enlace = this.title.find('a');
-		return;
-	},
-	comportamiento: function(){
-		var html = '<span class=\"icono\" title=\"enlace recurso externo\"></span>';
-		var isExterno = $(this.enlace).attr('target') == '_blank';
-		if(isExterno) this.enlace.append(html);
-		return;
-	}
-}
-var redesSocialesRecursoCompactado = {
-	idRedesSociales: '.redesSocialesCompartir',
-	init: function(){
-		this.config();
-		this.ocultar();
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.redes = $('#content ' + this.idRedesSociales).first();
-		this.ul = this.redes.find('ul');
-		this.lis = this.redes.find('li');
-		return;
-	},
-	ocultar: function(){
-		this.lis.each(function(){
-			var li = $(this);
-			if(!li.hasClass('big') && !li.hasClass('mostrar')) li.hide();
-		});
-		this.isRedesOcultas = true;
-		return;
-	},
-	mostrar: function(){
-		this.lis.each(function(){
-			var li = $(this);
-			if(!li.hasClass('big') && !li.hasClass('mostrar')) li.show();
-		});
-		this.isRedesOcultas = false;
-		return;
-	},	
-	engancharComportamiento: function(){
-		var that = this;
-		this.enlace = $('<a href="#">').text('mostrar');
-		this.liMostrar = $('<li>').attr('class','mostrarMas').append(this.enlace);
-		this.ul.append(this.liMostrar);
-		this.enlace.bind('click', function(evento){
-			evento.preventDefault();
-			that.comportamiento(evento);
-		})
-		return;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		if(this.isRedesOcultas){
-			this.mostrar();
-			enlace.parent().addClass('menos');
-		}else{
-			this.ocultar();
-			enlace.parent().removeClass('menos');		
-		}
-		return;
-	}
-}
-
-var seleccionarPreferencias = {
-    componentes: ['.fieldset01', '.fieldset02', '.fieldset03', '.fieldset04', '.fieldset05', '.fieldset06', '.fieldset07', '.fieldset08', '.fieldset09', '.fieldset010', '.fieldset011'],
-	init:function(){
-		var that = this;
-		$.each(this.componentes, function(indice, valor){
-			var item = $(valor);
-			var items = item.find('li');
-			var labels = item.find('label');
-			var checks = item.find('input[type=checkbox]');
-			items.each(function(contador){
-				var item = $(this);
-				item.addClass('item' + indice + contador);
-			});
-			item.addClass('activo');
-			items.bind('click', function (evento) {
-			    evento.preventDefault();
-				that.comportamiento(evento);
-			});
-			labels.bind('click', function(evento){
-				evento.preventDefault();
-			});		
-		});
-	},
-	changeCheck: function(li){
-		var li = $(li);
-		var check = li.find('input[type=checkbox]');
-		li.hasClass('on') ? li.removeClass('on') : li.addClass('on');
-		check.is(':checked') ? check.attr('checked', false) : check.attr('checked', true);
-		return;
-	},
-	comportamiento:function(evento){
-		var item = $(evento.target);
-		var name = evento.target.nodeName;
-		var li = item;
-		if(name != 'LI') li = item.parents('li').first();
-		this.changeCheck(li);
-		return;
-	}
-}
-var marcarObligatorios = {
-	init: function(){
-		this.datosTipoTexto();
-		return;
-	},
-	datosTipoTexto: function(){
-	    var campos = $('.fieldset01 input[type=text], .fieldset01 input[type=password], .fieldset01 select.dato');
-		campos.each(function(indice){
-			var campo = $(this);
-			var padre = campo.parent();
-			var label = padre.find('label');
-			if(label.hasClass('datoObligatorio')){
-				label.attr('title', 'campo obligatorio');
-				label.prepend('<span class="datoObligatorio">*</span>');
-			}
-		})
-		return;
-	}
-}
-var customizeFile = {
-	init: function(){
-		$('.customizeFileUpload').each(function(){
-			var contenedor = $(this);
-			var enlaces = contenedor.find('a.cambiar');
-			var selectorFile = contenedor.attr('rel');
-			var contenedorFile = $('.' + selectorFile).hide();
-			enlaces.bind('click', function(evento){
-				evento.preventDefault();
-				var enlace = $(evento.target);
-				var contenedor = enlace.parents('.customizeFileUpload');
-				var selectorFile = contenedor.attr('rel');
-				var contenedorFile = $('.' + selectorFile);
-				var selectorFile = contenedor.attr('rel');
-				var file = contenedorFile.find('input[type="file"]');
-				file.trigger('click');
-			});								
-		})
-	}
-};
-var ajusteFechaPublicador = {
-	init: function(){
-		$('.publicacion').each(function(indice){
-			var item = $(this);
-			var recurso = item.parents('.resource');
-			var author = recurso.find('.author');
-			var hasAuthor = author.size() > 0;
-			if(hasAuthor){
-				item.addClass('enCajaAuthor');
-				author.append(item)
-			}
-		});	
-	}
-}
-var desplegableGenerico = {
-	idView: '#view',
-	cssItemDesplegable: 'desplegable',
-	lis: [],
-	init: function(){
-		this.config();
-		this.view.addClass('activado');
-		if(this.view <= 0) return;
-		this.enganchar();
-	},
-	config: function(){
-		var that = this;
-		this.view = $(this.idView);
-		var li = this.view.find('li').first();
-		var lis = li.siblings();
-		this.lis.push(li);
-		lis.each(function(indice, valor){
-			var li = $(this);	
-			if(li.text() == ''){
-				li.remove();
-			}else{
-				that.lis.push(li);
-			}
-		})
-		return;
-	},
-	ocultar: function(){
-		$.each(this.lis, function(indice){
-			var item = this;
-			if(!item.hasClass('current')) item.addClass('off');
-		})
-		return;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		enlace.blur();
-		var li = enlace.parents('li').first();
-		li.addClass('current');
-		this.ocultar();
-		li.hasClass('off') ? li.removeClass('off') : li.addClass('off');
-		li.removeClass('current');
-		return;
-	},	
-	enganchar: function(){
-		var that = this;
-		$.each(this.lis, function(indice){
-			var item = this;
-			var enlace = item.find('a').first();
-			var ul = item.find('ul');
-			var lis = ul.find('li');
-            // Deprecado size()
-            //if (ul.size() > 0) {
-            if (ul.length > 0) {
-                // Deprecado size()
-                //if (lis.size() > 0) {
-                if (lis.length > 0) {
-					enlace.addClass('principal');
-					item.addClass('withOpciones off');
-					enlace.bind('click', function(evento){
-						evento.preventDefault();
-						that.comportamiento(evento);
-					})
-				}else{
-					item.hide();
-				}
-			}
-		})
-		return;
-	}
-}
-
-// Cambiado por antiguo front
-// Lo eliminará
-/*var marcarPasosFormulario = {
-	init: function(){
-		this.config();
-		this.marcarItems();
-		return;
-	},
-	config: function(){
-		this.content = content;
-		this.wraper = this.content.find('.formSteps').first();
-		this.pasos = this.wraper.find('li');
-		return;
-	},
-	marcarItems: function(){
-		var items = this.pasos.size();
-		this.pasos.each(function(indice){
-			var item = $(this);
-			item.addClass('item item0' + (indice + 1));
-			if(indice == 0) item.addClass('first');
-			if(indice == (items - 1)) item.addClass('last');
-			if(item.hasClass('activo')){
-				item.parent().addClass('activoItem0' + (indice + 1));
-			}
-		})
-		return;
-	}
-	
-}*/
-
-var presentacionVotosRecurso = {
-    isFicha: false,
-    init: function () {
-        var that = this;
-        this.config();
-        if (!this.isFicha) return;
-        // Deprecado size()
-        //if (this.enlace.size() <= 0) return;
-        if (this.enlace.length <= 0) return;
-        /*/*setTimeout(function(){
-        that.traerUsuariosVotosRecursosSencillo();
-        }, 1000)*/
-        //WebForm_DoCallback('ctl00$ctl00$CPH1$CPHContenido$controles_ficharecursoinevery_ascx', 'VerVotantesSimple', ReceiveServerData, '', null, false);
-        this.botonCerrarPanelAmpliado();
-        this.enmascarar();
-        this.enchangar();
-        return;
-    },
-    config: function () {
-        this.body = body;
-        this.isFicha = this.body.hasClass('fichaComunidad') || this.body.hasClass('fichaComunidad');
-        this.page = page;
-        this.content = content;
-        this.columna = this.content.find('#col02');
-        this.resource = this.columna.find('.resource').first();
-        this.utils = this.resource.find('.utils-1').addClass('js-activado');
-        this.enlace = this.utils.find('.votosPositivos a');
-        this.panelSencillo = this.utils.find('#panelVotosSimple');
-        this.panelAmpliado = this.utils.find('#panelVotosAmpliado');
-        return;
-    },
-    posicionar: function () {
-        var ancho = $(window).width();
-        var alto = $(window).height();
-        var top = $(window).scrollTop();
-        var anchoPanel = this.columna.width();
-        var left = (ancho - anchoPanel) / 2;
-        if (left < 0) left = 0;
-        this.mascara.css({
-            'width': ancho + 'px',
-            'height': alto + 'px',
-            'top': top + 'px'
-        });
-        this.panelAmpliado.css({
-            'left': left + 'px',
-            'top': (top + 100) + 'px'
-        });
-        return;
-    },
-    enmascarar: function () {
-        this.mascara = $('<div>').addClass('mascaraPanelAmpliado').hide();
-        this.body.append(this.mascara);
-        return;
-    },
-    botonCerrarPanelAmpliado: function () {
-        var that = this;
-        var parrafo = $('<p>').addClass('cerrarPanelAmpliado');
-        var enlace = $('<a>').attr('href', '#cerrarPanelAmpliado').text('cerrar');
-        parrafo.append(enlace);
-        this.panelAmpliado.append(parrafo);
-        enlace.bind('click', function (evento) {
-            evento.preventDefault();
-            var enlace = $(evento.target);
-            that.body.css("overflow", "auto");
-            that.panelAmpliado.hide();
-            that.mascara.hide();
-        })
-        return;
-    },
-    traerUsuariosVotosRecursosSencillo: function () {
-        var that = this;
-        ////var url = 'includes/recurso/usuariosVotaronRecursoSencillo.php';
-        //WebForm_DoCallback('ctl00$ctl00$CPH1$CPHContenido$controles_ficharecursoinevery_ascx', 'VerVotantesSimple', ReceiveServerData, '', null, false);
-
-        /////
-        /*var respuesta = $.ajax({
-        url: url,
-        type: "GET",
-        dataType: "html"
-        })
-        .done(function(pagina) {
-        var html = pagina;
-        that.panelSencillo.children().html(html);	
-        return;
-        })
-        .fail(function( jqXHR, textStatus ) {
-        alert( "Request failed: " + textStatus );
-        })*/
-        return;
-    },
-    traerUsuariosVotosRecursos: function () {
-        //if ($('#ctl00_ctl00_CPH1_CPHContenido_controles_ficharecurso_ascx_divResource').length > 0) {
-        //    WebForm_DoCallback('ctl00$ctl00$CPH1$CPHContenido$controles_ficharecurso_ascx', 'VerVotantes', ReceiveServerData, '', null, false);
-        //}
-        //else {
-        //    WebForm_DoCallback('ctl00$ctl00$CPH1$CPHContenido$controles_ficharecursoinevery_ascx', 'VerVotantes', ReceiveServerData, '', null, false);
-        //}
-        var that = this;
-        var url = document.location.href + '/load-voters';
-        //var respuesta = $.ajax({
-        //    url: url,
-        //    type: "POST",
-        //    dataType: "html"
-        //})
-        GnossPeticionAjax(url, null, true)
-        .done(function (html) {
-            that.panelAmpliado.find('.wrap').first().html(html);	
-            CompletadaCargaUsuariosVotanRecurso();
-            return;
-        })
-        //.fail(function( jqXHR, textStatus ) {
-        //alert( "Request failed: " + textStatus );
-        //})
-        return;
-    },
-    enchangar: function () {
-        var that = this;
-        this.enlace.bind('click', function (evento) {
-            evento.preventDefault();
-            $(window).scrollTop(0);
-            that.panelSencillo.hide();
-            that.posicionar();
-            that.body.append(that.panelAmpliado);
-            that.body.css("overflow", "hidden");
-            that.panelAmpliado.show();
-            that.mascara.show();
-            if (that.panelAmpliado.hasClass("no-data-panel")) {
-                that.traerUsuariosVotosRecursos();
-                /*setTimeout(function(){
-                that.traerUsuariosVotosRecursos();
-                }, 800);*/
-                //if ($('#ctl00_ctl00_CPH1_CPHContenido_controles_ficharecurso_ascx_divResource').length > 0) {
-                //    WebForm_DoCallback('ctl00$ctl00$CPH1$CPHContenido$controles_ficharecurso_ascx', 'VerVotantes', ReceiveServerData, '', null, false);
-                //}
-                //else {
-                //    WebForm_DoCallback('ctl00$ctl00$CPH1$CPHContenido$controles_ficharecursoinevery_ascx', 'VerVotantes', ReceiveServerData, '', null, false);   
-                //}
-            }
-            that.panelAmpliado.removeClass("no-data-panel");
-        });
-        this.enlace.hover(
-			function () {
-			    var enlace = $(this);
-			    if (!that.panelAmpliado.is(':visible')) that.panelSencillo.show();
-			},
-			function () {
-			    var enlace = $(this);
-			    that.panelSencillo.hide();
-			}
-		);
-        $(window).scroll(function () {
-            if (that.panelAmpliado.is(':visible')) $(window).scrollTop(0);
-        })
-        return;
-    },
-    comportamiento: function () {
-        return;
-    }
-}
-/**
- * Clase jquery para poder gestionar la aparición y login de una vista modal para que el usuario haga login.
+ * Inicializa el panel modal de Login y gestiona los eventos relacionados.
+ * 
+ * Llama a los métodos de configuración, muestra el modal, gestiona el hash y configura los eventos necesarios para el panel de login.
  * Aparecerá siempre y cuando el usuario realice una acción y no disponga de permisos para ejecutarla.
- * */
+ * 
+ * @name operativaLoginEmergente.init
+ * @memberof operativaLoginEmergente
+ * @returns {void}
+ */
 var operativaLoginEmergente = {
     /**
      * Acción que dispara directamente el panel modal de Login
@@ -17675,7 +8777,7 @@ var operativaLoginEmergente = {
      */
     closeModal: function () {
         $(this.idModalPanel).modal('toggle');
-		return;
+        return;
     },
     /*
      * Acción de mostrar la vista modal
@@ -17702,17 +8804,17 @@ var operativaLoginEmergente = {
         // Captar el formulario Login si se está en la página Login. Si no está en página Login --> Coger el formulario del modal
         this.form = this.isLoginCurrentPage ? $('body').find(this.idForm) : $(this.idModalPanel).find(this.idForm);
         this.loginForms = $(`.${this.formClassName}`);
-        
+
 
         // Inputs y botones
         this.idInputEmail = '#usuario_Login';
         this.inputEmailClassName = "usuario_Login";
         this.inputEmail = $(this.form).find(this.idInputEmail),
-        this.idInputPassword= '#password_login';
+            this.idInputPassword = '#password_login';
         this.inputPasswordClassName = "password_login";
         this.inputPassword = $(this.form).find(this.idInputPassword);
-        this.idButtonLogin= '#btnSubmit';
-        this.buttonLoginClassName= 'btnSubmit';
+        this.idButtonLogin = '#btnSubmit';
+        this.buttonLoginClassName = 'btnSubmit';
         this.buttonLogin = $(this.form).find(this.idButtonLogin);
         // Paneles de error
         this.idLoginPanelError = '#loginError .ko';
@@ -17746,15 +8848,15 @@ var operativaLoginEmergente = {
         // Botón Login - Vía Clase
         $(`.${this.buttonLoginClassName}`).click(function (event) {
             // Ocultar por defecto posibles mensajes de error
-            $.each(that.panelesErrorWithClassName, function() {
+            $.each(that.panelesErrorWithClassName, function () {
                 $(this).hide();
-            });                            
+            });
             // Hacer login solo si los datos han sido introducidos
             const loginButton = $(this);
             const currentForm = loginButton.closest(`.${that.formClassName}`);
             if (that.validarCampos(loginButton) == true) {
                 // Mostrar loading
-                MostrarUpdateProgress();                
+                MostrarUpdateProgress();
                 currentForm.submit();
             } else {
                 const loginPanelError = currentForm.find(`.${that.loginPanelErrorClassName}`);
@@ -17768,7 +8870,7 @@ var operativaLoginEmergente = {
         });
 
         // Configurar botón si no hay por clase
-        if (that.isButtonLoginIsConfigured == false){
+        if (that.isButtonLoginIsConfigured == false) {
             // Botón Login vía ID
             this.buttonLogin.click(function (event) {
                 // Ocultar por defecto posibles mensajes de error
@@ -17789,16 +8891,16 @@ var operativaLoginEmergente = {
             });
         }
     },
- 
+
     /**
     * Comprobar que los campos (email y password) no están vacíos
     * @returns {bool}    
     */
-    validarCampos: function (loginButton) {        
+    validarCampos: function (loginButton) {
         // Encontrar el formulario desde el que se está haciendo la validación o el Login
         const currentForm = loginButton.closest(`.${this.formClassName}`);
-        const inputEmail = currentForm.find(`.${this.inputEmailClassName}`);   
-        const inputPassWord = currentForm.find(`.${this.inputPasswordClassName}`);     
+        const inputEmail = currentForm.find(`.${this.inputEmailClassName}`);
+        const inputPassWord = currentForm.find(`.${this.inputPasswordClassName}`);
         return (inputEmail.val() != '' && inputPassWord.val() != '');
     },
 
@@ -17825,8 +8927,8 @@ var operativaLoginEmergente = {
     * Solo ha de ejecutarse cuando el usuario se encuentre en la página Login
     */
     doHashManagement: function () {
-        const that = this;        
-                
+        const that = this;
+
         that.isButtonLoginIsConfigured = $(`.${this.buttonLoginClassName}`).length > 0 ? true : false;
 
         let loginPanelError = undefined;
@@ -17835,19 +8937,19 @@ var operativaLoginEmergente = {
         let loginPanelErrorBloqueado = undefined;
 
         // Paneles de error según clase
-        if (that.isButtonLoginIsConfigured){
+        if (that.isButtonLoginIsConfigured) {
             loginPanelError = $(`.${that.loginPanelErrorClassName}`);
             loginPanelErrorTwice = $(`.${that.loginPanelErrortwiceKoClassName}`);
             loginPanelErrorAutenticacionExterna = $(`.${that.loginErrorAutenticacionExternaClassName}`);
             loginPanelErrorBloqueado = $(`.${that.loginErrorBloqueadoClassName}`);
-        }else{
+        } else {
             // Coger los paneles según ID
             loginPanelError = this.loginPanelError;
             loginPanelErrorTwice = this.loginPanelErrorTwice;
             loginPanelErrorAutenticacionExterna = this.loginErrorAutenticacionExterna;
             loginPanelErrorBloqueado = this.loginErrorBloqueado;
         }
-                               
+
         if (this.isLoginCurrentPage()) {
             if (ObtenerHash() == '#error') {
                 //this.loginPanelError.show();                                
@@ -17866,10 +8968,10 @@ var operativaLoginEmergente = {
             if (ObtenerHash() == '#errorAutenticacionExterna') {
                 loginPanelErrorAutenticacionExterna.show();
             }
-            if (ObtenerHash() == '#UsuarioBloqueado') {                              
+            if (ObtenerHash() == '#UsuarioBloqueado') {
                 loginPanelErrorBloqueado.show();
             }
-        }        
+        }
     },
 };
 
@@ -17907,6 +9009,19 @@ function isCapsLock(e) {
     return false;
 };
 
+
+/**
+ * Inicializa la operativa de doble factor.
+ * 
+ * Configura parámetros, eventos y rutas necesarios para el proceso de autenticación de doble factor.
+ * 
+ * @function
+ * @name operativaGestionDobleFactor.init
+ * @memberof operativaGestionDobleFactor
+ * @param {Object} pParams - Parámetros de configuración para la operativa de doble factor.
+ * @param {string} pParams.urlBase - La URL base para las peticiones al backend.
+ * @returns {void}
+ */
 const operativaGestionDobleFactor = {
 
     /**
@@ -17926,7 +9041,7 @@ const operativaGestionDobleFactor = {
         // Url base
 
         //this.urlBase = pParams.urlBase; //refineURL()
-        this.urlBase = window.location.href.split("?")[0];  
+        this.urlBase = window.location.href.split("?")[0];
         this.urlError = `${this.urlBase}?error=true`;
         this.urlAceptarToken = `${this.urlBase}/aceptar-token`;
     },
@@ -17950,9 +9065,9 @@ const operativaGestionDobleFactor = {
 
         that.btnSubmit.on("click", function (e) {
             that.validarToken();
-        }); 
+        });
     },
-    
+
     /**
      * Valida que el token pasado cumpla con el formato
      */
@@ -17970,7 +9085,7 @@ const operativaGestionDobleFactor = {
 
         MostrarUpdateProgress();
         that.formAutenticacionDobleFactor.submit();
-        
+
     },
 
     /**
@@ -17993,7 +9108,7 @@ const operativaGestionDobleFactor = {
  * Este proceso en cuestión se encarga de la gestión del paso 1 de registro del usuario
  * Ej: Proceso de registro al acceder a la url: http://depuracion.net/comunidad/gnoss-developers-community/hazte-miembro
  * */
-const operativaRegistroUsuarioPaso1 = {    
+const operativaRegistroUsuarioPaso1 = {
     /**
      * Acción para inicializar elementos y eventos
      */
@@ -18055,7 +9170,7 @@ const operativaRegistroUsuarioPaso1 = {
         // Input para Cargo (Quitar foco del input)
         this.txtEmail.blur(function () {
             ComprobarEmailUsuario(that.currentUrl);
-        });   
+        });
 
         // Input para Contraseña (Quitar foco del input)
         this.txtContrasenya.blur(function () {
@@ -18068,14 +9183,33 @@ const operativaRegistroUsuarioPaso1 = {
             changeYear: true,
             yearRange: that.datepickerConfigOptions.yearRange,
             maxDate: that.datepickerConfigOptions.maxdate,
-        });       
+        });
     },
 };
 
 /**
- * Clase para poder gestionar las solicitudes de creación de comunidades
- *
- * */
+ * Inicializa elementos y eventos para la solicitud de creación de una comunidad.
+ * 
+ * Configura los elementos del DOM, los eventos y establece los paneles descriptivos según el tipo de acceso.
+ * 
+ * @function
+ * @name operativaSolicitudCreacionComunidad.init
+ * @memberof operativaSolicitudCreacionComunidad
+ * @param {Object} pParams - Parámetros de configuración para la solicitud de creación de comunidad.
+ * @param {string} pParams.idTxtNombreComunidad - ID del campo de texto para el nombre de la comunidad.
+ * @param {string} pParams.idTxtNombreCortoComunidad - ID del campo de texto para el nombre corto de la comunidad.
+ * @param {string} pParams.idCmbAcceso - ID del comboBox para seleccionar el tipo de acceso.
+ * @param {string} pParams.idLbEnviarSolicitud - ID del botón para enviar la solicitud de creación.
+ * @param {string} pParams.idCmbComunidadPadre - ID del comboBox para seleccionar la comunidad padre.
+ * @param {string} pParams.idPanParrafoAcceso0 - ID del panel de descripción del tipo de acceso 0.
+ * @param {string} pParams.idPanParrafoAcceso1 - ID del panel de descripción del tipo de acceso 1.
+ * @param {string} pParams.idPanParrafoAcceso2 - ID del panel de descripción del tipo de acceso 2.
+ * @param {string} pParams.idPanParrafoAcceso3 - ID del panel de descripción del tipo de acceso 3.
+ * @param {string} pParams.idPanComunidadPadre - ID del panel de comunidad padre.
+ * @param {string} pParams.emptyGuid - GUID vacío utilizado como valor por defecto para la comunidad padre.
+ * @param {string} pParams.urlPost - URL para enviar la solicitud de creación de la comunidad.
+ * @returns {void}
+ */
 const operativaSolicitudCreacionComunidad = {
     /**
      * Acción para para inicializar elementos y eventos
@@ -18118,7 +9252,8 @@ const operativaSolicitudCreacionComunidad = {
 
         // KeyUp en Nombre corto de Comunidad
         this.txtNombreCortoComunidad.on("keyup", function (e) {
-            this.value = this.value.replace(/[^a-zA-Z0-9 _ -]/g, '').trim();
+            this.value = this.value.trim().replaceAll(' ', '-');
+            this.value = this.value.replace(/[^a-zA-Z0-9_-]/g, '');
             this.value = this.value.toLowerCase();
         });
 
@@ -18177,6 +9312,7 @@ const operativaSolicitudCreacionComunidad = {
     validarCampos: function () {
         var nombreCom = $('#txtNombreComunidad').val();
         var nombreCorto = $('#txtNombreCortoComunidad').val();
+        var idiomaCom = $('#defaultCommunityLanguge').val();
         // Quitar tildes
         //nombreCorto = nombreCorto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");        
 
@@ -18186,7 +9322,7 @@ const operativaSolicitudCreacionComunidad = {
         var RegExPatternnombreCom = /<|>$/;
 
 
-        if (nombreCorto == '' || nombreCom == '' || descripcion == '') {
+        if (nombreCorto == '' || nombreCom == '' || descripcion == '' || idiomaCom == '') {
             error = form.campossolicitudcomunidadincompletos;
         }
         else if (nombreCom.match(RegExPatternnombreCom)) {
@@ -18215,6 +9351,7 @@ const operativaSolicitudCreacionComunidad = {
                 Description: Encoder.htmlEncode(descripcion.replace(/\n/g, '')),
                 Type: tipoComunidad,
                 CommunityParent: comunidadPadre,
+                Language: idiomaCom
             }
 
             // Petición a realizar
@@ -18237,9 +9374,8 @@ const operativaSolicitudCreacionComunidad = {
 
 
 /**
- * Clase para poder gestionar la edición de perfil de un usuario en la comunidad
- * 
- * */
+ * Operativa/Objeto que contiene las operaciones para gestionar la edición del perfil de un usuario
+ */
 const operativaEditarPerfilUsuario = {
 
     /**
@@ -18267,7 +9403,7 @@ const operativaEditarPerfilUsuario = {
         this.twofactorauthentication = $(`#${pParams.perfilPersonal.idTwoFactorAuthentication}`);
         this.country = $(`#${pParams.perfilPersonal.idCountry}`);
         this.region = $(`#${pParams.perfilPersonal.idRegion}`);
-        this.location= $(`#${pParams.perfilPersonal.idLocation}`);
+        this.location = $(`#${pParams.perfilPersonal.idLocation}`);
         this.postalCode = $(`#${pParams.perfilPersonal.idPostalCode}`);
         this.lang = $(`#${pParams.perfilPersonal.idLang}`);
         this.sex = $(`#${pParams.perfilPersonal.idSex}`);
@@ -18284,7 +9420,7 @@ const operativaEditarPerfilUsuario = {
         this.aliasOrganization = $(`#${pParams.perfilPersonal.idAliasOrganization}`);
         this.websiteOrganization = $(`#${pParams.perfilPersonal.idWebsiteOrganization}`);
         this.addressOrganization = $(`#${pParams.perfilPersonal.idAddressOrganization}`);
-              
+
         // edición sección Bio (CV)
         this.description = $(`#${pParams.curriculum.idDescription}`);
         this.tags = $(`#${pParams.curriculum.idTags}`);
@@ -18295,7 +9431,7 @@ const operativaEditarPerfilUsuario = {
         this.btnRedSocial = $(`#${pParams.redesSociales.idBtnRedSocial}`);
         this.twitterSocial = $(`#${pParams.redesSociales.idTwitterSocial}`);
         this.facebookSocial = $(`#${pParams.redesSociales.idFacebookSocial}`);
-        this.linkedinSocial = $(`#${pParams.redesSociales.idLinkedinSocial}`);       
+        this.linkedinSocial = $(`#${pParams.redesSociales.idLinkedinSocial}`);
 
         // Se utilizará la clase ya que hay muchos elementos para borrar (botón papelera con clase btnBorrarURL)
         this.classBorrarURL = pParams.redesSociales.idBtnBorrarUrl;
@@ -18311,15 +9447,15 @@ const operativaEditarPerfilUsuario = {
 
         // Inputs que NO podrán quedar vacíos
         this.inputsNoEmpty = [this.name,
-            this.lastName,
-            this.email,
-            this.bornDate,            
-            this.emailProfesional,
-            this.nameOrganization,
-            this.countryOrganization,
-            this.postalCodeOrganization,
-            this.locationOrganization,
-            this.addressOrganization
+        this.lastName,
+        this.email,
+        this.bornDate,
+        this.emailProfesional,
+        this.nameOrganization,
+        this.countryOrganization,
+        this.postalCodeOrganization,
+        this.locationOrganization,
+        this.addressOrganization
         ];
 
         // Nombre de las clases css para estilo de error o success (Bootstrap)
@@ -18335,7 +9471,7 @@ const operativaEditarPerfilUsuario = {
     validarCampos: function (inputs) {
         let areInputsOK = false;
         let error = "";
-        
+
         for (input of inputs) {
             if (input.length > 0) {
                 error = ValidarCampoNoVacio(input, undefined, true);
@@ -18347,7 +9483,7 @@ const operativaEditarPerfilUsuario = {
             this.showInfoPanelErrorOrOK(false, true, error);
         } else {
             areInputsOK = true
-            this.showInfoPanelErrorOrOK(false, false, undefined);            
+            this.showInfoPanelErrorOrOK(false, false, undefined);
         }
         return areInputsOK;
     },
@@ -18360,7 +9496,7 @@ const operativaEditarPerfilUsuario = {
      */
     showInfoPanelErrorOrOK: function (showOK, showError, message) {
         const that = this;
-        
+
         // Mostrar panel OK
         that.divPanelInfo.html(message);
         if (showOK) {
@@ -18377,7 +9513,7 @@ const operativaEditarPerfilUsuario = {
             return
         }
         // Mostrar el panel
-        this.divPanelInfo.show();      
+        this.divPanelInfo.show();
     },
 
     /**
@@ -18396,22 +9532,22 @@ const operativaEditarPerfilUsuario = {
         // Valor cambiado de inputs -> Avisar al usuario con sobreado rojo (o quitarlo) si es vacío campo obligatorio
         this.inputsNoEmpty.forEach(input => {
             input.on("change", function () {
-                if ($(this).val().length == 0) {                    
+                if ($(this).val().length == 0) {
                     $(this).addClass('is-invalid');
-                } else {                    
+                } else {
                     $(this).removeClass('is-invalid');
                 }
             });
         });
 
         // Botón de guardado de los datos
-        this.saveButton.on("click", function () {            
+        this.saveButton.on("click", function () {
             if (that.validarCampos(that.inputsNoEmpty)) {
                 // Guardar sección de datos personales (Nombre, Apellidos)
                 that.savePersonalDataProfile();
                 // Guardar sección de Curriculum (Tags, Descripcion)
-                that.saveBioUserProfile(false);            
-            } 
+                that.saveBioUserProfile(false);
+            }
         });
 
         // Botón click para añadir url del input en perfil del usuario
@@ -18422,7 +9558,7 @@ const operativaEditarPerfilUsuario = {
         });
 
         // Pulsación Enter para guardado de URL en perfil de usuario
-        this.urlUsuario.keypress(function (event) {                        
+        this.urlUsuario.keypress(function (event) {
             if (event.keyCode === 13) {
                 that.addSocialWebsFromInputToTable(that.urlUsuario.val());
                 that.urlUsuario.val('');
@@ -18475,7 +9611,7 @@ const operativaEditarPerfilUsuario = {
         // Input de red social Twitter cuando se salga de él, Revisar si existe en la tabla y eliminarla para sustituirla por la nueva introducida      
         this.twitterSocial.on("blur", function () {
             if ($(this).val().length > 0) {
-                that.findAndUpdatePersonalSocialWeb("twitter", $(this));                
+                that.findAndUpdatePersonalSocialWeb("twitter", $(this));
             }
         });
 
@@ -18614,19 +9750,19 @@ const operativaEditarPerfilUsuario = {
         // Mostrado de Loading
         MostrarUpdateProgress();
 
-        
+
         // Construcción del objeto POST
         const dataPost = {
-            Description: that.description.val(),                       
+            Description: that.description.val(),
             Tags: that.tags.val()
         }
         GnossPeticionAjax(this.urlPersonalProfileSaveBio, dataPost, true, false)
             .done(function (data) {
-        }).fail(function (data) {
-            //GuardadoCVRapido('KO');            
-        }).always(function () {
-            OcultarUpdateProgress();
-        });
+            }).fail(function (data) {
+                //GuardadoCVRapido('KO');            
+            }).always(function () {
+                OcultarUpdateProgress();
+            });
     },
 
     /**
@@ -18654,7 +9790,7 @@ const operativaEditarPerfilUsuario = {
         if (url.length > 0) {
             let domainName = url.replace(/.+\/\/|www.|\..+/g, '');
             // Primera letra mayúscula
-            domainName = domainName.charAt(0).toUpperCase() + domainName.slice(1);            
+            domainName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
             // Mostrar / Montar la red social en la tabla
             this.montarUrlRedSocial(domainName, url);
         }
@@ -18709,7 +9845,7 @@ const operativaEditarPerfilUsuario = {
         // Agregar la fila de la red social a la tabla
         this.tblRedesSociales.find('tbody').append(htmlFila);
         // Comprobar si la tabla está oculta
-        if (this.tblRedesSociales.hasClass("d-none")) { this.tblRedesSociales.removeClass("d-none");}
+        if (this.tblRedesSociales.hasClass("d-none")) { this.tblRedesSociales.removeClass("d-none"); }
     },
 
     /**
@@ -18720,7 +9856,7 @@ const operativaEditarPerfilUsuario = {
         const that = this;
 
         // Nombre de la red que se desea borrar
-        const nombreRed = btnDeleteUrl.data("urlname");        
+        const nombreRed = btnDeleteUrl.data("urlname");
 
         // Mostrar Loading
         MostrarUpdateProgress();
@@ -18755,7 +9891,7 @@ const operativaEditarPerfilUsuario = {
                 });
             }).always(function () {
                 OcultarUpdateProgress();
-            });       
+            });
     },
     /**
      * Acción para poder eliminar la actual imagen del usuario
@@ -18773,15 +9909,15 @@ const operativaEditarPerfilUsuario = {
             this.urlPersonalProfileSaveSocialWebs,
             dataPost,
             true
-        ).done(function () {            
-            
+        ).done(function () {
+
             // Mostrar imagen por defecto del usuario
             /*$('#imgPerfil').attr('src', urlAnonimo);
             imgPerfil.attr('src', urlAnonimo.replace('_grande', '_peque'));*/
-            
+
             // Establecer la imagen "anónima"
             const imagePlaceholder = $(`.image-uploader__img`);
-            imagePlaceholder.attr('src', that.urlImagenAnonima);             
+            imagePlaceholder.attr('src', that.urlImagenAnonima);
             // Ocultar el botón para eliminar la imagen del perfil
             that.deleteProfileImage.addClass("d-none");
 
@@ -18902,8 +10038,9 @@ const operativaSolicitarCambiarContrasenia = {
      * */
     cambiarPassword: function () {
         // Referencia al objeto
-        const that = this;
-        this.btnCambiarPassword.hide();
+        const that = this;        
+        this.btnCambiarPassword.prop('disabled', true);
+        
         MostrarUpdateProgress();
         // Construcción del objeto con los passwords
         const params = {
@@ -18941,6 +10078,8 @@ const operativaSolicitarCambiarContrasenia = {
                 that.emptyInputs();
                 // Ocultar el loading
                 OcultarUpdateProgress();
+                // Volver a habilitar el botón
+                that.btnCambiarPassword.prop('disabled', false);
             });
     },
 
@@ -18974,234 +10113,9 @@ const operativaSolicitarCambiarContrasenia = {
     }
 };
 
-/*
-Plugin de CKEditor simplificado. Se activará sobre cualquier input que tenga la clase cke y cuyo "sibling" (activador del ckEditor) también tenga la clase 'ckeSimple'.
-- El plugin hará que:
-    - La "ToolBar" no esté visible si no se hace click en el input para añadir información.
-    - La "ToolBar" esté visible si se hace click en el editor CKEditor.
-    - La altura del CKEditor sea de 100px y si se está editando, que sea de 200px.
-    - Si hay contenido, se mostrará el ckEditor. Si por el contrario está vacío, se verá de momento un único input.
-*/
-; (function ($) {
-
-    // Declaración del plugin.
-    $.fn.ckEditorSimple = function (method) {
-
-        // Variables por defecto
-        let defaults = {
-            speed: 200,                                      // Velocidad con la que se expandirá el panel 'contents'
-            isCKEditorContentPanelExpanded: true,            // Valor por defecto que indica que el panel Contents está o no expandido
-            isCKEditorToolBarVisible: true,                 // Valor por defecto que indica que la Toolbar está o no visible
-            isOnFocusCKEditor: false,                       // Valor por defecto que indica si está el foco en el ckEditor (El usuario está introduciendo datos)
-            contentMinHeight: '40px',                       // Altura mínima de Contentl del CKEditor (contraido)
-            contentMaxHeight: '250px',                      // Altura máxima del Content del CKEditor (desplegado)
-        }
-
-        // Variables por defecto + variables pasadas por parámetro
-        let settings = {
-            $ckEditor: undefined,                           // El propio ckEditor
-            $ckEditorInstance: undefined,                   // La instancia jquery del CKEditor creado
-            $ckEditorToolbar: undefined,                    // Toolbar del CKEditor
-            $ckEditorContent: undefined,	                // Content del CKEditor
-            ckeEditorContentLength: 0,                      // Longitud de textos que hay en el editor CKEditor
-            isOnFocusCKEditor: false,                       // Valor por defecto que indica si está el foco en el ckEditor (El usuario está introduciendo datos)
-        }
-
-        // Métodos públicos que podrán ser llamados desde fuera del plugin
-        const methods = {
-            // Instanciación del plugin
-            init: function (options) {
-                return this.each(function () {
-                    // Combinar las variables por defecto (defaults) + options pasadas
-                    settings = $.extend({}, defaults, options)
-                    const element = $(this);                   
-
-                    // Inicio visualización del ckEditor -> Dejarlo desplegado si ya hay contenido (Ej: Editar un recurso)                            
-                    if (!(settings.ckeEditorContentLength > 1)) {
-                        helpers.animateToolbarCKEditor(false, !settings.isCKEditorContentPanelExpanded);
-                    }
-
-                    // Inicialización de observers
-                    helpers.setupObserver();
-                });
-            },
-        }
-
-        // Métodos privados que serán de ayuda a esos públicos
-        const helpers = {
-            // Configuración del focus en la instancia del CKEditor para ocultar/no ocultar Toolbar y expandir/contraer el Contents de CKEditor
-            // Observo posibles cambios en las clases del editor de CKEditor
-            setupObserver: function () {
-                let observer = new MutationObserver(function (mutations) {
-                    mutations.forEach(function (mutation) {
-                        if (mutation.attributeName === "class") {
-                            attributeValue = $(mutation.target).prop(mutation.attributeName);
-                            const arrayClassList = attributeValue.split(" ");
-                            settings.isOnFocusCKEditor = false;
-                            // Buscar si está o no focus en el CKEditor
-                            if (jQuery.inArray("cke_focus", arrayClassList) != -1) {
-                                // Está el Foco del CKEditor
-                                settings.isOnFocusCKEditor = true
-                            } else {
-                                // No está el Foco del CKEditor
-                                settings.isOnFocusCKEditor = false;
-                            }
-                            // Animar altura CKEditor siempre que sea diferente al valor actual
-                            settings.isCKEditorContentPanelExpanded != settings.isOnFocusCKEditor && helpers.animateToolbarCKEditor(true, !settings.isCKEditorToolBarVisible);
-                        }
-                    });
-                });
-
-                // Observer para contenido introducido en ckEditor
-                let contentObserver = new MutationObserver(function (mutations) {
-                    mutations.forEach(function (mutation) {
-                        if (mutation.addedNodes.length > 0 && mutation.target.className) {
-                            helpers.animateToolbarCKEditor(true, true);
-                        }
-                        if (mutation.removedNodes.length >= 1 && !settings.isOnFocusCKEditor) {
-                            // Cerrar la caja si no hay contenido y no está el focus en el ckEditor
-                            helpers.animateToolbarCKEditor(true, false);                            
-                        }
-                    });
-                });
-
-                // Ejecutamos observer para comprobar posibles cambios en clases JS
-                observer.observe(settings.$ckEditorInstance[0], {
-                    attributes: true,
-                });
-
-                // Ejecutamos observer para comprobar posibles cambios en clases JS
-                contentObserver.observe($(settings.$ckEditorContent).find("iframe").contents()[0], {
-                    subtree: true,
-                    childList: true,
-                });
-            },
-
-            /*
-            * Método para visualizar o no el Toolbar del CKEditor
-            * @param {bool} animate: Indicar si se desea animar o no
-            * @param {bool} extendPanel: Hacer más grande o no el Content del CKEditor         
-            * */
-            animateToolbarCKEditor: function (animate, extendPanel) {
-                // Altura por defecto del Toolbar de ckEditor
-                let toolbarHeight = 31;
-
-                // Si hay texto o imagenes no hacer nada
-                let spanItems = "";             
-                // Evitar posibles errores en la creación de instancias del ckEditor
-                if (settings.$ckEditor.document == undefined) {
-                    return;
-                }
-                spanItems = settings.$ckEditor.document.getBody().find("span").$.length != undefined ? settings.$ckEditor.document.getBody().find("span").$.length : 0;
-                const textItems = settings.$ckEditor.document.getBody().getText().length;
-                const editItems = spanItems + textItems;
-
-                //if ((settings.$ckEditor.document.getBody().getText().length > 1)) {
-
-                // Comprobar si está oculto ckEditor
-                if (settings.$ckEditorToolbar.height() > 0) {
-                    if (editItems > 1) {
-                        return;
-                    }
-                }
-
-                // Controlar tamaño de dispositivo para dar altura al toolbar de ckEditor
-                const displayWidth = window.innerWidth;
-                if (displayWidth < 740) {
-                    toolbarHeight = 90;
-                }
-
-                // Altura que tendrá el panel
-                const panelHeight = extendPanel ? toolbarHeight : 0;
-
-                // Controlar animación (true/false)
-                if (animate) {
-                    settings.$ckEditorToolbar.animate({
-                        height: panelHeight
-                    }, settings.speed, function () {
-                        // Guardamos flag de que el tamaño del panel ha sido modificado
-                        settings.isCKEditorToolBarVisible = !settings.isCKEditorToolBarVisible;
-                        // Animación visualización del $ckEditorContent
-                        helpers.animateHeightCKEditor(animate, extendPanel);
-                    });
-                } else {
-                    // Establecer tamaño sin animación               
-                    settings.$ckEditorToolbar.css('height', panelHeight);
-                    // Guardamos flag de que el tamaño del panel ha sido modificado
-                    settings.isCKEditorToolBarVisible = !settings.isCKEditorToolBarVisible;
-                    // Establecer visualización del ToolbarCKEditor sin animación
-                    helpers.animateHeightCKEditor(animate, extendPanel);
-                }
-            },
-
-            /*
-            * Método para extender o hacer más grande o más pequeño el panel Contents de CKEditor (donde irá el contenido)
-            * @param {bool} animate: Indicar si se desea animar o no
-            * @param {bool} extendPanel: Hacer más grande o no el Content del CKEditor         
-            * */
-            animateHeightCKEditor: function (animate, extendPanel) {
-
-                // Altura que tendrá el panel
-                const panelHeight = extendPanel ? settings.contentMaxHeight : settings.contentMinHeight;
-
-                // Quitar posible scrollbar si el panel está contraido
-                extendPanel ? helpers.showScrollbar(true) : helpers.showScrollbar(false);
-
-                // Controlar animación (true/false)
-                if (animate) {
-                    settings.$ckEditorContent.animate({
-                        height: panelHeight
-                    }, settings.speed, function () {
-                        // Guardamos flag de que el tamaño del panel ha sido modificado
-                        settings.isCKEditorContentPanelExpanded = !settings.isCKEditorContentPanelExpanded;                        
-                    });
-                } else {
-                    // Establecer tamaño sin animación               
-                    settings.$ckEditorContent.css('height', panelHeight);
-                    // Guardamos flag de que el tamaño del panel ha sido modificado
-                    settings.isCKEditorContentPanelExpanded = !settings.isCKEditorContentPanelExpanded;
-                }
-                helpers.showSendCommentButton(extendPanel);
-            },
-
-            /**
-             * Método para ocultar o mostrar el botón de "Enviar comentario" que esté asociado a un ckEditor
-             * */
-            showSendCommentButton: function (showSendCommentButton) {
-                // Contenedor asociado al ckEditor actual                
-                const $containerSendComment = settings.$ckEditorInstance.parent().siblings(".accion-comentario");
-
-                // Ocultar o mostrar el botón de "Enviar comentario"
-                if ($containerSendComment.length > 0) {
-                    showSendCommentButton ? $containerSendComment.css('visibility', 'visible').hide().fadeIn() : $containerSendComment.css('visibility', 'visible').hide().fadeOut();
-                }                               
-            },
-
-            /*
-            * Método mostrar u ocultar el scrollbar del contenido del ckeditor. Solo estaría disponible si el editor está desplegado (Por si hay contenido añadido)         
-            * @param {bool} showScrollbar: Ocultar o permitir el scrollbar en el contenido del CKEditor
-            * */
-            showScrollbar: function (showScrollBar) {
-                showScrollBar ? settings.$ckEditor.document.getBody().removeClass('overflow-hidden') : settings.$ckEditor.document.getBody().addClass('overflow-hidden');
-            }
-        }
-
-        // run
-        if (methods[method]) {
-            return methods[method].apply(this, Array.prototype.slice.call(arguments, 1));
-        } else if (typeof method === "object" || !method) {
-            return methods.init.apply(this, arguments);
-        } else {
-            $.error(`Método ${method} no existe dentro del plugion ckeSimple`);
-        }
-    }
-})(jQuery);
-
-
 /**
  * Clase jquery para poder gestionar las búsquedas de fechas en Facetas (Mes pasado, semana pasada, semestre pasado)
  * Calculará la fecha teniendo en cuenta la opción pulsada para escribir el valor en el input "Desde" y "Hasta"
- * Se utilizará la librería moment.js para el trabajo con fechas
  * 
  * */
 var operativaFechasFacetas = {
@@ -19264,28 +10178,37 @@ var operativaFechasFacetas = {
      * Calcular el plazo de tiempo deseado y establecerlo en los inputs "from" y "to"
      * */
     getAndSetDate: function (item) {
-        let localLocale = moment();
-        moment.locale('es');
-        localLocale.locale(false);
+        let now = new Date();
+        let dateFormatter = new Intl.DateTimeFormat("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
 
         // Fecha inicial
-        let startDate = '';
+        let startDate = new Date(now);
         // Fecha final (actual)
-        let endDate = localLocale.format('L');
-
-        // Coger la última semana del día actual (-De momento se escogen por días)
-        //console.log(moment().subtract(1, 'weeks').startOf('isoWeek').format('L'));
-        //console.log(moment().subtract(1, 'weeks').endOf('isoWeek').format('L'));
+        let endDate = dateFormatter.format(now);
 
         if ($(item).hasClass(`facet-last-week`)) {
-            startDate = localLocale.subtract(7, "days");
+            startDate.setDate(startDate.getDate() - 7)
         } else if ($(item).hasClass(`facet-last-month`)) {
-            startDate = localLocale.subtract(30, "days");
+            startDate.setMonth(startDate.getMonth() - 1);
+            // Si salta el caso de que es 31 de Marzo y quiero ver el mes anterior
+            // Mostrará el 28/29 de Febrero en vez de una fecha incorrecta
+            if (startDate.getDate() !== now.getDate()) {
+                start.setDate(0);
+            }
         } else if ($(item).hasClass(`facet-last-semester`)) {
-            startDate = localLocale.subtract(180, "days");
+            startDate.setMonth(startDate.getMonth() - 6);
+            // Si estamos en un mes con 31 dias y 6 meses atrás acaba en un mes de 30 o 28 dias
+            // mostrará el ultimo dia de dicho mes. Y no una fecha incorrecta
+            if (startDate.getDate() !== now.getDate()) {
+                start.setDate(0);
+            }
         } else {
             // Selección del último año
-            startDate = localLocale.subtract(365, "days");
+            startDate.setFullYear(startDate.getFullYear() - 1);
         }
 
         // Botón para búsqueda,  inputs para establecer fechas
@@ -19294,7 +10217,7 @@ var operativaFechasFacetas = {
         const toDateValue = $(item).parent().parent().parent().find(this.inputToDate);
 
         // Escribir las fechas en inputs
-        fromDateValue.val(startDate.format('L'));
+        fromDateValue.val(dateFormatter.format(startDate));
         toDateValue.val(endDate);
 
         // Hacer click en botón de búsqueda
@@ -19481,7 +10404,8 @@ const operativaPeticionCambiarContrasenia = {
     cambiarPassword: function () {
         // Referencia al objeto
         const that = this;
-        this.btnCambiarPassword.hide();
+        this.btnCambiarPassword.prop('disabled', true);
+
         MostrarUpdateProgress();
         // Construcción del objeto con los passwords
         const dataPost = {
@@ -19521,6 +10445,7 @@ const operativaPeticionCambiarContrasenia = {
                 that.emptyInputs();
                 // Ocultar el loading
                 OcultarUpdateProgress();
+                that.btnCambiarPassword.prop('disabled', false);
             });
     },
 
@@ -19559,41 +10484,41 @@ const operativaEnviarResource_Link_Community_Invitation = {
      */
     init: function (pParams) {
         this.config(pParams);
-        this.configEvents();        
-        if (pParams.autocompleteParams) { 
+        this.configEvents();
+        if (pParams.autocompleteParams) {
             this.configAutocompleteService(pParams.autocompleteParams);
             this.configAutocompleteServiceForCommunityGroups(pParams.autocompleteParams)
-        }        
+        }
     },
     /*
      * Opciones de configuración de la vista
      * */
     config: function (pParams) {
         // Inicialización de las vistas
-       // Inicialización de las vistas
-       this.txtFiltro = $(`#${pParams.idTxtFiltro}`);
-       this.txtFiltroGrupos = $(`#${pParams.idTxtFiltroGrupos}`);
-       this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);        
-       this.buttonLitAniadirCorreo = $(`#${pParams.idButtonLitAniadirCorreo}`);
-       this.txtHackInvitados = $(`#${pParams.idTxtHackInvitados}`);
-       this.txtHackGrupos = $(`#${pParams.idTxtHackGrupos_invite_community}`);
-       // El autocomplete necesita solo el nombre del input oculto
-       this.txtHackInvitadosInputName = pParams.idTxtHackInvitados;
-       // El autocomplete necesita solo el nombre del input oculto
-       this.txtHackGruposInvitadosInputName = pParams.idTxtFiltroGrupos;
+        // Inicialización de las vistas
+        this.txtFiltro = $(`#${pParams.idTxtFiltro}`);
+        this.txtFiltroGrupos = $(`#${pParams.idTxtFiltroGrupos}`);
+        this.txtCorreoAInvitar = $(`#${pParams.idTxtCorreoAInvitar}`);
+        this.buttonLitAniadirCorreo = $(`#${pParams.idButtonLitAniadirCorreo}`);
+        this.txtHackInvitados = $(`#${pParams.idTxtHackInvitados}`);
+        this.txtHackGrupos = $(`#${pParams.idTxtHackGrupos_invite_community}`);
+        // El autocomplete necesita solo el nombre del input oculto
+        this.txtHackInvitadosInputName = pParams.idTxtHackInvitados;
+        // El autocomplete necesita solo el nombre del input oculto
+        this.txtHackGruposInvitadosInputName = pParams.idTxtFiltroGrupos;
 
-       this.panContenedorInvitados = $(`#${pParams.idPanContenedorInvitados}`);
-       this.listaDestinatarios = $(`#${pParams.idListaDestinatarios}`);
-       this.listaGrupos = $(`#${pParams.idPanContenedorGrupos}`);
-       this.noDestinatarios = $(`#${pParams.idNoDestinatarios}`);
-       this.btnEnviarInvitaciones = $(`#${pParams.idBtnEnviarInvitaciones}`);        
-       this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);        
-       this.panelInfoInvitationSent = $(`#${pParams.idPanelInfoInvitationSent}`);
+        this.panContenedorInvitados = $(`#${pParams.idPanContenedorInvitados}`);
+        this.listaDestinatarios = $(`#${pParams.idListaDestinatarios}`);
+        this.listaGrupos = $(`#${pParams.idPanContenedorGrupos}`);
+        this.noDestinatarios = $(`#${pParams.idNoDestinatarios}`);
+        this.btnEnviarInvitaciones = $(`#${pParams.idBtnEnviarInvitaciones}`);
+        this.lblInfoCorreo = $(`#${pParams.idLblInfoCorreo}`);
+        this.panelInfoInvitationSent = $(`#${pParams.idPanelInfoInvitationSent}`);
 
         // Campos especiales para envío de link (idioma & notas/mensaje)                
         this.txtNotas = $(`#${pParams.idTxtNotas}`);
         this.dllIdioma = $(`#${pParams.idDlIdioma}`);
-       
+
         // Paneles de error/info
         this.panelesInfo = [this.panelInfoInvitationSent];
 
@@ -19621,7 +10546,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
             // Comprobar que el input de invitados (el oculto que almacena los ids al menos tiene emails o contactos)
             if (that.validarCampos()) {
                 // Realizar la petición de cambio de contraseña
-                that.enviarInvitacion_EnlaceSubmit();                           
+                that.enviarInvitacion_EnlaceSubmit();
             }
         });
 
@@ -19641,15 +10566,15 @@ const operativaEnviarResource_Link_Community_Invitation = {
         // Configurar el borrado de elementos al pulsar en (x) de un item de los destinatarios
         this.listaDestinatarios.on('click', '.tag-remove', function (event) {
             const identidad = $(event.target).parent().parent().attr("id");
-            that.eliminarUsuario(null, identidad);            
+            that.eliminarUsuario(null, identidad);
         });
 
-        
+
         // Configurar el borrado de grupos al pulsar en (x) de un item de grupos        
         this.listaGrupos.on('click', '.tag-remove', function (event) {
             const identidad = $(event.target).parent().parent().attr("id");
             that.eliminarGrupo(null, identidad);
-        });  
+        });
     },
 
     /**
@@ -19668,7 +10593,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
      * @param {any} identidad: La identidad del item seleccionado
      * @param {boolean} isAnEmail: Valor que indicará si lo que se está intentando añadir es un contacto (normal) o un email de un usuario
      */
-    crearInvitado: function (ficha, nombre, identidad, isAnEmail) {     
+    crearInvitado: function (ficha, nombre, identidad, isAnEmail) {
         // Item que se añadirá como elemento seleccionado
         let itemHtml = "";
 
@@ -19680,10 +10605,10 @@ const operativaEnviarResource_Link_Community_Invitation = {
             itemHtml += `</div>`;
             itemHtml += `</div>`;
             // Añadir la identidad al input de invitados
-            this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${identidad}`);        
-        } else {            
+            this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${identidad}`);
+        } else {
             // Construyo correos separados por comas
-            const correos = this.txtCorreoAInvitar.val().split(',');                        
+            const correos = this.txtCorreoAInvitar.val().split(',');
             // Validar si son correos válidos     
             for (let i = 0; i < correos.length; i++) {
                 if (correos[i] != '') {
@@ -19699,21 +10624,21 @@ const operativaEnviarResource_Link_Community_Invitation = {
             }
             // Recorrer array de correos para ser añadidos a la vista
             for (let i = 0; i < correos.length; i++) {
-                if (correos[i] != '') {                    
+                if (correos[i] != '') {
                     let data_item = correos[i].replace(/\@/g, '_');
-                    data_item = data_item.replace(".",'_');
+                    data_item = data_item.replace(".", '_');
                     itemHtml += `<div class="tag" id="${correos[i]}" data-item="${data_item}">`;
                     itemHtml += `<div class="tag-wrap">`;
                     itemHtml += `<span class="tag-text">${correos[i]}</span>`;
                     itemHtml += `<span class="tag-remove material-icons">close</span>`;
                     itemHtml += `</div>`;
-                    itemHtml += `</div>`;                                        
+                    itemHtml += `</div>`;
                     // Añadir el correo al input de invitados
-                    this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${correos[i].replace(/^\s*|\s*$/g, "")}`);  
+                    this.txtHackInvitados.val(`${this.txtHackInvitados.val()}&${correos[i].replace(/^\s*|\s*$/g, "")}`);
                 }
             }
         }
-        
+
         // Añadir el item en el contenedor de destinatarios
         this.listaDestinatarios.append(itemHtml);
 
@@ -19728,7 +10653,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
 
         if (ficha != null) {
             ficha.style.display = 'none';
-        }        
+        }
     },
 
     /**
@@ -19737,25 +10662,25 @@ const operativaEnviarResource_Link_Community_Invitation = {
      * @param {any} nombre: El nombre del usuario seleccionado
      * @param {any} identidad: La identidad del item seleccionado     
      */
-     crearGrupoInvitado: function (nombre, identidad) {
+    crearGrupoInvitado: function (nombre, identidad) {
         // Item que se añadirá como elemento seleccionado
         let itemHtml = "";
 
         itemHtml += `<div class="tag" id="${identidad}" data-item="${identidad}">`;
-            itemHtml += `<div class="tag-wrap">`;
-                itemHtml += `<span class="tag-text">${nombre}</span>`;
-                itemHtml += `<span class="tag-remove material-icons">close</span>`;
-            itemHtml += `</div>`;
+        itemHtml += `<div class="tag-wrap">`;
+        itemHtml += `<span class="tag-text">${nombre}</span>`;
+        itemHtml += `<span class="tag-remove material-icons">close</span>`;
+        itemHtml += `</div>`;
         itemHtml += `</div>`;
 
         // Añadir la identidad al input de grupos    
-        this.txtHackGrupos.val(`${this.txtHackGrupos.val()}&${identidad}`);        
+        this.txtHackGrupos.val(`${this.txtHackGrupos.val()}&${identidad}`);
 
         // Añadir el item en el contenedor de grupos
         this.listaGrupos.append(itemHtml);
-        
+
         // Vaciamos el input donde se ha introducido el grupo a buscar
-        this.txtFiltroGrupos.val('');       
+        this.txtFiltroGrupos.val('');
     },
 
     /**
@@ -19764,10 +10689,10 @@ const operativaEnviarResource_Link_Community_Invitation = {
      * @param {any} fichaId             
      */
     eliminarUsuario: function (fichaId, identidad) {
-               
+
         // Eliminar la identidad al input construyendo el nuevo valor que tomará
         let newTxtHackInvitados = this.txtHackInvitados.val().replace('&' + identidad, '');
-        this.txtHackInvitados.val(newTxtHackInvitados);                   
+        this.txtHackInvitados.val(newTxtHackInvitados);
 
         // Tratar de eliminar caracteres especiales para buscar el atributo de data-item (para casos de correos electrónicos)
         let data_item = identidad.replace(/\@/g, '_');
@@ -19785,7 +10710,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
          * los items seleccionados para el envío de la solicitud
          * @param {any} fichaId             
          */
-     eliminarGrupo: function (fichaId, identidad) {
+    eliminarGrupo: function (fichaId, identidad) {
 
         // Eliminar la identidad al input construyendo el nuevo valor que tomará
         let newTxtHackInvitados = this.txtHackGrupos.val().replace('&' + identidad, '');
@@ -19813,9 +10738,9 @@ const operativaEnviarResource_Link_Community_Invitation = {
         if (autoCompleteParams.isEcosistemasinMetaProyecto) {
             extraParams = {
                 identidad: autoCompleteParams.identidad,
-                identidadMyGnoss: autoCompleteParams.identidadMyGnoss, 
-                identidadOrg: autoCompleteParams.identidadOrg, 
-                proyecto: autoCompleteParams.proyecto, 
+                identidadMyGnoss: autoCompleteParams.identidadMyGnoss,
+                identidadOrg: autoCompleteParams.identidadOrg,
+                proyecto: autoCompleteParams.proyecto,
                 bool_esPrivada: autoCompleteParams.esPrivada
             }
         } else {
@@ -19856,10 +10781,10 @@ const operativaEnviarResource_Link_Community_Invitation = {
      * Se pasaran los parámetros necesarios los cuales se han obtenido de la vista
      * @param {any} autoCompleteParams
      */
-     configAutocompleteServiceForCommunityGroups(autoCompleteParams) {
+    configAutocompleteServiceForCommunityGroups(autoCompleteParams) {
         const that = this;
 
-            // Configurar input de autocomplete para grupos de la comunidad
+        // Configurar input de autocomplete para grupos de la comunidad
         this.txtFiltroGrupos.keydown(function (event) {
             if (event.which || event.keyCode) { if ((event.which == 13) || (event.keyCode == 13)) { return false; } }
         }).autocomplete(
@@ -19877,19 +10802,19 @@ const operativaEnviarResource_Link_Community_Invitation = {
                 NoPintarSeleccionado: true,
                 txtValoresSeleccID: that.txtHackGruposInvitadosInputName,
 
-                    extraParams: {
+                extraParams: {
                     identidad: autoCompleteParams.identidad,
                     identidadMyGnoss: autoCompleteParams.identidadMyGnoss,
                     identidadOrg: autoCompleteParams.identidadOrg,
-                    proyecto: autoCompleteParams.proyecto,                    
+                    proyecto: autoCompleteParams.proyecto,
                 }
             });
 
-            // Configuración la acción select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
+        // Configuración la acción select (cuando se seleccione un item de autocomplete) para grupos de la comunidad
         this.txtFiltroGrupos.result(function (event, data, formatted) {
             that.crearGrupoInvitado(data[0], data[1]);
         });
-    },    
+    },
 
     /**
     * Acción de envío de la invitación de la comunidad o del enlace
@@ -19959,7 +10884,7 @@ const operativaEnviarResource_Link_Community_Invitation = {
  *  - Desde la ficha de un recurso
  * */
 const operativaEnviarRecursoParticipantesGruposComunidad = {
-   
+
     /**
     * Inicializar operativa
     */
@@ -19967,17 +10892,17 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
         this.pParams = pParams;
         this.config(pParams);
         this.configEvents();
-        if (pParams.autocompleteParams) { 
+        if (pParams.autocompleteParams) {
             this.configAutocompleteService(pParams.autocompleteParams)
         }
-        this.configRutas(pParams); 
-        this.triggerEvents();     
+        this.configRutas(pParams);
+        this.triggerEvents();
     },
 
     /**
      * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
      */
-    triggerEvents: function(){
+    triggerEvents: function () {
         const that = this;
 
         // Permitir enviar o no dependiendo del botón del envío
@@ -20004,8 +10929,8 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
         this.panGroupsContainerSendNewsletter = $(`#${this.panGroupsContainerSendNewsletterId}`);
         // Checkbox/RadioButton de los idiomas en los que se desea enviar la newsletter
         this.selectLanguageOptionsClassName = "rbSelectNewsletterLanguage";
-        this.selectLanguageOptions = $(`.${this.selectLanguageOptionsClassName}`);   
-        
+        this.selectLanguageOptions = $(`.${this.selectLanguageOptionsClassName}`);
+
         // Flag para controlar si hay al menos una opción seleccionada
         this.isLanguageOptionSelected = false;
         this.languageSelected = "";
@@ -20016,8 +10941,8 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
      */
     configRutas: function (pParams) {
         // Url para editar un certificado
-        this.urlSendResourceToCommunityGroups = pParams.urlSend;       
-    },    
+        this.urlSendResourceToCommunityGroups = pParams.urlSend;
+    },
 
     /**
      * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
@@ -20033,22 +10958,22 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
         });
 
         // Agrega un evento change a los radio buttons
-        this.selectLanguageOptions.on("change", function() {
+        this.selectLanguageOptions.on("change", function () {
             that.handleCheckIfLanguageIsSelected();
             // Guardar el idioma seleccionado
-            that.languageSelected = $(this).data("language");             
+            that.languageSelected = $(this).data("language");
         });
 
         // Acción de enviar la newsletter a los grupos elegidos
-        this.btnSendNewsletterToCommunityGroups.on("click", function(){
+        this.btnSendNewsletterToCommunityGroups.on("click", function () {
             that.handleSendNewsletterToCommunityGroups();
         });
-    }, 
-    
+    },
+
     /**
      * Método para controlar si hay al menos un idioma seleccionado para posibilitar el envío de la newsletter
      */
-    handleCheckIfLanguageIsSelected: function(){
+    handleCheckIfLanguageIsSelected: function () {
         const that = this;
 
         // Flag para comprobar que haya grupos seleccionados para el envío
@@ -20061,8 +10986,8 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
         if (txtHackGroupsWithoutComma.trim() != '') {
             // Con destinatarios
             areGroupsSelected = true;
-        } 
-            
+        }
+
         // Verifica si al menos un radio button está seleccionado
         if (that.selectLanguageOptions.is(":checked") && areGroupsSelected) {
             // Habilita el botón
@@ -20072,13 +10997,13 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
             // Deshabilita el botón si ninguno está seleccionado
             that.btnSendNewsletterToCommunityGroups.prop("disabled", true);
             that.isLanguageOptionSelected = false;
-        }        
+        }
     },
 
     /**
      * Método para configurar el servicio autocomplete/select
      */
-    configAutocompleteService: function(autoCompleteParams){
+    configAutocompleteService: function (autoCompleteParams) {
         const that = this;
 
         // Objeto que albergará los extraParams para el servicio autocomplete
@@ -20089,9 +11014,9 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
             extraParams = {
                 lista: ",",
                 identidad: autoCompleteParams.identidad,
-                identidadMyGnoss: autoCompleteParams.identidadMyGnoss, 
-                identidadOrg: autoCompleteParams.identidadOrg, 
-                proyecto: autoCompleteParams.proyecto, 
+                identidadMyGnoss: autoCompleteParams.identidadMyGnoss,
+                identidadOrg: autoCompleteParams.identidadOrg,
+                proyecto: autoCompleteParams.proyecto,
                 bool_esPrivada: autoCompleteParams.esPrivada
             }
         } else {
@@ -20124,8 +11049,8 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
         this.txtFilterGroups.result(function (event, data, formatted) {
             that.handleSelecGroup(data[0], data[1]);
             that.handleCheckIfLanguageIsSelected();
-        });         
-    },    
+        });
+    },
 
     /**
      * Método para seleccionar un item a partir de la lista de autocomplete
@@ -20135,27 +11060,27 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
      * @param groupName: Nombre del grupo seleccionado
      * @param groupId: Id o Key del grupo seleccionado
      */
-    handleSelecGroup: function(groupName, groupId){
+    handleSelecGroup: function (groupName, groupId) {
         const that = this;
 
         // Item que se añadirá como elemento seleccionado
         let itemHtml = "";
 
         itemHtml += `<div class="tag" id="${groupId}" data-item="${groupId}">`;
-            itemHtml += `<div class="tag-wrap">`;
-                itemHtml += `<span class="tag-text">${groupName}</span>`;
-                itemHtml += `<span class="tag-remove material-icons">close</span>`;
-            itemHtml += `</div>`;
+        itemHtml += `<div class="tag-wrap">`;
+        itemHtml += `<span class="tag-text">${groupName}</span>`;
+        itemHtml += `<span class="tag-remove material-icons">close</span>`;
+        itemHtml += `</div>`;
         itemHtml += `</div>`;
 
         // Añadir la identidad al input de grupos (Separado por comas)            
-        this.txtHackGroupsSendNewsletter.val(`${this.txtHackGroupsSendNewsletter.val()},${groupId}`);        
+        this.txtHackGroupsSendNewsletter.val(`${this.txtHackGroupsSendNewsletter.val()},${groupId}`);
 
         // Añadir el item en el contenedor de grupos
         this.panGroupsContainerSendNewsletter.append(itemHtml);
-        
+
         // Vaciamos el input donde se ha introducido el grupo a buscar
-        this.txtFilterGroups.val('');          
+        this.txtFilterGroups.val('');
     },
 
     /**
@@ -20163,7 +11088,7 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
      * los items seleccionados para el envío de la solicitud
      * @param {any} groupId             
      */
-     removeGroup: function (groupId) {
+    removeGroup: function (groupId) {
 
         // Eliminar la groupId al input construyendo el nuevo valor que tomará
         let newTxtHackInvitados = this.txtHackGroupsSendNewsletter.val().replace(',' + groupId, '');
@@ -20174,53 +11099,51 @@ const operativaEnviarRecursoParticipantesGruposComunidad = {
         data_item = data_item.replace(".", '_');
         const itemToDelete = $(`*[data-item="${data_item}"]`);
         itemToDelete.remove();
-    },   
+    },
 
     /**
      * Método para enviar las newsletter a los grupos elegidos de la comunidad
      */
-    handleSendNewsletterToCommunityGroups: function(){
+    handleSendNewsletterToCommunityGroups: function () {
         const that = this;
 
         // Obtén el valor de los grupos
         const txtGroupsSendNewsletterValue = this.txtHackGroupsSendNewsletter.val();
         // Generar un array excluyendo posibles espacios vacíos
-        const arrayItems = txtGroupsSendNewsletterValue.split(',');        
-        const arrayGroupsSendNewsletterValue = arrayItems.filter(function(item) {
+        const arrayItems = txtGroupsSendNewsletterValue.split(',');
+        const arrayGroupsSendNewsletterValue = arrayItems.filter(function (item) {
             return item.trim() !== '';
         });
-        
+
 
         MostrarUpdateProgress();
-    
+
         // Construcción del objeto dataPost
         let dataPost = {
             Language: that.languageSelected,
-            Groups: arrayGroupsSendNewsletterValue,            
+            Groups: arrayGroupsSendNewsletterValue,
         };
-                
+
         GnossPeticionAjax(
             that.urlSendResourceToCommunityGroups,
             dataPost,
             true
-        ).done(function (response) {            
+        ).done(function (response) {
             // Cerrar modal y mostrar                         
             $('#modal-container').modal('hide');
             // 3 - Mostrar mensaje OK
             setTimeout(() => {
                 mostrarNotificacion('success', response);
             }, 1500)
-        }).fail(function (response) {           
+        }).fail(function (response) {
             setTimeout(() => {
                 mostrarNotificacion('error', response);
             }, 1500)
         }).always(function (response) {
             OcultarUpdateProgress();
-        });            
+        });
     },
 };
-
-
 
 /**
  * Clase jquery para poder gestionar la suscripción de un usuario a las categorías de una comunidad
@@ -20296,7 +11219,7 @@ const operativaGestionarSuscripcionComunidad = {
             });
         }
         // Botón de guardar cambios/enviar al servidor
-        this.btnSaveSubscriptionPreferences.on("click", function () {            
+        this.btnSaveSubscriptionPreferences.on("click", function () {
             // Comprobar los valores para el envío
             that.checkRadioButtonsAndCheckValues();
             // Enviar los datos
@@ -20346,7 +11269,7 @@ const operativaGestionarSuscripcionComunidad = {
             that.urlRequestCommunitySubscription,
             dataPost,
             true
-        ).done(function () {            
+        ).done(function () {
             that.panelInfoSuscripcionCategorias.addClass(that.okClass);
             that.panelInfoSuscripcionCategorias.removeClass(that.errorClass);
         }).fail(function () {
@@ -20398,7 +11321,7 @@ const operativaSolicitarRecibirNewsletter = {
         this.urlRequestReceiveNewsletters = pParams.urlRequestReceiveNewsletters;
 
         // Inicialización de las vistas
-        this.panelesInfo = [this.chkRecibirNewsletterNameInfoPanel]; 
+        this.panelesInfo = [this.chkRecibirNewsletterNameInfoPanel];
     },
 
     /**
@@ -20436,7 +11359,7 @@ const operativaSolicitarRecibirNewsletter = {
         MostrarUpdateProgress();
         that.hideInfoPanels();
         // Construcción del DataPost para enviar la petición
-        const dataPost = {            
+        const dataPost = {
             recibirNewsletter: option,
         };
 
@@ -20502,7 +11425,7 @@ const operativaOlvidoPassword = {
 
         // Mensajes preconfigurados de error
         this.msgInfoEmptyField = pParams.msgInfoEmptyField;
-        this.msgErrorForgetPasswordRequest = pParams.msgErrorForgetPasswordRequest;                                      
+        this.msgErrorForgetPasswordRequest = pParams.msgErrorForgetPasswordRequest;
     },
 
     /**
@@ -20523,13 +11446,13 @@ const operativaOlvidoPassword = {
             // Ocultar por defecto posibles mensajes de error
             that.hideInfoPanels();
             // Comprobar que el input no es vacío
-            if (that.validarCampos()) {                
+            if (that.validarCampos()) {
                 // Realizar la petición de cambio de contraseña
                 that.cambiarPasswordSubmit();
-            } else {                
+            } else {
                 that.forgetPasswordInfoPanel.html(that.msgInfoEmptyField);
                 that.forgetPasswordInfoPanel.fadeIn();
-            }         
+            }
         });
     },
 
@@ -20556,1268 +11479,90 @@ const operativaOlvidoPassword = {
         GnossPeticionAjax(this.urlForgetPasswordRequest, dataPost, true).fail(function () {
             // Mostrar mensaje de error con la información traida del backend
             that.forgetPasswordInfoPanel.html(that.msgErrorForgetPasswordRequest);
-            that.forgetPasswordInfoPanel.fadeIn("slow");            
+            that.forgetPasswordInfoPanel.fadeIn("slow");
             OcultarUpdateProgress();
         });
     }
 };
 
-
-var engancharComportamientoIdiomas = {
-	idiomas: [],
-	init: function(){
-		this.config();
-		this.comprobarNumeroIdiomas();
-		if(this.idiomas.length < 3) return;
-		this.identidad.addClass('idiomasCustomizado');
-		this.montarListado();
-		this.montarDesplegable();
-		this.enganchar();
-		this.mostrarIdiomaActivo();
-		this.controlarItemBeta();
-		return;
-	},
-	config: function(){
-		this.body = body;
-		this.perfilUsuarioGnoss = this.body.find('#perfilUsuarioGnoss');
-		this.identidad = this.perfilUsuarioGnoss.find('#identidadGNOSS');
-		// Deprecado size()
-        //if (this.identidad.size() <= 0) this.identidad = this.body.find('#identidad');
-        if (this.identidad.length <= 0) this.identidad = this.body.find('#identidad');
-		this.gnoss = this.identidad.find('#gnoss');
-		return;
-	},
-	comprobarNumeroIdiomas: function(){
-		var that = this;
-		var items = this.gnoss.children();
-		items.each(function(){
-			var item = $(this);
-			if(!item.hasClass('logo')) that.idiomas.push(this);
-		})
-		return;
-	},
-	mostrarIdiomaActivo: function(){
-		var ul = this.capa.children();
-		var items = ul.first().find('li');
-		var primero = items.first();
-		var segundo = primero.next();
-		if(primero.children().hasClass('activo')) return;
-		var opciones = this.capa.find('#idiomasSelector');
-		var activo = opciones.find('.activo');
-		var clonado = activo.clone();
-		var lang = clonado.attr('lang');
-		clonado.text(lang);
-		var li = $('<li />');
-		li.append(clonado);
-		primero.before(li);
-		segundo.remove();
-		return;
-	},	
-	montarListado: function(){
-		this.capa = $('<div />').attr('id', 'idiomas');
-		var ul = $('<ul />');
-		var li = $('<li />');
-		this.desplegar = $('<a />').addClass('desplegar').text('desplegar');
-		$.each(this.idiomas, function(indice){
-			var item = $(this);
-			var clonado = item.clone();
-			if(item.children().hasClass('activo')){
-				clonado.children().addClass('activo');
-			}			
-			if(indice < 2){
-				ul.append(clonado);
-			}
-		});
-		li.append(this.desplegar);
-		ul.append(li);
-		this.capa.append(ul);
-		this.gnoss.before(this.capa);
-		return;
-	},	
-	montarDesplegable: function(){		
-		var div = $('<div />').attr('id', 'idiomasSelector');
-		var ul = $('<ul />');
-		$.each(this.idiomas, function(indice){
-			var item = $(this);
-			var enlace = item.children();
-			var idioma = enlace.attr('title');
-			var abreviatura = enlace.attr('lang');
-			var texto = idioma + ' (' + abreviatura + ')';
-			enlace.text(texto);
-			ul.append(item);
-		});		
-		div.append(ul);
-		this.capa.append(div);
-		div.hover(
-		function(){
-			return;
-		},
-		function(){
-			$(this).hide();
-		})
-		return;
-	},	
-	controlarItemBeta: function(){
-		var beta = this.capa.find('.beta');
-		this.capa.after(beta);
-		return;
-	},
-	enganchar: function(){
-		this.desplegar.bind('click', function(evento){
-			evento.preventDefault();
-			var enlace = $(evento.target);
-			var padre = enlace.parents('div');
-			var opciones = padre.find('#idiomasSelector');
-			opciones.is(':visible') ? opciones.hide() : opciones.show();
-		})
-		return;
-	}
-}
-var html, body, page, content;
-
-$(function () {
-    html = $('html');
-    body = html.find('body');
-    page = body.find('#page');
-    content = page.find('#content');
-
-    var navegador = navigator.userAgent;
-
-    if (navegador.indexOf('MSIE 7.0') > 0) {
-        body.addClass('msie7');
-    } else if (navegador.indexOf('MSIE 8.0') > 0) {
-        body.addClass('msie8');
-    }
-
-    $('.hidePanel').each(function () {
-        var link = $(this);
-        link.bind('click', function (event) {
-            event.preventDefault();
-            var panel = link.attr('href');
-			var operativa
-            $(panel).hide();
-        });
-    });
-    $('.hideShowPanel').each(function () {
-        var link = $(this);
-        link.bind('click', function (event) {
-            event.preventDefault();
-            var panel = link.attr('href');
-            var panels = link.attr('rel');
-            var li = link.parent();
-            var ul = li.parents('ul');
-            var lis = $('li', ul);
-            if (!link.hasClass('noGroup')) desmarcarOpcionesGrupo(lis);
-            var hasOtherPanels = false;
-            if (panels != null && panels != '') hasOtherPanels = true;
-            if (hasOtherPanels) ocultarPaneles(panels);
-            panel = $(panel);
-            if (panel.is(':visible')) {
-                li.removeClass('active');
-                panel.slideUp();
-            } else {
-                li.addClass('active');
-                /*if( $.browser.msie) panel.css('display','block');*/
-                panel.slideDown();
-            }
-        });
-    });
-
-    /* longitud facetas... */
-    // Longitud facetas por CSS
-    // limiteLongitudFacetas.init();
-
-    /* numero categorias */
-    mostrarNumeroCategorias.init();
-
-    /* numero etiquetas */
-    mostrarNumeroEtiquetas.init();
-
-    /* enganchar mas menos categorias y etiquetas */
-    verTodasCategoriasEtiquetas.init();
-
-    /* presentacion facetas */
-    //facetedSearch.init();
-
-
-    /* presentacion icono certificado */
-    $('#section p.certificado').each(function () {
-        $(this).prepend('<span class=\"icono\"><\/span>');
-    })
-
-    /* presentacion votos */
-
-    presentacionVotosRecurso.init();
-
-    /* 
-    presentacion votos 
-    @deprecated 19.09.2013
-    $('#section p.votosPositivos a').each(function(){
-    var enlace = $(this);
-    var div = enlace.parents('div').first();
-    var panel = div.find('.panelVotos');
-    panel.hide();
-    panel.addClass('activado');
-    enlace.bind('click', function(evento){
-    evento.preventDefault();
-    panel.is(':visible') ? panel.hide() : panel.show(); 
-			
-    })
-    });
-    */
-
-    /* carrusel home */
-    carrusel.init();
-
-    /* carrusel comite crea */
-    carruselLateralColumna.init();
-
-    /* opciones menu identidad */
-    opcionesMenuIdentidad.init();
-
-    /* marcar seccion del menu principal activa */
-    //seccion.init();
-    /* enganchar modo visualizacion listados */
-    //modoVisualizacionListados.init();
-
-    /* limpiar actividad reciente home */
-    limpiarActividadRecienteHome.init();
-
-    if (body.hasClass('homeCatalogo')) {
-        modoVisualizacionListadosHomeCatalogo.init();
-    }
-    /* add icono video */
-    pintarRecursoVideo.init();
-
-    /* ficha. acerca de este recurso compactado */
-    herramientasRecursoCompactado.init();
-    redesSocialesRecursoCompactado.init();
-
-    iconografia.init();
-
-    /* texto logo */
-    ajustarTextoLogoComunidad.init();
-
-    /* only members */
-    onlymembers.init();
-    onlymembersContent.init();
-
-    /* subcategorias menu principal 2012.10.08 */
-    subcategoriasMenuPrincipal.init();
-
-    /* subcategorias menu principal 2012.11.12 */
-    abreEnVentanaNueva.init();
-
-    /* desplegables modo visualizacion */
-    desplegableGenerico.init();
-
-    /* comportamiento idiomas v.2014.05.09.01 */
-	engancharComportamientoIdiomas.init();
-
-    /* paneles colapsables 2012.11.26 
-    panelesColapsablesTresNiveles.init(); 
-    */
-
-    /* ajuste paginadores de recursos */
-    $('#col01 .paginadorSiguienteAnterior').each(function () {
-        var paginador = $(this);
-        var grupo = paginador.parents('.group.resources');
-        var contextoOtraComunidad = grupo.find('.context-header');
-        if (contextoOtraComunidad.size() <= 0) grupo.addClass('grupoPaginado');
-    });
-
-    /* ajuste fecha publicador 
-    */
-    ajusteFechaPublicador.init();
-
-    controladorLineas.init();
-    limpiarGruposVaciosSemanticView.init();
-
-    /* selector paso 01 registro */
-    if (body.hasClass('registroPaso01')) seleccionarPreferencias.init();
-    // Cambiado por nuevo Front
-    // Eliminarlo porque no tiene sentido
-    //if (body.hasClass('operativaRegistro')) marcarPasosFormulario.init();
-
-    /* registro */
-    // Deprecado size()
-    //if ($('.formularioRegistroUsuarios').size() > 0) {
-    if ($('.formularioRegistroUsuarios').length > 0) {
-        marcarObligatorios.init();
-    }
-    /* customizador file */
-    customizeFile.init()
-
-    /* swf component fullscreen  
-    var swfFullScreen = $('#section .swffullscreen a');
-    if(swfFullScreen.size() > 0){
-    swfFullScreen.fancybox({
-    'padding'           : 0,
-    'autoScale'     	: true,
-    'transitionIn'		: 'none',
-    'transitionOut'		: 'none',
-    'width'				: '98%',
-    'height'			: '90%'
-    });
-    }
-    */
-
-    /* Ajustar pestañas */
-    var pestanyas= $('#header #nav .principal li');
-    // Deprecado size()
-    //if (pestanyas.find('activo').size() == 0)
-    if (pestanyas.find('activo').length == 0)
-    {
-        var rutaActual=document.location.href;
-        pestanyas.each(function () {
-            var pestanya = $(this);
-            var enlace= pestanya.find('a');
-            if(enlace!=undefined && enlace.attr('href')!=undefined && enlace.attr('href')==rutaActual)
-            {
-                pestanya.addClass('activo');
-            }
-        });
-    }    
-});/**/ 
-/*jquery.gnoss.apply.js*/ 
-/*!
- * jQuery JavaScript Library v1.6.1
- * http://jquery.com/
- *
- * Copyright 2011, John Resig
- * Dual licensed under the MIT or GPL Version 2 licenses.
- * http://jquery.org/license
- *
- * Includes Sizzle.js
- * http://sizzlejs.com/
- * Copyright 2011, The Dojo Foundation
- * Released under the MIT, BSD, and GPL Licenses.
- *
- * Date: Thu May 12 15:04:36 2011 -0400
+/**
+ * Inicializa los datepickers en la página.
  */
+function initializeDatePickers() {
+    const currentYear = new Date().getFullYear();
+    const oldYear = currentYear - 100;
+    const maxYear = currentYear + 100;
 
-var isPendingSuccess = false;
-
-var filter = {
-	cssFilterSpace: '.filterSpace',
-	cssSearchBy: '.searchBy',
-	cssTags: '.tags',
-	cssCounter: '.counter',
-	isAppliedTags: false,
-	init: function(){
-		this.config();
-	},
-	config: function(){
-		this.filterSpace = $(this.cssFilterSpace);
-		this.searchBy = $(this.cssSearchBy, this.filterSpace);
-		this.tags = $(this.cssTags, this.filterSpace);
-		this.counter = $(this.cssCounter, this.filterSpace);
-		this.number = $('strong', this.counter);
-		if(!this.isAppliedTags){
-			this.searchBy.hide();
-			this.tags.hide();
-		}
-		return;
-	},
-	templateTag: function(tag){
-		var literal = $(tag).text();
-		var rel = $(tag).attr('rel');
-		var html = '<li>';
-		html += literal;
-		html += ' <a href="#" rel="' + rel + '" class="remove">eliminar</a>';
-		html += '</li>';
-		return html;
-	},
-	addTag: function(tag){
-		if(!this.isAppliedTags){
-			this.tags.html('');		
-			this.searchBy.show();
-			this.tags.show();
-		};		
-		this.tags.append(this.templateTag(tag));
-		this.isAppliedTags = true;
-		return;
-	},
-	changeCounter: function(number){
-		this.number.html(number);
-		return;
-	}
-}
-var results = {
-	cssList: '.resource-list',
-	init: function(){
-		this.config();
-	},
-	config: function(){
-		this.list = $(this.cssList);
-		return;
-	},
-	loading: function(){
-		this.list.html(this.templateLoading);
-		return;
-	},
-	addContent: function(html){
-		var that = this;
-		setTimeout(function(){
-			that.list.html(html);
-			isPendingSuccess = false;
-			// Cambiar por el nuevo Front. Al hacer click en una faceta de tipo tree, cargar los resultados en la zona de contenido
-            //modoVisualizacionListados.init('#col02 .resource-list');            
-            modoVisualizacionListados.init('#panResultados .resource-list');
-
-		}, 500);
-		return;
-	},	
-    /*
-     * Función que se ejecuta cuando se pulsa en una opción de link de tipo Tree o ListTree en Facetas. 
-     * Muestra un pensaje de Cargando hasta que los datos son devueltos por el servidor     
-     */
-	templateLoading: function(){
-		//var html = '<p class="loading">procesing linked data...</p>';
-        var html = "";
-        html += '<div class="align-items-center mb-2">';
-        html += '<div ';
-        html += 'class="spinner-border texto-primario mr-2"';
-        html += 'role="status"';
-        html += 'aria-hidden="true"';           
-        html += '></div>';
-        html += '<strong>Cargando resultados ...</strong>';       
-        html += '</div>';
-		return html;
-	}
-}
-function templateRecurso(resource){
-	html_response = "<div class=\"resource\">";
-	html_response += "<div class=\"box description\">";
-	html_response += "<div class=\"group title\">";
-	html_response += "<h4><a href=\"" + resource.url + "\">" + resource.titulo + "</a></h4>";
-	html_response += "<p class=\"resourceType digital\"><span>tipo de documento<\/span><a href=\"#resource\">Archivo digital<\/a><\/p>";
-	html_response += "</div>";
-	html_response += "<div class=\"group content\">";
-	html_response += resource.contenidoBreve;
-	html_response += "<\/div>";
-	html_response += "<div class=\"group utils-2\">";
-	html_response += "<p>Autores: <a href=\"personas.php\">Equipo GNOSS, Dr. Martin Hepp<\/a><\/p>";
-	html_response += "<p>Publicado el 21.04.10 por <a href=\"personas.php\">Equipo GNOSS<\/a><\/p>";
-	html_response += "<p>Editores: <a href=\"personas.php\">Lina Aguirre, Equipo GNOSS<\/a>, <a href=\"personas.php\">Ricardo Alonso Maturana<\/a><\/p>";
-	html_response += "<\/div>";
-	html_response += "<div class=\"group categorias\">";
-	html_response += "<p>Categorías:<\/p>";
-	html_response += "<ul>";
-	html_response += "<li><a href=\"recursos.php\">Representación del conocimiento/ Knowledge representation,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">Vocabularios Semánticos/Data Vocabularies,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">Ontologías/ Ontologies,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">Marketing semántico/Semantic marketing<\/a><\/li>";
-	html_response += "<\/ul>";
-	html_response += "<\/div>";
-	html_response += "<div class=\"group etiquetas\">";
-	html_response += "<p>Etiquetas: <\/p>";
-	html_response += "<ul>";
-	html_response += "<li><a href=\"recursos.php\">data,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">e-commerce,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">linked data,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">ontología,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">owl,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">posicionamiento,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">rdf,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">rdfa,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">rdf-s,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">search,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">searchmonkey,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">sem,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">semantic web,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">seo,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">servicios,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">web,<\/a><\/li>";
-	html_response += "<li><a href=\"recursos.php\">yahoo<\/a><\/li>";
-	html_response += "<\/ul>";
-	html_response += "</div>";	
-	html_response += "<\/div>";
-	html_response += "<\/div>";
-	return html_response;
-}
-function suggest(){
-  $.ajax({
-    data: "parametro1=valor1&amp;parametro2=valor2",
-	cache: false,
-    type: "GET",
-    dataType: "json",
-    url: "includes/recursos/data.php",
-    success: function(resources){ 
-		var html_response = "";
-		$.each(resources, function(indice, resource){
-			if(indice == 'resumen'){
-				filter.changeCounter(resource.numero);
-			}else{
-				html_response += templateRecurso(resource);
-			}
-		});
-		results.addContent(html_response);
-	},
-	error: function(e, xhr){
-		//console.log(e);
-	}	
-   });
-}
-$(function(){
-	filter.init();
-	results.init();
-	$('.layout02 #facetedSearch .box ul a').each(function(){
-		$(this).bind('click', function(event){
-			var enlace = $(this);
-			var li = enlace.parent().html();
-			if(!enlace.hasClass('applied')){
-				if(isPendingSuccess == false){
-					isPendingSuccess = true;
-					filter.addTag(li);
-					results.loading();
-					enlace.addClass('applied');
-					suggest();
-				};
-			};
-			event.preventDefault();
-		})
-	});
-})/**/ 
-/*jquery.autocomplete.js*/ 
-/*
- * jQuery Autocomplete plugin 1.1
- *
- * Copyright (c) 2009 Jörn Zaefferer
- *
- * Dual licensed under the MIT and GPL licenses:
- *   http://www.opensource.org/licenses/mit-license.php
- *   http://www.gnu.org/licenses/gpl.html
- *
- * Revision: $Id: jquery.autocomplete.js 15 2009-08-22 10:30:27Z joern.zaefferer $
- */
-
-
-$(document).ready(function() {	    
-    // Preparar el .datePicker para que esté disponible en la web
-    const oldYear = moment().format('YYYY') - 100;
-    const currentYear = moment().format('YYYY');
-    const maxYear = moment().add(100, 'year').format('YYYY');
-    // DatePicker normales
+    // DatePickers normales
     $('.datepicker').datepicker({
         changeMonth: true,
         changeYear: true,
         yearRange: `${oldYear}:${maxYear}`,
     });
-    // DatePicker con límite en Fecha
+
+    // DatePickers con límite en Fecha
     $('.datepicker-minToday').datepicker({
         changeMonth: true,
-        changeYear: true,        
+        changeYear: true,
         // Fecha mínima será hoy
-        minDate: '0',       
+        minDate: '0',
     });
+}
 
-    // Prevenir actualización de páginas cuando haya formularios "importantes". Avisar al usuario
-    if ($("#preventLeavingFormWithoutSaving").dirty != null) {
-        $("#preventLeavingFormWithoutSaving").dirty({ preventLeaving: true });
+/**
+ * Previene la actualización de la página cuando hay formularios importantes sin guardar.
+ */
+function preventLeavingFormWithoutSaving() {
+    const form = $("#preventLeavingFormWithoutSaving");
+    if (form.dirty != null) {
+        form.dirty({ preventLeaving: true });
     }
+}
 
-    // Tener en cuenta la posición del footer por el scroll automático
-    if (typeof Waypoint != 'undefined') {
-        setInterval(function () {
-            Waypoint.refreshAll();            
-        }, 1000);
-    }    
-
-    // Establecer comportamiento del modal-container antes de que se vaya a mostrar
-    $('#modal-container').on('shown.bs.modal', function (e) {
+/**
+ * Configura el comportamiento del modal-container antes de que se muestre.
+ */
+function setupModalBehavior() {
+    $('#modal-container').on('shown.bs.modal', function(e) {
         // Comprobar si hay que mostrar el contenedor centrado en pantalla o no
         const elementThatTriggeredModal = $(e.relatedTarget);
         if (elementThatTriggeredModal.data("showmodalcentered")) {
             // Eliminar la clase por defecto de mostrarse en el top
             $(this).removeClass("modal-top");
-        }               
-    });
-
-    // Comportamiento de navegación back button del navegador
-    operativaDetectarNavegacionBackButton.init(); 
-
-    // Comportamiento para hacer zoom en imágenes
-    operativaImagesZooming.init();
-});
-
-/* Evitar ocultamiento de faceta cuando se utiliza el datepicker para seleccionar meses */
-$(document).on('click', '#ui-datepicker-div, .ui-datepicker-prev, .ui-datepicker-next', function (e) {
-    e.stopPropagation();
-});
-
-/*jquery.gnoss.header.js*/ 
-var globalIsContrayendo = false;
-var confirmacionEliminacionMultiple = {
-	cssConfirmacion: '.confirmacionMultiple',
-	items: [
-		'.listToolBar .delete a'
-	],	
-	init: function(){
-		this.config();
-		return;
-	},
-	config: function(){
-		this.confirmacion = $(this.cssConfirmacion);
-		var that = this;
-		$.each(this.items, function(indice){
-			var item = $(that.items[indice]);
-			item.bind('click', function(evento){
-				that.engancharEvento(evento);
-				evento.preventDefault();
-			});
-		});
-		return;
-	},
-	engancharEvento: function(evento){
-		this.mostrarConfirmacion();
-		return;
-	},
-	mostrarConfirmacion: function(){
-		this.confirmacion.show();
-	}
-}
-var confirmacionEliminacionSencilla = {
-	cssConfirmacion: '.confirmacionSencilla',
-	items: [
-		'.resource-list .resource .delete'
-	],	
-	init: function(){
-		this.config();
-		return;
-	},
-	config: function(){
-		this.confirmacion = $(this.cssConfirmacion);
-		this.pregunta = this.confirmacion.find('.pregunta');
-		var that = this;
-		$.each(this.items, function(indice){
-			var item = $(that.items[indice]);
-			item.bind('click', function(evento){
-				that.engancharEvento(evento);
-				evento.preventDefault();
-			});
-		});
-		return;
-	},
-	engancharEvento: function(evento){
-		this.currentBoton = $(evento.target);
-		this.encontrarRecurso();
-		this.mostrarConfirmacion();
-		return;
-	},
-	encontrarRecurso: function(){
-		this.currentRecurso = this.currentBoton.parents('.resource');
-		return;
-	},
-	mostrarConfirmacion: function(){
-		var altura = this.currentRecurso.height() + 'px';
-		var margin = (this.currentRecurso.height() / 3) + 'px';
-		var top = this.currentRecurso.position().top + 'px';
-		this.confirmacion.css({
-			'height': altura,
-			'top': top
-		});
-		this.pregunta.css('margin-top', margin);
-		
-		this.confirmacion.show();
-	}
-}
-var desplegableUsuario = {
-	idEspacios: '#usuarioConectado',
-	cssEnlace: '.enlaceDesplegable',
-	cssDesplegable: '.desplegable',
-	cssListadoAmpliado: '.listadoAmpliado',
-	init: function(){
-		this.config();
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.espacios = $(this.idEspacios);
-		this.enlaces = this.espacios.find(this.cssEnlace);
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			});
-		});
-		return;
-	},
-	ocultarTodos: function(){
-		this.enlaces.each(function(indice){
-			var parrafo = $(this);
-			var div = parrafo.parent();
-			parrafo.removeClass('activo');
-			div.removeClass('showDesplegable');
-		});
-		return;
-	},
-	comportamiento: function(evento){
-		var parrafo = $(evento.target);
-		if(!parrafo.is('P')){
-			parrafo = parrafo.parents('p').first();
-		};
-		var div = parrafo.parent();
-		if(!parrafo.hasClass('activo')) this.ocultarTodos();
-		parrafo.hasClass('activo') ? parrafo.removeClass('activo') : parrafo.addClass('activo');
-		div.hasClass('showDesplegable') ? div.removeClass('showDesplegable') : div.addClass('showDesplegable');
-		return;	
-	}
-}
-
-var desplegablesEspacios = {
-	idEspacios: '#espacios',
-	cssEnlace: '.enlaceDesplegable',
-	cssDesplegable: '.desplegable',
-	cssListadoAmpliado: '.listadoAmpliado',
-	init: function(){
-		this.config();
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.espacios = $(this.idEspacios);
-		this.enlaces = this.espacios.find(this.cssEnlace);
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			});
-		});
-		return;
-	},
-	ocultarTodos: function(){
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			var li = enlace.parent();
-			enlace.removeClass('activo');
-			li.removeClass('showDesplegable');
-		});
-		return;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		var li = enlace.parent();
-		if(!enlace.hasClass('activo')) this.ocultarTodos();
-		enlace.hasClass('activo') ? enlace.removeClass('activo') : enlace.addClass('activo');
-		li.hasClass('showDesplegable') ? li.removeClass('showDesplegable') : li.addClass('showDesplegable');
-		return;	
-	}
-}
-
-var desplegablesEspaciosGNOSS = {
-	idEspacios: '#identidadGNOSS',
-	cssEnlace: '.enlaceDesplegable',
-	cssDesplegable: '.desplegable',
-	cssListadoAmpliado: '.listadoAmpliado',
-	init: function(){
-		this.config();
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.espacios = $(this.idEspacios);
-		this.enlaces = this.espacios.find(this.cssEnlace);
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			});
-		});
-		return;
-	},
-	ocultarTodos: function(){
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			var li = enlace.parent();
-			enlace.removeClass('activo');
-			li.removeClass('showDesplegable');
-		});
-		return;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		var li = enlace.parent();
-		if(!enlace.hasClass('activo')) this.ocultarTodos();
-		enlace.hasClass('activo') ? enlace.removeClass('activo') : enlace.addClass('activo');
-		li.hasClass('showDesplegable') ? li.removeClass('showDesplegable') : li.addClass('showDesplegable');
-		return;	
-	}
-}
-
-var desplegablesOtrasIdentidades = {
-	idEspacios: '#otrasIdentidades',
-	cssEnlace: '.enlaceDesplegable',
-	cssDesplegable: '.desplegable',
-	cssListadoAmpliado: '.listadoAmpliado',
-	init: function(){
-		this.config();
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.espacios = $(this.idEspacios);
-		this.enlaces = this.espacios.find(this.cssEnlace);
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			});
-		});
-		return;
-	},
-	ocultarTodos: function(){
-		var that = this;
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			enlace.removeClass('activo');
-			that.espacios.removeClass('showDesplegable');
-		});
-		return;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		if(!enlace.hasClass('activo')) this.ocultarTodos();
-		enlace.hasClass('activo') ? enlace.removeClass('activo') : enlace.addClass('activo');
-		this.espacios.hasClass('showDesplegable') ? this.espacios.removeClass('showDesplegable') : this.espacios.addClass('showDesplegable');
-		return;	
-	}
-}
-
-var ampliarContraerListados = {
-	css: '.mostrarListadoAmpliado',
-	cssVerTodas: '.mostrarListadoTodos',
-	init: function(){
-		this.config();
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.enlaces = $(this.css);
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		this.enlaces.each(function(indice){
-			var parrafo = $(this);
-			var enlace = parrafo.find('a');
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			});					
-		});
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		var contenedor = enlace.parent().parent();
-		var ulAmpliado = contenedor.find('ul.listadoAmpliado');
-		var ulListado = ulAmpliado.prev();
-		var pVerTodos = enlace.parent().next();
-		var hasVerTodos = pVerTodos.size() > 0;
-		var texto = enlace.text();
-		var textoAlt = enlace.attr('rel');
-		enlace.text(textoAlt);
-		enlace.attr('rel', texto);
-		if(ulAmpliado.is(':visible')){
-			ulAmpliado.hide();
-			globalIsContrayendo = true;
-		}else{
-			if(hasVerTodos){
-				ulListado.hide();
-				enlace.parent().hide();
-				pVerTodos.show();
-				ulAmpliado.show();
-				
-			}else{
-				ulAmpliado.show();
-			}
-			globalIsContrayendo = false;
-		}
-	}
-}
-
-var ocultarDesplegables = {
-	idPage: '#page',
-	init: function(){
-		$(this.idPage).hover( function(){
-			if(globalIsContrayendo) return;
-			desplegablesEspacios.ocultarTodos();
-			desplegableUsuario.ocultarTodos();
-			desplegablesOtrasIdentidades.ocultarTodos();
-			desplegablesEspaciosGNOSS.ocultarTodos();
-			desplegablesIdentidad.ocultarTodos();
-		},function(){});
-	}
-}
-
-var hoverDesplegable = {
-	desplegables: '.desplegable',
-	init: function(){
-		$(this.desplegables).each(function(){
-			var desplegable = $(this);
-			desplegable.hover(
-			function(){
-				globalIsContrayendo = false;
-			},function(){});			
-		});
-	}
-}
-
-var montarModuloOtrasIdentidades = {
-	id: '#otrasIdentidades',
-	cssDesplegable: '.panelMasIdentidades',
-	n: 4,
-	isMuchasIdentidades: false,
-	init: function(){
-		this.config();
-		this.determinarItemsAMostrar();
-	},
-	config: function(){
-		this.modulo = $(this.id);
-		this.desplegable = this.modulo.find(this.cssDesplegable);
-		this.ulVisible = this.modulo.find('ul').first();
-		this.botonMasIdentidades = this.ulVisible.find('li.masIdentidades');
-		this.ul = this.desplegable.find('ul').first();
-		this.lis = this.ul.find('li');
-		return;
-	},
-	determinarItemsAMostrar: function(){	
-		// Deprecado size() 
-        // var numeroItems = this.lis.size();
-        var numeroItems = this.lis.length;
-		if(numeroItems == 0){
-			this.modulo.remove();
-		}else{
-			if(numeroItems > this.n) this.isMuchasIdentidades = true;
-			this.mostrarLosNPrimeros()
-		}
-		return;
-	},
-	mostrarLosNPrimeros: function(){
-		var that = this;
-		if(!this.isMuchasIdentidades){
-			this.desplegable.remove();
-			this.botonMasIdentidades.remove();
-			this.lisMostrar = this.lis.splice(0, this.n);
-		}else{
-			this.lisMostrar = this.lis.splice(0, this.n - 1);			
-		}	
-		this.lisMostrar = $(this.lisMostrar.reverse());
-		this.lisMostrar.each(function(indice){
-			var li = $(this);
-			that.ulVisible.prepend(li);
-		});
-		return;
-	}
-}
-marcarItemsDesplegables = {
-	css: '.enlaceDesplegable',
-	init: function(){
-		this.comportamiento();
-	},
-	config: function(){
-		return;
-	},
-	comportamiento: function(){
-		var enlaces = $(this.css);
-		enlaces.each(function(){
-			var enlace = $(this);
-			if(enlace.parents('.identidadGNOSS').size() > 0) return;
-			enlace.addClass('menuDesplegable');
-		});
-		return;
-	}
-}
-var marcarIdentidadProfesor = {
-	cssProfesor: '.profesor',
-	init: function(){
-		this.config();
-		this.marcar();
-	},
-	config: function(){
-		this.identidades = $('#otrasIdentidades ' + this.cssProfesor);
-		return;
-	},
-	marcar: function(){
-		this.identidades.each(function(){
-			var identidad = $(this);
-			var title = identidad.attr('title');
-			var li = identidad.parent();
-			li.css('position','relative');
-			li.append('<span class="identidadProfesor" title="' + title + '">identidad profesor</span>');
-		});
-		return;
-	}
-}
-
-var desplegablesIdentidad = {
-	idEspacios: '#identidad',
-	cssEnlace: '.enlaceDesplegable',
-	cssDesplegable: '.desplegable',
-	cssListadoAmpliado: '.listadoAmpliado',
-	init: function(){
-		this.config();
-		this.engancharComportamiento();
-	},
-	config: function(){
-		this.espacios = $(this.idEspacios);
-		this.enlaces = this.espacios.find(this.cssEnlace);
-	},
-	engancharComportamiento: function(){
-		var that = this;
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			enlace.bind('click', function(evento){
-				evento.preventDefault();
-				that.comportamiento(evento);
-			});
-		});
-		return;
-	},
-	ocultarTodos: function(){
-		this.enlaces.each(function(indice){
-			var enlace = $(this);
-			var li = enlace.parent();
-			enlace.removeClass('activo');
-			li.removeClass('showDesplegable');
-		});
-		return;
-	},
-	comportamiento: function(evento){
-		var enlace = $(evento.target);
-		var li = enlace.parent();
-		if(!enlace.hasClass('activo')) this.ocultarTodos();
-		enlace.hasClass('activo') ? enlace.removeClass('activo') : enlace.addClass('activo');
-		li.hasClass('showDesplegable') ? li.removeClass('showDesplegable') : li.addClass('showDesplegable');
-		return;	
-	}
-}
-var buscadorCabecera = {
-    idBuscador: '#buscador',
-    cssSearchGroup: '.searchGroup',
-    literales: [],
-    init: function (id) {
-        var buscador = id || this.idBuscador;
-        var that = this;
-        this.buscador = $(buscador);
-        this.config();
-        this.wrapBuscador.show();
-        this.anchoSearchGroup = this.searchGroup.width();
-        // Nuevo Front. Cargaba recursos, y más opciones cuando el usuario no estaba registrado (Lo montaba después del buscador). No tiene sentido
-        //this.montarSelector();
-        // A simple vista, no monta ninguna opción. Parece ser un submenú. Ahora con nuevo Front no haría falta.
-        //this.montarOpciones();
-        this.marcarDefaultInput();
-        // Asocia clase cuando hay "focus". Lo elimino de momento
-        //this.engancharInput();
-        // Comportamiento para paneles y subpaneles (Desplegado, no desplegado). Para el nuevo Front, lo elimino de momento
-        //this.engancharSelector();
-        // Cálculo dinámico de paneles del viejo front. De momento lo oculto
-        //this.engancharOpciones();
-        // Comportamiento de establecer "selected" a opciones. Para el nuevo Front, lo elimino de momento
-        //this.defaultSeleccionado();
-        // Calcular ancho para el input de buscador. Para el nuevo Front, de momento lo elimino
-        /*setTimeout(function () {
-            that.calcularAnchoInputDisponible();
-        }, 200)*/
-        return;
-    },
-    config: function () {
-        this.wrapBuscador = $('fieldset', this.buscador);
-        this.searchGroup = $(this.cssSearchGroup, this.buscador);
-        this.defaultSelect = $('select', this.buscador);
-        this.defaultOptions = $('option', this.defaultSelect);
-        this.defaultInput = $('input[type=text]', this.buscador);
-        this.anchoBuscador = this.buscador.width();
-        return;
-    },
-    marcarDefaultInput: function () {
-        this.defaultInput.addClass('defaultText');
-        this.defaultInputText = this.defaultInput.attr('value');
-        return;
-    },
-    defaultSeleccionado: function () {
-        var that = this;
-        this.defaultOptions.each(function (indice) {
-            var option = $(this);
-            if (option.attr('selected')) that.enlaceSelector.html(that.literales[indice]);
-        });
-    },
-    engancharInput: function () {
-        var that = this;
-        this.defaultInput.bind('focus', function () {
-            var texto = that.defaultInput.val();
-            if (texto == '' || texto == that.defaultInputText) {
-                that.defaultInput.attr('value', '');
-                that.defaultInput.removeClass('defaultText');
-            }
-        });
-        this.defaultInput.bind('blur', function () {
-            var texto = that.defaultInput.val();
-            if (texto == '' || texto == that.defaultInputText) {
-                that.defaultInput.addClass('defaultText');
-                that.defaultInput.attr('value', that.defaultInputText);
-            }
-        });
-        return;
-    },
-    deseleccionar: function () {
-        this.defaultOptions.each(function () {
-            $(this).removeAttr('selected');
-        });
-        return;
-    },
-    engancharOpciones: function () {
-        var that = this;
-        var enlaces = $('a', this.opciones);
-        enlaces.each(function () {
-            var enlace = $(this);
-            enlace.bind('click', function (evento) {
-                evento.preventDefault();
-                enlace = $(evento.target);
-                var indice = enlace.attr('rel');
-                that.enlaceSelector.html(that.literales[indice]);
-                that.deseleccionar();
-                var opcionSeleccionada = that.defaultOptions[indice];
-                $(opcionSeleccionada).attr('selected', 'selected');
-                that.defaultSelect[0].selectedIndex = indice;
-                that.calcularAnchoInputDisponible();
-                if (typeof (window.PreparaAutoCompletarComunidad) == 'function') {
-                    PreparaAutoCompletarComunidad();
-                }
-            });
-        })
-        return;
-    },
-    calcularAnchoInputDisponible: function () {
-        var anchoBuscador = this.anchoBuscador;
-        var anchoSearchGroup = this.anchoSearchGroup;
-        var anchoSelector = this.selector.width();
-        var anchoDefaultInput = anchoSearchGroup - (anchoSelector + 54);
-        // Si el usuario no está en ninguna comunidad, el buscador se quedaba en 0px (No tiene sentido) -> Cambiado por nuevo Front
-        //this.defaultInput.css('width', anchoDefaultInput + 'px');
-        return;
-    },
-    engancharSelector: function () {
-        var that = this;
-        this.selector.hover(function () {
-            that.opciones.show();
-            that.selector.addClass('desplegado');
-            that.calcularAnchoInputDisponible();
-        }, function () {
-            that.opciones.hide();
-            that.selector.removeClass('desplegado');
-            that.calcularAnchoInputDisponible();
-        });
-        return;
-    },
-    plantillaSelector: function () {
-        var html = '<div id=\"selector\">';
-        html += '<p class=\"seleccionado\"><a href=\"#\"><\/a><span><\/span><\/p>';
-        html += '<div id=\"opciones\">';
-        html += '<\/div>';
-        html += '<\/div>';
-        return html;
-    },
-    montarSelector: function () {
-        this.searchGroup.prepend(this.plantillaSelector());
-        this.selector = $('#selector', this.buscador);
-        this.enlaceSelector = $('a', this.selector);
-        this.opciones = $('#opciones', this.selector);
-        return;
-    },
-    montarOpciones: function () {
-        var that = this;
-        var options = $('option', this.defaultSelect);
-        var html = '<ul>';
-        options.each(function (indice) {
-            var opcion = $(this);
-            var literal = opcion.html();
-            that.literales[indice] = literal;
-            html += '<li><a href=\"#\" rel=\"' + indice + '\">';
-            html += literal;
-            html += '<\/li><\/a>';
-        });
-        if (options.length == 1) {
-            this.selector.hide();
         }
-        this.opciones.html(html);
-        return;
+    });
+}
+
+/**
+ * Inicializa el comportamiento de navegación del botón back del navegador.
+ */
+function initializeBackButtonNavigation() {
+    if (typeof operativaDetectarNavegacionBackButton !== 'undefined' && operativaDetectarNavegacionBackButton.init) {
+        operativaDetectarNavegacionBackButton.init(); 
     }
 }
-$(function () {
 
-    /* buscador */
-    buscadorCabecera.init();
+/**
+ * Refresca los waypoints en la página.
+ */
+function refreshWaypoints() {
+    if (typeof Waypoint !== 'undefined') {
+        setInterval(function() {
+            Waypoint.refreshAll();            
+        }, 1000);
+    }
+}
 
-	confirmacionEliminacionMultiple.init();
-	confirmacionEliminacionSencilla.init();
-	
-	marcarIdentidadProfesor.init();
-	montarModuloOtrasIdentidades.init();
-	desplegablesIdentidad.init();
-	desplegablesEspacios.init();
-	desplegableUsuario.init();
-	desplegablesOtrasIdentidades.init();
-	desplegablesEspaciosGNOSS.init();
-	ampliarContraerListados.init();
-	ocultarDesplegables.init();
-	hoverDesplegable.init();
-	marcarItemsDesplegables.init();
-});/**/ 
-/*waypoints.min.js*/ 
-// Generated by CoffeeScript 1.6.2
-/*!
-jQuery Waypoints - v2.0.5
-Copyright (c) 2011-2014 Caleb Troughton
-Licensed under the MIT license.
-https://github.com/imakewebthings/jquery-waypoints/blob/master/licenses.txt
-*/
-(function(){var t=[].indexOf||function(t){for(var e=0,n=this.length;e<n;e++){if(e in this&&this[e]===t)return e}return-1},e=[].slice;(function(t,e){if(typeof define==="function"&&define.amd){return define("waypoints",["jquery"],function(n){return e(n,t)})}else{return e(t.jQuery,t)}})(window,function(n,r){var i,o,l,s,f,u,c,a,h,d,p,y,v,w,g,m;i=n(r);a=t.call(r,"ontouchstart")>=0;s={horizontal:{},vertical:{}};f=1;c={};u="waypoints-context-id";p="resize.waypoints";y="scroll.waypoints";v=1;w="waypoints-waypoint-ids";g="waypoint";m="waypoints";o=function(){function t(t){var e=this;this.$element=t;this.element=t[0];this.didResize=false;this.didScroll=false;this.id="context"+f++;this.oldScroll={x:t.scrollLeft(),y:t.scrollTop()};this.waypoints={horizontal:{},vertical:{}};this.element[u]=this.id;c[this.id]=this;t.bind(y,function(){var t;if(!(e.didScroll||a)){e.didScroll=true;t=function(){e.doScroll();return e.didScroll=false};return r.setTimeout(t,n[m].settings.scrollThrottle)}});t.bind(p,function(){var t;if(!e.didResize){e.didResize=true;t=function(){n[m]("refresh");return e.didResize=false};return r.setTimeout(t,n[m].settings.resizeThrottle)}})}t.prototype.doScroll=function(){var t,e=this;t={horizontal:{newScroll:this.$element.scrollLeft(),oldScroll:this.oldScroll.x,forward:"right",backward:"left"},vertical:{newScroll:this.$element.scrollTop(),oldScroll:this.oldScroll.y,forward:"down",backward:"up"}};if(a&&(!t.vertical.oldScroll||!t.vertical.newScroll)){n[m]("refresh")}n.each(t,function(t,r){var i,o,l;l=[];o=r.newScroll>r.oldScroll;i=o?r.forward:r.backward;n.each(e.waypoints[t],function(t,e){var n,i;if(r.oldScroll<(n=e.offset)&&n<=r.newScroll){return l.push(e)}else if(r.newScroll<(i=e.offset)&&i<=r.oldScroll){return l.push(e)}});l.sort(function(t,e){return t.offset-e.offset});if(!o){l.reverse()}return n.each(l,function(t,e){if(e.options.continuous||t===l.length-1){return e.trigger([i])}})});return this.oldScroll={x:t.horizontal.newScroll,y:t.vertical.newScroll}};t.prototype.refresh=function(){var t,e,r,i=this;r=n.isWindow(this.element);e=this.$element.offset();this.doScroll();t={horizontal:{contextOffset:r?0:e.left,contextScroll:r?0:this.oldScroll.x,contextDimension:this.$element.width(),oldScroll:this.oldScroll.x,forward:"right",backward:"left",offsetProp:"left"},vertical:{contextOffset:r?0:e.top,contextScroll:r?0:this.oldScroll.y,contextDimension:r?n[m]("viewportHeight"):this.$element.height(),oldScroll:this.oldScroll.y,forward:"down",backward:"up",offsetProp:"top"}};return n.each(t,function(t,e){return n.each(i.waypoints[t],function(t,r){var i,o,l,s,f;i=r.options.offset;l=r.offset;o=n.isWindow(r.element)?0:r.$element.offset()[e.offsetProp];if(n.isFunction(i)){i=i.apply(r.element)}else if(typeof i==="string"){i=parseFloat(i);if(r.options.offset.indexOf("%")>-1){i=Math.ceil(e.contextDimension*i/100)}}r.offset=o-e.contextOffset+e.contextScroll-i;if(r.options.onlyOnScroll&&l!=null||!r.enabled){return}if(l!==null&&l<(s=e.oldScroll)&&s<=r.offset){return r.trigger([e.backward])}else if(l!==null&&l>(f=e.oldScroll)&&f>=r.offset){return r.trigger([e.forward])}else if(l===null&&e.oldScroll>=r.offset){return r.trigger([e.forward])}})})};t.prototype.checkEmpty=function(){if(n.isEmptyObject(this.waypoints.horizontal)&&n.isEmptyObject(this.waypoints.vertical)){this.$element.unbind([p,y].join(" "));return delete c[this.id]}};return t}();l=function(){function t(t,e,r){var i,o;if(r.offset==="bottom-in-view"){r.offset=function(){var t;t=n[m]("viewportHeight");if(!n.isWindow(e.element)){t=e.$element.height()}return t-n(this).outerHeight()}}this.$element=t;this.element=t[0];this.axis=r.horizontal?"horizontal":"vertical";this.callback=r.handler;this.context=e;this.enabled=r.enabled;this.id="waypoints"+v++;this.offset=null;this.options=r;e.waypoints[this.axis][this.id]=this;s[this.axis][this.id]=this;i=(o=this.element[w])!=null?o:[];i.push(this.id);this.element[w]=i}t.prototype.trigger=function(t){if(!this.enabled){return}if(this.callback!=null){this.callback.apply(this.element,t)}if(this.options.triggerOnce){return this.destroy()}};t.prototype.disable=function(){return this.enabled=false};t.prototype.enable=function(){this.context.refresh();return this.enabled=true};t.prototype.destroy=function(){delete s[this.axis][this.id];delete this.context.waypoints[this.axis][this.id];return this.context.checkEmpty()};t.getWaypointsByElement=function(t){var e,r;r=t[w];if(!r){return[]}e=n.extend({},s.horizontal,s.vertical);return n.map(r,function(t){return e[t]})};return t}();d={init:function(t,e){var r;e=n.extend({},n.fn[g].defaults,e);if((r=e.handler)==null){e.handler=t}this.each(function(){var t,r,i,s;t=n(this);i=(s=e.context)!=null?s:n.fn[g].defaults.context;if(!n.isWindow(i)){i=t.closest(i)}i=n(i);r=c[i[0][u]];if(!r){r=new o(i)}return new l(t,r,e)});n[m]("refresh");return this},disable:function(){return d._invoke.call(this,"disable")},enable:function(){return d._invoke.call(this,"enable")},destroy:function(){return d._invoke.call(this,"destroy")},prev:function(t,e){return d._traverse.call(this,t,e,function(t,e,n){if(e>0){return t.push(n[e-1])}})},next:function(t,e){return d._traverse.call(this,t,e,function(t,e,n){if(e<n.length-1){return t.push(n[e+1])}})},_traverse:function(t,e,i){var o,l;if(t==null){t="vertical"}if(e==null){e=r}l=h.aggregate(e);o=[];this.each(function(){var e;e=n.inArray(this,l[t]);return i(o,e,l[t])});return this.pushStack(o)},_invoke:function(t){this.each(function(){var e;e=l.getWaypointsByElement(this);return n.each(e,function(e,n){n[t]();return true})});return this}};n.fn[g]=function(){var t,r;r=arguments[0],t=2<=arguments.length?e.call(arguments,1):[];if(d[r]){return d[r].apply(this,t)}else if(n.isFunction(r)){return d.init.apply(this,arguments)}else if(n.isPlainObject(r)){return d.init.apply(this,[null,r])}else if(!r){return n.error("jQuery Waypoints needs a callback function or handler option.")}else{return n.error("The "+r+" method does not exist in jQuery Waypoints.")}};n.fn[g].defaults={context:r,continuous:true,enabled:true,horizontal:false,offset:0,triggerOnce:false};h={refresh:function(){return n.each(c,function(t,e){return e.refresh()})},viewportHeight:function(){var t;return(t=r.innerHeight)!=null?t:i.height()},aggregate:function(t){var e,r,i;e=s;if(t){e=(i=c[n(t)[0][u]])!=null?i.waypoints:void 0}if(!e){return[]}r={horizontal:[],vertical:[]};n.each(r,function(t,i){n.each(e[t],function(t,e){return i.push(e)});i.sort(function(t,e){return t.offset-e.offset});r[t]=n.map(i,function(t){return t.element});return r[t]=n.unique(r[t])});return r},above:function(t){if(t==null){t=r}return h._filter(t,"vertical",function(t,e){return e.offset<=t.oldScroll.y})},below:function(t){if(t==null){t=r}return h._filter(t,"vertical",function(t,e){return e.offset>t.oldScroll.y})},left:function(t){if(t==null){t=r}return h._filter(t,"horizontal",function(t,e){return e.offset<=t.oldScroll.x})},right:function(t){if(t==null){t=r}return h._filter(t,"horizontal",function(t,e){return e.offset>t.oldScroll.x})},enable:function(){return h._invoke("enable")},disable:function(){return h._invoke("disable")},destroy:function(){return h._invoke("destroy")},extendFn:function(t,e){return d[t]=e},_invoke:function(t){var e;e=n.extend({},s.vertical,s.horizontal);return n.each(e,function(e,n){n[t]();return true})},_filter:function(t,e,r){var i,o;i=c[n(t)[0][u]];if(!i){return[]}o=[];n.each(i.waypoints[e],function(t,e){if(r(i,e)){return o.push(e)}});o.sort(function(t,e){return t.offset-e.offset});return n.map(o,function(t){return t.element})}};n[m]=function(){var t,n;n=arguments[0],t=2<=arguments.length?e.call(arguments,1):[];if(h[n]){return h[n].apply(null,t)}else{return h.aggregate.call(null,n)}};n[m].settings={resizeThrottle:100,scrollThrottle:30};return i.on("load.waypoints",function(){return n[m]("refresh")})})}).call(this);/**/ 
+/**
+ * Inicializa el comportamiento de zoom en imágenes.
+ */
+function initializeImageZooming() {
+    if (typeof operativaImagesZooming !== 'undefined' && operativaImagesZooming.init) {
+        operativaImagesZooming.init();
+    }
+}
+
 /*MVC.FichaDocumento.js*/ 
-function DesplegarPanelMVC(pPanelID) {
-    var panel = $('#' + pPanelID);
-
-    panel.children().css("display", "block");
-    panel.css("display", "block");
-
-    panel.children().children('#loading').css("display", "none");
-    panel.children().children('#menssages').css("display", "none");
-    panel.children().children('#action').css("display", "block");
-}
-
-function DesplegarAccionConPanelIDMVC(pPanelCopiar, pBoton, pPanelID) {
-    var panel = $('#' + pPanelID);
-
-    panel.children().children('#loading').css("display", "block");
-    panel.children().children('#menssages').css("display", "none");
-    panel.children().children('#action').css("display", "none");
-
-    panel.children().css("display", "block");
-    panel.css("display", "block");
-
-    if (pBoton != null && typeof (pBoton.parentNode) != 'undefined') {
-        DesactivarBotonesActivosDespl();
-        pBoton.parentNode.className += ' active';
-    }
-
-    panel.children().children('#action').html('').append($('#' + pPanelCopiar).clone());
-    panel.children().children('#loading').css("display", "none");
-    panel.children().children('#menssages').css("display", "none");
-    panel.children().children('#action').css("display", "block");
-    
-}
-
 // Desplegar y mostrar la vista o contenido devuelto de una petición vía urlAccion para ser mostrado en el panel pPanelID
 /**
  * 
@@ -21826,13 +11571,13 @@ function DesplegarAccionConPanelIDMVC(pPanelCopiar, pBoton, pPanelID) {
  * @param {any} pPanelID: ID del panel donde se devolverá ese código HTML devuelto por la petición mandada en el parámetro urlAccion
  * @param {any} pArg: Argumentos adicionales
  */
-function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {    
+function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
     // Panel principal (padre) donde se mostrarán todos los paneles
-    var panel = $('#' + pPanelID);    
+    var panel = $('#' + pPanelID);
     // Panel donde se mostrará el contenido
     var panelContent = panel.children('#content');
     // Panel de mensajes de OK/KO del contenedor padre (Posible error en la carga del servidor)
-    var panelMessagesResult = panel.children().children('#resource-message-results');    
+    var panelMessagesResult = panel.children().children('#resource-message-results');
     // Ocultado mensaje de errores por defecto
     panelMessagesResult.css("display", "none");
     // Comprobar posibles parámetros
@@ -21844,10 +11589,10 @@ function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
     }
 
     // Realizar la petición AJAX
-    GnossPeticionAjax(urlAccion, params, true).done(function (data) {        
-        panelContent.html(data);        
+    GnossPeticionAjax(urlAccion, params, true).done(function (data) {
+        panelContent.html(data);
         // Ocultar panel de mensajes mensajes
-        panelMessagesResult.css("display", "none");       
+        panelMessagesResult.css("display", "none");
         panelContent.css("display", "block");
         // Llamar a inicializar las DataTable dentro del modal para acción "Historico" en Recurso
         accionHistorial.montarTabla();
@@ -21858,29 +11603,46 @@ function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
             operativaLoginEmergente.init();
             OcultarUpdateProgress();
             CerrarPanelAccion(pPanelID);
-        } else {            
+        } else {
             // Mostrar mensaje de error
             panelMessagesResult.css("display", "block");
             panelContent.css("display", "none");
             panelMessagesResult.children(".ok").css("display", "none");
             panelMessagesResult.children(".ok").css("display", "block");
-            panelMessagesResult.children(".ok").html('error');            
+            panelMessagesResult.children(".ok").html('error');
         }
     });
 }
 
+/**
+ * Función para descargar un fichero desde SharePoint.
+ * Esta función obtiene el ID del recurso desde un elemento con el ID 'recurso_id',
+ * limpia la URL actual de ciertos parámetros y fragmentos específicos, y construye
+ * una nueva URL para solicitar la descarga del fichero desde SharePoint. Finalmente,
+ * abre una nueva ventana o pestaña del navegador para iniciar la descarga.
+ */
 function DescargarFicheroSharepoint() {
     let recurso_id = $("#recurso_id").val();
+    let recurso_version_id = $("#recurso_version_id").val();
+    let resource_id = recurso_id == recurso_version_id ? recurso_version_id : recurso_version_id;
     let urlSinVersioned = window.location.href.replace('?versioned', '');
     let urlSinCreated = urlSinVersioned.replace('?created', '');
     let urlSinModified = urlSinCreated.replace('?modified', '');
     urlSinModified = urlSinModified.replace('#', '');
-    let peticion = urlSinModified + "/download-sharepoint?RecursoID=" + recurso_id;
+    let peticion = urlSinModified + "/download-sharepoint?RecursoID=" + resource_id;
 
     window.open(peticion, '_blank');
-    
 }
 
+/**
+ * Función para crear una versión rápida de un recurso en SharePoint.
+ * 
+ * Esta función obtiene el ID del recurso desde un elemento con el ID 'recurso_id',
+ * limpia la URL actual de ciertos parámetros y fragmentos específicos, y construye
+ * una nueva URL para solicitar la creación de una versión rápida del recurso.
+ * Realiza una petición AJAX a la URL construida, muestra un progreso de actualización
+ * y maneja las respuestas de éxito o error.
+ */
 function CrearVersionRapidaEnlaceSharepoint() {
     let recurso_id = $("#recurso_id").val();
     let urlSinVersioned = window.location.href.replace('?versioned', '');
@@ -21908,19 +11670,31 @@ function CrearVersionRapidaEnlaceSharepoint() {
             window.location.href = data;
         } else {
             mostrarNotificacion("error", "Se ha producido un error al tratar de crear una versión.");
-        }           
+        }
     });
 }
 
+/**
+ * Función para desvincular un recurso de SharePoint.
+ * 
+ * Esta función obtiene el ID del recurso desde un elemento con el ID 'recurso_id',
+ * limpia la URL actual de ciertos parámetros y fragmentos específicos, y construye
+ * una nueva URL para solicitar la desvinculación del recurso de SharePoint.
+ * Realiza una petición AJAX a la URL construida y maneja las respuestas de éxito o error.
+ */
 function DesvincularSharepoint() {
     let recurso_id = $("#recurso_id").val();
+    let recurso_version_id = $("#recurso_version_id").val();
+    let resource_id = recurso_id == recurso_version_id ? recurso_version_id : recurso_version_id;
     let urlSinVersioned = window.location.href.replace('?versioned', '');
     let urlSinCreated = urlSinVersioned.replace('?created', '');
     let urlSinModified = urlSinCreated.replace('?modified', '');
+    let txtRecurso = $("#txtRecurso").val();
+    let txtMetodo = $("#desvincularSharepointMetodo").val();
 
-    let url = urlSinModified.replace("/recurso/", "/desvincular-sharepoint/");
+    let url = urlSinModified.replace(`/${txtRecurso}/`, `/${txtMetodo}/`);
     url = url.replace('#', '');
-    url += "?pDocumentoID=" + recurso_id;
+    url += "?pDocumentoID=" + resource_id;
     GnossPeticionAjax(
         url,
         '',
@@ -21929,22 +11703,24 @@ function DesvincularSharepoint() {
     ).done(function (data) {
         mostrarNotificacion("success", "El recurso ha sido desvinculado correctamente.");
         setTimeout(function () {
-            location.reload(); 
+            location.reload();
         }, 1000);
     }).fail(function (data) {
-        mostrarNotificacion("error", "Se ha producido un error al tratar de desvincular el recurso.");        
+        mostrarNotificacion("error", "Se ha producido un error al tratar de desvincular el recurso.");
     });
 
 }
 
 
-
-// Resetear el contenido del contenedor Modal para que la información no está visible y tenga que volver a cargarse de nuevo.
-// El contenedor #modal-container es utilizado para albergar modales de un Recurso de tal manera que pueda reutilizarse cada vez que este se cierra.
-// Ej: En ficha de recurso, el modal "Historico" se carga de forma dinámica. Cuando se cierre el contenedor padre, habrá que quitar el contenido para volver a ser reutilizado
+/**
+ * Objeto para gestionar el reseteo del contenido del modal.
+ * 
+ * Este objeto contiene métodos para inicializar el comportamiento del modal al ser cerrado,
+ * y para vaciar el contenido del modal y mostrar un estado de "cargando".
+ */
 var resetModalContainer = {
     // Inicializar el comportamiento cuando la página web está cargada
-    init: function () {        
+    init: function () {
         $("#modal-container").on("hidden.bs.modal", function () {
             // Añadir la clase por defecto para que se muestre en el top de la página
             $(this).addClass("modal-top");
@@ -21970,7 +11746,7 @@ var resetModalContainer = {
         return;
     },
 
-       
+
     // Vaciar el contenedor de un modal y dejarlo como "loading" hasta que este vuelva a llenarse con datos vía API REST (Ficha Recurso: Eliminar - Eliminar Selectivo)
     // Sirve para volver a llenar un modal sin que este sea cerrado.
     resetModalContent: function () {
@@ -21993,19 +11769,19 @@ var resetModalContainer = {
         initialContainerContent += '<div class="ko"></div>';
         initialContainerContent += '</div>';
         // Vuelvo a incluir el panel inicial para ser reutilizado (ocultar el contenido previo si se abrió antes el modal)
-        panelToReset.html(initialContainerContent);       
+        panelToReset.html(initialContainerContent);
     },
 };
 
-// Activar al inicio de carga de la página
-$(function () {
-    // Inicialización de reseteo de contenedor de modales (Ficha Recurso)
-    resetModalContainer.init();
-    // Activacin de tooltips de bootstrap para que estén disponibles en toda la página
-    $('[data-toggle="tooltip"]').tooltip();
-});
 
-
+/**
+ * Realiza una petición AJAX para obtener y mostrar contenido en un panel específico.
+ *
+ * @param {string} urlAccion - La URL de la acción que se desea ejecutar.
+ * @param {HTMLElement} pBoton - El botón que disparó la acción (puede ser null).
+ * @param {string} pPanelID - El ID del panel donde se mostrará el contenido.
+ * @param {object} pArg - Argumentos adicionales (opcional).
+ */
 function DesplegarAccionMVC(urlAccion, pBoton, pPanelID, pArg) {
     var panel = $('#' + pPanelID);
 
@@ -22017,7 +11793,7 @@ function DesplegarAccionMVC(urlAccion, pBoton, pPanelID, pArg) {
     panel.css("display", "block");
 
     if (pBoton != null && typeof (pBoton.parentNode) != 'undefined') {
-        DesactivarBotonesActivosDespl();
+        //DesactivarBotonesActivosDespl();
         pBoton.parentNode.className += ' active';
     }
 
@@ -22053,72 +11829,17 @@ function DesplegarAccionMVC(urlAccion, pBoton, pPanelID, pArg) {
 function DesplegarResultadoAccionMVC(pPanelID, pOk, pHtml, timeOut = 1500) {
     var panel = $('#' + pPanelID);
 
-    /* No añadir <p> al mensaje de texto
-     * if (pHtml != null && pHtml != '' && pHtml.indexOf('<p') != 0) {
-        pHtml = '<p>' + pHtml + '</p>';
-    }*/
-
     if (pOk) {
-        /* Cambiado por nuevo Front -> Toastr
-        panel.children().children('#menssages').children(".ok").css("display", "block");
-        panel.children().children('#menssages').children(".ko").css("display", "none");
-
-        panel.children().children('#menssages').children(".ok").html(pHtml);
-        */
-
         // Hacer desaparecer el modal si la acción es correcta
         $('#modal-container').modal('hide');
-
         // Mostrar mensaje OK
         setTimeout(() => {
             mostrarNotificacion('success', pHtml);
         }, timeOut)
     }
-    else {
-        /* Cambiado por nuevo Front -> Toastr
-        panel.children().children('#menssages').children(".ok").css("display", "none");
-        panel.children().children('#menssages').children(".ko").css("display", "block");
-
-        panel.children().children('#menssages').children(".ko").html(pHtml);
-        */
+    else {        
         mostrarNotificacion('error', pHtml);
     }
-
-    /* Cambiado por nuevo Front -> Toastr    
-    panel.children().children('#loading').css("display", "none");
-    panel.children().children('#menssages').css("display", "block");
-    panel.children().children('#action').css("display", "none");
-
-    panel.children().css("display", "block");
-    panel.css("display", "block");
-    */
-
-    DesactivarBotonesActivosDespl();
-}
-
-function AccionRecurso_PintarVotos(data) {
-    $('#panUtils1 .votos').remove();
-    $('#panUtils1 .votosPositivos').remove();
-    $('#panUtils1 .panelVotosSimple').remove();
-    $('#panUtils1 .panelVotosAmpliado').remove();
-    $('#panUtils1 .visitas').after(data);
-    presentacionVotosRecurso.init();
-}
-
-function CambiarTextoPorTextoAux(that) {
-    var texto = $(that).text().trim();
-    var textoAux = $(that).attr('textoAux');
-
-    $(that).html($(that).html().replace(texto, textoAux));
-    $(that).attr('textoAux', texto);
-}
-
-function CambiarOnClickPorOnclickAux(that) {
-    var onclick = $(that).attr('onclick');
-    var onclickAux = $(that).attr('onclickAux');
-
-    $(that).attr('onclick', onclickAux);
-    $(that).attr('onclickAux', onclick);
 }
 
 /**
@@ -22137,8 +11858,6 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
     // Parámetros
     var funcionVotarInvertido = "AccionRecurso_VotarEliminar(this, '" + urlVotarRecursoInvertido + "', '" + urlVotarRecurso + "')";
     var iconoVoto = "thumb_up_alt";
-    //var iconoVotoInvertido = "thumb_down_alt";
-    // Será el mismo icono pero cambiado el color
     var iconoVotoInvertido = iconoVoto;
     var nombreClaseVotoOK = "activo"
     var claseMaterialIcons = "material-icons";
@@ -22146,31 +11865,29 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
     var numVotosActual = parseInt($numVotos.text());
 
     // Clase de tipo "Loading"
-    var loadingClass = "spinner-border spinner-border-sm texto-primario"       
+    var loadingClass = "spinner-border spinner-border-sm texto-primario"
 
     // Ocultar icono del voto actual para mostrar solo el "Loading"
-    $(that).html("");    
+    $(that).html("");
     // Elimino la clase de material icons para poder cambiar el color
-    $(that).removeClass(claseMaterialIcons);    
+    $(that).removeClass(claseMaterialIcons);
     // Muestrar loading hasta que se complete la petición de "Votar"
     $(that).addClass(loadingClass);
     if (urlVotarRecurso != "") {
 
         //Evento matomo 
- 
         var matomoConfigurado = $('#inpt_matomoConfigurado').val();
-        
+
         if (matomoConfigurado != undefined && matomoConfigurado == 'True') {
             var recursoUrl = urlVotarRecurso.replace("/vote-positive", "");
             var matomoConfigurado = $('#inpt_matomoConfigurado').val();
             _paq.push(['setCustomDimension', 4, recursoUrl]);
-          
-            _paq.push(['trackEvent', 'Evento recurso', 'Voto', 'Me gusta']); 
+
+            _paq.push(['trackEvent', 'Evento recurso', 'Voto', 'Me gusta']);
         }
-        
-        GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {
-            AccionRecurso_PintarVotos(data);
-            EnviarAccGogAnac('Acciones sociales', 'Votar', urlVotarRecurso);
+
+        GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {            
+            // EnviarAccGogAnac('Acciones sociales', 'Votar', urlVotarRecurso);
             if (typeof voteAnalitics != 'undefined') {
                 voteAnalitics.voteResource(1);
             }
@@ -22202,68 +11919,6 @@ function AccionRecurso_VotarPositivo(that, urlVotarRecurso, urlVotarRecursoInver
         $(that).removeClass(loadingClass);
         operativaLoginEmergente.init();
     }
-}
-
-function AccionRecurso_VotarPositivoListado(that, urlVotarRecurso) {
-    if ($(that).parents('.acciones').find('.acc_nomegusta').hasClass('active')) {
-        var botonNoMeGusta = $(that).parents('.acciones').find('.acc_nomegusta a')[0];
-        CambiarTextoPorTextoAux(botonNoMeGusta);
-        $(botonNoMeGusta).parent().removeClass('active')
-        CambiarOnClickPorOnclickAux($(botonNoMeGusta));
-    }
-
-    CambiarTextoPorTextoAux(that);
-    $(that).parent().addClass("active");
-    CambiarOnClickPorOnclickAux($(that));
-
-    GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {
-        EnviarAccGogAnac('Acciones sociales', 'Votar', urlVotarRecurso);
-        if (typeof voteAnalitics != 'undefined') {
-            voteAnalitics.voteResource(1);
-        }
-    }).fail(function (data) {
-        if (data == "invitado") { operativaLoginEmergente.init(); }
-    });
-}
-
-
-function AccionRecurso_VotarNegativo(that, urlVotarRecurso) {
-    $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
-    $(that).addClass("eleccionUsuario");
-
-    GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {
-        AccionRecurso_PintarVotos(data);
-        EnviarAccGogAnac('Acciones sociales', 'Votar Negativamente', urlVotarRecurso);
-        if (typeof voteAnalitics != 'undefined') {
-            voteAnalitics.voteResource(-1);
-        }
-    }).fail(function (data) {
-        if (data == 'invitado') { operativaLoginEmergente.init(); }
-    });
-}
-
-
-function AccionRecurso_VotarNegativoListado(that, urlVotarRecurso) {
-    
-    if ($(that).parents('.acciones').find('.acc_megusta').hasClass('active')) {
-        var botonMeGusta = $(that).parents('.acciones').find('.acc_megusta a')[0];
-        CambiarTextoPorTextoAux(botonMeGusta);
-        $(botonMeGusta).parent().removeClass('active')
-        CambiarOnClickPorOnclickAux($(botonMeGusta));
-    }
-
-    CambiarTextoPorTextoAux(that);
-    $(that).parent().addClass("active");
-    CambiarOnClickPorOnclickAux($(that));
-
-    GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {
-        EnviarAccGogAnac('Acciones sociales', 'Votar Negativamente', urlVotarRecurso);
-        if (typeof voteAnalitics != 'undefined') {
-            voteAnalitics.voteResource(-1);
-        }
-    }).fail(function (data) {
-        if (data == 'invitado') { operativaLoginEmergente.init(); }
-    });
 }
 
 /**
@@ -22302,8 +11957,7 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
 
 
     if (urlVotarRecurso != "") {
-        GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {
-            AccionRecurso_PintarVotos(data);
+        GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {            
             if (typeof voteAnalitics != 'undefined') {
                 voteAnalitics.voteResource(0);
             }
@@ -22339,35 +11993,20 @@ function AccionRecurso_VotarEliminar(that, urlVotarRecurso, urlVotarRecursoInver
 }
 
 
-function AccionRecurso_VotarEliminarListado(that, urlVotarRecurso) {
-    if ($(that).parents('.acciones').find('.acc_megusta').hasClass('active')) {
-        CambiarTextoPorTextoAux($(that).parents('.acciones').find('.acc_megusta a')[0]);
-        $(that).parents('.acciones').find('.acc_megusta').removeClass('active')
-    }
-    if ($(that).parents('.acciones').find('.acc_nomegusta').hasClass('active')) {
-        CambiarTextoPorTextoAux($(that).parents('.acciones').find('.acc_nomegusta a')[0]);
-        $(that).parents('.acciones').find('.acc_nomegusta').removeClass('active')
-    }
-
-    CambiarOnClickPorOnclickAux($(that));
-
-    GnossPeticionAjax(urlVotarRecurso, null, true).done(function (data) {
-        if (typeof voteAnalitics != 'undefined') {
-            voteAnalitics.voteResource(0);
-        }
-    }).fail(function (data) {
-        var error = data.substr(data.indexOf('.') + 1);
-        if (error == 'Invitado') { operativaLoginEmergente.init(); }
-    });
-}
-
+/**
+ * Envía una solicitud AJAX para enviar un boletín informativo en un idioma específico.
+ *
+ * @param {string} idioma - El idioma en el que se enviará el boletín.
+ * @param {string} urlEnviarNewsletter - La URL a la que se enviará la solicitud AJAX.
+ * @param {string} documentoID - El ID del documento asociado con el boletín.
+ */
 function AccionRecurso_EnviarNewsletter_Aceptar(idioma, urlEnviarNewsletter, documentoID) {
     MostrarUpdateProgress();
 
     var dataPost = {
         Language: idioma
     }
-    
+
     GnossPeticionAjax(urlEnviarNewsletter, dataPost, true).done(function (data) {
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, data);
         OcultarUpdateProgress();
@@ -22377,6 +12016,16 @@ function AccionRecurso_EnviarNewsletter_Aceptar(idioma, urlEnviarNewsletter, doc
     });
 }
 
+
+/**
+ * AccionRecurso_EnviarNewsletterGrupos_Aceptar
+ * Envía una solicitud AJAX para enviar un boletín informativo a un conjunto de grupos en un idioma específico.
+ *
+ * @param {string} idioma - El idioma en el que se enviará el boletín.
+ * @param {string} urlEnviarNewsletterGrupos - La URL a la que se enviará la solicitud AJAX.
+ * @param {string} documentoID - El ID del documento asociado con el boletín.
+ * @param {string} listaGrupos - Una cadena con la lista de grupos separados por '&'.
+ */
 function AccionRecurso_EnviarNewsletterGrupos_Aceptar(idioma, urlEnviarNewsletterGrupos, documentoID, listaGrupos) {
     MostrarUpdateProgress();
 
@@ -22398,9 +12047,16 @@ function AccionRecurso_EnviarNewsletterGrupos_Aceptar(idioma, urlEnviarNewslette
     });
 }
 
-function AccionRecurso_RestaurarVersion_Aceptar(urlRestaurar, documentoID) {
+
+/** 
+ * Envía una solicitud AJAX para restaurar una versión de un documento y redirige al usuario a la URL proporcionada.
+ *
+ * @param {string} urlRestaurar - La URL a la que se enviará la solicitud AJAX para restaurar la versión del documento.
+ * @param {string} documentoID - El ID del documento cuyo estado se está restaurando.
+ */
+function AccionRecurso_MostrarHistorial_Aceptar(urlRestaurar, documentoID) {
     MostrarUpdateProgress();
-    
+
     GnossPeticionAjax(urlRestaurar, null, true).done(function (data) {
         window.location.href = data;
     }).fail(function (data) {
@@ -22414,6 +12070,14 @@ function AccionRecurso_RestaurarVersion_Aceptar(urlRestaurar, documentoID) {
     });
 }
 
+
+/** 
+ * Envía una solicitud AJAX para vincular un recurso con una URL dada y actualiza la lista de recursos vinculados.
+ *
+ * @param {string} urlVincularRecurso - La URL a la que se enviará la solicitud AJAX para vincular un recurso.
+ * @param {string} urlCargarVinculados - La URL para cargar la lista actualizada de recursos vinculados después de completar la acción.
+ * @param {string} documentoID - El ID del documento al que se está vinculando un recurso.
+ */
 function AccionRecurso_Vincular_Aceptar(urlVincularRecurso, urlCargarVinculados, documentoID) {
     MostrarUpdateProgress();
     var urlDocVinculado = $("#txtUrlDocVinculado_" + documentoID).val();
@@ -22422,7 +12086,7 @@ function AccionRecurso_Vincular_Aceptar(urlVincularRecurso, urlCargarVinculados,
         UrlResourceLink: urlDocVinculado
     }
     GnossPeticionAjax(urlVincularRecurso, datosPost, true).done(function (data) {
-        EnviarAccGogAnac('Acciones sociales', '"Vincular recurso', urlVincularRecurso);
+        // EnviarAccGogAnac('Acciones sociales', '"Vincular recurso', urlVincularRecurso);
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, textoRecursos.recursoVinculadoOK);
         OcultarUpdateProgress();
         Vinculados_CargarVinculados(urlCargarVinculados);
@@ -22432,6 +12096,13 @@ function AccionRecurso_Vincular_Aceptar(urlVincularRecurso, urlCargarVinculados,
     });
 }
 
+
+/** 
+ * Envía una solicitud AJAX para vincular un recurso a SharePoint usando un enlace proporcionado y actualiza el estado del recurso en la interfaz de usuario.
+ *
+ * @param {boolean} prueba - Indicador para determinar si es una prueba (no se usa en la implementación actual, pero se mantiene para compatibilidad).
+ * @param {string} documentoID - El ID del documento al que se está vinculando un recurso.
+ */
 function AccionRecurso_VincularSharepoint(prueba, documentoID) {
     MostrarUpdateProgress();
     var enlace = $("#txtUrlDocVinculado_" + documentoID).val();
@@ -22482,7 +12153,7 @@ function AccionRecurso_DesVincular_Aceptar(urlDesvincularRecurso, urlCargarVincu
         setTimeout(() => {
             $('#modal-container').modal('hide');
         }, 1500);
-        OcultarUpdateProgress();      
+        OcultarUpdateProgress();
         Vinculados_CargarVinculados(urlCargarVinculados);
     }).fail(function () {
         // Cambiado por nuevo Front
@@ -22492,6 +12163,12 @@ function AccionRecurso_DesVincular_Aceptar(urlDesvincularRecurso, urlCargarVincu
     });
 }
 
+
+/**
+ * Carga contenido HTML en un contenedor específico usando una solicitud AJAX y ejecuta una función de finalización una vez completada la carga.
+ *
+ * @param {string} urlCargarVinculados - La URL para la solicitud AJAX para cargar el contenido de los recursos vinculados.
+ */
 function Vinculados_CargarVinculados(urlCargarVinculados) {
     GnossPeticionAjax(urlCargarVinculados, null, true).done(function (data) {
         $('#panVinculadosInt').html(data);
@@ -22515,12 +12192,12 @@ function AccionRecurso_Certificar_Aceptar(urlPaginaCertificar, documentoID, text
     var valorSeleccionado = $('input[name=certificar-recurso]:checked').attr("data-value");
     // Cogemos id o value (no el texto en bruto) de la opción seleccionada en el radio button.
     var opcionSeleccionada = $('input[name=certificar-recurso]:checked').attr("data-option");
-    
+
     var dataPost = {
         //CertificationID: comboCertificado.val()
         CertificationID: opcionSeleccionada
     }
-    
+
     GnossPeticionAjax(urlPaginaCertificar, dataPost, true).done(function (data) {
         if ($('#panUtils1').length > 0) {
             $('#contCertificado').remove();
@@ -22536,6 +12213,13 @@ function AccionRecurso_Certificar_Aceptar(urlPaginaCertificar, documentoID, text
     });
 }
 
+
+/**
+ * Envía una solicitud AJAX para eliminar un recurso y muestra el resultado de la acción en un contenedor específico.
+ *
+ * @param {string} urlEliminarDocumento - La URL para la solicitud AJAX para eliminar el recurso.
+ * @param {number|string} documentoID - El identificador del documento que se va a eliminar.
+ */
 function AccionRecurso_Eliminar_Aceptar(urlEliminarDocumento, documentoID) {
     MostrarUpdateProgress();
 
@@ -22546,10 +12230,17 @@ function AccionRecurso_Eliminar_Aceptar(urlEliminarDocumento, documentoID) {
     GnossPeticionAjax(urlEliminarDocumento, null, true).done(function (data) {
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, data);
     }).fail(function (data) {
+        OcultarUpdateProgress();
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, data);
     });
 }
 
+/** 
+ * Envía una solicitud AJAX para eliminar selectivamente recursos basados en una lista de comunidades compartidas seleccionadas.
+ *
+ * @param {string} urlEliminarDocumento - La URL para la solicitud AJAX para eliminar los recursos.
+ * @param {number|string} documentoid - El identificador del documento sobre el que se está realizando la operación de eliminación selectiva.
+ */
 function AccionRecurso_EliminarSelectivo_Aceptar(urlEliminarDocumento, documentoid) {
     MostrarUpdateProgress();
 
@@ -22573,12 +12264,18 @@ function AccionRecurso_EliminarSelectivo_Aceptar(urlEliminarDocumento, documento
     GnossPeticionAjax(urlEliminarDocumento, dataPost, true);
 }
 
+
+/**
+ * Envía una solicitud AJAX para bloquear los comentarios en un recurso y actualiza el botón de interfaz de usuario en consecuencia.
+ *
+ * @param {HTMLElement} btnBloquear - El botón que al hacer clic bloquea los comentarios. Se actualizará para desbloquear los comentarios.
+ * @param {string} textDesbloquear - El texto que se mostrará en el botón después de que se bloqueen los comentarios.
+ * @param {string} urlBloquearComentarios - La URL para la solicitud AJAX que bloquea los comentarios en el recurso.
+ * @param {number|string} documentoID - El identificador del documento sobre el que se están bloqueando los comentarios.
+ */
 function BloquearComentarios(btnBloquear, textDesbloquear, urlBloquearComentarios, documentoID) {
     MostrarUpdateProgress();
 
-    //var dataPost = {
-    //    callback: 'acciones|AccionRecurso_Comentarios_Bloquear'
-    //}
     GnossPeticionAjax(urlBloquearComentarios, null, true).done(function (data) {
         var html = textoRecursos.comentBloqOK;
 
@@ -22589,7 +12286,7 @@ function BloquearComentarios(btnBloquear, textDesbloquear, urlBloquearComentario
         $(btnBloquear).attr('onclick', accion);
 
         $(btnBloquear).html($(btnBloquear).html().replace($(btnBloquear).text(), textDesbloquear));
-        
+
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, html);
         // Recargar la página para no permitir comentar un recurso y viceversa
         setTimeout(() => {
@@ -22604,35 +12301,41 @@ function BloquearComentarios(btnBloquear, textDesbloquear, urlBloquearComentario
     });
 }
 
+
+/**
+ * DesbloquearComentarios
+ * Envía una solicitud AJAX para desbloquear los comentarios en un recurso y actualiza el botón de interfaz de usuario en consecuencia.
+ *
+ * @param {HTMLElement} btnDesbloquear - El botón que al hacer clic desbloquea los comentarios. Se actualizará para bloquear los comentarios.
+ * @param {string} textBloquear - El texto que se mostrará en el botón después de que se desbloqueen los comentarios.
+ * @param {string} urlDesbloquearComentarios - La URL para la solicitud AJAX que desbloquea los comentarios en el recurso.
+ * @param {number|string} documentoID - El identificador del documento sobre el que se están desbloqueando los comentarios.
+ */
 function DesbloquearComentarios(btnDesbloquear, textBloquear, urlDesbloquearComentarios, documentoID) {
     MostrarUpdateProgress();
 
-    //var dataPost = {
-    //    callback: 'acciones|AccionRecurso_Comentarios_DesBloquear'
-    //}
-
-    //$.post(urlDesbloquearComentarios, dataPost, function (data) {
     GnossPeticionAjax(urlDesbloquearComentarios, null, true).done(function (data) {
         var html = textoRecursos.comentDesBloqOK;
-
         var accion = $(btnDesbloquear).attr('onclick');
         accion = accion.replace("DesbloquearComentarios(", "BloquearComentarios(");
         accion = accion.replace("/unlock-comments", "/lock-comments");
         accion = accion.replace(textBloquear, $(btnDesbloquear).text());
         $(btnDesbloquear).attr('onclick', accion);
-
         $(btnDesbloquear).html($(btnDesbloquear).html().replace($(btnDesbloquear).text(), textBloquear));
-        
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, html);
-
         OcultarUpdateProgress();
+
     }).fail(function (data) {
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, data);
-
         OcultarUpdateProgress();
     });
 }
 
+/**
+ * Envía una solicitud AJAX para crear una versión semántica de un documento y redirige a una nueva página o muestra un mensaje de resultado según la respuesta.
+ * @param {string} urlPagina - La URL base para la solicitud AJAX. Se le agrega `/create-version-semantic-document` para formar la URL completa.
+ * @param {number|string} documentoID - El identificador del documento para el cual se está creando una versión semántica.
+ */
 function CrearVersionDocSem(urlPagina, documentoID) {
     MostrarUpdateProgress();
 
@@ -22653,25 +12356,16 @@ function CrearVersionDocSem(urlPagina, documentoID) {
     });
 }
 
-
-function AccionRecurso_ReportPage_Aceptar(urlReportPage, documentoID) {
-    MostrarUpdateProgress();
-    var panelDespl = $('#despAccionRec_' + documentoID);
-    var mensaje = $(".reportPage textarea", panelDespl).val();
-
-    var dataPost = {
-        message: mensaje
-    }
-
-    GnossPeticionAjax(urlReportPage, dataPost, true).done(function (data) {
-        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, data);
-    }).fail(function (error) {
-        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, error);
-    }).always(function () {
-        OcultarUpdateProgress();
-    });
-}
-
+/**
+ * AccionRecurso_AgregarTags_Aceptar
+ * Envía una solicitud AJAX para agregar una lista de etiquetas (tags) a un recurso y actualiza la interfaz de usuario en función del resultado.
+ *
+ * @param {string} urlAgregarTags - La URL para la solicitud AJAX que se utiliza para agregar las etiquetas al recurso.
+ * @param {number|string} documentoID - El identificador del documento al cual se le agregarán las etiquetas.
+ * @param {string} tags - Una cadena de texto con etiquetas separadas por comas que se agregarán al recurso.
+ * @param {boolean} permisoEditarTags - Un valor booleano que indica si el usuario tiene permiso para editar las etiquetas del recurso.
+ * @param {string} urlBaseTags - La URL base utilizada para construir enlaces a las etiquetas.
+ */
 function AccionRecurso_AgregarTags_Aceptar(urlAgregarTags, documentoID, tags, permisoEditarTags, urlBaseTags) {
     MostrarUpdateProgress();
 
@@ -22687,11 +12381,11 @@ function AccionRecurso_AgregarTags_Aceptar(urlAgregarTags, documentoID, tags, pe
     var dataPost = {
         Tags: lista
     }
-    
+
     GnossPeticionAjax(urlAgregarTags, dataPost, true).done(function () {
         var html = textoRecursos.tagsOK;
 
-        EnviarAccGogAnac('Acciones sociales', 'Añadir etiquetas', urlAgregarTags);
+        // EnviarAccGogAnac('Acciones sociales', 'Añadir etiquetas', urlAgregarTags);
 
         var htmlTags = "";
         //var separador = ", ";
@@ -22706,7 +12400,7 @@ function AccionRecurso_AgregarTags_Aceptar(urlAgregarTags, documentoID, tags, pe
                 //separador = ", ";
             }
         });
-        
+
         // Cambio por nuevo Front
         //var ul = $('#despAccionRec_' + documentoID).parents('.wrapDescription').children('.group.etiquetas').find('ul');
         const ul = $('.group.etiquetas').find('.listTags');
@@ -22721,7 +12415,7 @@ function AccionRecurso_AgregarTags_Aceptar(urlAgregarTags, documentoID, tags, pe
                 });
             }
             ultimoLI.before(htmlTags);
-            
+
             if (ultimoLI.find('a').hasClass('mas')) {
                 ultimoLI.find('a').click();
             }
@@ -22734,7 +12428,7 @@ function AccionRecurso_AgregarTags_Aceptar(urlAgregarTags, documentoID, tags, pe
                 ultimoLI.after(htmlTags);
             }
         }
-        
+
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, html);
 
         OcultarUpdateProgress();
@@ -22751,6 +12445,18 @@ function AccionRecurso_AgregarTags_Aceptar(urlAgregarTags, documentoID, tags, pe
     });
 }
 
+
+
+/**
+ * AccionRecurso_AgregarCategorias_Aceptar
+ * Envía una solicitud AJAX para agregar una lista de categorías a un recurso y actualiza la interfaz de usuario en función del resultado.
+ *
+ * @param {string} urlAgregarCategorias - La URL para la solicitud AJAX que se utiliza para agregar las categorías al recurso.
+ * @param {number|string} documentoID - El identificador del documento al cual se le agregarán las categorías.
+ * @param {string} categorias - Una cadena de texto con categorías separadas por comas que se agregarán al recurso.
+ * @param {boolean} permisoEditarCategorias - Un valor booleano que indica si el usuario tiene permiso para editar las categorías del recurso.
+ * @param {string} urlBaseCategorias - La URL base utilizada para construir enlaces a las categorías.
+ */
 function AccionRecurso_AgregarCategorias_Aceptar(urlAgregarCategorias, documentoID, categorias, permisoEditarCategorias, urlBaseCategorias) {
     MostrarUpdateProgress();
 
@@ -22766,11 +12472,11 @@ function AccionRecurso_AgregarCategorias_Aceptar(urlAgregarCategorias, documento
     var dataPost = {
         Categories: lista
     }
-    
+
     GnossPeticionAjax(urlAgregarCategorias, dataPost, true).done(function () {
         var html = textoRecursos.categoriasOK;
 
-        EnviarAccGogAnac('Acciones sociales', 'Añadir recurso a categoría', urlAgregarCategorias);
+        //EnviarAccGogAnac('Acciones sociales', 'Añadir recurso a categoría', urlAgregarCategorias);
 
         var htmlCategorias = "";
         var separador = "";
@@ -22787,18 +12493,16 @@ function AccionRecurso_AgregarCategorias_Aceptar(urlAgregarCategorias, documento
             }
         });
 
-        //Cambio por nuevo Front
-        //var ul = $('#despAccionRec_' + documentoID).parents('.wrapDescription').children('.group.categorias').find('ul');
         const ul = $('.group.categorias').find('.listCat');
         var ultimoLI = ul.children().last();
-           
+
         if (ultimoLI.find('a').hasClass("verTodasCategoriasEtiquetas")) {
             //if (permisoEditarCategorias) {
-                ul.children().each(function () {
-                    if (!$(this).find('a').hasClass("verTodasCategoriasEtiquetas")) {
-                        $(this).remove();
-                    }
-                });
+            ul.children().each(function () {
+                if (!$(this).find('a').hasClass("verTodasCategoriasEtiquetas")) {
+                    $(this).remove();
+                }
+            });
             //}
             ultimoLI.before(htmlCategorias);
 
@@ -22806,15 +12510,10 @@ function AccionRecurso_AgregarCategorias_Aceptar(urlAgregarCategorias, documento
                 ultimoLI.find('a').click();
             }
         }
-        else {
-            /*if (permisoEditarCategorias) {*/
-                ul.html(htmlCategorias);
-            /*}
-            else {
-                ultimoLI.after(htmlCategorias);
-            }*/
+        else {           
+            ul.html(htmlCategorias);
         }
-        
+
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, html);
 
         OcultarUpdateProgress();
@@ -22838,7 +12537,7 @@ function AccionRecurso_AgregarCategorias_Aceptar(urlAgregarCategorias, documento
  * @param {any} personaID: El id de la persona que ha realizado la acción
  * @param {any} pListaUrlsAutocompletar
  */
- function AccionRecurso_Compartir_Cambiar(urlAccionCambiarCompartir, documentoID, personaID, pListaUrlsAutocompletar) {
+function AccionRecurso_Compartir_Cambiar(urlAccionCambiarCompartir, documentoID, personaID, pListaUrlsAutocompletar) {
     MostrarUpdateProgress();
     var panelDespl = $('#despAccionRec_' + documentoID);
     var txtBaseRecursos = panelDespl.find('#ddlCompartir option:selected');
@@ -22910,6 +12609,14 @@ function AccionRecurso_AgregarCategorias_Aceptar(urlAgregarCategorias, documento
     });
 }
 
+
+/**
+ * Envía una solicitud AJAX para agregar un recurso a una lista de categorías en el espacio personal del usuario y actualiza la interfaz de usuario en función del resultado.
+ *
+ * @param {string} urlAceptarGuardarEn - La URL para la solicitud AJAX que se utiliza para agregar el recurso a las categorías seleccionadas.
+ * @param {string} urlCargarCompartidos - La URL para la solicitud AJAX que se utiliza para recargar la lista de recursos compartidos.
+ * @param {number|string} documentoID - El identificador del documento que se agregará a las categorías seleccionadas.
+ */
 function AccionRecurso_AgregarABR_Aceptar(urlAceptarGuardarEn, urlCargarCompartidos, documentoID) {
     MostrarUpdateProgress();
     var panelDespl = $('#despAccionRec_' + documentoID);
@@ -22951,44 +12658,13 @@ function AccionRecurso_AgregarABR_Aceptar(urlAceptarGuardarEn, urlCargarComparti
     });
 }
 
-function AccionRecurso_AgregarCategoriaABR_Aceptar(urlAceptarGuardarEn, urlCargarCompartidos, documentoID) {
-    MostrarUpdateProgress();
-    var panelDespl = $('#despAccionRec_' + documentoID);
-    panelDespl.find('#menssages.createCat').hide();
-    panelDespl.find('#menssages.createCat .ko').hide();
-    panelDespl.find('#menssages.createCat .ok').hide();
-    var nombre = panelDespl.find('#inputNombreCategoria').val();
-    var idCategoriaPadre = panelDespl.find('#selectCategoriaPadre').val();
-    
-    var dataPost = {
-        categoryName: nombre,
-        parentCategoryID: idCategoriaPadre
-    }
-
-    GnossPeticionAjax(urlAceptarGuardarEn, dataPost, true).done(function (mensaje) {   
-        var marcados = panelDespl.find("#action input:checked");
-        panelDespl.find("#action").html(mensaje);
-        var txtSeleccionados = panelDespl.find('#txtSeleccionados');
-        if(marcados.length > 0){
-            for(var i = 0; i < marcados.length; i++){
-                $("#" + marcados[i].id).prop( "checked", true );
-                var claseInput = $("#" + marcados[i].id).parent().attr("class");
-                txtSeleccionados.val(txtSeleccionados.val() + claseInput + ',');
-            }
-        }
-        panelDespl.find('#menssages.createCat .ok').html('<p>' + textoRecursos.categoriasOK + '</p>');
-        panelDespl.find('#menssages.createCat').show();
-        panelDespl.find('#menssages.createCat .ok').show();
-    }).fail(function (error) {
-        panelDespl.find('#menssages.createCat').show();
-        panelDespl.find('#menssages.createCat .ko').html('<p>' + error + '</p>');
-        panelDespl.find('#menssages.createCat .ko').show();
-    }).always(function () {
-        panelDespl.find('#menssages.createCat').show();
-        OcultarUpdateProgress();
-    });
-}
-
+/** 
+ * Envía una solicitud AJAX para compartir un recurso con una lista de categorías, editores y lectores, y actualiza la interfaz de usuario en función del resultado.
+ *
+ * @param {string} urlAceptarCompartir - La URL para la solicitud AJAX que se utiliza para compartir el recurso.
+ * @param {number|string} documentoID - El identificador del documento que se compartirá.
+ * @param {string} urlDocumento - La URL para recargar la lista de recursos compartidos después de la operación.
+ */
 function AccionRecurso_Compartir_Aceptar(urlAceptarCompartir, documentoID, urlDocumento) {
     MostrarUpdateProgress();
     var panelDespl = $('#despAccionRec_' + documentoID);
@@ -23027,7 +12703,7 @@ function AccionRecurso_Compartir_Aceptar(urlAceptarCompartir, documentoID, urlDo
     }
 
     var visibleSoloEditores = panelDespl.find('#panLectores').find('#rbLectoresEditores').is(':checked');
-    
+
     var dataPost = {
         Categories: categorias,
         Editors: editores,
@@ -23039,10 +12715,6 @@ function AccionRecurso_Compartir_Aceptar(urlAceptarCompartir, documentoID, urlDo
         DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, true, textoRecursos.compartirOK);
 
         if (typeof shareAnalitics != 'undefined') {
-            //$.each(categorias, function () {
-            //    var br = this.split("$$")[0];
-            //    shareAnalitics.shareCommunity(br);
-            //});
             if (typeof shareAnalitics != 'undefined') {
                 shareAnalitics.shareCommunity();
             }
@@ -23053,25 +12725,32 @@ function AccionRecurso_Compartir_Aceptar(urlAceptarCompartir, documentoID, urlDo
     }).always(function () {
         OcultarUpdateProgress();
         //if ($('#divCompartido').length > 0) {
-            var dataPost2 = {
-                callback: "Compartidos|CargarCompartidos"
-            }
+        var dataPost2 = {
+            callback: "Compartidos|CargarCompartidos"
+        }
 
-            GnossPeticionAjax(urlDocumento, dataPost2, true).done(function (data) {
-                // Comprobar que existe el elemento -> Si no, crearlo
-                if (($(".info-recurso", "#contAutoresEditoresLectores").find("#divCompartido").length) == 0) {
-                    const divCompartido = `<div class="group compartida" id="divCompartido"><p class="group-title">Compartida con: </p></div>`;
-                    $(".info-recurso", "#contAutoresEditoresLectores").append(divCompartido);
-                }
-                $('#divCompartido').html(data);
-            });
-        //}
+        GnossPeticionAjax(urlDocumento, dataPost2, true).done(function (data) {
+            // Comprobar que existe el elemento -> Si no, crearlo
+            if (($(".info-recurso", "#contAutoresEditoresLectores").find("#divCompartido").length) == 0) {
+                const divCompartido = `<div class="group compartida" id="divCompartido"><p class="group-title">Compartida con: </p></div>`;
+                $(".info-recurso", "#contAutoresEditoresLectores").append(divCompartido);
+            }
+            $('#divCompartido').html(data);
+        });         
     });
 }
 
+
+/**
+ * Inicializa los campos de autocompletar para los editores y lectores de un recurso.
+ *
+ * @param {number|string} documentoID - El identificador del documento que se compartirá.
+ * @param {number|string} personaID - El identificador de la persona que está realizando la acción.
+ * @param {Array} pListaUrlsAutocompletar - Una lista de URLs utilizadas para las solicitudes de autocompletar.
+ */
 function AccionRecurso_Compartir_GenerarAutocompletar(documentoID, personaID, pListaUrlsAutocompletar) {
     var panelDespl = $('#despAccionRec_' + documentoID);
-    
+
     var panEditores = panelDespl.find('#panEditores').find('#divContEditores');
     var panLectores = panelDespl.find('#panLectores').find('#divContLectores');
 
@@ -23080,39 +12759,13 @@ function AccionRecurso_Compartir_GenerarAutocompletar(documentoID, personaID, pL
     CargarAutocompletarLectoresEditoresPorBaseRecursos(panLectores.find('#txtLectores_' + documentoID), panelDespl.find('#ddlCompartir option:selected').val(), personaID, 'txtHackLectores_' + documentoID, pListaUrlsAutocompletar, 'despAccionRec_' + documentoID, 'panContenedorLectores', 'txtHackLectores_' + documentoID);
 }
 
-function AccionRecurso_Compartir_AjustarPrivacidadRecurso(documentoID, pRbSelecc) {
-    var panelDespl = $('#despAccionRec_' + documentoID);
-
-    var panEditores = panelDespl.find('#panEditores').find('#divContEditores');
-    var panLectores = panelDespl.find('#panLectores').find('#divContLectores');
-
-    if (pRbSelecc.id == 'rbEditoresYo') {
-        $.each(panelDespl.find('#panEditores').find('#panContenedorEditores > ul > li').children(), function (i, v)         {
-            $(this).click();
-        });
-        panEditores.hide();
-    }
-    else if (pRbSelecc.id == 'rbEditoresOtros') {
-        panEditores.show();
-    }
-    else if (pRbSelecc.id == 'rbLectoresComunidad' || pRbSelecc.id == 'rbLectoresEditores') {
-        $.each(panelDespl.find('#panLectores').find('#panContenedorLectores > ul > li').children(), function (i, v)         {
-            $(this).click();
-        });
-        panLectores.hide();
-    }
-    else if (pRbSelecc.id == 'rbLectoresEspecificos') {
-        panLectores.show();
-    }
-}
-
 /**
  * Método para agregar una categoría desde la ficha Recurso al acceder a "Compartir.
  * Cuando se hace click sobre una categoría, esta se posiciona en un panel informativo para que el usuario posteriormente, confirme la acción.
  * Se ha incluido un botón de "delete" para que quede más intuitivo y parecido al nuevo Front.
  * @param documentoID: El id del documento que será asociado a una determinada comunidad.
  */
- function AccionRecurso_Compartir_Agregar(documentoID) {
+function AccionRecurso_Compartir_Agregar(documentoID) {
     MostrarUpdateProgress();
 
     var panelDespl = $('#despAccionRec_' + documentoID);
@@ -23156,18 +12809,23 @@ function AccionRecurso_Compartir_AjustarPrivacidadRecurso(documentoID, pRbSelecc
     OcultarUpdateProgress();
 }
 
+
+/** 
+ * Elimina una categoría de recursos seleccionada y actualiza la interfaz de usuario.
+ *
+ * @param {number|string} baseRecursosID - El identificador de la base de recursos que se eliminará.
+ * @param {number|string} documentoID - El identificador del documento asociado a la acción.
+ */
 function AccionRecurso_Compartir_Eliminar(baseRecursosID, documentoID) {
     var panelDespl = $('#despAccionRec_' + documentoID);
     var txtBaseRecursosID = panelDespl.find('#ddlCompartir option:selected').val();
-    if (txtBaseRecursosID == baseRecursosID)
-    {
+    if (txtBaseRecursosID == baseRecursosID) {
         panelDespl.find('#txtSeleccionados').val('');
         panelDespl.find('#divSelCatTesauro').find('input:checked').prop('checked', false);
     }
     panelDespl.find('#panContenedorBRAgregadas').find('ul.icoEliminar #' + baseRecursosID).remove();
 
-    if (panelDespl.find('#panContenedorBRAgregadas').find('ul.icoEliminar').children().length == 0)
-    {
+    if (panelDespl.find('#panContenedorBRAgregadas').find('ul.icoEliminar').children().length == 0) {
         panelDespl.find('#panContenedorBRAgregadas').hide();
         panelDespl.find('#panBotonAceptar').hide();
     }
@@ -23184,13 +12842,13 @@ function AccionRecurso_Compartir_Eliminar(baseRecursosID, documentoID) {
 function AccionRecurso_Descompartir(urlDescompartir, btnDescompartir, brID, proyID, orgID) {
     // Mostrar loading
     MostrarUpdateProgress();
-    
+
     const dataPost = {
         BR: brID,
         ProyectID: proyID,
         OrganizationID: orgID
     };
-    
+
     GnossPeticionAjax(urlDescompartir, dataPost, true)
         .done(function () {
             const ul = $(btnDescompartir).parent().parent();
@@ -23201,30 +12859,17 @@ function AccionRecurso_Descompartir(urlDescompartir, btnDescompartir, brID, proy
         })
         .always(function () {
             OcultarUpdateProgress();
-        });    
+        });
 }
 
-function AccionRecurso_Duplicar_Aceptar(urlAceptarDuplicar, documentoID, urlDocumento) {
-    MostrarUpdateProgress();
-    var panelDespl = $('#despAccionRec_' + documentoID);
-
-    var txtBaseRecursos = panelDespl.find('#ddlCompartir option:selected');
-
-    if (txtBaseRecursos.length > 0) {
-        var urlDuplicarRecurso = txtBaseRecursos[0].value;
-        urlDuplicarRecurso += urlAceptarDuplicar;
-        window.location.href = urlDuplicarRecurso;
-    } else {
-        DesplegarResultadoAccionMVC("despAccionRec_" + documentoID, false, textoRecursos.compartirFALLO);
-    }
-}
 
 /**
- * Método para votar un recurso de tipo Encuesta
- * @param {any} urlPagina
- * @param {any} documentoID
+ * Maneja la acción de votar en una encuesta y actualiza la interfaz de usuario con los resultados.
+ *
+ * @param {string} urlPagina - La URL a la que se enviará la solicitud de votación.
+ * @param {number|string} documentoID - El identificador del documento asociado a la encuesta.
  */
- function AccionRecurso_Encuesta_Votar(urlPagina, documentoID) {
+function AccionRecurso_Encuesta_Votar(urlPagina, documentoID) {
     MostrarUpdateProgress();
     var panelContenedor = $('#encuesta_' + documentoID);
     var opcionEncuesta = panelContenedor.find('input[type = radio]:checked');
@@ -23244,19 +12889,13 @@ function AccionRecurso_Duplicar_Aceptar(urlAceptarDuplicar, documentoID, urlDocu
     }
 }
 
-function AccionRecurso_Encuesta_VerResultados(urlPagina, documentoID) {
-    MostrarUpdateProgress();
-    var panelContenedor = $('#encuesta_' + documentoID);
-    var dataPost = {
-        callback: 'Encuesta|VerResultados'
-    }
 
-    $.post(urlPagina, dataPost, function (data) {
-        panelContenedor.html(data);
-        OcultarUpdateProgress();
-    });
-}
-
+/** 
+ * Maneja la creación de un nuevo comentario en un documento específico.
+ *
+ * @param {string} urlCrearComentario - La URL a la que se enviará la solicitud de creación de comentario.
+ * @param {number|string} documentoID - El identificador del documento asociado al comentario.
+ */
 function Comentario_CrearComentario(urlCrearComentario, documentoID) {
     if ($('#txtNuevoComentario_' + documentoID).val() != '') {
         MostrarUpdateProgress();
@@ -23272,7 +12911,7 @@ function Comentario_CrearComentario(urlCrearComentario, documentoID) {
             const relatedTinyMCEId = $('#txtNuevoComentario_' + documentoID).data("editorrelated");
             // Iterar sobre las instancias para buscar la que coincide con el ID 'txtMensaje'
             editors.forEach(function (editor) {
-                if (editor.id === relatedTinyMCEId) {                    
+                if (editor.id === relatedTinyMCEId) {
                     $('#txtNuevoComentario_' + documentoID).val("");
                     editor.setContent("");
                 }
@@ -23296,7 +12935,6 @@ function Comentario_CrearComentario(urlCrearComentario, documentoID) {
             if ((typeof CompletadaCargaComentarios != 'undefined')) {
                 CompletadaCargaComentarios();
             }
-            MontarFechas();
 
             if (typeof commentsAnalitics != 'undefined') {
                 var comentarioID = $('#panComentarios .comment').first().attr('id');
@@ -23318,12 +12956,15 @@ function Comentario_CrearComentario(urlCrearComentario, documentoID) {
         $('#error_' + documentoID).html(comentarios.comentarioError);
     }
 }
+
+
 /**
- * Acción para rechazar una comunidad
- * @param {any} urlRechazar: Url de api al que realizar la petición
- * @param {any} peticionID: ID de la solicitud
+ * Maneja el rechazo de una solicitud para una nueva comunidad.
+ *
+ * @param {string} urlRechazar - La URL a la que se enviará la solicitud de rechazo.
+ * @param {number|string} peticionID - El identificador de la solicitud que se va a rechazar.
  */
- function Peticion_RechazarSolicitudNuevaComunidad(urlRechazar, peticionID) {
+function Peticion_RechazarSolicitudNuevaComunidad(urlRechazar, peticionID) {
     MostrarUpdateProgress();
 
     //contamos comentarios hijos para restarselos
@@ -23338,10 +12979,12 @@ function Comentario_CrearComentario(urlCrearComentario, documentoID) {
         OcultarUpdateProgress();
     });
 }
-/**
- * Acción para aceptar una comunidad
- * @param {any} urlRechazar: Url de api al que realizar la petición
- * @param {any} peticionID: ID de la solicitud
+
+
+/** 
+ * Maneja la aceptación de una solicitud para una nueva comunidad.
+ * @param {string} urlAceptar - La URL a la que se enviará la solicitud de aceptación.
+ * @param {number|string} peticionID - El identificador de la solicitud que se va a aceptar.
  */
 function Peticion_AceptarSolicitudNuevaComunidad(urlRechazar, peticionID) {
     MostrarUpdateProgress();
@@ -23358,6 +13001,8 @@ function Peticion_AceptarSolicitudNuevaComunidad(urlRechazar, peticionID) {
         OcultarUpdateProgress();
     });
 }
+
+
 /**
  * Acción para rechazar a un usuario de la comunidad
  * @param {any} urlRechazar: Url de api al que realizar la petición
@@ -23427,29 +13072,6 @@ function Comentario_EliminarComentario(urlEliminar, comentarioID) {
     });
 }
 
-function Comentario_EliminarComentarioAnterior(urlEliminar, comentarioID) {
-    MostrarUpdateProgress();
-
-    //contamos comentarios hijos para restarselos
-    var panComentario = $('#' + comentarioID);
-    var numComentariosRestar = $(panComentario).find('.comment-content').length;
-    
-    GnossPeticionAjax(urlEliminar, null, true).done(function (data) {
-        $('span#numComentarios').text(parseInt($('span#numComentarios').text()) - numComentariosRestar);
-
-        $('#panComentarios #' + comentarioID).remove();
-
-        if ((typeof CompletadaCargaEliminarComentarios != 'undefined')) {
-            CompletadaCargaEliminarComentarios();
-        }
-
-        if (typeof commentsAnalitics != 'undefined') {
-            commentsAnalitics.commentDeleted(comentarioID);
-        }
-
-        OcultarUpdateProgress();
-    });
-}
 
 /**  
  * Método que se ejecuta cuando se pulsa en "Editar" un comentario dentro de la ficha de un recurso
@@ -23509,10 +13131,11 @@ function Comentario_EditarComentario(urlEditar, comentarioID) {
     });
 }
 
+
 /**
- * Acción de poder editar un comentario sin modal
- * @param {any} urlEditar
- * @param {any} comentarioID
+ * Permite la edición de un comentario en la interfaz de usuario sin modal
+ * @param {string} urlEditar - La URL a la que se enviará la solicitud de edición.
+ * @param {number|string} comentarioID - El identificador del comentario que se va a editar.
  */
 function Comentario_Editar_JIRA(urlEditar, comentarioID) {
 
@@ -23548,9 +13171,11 @@ function Comentario_Editar_JIRA(urlEditar, comentarioID) {
 
 }
 
+
 /**
- * Acción de poder Cancelar un comentario sin modal
- * @param {any} comentarioID
+ * Cancela la edición de un comentario en la interfaz de usuario, mostrando el comentario original sin modal
+ *
+ * @param {number|string} comentarioID - El identificador del comentario que se está editando.
  */
 function Comentario_Cancelar_JIRA(comentarioID) {
 
@@ -23581,27 +13206,8 @@ function Comentario_Cancelar_JIRA(comentarioID) {
 
 }
 
-function Comentario_EditarComentarioAnterior(urlEditar, comentarioID) {
-    var panComentario = $('#' + comentarioID);
-
-    var panTextoComentario = $(panComentario).find('.comment-content');
-    panTextoComentario.hide();
-
-    var mensajeAntiguo = panTextoComentario.html();
-
-    $(panComentario).find('.comment-enviar').remove();
-    $(panComentario).find('.comment-responder').remove();
-
-    var accion = "javascript:Comentario_EnviarEditarComentario('" + urlEditar + "', '" + comentarioID + "');";
-    var claseCK = 'cke comentarios';
-
-    var confirmar = $(['<div class="comment-enviar"><fieldset class="mediumLabels"><legend>', comentarios.editarComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_Editar_', comentarioID, '" rows="2" cols="20">' + mensajeAntiguo + '</textarea><p><label class="error" id="error_', comentarioID, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.guardar, '" class="btn btn-primary text medium sendComment"></p></fieldset></div>'].join(''));
-
-    panTextoComentario.after(confirmar);    
-}
-
 /**
- * Acción de Enviar al servidor (api) el comentario editado
+ * Acción de Enviar al servidor el comentario editado
  * @param {any} urlEditar: URL donde hay que hacer la petición para realizar la edición del comentario
  * @param {any} comentarioID: Id del comentario que se desea editar
  */
@@ -23633,7 +13239,7 @@ function Comentario_EnviarEditarComentario_JIRA(urlEditar, comentarioID) {
 }
 
 /**
- * Acción de Enviar al servidor (api) el comentario editado
+ * Acción de Enviar al servidor el comentario editado
  * @param {any} urlEditar: URL donde hay que hacer la petición para realizar la edición del comentario
  * @param {any} comentarioID: Id del comentario que se desea editar
  */
@@ -23657,49 +13263,19 @@ function Comentario_EnviarEditarComentario(urlEditar, comentarioID) {
             const panTextoComentario = $(panComentario).find('.comentario-contenido');
             panTextoComentario.html(descripcion);
         })
-        .always(function () {
-            OcultarUpdateProgress();
-        });
+            .always(function () {
+                OcultarUpdateProgress();
+            });
     }
     else {
         $('#error_' + comentarioID).html(comentarios.comentarioError);
     }
 }
 
-function Comentario_EnviarEditarComentarioAnterior(urlEditar, comentarioID) {
-    if ($('#txtComentario_Editar_' + comentarioID).val() != '') {
-        MostrarUpdateProgress();
-        $('#error_' + comentarioID).html('');
-        var descripcion = $('#txtComentario_Editar_' + comentarioID).val();
-
-        var datosPost = {
-            Description: encodeURIComponent(descripcion)
-        };
-
-        GnossPeticionAjax(urlEditar, datosPost, true).done(function (data) {
-            if (typeof commentsAnalitics != 'undefined') {
-                commentsAnalitics.commentModified(comentarioID);
-            }
-        });
-
-        var panComentario = $('#' + comentarioID);
-        var panTextoComentario = $(panComentario).find('.comment-content');
-        $(panComentario).find('.comment-enviar').remove();
-
-        panTextoComentario.html(descripcion);
-        panTextoComentario.show();
-
-        OcultarUpdateProgress();
-    }
-    else {
-        $('#error_' + comentarioID).html(comentarios.comentarioError);
-    }
-}
-
-/**  
- * Método que se ejecuta cuando se pulsa en "Responder" un comentario dentro de la ficha de un recurso
- * @param {any} urlResponder: Url a la que se le responderá 
- * @param {any} comentarioID: ID del comentario al que se desea responder
+/** 
+ * Crea un modal para responder a un comentario y configura la acción del botón de enviar. Se ejecuta cuando se pulsa en "Responder" un comentario dentro de la ficha de un recurso
+ * @param {string} urlResponder - La URL del endpoint donde se enviará la respuesta al comentario.
+ * @param {number|string} comentarioID - El identificador del comentario al que se está respondiendo.
  */
 function Comentario_ResponderComentario(urlResponder, comentarioID) {
     // Panel dinamico del modal padre donde se insertara la vista "hija"
@@ -23709,7 +13285,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     let plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
-    plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>Responder comentario</p>';
+    plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + comentarios.responderComentario + '</p>';
     plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
     plantillaPanelHtml += '</div>';
     // Cuerpo del panel
@@ -23717,7 +13293,7 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
     plantillaPanelHtml += '<div class="formulario-edicion">';
     // Cuerpo de la respuesta - TextArea
     plantillaPanelHtml += '<div class="form-group">';
-    plantillaPanelHtml += '<textarea class="form-control cke mensajes" id="txtComentario_Responder_' + comentarioID + '" rows="3"> </textarea>';
+    plantillaPanelHtml += '<textarea class="form-control cke comentarios" id="txtComentario_Responder_' + comentarioID + '" rows="3"> </textarea>';
     plantillaPanelHtml += '</div>';
 
     // Contenedor de mensajes y botones
@@ -23750,45 +13326,13 @@ function Comentario_ResponderComentario(urlResponder, comentarioID) {
 
 }
 
-
-function Comentario_ResponderComentarioAnterior(urlResponder, comentarioID) {
-    var panComentario = $('#' + comentarioID);
-
-    var panTextoComentario = $(panComentario).find('.comment-content');
-
-    $(panComentario).find('.comment-enviar').remove();
-    $(panComentario).find('.comment-responder').remove();
-
-    var accion = "javascript:Comentario_EnviarResponderComentario('" + urlResponder + "', '" + comentarioID + "');";
-    var claseCK = 'cke comentarios';
-
-    var confirmar = $(['<div class="comment-responder"><fieldset class="mediumLabels"><legend>', comentarios.responderComentario, '</legend><p><textarea class="' + claseCK + '" id="txtComentario_Responder_', comentarioID, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', comentarioID, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="text medium sendComment"></p></fieldset></div>'].join(''));
-
-    panTextoComentario.after(confirmar);    
-}
-
-function Comentario_ResponderComentario_V2(urlResponder, comentarioID) {
-    var panComentario = $('#' + comentarioID);
-
-    var panTextoComentario = $(panComentario).find('.comment-content');
-
-    $(panComentario).find('.comment-enviar').remove();
-    $(panComentario).find('.comment-responder').remove();
-
-    var accion = "javascript:Comentario_EnviarResponderComentario('" + urlResponder + "', '" + comentarioID + "');";
-    var claseCK = 'cke comentarios';
-
-    var confirmar = $(['<div class="escribir-comentario"><div class="publicador"></div><div class="escribe"><fieldset class="mediumLabels"><p><textarea class="' + claseCK + '" id="txtComentario_Responder_', comentarioID, '" rows="2" cols="20"></textarea><p><label class="error" id="error_', comentarioID, '"></label></p><input type="button" onclick="', accion, '" value="', comentarios.enviar, '" class="btn btn-primary text medium sendComment"></p></fieldset></div></div>'].join(''));
-
-    panTextoComentario.after(confirmar);    
-}
-
-/**
- * Acción de Envio al servidor del comentario respondido
- * @param {any} urlResponder: URL de la api hacia donde hay que realizar la respuesta
- * @param {any} comentarioID: ID del comentario que se enviará.
+/** 
+ * Envía una respuesta a un comentario y actualiza la interfaz de usuario con la nueva respuesta.
+ *
+ * @param {string} urlResponder - La URL del endpoint donde se enviará la respuesta al comentario.
+ * @param {number|string} comentarioID - El identificador del comentario al que se está respondiendo.
  */
- function Comentario_EnviarResponderComentario(urlResponder, comentarioID) {
+function Comentario_EnviarResponderComentario(urlResponder, comentarioID) {
     if ($('#txtComentario_Responder_' + comentarioID).val() != '') {
         MostrarUpdateProgress();
         $('#error_' + comentarioID).html('');
@@ -23819,7 +13363,6 @@ function Comentario_ResponderComentario_V2(urlResponder, comentarioID) {
             if ((typeof CompletadaCargaComentarios != 'undefined')) {
                 CompletadaCargaComentarios();
             }
-            MontarFechas();
 
             if (typeof commentsAnalitics != 'undefined') {
                 var comentarioRespuestaID = $('#panComentarios #' + comentarioID + ' .comment').first().attr('id');
@@ -23833,62 +13376,17 @@ function Comentario_ResponderComentario_V2(urlResponder, comentarioID) {
     }
 }
 
-function Comentario_VotarPositivo(that, urlVotarPositivo, comentarioID) {
-    MostrarUpdateProgress();
-    $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
-    $(that).addClass("eleccionUsuario");
-
-    $.post(urlVotarPositivo, null, function (data) {
-        var html = "";
-        for (var i in data) {
-            html += data[i].html;
-        }
-        $('#panComentarios').html(html);
-        if ((typeof CompletadaCargaVotoComentario != 'undefined')) {
-            CompletadaCargaVotoComentario();
-        }
-        MontarFechas();
-        OcultarUpdateProgress();
-    });
-}
-
-function Comentario_VotarNegativo(that, urlVotarNegativo, comentarioID) {
-    MostrarUpdateProgress();
-    $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
-    $(that).addClass("eleccionUsuario");
-
-    $.post(urlVotarNegativo, null, function (data) {
-        var html = "";
-        for (var i in data) {
-            html += data[i].html;
-        }
-        $('#panComentarios').html(html);
-        if ((typeof CompletadaCargaVotoComentario != 'undefined')) {
-            CompletadaCargaVotoComentario();
-        }
-        MontarFechas();
-        OcultarUpdateProgress();
-    });
-}
-
-function Comentario_EliminarVoto(that, urlEliminarVoto, comentarioID) {
-    MostrarUpdateProgress();
-    $(that).parent().find('.eleccionUsuario').removeClass("eleccionUsuario");
-
-    $.post(urlEliminarVoto, null, function (data) {
-        var html = "";
-        for (var i in data) {
-            html += data[i].html;
-        }
-        $('#panComentarios').html(html);
-        if ((typeof CompletadaCargaVotoComentario != 'undefined')) {
-            CompletadaCargaVotoComentario();
-        }
-        MontarFechas();
-        OcultarUpdateProgress();
-    });
-}
-
+/** 
+ * Solicita la carga de una faceta específica desde el servidor y actualiza el contenido de un panel con la faceta obtenida.
+ *
+ * @param {string} pUrlFac - La URL del servicio web para cargar la faceta.
+ * @param {string} pGrafo - El identificador del grafo de datos a utilizar.
+ * @param {string} pFaceta - El identificador de la faceta que se desea cargar.
+ * @param {object} pParametros - Parámetros adicionales para la solicitud.
+ * @param {string} pIdentidad - El identificador del usuario o entidad que realiza la solicitud.
+ * @param {string} pLanguageCode - El código de idioma para la solicitud.
+ * @param {string} pPanelID - El ID del panel HTML donde se mostrará la faceta cargada.
+ */
 function MontarFacetaFichaFormSem(pUrlFac, pGrafo, pFaceta, pParametros, pIdentidad, pLanguageCode, pPanelID) {
 
     pIdentidad = pIdentidad.toUpperCase();
@@ -23926,6 +13424,17 @@ function MontarFacetaFichaFormSem(pUrlFac, pGrafo, pFaceta, pParametros, pIdenti
     });
 }
 
+/** 
+ * Gestiona la paginación de un selector de entidades en una interfaz de usuario. Actualiza el contenido del selector
+ * según el enlace clicado y maneja la carga de datos adicionales si es necesario.
+ *
+ * @param {HTMLElement} link - El enlace que ha sido clicado para activar la paginación (debe ser un elemento con clase 'sigPagSelectEnt' para avanzar o un enlace para retroceder).
+ * @param {string} urlAccion - La URL para la solicitud de datos adicionales.
+ * @param {string} entidad - El nombre de la entidad que se está paginando.
+ * @param {string} propiedad - La propiedad de la entidad para la cual se realiza la paginación.
+ * @param {number} elemsPag - El número de elementos por página.
+ * @param {number} totalElem - El número total de elementos disponibles para la paginación.
+ */
 function PaginarSelectorEnt(link, urlAccion, entidad, propiedad, elemsPag, totalElem) {
     var divPadre = $($(link).parent('.pagSelectEnt')[0]);
 
@@ -23968,10 +13477,18 @@ function PaginarSelectorEnt(link, urlAccion, entidad, propiedad, elemsPag, total
     }
 
     divPadre.data('pag', pagActual);
-    
+
     AjustarDatosSelectorEntPaginado(pagActual, divPadre);
 }
 
+
+/** 
+ * Ajusta la visualización de los datos en un selector paginado de entidades en función de la página actual.
+ * Muestra los datos de la página actual y oculta los datos de las demás páginas.
+ *
+ * @param {number} pagActual - El índice de la página actualmente activa.
+ * @param {jQuery} divPadre - El contenedor que contiene los elementos paginados.
+ */
 function AjustarDatosSelectorEntPaginado(pagActual, divPadre) {
     var divDatos = divPadre.parent().children('.pagSelEnt');
 
@@ -23985,44 +13502,14 @@ function AjustarDatosSelectorEntPaginado(pagActual, divPadre) {
     }
 }
 
-function MontarFechaCliente() {
-    if (typeof (diffHoras) == 'undefined' || diffHoras == null) {
-        var fechaServidor = new Date($('#inpt_serverTime').val());
-        $('p.publicacion, span.fechaPublicacion').each(function (index) {
-            if ($(this).attr('content') != null) {
-                var fechaRecurso = new Date($(this).attr('content'));
-                var fechaCliente = new Date();
-                //var diffHoras = parseInt((fechaServidor.getTime() / (1000 * 60 * 60)) - (fechaCliente.getTime() / (1000 * 60 * 60)));
-                var diffMinutos = parseInt((fechaServidor.getTime() / (1000 * 60)) - (fechaCliente.getTime() / (1000 * 60)));
-                var diffHoras = diffMinutos / 60;
-                //redondeo
-                var resto = diffMinutos % 60;
-                if (resto / 60 > 0.5) {
-                    if (diffHoras > 0) {
-                        diffHoras = diffHoras + 1;
-                    }
-                    else {
-                        diffHoras = diffHoras - 1;
-                    }
-                }
-                fechaRecurso.setHours(fechaRecurso.getHours() - diffHoras);
-                var dia = fechaRecurso.getDate();
-                if (dia < 10) {
-                    dia = '0' + dia;
-                }
-                var mes = fechaRecurso.getMonth() + 1;
-                if (mes < 10) {
-                    mes = '0' + mes;
-                }
-                //var fechaPintado = fechaRecurso.format("yyyy/MM/dd HH:mm");
-                var fechaPintado = tiempo.fechaPuntos.replace('@1@', dia).replace('@2@', mes).replace('@3@', fechaRecurso.getFullYear());
-                $(this).html(fechaPintado);
-                $(this).show();
-            }
-        });
-    }
-}
-
+/**
+ * Inicializa un mapa de Google Maps en un elemento HTML especificado y dibuja una ruta sobre el mapa.
+ * Ajusta el mapa para mostrar la ruta completa y permite especificar el color de la línea de la ruta.
+ * 
+ * @param {String} pDivID - ID del `div` HTML donde se mostrará el mapa.
+ * @param {String} pRoute - Ruta en formato JSON con coordenadas geográficas separadas por punto y coma.
+ * @param {String} pColor - Color de la línea de la ruta en formato hexadecimal. Si se deja vacío, se usa rojo.
+ */
 function InitializeRouteMapGoogle(pDivID, pRoute, pColor) {
     try {
         var mapOptions = {
@@ -24065,10 +13552,10 @@ function InitializeRouteMapGoogle(pDivID, pRoute, pColor) {
     }
 }
 
-$(function () {
-    $('input.btnAccionSemCms').click(function () { AccionFichaRecSemCms(this); });
-});
-
+/**
+ * Maneja la acción del botón `btnAccionSemCms` enviando una solicitud AJAX y mostrando el resultado.
+ * La función verifica si existe una función personalizada `AccionFichaRecSemCmsPersonalizado`, en cuyo caso, la llama en lugar de ejecutar el código por defecto. Luego, prepara los datos necesarios para la solicitud AJAX, la envía al servidor y maneja la respuesta mostrando mensajes de éxito o error.
+ */
 function AccionFichaRecSemCms(boton) {
     if (typeof (AccionFichaRecSemCmsPersonalizado) != 'undefined') {
         AccionFichaRecSemCmsPersonalizado(boton);
@@ -24100,9 +13587,11 @@ function AccionFichaRecSemCms(boton) {
     }).always(function () {
         OcultarUpdateProgress();
     });
-}/**/ 
+}
+
+/**/ 
 /*MVC.FichaPerfil.js*/ 
-﻿/**
+/**
  * Acción de seguir a un usuario de una comunidad. Se ejecuta cuando se pulsa en el botón "Seguir"
  * @param {any} that: El botón que ha disparado la acción
  * @param {any} urlSeguirPerfil: URL a la que hay que llamar para realizar la llamda de "No seguir"
@@ -24113,7 +13602,7 @@ function AccionPerfil_Seguir(that, urlSeguirPerfil) {
     const buttonIcon = $(that).find("span.material-icons");
     const oldIconButton = buttonIcon.text();
     const oldTextButton = $(that).find(".texto").text();
-               
+
     // Textos e iconos una vez pulsado el botón
     let newTextButton = "";
     let newIconButton = "";
@@ -24130,7 +13619,7 @@ function AccionPerfil_Seguir(that, urlSeguirPerfil) {
         // Se desea seguir el perfil
         newTextButton = accionesUsuarios.dejarDeSeguir;
         newIconButton = "person_remove_alt_1";
-    }   
+    }
 
     // Quitar el icono para mostrar el loading
     buttonIcon.text('');
@@ -24140,12 +13629,12 @@ function AccionPerfil_Seguir(that, urlSeguirPerfil) {
     GnossPeticionAjax(urlSeguirPerfil, null, true)
         .done(function (data) {
             // Quitar el Loading 
-            buttonIcon.removeClass(loadingClass);                                  
+            buttonIcon.removeClass(loadingClass);
             // Añadir el nuevo método para seguir/no seguir
             if (data == "invitado") {
                 operativaLoginEmergente.init();
                 return;
-            }            
+            }
             $(that).attr('onclick', followJsAction.replace('follow', 'unfollow'));
             ChangeButtonAndText(that, newTextButton, newIconButton, null);
         })
@@ -24156,7 +13645,7 @@ function AccionPerfil_Seguir(that, urlSeguirPerfil) {
             if (data == "invitado") {
                 operativaLoginEmergente.init();
                 return;
-            }           
+            }
         })
         .always(function (data) {
             buttonIcon.removeClass(loadingClass);
@@ -24179,7 +13668,7 @@ function AccionPerfil_NoSeguir(that, urlNoSeguirPerfil) {
     // Textos e iconos una vez pulsado el botón
     var newTextButton = accionesUsuarios.sinSeguimiento;
     var newIconButton = "person_outline";
-    
+
     GnossPeticionAjax(urlNoSeguirPerfil, null, true).fail(function (data) {
         if (data == 'invitado') {
             operativaLoginEmergente.init();
@@ -24211,7 +13700,7 @@ function AccionPerfil_Seguir_Listado(that, urlSeguir, followUser) {
 
 
     // Acción de follow unfollow
-    const followJsAction = listFollowActionText.attr('onclick');    
+    const followJsAction = listFollowActionText.attr('onclick');
 
     // Textos e iconos una vez pulsado el botón para seguir/no seguir    
     const followText = accionesUsuarios.seguir;
@@ -24224,49 +13713,50 @@ function AccionPerfil_Seguir_Listado(that, urlSeguir, followUser) {
     currentFollowActionIcon.text('');
     // 2 - Añadir la clase de loading (petición in progress)
     currentFollowActionIcon.addClass(loadingClass);
-    
+
     GnossPeticionAjax(urlSeguir, null, true)
         .done(function (data) {
             // Finalizar Loading
             currentFollowActionIcon.removeClass(loadingClass);
             // Comprobar si se estaba siguiendo el perfil seleccionado
-            if (currentFollowActionItem.attr('data-follow') != undefined ) {
+            if (currentFollowActionItem.attr('data-follow') != undefined) {
                 // No se desea seguir al usuario - Se estaba siguiendo al usuario                             
-                
-                    // Añadir texto de "Seguir" e icono a la lista
-                    listFollowActionText.text(followText);                    
-                    listFollowActionIcon.text(followIcon);
-                    // Quitar el atributo
-                    listFollowActionItem.removeAttr('data-follow');
-                    // Añadir la acción para seguir                
-                    listFollowActionText.attr('onclick', followJsAction.replace('unfollow', 'follow'));
-                          
+
+                // Añadir texto de "Seguir" e icono a la lista
+                listFollowActionText.text(followText);
+                listFollowActionIcon.text(followIcon);
+                // Quitar el atributo
+                listFollowActionItem.removeAttr('data-follow');
+                // Añadir la acción para seguir                
+                listFollowActionText.attr('onclick', followJsAction.replace('unfollow', 'follow'));
+
             } else {
                 // Se desea seguir al usuario - No se estaba siguiendo al usuario            
                 // Añadir texto e icono de "No Seguir"
                 // Cambiar la acción de Seguir/No seguir                
-                    listFollowActionText.text(noFollowText);
-                    listFollowActionIcon.text(noFollowIcon);
-                    listFollowActionItem.attr('data-follow', '');
-                    listFollowActionText.attr('onclick', followJsAction.replace('follow', 'unfollow'));
+                listFollowActionText.text(noFollowText);
+                listFollowActionIcon.text(noFollowIcon);
+                listFollowActionItem.attr('data-follow', '');
+                listFollowActionText.attr('onclick', followJsAction.replace('follow', 'unfollow'));
 
             }
         })
         .fail(function (data) {
             // Dejarlo como estaba
-            if (currentFollowActionItem.attr('data-follow') != undefined || currentFollowActionItem.attr('data-follow') != false) {                
-                currentFollowActionText.text(noFollowText);                
+            if (currentFollowActionItem.attr('data-follow') != undefined || currentFollowActionItem.attr('data-follow') != false) {
+                currentFollowActionText.text(noFollowText);
                 currentFollowActionIcon.text(noFollowIcon);
             } else {
-                currentFollowActionText.text(followText);                
+                currentFollowActionText.text(followText);
                 currentFollowActionIcon.text(followIcon);
             }
 
         })
-        .always(function (data) {            
+        .always(function (data) {
             currentFollowActionIcon.removeClass(loadingClass);
         });
 }
+
 
 /**
  * Cambiar el texto, el icono (material-icons) y eliminar el evento click de un botón
@@ -24280,7 +13770,6 @@ function ChangeButtonAndText(button, newTextButton, newIconButton, classToBeDele
     // Icono del botón
     var buttonIcon = $(button).find("span.material-icons");
     var textButton = "";
-    var icon = "";
 
     if (buttonIcon.length == 0) {
         // No hay botón --> Buscar un span
@@ -24300,7 +13789,7 @@ function ChangeButtonAndText(button, newTextButton, newIconButton, classToBeDele
         $(button).css("cursor", "auto");
         // Quitar el estilo de botón (no clickeable)
         $(button).removeClass(classToBeDeleted);
-    }    
+    }
 }
 
 
@@ -24312,49 +13801,49 @@ function ChangeButtonAndText(button, newTextButton, newIconButton, classToBeDele
  * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  * */
 function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-container") {
-    
+
     // Panel dinámico del modal padre donde se insertará la vista "hija"
     const $modalDinamicContentPanel = $('#modal-container').find('#modal-dinamic-content #content');
 
     // Declaración de la acción que se realizará al hacer click en Enviar mensaje
     var accion = "EnviarMensaje('" + urlPagina + "', '" + id + "');";
-    
+
     // Plantilla del panel html que se cargará en el modal contenedor al pulsar en la acción
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
-        plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + titulo + '</p>';
-        plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
+    plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + titulo + '</p>';
+    plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
     plantillaPanelHtml += '</div>';
     // Cuerpo del panel
     plantillaPanelHtml += '<div class="modal-body">';
-        plantillaPanelHtml += '<div class="formulario-edicion">';
-            // Asunto del email - InputText
-            plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<label class="control-label" for="txtAsunto_'+id+'">' + mensajes.asunto + '</label>';
-                plantillaPanelHtml += '<input type="text" class="form-control" id="txtAsunto_'+id+'" rows="3"> </textarea>' ;
-            plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '<div class="formulario-edicion">';
+    // Asunto del email - InputText
+    plantillaPanelHtml += '<div class="form-group">';
+    plantillaPanelHtml += '<label class="control-label" for="txtAsunto_' + id + '">' + mensajes.asunto + '</label>';
+    plantillaPanelHtml += '<input type="text" class="form-control" id="txtAsunto_' + id + '" rows="3"> </textarea>';
+    plantillaPanelHtml += '</div>';
 
-            // Cuerpo del email - TextArea
-            plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<label class="control-label">' + mensajes.descripcion + '</label>';
-                plantillaPanelHtml += '<textarea class="form-control cke mensajes" id="txtDescripcion_'+id+'" rows="3"> </textarea>' ;
-            plantillaPanelHtml += '</div>';
+    // Cuerpo del email - TextArea
+    plantillaPanelHtml += '<div class="form-group">';
+    plantillaPanelHtml += '<label class="control-label">' + mensajes.descripcion + '</label>';
+    plantillaPanelHtml += '<textarea class="form-control cke mensajes" id="txtDescripcion_' + id + '" rows="3"> </textarea>';
+    plantillaPanelHtml += '</div>';
 
-        // Contenedor de mensajes y botones
-        plantillaPanelHtml += '<div id="modal-dinamic-action-response">';
-        // Posibles mensajes de info
-            plantillaPanelHtml += '<div>';
-                plantillaPanelHtml += '<div class="menssages_'+id+'" id="menssages">';
-                    plantillaPanelHtml += '<div class="ok"></div>';
-                    plantillaPanelHtml += '<div class="ko"></div>';
-                plantillaPanelHtml += '</div>';
-            plantillaPanelHtml += '</div>';
-        // Panel de botones para la acción
-            plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
-                plantillaPanelHtml += '<button class="btn btn-primary">' + mensajes.enviar + '</button>'                
-            plantillaPanelHtml += '</div>';
-        plantillaPanelHtml += '</div>';
+    // Contenedor de mensajes y botones
+    plantillaPanelHtml += '<div id="modal-dinamic-action-response">';
+    // Posibles mensajes de info
+    plantillaPanelHtml += '<div>';
+    plantillaPanelHtml += '<div class="menssages_' + id + '" id="menssages">';
+    plantillaPanelHtml += '<div class="ok"></div>';
+    plantillaPanelHtml += '<div class="ko"></div>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
+    // Panel de botones para la acción
+    plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
+    plantillaPanelHtml += '<button class="btn btn-primary">' + mensajes.enviar + '</button>'
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
@@ -24367,8 +13856,8 @@ function AccionEnviarMensajeMVC(urlPagina, id, titulo, idModalPanel = "#modal-co
     // Asignación de la función al botón "Sí" o de acción
     $(botones[0]).on("click", function () {
         EnviarMensaje(urlPagina, id);
-    });   
-    
+    });
+
 }
 
 /**
@@ -24389,16 +13878,13 @@ function EnviarMensaje(urlPagina, id) {
             mensaje: encodeURIComponent(mensaje.replace(/\n/g, ''))
         }
 
-        GnossPeticionAjax(urlPagina, dataPost, true).done(function (data) {
-            // Cambiado por nuevo Front
-            //DesplegarResultadoAccionMVC("desplegable_" + id, true, mensajes.mensajeEnviado);
+        GnossPeticionAjax(urlPagina, dataPost, true).done(function (data) {                        
             DesplegarResultadoAccionMVC("modal-dinamic-action-response", true, mensajes.mensajeEnviado);
             // Esperar 1,5 segundos y ocultar el panel
             setTimeout(() => {
                 $('#modal-container').modal('hide');
             }, 1500)
-        }).fail(function (data) {
-            //DesplegarResultadoAccionMVC("desplegable_" + id, false, "");
+        }).fail(function (data) {            
             DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Se ha producido un error al enviar el mensaje. Por favor insertándolo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
@@ -24410,134 +13896,31 @@ function EnviarMensaje(urlPagina, id) {
     }
 }
 
-function AccionEnviarMensajeMVCTutor(urlPagina, id) {
-    var $c = $('#' + id);
-
-    if (CKEDITOR.instances["txtDescripcion_" + id] != null) {
-        CKEDITOR.instances["txtDescripcion_" + id].destroy();
-    }
-
-    if ($c.children().length > 0) {
-        //Eliminar el anterior
-        $c.children().remove();
-    }
-
-    var accion = "javascript:EnviarMensajeTutor('" + urlPagina + "', '" + id + "');";
-
-    var $confirmar = $(['<fieldset class="mediumLabels"><legend>', mensajes.enviarMensaje, '</legend><p><label for="txtAsunto_', id, '">', mensajes.asunto, '</label><input type="text" id="txtAsunto_', id, '" class="text big"></p><p><label for="txtDescripcion_', id, '">', mensajes.descripcion, '</label></p><p><textarea class="cke mensajes" id="txtDescripcion_', id, '" rows="2" cols="20"></textarea></p><p><label class="error" id="error_', id, '"></label></p><input type="button" onclick="', accion, '" value="', mensajes.enviar, '" class="text medium"></p></fieldset>'].join(''));
-    //$confirmar.find('div').filter('.pregunta').fadeIn().end().filter('.mascara').show().fadeTo(600, 0.8);
-    // Incrustamos el elemento a la vez que lo mostramos y definimos los eventos: 
-    $confirmar.prependTo($c)
-    .find('button').click(function () { // Ambos botones hacen desaparecer la mascara
-        $c.parents('.stateShowForm').css({ display: 'none' });
-        $confirmar.css({ display: 'none' });
-    }).eq(0).click(accion); // pero solo el primero activa la funcionConfirmada
-
-    if ($('#divContMensajesPerf').length > 0 && $('#divContMensajesPerf').html() == '') {
-        $('#divContMensajesPerf').html($('#desplegable_' + id).parent().html());
-        $('#desplegable_' + id).parent().html('');
-    }
-
-    MostrarPanelAccionDesp("desplegable_" + id, null);    
-}
-
-
-function EnviarMensajeTutor(urlPagina, id) {
-    if ($('#txtAsunto_' + id).val() != '' && $('#txtDescripcion_' + id).val() != '') {
-        var asunto = $('#txtAsunto_' + id).val();
-        var mensaje = $('#txtDescripcion_' + id).val();
-        MostrarUpdateProgress();
-
-        var dataPost = {
-            callback: "Accion_EnviarMensajeTutor",
-            asunto: asunto,
-            mensaje: encodeURIComponent(mensaje.replace(/\n/g, ''))
-        }
-
-        GnossPeticionAjax(urlPagina, dataPost, true).done(function (data) {
-            DesplegarResultadoAccionMVC("desplegable_" + id, true, mensajes.mensajeEnviado);
-        }).fail(function (data) {
-            DesplegarResultadoAccionMVC("desplegable_" + id, false, data);
-        }).always(function (data) {
-            OcultarUpdateProgress();
-        });
-    }
-    else {
-        $('#error_' + id).html(mensajes.mensajeError);
-    }
-}
 
 /**
- * Acción de mandar a API endPoint la acción de agregar un contacto 
- * @param {any} urlPagina: Url a para ejecutar la acción
+ * Envía una solicitud POST a la página especificada para agregar un contacto a la organización. 
+ * La función envía una solicitud AJAX POST a `urlPagina` con un parámetro `callback` que indica la acción a realizar, en este caso, agregar un contacto. 
+ * @param {string} urlPagina - La URL a la que se envía la solicitud POST para agregar el contacto. 
+ * @returns {void} - La función no devuelve ningún valor.  
  */
-function AgregarContacto(urlPagina) {
-    var dataPost = {
-        callback: "Accion_AgregarContacto"
-    }
-    $.post(urlPagina, dataPost);
-    // Cerrar el modal pasados 1,5 segundos
-    setTimeout(() => {
-        $('#modal-container').modal('hide');
-    }, 1500);
-}
-
-/**
- * Acción de mandar a API endPoint la acción de Eliminar un contacto
- * @param {any} urlPagina: Url a para ejecutar la acción
- */
-function EliminarContacto(urlPagina) {
-    var dataPost = {
-        callback: "Accion_EliminarContacto"
-    }
-    $.post(urlPagina, dataPost);
-    // Cerrar el modal pasados 1,5 segundos
-    setTimeout(() => {
-        $('#modal-container').modal('hide');
-    }, 1500);
-}
-
 function AgregarContactoOrg(urlPagina) {
-	var dataPost = {
-		callback: "Accion_AgregarContactoOrg"
-	}
-	$.post(urlPagina, dataPost);
+    var dataPost = {
+        callback: "Accion_AgregarContactoOrg"
+    }
+    $.post(urlPagina, dataPost);
 }
 
+/**
+ * Envía una solicitud POST a la página especificada para eliminar un contacto de la organización.
+ * La función envía una solicitud AJAX POST a `urlPagina` con un parámetro `callback` que indica la acción a realizar, en este caso, eliminar un contacto.
+ * @param {string} urlPagina - La URL a la que se envía la solicitud POST para eliminar el contacto.
+ * @returns {void} - La función no devuelve ningún valor.
+ */
 function EliminarContactoOrg(urlPagina) {
-	var dataPost = {
-		callback: "Accion_EliminarContactoOrg"
-	}
-	$.post(urlPagina, dataPost);
-}
-
-function NotificarCorreccion(urlPagina) {
-	var dataPost = {
-		callback: "Accion_EnviarCorreccion"
-	}
-	$.post(urlPagina, dataPost);
-}
-
-function NotificarCorreccionDefinitiva(urlPagina) {
-	var dataPost = {
-		callback: "Accion_EnviarCorreccion",
-		EnviarCorreccionDefinitiva: true
-	}
-	$.post(urlPagina, dataPost);
-}
-
-function ValidarCorreccion(urlPagina) {
-	var dataPost = {
-		callback: "Accion_ValidarCorreccion"
-	}
-	$.post(urlPagina, dataPost);
-}
-
-function EliminarPersona(urlPagina) {
-	var dataPost = {
-		callback: "Accion_EliminarPersona"
-	}
-	$.post(urlPagina, dataPost);
+    var dataPost = {
+        callback: "Accion_EliminarContactoOrg"
+    }
+    $.post(urlPagina, dataPost);
 }
 
 /**
@@ -24553,7 +13936,7 @@ function EliminarPersona(urlPagina) {
  * @param {any} idModalPanel: Panel modal contenedor donde se insertará este HTML (Por defecto será #modal-container)
  */
 function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundario, texto, accionCambiarNombreHtml, idModalPanel = "#modal-container") {
-    
+
     // Acción que se ejecutará al pulsar sobre el botón primario (Realizar la acción de Expulsar)
     var accion = "EnviarAccionExpulsar('" + urlPagina + "', '" + id + "');";
 
@@ -24564,36 +13947,36 @@ function Expulsar(urlPagina, id, titulo, textoBotonPrimario, textoBotonSecundari
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
-        plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + titulo + '</p>';
-        plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
+    plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + titulo + '</p>';
+    plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
     plantillaPanelHtml += '</div>';
     // Cuerpo del panel
     plantillaPanelHtml += '<div class="modal-body">';
-        plantillaPanelHtml += '<div class="formulario-edicion">';
-            plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<label class="control-label">' + texto + '</label>';
-            plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '<div class="formulario-edicion">';
+    plantillaPanelHtml += '<div class="form-group">';
+    plantillaPanelHtml += '<label class="control-label">' + texto + '</label>';
+    plantillaPanelHtml += '</div>';
 
-        // Cuerpo del panel -> TextArea para enviar un email explicando la razón de la expulsión
-            plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<label for="txtMotivoExpulsion_'+ id +'">'+ accionesUsuarioAdminComunidad.motivoExpulsion +'</label>';
-                plantillaPanelHtml += '<textarea class="form-control" id="txtMotivoExpulsion_'+id+'" rows="3"></textarea>';
-            plantillaPanelHtml += '</div>';
+    // Cuerpo del panel -> TextArea para enviar un email explicando la razón de la expulsión
+    plantillaPanelHtml += '<div class="form-group">';
+    plantillaPanelHtml += '<label for="txtMotivoExpulsion_' + id + '">' + accionesUsuarioAdminComunidad.motivoExpulsion + '</label>';
+    plantillaPanelHtml += '<textarea class="form-control" id="txtMotivoExpulsion_' + id + '" rows="3"></textarea>';
+    plantillaPanelHtml += '</div>';
 
-            plantillaPanelHtml += '<div id="modal-dinamic-action-response">';
-        // Posibles mensajes de info
-                plantillaPanelHtml += '<div>';
-                    plantillaPanelHtml += '<div id="menssages">';
-                        plantillaPanelHtml += '<div class="ok"></div>';
-                        plantillaPanelHtml += '<div class="ko"></div>';
-                    plantillaPanelHtml += '</div>';
-                plantillaPanelHtml += '</div>';
-            // Panel de botones para la acción
-                plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
-                    plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">' + textoBotonSecundario + '</button>'
-                    plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1" onclick="' + accion + '">'+ textoBotonPrimario + ", " + accionesUsuarioAdminComunidad.expulsarUsuario + '</button>'
-                plantillaPanelHtml += '</div>';
-            plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '<div id="modal-dinamic-action-response">';
+    // Posibles mensajes de info
+    plantillaPanelHtml += '<div>';
+    plantillaPanelHtml += '<div id="menssages">';
+    plantillaPanelHtml += '<div class="ok"></div>';
+    plantillaPanelHtml += '<div class="ko"></div>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
+    // Panel de botones para la acción
+    plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
+    plantillaPanelHtml += '<button data-dismiss="modal" class="btn btn-primary">' + textoBotonSecundario + '</button>'
+    plantillaPanelHtml += '<button class="btn btn-outline-primary ml-1" onclick="' + accion + '">' + textoBotonPrimario + ", " + accionesUsuarioAdminComunidad.expulsarUsuario + '</button>'
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
     plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
@@ -24634,7 +14017,7 @@ function EnviarAccionExpulsar(urlPagina, id) {
             setTimeout(() => {
                 $('#modal-container').modal('hide');
             }, 1500)
-            
+
         }).fail(function (data) {
             // Cambiado por nuevo front
             //DesplegarResultadoAccionMVC("desplegable_" + id, false, "");
@@ -24683,45 +14066,45 @@ function CambiarRol(id, rol, urlPagina, idModalPanel = "#modal-container") {
     var plantillaPanelHtml = '';
     // Cabecera del panel
     plantillaPanelHtml += '<div class="modal-header">';
-        plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + accionesUsuarioAdminComunidad.cambiarRol + '</p>';
-        plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
+    plantillaPanelHtml += '<p class="modal-title"><span class="material-icons">label</span>' + accionesUsuarioAdminComunidad.cambiarRol + '</p>';
+    plantillaPanelHtml += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
     plantillaPanelHtml += '</div>';
     // Cuerpo del panel
     plantillaPanelHtml += '<div class="modal-body">';
-        plantillaPanelHtml += '<div class="formulario-edicion">';
-            plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<label class="control-label">' + accionesUsuarioAdminComunidad.selecionaRol + '</label>';
-            plantillaPanelHtml += '</div>';
-            // Cuerpo del panel -> Opciones de checkbox a cargar
-            plantillaPanelHtml += '<div class="form-group">';
-                plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
-                    plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_administrador' + id + '" value="0" class="custom-control-input"'+ checkedAdmin +'/>';
-                    plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_administrador' + id + '">'+ accionesUsuarioAdminComunidad.administrador +'</label>';
-                plantillaPanelHtml += '</div>';
-                plantillaPanelHtml += '<div name="cambiarRol' + id + '" class="themed primary custom-control custom-radio">';
-                    plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_supervisor' + id + '" value="1" class="custom-control-input"'+ checkedSupervisor +'/>';
-                    plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_supervisor' + id + '">'+ accionesUsuarioAdminComunidad.supervisor +'</label>';
-                plantillaPanelHtml += '</div>';
-                plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
-                    plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_usuario' + id + '" value="2" class="custom-control-input"'+ checkedUsuario +'/>';
-                    plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_usuario' + id + '">'+ accionesUsuarioAdminComunidad.usuario +'</label>';
-                plantillaPanelHtml += '</div>';
-            plantillaPanelHtml += '</div>'; 
+    plantillaPanelHtml += '<div class="formulario-edicion">';
+    plantillaPanelHtml += '<div class="form-group">';
+    plantillaPanelHtml += '<label class="control-label">' + accionesUsuarioAdminComunidad.selecionaRol + '</label>';
+    plantillaPanelHtml += '</div>';
+    // Cuerpo del panel -> Opciones de checkbox a cargar
+    plantillaPanelHtml += '<div class="form-group">';
+    plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
+    plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_administrador' + id + '" value="0" class="custom-control-input"' + checkedAdmin + '/>';
+    plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_administrador' + id + '">' + accionesUsuarioAdminComunidad.administrador + '</label>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '<div name="cambiarRol' + id + '" class="themed primary custom-control custom-radio">';
+    plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_supervisor' + id + '" value="1" class="custom-control-input"' + checkedSupervisor + '/>';
+    plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_supervisor' + id + '">' + accionesUsuarioAdminComunidad.supervisor + '</label>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '<div class="themed primary custom-control custom-radio">';
+    plantillaPanelHtml += '<input name="cambiarRol_' + id + '" type="radio" id="cambiarRol_usuario' + id + '" value="2" class="custom-control-input"' + checkedUsuario + '/>';
+    plantillaPanelHtml += '<label class="custom-control-label" for="cambiarRol_usuario' + id + '">' + accionesUsuarioAdminComunidad.usuario + '</label>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
 
     plantillaPanelHtml += '<div id="modal-dinamic-action-response">';
     // Posibles mensajes de info
-        plantillaPanelHtml += '<div>';
-            plantillaPanelHtml += '<div id="menssages">';
-                plantillaPanelHtml += '<div class="ok"></div>';
-                plantillaPanelHtml += '<div class="ko"></div>';
-            plantillaPanelHtml += '</div>';
-        plantillaPanelHtml += '</div>';
-    // Panel de botones para la acción
-        plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
-            plantillaPanelHtml += '<button class="btn btn-primary" onclick="'+ accion +'">' + accionesUsuarioAdminComunidad.cambiarRol + '</button>'            
-        plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '<div>';
+    plantillaPanelHtml += '<div id="menssages">';
+    plantillaPanelHtml += '<div class="ok"></div>';
+    plantillaPanelHtml += '<div class="ko"></div>';
     plantillaPanelHtml += '</div>';
-plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
+    // Panel de botones para la acción
+    plantillaPanelHtml += '<div id="modal-dinamic-action-buttons" class="form-actions">'
+    plantillaPanelHtml += '<button class="btn btn-primary" onclick="' + accion + '">' + accionesUsuarioAdminComunidad.cambiarRol + '</button>'
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
+    plantillaPanelHtml += '</div>';
 
     // Meter el código de la vista modal en el contenedor padre que viene identificado por el id #modal-container
     // En concreto, hay que buscar la etiqueta modal-dinamic-content #content e insertar el código
@@ -24759,10 +14142,16 @@ function EnviarAccionCambiarRol(urlPagina, id, rol) {
             DesplegarResultadoAccionMVC("modal-dinamic-action-response", false, "Error al tratar de cambiar el rol. Por favor, insertándolo de nuevo más tarde.");
         }).always(function (data) {
             OcultarUpdateProgress();
-        });        
+        });
     }
 }
 
+/**
+ * Envía una solicitud POST a la página especificada para realizar la acción de readmisión. 
+ * La función envía una solicitud AJAX POST a `urlPagina` con un parámetro `callback` que indica la acción a realizar, en este caso, readmitir. 
+ * @param {string} urlPagina - La URL a la que se envía la solicitud POST para readmitir. 
+ * @returns {void} - La función no devuelve ningún valor.
+ */
 function Readmitir(urlPagina) {
     var dataPost = {
         callback: "Accion_Readmitir"
@@ -24774,6 +14163,12 @@ function Readmitir(urlPagina) {
     }, 1500)
 }
 
+/**
+ * Envía una solicitud POST a la página especificada para realizar la acción de bloqueo de un usuario.
+ * La función envía una solicitud AJAX POST a `urlPagina` con un parámetro `callback` que indica la acción a realizar, en este caso, bloquear.
+ * @param {string} urlPagina - La URL a la que se envía la solicitud POST para bloquear.
+ * @returns {void} - La función no devuelve ningún valor.
+ */
 function Bloquear(urlPagina) {
     var dataPost = {
         callback: "Accion_Bloquear"
@@ -24785,6 +14180,12 @@ function Bloquear(urlPagina) {
     }, 1500)
 }
 
+/**
+ * Envía una solicitud POST a la página especificada para realizar la acción de desbloquear a un usuario.
+ * La función envía una solicitud AJAX POST a `urlPagina` con un parámetro `callback` que indica la acción a realizar, en este caso, bloquear.
+ * @param {string} urlPagina - La URL a la que se envía la solicitud POST para bloquear.
+ * @returns {void} - La función no devuelve ningún valor.
+ */
 function Desbloquear(urlPagina) {
     var dataPost = {
         callback: "Accion_Desbloquear"
@@ -24796,6 +14197,11 @@ function Desbloquear(urlPagina) {
     }, 1500)
 }
 
+/**
+ * Envía una solicitud POST para enviar un boletín informativo y oculta el modal después de un retraso.
+ * @param {string} urlPagina - La URL a la que se envía la solicitud POST para enviar el boletín.
+ * @returns {void} 
+ */
 function EnviarNewsletter(urlPagina) {
     var dataPost = {
         callback: "Accion_EnviarNewsletter"
@@ -24807,6 +14213,12 @@ function EnviarNewsletter(urlPagina) {
     }, 1500)
 }
 
+
+/**
+ * Envía una solicitud POST para no enviar un boletín informativo y oculta el modal después de un retraso.
+ * @param {string} urlPagina - La URL a la que se envía la solicitud POST para no enviar el boletín.
+ * @returns {void}
+ */
 function NoEnviarNewsletter(urlPagina) {
     var dataPost = {
         callback: "Accion_NoEnviarNewsletter"
@@ -24818,12 +14230,14 @@ function NoEnviarNewsletter(urlPagina) {
     }, 1500)
 }
 
-function CambiarNombreElementoMVC(that, nombre) {
-	$(that).html('');
-	$(that).parent().html(nombre)
-}/**/ 
+/**/ 
 /*MVC.Registro.js*/ 
-﻿function ComprobarDatosRegistroLogeado() {
+/**
+ * Comprueba si las condiciones de uso están aceptadas durante el registro de un usuario logeado.
+ * Si hay errores en las condiciones, los muestra en el div correspondiente.
+ * @returns {boolean} - Devuelve `true` si hay errores en las condiciones, de lo contrario `false`.
+ */
+function ComprobarDatosRegistroLogeado() {
     var errorCondiciones = ComprobarClausulas();
 
     if (errorCondiciones.length > 0) {
@@ -24836,6 +14250,12 @@ function CambiarNombreElementoMVC(that, nombre) {
     }
 }
 
+/**
+ * Valida los datos del formulario de registro de usuario, incluyendo nombre, apellidos, usuario, email, contraseña y más.
+ * Muestra errores en los divs correspondientes si se encuentran problemas en los datos del registro.
+ * @param {number} pEdadMinimaRegistro - Edad mínima requerida para el registro (opcional, pero no se usa en la función).
+ * @returns {boolean} - Devuelve `true` si se encontraron errores en los datos de registro, `false` si todos los datos son válidos.
+ */
 function ComprobarDatosRegistro(pEdadMinimaRegistro) {
     var error = "";
 
@@ -24902,6 +14322,11 @@ function ComprobarDatosRegistro(pEdadMinimaRegistro) {
     }
 }
 
+/**
+ * Valida el campo de login del usuario asegurando que el nombre de usuario no exceda los 12 caracteres. 
+ * @param {string} pTxtLogin - El ID del campo de texto del login a validar.
+ * @returns {string} - Un mensaje de error si el nombre de usuario es inválido, una cadena vacía si es válido.
+ */
 function ValidarCampoLogin(pTxtLogin) {
     var error = '';
     var textLogin = $('#' + pTxtLogin).val();
@@ -24911,9 +14336,15 @@ function ValidarCampoLogin(pTxtLogin) {
         }
     }
     return error;
-
 }
 
+/**
+ * Realiza validaciones para los campos de email proporcionados.
+ *
+ * @param {string} pTxtEmail - ID del campo de email principal.
+ * @param {string} pTxtEmailTutor - ID del campo de email del tutor.
+ * @returns {string} - Mensajes de error generados durante la validación.
+ */
 function ValidacionesEmail(pTxtEmail, pTxtEmailTutor) {
     var error = "";
     var textEmail = $('#' + pTxtEmail).val();
@@ -24938,14 +14369,12 @@ function ValidacionesEmail(pTxtEmail, pTxtEmailTutor) {
     return error;
 }
 
-function ValidacionEmail(pTxtMail, pLblMail) {
-    var textEmail = $('#' + pTxtMail).val();
-    if (textEmail == '') {
-        return false;
-    }
-    return true;
-}
-
+/**
+ * Verifica si el campo de email del tutor tiene un valor válido. 
+ * @param {string} pTxtMail - ID del campo de email del tutor.
+ * @param {string} pLblMail - ID del label asociado al campo de email.
+ * @returns {boolean} - `true` si el campo de email tiene un valor, `false` si está vacío o indefinido.
+ */
 function ValidacionEmailTutor(pTxtMail, pLblMail) {
     var textEmail = $('#' + pTxtMail).val();
     if (textEmail != undefined && textEmail == '') {
@@ -24954,6 +14383,10 @@ function ValidacionEmailTutor(pTxtMail, pLblMail) {
     return true;
 }
 
+/**
+ * Verifica que todas las cláusulas obligatorias estén aceptadas y actualiza la lista de cláusulas seleccionadas. 
+ * @returns {string} - Mensaje de error si alguna cláusula obligatoria no está aceptada, vacío si todo está correcto.
+ */
 function ComprobarClausulas() {
     error = "";
     var listaChecks = '';
@@ -24978,6 +14411,13 @@ function ComprobarClausulas() {
     return error;
 }
 
+
+/**
+ * Muestra el panel adicional y desplaza la vista hacia él. 
+ * Esta función hace visible el panel de registro, muestra el formulario dentro de él, 
+ * y desplaza la vista del navegador hacia la parte superior del panel.  
+ * @returns {boolean} - Siempre retorna `false` para evitar comportamientos por defecto del evento.
+ */
 function MostrarPanelExtra() {
     $('#despleReg').show();
     $('#despleReg .stateShowForm').show();
@@ -24986,6 +14426,11 @@ function MostrarPanelExtra() {
 }
 
 
+/**
+ * Verifica la validez del email introducido y realiza una solicitud POST para comprobar su existencia en el servidor. 
+ * @param {string} pUrlPagina - URL de la página del servidor a la que se enviará la solicitud POST.
+ * @returns {void} - No retorna ningún valor, maneja la lógica de validación y llamada al servidor.
+ */
 function ComprobarEmailUsuario(pUrlPagina) {
     var validarEmail = ValidarEmailIntroducido('txtEmail', 'lblEmail');
     if (validarEmail == '') {
@@ -25019,8 +14464,7 @@ function ProcesarEmailComprobado(pDatosRecibidos) {
     if ((typeof ProcesarEmailComprobadoPersonalizado != 'undefined')) {
         ProcesarEmailComprobadoPersonalizado(pDatosRecibidos);
     }
-    else
-    {
+    else {
         if (pDatosRecibidos == 'KO') {
             if ($('#divKoEmail').length == 0) {
                 $('#lblEmail').parent().after('<p id="divKoEmail"></p>');
@@ -25035,7 +14479,7 @@ function ProcesarEmailComprobado(pDatosRecibidos) {
             //$('#lblEmail').attr('class', 'ko');
             $('#txtEmail').addClass('is-invalid');
             $('#txtEmail').removeClass('is-valid');
-            
+
         } else {
             $('#divKoEmail').html('');
             //$('#lblEmail').attr('class', '');
@@ -25045,12 +14489,12 @@ function ProcesarEmailComprobado(pDatosRecibidos) {
     }
 }
 
-function comprobarCheck(pCheck, pTxtHackID) {
-    var num = parseInt($('#' + pTxtHackID).val().substring(0, $('#' + pTxtHackID).val().indexOf('||')));
-    if (pCheck.checked) { num--; } else { num++; }
-    $('#' + pTxtHackID).val(num + $('#' + pTxtHackID).val().substring($('#' + pTxtHackID).val().indexOf('||')))
-}
 
+/**
+ * Valida el campo de registro especificado llamando a la función de validación correspondiente.
+ * @param {string} pCampo - El identificador del campo a validar. 
+ * @returns {void} - No retorna ningún valor, llama a funciones de validación específicas basadas en el valor de `pCampo`.
+ */
 function ComprobarCampoRegistroMVC(pCampo) {
     if (pCampo == 'NombreUsu') {
         ValidarNombreUsu('txtNombreUsuario', 'lblNombreUsuario');
@@ -25084,6 +14528,13 @@ function ComprobarCampoRegistroMVC(pCampo) {
     }
 }
 
+
+/**
+ * Valida una fecha en formato DDMMAAAA (día/mes/año) asegurando que es una fecha válida.
+ *
+ * @param {string} fecha - La fecha en formato DDMMAAAA a validar.
+ * @returns {boolean} - Retorna `true` si la fecha es válida, de lo contrario, retorna `false`.
+ */
 function validaFechaDDMMAAAA(fecha) {
     var dtCh = "/";
     var minYear = 1900;
@@ -25157,6 +14608,15 @@ function validaFechaDDMMAAAA(fecha) {
     }
 }
 
+
+/**
+ * Valida la fecha de nacimiento en formato DDMMAAAA asegurando que la persona cumple con una edad mínima.
+ * Actualiza el estado del campo de fecha de nacimiento con un mensaje de error si no se cumple con los requisitos.
+ * @param {string} pFechaNacimiento - La fecha de nacimiento en formato DDMMAAAA.
+ * @param {string} pLblFechaNacimiento - El ID del elemento del label asociado a la fecha de nacimiento.
+ * @param {number} pEdadMinima - La edad mínima que debe cumplir la persona.
+ * @returns {string} - Mensaje de error si la fecha no es válida o no se cumple con la edad mínima; de lo contrario, retorna una cadena vacía.
+ */
 function ValidarFechaNacimientoMVC(pFechaNacimiento, pLblFechaNacimiento, pEdadMinima) {
     var error = '';
     $('#' + pLblFechaNacimiento).removeClass("ko");
@@ -25176,7 +14636,7 @@ function ValidarFechaNacimientoMVC(pFechaNacimiento, pLblFechaNacimiento, pEdadM
                 //Los ha cumplido en algún mes anterior
                 mayor = true;
             }
-                //Los cumple durante el año en el que estamos
+            //Los cumple durante el año en el que estamos
             else if (hoy.getMonth() == fecha.getMonth()) {
                 //Los cumple durante el mes en el que estamos        
                 if (hoy.getDate() >= fecha.getDate()) {
@@ -25200,18 +14660,13 @@ function ValidarFechaNacimientoMVC(pFechaNacimiento, pLblFechaNacimiento, pEdadM
 }
 
 
-function CargarFormLoginRegistro(urlPagina) {
-    MostrarUpdateProgress();;
-    var dataPost = {
-        callback: "cargarFormLogin"
-    };
-    $.post(urlPagina, dataPost, function (data) {
-        $('.box.box01').html(data);
-        OcultarUpdateProgress();
-    });
-}
-
-
+/**
+ * Valida si un campo de formulario obligatorio está vacío y actualiza la clase del elemento de etiqueta asociado.
+ * Retorna un mensaje de error si el campo está vacío.
+ * @param {jQuery} $campo - El campo de formulario que se va a validar.
+ * @param {jQuery} $lblCampo - La etiqueta asociada al campo que se actualizará según la validación.
+ * @returns {string} Mensaje de error si el campo está vacío, cadena vacía si el campo es válido.
+ */
 function ValidarCampoObligatorio(pTxtCampo, pLblCampo) {
     var error = '';
     if (pTxtCampo.val() == '') {
@@ -25224,6 +14679,16 @@ function ValidarCampoObligatorio(pTxtCampo, pLblCampo) {
     return error;
 }
 
+
+/**
+ * Valida si un campo de selección obligatorio tiene el valor por defecto y actualiza la clase del elemento de etiqueta asociado.
+ * Retorna un mensaje de error si el valor del campo es el valor por defecto.
+ * @param {jQuery} $campo - El campo de selección que se va a validar.
+ * @param {jQuery} $lblCampo - La etiqueta asociada al campo que se actualizará según la validación.
+ * @param {string} [mensajeError=form.camposVacios] - Mensaje de error personalizado si el campo tiene el valor por defecto.
+ * @param {string} [valorPorDefecto='00000000-0000-0000-0000-000000000000'] - Valor que indica un campo no seleccionado.
+ * @returns {string} Mensaje de error si el valor del campo es el valor por defecto, cadena vacía si el campo es válido.
+ */
 function ValidarCampoSelectObligatorio(pTxtCampo, pLblCampo) {
     var error = '';
     if (pTxtCampo.val() == '00000000-0000-0000-0000-000000000000') {
@@ -25236,25 +14701,21 @@ function ValidarCampoSelectObligatorio(pTxtCampo, pLblCampo) {
     return error;
 }
 
-function ValidarCampoRadioObligatorio(pRadioButons, pLblCampo) {
-    var error = '<p>' + form.camposVacios + '</p>';
-    pLblCampo.attr('class', 'ko');
-    pRadioButons.each(function () {
-        if($(this).is(':checked')){
-            pLblCampo.attr('class', '');
-            error = '';
-        }
-    });
-    return error;
-}
-
+/**
+ * Configura un campo de entrada para utilizar la funcionalidad de autocompletado con parámetros personalizados. 
+ * @param {string} inputID - El ID del campo de entrada donde se aplicará el autocompletado.
+ * @param {Object} [argumentos={}] - Un objeto con parámetros adicionales que se enviarán en la solicitud de autocompletado.
+ * @param {string} proyectoID - El ID del proyecto que se incluirá en la solicitud de autocompletado.
+ * @param {string} [urlServicio='/AutoCompletarDatoExtraProyectoVirtuoso'] - La URL del servicio de autocompletado. Por defecto es la URL especificada en el campo `#inpt_urlServicioAutocompletar`.
+ * @param {number} [minChars=1] - Número mínimo de caracteres requeridos para activar el autocompletado. Por defecto es 1.
+ * @param {number} [delay=0] - Tiempo de espera en milisegundos antes de enviar la solicitud de autocompletado. Por defecto es 0.
+ * @returns {void}
+ */
 function PrepararAutocompletar(inputID, argumentos, proyectoID) {
     $('#' + inputID).unautocomplete().unbind("focus")
     .autocomplete(
         null,
         {
-            //servicio: new WS($('#inpt_urlServicioAutocompletar').val(), WSDataType.jsonp),
-            //metodo: 'AutoCompletarDatoExtraProyectoVirtuoso',
             url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarDatoExtraProyectoVirtuoso",
             type: "POST",
             delay: 0,
@@ -25271,6 +14732,12 @@ function PrepararAutocompletar(inputID, argumentos, proyectoID) {
     );
 }
 
+
+/**
+ * Obtiene los valores de varios campos de entrada basados en una lista de IDs y los concatena en una cadena, separada por '|' (barra vertical). 
+ * @param {string} [variables=''] - Una cadena con IDs de campos de entrada separados por '|'. Si no se proporciona o está vacía, se devuelve una cadena vacía.
+ * @returns {string} Una cadena con los valores de los campos de entrada, separados por '|' (barra vertical).
+ */
 function ObtenerValoresArgumentos(variables) {
     var valores = '';
     if (typeof (variables) != 'undefined' && variables != '') {
@@ -25283,66 +14750,64 @@ function ObtenerValoresArgumentos(variables) {
     }
     return valores;
 }/**/ 
+
 /*MVC.Comun.js*/ 
-﻿function CargarAutocompletarGrupos(pTxtFiltroID, pTxtValSeleccID, pIdentidadID, pIdentidadMyGnossID, pIdentidadOrgID, pProyectoID, pListaUrlsAutocompletar) {
-	$('#' + pTxtFiltroID).autocomplete(null, {
-		servicio: new WS(pListaUrlsAutocompletar, WSDataType.jsonp),
-		metodo: 'AutoCompletarGruposInvitaciones',
-		delay: 0,
-		multiple: true,
-		scroll: false,
-		selectFirst: false,
-		minChars: 1,
-		width: 300,
-		cacheLength: 0,
-		NoPintarSeleccionado: true,
-		txtValoresSeleccID: pTxtValSeleccID,
-		extraParams: {
-			identidad: pIdentidadID,
-			identidadMyGnoss: pIdentidadMyGnossID,
-			identidadOrg: pIdentidadOrgID,
-			proyecto: pProyectoID,
-		}
-	});
-}
-
+/**
+ * Configura un campo de autocompletar para buscar lectores y editores basados en una base de recursos específica. 
+ * @param {jQuery} control - El campo de entrada que se utilizará para el autocompletado.
+ * @param {string} baseRecursosID - El ID de la base de recursos para la búsqueda.
+ * @param {string} personaID - El ID de la persona que realiza la búsqueda.
+ * @param {string} pTxtValSeleccID - El ID del campo donde se guardarán los valores seleccionados.
+ * @param {Array<string>} pListaUrlsAutocompletar - Lista de URLs para el servicio de autocompletar.
+ * @param {string} panelContenedorID - El ID del panel que contendrá los resultados del autocompletado.
+ * @param {string} panResultadosID - El ID del panel donde se mostrarán los resultados.
+ * @param {string} txtHackID - El ID del campo oculto para el hack de autocompletado. 
+ */
 function CargarAutocompletarLectoresEditoresPorBaseRecursos(control, baseRecursosID, personaID, pTxtValSeleccID, pListaUrlsAutocompletar, panelContenedorID, panResultadosID, txtHackID) {
-	control.unautocomplete().autocomplete(
-		null,
-		{
-			servicio: new WS(pListaUrlsAutocompletar, WSDataType.jsonp),
-			metodo: 'AutoCompletarLectoresEditoresPorBaseRecursos',
-			delay: 0,
-			multiple: true,
-			scroll: false,
-			selectFirst: false,
-			minChars: 1,
-			width: 300,
-			cacheLength: 0,
-			NoPintarSeleccionado: true,
-			txtValoresSeleccID: pTxtValSeleccID,
-			extraParams: {
-				baserecursos: baseRecursosID,
-				persona: personaID
-			}
-		}
-	);
-	control.result(function (event, data, formatted) {
-		seleccionarAutocompletarMVC(data[0], data[1], control, panelContenedorID, panResultadosID, txtHackID);
-	});
+    control.unautocomplete().autocomplete(
+        null,
+        {
+            servicio: new WS(pListaUrlsAutocompletar, WSDataType.jsonp),
+            metodo: 'AutoCompletarLectoresEditoresPorBaseRecursos',
+            delay: 0,
+            multiple: true,
+            scroll: false,
+            selectFirst: false,
+            minChars: 1,
+            width: 300,
+            cacheLength: 0,
+            NoPintarSeleccionado: true,
+            txtValoresSeleccID: pTxtValSeleccID,
+            extraParams: {
+                baserecursos: baseRecursosID,
+                persona: personaID
+            }
+        }
+    );
+    control.result(function (event, data, formatted) {
+        seleccionarAutocompletarMVC(data[0], data[1], control, panelContenedorID, panResultadosID, txtHackID);
+    });
 }
 
-/* Seleccionar & eliminar Autocompletar*/
+/**
+ * Añade un nuevo elemento al panel de resultados del autocompletado y actualiza el campo oculto con la identidad del elemento. 
+ * @param {string} nombre - El nombre del elemento seleccionado.
+ * @param {string} identidad - La identidad del elemento seleccionado.
+ * @param {jQuery} txtFiltro - El campo de entrada donde se muestra el autocompletado.
+ * @param {string} panelContenedorID - El ID del panel que contiene los resultados del autocompletado.
+ * @param {string} panResultadosID - El ID del panel donde se mostrarán los resultados.
+ * @param {string} txtHackID - El ID del campo oculto para almacenar la identidad del elemento. 
+ */
 function seleccionarAutocompletarMVC(nombre, identidad, txtFiltro, panelContenedorID, panResultadosID, txtHackID) {
-	txtFiltro.val('');
+    txtFiltro.val('');
 
-	$('#selector').css('display', 'none');
+    $('#selector').css('display', 'none');
 
-	var contenedor = $('#' + panelContenedorID).find('#' + panResultadosID);
+    var contenedor = $('#' + panelContenedorID).find('#' + panResultadosID);
 
-	if (contenedor.html().trim().indexOf('<ul') == 0) {
-		contenedor.html(contenedor.html().replace('<ul class=\"icoEliminar\">', '').replace('</ul>', ''));
-	}
+    if (contenedor.html().trim().indexOf('<ul') == 0) {
+        contenedor.html(contenedor.html().replace('<ul class=\"icoEliminar\">', '').replace('</ul>', ''));
+    }
     // Cambiado por nuevo Front
     // contenedor.html('<ul class=\"icoEliminar\">' + contenedor.html() + '<li>' + nombre + '<a class="remove" onclick="javascript:eliminarAutocompletarMVC(this,\'' + identidad + '\',\'' + panelContenedorID + '\',\'' + panResultadosID + '\',\'' + txtHackID + '\');">' + textoRecursos.Eliminar + '</a></li>' + '</ul>');
     // Construyo el editor
@@ -25356,67 +14821,72 @@ function seleccionarAutocompletarMVC(nombre, identidad, txtFiltro, panelContened
                 <input type="hidden" value="${identidad}"/>
             </div>
         </div>
-    `;    
+    `;
     // Añadir editor al contenedor
     contenedor.append(editorSeleccionadoHtml);
 
     // Añadirlo al input txtHack
-	var txtHack = $('#' + panelContenedorID).find('#' + txtHackID);
-	txtHack.val(txtHack.val() + "," + identidad);
+    var txtHack = $('#' + panelContenedorID).find('#' + txtHackID);
+    txtHack.val(txtHack.val() + "," + identidad);
 
-	contenedor.css('display', '');
+    contenedor.css('display', '');
 }
 
+/**
+ * Elimina un elemento del panel de resultados del autocompletado y actualiza el campo oculto para eliminar la identidad del elemento. 
+ * @param {HTMLElement} that - El elemento HTML del botón de eliminación.
+ * @param {string} identidad - La identidad del elemento a eliminar.
+ * @param {string} panelContenedorID - El ID del panel que contiene los resultados del autocompletado.
+ * @param {string} panResultadosID - El ID del panel donde se mostrarán los resultados.
+ * @param {string} txtHackID - El ID del campo oculto para almacenar las identidades de los elementos seleccionados. 
+ */
 function eliminarAutocompletarMVC(that, identidad, panelContenedorID, panResultadosID, txtHackID) {
-    // Cambiado por nuevo front
-    //$(that).parent().remove();
     $(that).parent().parent().remove();
 
-	var txtHack = $('#' + panelContenedorID).find('#' + txtHackID);
-	txtHack.val(txtHack.val().replace(',' + identidad, ''));
+    var txtHack = $('#' + panelContenedorID).find('#' + txtHackID);
+    txtHack.val(txtHack.val().replace(',' + identidad, ''));
 
-	if (txtHack.val() == "") {
-		var contenedor = $('#' + panelContenedorID).find('#' + panResultadosID);
-		contenedor.css('display', 'none');
-	}
+    if (txtHack.val() == "") {
+        var contenedor = $('#' + panelContenedorID).find('#' + panResultadosID);
+        contenedor.css('display', 'none');
+    }
 }
 
 
-/*-------------------------------------------------------------------------------------------------*/
+/**
+ * Carga más actividades recientes y actualiza el panel de actividades.  
+ * Esta función envía una solicitud POST a una URL para cargar más actividades recientes basadas en el tipo de actividad y los parámetros proporcionados. Luego, actualiza el contenido del panel de actividades y obtiene acciones adicionales para el listado.
+ * @param {string} pUrlLoadMoreActivity - La URL a la que se envía la solicitud POST para cargar más actividades.
+ * @param {string} pUrlLoadActions - La URL para obtener acciones adicionales para el listado de actividades.
+ * @param {string} pTipoActividad - El tipo de actividad para filtrar las actividades recientes.
+ * @param {number} pNumPeticion - El número de petición para la solicitud de actividades.
+ * @param {string} idPanel - El ID del panel donde se mostrarán las actividades recientes.
+ * @param {string} pComponentKey - La clave del componente para la solicitud.
+ * @param {string} pProfileKey - La clave del perfil para la solicitud.
+ */
+function ActividadReciente_MostrarMas(pUrlLoadMoreActivity, pUrlLoadActions, pTipoActividad, pNumPeticion, idPanel, pComponentKey, pProfileKey) {
+    MostrarUpdateProgress();
+    var datosPost = {
+        NumPeticion: pNumPeticion,
+        TypeActivity: pTipoActividad,
+        ComponentKey: pComponentKey,
+        ProfileKey: pProfileKey
+    };
 
-
-function ActividadReciente_MostrarMas(pUrlLoadMoreActivity, pUrlLoadActions, pTipoActividad, pNumPeticion, idPanel, pComponentKey, pProfileKey)
-{
-	MostrarUpdateProgress();
-	var datosPost = {
-	    NumPeticion: pNumPeticion,
-	    TypeActivity: pTipoActividad,
-	    ComponentKey: pComponentKey,
-	    ProfileKey: pProfileKey
-	};
-
-	$.post(pUrlLoadMoreActivity, datosPost, function (data) {
-		$("#actividadReciente_" + idPanel).replaceWith(data);
-		OcultarUpdateProgress();
-		ObtenerAccionesListadoMVC(pUrlLoadActions);
-	});
+    $.post(pUrlLoadMoreActivity, datosPost, function (data) {
+        $("#actividadReciente_" + idPanel).replaceWith(data);
+        OcultarUpdateProgress();
+        ObtenerAccionesListadoMVC(pUrlLoadActions);
+    });
 }
 
-//function AgregarFiltroPerfil(pUrlPagina, pCallBack, idPanel) {
-//    MostrarUpdateProgress();
-//    var datosPost = {
-//        callback: pCallBack
-//    };
-
-//    $.post(pUrlPagina, datosPost, function (data) {
-//        $("#actividadReciente_" + idPanel).replaceWith(data);
-//        OcultarUpdateProgress();
-//    });
-//}
-
-//Métodos para las acciones de los listados de las búsquedas
 
 var ObteniendoAcciones = false;
+/**
+ * Obtiene acciones adicionales para una lista de recursos y actualiza los paneles correspondientes.  
+ * Esta función envía una solicitud POST a una URL proporcionada para obtener una lista de acciones para los recursos en la página. Luego, actualiza los paneles de acciones con el HTML recibido. 
+ * @param {string} pUrlPagina - La URL a la que se envía la solicitud POST para obtener las acciones. 
+ */
 function ObtenerAccionesListadoMVC(pUrlPagina) {
     if (!ObteniendoAcciones) {
         ObteniendoAcciones = true;
@@ -25519,25 +14989,12 @@ function ObtenerAccionesListadoMVC(pUrlPagina) {
     }
 }
 
-function DesplegarImgMasMVC(pBoton, pPanel) {
-	var $boton = $(pBoton);
-	var $panel = $(pPanel);
-	var $img = $boton.find('img');
-	if ($img.length == 0) {
-		$img = $boton;
-	}
-	var source = $img.attr('src');
-	if ($img.attr('alt') == '+') {
-		$panel.show();
-		$img.attr({ alt: '-', src: source.replace('Mas', 'Menos') });
-	} else if ($img.attr('alt') == '-') {
-		$panel.hide()
-		$img.attr({ alt: '+', src: source.replace('Menos', 'Mas') });
-	}
-
-	return false;
-}
-
+/**
+ * Alterna la visibilidad de un panel de imagen de usuario y cambia el ícono del botón.
+ * Esta función cambia el texto del botón entre "person" y "person_search" para alternar entre dos estados. Además, muestra u oculta un panel de imagen de usuario basado en su clase de CSS.
+ * @param {string} pBoton - Selector o referencia al botón que se usa para alternar el panel.
+ * @param {string} pPanel - Selector o referencia al panel de imagen de usuario que se muestra u oculta.
+ */
 function DesplegarUserImgMasMVC(pBoton, pPanel) {
     const $boton = $(pBoton);
     const $panel = $(pPanel);
@@ -25551,143 +15008,17 @@ function DesplegarUserImgMasMVC(pBoton, pPanel) {
     $panel.toggleClass("d-none");
 }
 
-
-function paginadorGadget_Siguiente(urlPagina, gadgetID) {
-    var botonSiguiente = $('#btnSiguiente_' + gadgetID)
-    if (!botonSiguiente.hasClass("desactivado")) {
-        var botonAnterior = $('#btnAnterior_' + gadgetID)
-        botonAnterior.removeClass("desactivado");
-        var paneles = $('#' + gadgetID).find('.contexto.resource-list');
-        var panelActivo = $('#' + gadgetID).find('.contexto.resource-list.activo');
-
-        var panelSiguiente = panelActivo.next();
-
-        panelActivo.hide();
-        panelSiguiente.show();
-        panelActivo.removeClass("activo");
-        panelSiguiente.addClass("activo");
-
-        var ultimoPanel = panelSiguiente.next('.contexto.resource-list').length == 0 || panelSiguiente.next('.contexto.resource-list').is(":empty");
-        if (ultimoPanel) {
-            botonSiguiente.addClass("desactivado");
-            if (!panelSiguiente.next('.contexto.resource-list').is(":empty")) {
-                panelSiguiente.after("<div class=\"contexto resource-list\" style=\"display:none\"></div>");
-
-                var datapost = {
-                    callback: "paginadorGadget",
-                    gadgetid: gadgetID,
-                    numPagina: paneles.length + 1,
-                }
-
-                $.post(urlPagina, datapost, function (data) {
-                    var htmlRecursos = "";
-                    for (var i in data) {
-                        if (data[i].updateTargetId.indexOf("FichaRecursoMini_") == 0) {
-                            htmlRecursos += data[i].html;
-                        }
-                    }
-                    if (htmlRecursos != "") {
-                        botonSiguiente.removeClass("desactivado");
-                        panelSiguiente.next().remove();
-                        panelSiguiente.after("<div class=\"contexto resource-list\" style=\"display:none\">" + htmlRecursos + "</div>");
-                    }
-                    CompletadaCargaContextos();
-                });
-            }
-        } else
-        {
-            CompletadaCargaContextos();
-        }
-    }
-}
-
-function paginadorGadget_Anterior(urlPagina, gadgetID) {
-    var botonAnterior = $('#btnAnterior_' + gadgetID)
-    if (!botonAnterior.hasClass("desactivado")) {
-        var botonSiguiente = $('#btnSiguiente_' + gadgetID)
-        botonSiguiente.removeClass("desactivado");
-        var paneles = $('#' + gadgetID).find('.contexto.resource-list');
-        var panelActivo = $('#' + gadgetID).find('.contexto.resource-list.activo');
-
-        var panelAnterior = panelActivo.prev();
-
-        panelActivo.hide();
-        panelAnterior.show();
-        panelActivo.removeClass("activo");
-        panelAnterior.addClass("activo");
-
-        var ultimoPanel = panelAnterior.prev('.contexto.resource-list').length == 0;
-        if (ultimoPanel) {
-            botonAnterior.addClass("desactivado");
-        }
-        CompletadaCargaContextos();
-    }
-}
-
-function paginadorVinculados_Siguiente(urlPagina) {
-    var botonSiguiente = $('#btnSiguiente_vinc');
-    if (!botonSiguiente.hasClass("desactivado")) {
-        var botonAnterior = $('#btnAnterior_vinc');
-        botonAnterior.removeClass("desactivado");
-        var paneles = $('#panVinculadosInt').find('.resource-list.vinculados');
-        var panelActivo = $('#panVinculadosInt').find('.resource-list.vinculados.activo');
-
-        var panelSiguiente = panelActivo.next();
-
-        panelActivo.hide();
-        panelSiguiente.show();
-        panelActivo.removeClass("activo");
-        panelSiguiente.addClass("activo");
-
-        var ultimoPanel = panelSiguiente.next().length == 0 || panelSiguiente.next().is(":empty");
-        if (ultimoPanel) {
-            botonSiguiente.addClass("desactivado");
-            if (!panelSiguiente.next().is(":empty")) {
-                panelSiguiente.after("<div class=\"resource-list vinculados\" style=\"display:none\"></div>");
-                var datapost = {
-                    page: paneles.length + 1
-                }
-                $.post(urlPagina + "/load-linked-resources", datapost, function (data) {
-                    var htmlNuevo = $('<div/>').html(data).find('.resource-list.vinculados');
-                    if (htmlNuevo.length) {
-                        botonSiguiente.removeClass("desactivado");
-                        panelSiguiente.next().remove();
-                        panelSiguiente.after("<div class=\" resource-list vinculados\" style=\"display:none\">" + htmlNuevo.html() + "</div>");
-                    }
-                    CompletadaCargaContextos();
-                });
-            }
-        } else {
-            CompletadaCargaContextos();
-        }
-    }
-}
-
-function paginadorVinculados_Anterior(urlPagina) {
-    var botonAnterior = $('#btnAnterior_vinc');
-    if (!botonAnterior.hasClass("desactivado")) {
-        var botonSiguiente = $('#btnSiguiente_vinc')
-        botonSiguiente.removeClass("desactivado");
-        var paneles = $('#panVinculadosInt').find('.resource-list.vinculados');
-        var panelActivo = $('#panVinculadosInt').find('.resource-list.vinculados.activo');
-
-        var panelAnterior = panelActivo.prev();
-
-        panelActivo.hide();
-        panelAnterior.show();
-        panelActivo.removeClass("activo");
-        panelAnterior.addClass("activo");
-
-        var ultimoPanel = panelAnterior.prev('.resource-list.vinculados').length == 0;
-        if (ultimoPanel) {
-            botonAnterior.addClass("desactivado");
-        }
-        CompletadaCargaContextos();
-    }
-}
-
-function GnossPeticionAjax(url, parametros, traerJson, redirectActive = true)
-{
+/**
+ * Realiza una petición AJAX utilizando jQuery con opciones configurables y maneja la respuesta.
+ * Esta función realiza una solicitud POST a una URL dada, maneja el progreso de la carga, y resuelve o rechaza una promesa en función de la respuesta del servidor. 
+ * También gestiona los errores de red y redirige a una URL si es necesario.
+ * @param {string} url - La URL a la que se enviará la solicitud AJAX.
+ * @param {object|FormData} parametros - Los parámetros a enviar en la solicitud. Puede ser un objeto o una instancia de FormData.
+ * @param {boolean} traerJson - Indica si se espera una respuesta en formato JSON.
+ * @param {boolean} [redirectActive=true] - Indica si se debe redirigir a una URL especificada en la respuesta.
+ * @returns {Promise} Una promesa que se resuelve con la respuesta del servidor o se rechaza con un mensaje de error.
+ */
+function GnossPeticionAjax(url, parametros, traerJson, redirectActive = true) {
     var defr = $.Deferred();
 
     var esFormData = parametros instanceof FormData;
@@ -25727,10 +15058,9 @@ function GnossPeticionAjax(url, parametros, traerJson, redirectActive = true)
             defr.reject("invitado");
         }
         else if (response.Status == "OK") {
-            if (response.UrlRedirect != null)
-            {
-                if(redirectActive){ location.href = response.UrlRedirect; }
-                else{ defr.resolve(response.UrlRedirect); }
+            if (response.UrlRedirect != null) {
+                if (redirectActive) { location.href = response.UrlRedirect; }
+                else { defr.resolve(response.UrlRedirect); }
             }
             else if (response.Html != null) {
                 defr.resolve(response.Html);
@@ -25756,6 +15086,12 @@ function GnossPeticionAjax(url, parametros, traerJson, redirectActive = true)
     return defr;
 }
 
+
+/**
+ * Objeto que maneja el comportamiento para redirigir a una ficha de recurso en caso de errores de red.
+ * Este objeto proporciona métodos para intentar obtener una ficha de recurso mediante repetidas solicitudes
+ * y manejar errores de conexión. Si no se puede obtener la ficha, se llama a una función de manejo de errores.
+ */
 var comportamientoNetworkError = {
     intentarRedirigirFichaRecurso: function (url, funcion) {
         if (documentoID != null && documentoID != '') {
@@ -25808,6 +15144,12 @@ var comportamientoNetworkError = {
     }
 }
 
+/**
+ * Genera un identificador único global (GUID) en formato estándar.
+ * Esta función crea un GUID de 128 bits (16 bytes) en formato hexadecimal, que se puede utilizar como un identificador único en aplicaciones web.
+ * El GUID generado sigue el formato: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`, donde `x` es un dígito hexadecimal.
+ * @returns {string} El GUID generado en formato `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.
+ */
 function guidGenerator() {
     var S4 = function () {
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
@@ -25815,16 +15157,32 @@ function guidGenerator() {
     return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }
 
+/**
+ * Extiende la funcionalidad de String añadiendo un método que verifica si una cadena de texto termina con un sufijo específico. 
+ * @param {string} suffix - El sufijo que se busca en el final de la cadena.
+ * @returns {boolean} `true` si la cadena termina con el sufijo, de lo contrario `false`. 
+ */
 String.prototype.EndsWith = function (suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
+/**
+ * Extiende la funcionalidad de String añadiendo un método que verifica si una cadena de texto comienza con una subcadena específica desde una posición dada.
+ * @param {string} searchString - La subcadena que se busca al principio de la cadena.
+ * @param {number} [position=0] - La posición en la cadena desde donde comenzar la búsqueda (por defecto es 0).
+ * @returns {boolean} `true` si la cadena comienza con la subcadena desde la posición dada, de lo contrario `false`.
+ */
 String.prototype.StartsWith = function (searchString, position) {
     position = position || 0;
     return this.lastIndexOf(searchString, position) === position;
 };
 
-//Añadimos esta funcion que antes la añadia .Net
+/**
+ * Añadir funcionalidad a Date cuyo método sirve para formatear una fecha en un formato específico. 
+ * @function format
+ * @param {string} [format="MM/dd/yyyy"] - El formato deseado para la fecha. Los formatos soportados son: 
+ * @returns {string} La fecha formateada según el formato especificado.
+ */
 Date.prototype.format = function (format) {
     var date = this,
         day = date.getDate(),
@@ -25882,34 +15240,6 @@ Date.prototype.format = function (format) {
     return format;
 };
 
-/*Tesauros*/
-function MVCDesplegarTreeView(pImagen) {
-
-    if (typeof MarcarDesplegarTreeView == "function")
-    {
-        MarcarDesplegarTreeView(pImagen);
-    }
-
-    var imagen = $(pImagen);
-    if (pImagen.src.indexOf('verMas') > 0) {
-        pImagen.src = pImagen.src.replace('verMas', 'verMenos');
-    }
-    else {
-        pImagen.src = pImagen.src.replace('verMenos', 'verMas');
-    }
-    MVCDesplegarPanel($(pImagen).parent().children('.panHijos'));
-}
-
-function MVCDesplegarPanel(pPanel) {
-    if (pPanel.css("display") == 'none') {
-        pPanel.show();
-    }
-    else {
-        pPanel.hide();
-    }
-    return false;
-}
-
 /**
  * Método para filtrar elementos. En este caso, en la lista de Categorías, modo "Lista" de la ficha Recurso.
  * Al teclear en el input, filtrará (ocultará) los elementos que no correspondan con el texto de la búsqueda
@@ -25961,7 +15291,7 @@ function MVCFiltrarListaSelCatArbol(txt, id, completion = undefined) {
             }
 
             var categoriaHijo = $(this).find('.panHijos').children('.categoria-wrap');
-            categoriaHijo.each(function () {                
+            categoriaHijo.each(function () {
                 var nombreCatHijo = $(this).find('.categoria label').text().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
                 if (nombreCatHijo.toLowerCase().indexOf(cadena.toLowerCase()) < 0) {
                     $(this).hide();
@@ -26057,7 +15387,7 @@ function MVCMarcarTodosElementosCat(pCheck, panDesplID, hackedInputId = undefine
 function MVCMarcarElementoSelCat(pCheck, panDesplID, hackedInputId = undefined) {
     // Debido al nuevo Front - No se accede al padre sino al ID del propio Input
     //var claseInput = $(pCheck).parent().attr("class");
-    var claseInput = $(pCheck).attr("data-item");    
+    var claseInput = $(pCheck).attr("data-item");
 
     var txtSeleccionados = '';
 
@@ -26090,11 +15420,8 @@ function MVCMarcarElementoSelCat(pCheck, panDesplID, hackedInputId = undefined) 
  * Método para comprobar si se han chequeado todos los checks
  * @param {any} panDesplID
  */
-function MVCComprobarChecks(panDesplID) {
-    //var itemsListado = $('#' + panDesplID).find('#divSelCatLista').find('div span input');         
-    const itemsListado = $('#' + panDesplID).find('#divSelCatLista').children('div').find("input");
-
-    //var numItemsChecked = $('#' + panDesplID).find('#divSelCatLista').find('div span input:checked').length;
+function MVCComprobarChecks(panDesplID) {    
+    const itemsListado = $('#' + panDesplID).find('#divSelCatLista').children('div').find("input");    
     const numItemsChecked = $('#' + panDesplID).find('#divSelCatLista').children('div').find("input:checked").length;
 
     if (numItemsChecked == itemsListado.length) {
@@ -26107,6 +15434,35 @@ function MVCComprobarChecks(panDesplID) {
 /*Fin Tesauros*/
 var inicializadoSubirRecurso = false;
 
+/**
+ * Este método se ejecuta cuando finaliza la carga de los recursos (por ejemplo, los elementos
+ * de un listado).
+ * Aunque no está inicializado, en cada comunidad/proyecto, se puede definir la función `CompletadaCargaRecursosComunidad()`
+ * para extender o modificar el comportamiento por defecto tras la carga de recursos.
+ */
+function CompletadaCargaRecursos() {
+    if (typeof (window.CompletadaCargaRecursosComunidad) == 'function') {
+        CompletadaCargaRecursosComunidad();
+    }
+}
+
+/**
+ * Este método se ejecuta cuando finaliza la carga de las facetas 
+ * Aunque no está inicializado por defecto, en cada comunidad/proyecto, se puede definir la función `CompletadaCargaFacetas()`
+ * para extender o modificar el comportamiento por defecto tras la carga de recursos.
+ */
+function CompletadaCargaFacetas() {
+    if (typeof (window.comportamientoCargaFacetasComunidad) == 'function') {
+        comportamientoCargaFacetasComunidad();
+    }
+}
+
+/**
+ * Inicializa los eventos para los botones de una interfaz de carga de recursos externos. Inicializa los eventos para subir recursos externos con una URL base específica
+ * Configura acciones para cada botón, incluyendo mostrar un progreso de actualización y manejar solicitudes AJAX.
+ * @param {string} urlPaginaSubir - La URL base para las solicitudes AJAX relacionadas con la carga de recursos.
+ * @returns {void}
+ */
 function InicializarSubirRecursoExt(urlPaginaSubir) {
     if (inicializadoSubirRecurso) { return; }
 
@@ -26119,7 +15475,7 @@ function InicializarSubirRecursoExt(urlPaginaSubir) {
     });
 
     $("#lbSiguienteURL").click(function () {
-        validarUrlExt(urlPaginaSubir, false);     
+        validarUrlExt(urlPaginaSubir, false);
     });
 
     $("#lbSiguienteReferencia").click(function () { validarDocFisicoExt(urlPaginaSubir, false); });
@@ -26146,6 +15502,12 @@ function InicializarSubirRecursoExt(urlPaginaSubir) {
     inicializadoSubirRecurso = true;
 }
 
+/**
+ * Muestra un panel de carga de recursos basado en el nombre del recurso especificado.
+ * Oculta todos los otros paneles de recursos y configura las fuentes para los iframes si es necesario.
+ * @param {string} nombre - El nombre del tipo de recurso a mostrar. Puede ser 'Archivo', 'Referencia', 'URL', 'Brightcove', 'TOP', o 'Wiki'.
+ * @returns {void}
+ */
 function mostrarPanSubirRecurso(nombre) {
 
     if (typeof (InicioMostrarPanSubirRecurso) != "undefined") {
@@ -26232,10 +15594,10 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
         // Panel donde se mostrará posibles errores en la subida del un recurso de tipo Enlace Externo (Nuevo Front)
         const panelResourceFileErrorMessage = $('#modal-add-resource-link-messages-wrapper .ko');
         // Vaciar el panel de posibles errores anteriores y ocultarlo
-        panelResourceFileErrorMessage.empty().hide(); 
+        panelResourceFileErrorMessage.empty().hide();
 
         var regexURL = /^(http(s)?:\/\/.)[-a-zA-Z0-9@:%.\/_\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)$/i;
-        if (url.value.length > 0 && url.value.match(regexURL)) {          
+        if (url.value.length > 0 && url.value.match(regexURL)) {
             let enlaceASubir = url.value;
             if (enlaceASubir.includes("riamlab.sharepoint.com") || enlaceASubir.includes("riamlab-my.sharepoint.com")) {
                 var oneDrive = $("#inpt_oneDrivePermitido").val();
@@ -26254,7 +15616,7 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
                     let urlDestino = $("#inpt_baseUrlBusqueda").val();
                     urlDestino = urlDestino + "/comprobar-token-sp?pLink=" + enlaceASubir + "&pTypeResourceSelected=1&pSkipRepeat=" + omitirCompRep + "&pUrlPaginaSubir=" + urlPaginaSubir;
                     window.location.href = urlDestino;
-                }           
+                }
             } else {
                 MostrarUpdateProgress();
                 GnossPeticionAjax(urlPaginaSubir + '/selectresource', { TypeResourceSelected: 1, Link: url.value, SkipRepeat: omitirCompRep }, true).done(function (data) {
@@ -26272,7 +15634,7 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
                 });
 
                 return true;
-            }        
+            }
         }
         else {
             lblUrl.style.color = "Red";
@@ -26284,9 +15646,14 @@ function validarUrlExt(urlPaginaSubir, omitirCompRep) {
     return true;
 }
 
-
+/**
+ * Valida la ubicación del documento físico y realiza una solicitud AJAX para agregar el recurso. 
+ * @param {string} urlPaginaSubir - URL del servicio para subir recursos.
+ * @param {boolean} omitirCompRep - Indica si se debe omitir la comprobación de documentos repetidos.
+ * @returns {boolean} - Retorna `true` si el documento es válido, `false` en caso contrario.
+ */
 function validarDocFisicoExt(urlPaginaSubir, omitirCompRep) {
-    try //Intentamos validar un documento físico
+    try
     {
         var doc = document.getElementById("txtUbicacionDoc");
 
@@ -26308,17 +15675,9 @@ function validarDocFisicoExt(urlPaginaSubir, omitirCompRep) {
             return false;
         }
     } catch (e) {
-        //Error provado porque no existe el elemento doc (no es un elemento físico)
+        //Error porque no existe el elemento doc (no es un elemento físico)
     }
 }
-
-/**
- * Inicialización de Input de tipo "File" para que coja el nombre del fichero seleccionado (Bootstrap)
- * ---------------
- */
-$(document).on('change', '.custom-file-input', function (event) {
-    $(this).next('.custom-file-label').html(event.target.files[0].name);
-});
 
 /**
  * Acción que se ejecuta para comprobar que el fichero adjunto es correcto. Es el paso previo que se realiza antes de poder crear un recurso de tipo "Adjunto"
@@ -26327,14 +15686,14 @@ $(document).on('change', '.custom-file-input', function (event) {
  * @param {Boolean} extraArchivo
  */
 function validarDocAdjuntarExt(urlPaginaSubir, omitirCompRep, extraArchivo) {
-    try //Intentamos validar que haya un documento para adjuntar
+    try
     {
         var lblDoc = document.getElementById("lblSelecionaUnDoc");
         var doc = document.getElementById("fuExaminar");
         // Panel donde se mostrará posibles errores en la subida del archivo (Nuevo Front)
         const panelResourceFileErrorMessage = $('#modal-add-resource-file-messages-wrapper .ko');
         // Vaciar el panel de posibles errores anteriores y ocultarlo
-        panelResourceFileErrorMessage.empty().hide(); 
+        panelResourceFileErrorMessage.empty().hide();
 
         if (omitirCompRep) {
             MostrarUpdateProgress();
@@ -26374,7 +15733,7 @@ function validarDocAdjuntarExt(urlPaginaSubir, omitirCompRep, extraArchivo) {
                     panelResourceFileErrorMessage.append(data).show();
                     // Mostrar de nuevo botón de "Siguiente" para reintentar envío de fichero
                     $('#lbSiguienteArchivo').show();
-                    
+
                 }).fail(function (data) {
                     document.getElementById("lblSelecionaUnDoc").style.color = "Red";
                     $('#pArchError').remove();
@@ -26405,47 +15764,13 @@ function validarDocAdjuntarExt(urlPaginaSubir, omitirCompRep, extraArchivo) {
     }
 }
 
-function comprobarSubidaBrightcove() {
-    var iframe = document.getElementById("iframeBrightcove");
-    var doc;
-    if (!window.opera && document.all && document.getElementById) {
-        doc = iframe.contentWindow.document;
-    } else if (document.getElementById) {
-        doc = iframe.contentDocument;
-    }
-    try {
-        if (doc.getElementById("lblVideoBrightcoveOK") != null) {
-            MostrarUpdateProgress();
-            location.href = URLVideo;
-        }
-        if (doc.getElementById("lblAudioBrightcoveOK") != null) {
-            MostrarUpdateProgress();
-            location.href = URLAudio;
-        }
-    } catch (error) { }
-}
-
-function comprobarSubidaTOP() {
-    var iframe = document.getElementById("iframeTOP");
-    var doc;
-    if (!window.opera && document.all && document.getElementById) {
-        doc = iframe.contentWindow.document;
-    } else if (document.getElementById) {
-        doc = iframe.contentDocument;
-    }
-    try {
-        if (doc.getElementById("lblVideoTOPOK") != null) {
-            MostrarUpdateProgress();
-            location.href = URLVideo;
-        }
-        if (doc.getElementById("lblAudioTOPOK") != null) {
-            MostrarUpdateProgress();
-            location.href = URLAudio;
-        }
-    } catch (error) { }
-}/**/ 
+/**/ 
 /*MVC.ComAdmin.js*/ 
-﻿function FormularioSubidaEstilos() {
+/**
+ * Habilita o deshabilita campos de entrada de archivos en un formulario de subida dependiendo del tipo de archivo seleccionado.
+ * Actualiza el valor del campo `tipo_archivo` basado en la selección del usuario entre `js/css` o `zip`.
+ */
+function FormularioSubidaEstilos() {
     if (document.getElementById('js/css').checked) {
         document.getElementById('archivo_js').disabled = false;
         document.getElementById('archivo_css').disabled = false;
@@ -26457,96 +15782,8 @@ function comprobarSubidaTOP() {
         document.getElementById('archivo_css').disabled = true;
         document.getElementById('archivo_zip').disabled = false;
         document.getElementById('tipo_archivo').value = 'zip';
-
     }
-}/**/ 
-// NOTIFICACIONES PUSH
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/ServiceWorker.js");
-    });
 }
-if ('serviceWorker' in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/ServiceWorker.js")
-            .then((reg) => {
-                if (Notification.permission === "granted") {
-                    getSubscription(reg);
-                } else if (Notification.permission === "denied") {
-                    blockSubscription();
-                } else {
-                    requestNotificationAccess(reg);
-                }
-            });
-    });
-}
-
-function requestNotificationAccess(reg) {
-    var notificacionesPermitidas = $('#inpt_Notificaciones').val();
-    if(notificacionesPermitidas != ""){
-        Notification.requestPermission(function (status) {
-            if (status == "granted") {
-                getSubscription(reg);
-            } else if (status == "denied") {
-                blockSubscription();
-            }
-        });
-    }  
-}
-
-function blockSubscription() {
-    var urlPeticion = location.protocol + "//" + location.host + "/PeticionesAJAX/DesuscribirseNotificacionesPush";
-
-    GnossPeticionAjax(
-        urlPeticion,
-        null,
-        true
-    ).done(function (data) {
-
-    }).fail(function (data) {
-
-    }).always(function () {
-
-    });
-}
-
-function fillSubscribeFields(sub) {
-    var endpoint = sub.endpoint;
-    var p256dh = arrayBufferToBase64(sub.getKey("p256dh"));
-    var auth = arrayBufferToBase64(sub.getKey("auth"));
-    var urlPeticion = location.protocol + "//" + location.host + "/PeticionesAJAX/SuscribirseNotificacionesPush";
-
-    var datapost =
-    {
-        pEndpoint: endpoint,
-        pP256dh: p256dh,
-        pAuth: auth
-    };
-
-    GnossPeticionAjax(
-        urlPeticion,
-        datapost,
-        true
-    ).done(function (data) {
-
-    }).fail(function (data) {
-
-    }).always(function () {
-
-    });
-}
-
-function arrayBufferToBase64(buffer) {
-    var binary = '';
-    var bytes = new Uint8Array(buffer);
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-}
-// FIN NOTIFICACIONES PUSH
 
 /**
  * Operativa para hacer Zoom en las imágenes. Sólo se ejecutará si existe la librería instalada
@@ -26560,36 +15797,36 @@ const operativaImagesZooming = {
         this.pParams = pParams;
         this.config(pParams);
         this.configEvents();
-        this.triggerEvents();     
+        this.triggerEvents();
     },
 
     /*
      * Inicializar elementos de la vista
      * */
-    config: function (pParams) {                
+    config: function (pParams) {
         // Elementos del DOM
-        
+
         /* Nombre de la clase a las que se aplicará el comportamiento de imágenes en Zoom */
-        this.imageZoomingClassName = "zooming";                         
-    },    
+        this.imageZoomingClassName = "zooming";
+    },
 
     /**
      * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
      */
     configEvents: function (pParams) {
-        
+
     },
-       
+
     /**
      * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
      */
-    triggerEvents: function(){
-        const that = this;        
+    triggerEvents: function () {
+        const that = this;
 
         // Ejecutar operativa si existe la librería zooming
-        if (typeof Zooming !== 'undefined') {            
-            that.setupZoomImagesImages();                    
-        }                     
+        if (typeof Zooming !== 'undefined') {
+            that.setupZoomImagesImages();
+        }
     },
 
     setupObserverForImageZooming: function (classNames, callback) {
@@ -26604,10 +15841,10 @@ const operativaImagesZooming = {
             }
             node.childNodes.forEach(buscarElementos);
         }
-     
+
         // Ejecutar la búsqueda en el documento completo
         buscarElementos(document.body);
-     
+
         // Configurar el MutationObserver para observar cambios en el DOM
         let observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
@@ -26617,17 +15854,282 @@ const operativaImagesZooming = {
             });
         });
         observer.observe(document.body, { childList: true, subtree: true });
-    },        
+    },
 
     /**
      * Método que revisará las imágenes y las prepara para tengan la opción del "Zoom" haciendo uso de la librería "zooming"
      */
-    setupZoomImagesImages: function(){
+    setupZoomImagesImages: function () {
         const that = this;
 
         // Configurar el disparador para la faceta
-        that.setupObserverForImageZooming([`${that.imageZoomingClassName}`], function(element){            
+        that.setupObserverForImageZooming([`${that.imageZoomingClassName}`], function (element) {
             new Zooming().listen(`.${that.imageZoomingClassName}`);
-        });          
-    },    
+        });
+    },
+}
+
+/**
+ * Operariva que permite cargar mas comentarios de un recurso
+ */
+const operativaCargarMasComentarios = {
+    /**
+     * Acción para inicializar elementos y eventos
+     * @param {any} pParams
+     */
+    init: function (pParams) {
+        this.config(pParams);
+        this.configEvents(pParams);
+    },
+
+    /**
+     * Opciones de configuración de la vista (recoger ids para poder interactuar)
+     * @param {any} pParams
+     */
+    config: function (pParams) {
+
+        // Inicialización de variables
+        this.btnLoadMoreComments = $(`.${pParams.config.btnLoadMoreCommentsClassName}`);
+ 	    this.urlLoadMoreComments = pParams.config.urlLoadMoreComments;
+        this.panComentariosIdName = pParams.config.panComentariosIdName;
+        this.comentarioClassName = pParams.config.comentarioClassName;
+        this.loadingMoreResultClassName = pParams.config.loadingMoreResultClassName;
+        this.numComentariosIdName = pParams.config.numComentariosIdName;
+    },
+    /**
+     * Configuración de los eventos de los items html
+     */
+    configEvents: function (pParams) {
+        const that = this;
+
+        this.btnLoadMoreComments.off().on("click", function () {
+                that.loadMoreComments();
+            });
+    },
+    loadMoreComments: function () {
+        const that = this;
+
+        let inicio = $(`#${that.panComentariosIdName} .${that.comentarioClassName}`).length;
+        if(inicio == undefined) inicio = 0;
+
+        // Mostrado de loading
+        $(`.${that.loadingMoreResultClassName}`).removeClass("d-none");
+
+        let dataPost = {
+            pInicio: inicio
+        }
+
+        this.btnLoadMoreComments.prop("disabled", true);
+
+        // Realizar la petición para actualizar el campo
+        GnossPeticionAjax(
+            that.urlLoadMoreComments,
+            dataPost,
+            true
+        ).done(function (data) {
+            data.$values.forEach(function (item){
+                $(`#${that.panComentariosIdName}`).append(item.html);
+            });
+
+            if($(`#${that.panComentariosIdName} .${that.comentarioClassName}`).length == $(`#${that.numComentariosIdName}`).text()){
+                that.btnLoadMoreComments.addClass("d-none");
+            }
+        }).fail(function (data) {
+            mostrarNotificacion("error",data);
+        }).always(function () {
+            // Ocultar loading
+            that.btnLoadMoreComments.prop("disabled", false);
+            $('.loading-more-results').addClass("d-none");
+        })
+    },
+}
+
+/**
+ * Operativa para el comportamiento de la pagina "Mis Comunidades"
+ */
+const operativaMisComunidades = {
+    
+    init: function () {
+        this.configEvents();
+    },
+
+    /**
+     * Asignamos los eventos a los items del drop down
+     */
+    configEvents: function () {
+        const that = this;
+
+        $($("#panel-orderBy a.item-dropdown.my-community")).on("click", function () {
+            that.orderMyCommunities(this);
+        });
+    },
+
+    /**
+     * Ordenamos segun el item seleccionado
+     */
+    orderMyCommunities: function (pItem) {
+        let item = $(pItem);
+        let orderBy = item.data("orderby");
+        let order = item.data("order");
+
+        let communityList = $(".resource-list-wrap .card-community").get();
+        let campo = "";
+        let isDate = false;
+        switch(orderBy){
+            case "foaf:firstName":
+                campo = "name";
+                break;
+            case "gnoss:hasnumerorecursos":
+                campo = "resources";
+                break;
+            case "gnoss:hasparticipanteIdentidadID":
+                campo = "persons";
+                break;
+            case "gnoss:hasfechaAlta":
+                campo = "creationdate";
+                isDate = true;
+                break;
+        }
+
+        communityList.sort(function(a,b){
+            
+            let item1 = $(a).find(`.${campo}`).data(campo);
+            let item2 = $(b).find(`.${campo}`).data(campo);
+
+            if(campo === "name"){
+                item1 = item1.toLowerCase();
+                item2 = item2.toLowerCase();
+            }
+
+            if(isDate){
+                item1 = item1.split('/').reverse().join(),
+                item2 = item2.split('/').reverse().join();
+            }
+
+            if(order.includes("asc")){
+                return item1 > item2 ? 1 : (item1 < item2) ? -1 : 0;
+            }else{
+                return item1 < item2 ? 1 : (item1 > item2) ? -1 : 0;
+            }
+        });
+
+        $(".resource-list-wrap").empty().append(communityList);
+        
+    }  
+}
+
+/**
+ * Renderiza un elemento de la lista de resultados del servicio de autocomplete.
+ * 
+ * @param {Object} item - Objeto que representa el ítem a renderizar, típicamente contiene datos como imagen, título, peso, etc.
+ * @param {string} term - El término de búsqueda que originó los resultados de autocomplete.
+ * @returns {string} - HTML string que representa el ítem renderizado para ser insertado en el DOM.
+ */
+function autocompleteFillListItem(item, term) {
+
+    // Comprobación de versión del customizada para el proyecto
+    if (typeof autocompleteCustomFillListItem === 'function') {
+        return autocompleteCustomFillListItem(item, term);
+    } else {
+        // Comprobar si la imagen es válida o no
+        const imageUrl = item.data.imagen ? item.data.imagen : '';
+        const imagePlaceholder = imageUrl
+            ? `<img src="${imageUrl}" alt="${item.data.titulo}" class="autocomplete__result-item-img">`
+            : item.data.textoBuscableFaceta
+            ? `<span class="material-icons autocomplete__result-item-placeholder">sort</span>`
+            : `<span class="material-icons autocomplete__result-item-placeholder">search</span>`;
+
+        // Comprobar si la URL y otros datos existen
+        const subtipoData = item.data.subtipo ? item.data.subtipo : '';
+        const url = item.data.urlRecurso ? item.data.urlRecurso : item.data.textoBuscableFaceta ? window.location.href.split('?')[0] + '?' + item.data.textoBuscableFaceta : '';
+        item.data.urlRecurso = url;
+        return `
+              <div class="autocomplete__result-item">
+                <div class="autocomplete__result-item-image">
+                  ${imagePlaceholder}
+                </div>
+                <div class="autocomplete__result-item-content">
+                  <div class="autocomplete__result-item-title">${item.data.titulo}</div>
+                  <div class="autocomplete__result-item-subtype">${subtipoData}</div>
+                </div>
+              </div>
+        `;
+    }
+}
+
+
+/**
+ * Inicializa un selector de fecha y hora en el elemento especificado con las opciones dadas.
+ *
+ * Esta función limpia cualquier inicialización previa del selector de fecha y hora en el
+ * selector especificado y configura un nuevo selector de fecha y hora con las opciones proporcionadas,
+ * fusionadas con la configuración predeterminada.
+ *
+ * @param {string} selector - El selector de jQuery que identifica el(los) elemento(s)
+ *                            a los que se les adjuntará el selector de fecha y hora.
+ * @param {Object} [options={}] - Configuraciones opcionales para el selector de fecha y hora.
+ * @param {boolean} [options.enableTime=false] - Indica si se debe habilitar el selector de hora.
+ * @param {string} [options.defaultTime='12:00'] - La hora predeterminada si se habilita el selector de hora.
+ * @param {number} [options.yearStart] - El año inicial en el rango de años.
+ * @param {number} [options.yearEnd] - El año final en el rango de años.
+ * @param {string} [options.lang='en'] - El idioma para el selector de fecha y hora, por defecto toma el valor de '#inpt_Idioma' o 'en'.
+ * @param {number} [options.dayOfWeekStart=1] - El día de inicio de la semana (0 para domingo, 1 para lunes).
+ * @param {function} [options.onSelectDate=() => {}] - Función de devolución de llamada cuando se selecciona una fecha.
+ * @param {function} [options.onSelectTime=() => {}] - Función de devolución de llamada cuando se selecciona una hora.
+ * *****************************************************
+ * Ejemplo de uso
+ * 
+    initCustomDatePicker('.calenFormSem', {
+        yearStart: 2000,
+        yearEnd: 2030,
+        enableTime: true, // Activa el configuración para la "Hora"
+    });
+ */
+function initCustomDatePicker(selector, options = {}) {
+    if (typeof $.datetimepicker === 'undefined') {
+        console.warn("Datetimepicker no está cargado. No se puede inicializar.");
+        return;
+    }
+
+    // Limpiar cualquier rastro de inicializaciones previas
+    $(selector).off();
+    $(selector).removeClass('xdsoft_input');
+    $(selector).removeData('xdsoft_datetimepicker');
+
+    const defaultYearStart = new Date().getFullYear() - 110; // Hace 110 años a partir del año actual
+    const defaultYearEnd = new Date(new Date().setFullYear(new Date().getFullYear() + 100)).getFullYear(); // Dentro de 100 años a partir del año actual    
+
+    // Si no se pasan valores, se asignan los valores por defecto
+    const yearStart = options.yearStart !== undefined ? options.yearStart : defaultYearStart;
+    const yearEnd = options.yearEnd !== undefined ? options.yearEnd : defaultYearEnd;
+
+    // Valores predeterminados
+    const defaultOptions = {
+        format: options.enableTime ? 'd/m/Y H:i:s' : 'd/m/Y', // Añade hora solo si está habilitada
+        timepicker: options.enableTime || false, // Activa o desactiva el selector de hora
+        datepicker: true, // Mantiene el selector de fecha activo
+        defaultTime: options.enableTime ? '12:00' : false, // Hora predeterminada solo si está habilitada
+        yearStart: yearStart !== null ? yearStart : undefined, // Usar undefined si no hay valor
+        yearEnd: yearEnd !== null ? yearEnd : undefined, // Usar undefined si no hay valor        
+        dayOfWeekStart: 1, // Comienza la semana en lunes
+        onSelectDate: () => {
+            $(selector).datetimepicker('hide');
+        },
+        onSelectTime: () => {
+            $(selector).datetimepicker('hide');
+        },
+    };
+
+    // Combina los valores predeterminados con los proporcionados
+    const config = {
+        ...defaultOptions,
+        ...options, // Sobrescribe los valores predeterminados con las opciones del usuario
+    };
+    
+    // Idioma del datepicker
+    $.datetimepicker.setLocale($('#inpt_Idioma').val() || 'en');
+    // Retrasar la inicialización para poder "destruir" posibles comportamientos asociados previos
+    setTimeout(() => {
+        $(selector).datetimepicker(config);        
+    }, 3000);
 }

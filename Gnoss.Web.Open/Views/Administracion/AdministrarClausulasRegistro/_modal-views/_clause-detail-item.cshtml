@@ -103,16 +103,16 @@ Variables
 						@if (!Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.PoliticaCookiesUrlPagina) && !Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
 						{
 							<div class="form-group mb-4">
-								<textarea  
+								<textarea id="txtClausula"
 										  rows="6"
 										  name="TextoClausula"
-		 			   					  class="cke multiIdioma" 
+		 			   					  class="multiIdioma" 
 										  data-labeltext="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCLAUSULA")">@Model.Text1</textarea>
 							</div>
 						} else if (Model.Type.Equals(ManageRegisterClausesViewModel.ClauseType.Opcional))
 						{
 							<div class="form-group mb-4">
-								<textarea  
+								<textarea id="txtClausula"
 										  rows="6"
 										  name="TextoClausula"
 		 			   					  class="multiIdioma" 
@@ -123,19 +123,19 @@ Variables
 						{
 							@* Texto Cláusula *@
 							<div class="form-group mb-4">
-								<textarea  								
-										  rows="6"
+								<textarea id="txtClausula"
+									  rows="6"
 										  name="TextoCabeceraClausula"
-		 			   					  class="cke multiIdioma" 
+		 			   					  class="multiIdioma" 
 										  data-labeltext="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOCABECERACLAUSULACOOKIES")">@Model.Text1</textarea>
 							</div>
 
 						 @* Texto Página de la cláusula *@
-							<div class="form-group mb-4">								
-								<textarea  
+							<div class="form-group mb-4">
+								<textarea id="txtClausula"
 										  rows="6"
 										  name="TextoPaginaClausula"
-		 			   					  class="cke multiIdioma" 
+		 			   					  class="multiIdioma" 
 										  data-labeltext="@Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTOPAGINACLAUSULACOOKIES")">@Model.Text2</textarea>
 							</div>						
 						}

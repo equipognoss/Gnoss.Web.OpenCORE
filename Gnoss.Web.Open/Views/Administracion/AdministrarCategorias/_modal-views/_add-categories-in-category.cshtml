@@ -26,6 +26,10 @@
 		@* Título de la categoría -> Pintar caja multiidioma *@
 		@Html.PartialView("_PintarCajasMultiidioma", pintarComboAdministrarCategoriasModel)        
 
+        <div class="form-group mb-4">
+            <label class="control-label d-block">@Html.GetText("DEVTOOLS","IMAGENCATEGORIA")</label>
+            <input type="file" id="pImagenCategoria" class="form-control" accept="image/*" max-size="20480">
+        </div>
 		@* Sección botón de guardado y cierre del modal *@
 		<div class="panelBotonera">
 			<a id="btnGuardarCategoryInCategory" data-category-id="@Model.CategoriaId" class="btn btn-primary uppercase">@Html.GetText("COMMON","AÑADIR")</a>

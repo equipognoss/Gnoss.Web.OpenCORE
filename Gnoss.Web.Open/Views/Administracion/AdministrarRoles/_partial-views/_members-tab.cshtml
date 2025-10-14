@@ -1,0 +1,89 @@
+﻿@model RolModel
+
+<div class="tab-content">
+    <div class="buscador">
+        <form method="post" action="#">
+            <div class="fieldsetGroup searchGroup">
+                <div class="textoBusquedaPrincipalInput">
+                    <input type="text" id="txtBusquedaUsuario" class="not-outline text txtBusqueda autocompletar personalizado ac_input" placeholder="@Html.GetText("DEVTOOLS", "ESCRIBEALGO")" autocomplete="off">
+                    <span class="botonSearch">
+                        <span class="material-icons">search</span>
+                    </span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <table class="display nowrap table table-sm tabla-miembros">
+        <thead>
+            <tr>
+                <th>@Html.GetText("DEVTOOLS", "NOMBRE")</th>
+                <th>@Html.GetText("CONTACTOS", "TIPO")</th>
+                <th>@Html.GetText("CONTROLESDOCUMENTACION", "ACCIONES")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (MiembroDeRol miembro in Model.ListaMiembros)
+            {
+
+                <tr id="miembro_@miembro.ID" class="component-wrap usuario-row">
+                    <td>
+                        <div class="user-miniatura">
+                            <div class="imagen-usuario-wrap">
+                                <a href="@miembro.Url">
+                                    @if (string.IsNullOrEmpty(miembro.Foto))
+                                    {
+                                        <div class="imagen sinImagen">
+                                            @if (miembro.EsGrupo)
+                                            {
+                                                <span class="material-icons">groups</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="material-icons">person</span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        string foto = $"{@Html.GetBaseUrlContent()}/{miembro.Foto}";
+                                        <div class="imagen">
+                                            <span style="background-image: url(@foto)"></span>
+                                        </div>
+                                    }
+                                </a>
+                            </div>
+                            <div class="nombre-usuario-wrap">
+                                <a href="@miembro.Url">
+                                    <p class="nombre component-name">@miembro.Nombre</p>
+                                    <p class="nombre-completo">@miembro.Nombre</p>
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @if (miembro.EsGrupo)
+                        {
+                            @Html.GetText("DEVTOOLS", "GRUPO")
+                        }
+                        else
+                        {
+                            @Html.GetText("DEVTOOLS", "USUARIO")
+                        }
+                    </td>
+                    <td>
+                        <div class="acciones">
+                            <ul class="no-list-style">
+                                <li>
+                                    <a class="btnEliminarMiembroRol" data-rol="@Model.RolID" data-nombre-miembro="@miembro.Nombre" data-nombre-rol="@Html.ObtenerTextoDeIdioma(Model.Nombre)" data-miembro="@miembro.ID" data-esgrupo="@miembro.EsGrupo" data-toggle="modal" data-target="#modal-eliminar-miembro">
+                                        <span class="material-icons">delete</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

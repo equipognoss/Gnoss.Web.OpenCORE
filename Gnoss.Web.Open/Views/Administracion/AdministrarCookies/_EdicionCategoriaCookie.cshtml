@@ -2,7 +2,7 @@
 @using Es.Riam.Gnoss.AD.EntityModel.Models.Cookies;
 
 @{
-    CategoriaProyectoCookie categoriaCookie = Model.CategoriaProyectoCookie;
+	CategoriaProyectoCookie categoriaCookie = Model.CategoriaProyectoCookie;
 }
 
 
@@ -18,20 +18,20 @@ Variables
 *@
 
 @{
-// Cabecera para obtención de idiomas de la Comunidad
-HeaderModel cabecera = Html.GetCabecera();
-string idModalCookie = "modal-configuracion-category-cookie_" + categoriaCookie.CategoriaID;	
-string idModalCookieDelete = "modal-configuracion-category-cookie_delete" + categoriaCookie.CategoriaID;    
-// Diccionario del contenido de la cláusula (En varios idiomas)    
-Dictionary<string, string> cookieNameDictionary = new Dictionary<string, string>();    
-// Idioma por defecto de la comunidad
-string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
+	// Cabecera para obtención de idiomas de la Comunidad
+	HeaderModel cabecera = Html.GetCabecera();
+	string idModalCookie = "modal-configuracion-category-cookie_" + categoriaCookie.CategoriaID;
+	string idModalCookieDelete = "modal-configuracion-category-cookie_delete" + categoriaCookie.CategoriaID;
+	// Diccionario del contenido de la cláusula (En varios idiomas)
+	Dictionary<string, string> cookieNameDictionary = new Dictionary<string, string>();
+	// Idioma por defecto de la comunidad
+	string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
 }
 
 @* Construir los diferentes items en idiomas (Nombre) *@
 @{
 	// Obtener descripción/contenido de la cláusula en formato diccionario con los multiIdiomas para ser mostrados en la row de la cláusula
-    cookieNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(categoriaCookie.Nombre);		
+	cookieNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(categoriaCookie.Nombre);
 }
 
 @* Contenedor de la cookie *@
@@ -39,104 +39,99 @@ string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
 	<div class="component" data-id="@categoriaCookie.CategoriaID">
 		<div class="component-header-wrap">
 			<div class="component-header">
-                @* Icono para arrastrar y mover la cookie *@
+				@* Icono para arrastrar y mover la cookie *@
 				<div class="component-sortable js-component-sortable-cookie">
 					<span class="material-icons-outlined sortable-icon">drag_handle</span>
-				</div>                
+				</div>
 				<div class="component-header-content">
 					<div class="component-header-left">
-                        @* Nombre, tipo de cookie *@
+						@* Nombre, tipo de cookie *@
 						<div class="component-name-wrap">
 							@if (cookieNameDictionary.Count == 0)
 							{
-								<span class="language-component component-contenido @(idiomaPorDefecto)" data-languageitem="@idiomaPorDefecto">																																																			
+								<span class="language-component component-contenido @(idiomaPorDefecto)" data-languageitem="@idiomaPorDefecto">
 									@categoriaCookie.Nombre
 								</span>
 							}
 							else
-							{							
+							{
 								foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
-								{																												
-									<span class="language-component component-contenido @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">																	
+								{
+									<span class="language-component component-contenido @( idiomaPorDefecto == idioma.Key ? " " : "d-none")" data-languageitem="@idioma.Key">
 										@* Asegurarnos de que haya valor en el dictionary. Si no, dejarlo en blanco *@																										
 										@{
 											string value = "";
 											if (cookieNameDictionary.TryGetValue(idioma.Key, out value))
-											{                                           
-											   @value
-											}										
+											{
+												@value
+											}
 										}
 									</span>
 								}
 							}
 						</div>
-                        @* Nombre corto de la categoría cookie *@
+						@* Nombre corto de la categoría cookie *@
 						<div class="component-tipo-wrap">
 							<span class="component-tipo">@categoriaCookie.NombreCorto</span>
 						</div>
-                        @* Fecha creación / actualización de la categoría de la cookie *@
+						@* Fecha creación / actualización de la categoría de la cookie *@
 						<div class="component-fecha-wrap">
 							<span class="component-fecha">01 / 01 / 2022</span>
 						</div>
 					</div>
-                    @* Acciones de la cookie *@
+					@* Acciones de la cookie *@
 					<div class="component-header-right">
 						<div class="component-actions-wrap">
 							<div class="dropdown">
 								@* Dropdown de acciones en la categoría de cookie *@
-								<a								
-								class="nav-link dropdown-toggle btn btn-outline-grey @( categoriaCookie.EsCategoriaTecnica ? "disabled" : "")"
-								data-toggle="dropdown"
-								href="#"
-								role="button"
-								aria-haspopup="true"
-								aria-expanded="false">                                    
+								<a class="nav-link dropdown-toggle btn btn-outline-grey"
+								   data-toggle="dropdown"
+								   href="#"
+								   role="button"
+								   aria-haspopup="true"
+								   aria-expanded="false">
 									<span class="material-icons">create</span>
-									<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
+									<span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
 								</a>
-																
-								<div
-									class="dropdown-menu dropdown-menu-left basic-dropdown"
-									style="will-change: transform">
+
+								<div class="dropdown-menu dropdown-menu-left basic-dropdown"
+									 style="will-change: transform">
 									<ul class="no-list-style">
 										@* Botón Editar Categoria Cookie *@
-										@if (!categoriaCookie.EsCategoriaTecnica)
-										{																				
-											<li>
-												<a class="item-dropdown js-action-edit-component btnEditCategoryCookie"
-												   data-target="#@(idModalCookie)"
-												   data-toggle="modal">
-													<span class="material-icons">create</span>
-													<span class="texto">@Html.GetText("COMMON","EDITAR")</span>
-												</a>											  
-											</li>
+										<li>
+											<a class="item-dropdown js-action-edit-component btnEditCategoryCookie"
+											   data-target="#@(idModalCookie)"
+											   data-toggle="modal">
+												<span class="material-icons">create</span>
+												<span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
+											</a>
+										</li>
 
-											@if (!Model.CookiesVinculadas)
-											{
-												@* Botón Eliminar Categoria Cookie *@
-												<li>
-													<a class="item-dropdown js-action-delete-component btnDeleteCategoryCookie"
-												   data-target="#@(idModalCookieDelete)" 
+										@if (!Model.CookiesVinculadas)
+										{
+											@* Botón Eliminar Categoria Cookie *@
+											<li>
+												<a class="item-dropdown js-action-delete-component btnDeleteCategoryCookie"
+												   data-target="#@(idModalCookieDelete)"
 												   data-toggle="modal">
-														<span class="material-icons">delete</span>
-														<span class="texto">@Html.GetText("COMMON","ELIMINAR")</span>
-													</a>
-												</li>
-											}
+													<span class="material-icons">delete</span>
+													<span class="texto">@Html.GetText("COMMON", "ELIMINAR")</span>
+												</a>
+											</li>
 										}
 									</ul>
 								</div>
-								
+
 							</div>
 						</div>
-					</div>					
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 
 	@* Carga del modal para edición de la categoría cookie *@		
-	@Html.PartialView("_modal-views/_cookie-category-detail-item", Model)			
+	@Html.PartialView("_modal-views/_cookie-category-detail-item", Model)
 </li>
 
 
