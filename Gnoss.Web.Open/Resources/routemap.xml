@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <routeMap>
 	<seccion name="comun">
+		<pagina>
 			<pagina>
 				<key>@#@@URLSEM,|,REGISTROORGANIZACION@@#@</key>
 				<value>RegistroOrganizacion</value>
@@ -25,7 +26,6 @@
 				<key>@#@@URLSEM,|,REGISTROCLASE@@#@</key>
 				<value>registroorganizacion.aspx?clase=true</value>
 			</pagina>
-		<pagina>
 			<key>download-file</key>
 			<value>VisualizarDocumento</value>
 		</pagina>
@@ -1258,8 +1258,7 @@
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/delete-rol</key>
 			<value>AdministrarRoles/EliminarRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
+		</pagina>											 
 			<key>@#@@URLSEM,|,ADMINISTRARCOOKIESCOMECOSISTEMA@@#@</key>
 			<value>AdministrarCookies?ecosistema=true</value>
 		</pagina>
