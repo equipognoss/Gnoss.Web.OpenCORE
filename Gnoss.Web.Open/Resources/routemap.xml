@@ -451,7 +451,7 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,VERSIONARDOCUMENTOCREADO@@#@/{docID}/{ontologiaID}/{crearVersion}/saveresource</key>
-			<value>EditarRecurso/GuardarRecurso?editarformsem=true?version=true</value>
+			<value>EditarRecurso/GuardarRecurso?editarformsem=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,VERSIONARDOCUMENTOCREADO@@#@/{docID}/{ontologiaID}/{crearVersion}/attachfile</key>
@@ -995,22 +995,6 @@
 			<value>CMSAdminComponenteEditar/Select</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE@@#@/{idComponente}/{versionIdComponente}/restore</key>
-			<value>CMSAdminComponenteEditar/Restore</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE@@#@/{idComponente}/addCommentRestore</key>
-			<value>CMSAdminComponenteEditar/AddCommentVersion</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSHISTORIALCOMPONENTE@@#@/{idComponente}/load-history</key>
-			<value>CMSAdminComponenteHistorial/LoadHistory</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSHISTORIALCOMPONENTE@@#@/{idComponente}/compare</key>
-			<value>CMSAdminComponenteHistorial/Compare</value>
-		</pagina>
-		<pagina>																									   
 			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/{tipoPagina}/searchComponent</key>
 			<value>AdministrarPaginasCMS/BuscarComponente</value>
 		</pagina>
@@ -1039,14 +1023,6 @@
 			<value>AdministrarPaginasCMS/CrearComponente</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCMSPAGINAHISTORIAL@@#@/load-history</key>
-			<value>AdministrarPaginaCMSHistorial/LoadHistory</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCMSPAGINAHISTORIAL@@#@/compare</key>
-			<value>AdministrarPaginaCMSHistorial/Compare</value>
-		</pagina>
-		<pagina>															 
 			<key>configurar-search-autocompletar</key>
 			<value>AdministracionSearch</value>
 		</pagina>
@@ -1055,14 +1031,6 @@
 			<value>AdministrarPaginasCMS/SeleccionarComponente</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/add-comment</key>
-			<value>AdministrarPaginasCMS/AddCommentVersion</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/restore</key>
-			<value>AdministrarPaginasCMS/RestaurarVersion</value>
-		</pagina>
-		<pagina>																  
 			<key>@#@@URLSEM,|,ONTOLOGIA@@#@/{ontologia}</key>
 			<value>Ontologia/DescargarOntologia</value>
 		</pagina>
@@ -1151,114 +1119,10 @@
 			<value>Registro/RegistrarUsuarioAdmin</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,COMADMINCOMMIEMBROS@@#@/cargar-modal-cambiar-rol</key>
-			<value>FichaPerfil/CargarModalCambiarRolUsuario</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,COMADMINCOMMIEMBROS@@#@/cargar-modal-cambiar-rol-grupo</key>
-			<value>FichaPerfil/CargarModalCambiarRolGrupo</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,COMADMINCOMMIEMBROS@@#@/cambiar-roles-usuario</key>
-			<value>FichaPerfil/CambiarRolesUsuario</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,COMADMINCOMMIEMBROS@@#@/cambiar-roles-grupo</key>
-			<value>FichaPerfil/CambiarRolesGrupo</value>
-		</pagina>
-		<pagina>															   
 			<key>@#@@URLSEM,|,COMADMINCOMMIEMBROS@@#@/cambiar-pass-admin</key>
 			<value>FichaPerfil/ResetPassord</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@</key>
-			<value>AdministrarRoles?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINLISTADOPERMISOS@@#@</key>
-			<value>AdministrarListadoPermisos</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINLISTADOPERMISOS@@#@/ver-permiso</key>
-			<value>AdministrarListadoPermisos/CargarFichaPermiso</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINLISTADOPERMISOSECOSISTEMA@@#@/ver-permiso</key>
-			<value>AdministrarListadoPermisos?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINLISTADOPERMISOSECOSISTEMA@@#@</key>
-			<value>AdministrarListadoPermisos?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@</key>
-			<value>Busqueda?perorg=true?admin=true?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/cargar-modal-cambiar-rol</key>
-			<value>FichaPerfil/CargarModalCambiarRolUsuario?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/cargar-modal-cambiar-rol-grupo</key>
-			<value>FichaPerfil/CargarModalCambiarRolGrupo?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/cambiar-roles-usuario</key>
-			<value>FichaPerfil/CambiarRolesUsuario?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/cambiar-roles-grupo</key>
-			<value>FichaPerfil/CambiarRolesGrupo?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/load-modal-user-page-permissions</key>
-			<value>Busqueda/LoadModalUserPagePermissions?perorg=true?admin=true?ecosistema=true</value>
-		</pagina>
-
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/save-user-page-permissions</key>
-			<value>Busqueda/SaveUserPagePermissions?perorg=true?admin=true?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/registro-usuario-admin</key>
-			<value>Registro/RegistrarUsuarioAdmin?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMIEMBROSECOSISTEMA@@#@/cambiar-pass-admin</key>
-			<value>FichaPerfil/ResetPassord?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/load-modal-new-rol</key>
-			<value>AdministrarRoles/CargarModalNuevoRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/load-modal-see-rol</key>
-			<value>AdministrarRoles/CargarModalVerRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/load-modal-edit-rol</key>
-			<value>AdministrarRoles/CargarModalEditarRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/load-modal-delete-rol</key>
-			<value>AdministrarRoles/CargarModalEliminarRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/remove-member-rol</key>
-			<value>AdministrarRoles/EliminarMiembroDeRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/save-new-rol</key>
-			<value>AdministrarRoles/CrearNuevoRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/save-rol</key>
-			<value>AdministrarRoles/GuardarRol?ecosistema=true</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLESECOSISTEMA@@#@/delete-rol</key>
-			<value>AdministrarRoles/EliminarRol?ecosistema=true</value>
-		</pagina>											 
 			<key>@#@@URLSEM,|,ADMINISTRARCOOKIESCOMECOSISTEMA@@#@</key>
 			<value>AdministrarCookies?ecosistema=true</value>
 		</pagina>
@@ -1678,14 +1542,6 @@
 			<value>AdministrarOpcionesAvanzadasPlataforma/Guardar</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,ADMINOPCIONESPLATAFORMA@@#@/shutdown</key>
-			<value>AdministrarOpcionesAvanzadasPlataforma/Shutdown</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINOPCIONESPLATAFORMA@@#@/add-custom-language</key>
-			<value>AdministrarOpcionesAvanzadasPlataforma/AddCustomLanguage</value>
-		</pagina>
-		<pagina>												   
 			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@</key>
 			<value>AdministrarCategorias?ecosistema=true</value>
 		</pagina>
@@ -2320,34 +2176,18 @@
 			<value>Busqueda?Meta=true</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,RECURSOS@@#@</key>
-			<value>Busqueda?Recursos=true</value>
-		</pagina>
-		<pagina>						   
 			<key>@#@@URLSEM,|,RECURSOS@@#@/{*searchInfo}</key>
 			<value>Busqueda?Recursos=true</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,DEBATES@@#@</key>
-			<value>Busqueda?debates=true</value>
-		</pagina>
-		<pagina>						  
 			<key>@#@@URLSEM,|,DEBATES@@#@/{*searchInfo}</key>
 			<value>Busqueda?debates=true</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,PREGUNTAS@@#@</key>
-			<value>Busqueda?preguntas=true</value>
-		</pagina>
-		<pagina>							
 			<key>@#@@URLSEM,|,PREGUNTAS@@#@/{*searchInfo}</key>
 			<value>Busqueda?preguntas=true</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,ENCUESTAS@@#@</key>
-			<value>Busqueda?encuestas=true</value>
-		</pagina>
-		<pagina>							
 			<key>@#@@URLSEM,|,ENCUESTAS@@#@/{*searchInfo}</key>
 			<value>Busqueda?encuestas=true</value>
 		</pagina>
@@ -2610,46 +2450,9 @@
 			<key>@#@@URLSEM,|,ADMINMETAADMINOPTIONS@@#@/shutdown</key>
 			<value>AdministrarOpcionesMetaAdministrador/Shutdown</value>
 		</pagina> 
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@</key>
-			<value>AdministrarRoles</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/save-config-download</key>
-			<value>AdministrarRoles/GuardarDescargarFicheroUsuarioInvitado</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/load-modal-new-rol</key>
-			<value>AdministrarRoles/CargarModalNuevoRol</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/load-modal-see-rol</key>
-			<value>AdministrarRoles/CargarModalVerRol</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/load-modal-edit-rol</key>
-			<value>AdministrarRoles/CargarModalEditarRol</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/load-modal-delete-rol</key>
-			<value>AdministrarRoles/CargarModalEliminarRol</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/remove-member-rol</key>
-			<value>AdministrarRoles/EliminarMiembroDeRol</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/save-new-rol</key>
-			<value>AdministrarRoles/CrearNuevoRol</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/save-rol</key>
-			<value>AdministrarRoles/GuardarRol</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARROLES@@#@/delete-rol</key>
-			<value>AdministrarRoles/EliminarRol</value>
-		</pagina>
+
+
+
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADBUZONCORREO@@#@</key>
 			<value>AdministrarOpcionesAvanzadas/IndexBuzonCorreo</value>
@@ -2805,30 +2608,7 @@
 			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/save</key>
 			<value>AdministrarPestanyas/Guardar</value>
 		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/saveP</key>
-			<value>AdministrarPestanyas/GuardarPestanya</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/CloseModal</key>
-			<value>AdministrarPestanyas/CerrarModalSinGuardar</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/RestorePage</key>
-			<value>AdministrarPestanyas/RestaurarVersion</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/add-comment</key>
-			<value>AdministrarPestanyas/AddCommentVersion</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/ComparePage</key>
-			<value>AdministrarPestanyas/CompararVersionConfigPestanya</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/load-history</key>
-			<value>AdministrarPestanyas/CargarHistorial</value>
-		</pagina>
+
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARHEADESTILOS@@#@</key>
 			<value>AdministrarHead</value>
@@ -3637,7 +3417,7 @@
 			<value>FichaRecurso/UnlockComments</value>
 		</pagina>
 		<pagina>
-			<key>{nombreRecurso}/{docID}/{versionDocID}/restore-version</key>
+			<key>{nombreRecurso}/{docID}/restore-version</key>
 			<value>FichaRecurso/RestoreVersion</value>
 		</pagina>
 		<pagina>
