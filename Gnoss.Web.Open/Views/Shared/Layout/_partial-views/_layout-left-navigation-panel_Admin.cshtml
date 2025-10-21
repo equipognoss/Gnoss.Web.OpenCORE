@@ -1008,76 +1008,77 @@ Variables
                             </a>
                         }
                     }
-
-                    @*Sección Ayuda*@
-                    <div class="group-collapse ayuda">
-                        <a href="#ayuda"
-                        data-toggle="collapse"
-                        aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "true" : "false" )"
-                        class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "activo" : null) ">
-                            <span class="material-icons" alt="@Html.GetText("DEVTOOLS","AYUDA")" title="@Html.GetText("DEVTOOLS","AYUDA")" aria-label="@Html.GetText("DEVTOOLS","AYUDA")">
-                                contact_support
-                            </span>
-                            <span class="texto">@Html.GetText("DEVTOOLS", "AYUDA") (BETA)</span>
-                            @* Arrow down/up dependiendo (Activo /No activo) *@
-                            <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
-                        </a>
-                        <div id="ayuda" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "show" : null) ">
-                            <ul class="pmd-sidebar-nav">
-                                @* Diagnostico problemas *@
-                                @if (permisosPaginas.EsAdministradorProyecto)
-                                {
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "DIAGNOSTICOPROBLEMAS")"
-                                        data-searchable="diagnóstico, problemas, troubleshooting, ayuda, error, fallo"
-                                        class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Ayuda_DiagnosticoProblemas) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS", "DIAGNOSTICOPROBLEMAS")
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
+                    @if (!isInEcosistemaPlatform)
+                    {
+                        @*Sección Ayuda*@
+                        <div class="group-collapse ayuda">
+                            <a href="#ayuda"
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "true" : "false" )"
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "activo" : null) ">
+                                <span class="material-icons" alt="@Html.GetText("DEVTOOLS","AYUDA")" title="@Html.GetText("DEVTOOLS","AYUDA")" aria-label="@Html.GetText("DEVTOOLS","AYUDA")">
+                                    contact_support
+                                </span>
+                                <span class="texto">@Html.GetText("DEVTOOLS", "AYUDA") (BETA)</span>
+                                @* Arrow down/up dependiendo (Activo /No activo) *@
+                                <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
+                            </a>
+                            <div id="ayuda" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Ayuda) ? "show" : null) ">
+                                <ul class="pmd-sidebar-nav">
+                                    @* Diagnostico problemas *@
+                                    @if (permisosPaginas.EsAdministradorProyecto)
+                                    {
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "DIAGNOSTICOPROBLEMAS")"
+                                            data-searchable="diagnóstico, problemas, troubleshooting, ayuda, error, fallo"
+                                            class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Ayuda_DiagnosticoProblemas) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "DIAGNOSTICOPROBLEMAS")
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
                         </div>
-                    </div>
 
-                    @* Sección mantenimiento *@
-                    <div class="group-collapse mantenimiento">
-                        <a href="#mantenimiento"
-                        data-toggle="collapse"
-                        aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "true" : "false" )"
-                        class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "activo" : null) ">
-                            <span class="material-icons" alt="@Html.GetText("DEVTOOLS","MANTENIMIENTO")" title="@Html.GetText("DEVTOOLS","MANTENIMIENTO")" aria-label="@Html.GetText("DEVTOOLS","MANTENIMIENTO")">
-                                pending_actions
-                            </span>
-                            <span class="texto">@Html.GetText("DEVTOOLS", "MANTENIMIENTO") (BETA)</span>
-                            @* Arrow down/up dependiendo (Activo /No activo) *@
-                            <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
-                        </a>
-                        <div id="mantenimiento" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "show" : null) ">
-                            <ul class="pmd-sidebar-nav">
-                                @if (administrarReprocesar)
-                                {
-                                    @* Regenerar recursos *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "REPROCESADORECURSOS")"
-                                        data-searchable="recursos, reprocesado, regenerar, índice"
-                                        class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_ReprocesadoRecursos) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS", "REPROCESADORECURSOS")
-                                        </a>
-                                    </li>
+                        @* Sección mantenimiento *@
+                        <div class="group-collapse mantenimiento">
+                            <a href="#mantenimiento"
+                            data-toggle="collapse"
+                            aria-expanded="@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "true" : "false" )"
+                            class="parent-navigation @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "activo" : null) ">
+                                <span class="material-icons" alt="@Html.GetText("DEVTOOLS","MANTENIMIENTO")" title="@Html.GetText("DEVTOOLS","MANTENIMIENTO")" aria-label="@Html.GetText("DEVTOOLS","MANTENIMIENTO")">
+                                    pending_actions
+                                </span>
+                                <span class="texto">@Html.GetText("DEVTOOLS", "MANTENIMIENTO") (BETA)</span>
+                                @* Arrow down/up dependiendo (Activo /No activo) *@
+                                <span class="material-icons icon-collapse">@((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "keyboard_arrow_up" : "keyboard_arrow_down")</span>
+                            </a>
+                            <div id="mantenimiento" class="collapse @((seccionDevTools == AdministracionSeccionesDevTools.SeccionesDevTools.Mantenimiento) ? "show" : null) ">
+                                <ul class="pmd-sidebar-nav">
+                                    @if (administrarReprocesar)
+                                    {
+                                        @* Regenerar recursos *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "REPROCESADORECURSOS")"
+                                            data-searchable="recursos, reprocesado, regenerar, índice"
+                                            class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_ReprocesadoRecursos) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "REPROCESADORECURSOS")
+                                            </a>
+                                        </li>
 
-                                    @* Tareas en segundo plano *@
-                                    <li>
-                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "TAREASFONDO")"
-                                        data-searchable="fondo, segundo plano, tareas"
-                                        class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_TareasFondo) ? "activo" : null)">
-                                            @Html.GetText("DEVTOOLS", "TAREASSEGUNDOPLANO")
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
+                                        @* Tareas en segundo plano *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "TAREASFONDO")"
+                                            data-searchable="fondo, segundo plano, tareas"
+                                            class="info-ayuda @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_TareasFondo) ? "activo" : null)">
+                                                @Html.GetText("DEVTOOLS", "TAREASSEGUNDOPLANO")
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
                         </div>
-                    </div>
-
+                    }
                     @* Sección Apariencia (Ecosistema) *@
                     @if (isInEcosistemaPlatform)
                     {

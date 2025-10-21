@@ -1766,6 +1766,10 @@
 			<key>@#@@URLSEM,|,MANUALSHAREPOINT@@#@</key>
 			<value>AdministrarSharepoint/Manual?ecosistema=true</value>
 		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRAREVENTOSEXTERNOSECOSISTEMA@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarEventosExternos</value>
+		</pagina>
 	</seccion>
 	<seccion name="acercaYaprende">
 		<!--<pagina>
@@ -2287,18 +2291,6 @@
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARSEOGOOGLEPLATAFORMA@@#@/save</key>
 			<value>AdministrarSeoGooglePlataforma/Guardar</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMATOMO@@#@</key>
-			<value>AdministrarMatomo</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMATOMO@@#@/restore-current-user</key>
-			<value>AdministrarMatomo/RestoreCurrentUser</value>
-		</pagina>
-		<pagina>
-			<key>@#@@URLSEM,|,ADMINISTRARMATOMO@@#@/resetore-admin-matomo-password</key>
-			<value>AdministrarMatomo/RestoreAdminMatomoPassword</value>
 		</pagina>
 		<pagina>
 			<key></key>
@@ -3155,10 +3147,6 @@
 			<value>AdministrarBorradoMasivo/Eliminar</value>
 		</pagina>
 		<pagina>
-			<key>@#@@URLSEM,|,CONSULTACARGAMASIVA@@#@</key>
-			<value>ConsultaCargaMasiva</value>
-		</pagina>
-		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRASEARCH@@#@</key>
 			<value>AdministrarSearch</value>
 		</pagina>
@@ -3529,6 +3517,54 @@
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARDESCARGARTRADUCCIONES@@#@/upload</key>
 			<value>DescargarTraducciones/subirFicheros</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCONFIGURACIONPESOBUSQUEDAS@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarPesos</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARESTADOSISTEMAS@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarEstadoSistemas</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRAREVENTOSEXTERNOS@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarEventosExternos</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARMATOMO@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarEstadisticasComunidad</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,CONSULTACARGAMASIVA@@#@</key>
+			<value>UpgradeVersion/IndexConsultaCargaMasiva</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARINTEGRACIONCONTINUA@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarIntegracionContinua</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,CONFIGURARINTEGRACIONCONTINUAINCIAL@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarIntegracionContinua</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,CONFIGURARINTEGRACIONCONTINUAREPOSITORIO@@#@</key>
+			<value>UpgradeVersion/IndexAdministrarIntegracionContinua</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,DIAGNOSTICOPROBLEMAS@@#@</key>
+			<value>UpgradeVersion/IndexDiagnosticoProblemas</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,REPROCESADORECURSOS@@#@</key>
+			<value>UpgradeVersion/IndexReprocesadoRecursos</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,TAREASFONDO@@#@</key>
+			<value>UpgradeVersion/IndexMonitorizarTareas</value>
+		</pagina>
+		<pagina>
+			<key>administrar-aplicaciones-especificas</key>
+			<value>UpgradeVersion/IndexAdministrarApliacionesEspecificas</value>
 		</pagina>
 	</seccion>
 	<seccion name="fichaRecurso">
