@@ -166,13 +166,88 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         /// Muestra la página de subir a premium
         /// </summary>
         /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.EjecutarReprocesadosDeRecursos } })]
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarIntegracionContinua } })]
         public IActionResult IndexAdministrarApliacionesEspecificas()
         {
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOAPLICACIONESESPECIFICAS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_DesplegarWeb;
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.IntegracionContinua;
+
+            return View("Index", textoMostrar);
+        }
+
+        /// <summary>
+        /// Muestra la página de subir a premium
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccesoSparqlEndpoint } })]
+        public IActionResult IndexAccesoSparql()
+        {
+            string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOCONSULTASSPARQL");
+            string textoMostrar = ObtenerTextoEnterprise(textoServicio);
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_SparQL;
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
+            ViewBag.PermisosPaginas = PermisosPaginasAdministracion;
+            return View("Index", textoMostrar);
+        }
+
+        /// <summary>
+        /// Muestra la página de subir a premium
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAlFTP } })]
+        public IActionResult IndexFTP()
+        {
+            string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOFTP");
+            string textoMostrar = ObtenerTextoEnterprise(textoServicio);
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_AccesoFTP;
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.PermisosPaginas = PermisosPaginasAdministracion;
+            return View("Index", textoMostrar);
+        }
+
+        /// <summary>
+        /// Muestra la página de subir a premium
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCache } })]
+        public IActionResult IndexAdministracionCache()
+        {
+            string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOCACHE");
+            string textoMostrar = ObtenerTextoEnterprise(textoServicio);
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cache;
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.PermisosPaginas = PermisosPaginasAdministracion;
+            return View("Index", textoMostrar);
+        }
+
+        /// <summary>
+        /// Muestra la página de subir a premium
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+        public IActionResult IndexDescargaConfiguraciones()
+        {
+            string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIODESCARGACONFIGURACIONES");
+            string textoMostrar = ObtenerTextoEnterprise(textoServicio);
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Descargar_Configuraciones;
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
+            ViewBag.PermisosPaginas = PermisosPaginasAdministracion;
+            return View("Index", textoMostrar);
+        }
+
+        /// <summary>
+        /// Muestra la página de subir a premium
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTrazas } })]
+        public IActionResult IndexTrazas()
+        {
+            string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOTRAZAS");
+            string textoMostrar = ObtenerTextoEnterprise(textoServicio);
+            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Trazas;
+            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
             ViewBag.PermisosPaginas = PermisosPaginasAdministracion;
             return View("Index", textoMostrar);
         }

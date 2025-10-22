@@ -1770,6 +1770,10 @@
 			<key>@#@@URLSEM,|,ADMINISTRAREVENTOSEXTERNOSECOSISTEMA@@#@</key>
 			<value>UpgradeVersion/IndexAdministrarEventosExternos</value>
 		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARDESCARGARCONFIGURACIONECOSISTEMA@@#@</key>
+			<value>UpgradeVersion/IndexDescargaConfiguraciones</value>
+		</pagina>
 	</seccion>
 	<seccion name="acercaYaprende">
 		<!--<pagina>
@@ -3565,6 +3569,27 @@
 		<pagina>
 			<key>administrar-aplicaciones-especificas</key>
 			<value>UpgradeVersion/IndexAdministrarApliacionesEspecificas</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCONSULTASPARQL@@#@</key>
+			<value>UpgradeVersion/IndexAccesoSparql</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,CONFIGURAFTP@@#@</key>
+			<value>UpgradeVersion/IndexFTP</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCACHE@@#@</key>
+			<value>UpgradeVersion/IndexAdministracionCache</value>
+		</pagina>
+
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARDESCARGARCONFIGURACION@@#@</key>
+			<value>UpgradeVersion/IndexDescargaConfiguraciones</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARTRAZAS@@#@</key>
+			<value>UpgradeVersion/IndexTrazas</value>
 		</pagina>
 	</seccion>
 	<seccion name="fichaRecurso">
